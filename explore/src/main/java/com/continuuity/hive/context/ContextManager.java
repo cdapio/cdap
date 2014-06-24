@@ -13,29 +13,30 @@ import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.zookeeper.ZKClientService;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * Stores/creates context for Hive queries to run in MapReduce jobs.
  */
 public class ContextManager {
-  private static DatasetFramework datasetFramework;
+  private static Context savedContext;
 
-  public static void initialize(DatasetFramework datasetFramework) {
-    ContextManager.datasetFramework = datasetFramework;
+  public static void saveContext(DatasetFramework datasetFramework) {
+    savedContext = new Context(datasetFramework);
   }
 
-  public static DatasetFramework getDatasetManager(Configuration conf) throws IOException {
-    if (datasetFramework == null) {
-      selfInit(conf);
+  public static Context getContext(Configuration conf) throws IOException {
+    if (savedContext == null) {
+      return createContext(conf);
     }
 
-    return datasetFramework;
+    return savedContext;
   }
 
-  private static void selfInit(Configuration conf) throws IOException {
-    // Self init needs to happen only when running in as a MapReduce job.
-    // In other cases, ContextManager will be initialized using initialize method.
+  private static Context createContext(Configuration conf) throws IOException {
+    // Create context needs to happen only when running in as a MapReduce job.
+    // In other cases, ContextManager will be initialized using saveContext method.
 
     CConfiguration cConf = ConfigurationUtil.get(conf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE);
     Configuration hConf = ConfigurationUtil.get(conf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE);
@@ -49,9 +50,37 @@ public class ContextManager {
     );
 
     ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
-    // TODO: need to stop zkClientService at the end - REACTOR-273
     zkClientService.startAndWait();
 
-    datasetFramework = injector.getInstance(DatasetFramework.class);
+    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
+    return new Context(datasetFramework, zkClientService);
+  }
+
+  /**
+   * Contains DatasetFramework object required to run Hive queries in MapReduce jobs.
+   */
+  public static class Context implements Closeable {
+    private final DatasetFramework datasetFramework;
+    private final ZKClientService zkClientService;
+
+    public Context(DatasetFramework datasetFramework, ZKClientService zkClientService) {
+      this.datasetFramework = datasetFramework;
+      this.zkClientService = zkClientService;
+    }
+
+    public Context(DatasetFramework datasetFramework) {
+      this(datasetFramework, null);
+    }
+
+    public DatasetFramework getDatasetFramework() {
+      return datasetFramework;
+    }
+
+    @Override
+    public void close() {
+      if (zkClientService != null) {
+        zkClientService.stopAndWait();
+      }
+    }
   }
 }

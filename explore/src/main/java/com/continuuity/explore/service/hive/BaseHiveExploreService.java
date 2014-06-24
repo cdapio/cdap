@@ -60,7 +60,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.hiveConf = hiveConf;
     this.cliService = new CLIService();
     this.txClient = txClient;
-    ContextManager.initialize(datasetFramework);
+    ContextManager.saveContext(datasetFramework);
   }
 
   protected HiveConf getHiveConf() {
