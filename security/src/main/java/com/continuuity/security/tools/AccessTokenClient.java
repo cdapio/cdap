@@ -259,7 +259,8 @@ public class AccessTokenClient {
         PrintWriter writer = new PrintWriter(filePath, "UTF-8");
         writer.write(token);
         writer.close();
-        System.out.println("Access Token saved to file access_token");
+        System.out.println("Your Access Token is:" + token);
+        System.out.println("Access Token saved to file " + filePath);
       } catch (Exception e) {
         System.err.println("Could not parse response contents.");
         e.printStackTrace(System.err);
