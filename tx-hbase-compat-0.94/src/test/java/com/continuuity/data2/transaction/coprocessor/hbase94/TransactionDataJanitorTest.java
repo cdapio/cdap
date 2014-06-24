@@ -10,6 +10,7 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
+import com.continuuity.test.SlowTests;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -32,6 +33,7 @@ import org.apache.hadoop.hbase.util.MockRegionServerServices;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +52,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Tests filtering of invalid transaction data by the {@link TransactionDataJanitor} coprocessor.
  */
+@Category(SlowTests.class)
 public class TransactionDataJanitorTest {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionDataJanitorTest.class);
 

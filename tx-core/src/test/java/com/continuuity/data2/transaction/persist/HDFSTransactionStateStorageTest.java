@@ -5,10 +5,12 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.snapshot.DefaultSnapshotCodec;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
+import com.continuuity.test.SlowTests;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 
@@ -17,6 +19,7 @@ import java.io.IOException;
  * Tests persistence of transaction snapshots and write-ahead logs to HDFS storage, using the
  * {@link HDFSTransactionStateStorage} and {@link HDFSTransactionLog} implementations.
  */
+@Category(SlowTests.class)
 public class HDFSTransactionStateStorageTest extends AbstractTransactionStateStorageTest {
   private static final String TEST_DIR = "/tmp/wal_test";
 

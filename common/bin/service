@@ -103,7 +103,7 @@ start() {
       # Setup classpaths.
       set_classpath $COMPONENT_HOME $CONTINUUITY_CONF
 
-      # Setup hive classpath if hive is installed.
+      # Setup hive classpath if hive is installed, this has to be run after HBASE_CP is setup by set_classpath.
       set_hive_classpath
 
       # sets the JAVA variable.

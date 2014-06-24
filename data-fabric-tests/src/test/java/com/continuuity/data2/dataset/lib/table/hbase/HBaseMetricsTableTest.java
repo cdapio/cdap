@@ -13,14 +13,17 @@ import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.dataset.lib.table.MetricsTableTest;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
+import com.continuuity.test.SlowTests;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.experimental.categories.Category;
 
 /**
  * metrics table test for levelDB.
  */
+@Category(SlowTests.class)
 public class HBaseMetricsTableTest extends MetricsTableTest {
   private static HBaseTestBase testHBase;
 

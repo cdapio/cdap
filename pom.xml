@@ -46,6 +46,7 @@
   </properties>
 
   <modules>
+    <module>common-unit-test</module>
     <module>continuuity-api</module>
     <module>parent</module>
     <module>common</module>

@@ -23,10 +23,10 @@ public class UniqueCountTableDefinition
   }
 
   @Override
-  public UniqueCountTable getDataset(DatasetSpecification spec) throws IOException {
+  public UniqueCountTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     return new UniqueCountTable(spec.getName(),
-                                getDataset("entryCountTable", Table.class, spec),
-                                getDataset("uniqueCountTable", Table.class, spec));
+                                getDataset("entryCountTable", Table.class, spec, classLoader),
+                                getDataset("uniqueCountTable", Table.class, spec, classLoader));
   }
 
   public static class UniqueCountTable extends AbstractDataset {
