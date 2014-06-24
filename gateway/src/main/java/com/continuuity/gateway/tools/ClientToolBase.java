@@ -81,7 +81,7 @@ public abstract class ClientToolBase {
   /**
    * Returns the name of the tool.
    *
-   * @return
+   * @return tool name
    */
   public String getToolName() {
     return this.toolName;
