@@ -203,7 +203,8 @@ public class HiveExploreServiceTest {
     Class.forName("com.continuuity.explore.jdbc.ExploreDriver");
 
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-    Discoverable discoverable = new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();
+    Discoverable discoverable = new RandomEndpointStrategy(
+      discoveryServiceClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();
     InetSocketAddress addr = discoverable.getSocketAddress();
     String serviceUrl = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, addr.getHostName(), addr.getPort());
 

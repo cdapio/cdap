@@ -81,11 +81,12 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
       ReactorServiceManager serviceManager = reactorServiceManagementMap.get(serviceName);
       int instance = getInstances(request);
-      Integer currentInstance = getSystemServiceInstanceCount(serviceName);
       if (!serviceManager.isServiceEnabled()) {
         responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
         return;
       }
+
+      Integer currentInstance = getSystemServiceInstanceCount(serviceName);
       if (instance < serviceManager.getMinInstances() || instance > serviceManager.getMaxInstances()) {
         String response = String.format("Instance count should be between [%s,%s]", serviceManager.getMinInstances(),
                                         serviceManager.getMaxInstances());
