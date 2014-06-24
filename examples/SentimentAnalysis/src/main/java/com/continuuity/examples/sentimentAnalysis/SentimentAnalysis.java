@@ -15,7 +15,7 @@
  */
 package com.continuuity.examples.sentimentAnalysis;
 
-import com.continuuity.api.Application;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.annotation.Batch;
@@ -24,12 +24,11 @@ import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
-import com.continuuity.api.data.dataset.TimeseriesTable;
-import com.continuuity.api.data.dataset.table.Get;
-import com.continuuity.api.data.dataset.table.Increment;
-import com.continuuity.api.data.dataset.table.Row;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.dataset.lib.TimeseriesTable;
+import com.continuuity.api.dataset.table.Get;
+import com.continuuity.api.dataset.table.Increment;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -65,10 +64,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Application that analyzes sentiment of sentences as positive, negative or neutral.
  */
-public class SentimentAnalysis implements Application {
+public class SentimentAnalysis extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
+  public void configure() {
     return ApplicationSpecification.Builder.with()
       .setName("sentiment")
       .setDescription("Sentiment Analysis")
@@ -76,7 +75,7 @@ public class SentimentAnalysis implements Application {
         .add(new Stream("sentence"))
       .withDataSets()
         .add(new Table("sentiments"))
-        .add(new SimpleTimeseriesTable("text-sentiments"))
+        .add(new TimeseriesTable("text-sentiments"))
       .withFlows()
         .add(new SentimentAnalysisFlow())
       .withProcedures()
@@ -240,7 +239,7 @@ public class SentimentAnalysis implements Application {
     private Table sentiments;
     
     @UseDataSet("text-sentiments")
-    private SimpleTimeseriesTable textSentiments;
+    private TimeseriesTable textSentiments;
 
     Metrics metrics;
 
@@ -285,7 +284,7 @@ public class SentimentAnalysis implements Application {
     private Table sentiments;
 
     @UseDataSet("text-sentiments")
-    private SimpleTimeseriesTable textSentiments;
+    private TimeseriesTable textSentiments;
 
     @Handle("aggregates")
     public void sentimentAggregates(ProcedureRequest request, ProcedureResponder response) throws Exception {
@@ -311,13 +310,13 @@ public class SentimentAnalysis implements Application {
       }
 
       long time = System.currentTimeMillis();
-      List<SimpleTimeseriesTable.Entry> entries =
+      List<TimeseriesTable.Entry> entries =
         textSentiments.read(sentiment.getBytes(Charsets.UTF_8),
                             time - TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS),
                             time);
 
       Map<String, Long> textTimeMap = Maps.newHashMapWithExpectedSize(entries.size());
-      for (SimpleTimeseriesTable.Entry entry : entries) {
+      for (TimeseriesTable.Entry entry : entries) {
         textTimeMap.put(Bytes.toString(entry.getValue()), entry.getTimestamp());
       }
       response.sendJson(ProcedureResponse.Code.SUCCESS, textTimeMap);

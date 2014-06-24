@@ -109,6 +109,11 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public boolean hasType(String typeName) throws DatasetManagementException {
+    return client.getType(typeName) != null;
+  }
+
+  @Override
   public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
     client.deleteInstance(namespace(datasetInstanceName));
   }
@@ -121,9 +126,9 @@ public class RemoteDatasetFramework implements DatasetFramework {
     if (instanceInfo == null) {
       return null;
     }
-    DatasetDefinition impl = getDatasetDefinition(instanceInfo.getType(), classLoader);
 
-    return (T) impl.getAdmin(instanceInfo.getSpec());
+    DatasetDefinition impl = getDatasetDefinition(instanceInfo.getType(), classLoader);
+    return (T) impl.getAdmin(instanceInfo.getSpec(), classLoader);
   }
 
   @Override
@@ -134,9 +139,9 @@ public class RemoteDatasetFramework implements DatasetFramework {
     if (instanceInfo == null) {
       return null;
     }
-    DatasetDefinition impl = getDatasetDefinition(instanceInfo.getType(), classLoader);
 
-    return (T) impl.getDataset(instanceInfo.getSpec());
+    DatasetDefinition impl = getDatasetDefinition(instanceInfo.getType(), classLoader);
+    return (T) impl.getDataset(instanceInfo.getSpec(), classLoader);
   }
 
   private void addModule(String moduleName, Class<?> typeClass) throws DatasetManagementException {

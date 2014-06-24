@@ -16,10 +16,10 @@
 package com.continuuity.examples.ticker.data;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.table.Put;
-import com.continuuity.api.data.dataset.table.Row;
-import com.continuuity.api.data.dataset.table.Scanner;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.dataset.table.Put;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
 import com.continuuity.test.ReactorTestBase;

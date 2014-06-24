@@ -15,34 +15,25 @@
  */
 package com.continuuity.examples.wordcount;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.lib.KeyValueTable;
+import com.continuuity.api.dataset.table.Table;
 
 /**
  * Word count sample Application.
  */
-public class WordCount implements Application {
+public class WordCount extends AbstractApplication {
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("WordCount")
-      .setDescription("Example Word Count Application")
-      .withStreams()
-        .add(new Stream("wordStream"))
-      .withDataSets()
-        .add(new Table("wordStats"))
-        .add(new KeyValueTable("wordCounts"))
-        .add(new UniqueCountTable("uniqueCount"))
-        .add(new AssociationTable("wordAssocs"))
-      .withFlows()
-        .add(new WordCounter())
-      .withProcedures()
-        .add(new RetrieveCounts())
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("WordCount");
+    setDescription("Example Word Count Application");
+    addStream(new Stream("wordStream"));
+    createDataSet("wordStats", Table.class);
+    createDataSet("wordCounts", KeyValueTable.class);
+    createDataSet("uniqueCount", UniqueCountTable.class);
+    createDataSet("wordAssocs", AssociationTable.class);
+    addFlow(new WordCounter());
+    addProcedure(new RetrieveCounts());
   }
 }

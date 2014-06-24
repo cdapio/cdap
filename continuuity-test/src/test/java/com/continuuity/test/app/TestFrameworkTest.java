@@ -16,8 +16,10 @@ import com.continuuity.test.ReactorTestBase;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.ServiceManager;
+import com.continuuity.test.SlowTests;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.test.WorkflowManager;
+import com.continuuity.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -27,6 +29,7 @@ import com.google.gson.Gson;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +44,7 @@ import java.util.concurrent.TimeoutException;
 /**
  *
  */
+@Category(SlowTests.class)
 public class TestFrameworkTest extends ReactorTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTest.class);
 
@@ -77,6 +81,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
+  @Category(XSlowTests.class)
   @Test
   public void testDeployWorkflowApp() throws InterruptedException {
     ApplicationManager applicationManager = deployApplication(AppWithSchedule.class);
@@ -129,6 +134,7 @@ public class TestFrameworkTest extends ReactorTestBase {
 
   }
 
+  @Category(XSlowTests.class)
   @Test(timeout = 240000)
   public void testMultiInput() throws InterruptedException, IOException, TimeoutException {
     ApplicationManager applicationManager = deployApplication(JoinMultiStreamApp.class);
@@ -165,11 +171,13 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
+  @Category(XSlowTests.class)
   @Test(timeout = 360000)
   public void testApp() throws InterruptedException, IOException, TimeoutException {
     testApp(WordCountApp2.class, false, "text2");
   }
 
+  @Category(XSlowTests.class)
   @Test(timeout = 360000)
   public void testAppWithDatasetV2() throws InterruptedException, IOException, TimeoutException {
     testApp(WordCountAppV2.class, true, "text");
@@ -263,6 +271,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
+  @Category(SlowTests.class)
   @Test
   public void testGenerator() throws InterruptedException, IOException, TimeoutException {
     ApplicationManager applicationManager = deployApplication(GenSinkApp2.class);
@@ -362,14 +371,14 @@ public class TestFrameworkTest extends ReactorTestBase {
   @Test(timeout = 60000L)
   public void testAppWithExistingDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("keyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyProcedure");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("keyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyProcedureWithUseDataSetAnnotation");
   }
 
