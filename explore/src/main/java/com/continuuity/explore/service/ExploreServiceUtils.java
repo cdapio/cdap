@@ -19,7 +19,7 @@ public class ExploreServiceUtils {
   // todo populate this with whatever hive version CDH4.3 runs with - REACTOR-229
   private static final String[] SUPPORTED_VERSIONS = new String[] { "0.12", "0.13" };
 
-  private static Iterable<URL> getClassPath(String hiveClassPath) {
+  public static Iterable<URL> getClassPathJars(String hiveClassPath) {
     if (hiveClassPath == null) {
       return null;
     }
@@ -31,7 +31,7 @@ public class ExploreServiceUtils {
         @Override
         public URL apply(String input) {
           try {
-            return new File(input).toURI().toURL();
+            return new File(input).getAbsoluteFile().toURI().toURL();
           } catch (MalformedURLException e) {
             throw Throwables.propagate(e);
           }
@@ -42,7 +42,7 @@ public class ExploreServiceUtils {
    * Builds a class loader with the class path provided.
    */
   public static ClassLoader buildHiveClassLoader(String hiveClassPathStr) {
-    Iterable<URL> hiveClassPath = getClassPath(hiveClassPathStr);
+    Iterable<URL> hiveClassPath = getClassPathJars(hiveClassPathStr);
     return new URLClassLoader(Iterables.toArray(hiveClassPath, URL.class),
                               ClassLoader.getSystemClassLoader());
   }

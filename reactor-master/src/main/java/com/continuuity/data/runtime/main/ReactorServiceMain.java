@@ -57,6 +57,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -333,12 +334,21 @@ public class ReactorServiceMain extends DaemonMain {
     // This checking will throw an exception if Hive is not present or if its version is unsupported
     ExploreServiceUtils.checkHiveVersion(hiveCL);
 
-    return preparer.withClassPaths(hiveClassPathStr);
+    Iterable<URL> hiveJars = ExploreServiceUtils.getClassPathJars(hiveClassPathStr);
+
+    for (URL url : hiveJars) {
+      int i = url.getFile().lastIndexOf("/") + 1;
+      String s = url.getFile().substring(i);
+      LOG.info("index {} str {}", i, s);
+      preparer = preparer.withClassPaths(s);
+    }
+
+    return preparer;
   }
 
   private TwillPreparer getPreparer() {
     TwillPreparer preparer = twillRunnerService.prepare(twillApplication)
-        .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+      .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
     preparer = addHiveDependenciesToPreparer(preparer);
 
     return prepare(preparer);

@@ -64,6 +64,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   protected HiveConf getHiveConf() {
     // TODO figure out why this hive conf does not contain our env properties - REACTOR-270
     // return hiveConf;
+
+    // TODO print out where the conf comes from, make sure it comes
+    // from the correct file of the container classpath
     return new HiveConf();
   }
 

@@ -168,13 +168,13 @@ public class ExploreRuntimeModule extends RuntimeModule {
         String auxJarsPath = generateAuxJarsClasspath();
         System.setProperty(HiveConf.ConfVars.HIVEAUXJARS.toString(), auxJarsPath);
         LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
-            System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
+                  System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
 
         // Set local tmp dir to an absolute location in the twill runnable otherwise Hive complains
         System.setProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString(),
-            new File(HiveConf.ConfVars.LOCALSCRATCHDIR.defaultVal).getAbsolutePath());
+                           new File(HiveConf.ConfVars.LOCALSCRATCHDIR.defaultVal).getAbsolutePath());
         LOG.info("Setting {} to {}", HiveConf.ConfVars.LOCALSCRATCHDIR.toString(),
-            System.getProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString()));
+                 System.getProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString()));
       } catch (Throwable e) {
         throw Throwables.propagate(e);
       }

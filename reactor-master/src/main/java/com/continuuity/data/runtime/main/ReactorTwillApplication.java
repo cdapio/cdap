@@ -3,6 +3,7 @@ package com.continuuity.data.runtime.main;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.AbortOnTimeoutEventHandler;
+import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.logging.run.LogSaverTwillRunnable;
 import com.continuuity.metrics.runtime.MetricsProcessorTwillRunnable;
 import com.continuuity.metrics.runtime.MetricsTwillRunnable;
@@ -14,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 /**
  * TwillApplication wrapper for Reactor YARN Services.
@@ -188,10 +191,28 @@ public class ReactorTwillApplication implements TwillApplication {
       .setInstances(cConf.getInt(Constants.Explore.CONTAINER_INSTANCES, 1))
       .build();
 
-    return builder.add(new ExploreServiceTwillRunnable("explore.executor", "cConf.xml", "hConf.xml"), resourceSpec)
-      .withLocalFiles()
-      .add("cConf.xml", cConfFile.toURI())
-      .add("hConf.xml", hConfFile.toURI())
-      .apply();
+    // HIVE_CLASSPATH will be defined in startup scripts if Hive is installed.
+    String hiveClassPathStr = System.getProperty(Constants.Explore.HIVE_CLASSPATH);
+    if (hiveClassPathStr == null) {
+      throw new RuntimeException("System property " + Constants.Explore.HIVE_CLASSPATH + " is not set.");
+    }
+    Iterable<URL> hiveJars = ExploreServiceUtils.getClassPathJars(hiveClassPathStr);
+
+    TwillSpecification.Builder.MoreFile twillSpecs =
+      builder.add(new ExploreServiceTwillRunnable("explore.executor", "cConf.xml", "hConf.xml"), resourceSpec)
+        .withLocalFiles()
+        .add("cConf.xml", cConfFile.toURI())
+        .add("hConf.xml", hConfFile.toURI());
+
+    try {
+      for (URL url : hiveJars) {
+        twillSpecs = twillSpecs.add(url.getFile().substring(url.getFile().lastIndexOf("/") + 1), url.toURI());
+      }
+    } catch (URISyntaxException e) {
+      LOG.error("Hive jar URL format is incorrect", e);
+      throw new RuntimeException(e);
+    }
+
+    return twillSpecs.apply();
   }
 }
