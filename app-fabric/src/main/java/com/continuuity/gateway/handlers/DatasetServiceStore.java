@@ -21,8 +21,8 @@ import com.google.inject.name.Named;
 /**
  * DataSetService Store implements ServiceStore using DataSets without Transaction.
  */
-public class DatasetServiceStore implements ServiceStore {
-  private NoTxKeyValueTable table;
+public final class DatasetServiceStore implements ServiceStore {
+  private final NoTxKeyValueTable table;
 
   @Inject
   public DatasetServiceStore(CConfiguration cConf, DefaultDatasetDefinitionRegistry dsRegistry,

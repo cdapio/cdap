@@ -80,7 +80,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       }
 
       ReactorServiceManager serviceManager = reactorServiceManagementMap.get(serviceName);
-      final int instance = getInstances(request);
+      int instance = getInstances(request);
       Integer currentInstance = getSystemServiceInstanceCount(serviceName);
       if (!serviceManager.isServiceEnabled()) {
         responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
