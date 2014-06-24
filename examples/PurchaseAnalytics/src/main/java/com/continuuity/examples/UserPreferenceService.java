@@ -37,12 +37,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-
-
-
 /**
  * User preference service runs a HTTP service that returns user interest for a given user id.
  * The implementation of the id to user interest is mock.
@@ -89,6 +83,7 @@ public class UserPreferenceService implements TwillApplication {
       runLatch = new CountDownLatch(1);
       context.announce("UserInterestsLookup", port);
     }
+
     @Override
     public void run() {
       try {
