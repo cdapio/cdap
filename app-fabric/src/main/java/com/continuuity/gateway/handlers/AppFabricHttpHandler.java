@@ -2958,15 +2958,19 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           if (spec == null) {
             spec = store.getDataSet(account, dsName);
           }
+
           if (spec != null) {
+            // Dataset V1
             typeName = spec.getType();
           } else {
             // trying to see if that is Dataset V2
             ReactorDatasetNamespace namespace = new ReactorDatasetNamespace(configuration,
                                                                             DataSetAccessor.Namespace.USER);
-            DatasetInstanceMeta meta = getDatasetInstanceMeta(namespace.namespace(dsName));
+            String namespacedDsName = namespace.namespace(dsName);
+            DatasetInstanceMeta meta = getDatasetInstanceMeta(namespacedDsName);
             if (meta != null) {
               typeName = meta.getType().getName();
+              dsName = namespacedDsName;
             }
           }
           result.add(makeDataSetRecord(dsName, typeName, null));
