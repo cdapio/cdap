@@ -375,7 +375,7 @@ public class ReactorTestBase {
     String host = address.getHostName();
     int port = address.getPort();
 
-    String connectString = String.format("jdbc:explore://%s:%d", host, port);
+    String connectString = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, host, port);
 
     return DriverManager.getConnection(connectString);
   }
