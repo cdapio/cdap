@@ -12,7 +12,8 @@ define(['core/controllers/app', 'core/controllers/mapreduce-config', 'core/contr
 	'core/controllers/flow-log', 'core/controllers/procedure-log', 'core/controllers/analyze',
   'core/controllers/workflow-status', 'core/controllers/workflow-history',
   'core/controllers/workflow-config', 'core/controllers/login', 'core/controllers/loading',
-  'core/controllers/services', 'core/controllers/service-log', 'core/controllers/connection-error'],
+  'core/controllers/services', 'core/controllers/service-log', 'core/controllers/connection-error',
+  'core/controllers/accesstoken'],
 	function () {
 
 		return Array.prototype.slice.call(arguments, 0);

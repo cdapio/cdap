@@ -39,4 +39,9 @@ public class InMemoryReactorServiceManager implements ReactorServiceManager {
   public boolean isServiceAvailable() {
     return true;
   }
+
+  @Override
+  public boolean isServiceEnabled() {
+    return true;
+  }
 }

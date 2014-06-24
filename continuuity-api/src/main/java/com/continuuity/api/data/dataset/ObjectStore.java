@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.annotation.Beta;
@@ -29,8 +33,10 @@ import java.util.List;
  * </ul>
  * Interfaces and not-static inner classes are not supported.
  * @param <T> the type of objects in the store
+ *
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.lib.ObjectStore}
  */
-@Beta
+@Deprecated
 public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>, BatchWritable<byte[], T> {
 
   private static final Gson GSON = new GsonBuilder()

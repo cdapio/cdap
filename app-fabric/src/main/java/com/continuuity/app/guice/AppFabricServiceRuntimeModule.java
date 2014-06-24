@@ -15,6 +15,7 @@ import com.continuuity.common.twill.ReactorServiceManager;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.stream.StreamServiceManager;
 import com.continuuity.data2.datafabric.dataset.DatasetExecutorServiceManager;
+import com.continuuity.explore.service.ExploreServiceManager;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.gateway.handlers.MonitorHandler;
 import com.continuuity.gateway.handlers.PingHandler;
@@ -97,6 +98,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                mapBinder.addBinding(Constants.Service.STREAMS).to(InMemoryReactorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(
                                  InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
+                                 .to(InMemoryReactorServiceManager.class);
                              }
                            });
   }
@@ -127,6 +130,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                mapBinder.addBinding(Constants.Service.STREAMS).to(InMemoryReactorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(
                                  InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
+                                 .to(InMemoryReactorServiceManager.class);
                              }
                            });
   }
@@ -154,6 +159,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                mapBinder.addBinding(Constants.Service.STREAMS).to(StreamServiceManager.class);
                                mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(
                                  DatasetExecutorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
+                                 .to(ExploreServiceManager.class);
                              }
                            });
   }

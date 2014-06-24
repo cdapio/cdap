@@ -48,6 +48,11 @@ public abstract class AbstractDistributedReactorServiceManager implements Reacto
     return instances;
   }
 
+  public boolean isServiceEnabled() {
+    // By default all the services are enabled. extending classes can override if the behavior should be different.
+    return true;
+  }
+
   @Override
   public boolean setInstances(int instanceCount) {
     Preconditions.checkArgument(instanceCount > 0);

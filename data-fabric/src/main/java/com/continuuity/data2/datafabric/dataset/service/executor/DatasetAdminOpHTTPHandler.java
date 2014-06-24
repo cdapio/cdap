@@ -84,7 +84,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     }
 
     DatasetSpecification spec = def.configure(name, props);
-    DatasetAdmin admin = def.getAdmin(spec);
+    DatasetAdmin admin = def.getAdmin(spec, null);
     admin.create();
     responder.sendJson(HttpResponseStatus.OK, spec);
   }
@@ -113,7 +113,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
       return;
     }
 
-    DatasetAdmin admin = def.getAdmin(spec);
+    DatasetAdmin admin = def.getAdmin(spec, null);
     admin.drop();
     responder.sendJson(HttpResponseStatus.OK, spec);
   }

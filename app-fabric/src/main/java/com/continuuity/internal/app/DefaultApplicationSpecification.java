@@ -1,7 +1,6 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
@@ -9,9 +8,9 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.ApplicationSpecification;
+import com.continuuity.data.dataset.DatasetCreationSpec;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import org.apache.twill.api.TwillSpecification;
 
 import java.util.Map;
 
@@ -25,7 +24,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final Map<String, StreamSpecification> streams;
   private final Map<String, DataSetSpecification> datasets;
   private final Map<String, String> datasetModules;
-  private final Map<String, DatasetInstanceCreationSpec> datasetInstances;
+  private final Map<String, DatasetCreationSpec> datasetInstances;
   private final Map<String, FlowSpecification> flows;
   private final Map<String, ProcedureSpecification> procedures;
   private final Map<String, MapReduceSpecification> mapReduces;
@@ -42,7 +41,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, WorkflowSpecification> workflows) {
     this(name, description, streams, datasets,
          Maps.<String, String>newHashMap(),
-         Maps.<String, DatasetInstanceCreationSpec>newHashMap(),
+         Maps.<String, DatasetCreationSpec>newHashMap(),
          flows, procedures, mapReduces, workflows, Maps.<String, ServiceSpecification>newHashMap());
 
   }
@@ -51,7 +50,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, StreamSpecification> streams,
                                          Map<String, DataSetSpecification> datasets,
                                          Map<String, String> datasetModules,
-                                         Map<String, DatasetInstanceCreationSpec> datasetInstances,
+                                         Map<String, DatasetCreationSpec> datasetInstances,
                                          Map<String, FlowSpecification> flows,
                                          Map<String, ProcedureSpecification> procedures,
                                          Map<String, MapReduceSpecification> mapReduces,
@@ -103,7 +102,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   }
 
   @Override
-  public Map<String, DatasetInstanceCreationSpec> getDatasets() {
+  public Map<String, DatasetCreationSpec> getDatasets() {
     return datasetInstances;
   }
 
