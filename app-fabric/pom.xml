@@ -33,7 +33,7 @@
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
-      <artifactId>explore</artifactId>
+      <artifactId>explore-client</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

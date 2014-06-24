@@ -3,7 +3,6 @@ package com.continuuity.explore.service;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.AbstractDistributedReactorServiceManager;
-import com.continuuity.data.stream.StreamServiceManager;
 import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.Discoverable;
@@ -16,9 +15,8 @@ import org.slf4j.LoggerFactory;
  * Service manager for explore service in distributed mode.
  */
 public class ExploreServiceManager extends AbstractDistributedReactorServiceManager {
-  private static final Logger LOG = LoggerFactory.getLogger(StreamServiceManager.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ExploreServiceManager.class);
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final boolean exploreServiceEnabled = false;
 
   @Inject
   public ExploreServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
