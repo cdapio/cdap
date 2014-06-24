@@ -1,13 +1,16 @@
 package com.continuuity.hbase.wd;
 
+import com.continuuity.test.XSlowTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 /**
  *
  */
+@Category(XSlowTests.class)
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
   IdentityHashDistributorTestRun.class,

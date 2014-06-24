@@ -237,12 +237,12 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       }
 
       @Override
-      public DatasetAdmin getAdmin(DatasetSpecification spec) {
+      public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) {
         return new CompositeDatasetAdmin(Collections.<DatasetAdmin>emptyList());
       }
 
       @Override
-      public Dataset getDataset(DatasetSpecification spec) {
+      public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) {
         return null;
       }
     };

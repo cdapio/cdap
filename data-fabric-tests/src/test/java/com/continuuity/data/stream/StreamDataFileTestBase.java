@@ -10,6 +10,7 @@ import com.continuuity.data.file.FileReader;
 import com.continuuity.data.file.FileWriter;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
+import com.continuuity.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
@@ -23,6 +24,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -459,6 +461,7 @@ public abstract class StreamDataFileTestBase {
   /**
    * Test live stream reader with new partitions and/or sequence file being created over time.
    */
+  @Category(SlowTests.class)
   @Test
   public void testLiveStream() throws Exception {
     String streamName = "live";
