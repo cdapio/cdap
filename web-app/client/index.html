@@ -58,18 +58,18 @@
       <div id="global">
       {{#if C.Env.security_enabled}}
           {{#if C.Env.auth_token}}
-            <a href="/logout" id="header-logout">Logout</a>
+            <a class="general-link logout-link" href="/logout" id="header-logout">Logout</a>
           {{else}}
-            <a href="/#/login" id="header-login">Login</a>
+            <a class="general-link login-link" href="/#/login" id="header-login">Login</a>
           {{/if}}
           {{#if C.Env.authenticated}}
-            <a href="https://accounts.continuuity.com/logout">Logout</a>
-            <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" class="support-link"></a>
+            <a class="general-link logout-link" href="https://accounts.continuuity.com/logout">Logout</a>
+            <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" class="support-link">Support</a>
             <a href="https://accounts.continuuity.com/profile" class="user-link" target="_blank">{{C.Env.user.name}}</a>
             <a href="#" class="cloud-link">{{C.Env.cluster.vpc_label}}</a>
           {{else}}
             {{#unless C.isEnterprise}}
-            <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" class="support-link"></a>
+            <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" class="support-link">Support</a>
             {{/unless}}
             <div class="pull-right user-link small-pad" style="position: relative; width: 140px;text-align: center;">
               <div class="dropdown" data-toggle="dropdown">
@@ -84,7 +84,7 @@
             </div>
           {{/if}}
       {{/if}}
-      <a href="#/services" class="topmenu-top-padding">Services</a>
+      <a href="#/services" class="general-link services-link topmenu-top-padding">Services</a>
       <a href="#/analyze" class="metrics-link" id="header-metrics">Metrics</a>
       </div>
     </div>
@@ -175,11 +175,11 @@
         <table class="table">
           <thead>
             <th style="padding-left: 14px; min-width: 350px" class="service-col">Name</th>
-            <th style="min-width: 100px;" class="status-col">Status
+            <th style="min-width: 100px;" class="status-col center-align">Status
             </th>
-            <th style="min-width: 100px;" class="logs-col">Logs</th>
-            <th style="min-width: 200px;" class="instance-col">Instances Requested</th>
-            <th style="min-width: 200px;" class="instance-col">Provisioned</th>
+            <th style="min-width: 100px;" class="logs-col center-align">Logs</th>
+            <th style="min-width: 200px;" class="instance-col center-align">Instances Requested</th>
+            <th style="min-width: 200px;" class="instance-col center-align">Provisioned</th>
           </thead>
           <tbody>
           {{#each services}}
@@ -208,18 +208,20 @@
                 <div class="instance-wrapper">
                   <div class="instance-num"><span>{{this.requested}}</span></div>
                   <div>
+                    {{#if this.isDecreaseEnabled}}
                     <a class="cursor-pointer" {{action decreaseInstance this.name this.requested }}>
                       <img src="assets/img/minus.png" />
                     </a>
+                    {{/if}}
+                    {{#if this.isIncreaseEnabled}}
                     <a class="cursor-pointer" {{action increaseInstance this.name this.requested }}>
                       <img src="assets/img/plus.png" />
                     </a>
+                    {{/if}}
                   </div>
                 </div>
               <td style="max-width: 350px;" class="instance-provisioned service-col">
-              <div class="instance-wrapper">
-                  <div class="instance-num"><span>{{this.provisioned}}</span></div>
-              </div>
+                  <div class="instance-num auto-margin"><span>{{this.provisioned}}</span></div>
               </td>
             </tr>
           {{/each}}

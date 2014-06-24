@@ -204,7 +204,7 @@ WebAppServer.prototype.getServerInstance = function(app) {
 
 WebAppServer.prototype.checkAuth = function(req, res, next) {
   if (!('token' in req.cookies)) {
-    req.cookies.token = 'DUMMY';
+    req.cookies.token = '';
   }
   next();
 };
@@ -702,8 +702,10 @@ WebAppServer.prototype.bindRoutes = function() {
 
   // Security endpoints.
   this.app.get('/getsession', function (req, res) {
+    var headerOpts = {};
     var token = '';
-    if ('token' in req.cookies && req.cookies.token !== 'DUMMY') {
+    if ('token' in req.cookies && req.cookies.token !== '') {
+      headerOpts['Authorization'] = "Bearer " + req.cookies.token;
       token = req.cookies.token;
     }
 
@@ -712,10 +714,7 @@ WebAppServer.prototype.bindRoutes = function() {
       port: self.config['gateway.server.port'],
       path: '/' + self.API_VERSION + '/deploy/status',
       method: 'GET',
-      headers: {
-        'X-Continuuity-ApiKey': '',
-        'Authorization': 'Bearer ' + token
-      }
+      headers: headerOpts
     };
 
     var request = self.lib.request(options, function (response) {
