@@ -11,34 +11,28 @@ import com.continuuity.common.collect.LastNCollector;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.stream.DefaultStreamEvent;
-import com.continuuity.common.utils.UsageException;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.internal.app.verification.StreamVerification;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
-import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.OptionBuilder;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.Options;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -68,12 +62,7 @@ public class StreamClient extends ClientToolBase {
   private static final String NAME = "stream-client";
   private static final String HEADER_OPTION = "header";
 
-  /**
-   * for debugging. should only be set to true in unit tests.
-   * when true, program will print the stack trace after the usage.
-   */
-  public static boolean debug = false;
-
+  String command = null;         // the command to run
   boolean hex = false;           // whether body is in hex noatation
   boolean urlenc = false;        // whether body is in url encoding
   String body = null;            // the body of the event as a String
@@ -86,22 +75,16 @@ public class StreamClient extends ClientToolBase {
   Long ttl = null;               // Stream TTL
   Map<String, String> headers = Maps.newHashMap(); // to accumulate all headers
 
-  boolean forceNoSSL = false;
-
   public StreamClient() {
     super("stream-client");
-    buildOptions();
   }
 
   public StreamClient(String toolName) {
     super(toolName);
-    buildOptions();
   }
 
   @Override
-  public void buildOptions() {
-    // build the default options
-    super.buildOptions();
+  protected void addOptions(Options options) {
     options.addOption(OptionBuilder
                         .withLongOpt(HEADER_OPTION)
                         .hasArgs(2)
@@ -125,7 +108,7 @@ public class StreamClient extends ClientToolBase {
   }
 
   @Override
-  public void printUsage(boolean error) {
+  public void printUsageTop(boolean error) {
     PrintStream out = error ? System.err : System.out;
     out.println("Usage:\n");
     out.println("\t" + getToolName() + " create --stream <id>");
@@ -136,112 +119,95 @@ public class StreamClient extends ClientToolBase {
     out.println("\t" + getToolName() + " info --stream <id> [ <option> ... ]");
     out.println("\t" + getToolName() + " truncate --stream <id>");
     out.println("\t" + getToolName() + " config --stream <id> [ <option> ... ]\n");
-    super.printUsage(error);
   }
 
-  public boolean parseArguments(String[] args) {
-    // parse generic args first
-    CommandLineParser parser = new BasicParser();
-    // Check all the options of the command line
-    try {
-      command = args[0];
-      CommandLine line = parser.parse(options, args);
-      parseBasicArgs(line);
-      // returns false if help was passed
-      if (help) {
-        return false;
+  @Override
+  public boolean parseAdditionalArguments(CommandLine line) {
+    destination = line.getOptionValue(STREAM_OPTION, null);
+    body = line.getOptionValue(BODY_OPTION, null);
+    bodyFile = line.getOptionValue(BODY_FILE_OPTION, null);
+    hex = line.hasOption(HEX_OPTION);
+    urlenc = line.hasOption(URL_OPTION);
+    all = line.hasOption(ALL_OPTION);
+    if (line.hasOption(HEADER_OPTION)) {
+      String[] headerList = line.getOptionValues(HEADER_OPTION);
+      // must pass header arguments in pairs
+      if (headerList.length % 2 != 0) {
+        usage("--" + HEADER_OPTION + " arguments must be passed in pairs");
       }
-      destination = line.getOptionValue(STREAM_OPTION, null);
-      body = line.getOptionValue(BODY_OPTION, null);
-      bodyFile = line.getOptionValue(BODY_FILE_OPTION, null);
-      hex = line.hasOption(HEX_OPTION);
-      urlenc = line.hasOption(URL_OPTION);
-      all = line.hasOption(ALL_OPTION);
-      if (line.hasOption(HEADER_OPTION)) {
-        String[] headerList = line.getOptionValues(HEADER_OPTION);
-        // must pass header arguments in pairs
-        if (headerList.length % 2 != 0) {
-          usage("--" + HEADER_OPTION + " arguments must be passed in pairs");
-        }
-        for (int i = 0; i < headerList.length; i += 2) {
-          headers.put(headerList[i], headerList[i + 1]);
-        }
+      for (int i = 0; i < headerList.length; i += 2) {
+        headers.put(headerList[i], headerList[i + 1]);
       }
-      // validate consumer is a numerical value
-      consumer = line.hasOption(GROUP_OPTION) ? parseNumericArg(line, GROUP_OPTION).toString() : null;
-      first = line.hasOption(FIRST_OPTION) ? parseNumericArg(line, FIRST_OPTION).intValue() : null;
-      last = line.hasOption(LAST_OPTION) ? parseNumericArg(line, LAST_OPTION).intValue() : null;
-      ttl = line.hasOption(TTL_OPTION) ? parseNumericArg(line, TTL_OPTION) : null;
-      // expect at least 1 extra arg because of pos arg, the command to run
-      if (line.getArgs().length > 1) {
-        usage("Extra arguments provided");
-      }
-    } catch (ParseException e) {
-      printUsage(true);
-    } catch (IndexOutOfBoundsException e) {
-      printUsage(true);
     }
+    // validate consumer is a numerical value
+    consumer = line.hasOption(GROUP_OPTION) ? parseNumericArg(line, GROUP_OPTION).toString() : null;
+    first = line.hasOption(FIRST_OPTION) ? parseNumericArg(line, FIRST_OPTION).intValue() : null;
+    last = line.hasOption(LAST_OPTION) ? parseNumericArg(line, LAST_OPTION).intValue() : null;
+    ttl = line.hasOption(TTL_OPTION) ? parseNumericArg(line, TTL_OPTION) : null;
+    // should have 1 arg remaining, the command which is positional
+    String[] remaining = line.getArgs();
+    if (remaining.length != 1) {
+      return false;
+    }
+    command = remaining[0];
     return true;
   }
 
   static List<String> supportedCommands =
     Arrays.asList("create", "send", "group", "fetch", "view", "info", "truncate", "config");
 
-  protected void validateArguments(String[] args) {
-    // first parse command arguments
-    parseArguments(args);
-    if (help) {
-      return;
-    }
+  @Override
+  protected String validateArguments() {
     // first validate the command
     if (!supportedCommands.contains(command)) {
-      usage("Please provide a valid command");
+      return ("Please provide a valid command");
     }
     // verify that either --body or --body-file is given
     if ("send".equals(command) && body != null && bodyFile != null) {
-      usage("Either --body or --body-file must be specified.");
+      return "Either --body or --body-file must be specified.";
     }
     // verify that a destination was given
     if (destination == null) {
-      usage("A destination stream must be specified.");
+      return "A destination stream must be specified.";
     }
     if (port > 0 && hostname == null) {
-      usage("A hostname must be provided when a port is specified.");
+      return "A hostname must be provided when a port is specified.";
     }
     // verify that only one encoding is given for the body
     if (hex && urlenc) {
-      usage("Only one of --hex or --url may be specified");
+      return "Only one of --hex or --url may be specified";
     }
     if (bodyFile != null && (hex || urlenc)) {
-      usage("Options --hex and --url are incompatible with --body-file (binary input)");
+      return "Options --hex and --url are incompatible with --body-file (binary input)";
     }
     // make sure that fetch command has a consumer id
     if ("fetch".equals(command) && consumer == null) {
-      usage("--group must be specified for fetch");
+      return "--group must be specified for fetch";
     }
     // make sure that view command does not have contradicting options
     if ("view".equals(command)) {
       if ((all && first != null) || (all && last != null) ||
         (last != null && first != null)) {
-        usage("Only one of --all, --first or --last may be specified");
+        return "Only one of --all, --first or --last may be specified";
       }
       if (first != null && first < 1) {
-        usage("--first must be at least 1");
+        return "--first must be at least 1";
       }
       if (last != null && last < 1) {
-        usage("--last must be at least 1");
+        return "--last must be at least 1";
       }
     }
     if ("create".equals(command)) {
       if (!isId(destination)) {
-        usage("id is not a printable ascii character string");
+        return "id is not a printable ascii character string";
       }
     }
     if ("config".equals(command)) {
       if (ttl == null || ttl < 0L) {
-        usage("--ttl must be specified as a non-negative value");
+        return "--ttl must be specified as a non-negative value";
       }
     }
+    return null;
   }
 
   /**
@@ -309,14 +275,11 @@ public class StreamClient extends ClientToolBase {
    * instead of exiting in case of error it returns null, whereas in case of
    * success it returns the retrieved value as shown on the console.
    *
-   * @param args   the command line arguments of the main method
    * @param config The configuration of the gateway
    * @return null in case of error, an string representing the retrieved value
    *         in case of success
    */
-  public String execute0(String[] args, CConfiguration config) {
-    // parse and validate arguments
-    validateArguments(args);
+  protected String execute(CConfiguration config) {
     if (help) {
       return "";
     }
@@ -354,7 +317,12 @@ public class StreamClient extends ClientToolBase {
         post.setHeader(destination + "." + header, headers.get(header));
       }
       post.setEntity(new ByteArrayEntity(binaryBody));
-      return (sendHttpRequest(post, null) != null) ? "OK." : null;
+      HttpClient client = new DefaultHttpClient();
+      try {
+        return (sendHttpRequest(client, post, null) != null) ? "OK." : null;
+      } finally {
+        client.getConnectionManager().shutdown();
+      }
     } else if ("group".equals(command)) {
       String id = getConsumerId(requestUrl);
       if (id != null) {
@@ -395,18 +363,23 @@ public class StreamClient extends ClientToolBase {
       return writeBody(Bytes.toBytes(event.getBody()));
     } else if ("view".equals(command)) {
       if (consumer == null) {
+        HttpClient client = new DefaultHttpClient();
         HttpPost post = new HttpPost(requestUrl + "/consumer-id");
-        HttpResponse response = sendHttpRequest(post, null);
-        if (response == null) {
-          return null;
+        try {
+          HttpResponse response = sendHttpRequest(client, post, null);
+          if (response == null) {
+            return null;
+          }
+          // read the binary value from the HTTP response
+          byte[] binaryValue = Util.readHttpResponse(response);
+          if (binaryValue == null) {
+            System.err.println("Unexpected response without body.");
+            return null;
+          }
+          consumer = Bytes.toString(binaryValue);
+        } finally {
+          client.getConnectionManager().shutdown();
         }
-        // read the binary value from the HTTP response
-        byte[] binaryValue = Util.readHttpResponse(response);
-        if (binaryValue == null) {
-          System.err.println("Unexpected response without body.");
-          return null;
-        }
-        consumer = Bytes.toString(binaryValue);
       }
       Collector<StreamEvent> collector =
         all ? new AllCollector<StreamEvent>(StreamEvent.class) :
@@ -423,17 +396,32 @@ public class StreamClient extends ClientToolBase {
       }
 
     } else if ("create".equals(command)) {
+      HttpClient client = new DefaultHttpClient();
       HttpPut put = new HttpPut(requestUrl);
-      return (sendHttpRequest(put, null) != null) ? "OK." : null;
+      try {
+        return (sendHttpRequest(client, put, null) != null) ? "OK." : null;
+      } finally {
+        client.getConnectionManager().shutdown();
+      }
     } else if ("truncate".equals(command)) {
+      HttpClient client = new DefaultHttpClient();
       HttpPost post = new HttpPost(requestUrl + "/truncate");
-      return (sendHttpRequest(post, null) != null) ? "OK." : null;
+      try {
+        return (sendHttpRequest(client, post, null) != null) ? "OK." : null;
+      } finally {
+        client.getConnectionManager().shutdown();
+      }
     } else if ("config".equals(command)) {
+      HttpClient client = new DefaultHttpClient();
       HttpPut put = new HttpPut(requestUrl + "/config");
       JsonObject streamConfig = new JsonObject();
       streamConfig.addProperty("ttl", ttl);
       put.setEntity(new ByteArrayEntity(GSON.toJson(streamConfig).getBytes(Charsets.UTF_8)));
-      return (sendHttpRequest(put, null) != null) ? "OK." : null;
+      try {
+        return (sendHttpRequest(client, put, null) != null) ? "OK." : null;
+      } finally {
+        client.getConnectionManager().shutdown();
+      }
     }
     return null;
   }
@@ -445,18 +433,23 @@ public class StreamClient extends ClientToolBase {
    * @return the consumer group id returned by the gateway
    */
   String getConsumerId(String requestUrl) {
+    HttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost(requestUrl + "/consumer-id");
-    HttpResponse response = sendHttpRequest(post, null);
-    if (response == null) {
-      return null;
+    try {
+      HttpResponse response = sendHttpRequest(client, post, null);
+      if (response == null) {
+        return null;
+      }
+      // read the binary value from the HTTP response
+      byte[] binaryValue = Util.readHttpResponse(response);
+      if (binaryValue == null) {
+        System.err.println("Unexpected response without body.");
+        return null;
+      }
+      return Bytes.toString(binaryValue);
+    } finally {
+      client.getConnectionManager().shutdown();
     }
-    // read the binary value from the HTTP response
-    byte[] binaryValue = Util.readHttpResponse(response);
-    if (binaryValue == null) {
-      System.err.println("Unexpected response without body.");
-      return null;
-    }
-    return Bytes.toString(binaryValue);
   }
 
   /**
@@ -468,18 +461,24 @@ public class StreamClient extends ClientToolBase {
    */
   String getQueueInfo(String requestUrl) {
     // prepare for HTTP
+    HttpClient client = new DefaultHttpClient();
     HttpGet get = new HttpGet(requestUrl + "/info");
-    HttpResponse response = sendHttpRequest(get, null);
-    if (response == null) {
-      return null;
+
+    try {
+      HttpResponse response = sendHttpRequest(client, get, null);
+      if (response == null) {
+        return null;
+      }
+      // read the binary value from the HTTP response
+      byte[] binaryValue = Util.readHttpResponse(response);
+      if (binaryValue == null) {
+        System.err.println("Unexpected response without body.");
+        return null;
+      }
+      return new String(binaryValue);
+    } finally {
+      client.getConnectionManager().shutdown();
     }
-    // read the binary value from the HTTP response
-    byte[] binaryValue = Util.readHttpResponse(response);
-    if (binaryValue == null) {
-      System.err.println("Unexpected response without body.");
-      return null;
-    }
-    return new String(binaryValue);
   }
 
   /**
@@ -520,34 +519,40 @@ public class StreamClient extends ClientToolBase {
    */
   StreamEvent fetchOne(String uri, String consumer) throws Exception {
     // prepare for HTTP
+    HttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost(uri + "/dequeue");
     post.addHeader(Constants.Stream.Headers.CONSUMER_ID, consumer);
     Integer[] expectedCodes = { HttpStatus.SC_OK, HttpStatus.SC_NO_CONTENT };
-    HttpResponse response = sendHttpRequest(post, Arrays.asList(expectedCodes));
-    if (response == null) {
-      return null;
-    }
-    // we expect either OK for an event, or NO_CONTENT for end of stream
-    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
-      return null;
-    }
-    // read the binary value from the HTTP response
-    byte[] binaryValue = Util.readHttpResponse(response);
-    if (binaryValue == null) {
-      throw new Exception("Unexpected response without body.");
-    }
-    // collect all the headers
-    Map<String, String> headers = new TreeMap<String, String>();
-    for (org.apache.http.Header header : response.getAllHeaders()) {
-      String name = header.getName();
-      // ignore common HTTP headers. All the headers of the actual
-      // event are transmitted with the stream name as a prefix
-      if (name.startsWith(destination)) {
-        String actualName = name.substring(destination.length() + 1);
-        headers.put(actualName, header.getValue());
+
+    try {
+      HttpResponse response = sendHttpRequest(client, post, Arrays.asList(expectedCodes));
+      if (response == null) {
+        return null;
       }
+      // we expect either OK for an event, or NO_CONTENT for end of stream
+      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
+        return null;
+      }
+      // read the binary value from the HTTP response
+      byte[] binaryValue = Util.readHttpResponse(response);
+      if (binaryValue == null) {
+        throw new Exception("Unexpected response without body.");
+      }
+      // collect all the headers
+      Map<String, String> headers = new TreeMap<String, String>();
+      for (org.apache.http.Header header : response.getAllHeaders()) {
+        String name = header.getName();
+        // ignore common HTTP headers. All the headers of the actual
+        // event are transmitted with the stream name as a prefix
+        if (name.startsWith(destination)) {
+          String actualName = name.substring(destination.length() + 1);
+          headers.put(actualName, header.getValue());
+        }
+      }
+      return new DefaultStreamEvent(headers, ByteBuffer.wrap(binaryValue));
+    } finally {
+      client.getConnectionManager().shutdown();
     }
-    return new DefaultStreamEvent(headers, ByteBuffer.wrap(binaryValue));
   }
 
   /**
@@ -582,17 +587,11 @@ public class StreamClient extends ClientToolBase {
     return events.length + " events.";
   }
 
-  public String execute(String[] args, CConfiguration config) {
-    try {
-      return execute0(args, config);
-    } catch (UsageException e) {
-      if (debug) { // this is mainly for debugging the unit test
-        System.err.println("Exception for arguments: " +
-                             Arrays.toString(args) + ". Exception: " + e);
-        e.printStackTrace(System.err);
-      }
-    }
-    return null;
+  private boolean isId(String id) {
+    StreamSpecification spec = new StreamSpecification.Builder().setName(id).create();
+    StreamVerification verifier = new StreamVerification();
+    VerifyResult result = verifier.verify(null, spec); // safe to pass in null for this verifier
+    return (result.getStatus() == VerifyResult.Status.SUCCESS);
   }
 
   /**
@@ -614,12 +613,4 @@ public class StreamClient extends ClientToolBase {
       System.exit(1);
     }
   }
-
-  private boolean isId(String id) {
-    StreamSpecification spec = new StreamSpecification.Builder().setName(id).create();
-    StreamVerification verifier = new StreamVerification();
-    VerifyResult result = verifier.verify(null, spec); // safe to pass in null for this verifier
-    return (result.getStatus() == VerifyResult.Status.SUCCESS);
-  }
-
 }

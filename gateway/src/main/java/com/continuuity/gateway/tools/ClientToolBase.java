@@ -7,15 +7,16 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.cli.ParseException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.log4j.Level;
 
 import java.io.File;
@@ -26,6 +27,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Reader;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,6 +35,17 @@ import java.util.List;
  * Base class for reactor tools
  */
 public abstract class ClientToolBase {
+
+  /**
+   * for debugging. should only be set to true in unit tests.
+   * when true, program will print the stack trace after the usage.
+   */
+  public static boolean debug = false;
+
+  static {
+    // this turns off all logging but we don't need that for a cmdline tool
+    org.apache.log4j.Logger.getRootLogger().setLevel(Level.OFF);
+  }
 
   private String toolName;
   protected static final Gson GSON = new Gson();
@@ -50,23 +63,45 @@ public abstract class ClientToolBase {
   protected boolean help = false;
   protected boolean verbose = false;
   protected boolean forceNoSSL = false;
-  protected String command = null;
   protected String apikey = null;          // the api key for authentication
   protected String tokenFile = null;       // the file containing the access token only
   protected String accessToken = null;     // the access token for secure connections
   protected String hostname = null;
   protected int port = -1;
 
+  /**
+   * A base class for implementing reactor tools.
+   *
+   * @param toolName The name of the tool.
+   */
+  public ClientToolBase(String toolName) {
+    this.toolName = toolName;
+  }
+
+  /**
+   * Returns the name of the tool.
+   *
+   * @return
+   */
   public String getToolName() {
     return this.toolName;
   }
 
+  /**
+   * Forces no SSL.
+   *
+   * @return Returns this instance.
+   */
   public ClientToolBase disallowSSL() {
     this.forceNoSSL = true;
     return this;
   }
 
-  protected void buildOptions() {
+  /**
+   * Adds all basic options for a tool as well as additional options as specified by the addOptions method.
+   */
+  private void buildOptions() {
+    options = new Options();
     options.addOption(null, HOST_OPTION, true, "To specify the reactor host");
     options.addOption(null, PORT_OPTION, true, "To specify the port to use. The default value is --port "
                       + Constants.Gateway.DEFAULT_PORT);
@@ -75,36 +110,147 @@ public abstract class ClientToolBase {
     options.addOption(null, API_KEY_OPTION, true, "To specify an API key for authentication");
     options.addOption(null, TOKEN_OPTION, true, "To specify the access token for secure reactor");
     options.addOption(null, TOKEN_FILE_OPTION, true, "To specify a path to the access token for secure reactor");
+    addOptions(options);
   }
 
-  protected boolean parseBasicArgs(CommandLine line) {
+  /**
+   * Parses the basic arguments which are common to all tools.
+   *
+   * @param line The instance of CommandLine which has already parsed the arguments.
+   */
+  private void parseBasicArgs(CommandLine line) {
     if (line.hasOption(HELP_OPTION)) {
       printUsage(false);
       help = true;
-      return false;
+      return;
     }
     verbose = line.hasOption(VERBOSE_OPTION);
     hostname = line.getOptionValue(HOST_OPTION, null);
     port = line.hasOption(PORT_OPTION) ? parseNumericArg(line, PORT_OPTION).intValue() : -1;
     apikey = line.hasOption(API_KEY_OPTION) ? line.getOptionValue(API_KEY_OPTION) : null;
     accessToken = line.hasOption(TOKEN_OPTION) ? line.getOptionValue(TOKEN_OPTION).replaceAll("(\r|\n)", "") : null;
-    tokenFile = line.hasOption(TOKEN_FILE_OPTION) ? line.getOptionValue(TOKEN_FILE_OPTION).replaceAll("(\r|\n)", "")
-      : null;
+    tokenFile = line.getOptionValue(TOKEN_FILE_OPTION, null);
+    // read the access token if one is not provided but the access token file is provided.
+    if (accessToken == null && tokenFile != null) {
+      accessToken = readTokenFile();
+    }
+  }
+
+  /**
+   * Specifies any additional options that could appear in the tool.
+   * Should be overridden by child classes to add new optional arguments.
+   *
+   * @param options The Options object to add to.
+   */
+  protected void addOptions(Options options) { }
+
+  /**
+   * Parses args based on the options that were added when buildOptions was called.
+   *
+   * @param args The array of arguments to parse.
+   * @return Returns true if the parsing succeeded and the help option was not specified.
+   */
+  protected boolean parseArguments(String[] args) {
+    // parse generic args first
+    CommandLineParser parser = new BasicParser();
+    // Check all the options of the command line
+    try {
+      CommandLine line = parser.parse(options, args);
+      parseBasicArgs(line);
+      if (help) {
+        return false;
+      }
+      return parseAdditionalArguments(line);
+    } catch (ParseException e) {
+      printUsage(true);
+    } catch (IndexOutOfBoundsException e) {
+      printUsage(true);
+    }
     return true;
   }
 
-  protected abstract boolean parseArguments(String[] args);
-  protected abstract void validateArguments(String[] args);
-  public abstract String execute(String[] args, CConfiguration config);
+  /**
+   * Used to validate all additional arguments added by child class. Should return
+   * the error message that should be displayed along with the usage if there are
+   * invalid arguments.
+   *
+   * @return The error message to display along with the usage. Null if the usage should not be printed.
+   */
+  protected String validateArguments() { return null; }
 
-  static {
-    // this turns off all logging but we don't need that for a cmdline tool
-    org.apache.log4j.Logger.getRootLogger().setLevel(Level.OFF);
+  /**
+   * Should be implemented by child classes to run the main logic. In order to make it testable,
+   * instead of exiting in case of error it returns null, whereas in case of
+   * success it returns the retrieved value as shown on the console.
+   *
+   * @param config The configuration of the gateway
+   * @return null in case of error. A String representing the retrieved value
+   * in case of success
+   */
+  protected abstract String execute(CConfiguration config);
+
+  /**
+   * Should be overridden by child classes to parse additional arguments if needed. This will often
+   * go hand in hand with overriding addOptions. For positional arguments, first parse all optional
+   * arguments and then check the remaining arguments in the line object using getArgs.
+   *
+   * @param line The CommandLine object which contains all arguments that have been passed in.
+   * @return A boolean indicating whether or not the parsing was successful/valid or not.
+   */
+  protected boolean parseAdditionalArguments(CommandLine line) { return true; }
+
+  /**
+   * The main execute method for all tools. Parses the arguments, checks that they are valid,
+   * and then calls the child class's execute method. In order to make it testable,
+   * instead of exiting in case of error it returns null, whereas in case of
+   * success it returns the retrieved value as shown on the console.
+   *
+   * @param args The array of arguments to parse.
+   * @param config The configuration of the gateway
+   * @return null in case of error. A String representing the retrieved value
+   * in case of success
+   */
+  public String execute(String[] args, CConfiguration config) {
+    try {
+      buildOptions();
+      boolean parseResult = parseArguments(args);
+      if (help) {
+        return "";
+      }
+      if (!parseResult) {
+        printUsage(true);
+        return null;
+      }
+
+      String usageMessage = validateArguments();
+      if (usageMessage != null) {
+        usage(usageMessage);
+      }
+      return execute(config);
+    } catch (UsageException e) {
+      if (debug) { // this is mainly for debugging the unit test
+        System.err.println("Exception for arguments: " + Arrays.toString(args) + ". Exception: " + e);
+        e.printStackTrace(System.err);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Should be overridden if any information should be printed before the
+   * available command line options like positional arguments.
+   *
+   * @param error Used to print to different streams, System.out vs System.err
+   */
+  protected void printUsageTop(boolean error) {
+    PrintStream out = error ? System.err : System.out;
+    out.println(toolName + " Usage: ");
   }
 
   /**
    * Sends http requests with apikey and access token headers
    * and checks the status of the request afterwards.
+   *
    * @param requestBase The request to send. This method adds the apikey and access token headers
    *                    if they are valid.
    * @param expectedCodes The list of expected status codes from the request. If set to null,
@@ -112,14 +258,13 @@ public abstract class ClientToolBase {
    * @return The HttpResponse if the request was successfully sent and the request status code
    * is one of expectedCodes or OK if expectedCodes is null. Otherwise, returns null.
    */
-  protected HttpResponse sendHttpRequest(HttpRequestBase requestBase, List<Integer> expectedCodes) {
+  protected HttpResponse sendHttpRequest(HttpClient client, HttpRequestBase requestBase, List<Integer> expectedCodes) {
     if (apikey != null) {
       requestBase.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
     }
     if (accessToken != null) {
       requestBase.setHeader("Authorization", "Bearer " + accessToken);
     }
-    HttpClient client = new DefaultHttpClient();
     try {
       HttpResponse response = client.execute(requestBase);
       // if expectedCodes is null, just check that we have OK status code
@@ -136,8 +281,6 @@ public abstract class ClientToolBase {
     } catch (IOException e) {
       System.err.println("Error sending HTTP request: " + e.getMessage());
       return null;
-    } finally {
-      client.getConnectionManager().shutdown();
     }
   }
 
@@ -164,7 +307,14 @@ public abstract class ClientToolBase {
     printUsage(true);
   }
 
+  /**
+   * Prints the usage message to the PrintStream indicated by the error parameter
+   *
+   * @param error Indicates which stream to print to. If true, throws UsageException.
+   */
   protected void printUsage(boolean error) {
+    // print the positional args, if any, from child class
+    printUsageTop(error);
     PrintWriter pw = error ? new PrintWriter(System.err) : new PrintWriter(System.out);
     pw.println("Options:\n");
     HelpFormatter formatter = new HelpFormatter();
@@ -288,10 +438,5 @@ public abstract class ClientToolBase {
       System.out.println(statusLine);
     }
     return true;
-  }
-
-  public ClientToolBase(String toolName) {
-    this.toolName = toolName;
-    options = new Options();
   }
 }

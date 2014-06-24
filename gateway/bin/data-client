@@ -41,7 +41,7 @@ if [ -d "$conf" ]; then
   CLASSPATH=$CLASSPATH:"$conf"/
 fi
 
-auth_file="$bin/access_token"
+auth_file="$HOME/.continuuity_accesstoken"
 # add token file arg with default token file if one is not provided
 containsTokenFileArg=0
 for var in "$@"

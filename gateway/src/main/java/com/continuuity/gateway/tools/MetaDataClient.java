@@ -1,17 +1,16 @@
 package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.utils.UsageException;
 import com.continuuity.gateway.util.Util;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.OptionBuilder;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.Options;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 import java.io.PrintStream;
 import java.net.URI;
@@ -36,6 +35,7 @@ public class MetaDataClient extends ClientToolBase {
   private static final String FILTER_OPTION = "filter";
   private static final String VALUE_OPTION = "value";
 
+  String command = null;         // the command to run
   String app = null;             // the application to inspect, optional
   String type = null;            // the type of entries
   String id = null;              // the id of the entry to show, optional
@@ -45,18 +45,14 @@ public class MetaDataClient extends ClientToolBase {
 
   public MetaDataClient() {
     super("meta-client");
-    buildOptions();
   }
 
   public MetaDataClient(String toolName) {
     super(toolName);
-    buildOptions();
   }
 
   @Override
-  public void buildOptions() {
-    // build the default options
-    super.buildOptions();
+  protected void addOptions(Options options) {
     options.addOption(OptionBuilder.withLongOpt(FILTER_OPTION)
                         .hasArg(true)
                         .withDescription("To specify a field to filter on")
@@ -71,95 +67,68 @@ public class MetaDataClient extends ClientToolBase {
   }
 
   @Override
-  public void printUsage(boolean error) {
+  public void printUsageTop(boolean error) {
     PrintStream out = (error ? System.err : System.out);
     out.println("Usage: ");
     out.println("\t" + getToolName() + " list [ --application <id> ] --type <name>");
     out.println("\t" + getToolName() + " read [ --application <id> ] --type <name> --id <id>\n");
-    super.printUsage(error);
   }
 
-  /**
-   * Parse the command line arguments.
-   */
-  protected boolean parseArguments(String[] args) {
-    // parse generic args first
-    CommandLineParser parser = new GnuParser();
-    // Check all the options of the command line
-    try {
-      command = args[0];
-      CommandLine line = parser.parse(options, args);
-      parseBasicArgs(line);
-      if (line.hasOption(FILTER_OPTION)) {
-        String[] filterList = line.getOptionValues(FILTER_OPTION);
-        for (int i = 0; i < filterList.length; ++i) {
-          filters.add(filterList[i]);
-        }
+  @Override
+  protected boolean parseAdditionalArguments(CommandLine line) {
+    if (line.hasOption(FILTER_OPTION)) {
+      String[] filterList = line.getOptionValues(FILTER_OPTION);
+      for (int i = 0; i < filterList.length; ++i) {
+        filters.add(filterList[i]);
       }
-      if (line.hasOption(VALUE_OPTION)) {
-        String[] valueList = line.getOptionValues(VALUE_OPTION);
-        for (int i = 0; i < valueList.length; ++i) {
-          values.add(valueList[i]);
-        }
-      }
-      app = line.getOptionValue(APP_OPTION, null);
-      type = line.getOptionValue(TYPE_OPTION, null);
-      id = line.getOptionValue(ID_OPTION, null);
-
-      // expect at least 1 extra arg because of pos arg, the command to run
-      if (line.getArgs().length > 1) {
-        usage("Extra arguments provided");
-      }
-    } catch (ParseException e) {
-      printUsage(true);
-    } catch (IndexOutOfBoundsException e) {
-      printUsage(true);
     }
+    if (line.hasOption(VALUE_OPTION)) {
+      String[] valueList = line.getOptionValues(VALUE_OPTION);
+      for (int i = 0; i < valueList.length; ++i) {
+        values.add(valueList[i]);
+      }
+    }
+    app = line.getOptionValue(APP_OPTION, null);
+    type = line.getOptionValue(TYPE_OPTION, null);
+    id = line.getOptionValue(ID_OPTION, null);
+    // should have 1 arg remaining, the command which is positional
+    String[] remaining = line.getArgs();
+    if (remaining.length != 1) {
+      return false;
+    }
+    command = remaining[0];
     return true;
   }
 
   static List<String> supportedCommands = Arrays.asList("list", "read");
 
-  protected void validateArguments(String[] args) {
-    // first parse command arguments
-    parseArguments(args);
-    if (help) {
-      return;
-    }
-
-    // first validate the command
+  @Override
+  protected String validateArguments() {
     if (!supportedCommands.contains(command)) {
-      usage("Please provide a valid command.");
+      return "Please provide a valid command.";
     }
     if (type == null) {
-      usage("--type must be specified");
+      return "--type must be specified";
     }
     if ("read".equals(command)) {
       if (id == null) {
-        usage("--id must be specified");
+        return "--id must be specified";
       }
       if (!filters.isEmpty()) {
-        usage("--filter is not allowed with read");
+        return "--filter is not allowed with read";
       }
     } else {
       if (id != null) {
-        usage("--id is not alllowed with list");
+        return "--id is not alllowed with list";
       }
     }
     if (filters.size() != values.size()) {
-      usage("number of --filter and --value does not match");
+      return "number of --filter and --value does not match";
     }
+    return null;
   }
 
-  public String execute0(String[] args, CConfiguration config) {
-    // parse and validate arguments
-    validateArguments(args);
-    if (help) {
-      return "";
-    }
-    if (accessToken == null && tokenFile != null) {
-      readTokenFile();
-    }
+  protected String execute(CConfiguration config) {
     boolean useSsl = !forceNoSSL && (apikey != null);
     String baseUrl = GatewayUrlGenerator.getBaseUrl(config, hostname, port, useSsl);
     if (baseUrl == null) {
@@ -195,13 +164,25 @@ public class MetaDataClient extends ClientToolBase {
       sep = "&";
     }
     HttpGet get = new HttpGet(requestUri);
-    HttpResponse response = sendHttpRequest(get, null);
-    if (printResponse(response) == null) {
-      return null;
+    HttpClient client = new DefaultHttpClient();
+
+    try {
+      HttpResponse response = sendHttpRequest(client, get, null);
+      if (printResponse(response) == null) {
+        return null;
+      }
+      return "OK.";
+    } finally {
+      client.getConnectionManager().shutdown();
     }
-    return "OK.";
   }
 
+  /**
+   * Prints the contents of HTTP response if it is not null.
+   *
+   * @param response The HttpResponse to print
+   * @return String specifying whether the procedure succeeded or null otherwise.
+   */
   public String printResponse(HttpResponse response) {
     // read the binary value from the HTTP response
     if (response == null) {
@@ -214,18 +195,6 @@ public class MetaDataClient extends ClientToolBase {
     // now make returned value available to user
     System.out.println(new String(binaryResponse, Charsets.UTF_8));
     return "OK.";
-  }
-
-  public String execute(String[] args, CConfiguration config) {
-    try {
-      return execute0(args, config);
-    } catch (UsageException e) {
-      if (debug) { // this is mainly for debugging the unit test
-        System.err.println("Exception for arguments: " + Arrays.toString(args) + ". Exception: " + e);
-        e.printStackTrace(System.err);
-      }
-    }
-    return null;
   }
 
   /**
