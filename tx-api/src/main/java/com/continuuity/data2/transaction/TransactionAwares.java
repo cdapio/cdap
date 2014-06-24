@@ -1,7 +1,5 @@
 package com.continuuity.data2.transaction;
 
-import com.google.common.collect.Lists;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -41,7 +39,7 @@ public final class TransactionAwares {
 
     @Override
     public Collection<byte[]> getTxChanges() {
-      List<byte[]> changes = Lists.newArrayList();
+      List<byte[]> changes = new ArrayList<byte[]>();
       for (TransactionAware txAware : this) {
         changes.addAll(txAware.getTxChanges());
       }
