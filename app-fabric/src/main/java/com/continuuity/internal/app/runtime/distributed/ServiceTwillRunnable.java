@@ -61,12 +61,7 @@ import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
-import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Services;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -147,21 +142,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
       zkClientService = injector.getInstance(ZKClientService.class);
       kafkaClientService = injector.getInstance(KafkaClientService.class);
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-
-
-      DiscoveryService dsService = new DiscoveryService() {
-        @Override
-        public Cancellable register(Discoverable discoverable) {
-          return context.announce(discoverable.getName(), discoverable.getSocketAddress().getPort());
-        }
-      };
-
-      DiscoveryServiceClient dsClient = new DiscoveryServiceClient() {
-        @Override
-        public ServiceDiscovered discover(String s) {
-          return context.discover(s);
-        }
-      };
 
       // Initialize log appender
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
