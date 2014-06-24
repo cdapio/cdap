@@ -336,6 +336,9 @@ public final class Constants {
     public static final String NUM_CORES = "metrics.processor.num.cores";
     public static final String MEMORY_MB = "metrics.processor.memory.mb";
     public static final String MAX_INSTANCES = "metrics.processor.max.instances";
+
+    public static final String METRICS_PROCESSOR_STATUS_HANDLER = "metrics.processor.status.handler";
+    public static final String ADDRESS = "metrics.processor.status.bind.address";
   }
 
   /**
@@ -345,6 +348,9 @@ public final class Constants {
     public static final String NUM_INSTANCES = "log.saver.num.instances";
     public static final String MEMORY_MB = "log.saver.run.memory.megs";
     public static final String MAX_INSTANCES = "log.saver.max.instances";
+
+    public static final String LOG_SAVER_STATUS_HANDLER = "log.saver.status.handler";
+    public static final String ADDRESS = "log.saver.status.bind.address";
   }
 
   /**
@@ -434,9 +440,16 @@ public final class Constants {
 
     public static final String CFG_LOCAL_DATA_DIR = "hive.local.data.dir";
     public static final String CFG_EXPLORE_ENABLED = "reactor.explore.enabled";
+
     //max-instances of explore HTTP service
     public static final String MAX_INSTANCES = "explore.executor.max.instances";
 
+    /**
+     * Explore JDBC constants.
+     */
+    public static final class Jdbc {
+      public static final String URL_PREFIX = "jdbc:reactor://";
+    }
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
