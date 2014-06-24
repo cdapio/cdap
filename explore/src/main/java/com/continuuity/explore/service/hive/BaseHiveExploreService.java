@@ -67,7 +67,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     // TODO print out where the conf comes from, make sure it comes
     // from the correct file of the container classpath
-    return new HiveConf();
+    HiveConf conf = new HiveConf();
+    LOG.info("Hive site URL: {}", conf.getHiveSiteLocation());
+    return conf;
   }
 
   protected CLIService getCliService() {
