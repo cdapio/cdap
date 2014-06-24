@@ -19,9 +19,9 @@ public final class Constants {
     public static final String REACTOR_SERVICES = "reactor.services";
     public static final String METRICS_PROCESSOR = "metrics.processor";
     public static final String DATASET_MANAGER = "dataset.manager";
-    public static final String DATASET_EXECUTOR = "dataset.executor";
+    public static final String DATASET_EXECUTOR = "dataset.service";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
-    public static final String EXPLORE_HTTP_USER_SERVICE = "explore.http.user.service";
+    public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
   }
 
   /**
