@@ -16,11 +16,13 @@ import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.stream.StreamConfig;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.List;
 
 /**
@@ -79,6 +81,9 @@ final class InMemoryStreamFileWriterFactory implements StreamFileWriterFactory {
           });
         } catch (TransactionFailureException e) {
           throw new IOException(e);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new InterruptedIOException();
         }
       }
     };

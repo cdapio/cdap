@@ -192,8 +192,10 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
       // Clear the interrupted flag and execute Flowlet.destroy()
       Thread.interrupted();
-      destroyFlowlet();
+    } catch (InterruptedException e) {
+      // It is ok to do nothing: we are shutting down
     } finally {
+      destroyFlowlet();
       serviceHook.stopAndWait();
     }
   }
@@ -349,7 +351,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     };
   }
 
-  private void initFlowlet() {
+  private void initFlowlet() throws InterruptedException {
     try {
       dataFabricFacade.createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
         @Override
@@ -379,6 +381,8 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     } catch (TransactionFailureException e) {
       Throwable cause = e.getCause() == null ? e : e.getCause();
       LOG.error("Flowlet throws exception during flowlet destroy: " + flowletContext, cause);
+      // No need to propagate, as it is shutting down.
+    } catch (InterruptedException e) {
       // No need to propagate, as it is shutting down.
     }
   }
