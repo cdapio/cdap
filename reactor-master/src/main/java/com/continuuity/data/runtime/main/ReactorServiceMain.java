@@ -226,7 +226,8 @@ public class ReactorServiceMain extends DaemonMain {
       try {
         Integer savedCount = serviceStore.getServiceInstance(service);
         if (savedCount == null) {
-          savedCount = cConf.getInt(instanceVariable);
+          // TODO: Check to see why this is needed.
+          savedCount = cConf.getInt(instanceVariable, 1);
         }
 
         instanceCountMap.put(service, savedCount);
