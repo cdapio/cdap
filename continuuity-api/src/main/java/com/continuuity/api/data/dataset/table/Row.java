@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.dataset.table;
 
 import java.util.Map;
@@ -7,7 +11,10 @@ import javax.annotation.Nullable;
  * Represents one row in a table with a subset of columns.
  * NOTE: Depending on the operation that returns {@link Row} as a result, it may contain all or just a subset of column
  *       values.
+ *
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.table.Row}
  */
+@Deprecated
 public interface Row {
   /**
    * @return key of this row

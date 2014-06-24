@@ -783,7 +783,7 @@ WebAppServer.prototype.bindRoutes = function() {
 
           request(options, function (nerr, nres, nbody) {
             if (nerr || nres.statusCode !== 200) {
-              res.locals.errorMessage = "Please specify a valid username and password";
+              res.locals.errorMessage = "Please specify a valid username and password.";
               res.redirect('/#/login');
             } else {
               var nbody = JSON.parse(nbody);
@@ -801,6 +801,44 @@ WebAppServer.prototype.bindRoutes = function() {
         res.redirect('/#/login');
       })
    });
+
+  this.app.post('/accesstoken', function (req, res) {
+     req.session.regenerate(function () {
+       var auth_uri = self.getAuthServerAddress();
+       auth_uri = auth_uri.slice(0, -5);
+       auth_uri += "extendedtoken";
+       if (auth_uri === null) {
+         res.send(500, "No Authentication service to connect to was found.");
+       } else {
+         var post = req.body;
+         var options = {
+           url: auth_uri,
+           auth: {
+             user: post.username,
+             password: post.password
+           },
+           rejectUnauthorized: false,
+           requestCert: true,
+           agent: false
+         }
+
+         request(options, function (nerr, nres, nbody) {
+           if (nerr || nres.statusCode !== 200) {
+             res.send(400, "Please specify a valid username and password.");
+           } else {
+             var nbody = JSON.parse(nbody);
+             res.send(nbody);
+           }
+         });
+       }
+     });
+  });
+
+  this.app.get('/download-access-token/*', function (req, res) {
+    var accessToken = req.params[0];
+    res.attachment('.continuuity.accesstoken');
+    res.end(accessToken, 'utf-8');
+  });
 
   /**
    * Check for new version.
