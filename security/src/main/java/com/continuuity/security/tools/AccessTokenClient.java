@@ -130,56 +130,42 @@ public class AccessTokenClient {
       usage(true);
     }
 
-    if (commandLine.hasOption("help")) {
+    if (commandLine.hasOption(ConfigurableOptions.HELP)) {
       usage(false);
       help = true;
       return;
     }
+
     if (commandLine.hasOption(ConfigurableOptions.HOST)) {
-      host = commandLine.getOptionValue(ConfigurableOptions.HOST);
+      host = commandLine.getOptionValue(ConfigurableOptions.HOST, "localhost");
     }
+
     if (commandLine.hasOption(ConfigurableOptions.USER_NAME)) {
-      username = commandLine.getOptionValue(ConfigurableOptions.USER_NAME);
+      username = commandLine.getOptionValue(ConfigurableOptions.USER_NAME, System.getProperty("user.name"));
+      if (username == null) {
+        usage("Specify --username to login as a user.");
+      }
     }
+
     if (commandLine.hasOption(ConfigurableOptions.PASSWORD)) {
       password = commandLine.getOptionValue(ConfigurableOptions.PASSWORD);
+    } else {
+      if (password == null) {
+        Console console = System.console();
+        password = String.valueOf(console.readPassword("Password: "));
+      }
     }
+
     if (commandLine.hasOption(ConfigurableOptions.FILE)) {
       filePath = commandLine.getOptionValue(ConfigurableOptions.FILE);
+      if (filePath == null) {
+        usage("Specify --file to save to file");
+      }
     }
 
     if (commandLine.getArgs().length > 0) {
       usage(true);
     }
-  }
-
-  void validateArguments(String[] args) {
-    parseArguments(args);
-    if (help) {
-      return;
-    }
-    // Default values for host and port.
-    if (host == null) {
-      host = "localhost";
-    }
-
-    if (filePath == null) {
-      usage("Specify --file to save to file");
-    }
-
-    if (username == null) {
-      username = System.getProperty("user.name");
-      if (username == null) {
-        usage("Specify --username to login as a user.");
-      }
-    }
-    System.out.println(String.format("Authenticating as: %s", username));
-
-    if (password == null) {
-      Console console = System.console();
-      password = String.valueOf(console.readPassword("Password: "));
-    }
-
   }
 
   private String getAuthenticationServerAddress() throws IOException {
@@ -207,7 +193,7 @@ public class AccessTokenClient {
 
   public String execute0(String[] args) {
     buildOptions();
-    validateArguments(args);
+    parseArguments(args);
     if (help) {
       return "";
     }
@@ -221,6 +207,7 @@ public class AccessTokenClient {
     }
 
     System.out.println(String.format("Authentication server address is: %s", baseUrl));
+    System.out.println(String.format("Authenticating as: %s", username));
 
     HttpClient client = new DefaultHttpClient();
     HttpResponse response;
