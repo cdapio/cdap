@@ -171,7 +171,7 @@ done using a JDBC connection obtained from the test base::
   // Obtain a JDBC connection
   Connection connection = getQueryClient();
   try {
-      // run a query over the dataset
+      // Run a query over the dataset
       results = connection.prepareStatement("SELECT key FROM mytable WHERE value = '1'").executeQuery();
       Assert.assertTrue(results.next());
       Assert.assertEquals("a", results.getString(1));
@@ -184,8 +184,8 @@ done using a JDBC connection obtained from the test base::
       connection.close();
     }
 
-The JDBC connection does not implement the full JDBC functionality: It does not allow variable replacement and also
-will not allow you to make any changes to datasets. But it is sufficient to perform test validation: You can create
+The JDBC connection does not implement the full JDBC functionality: it does not allow variable replacement and
+will not allow you to make any changes to datasets. But it is sufficient to perform test validation: you can create
 or prepare statements and execute queries, then iterate over the results set and validate its correctness.
 
 
