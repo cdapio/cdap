@@ -30,14 +30,13 @@ import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
-import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.security.User;
@@ -144,7 +143,7 @@ public class ReactorServiceMain extends DaemonMain {
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
     dsService = baseInjector.getInstance(DatasetService.class);
     serviceStore = baseInjector.getInstance(ServiceStore.class);
-    systemServiceInstanceMap = baseInjector.getInstance(Key.get(mapOfString, Names.named("service.instance.name")));
+    systemServiceInstanceMap = getConfigKeys();
   }
 
   @Override
@@ -216,6 +215,17 @@ public class ReactorServiceMain extends DaemonMain {
       LOG.error("Error obtaining localhost address", e);
       throw Throwables.propagate(e);
     }
+  }
+
+  private Map<String, String> getConfigKeys() {
+    Map<String, String> instanceCountMap = Maps.newHashMap();
+    instanceCountMap.put(Constants.Service.LOGSAVER, Constants.LogSaver.NUM_INSTANCES);
+    instanceCountMap.put(Constants.Service.TRANSACTION, Constants.Transaction.Container.NUM_INSTANCES);
+    instanceCountMap.put(Constants.Service.METRICS_PROCESSOR, Constants.MetricsProcessor.NUM_INSTANCES);
+    instanceCountMap.put(Constants.Service.METRICS, Constants.Metrics.NUM_INSTANCES);
+    instanceCountMap.put(Constants.Service.STREAMS, Constants.Stream.CONTAINER_INSTANCES);
+    instanceCountMap.put(Constants.Service.DATASET_EXECUTOR, Constants.Dataset.Executor.CONTAINER_INSTANCES);
+    return instanceCountMap;
   }
 
   private Map<String, Integer> getSystemServiceInstances() {

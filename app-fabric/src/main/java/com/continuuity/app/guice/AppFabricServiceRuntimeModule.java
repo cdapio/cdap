@@ -191,18 +191,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(PingHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
       handlerBinder.addBinding().to(ServiceHttpHandler.class);
-
-      MapBinder<String, String> instanceCountBinder = MapBinder.newMapBinder(binder(), String.class, String.class,
-                                                                   Names.named("service.instance.name"));
-      instanceCountBinder.addBinding(Constants.Service.LOGSAVER).toInstance(Constants.LogSaver.NUM_INSTANCES);
-      instanceCountBinder.addBinding(Constants.Service.TRANSACTION).toInstance(
-        Constants.Transaction.Container.NUM_INSTANCES);
-      instanceCountBinder.addBinding(Constants.Service.METRICS_PROCESSOR).toInstance(
-        Constants.MetricsProcessor.NUM_INSTANCES);
-      instanceCountBinder.addBinding(Constants.Service.METRICS).toInstance(Constants.Metrics.NUM_INSTANCES);
-      instanceCountBinder.addBinding(Constants.Service.STREAMS).toInstance(Constants.Stream.CONTAINER_INSTANCES);
-      instanceCountBinder.addBinding(Constants.Service.DATASET_EXECUTOR).toInstance(
-        Constants.Dataset.Executor.CONTAINER_INSTANCES);
     }
 
     @Provides
