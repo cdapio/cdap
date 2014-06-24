@@ -64,6 +64,10 @@ public class TransactionExecutorTest {
     return factory.createExecutor(txAwares);
   }
 
+  private TransactionExecutor getExecutorWithNoRetry() {
+    return new DefaultTransactionExecutor(txClient, txAwares, RetryStrategies.noRetries());
+  }
+
   static final byte[] A = { 'a' };
   static final byte[] B = { 'b' };
 
@@ -228,11 +232,61 @@ public class TransactionExecutorTest {
   }
 
   @Test
+  public void testNoIndefiniteRetryByDefault() throws TransactionFailureException, InterruptedException {
+    // we want retry by default, so that engineers don't miss it
+    txClient.failCommits = 1000;
+    try {
+      // execute: add a change to ds1 and ds2
+      getExecutor().execute(testFunction, 10);
+      Assert.fail("commit failed too many times to retry - exception should be thrown");
+    } catch (TransactionConflictException e) {
+      Assert.assertNull(e.getCause());
+    }
+
+    txClient.failCommits = 0;
+    
+    // verify both are rolled back and tx is aborted
+    Assert.assertTrue(ds1.started);
+    Assert.assertTrue(ds2.started);
+    Assert.assertTrue(ds1.checked);
+    Assert.assertTrue(ds2.checked);
+    Assert.assertTrue(ds1.committed);
+    Assert.assertTrue(ds2.committed);
+    Assert.assertFalse(ds1.postCommitted);
+    Assert.assertFalse(ds2.postCommitted);
+    Assert.assertTrue(ds1.rolledBack);
+    Assert.assertTrue(ds2.rolledBack);
+    Assert.assertEquals(txClient.state, DummyTxClient.CommitState.Aborted);
+  }
+
+  @Test
+  public void testRetryByDefault() throws TransactionFailureException, InterruptedException {
+    // we want retry by default, so that engineers don't miss it
+    txClient.failCommits = 2;
+    // execute: add a change to ds1 and ds2
+    getExecutor().execute(testFunction, 10);
+    // should not fail, but continue
+
+    // verify both are committed
+    Assert.assertTrue(ds1.started);
+    Assert.assertTrue(ds2.started);
+    Assert.assertTrue(ds1.checked);
+    Assert.assertTrue(ds2.checked);
+    Assert.assertTrue(ds1.committed);
+    Assert.assertTrue(ds2.committed);
+    Assert.assertTrue(ds1.postCommitted);
+    Assert.assertTrue(ds2.postCommitted);
+    Assert.assertFalse(ds1.rolledBack);
+    Assert.assertFalse(ds2.rolledBack);
+    Assert.assertEquals(txClient.state, DummyTxClient.CommitState.Committed);
+  }
+
+  @Test
   public void testCommitFalse() throws TransactionFailureException, InterruptedException {
-    txClient.failCommitOnce = true;
+    txClient.failCommits = 1;
     // execute: add a change to ds1 and ds2
     try {
-      getExecutor().execute(testFunction, 10);
+      getExecutorWithNoRetry().execute(testFunction, 10);
       Assert.fail("commit failed - exception should be thrown");
     } catch (TransactionConflictException e) {
       Assert.assertNull(e.getCause());
@@ -256,7 +310,7 @@ public class TransactionExecutorTest {
     txClient.failCanCommitOnce = true;
     // execute: add a change to ds1 and ds2
     try {
-      getExecutor().execute(testFunction, 10);
+      getExecutorWithNoRetry().execute(testFunction, 10);
       Assert.fail("commit failed - exception should be thrown");
     } catch (TransactionConflictException e) {
       Assert.assertNull(e.getCause());
@@ -447,7 +501,7 @@ public class TransactionExecutorTest {
   static class DummyTxClient extends InMemoryTxSystemClient {
 
     boolean failCanCommitOnce = false;
-    boolean failCommitOnce = false;
+    int failCommits = 0;
     enum CommitState {
       Started, Committed, Aborted, Invalidated
     }
@@ -470,8 +524,7 @@ public class TransactionExecutorTest {
 
     @Override
     public boolean commit(Transaction tx) throws TransactionNotInProgressException {
-      if (failCommitOnce) {
-        failCommitOnce = false;
+      if (failCommits-- > 0) {
         return false;
       } else {
         state = CommitState.Committed;
