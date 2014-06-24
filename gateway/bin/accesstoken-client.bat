@@ -46,7 +46,7 @@ endlocal
 
 mkdir %CONTINUUITY_HOME%\logs > NUL 2>&1
 
-set auth_file=%~dp0access_token
+set auth_file=%HOMEPATH%\.continuuity.accesstoken
 REM check if token-file is provided. if not use the default file
 set tokenFileProvided=false
 for %%a in (%*) do (
