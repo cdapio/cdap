@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
  */
 
 package com.continuuity.api;
@@ -63,7 +63,9 @@ package com.continuuity.api;
  * @see com.continuuity.api.procedure.Procedure Procedure
  * @see com.continuuity.api.mapreduce.MapReduce MapReduce
  * @see com.continuuity.api.workflow.Workflow Workflow
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
  */
+@Deprecated
 public interface Application {
   /**
    * Configures the {@link Application} by returning an {@link ApplicationSpecification}.

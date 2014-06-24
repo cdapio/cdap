@@ -23,8 +23,15 @@ import java.util.Map;
 public class DatasetAccessor {
 
   // TODO: this will go away when dataset manager does not return datasets having classloader conflict - REACTOR-276
-  private static final Map<String, ClassLoader> DATASET_CLASSLOADERS = Maps.newHashMap();
+  private static final Map<String, ClassLoader> DATASET_CLASSLOADERS = Maps.newConcurrentMap();
 
+  /**
+   * Returns a RecordScannable. The returned object will have to be closed by the caller.
+   *
+   * @param conf Configuration that contains RecordScannable name to load, Reactor and HBase configuration.
+   * @return RecordScannable.
+   * @throws IOException
+   */
   public static RecordScannable getRecordScannable(Configuration conf) throws IOException {
     RecordScannable recordScannable = instantiate(conf);
 
@@ -36,8 +43,20 @@ public class DatasetAccessor {
     return recordScannable;
   }
 
+  /**
+   * Returns record type of the RecordScannable.
+   *
+   * @param conf Configuration that contains RecordScannable name to load, Reactor and HBase configuration.
+   * @return Record type of RecordScannable.
+   * @throws IOException
+   */
   public static Type getRecordScannableType(Configuration conf) throws IOException {
-    return instantiate(conf).getRecordType();
+    RecordScannable<?> recordScannable = instantiate(conf);
+    try {
+      return recordScannable.getRecordType();
+    } finally {
+      recordScannable.close();
+    }
   }
 
   private static RecordScannable instantiate(Configuration conf) throws IOException {
@@ -48,15 +67,14 @@ public class DatasetAccessor {
 
     DatasetFramework framework = ContextManager.getDatasetManager(conf);
 
+    Dataset dataset;
     try {
       ClassLoader classLoader = DATASET_CLASSLOADERS.get(datasetName);
       if (classLoader == null) {
         classLoader = conf.getClassLoader();
-      }
-
-      Dataset dataset = framework.getDataset(datasetName, classLoader);
-      if (dataset != null && !DATASET_CLASSLOADERS.containsKey(datasetName)) {
-        DATASET_CLASSLOADERS.put(datasetName, dataset.getClass().getClassLoader());
+        dataset = firstLoad(framework, datasetName, classLoader);
+      } else {
+        dataset = framework.getDataset(datasetName, classLoader);
       }
 
       if (!(dataset instanceof RecordScannable)) {
@@ -69,5 +87,21 @@ public class DatasetAccessor {
     } catch (DatasetManagementException e) {
       throw new IOException(e);
     }
+  }
+
+  private static synchronized Dataset firstLoad(DatasetFramework framework, String datasetName, ClassLoader classLoader)
+    throws DatasetManagementException, IOException {
+    ClassLoader datasetClassLoader = DATASET_CLASSLOADERS.get(datasetName);
+    if (datasetClassLoader != null) {
+      // Some other call in parallel may have already loaded it, so use the same classlaoder
+      return framework.getDataset(datasetName, datasetClassLoader);
+    }
+
+    // No classloader for dataset exists, load the dataset and save the classloader.
+    Dataset dataset = framework.getDataset(datasetName, classLoader);
+    if (dataset != null) {
+      DATASET_CLASSLOADERS.put(datasetName, dataset.getClass().getClassLoader());
+    }
+    return dataset;
   }
 }
