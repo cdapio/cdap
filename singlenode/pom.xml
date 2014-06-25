@@ -295,6 +295,27 @@
                   </target>
                 </configuration>
               </execution>
+              <!-- Skip the unrelated one when rpm/deb profiles are on -->
+              <execution>
+                <id>rpm-bin-permission</id>
+                <phase>prepare-package</phase>
+                <configuration combine.self="override">
+                  <skip>true</skip>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>deb-bin-permission</id>
+                <phase>prepare-package</phase>
+                <configuration combine.self="override">
+                  <skip>true</skip>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
             </executions>
           </plugin>
           <plugin>
@@ -303,8 +324,16 @@
             <version>2.4</version>
             <executions>
               <execution>
-                <!-- Override the one in parent as singlenode build zip, not tgz -->
                 <id>tgz-package</id>
+                <configuration combine.self="override">
+                  <skipAssembly>true</skipAssembly>
+                </configuration>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>zip-package</id>
                 <phase>package</phase>
                 <goals>
                   <goal>single</goal>

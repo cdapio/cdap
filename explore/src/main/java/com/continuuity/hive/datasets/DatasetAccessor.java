@@ -65,11 +65,13 @@ public class DatasetAccessor {
       throw new IOException(String.format("Dataset name property %s not defined.", Constants.Explore.DATASET_NAME));
     }
 
-    DatasetFramework framework = ContextManager.getDatasetManager(conf);
+    ContextManager.Context context = ContextManager.getContext(conf);
 
-    Dataset dataset;
     try {
+      DatasetFramework framework = context.getDatasetFramework();
+
       ClassLoader classLoader = DATASET_CLASSLOADERS.get(datasetName);
+      Dataset dataset;
       if (classLoader == null) {
         classLoader = conf.getClassLoader();
         dataset = firstLoad(framework, datasetName, classLoader);
@@ -86,6 +88,8 @@ public class DatasetAccessor {
       return (RecordScannable) dataset;
     } catch (DatasetManagementException e) {
       throw new IOException(e);
+    } finally {
+      context.close();
     }
   }
 

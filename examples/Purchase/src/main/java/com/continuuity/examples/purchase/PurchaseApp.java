@@ -39,7 +39,7 @@ public class PurchaseApp extends AbstractApplication {
     addWorkflow(new PurchaseHistoryWorkflow());
 
     try {
-      ObjectStores.createObjectStore(getConfigurer(), "history", PurchaseHistory.class);
+      createDataSet("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());
       ObjectStores.createObjectStore(getConfigurer(), "purchases", Purchase.class);
     } catch (UnsupportedTypeException e) {
       // This exception is thrown by ObjectStore if its parameter type cannot be 
