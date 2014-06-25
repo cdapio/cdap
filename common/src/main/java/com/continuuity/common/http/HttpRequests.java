@@ -79,7 +79,9 @@ public final class HttpRequests {
   /**
    * Same as {@link #post(java.net.URL, String, java.util.Map)}, accepts headers as string params for convenience
    */
-  public static HttpResponse post(URL url, @Nullable String body, String headerName, String headerValue) throws IOException {
+  public static HttpResponse post(URL url, @Nullable String body,
+                                  String headerName, String headerValue) throws IOException {
+
     return doRequest("POST", url, ImmutableMap.of(headerName, headerValue),
                      body != null ? body.getBytes(Charsets.UTF_8) : null, null);
   }
@@ -116,7 +118,9 @@ public final class HttpRequests {
   /**
    * Same as {@link #put(java.net.URL, String, java.util.Map)}, accepts headers as string params for convenience
    */
-  public static HttpResponse put(URL url, @Nullable String body, String headerName, String headerValue) throws IOException {
+  public static HttpResponse put(URL url, @Nullable String body,
+                                 String headerName, String headerValue) throws IOException {
+
     return doRequest("PUT", url, ImmutableMap.of(headerName, headerValue),
                      body != null ? body.getBytes(Charsets.UTF_8) : null, null);
   }
