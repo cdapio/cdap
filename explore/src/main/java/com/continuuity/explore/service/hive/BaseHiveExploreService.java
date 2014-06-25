@@ -137,11 +137,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       LOG.info("Timing out active handles...");
     }
     activeHandleCache.invalidateAll();
-
-    if (!activeHandleCache.asMap().isEmpty()) {
-      LOG.info("Timing out fetched handles...");
-    }
-    inactiveHandleCache.invalidateAll();
+    // Make sure the cache entries get expired.
+    runCacheCleanup();
 
     // Wait for all cleanup jobs to complete
     scheduledExecutorService.shutdown();
