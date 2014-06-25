@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Utility class to convert String array to Map<String, String> following POSIX standard.
  */
-final public class RuntimeArgumentsUtil {
+public final class RuntimeArgumentsUtil {
   public static Map<String, String> toMap(String[] args) {
     Map<String, String> kvMap = Maps.newHashMap();
     for (String arg : args) {
