@@ -118,7 +118,7 @@ public abstract class DatasetServiceTestBase {
     try {
       return HttpRequests.doRequest("PUT", getUrl("/data/modules/" + moduleName),
                                     ImmutableMap.of("X-Continuuity-Class-Name", moduleClass.getName()),
-                                    null, is).getResponseCode();
+                                    (byte[]) null, is).getResponseCode();
     } finally {
       is.close();
     }
