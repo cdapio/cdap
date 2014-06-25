@@ -19,8 +19,6 @@ public class InMemoryProgramServiceDiscovery implements ProgramServiceDiscovery 
 
   @Override
   public ServiceDiscovered discover(String accountId, String appId, String serviceId, String serviceName) {
-    String serviceNamespace = String.format("service.%s.%s.%s.%s", accountId, appId, serviceId, serviceName);
-    System.out.println("Looking for " + serviceNamespace);
-    return dsClient.discover(serviceNamespace);
+    return dsClient.discover(String.format("service.%s.%s.%s.%s", accountId, appId, serviceId, serviceName));
   }
 }
