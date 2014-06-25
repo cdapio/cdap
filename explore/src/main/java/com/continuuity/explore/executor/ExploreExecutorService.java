@@ -83,16 +83,21 @@ public class ExploreExecutorService extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.info("Stopping {}...", ExploreExecutorService.class.getSimpleName());
 
-    if (exploreService != null) {
-      exploreService.stopAndWait();
-    }
-
     try {
+      // First cancel discoverable so that we don't get any more HTTP requests.
       if (cancellable != null) {
         cancellable.cancel();
       }
     } finally {
-      httpService.stopAndWait();
+      try {
+        // Then stop HTTP service so that we don't send anymore requests to explore service.
+        httpService.stopAndWait();
+      } finally {
+        if (exploreService != null) {
+          // Finally stop explore service
+          exploreService.stopAndWait();
+        }
+      }
     }
   }
 

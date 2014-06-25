@@ -10,11 +10,15 @@ import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
+import com.continuuity.explore.service.Result;
+import com.continuuity.explore.service.Status;
 import com.continuuity.hive.context.CConfCodec;
 import com.continuuity.hive.context.ConfigurationUtil;
 import com.continuuity.hive.context.ContextManager;
 import com.continuuity.hive.context.HConfCodec;
 import com.continuuity.hive.context.TxnCodec;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -27,13 +31,15 @@ import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.TableSchema;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -47,18 +53,49 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final Configuration hConf;
   private final HiveConf hiveConf;
 
-  // TODO: timeout operations - REACTOR-269
-  private final ConcurrentMap<Handle, OperationInfo> handleMap = Maps.newConcurrentMap();
+  // Handles that are running, or not yet completely fetched, they have longer timeout
+  private final Cache<Handle, OperationInfo> activeHandleCache;
+  // Handles that don't have any more results to be fetched, they can be timed out aggressively.
+  private final Cache<Handle, OperationInfo> inactiveHandleCache;
+
+  private final OperationRemovalHandler operationRemovalHandler;
 
   private final CLIService cliService;
+  private final ScheduledExecutorService scheduledExecutorService;
+  private final long cleanupJobSchedule;
+
+  protected abstract Status fetchStatus(Handle handle) throws ExploreException, HandleNotFoundException;
+  protected abstract List<Result> fetchNextResults(Handle handle, int size) throws ExploreException,
+    HandleNotFoundException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.hiveConf = hiveConf;
+    this.operationRemovalHandler = new OperationRemovalHandler(this);
+    this.activeHandleCache =
+      CacheBuilder.newBuilder()
+        .expireAfterWrite(cConf.getLong(Constants.Explore.ACTIVE_OPERATION_TIMEOUT_SECS), TimeUnit.SECONDS)
+        .removalListener(operationRemovalHandler)
+        .build();
+    this.inactiveHandleCache =
+      CacheBuilder.newBuilder()
+        .expireAfterWrite(cConf.getLong(Constants.Explore.INACTIVE_OPERATION_TIMEOUT_SECS), TimeUnit.SECONDS)
+        .removalListener(operationRemovalHandler)
+        .build();
+
     this.cliService = new CLIService();
+    this.scheduledExecutorService =
+      Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("explore-handle-timeout"));
+
     ContextManager.initialize(txClient, datasetFramework);
+
+    cleanupJobSchedule = cConf.getLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS, 60);
+
+    LOG.info("Active handle timeout = {} secs", cConf.getLong(Constants.Explore.ACTIVE_OPERATION_TIMEOUT_SECS));
+    LOG.info("Inactive handle timeout = {} secs", cConf.getLong(Constants.Explore.INACTIVE_OPERATION_TIMEOUT_SECS));
+    LOG.info("Cleanup job schedule = {} secs", cConf.getLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS, 60));
   }
 
   protected HiveConf getHiveConf() {
@@ -78,11 +115,46 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     cliService.start();
     // TODO: Figure out a way to determine when cliService has started successfully - REACTOR-254
     TimeUnit.SECONDS.sleep(5);
+
+    // Schedule the cleanup handler
+    scheduledExecutorService.scheduleWithFixedDelay(
+      new Runnable() {
+        @Override
+        public void run() {
+          runCacheCleanup();
+        }
+      }, cleanupJobSchedule, cleanupJobSchedule, TimeUnit.SECONDS
+    );
+    scheduledExecutorService.scheduleWithFixedDelay(
+      operationRemovalHandler, cleanupJobSchedule, cleanupJobSchedule, TimeUnit.SECONDS);
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping {}...", Hive13ExploreService.class.getSimpleName());
+    scheduledExecutorService.shutdown();
+
+    // By this time we should not get anymore new requests, since HTTP service has already been stopped.
+    // Close all handles
+    if (!activeHandleCache.asMap().isEmpty()) {
+      LOG.info("Timing out active handles...");
+    }
+    for (Map.Entry<Handle, OperationInfo> entry : activeHandleCache.asMap().entrySet()) {
+      operationRemovalHandler.onRemoval(entry.getKey(), entry.getValue());
+      activeHandleCache.invalidate(entry.getKey());
+    }
+
+    if (!activeHandleCache.asMap().isEmpty()) {
+      LOG.info("Timing out fetched handles...");
+    }
+    for (Map.Entry<Handle, OperationInfo> entry : inactiveHandleCache.asMap().entrySet()) {
+      operationRemovalHandler.onRemoval(entry.getKey(), entry.getValue());
+      inactiveHandleCache.invalidate(entry.getKey());
+    }
+
+    // Run one final cleanup
+    operationRemovalHandler.run();
+
     cliService.stop();
   }
 
@@ -100,6 +172,30 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     } catch (Exception e) {
       throw new ExploreException(e);
     }
+  }
+
+  @Override
+  public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException {
+    Status status = fetchStatus(handle);
+    if (status.getStatus() == Status.OpStatus.FINISHED && !status.hasResults()) {
+      // No results, so can be timed out aggressively
+      timeoutAggresively(handle);
+    } else if (status.getStatus() == Status.OpStatus.ERROR) {
+      // Error so can be timed out aggressively
+      timeoutAggresively(handle);
+    }
+    return status;
+  }
+
+  @Override
+  public List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
+    List<Result> results = fetchNextResults(handle, size);
+
+    if (results.isEmpty()) {
+      // Since operation has fetched all the results, handle can be timed out aggressively.
+      timeoutAggresively(handle);
+    }
+    return results;
   }
 
   @Override
@@ -126,6 +222,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       LOG.trace("Cancelling operation {}", handle);
       cliService.cancelOperation(getOperationHandle(handle));
+
+      // Since operation is cancelled, we can aggressively time it out.
+      timeoutAggresively(handle);
     } catch (HiveSQLException e) {
       throw new ExploreException(e);
     }
@@ -179,11 +278,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @throws ExploreException
    */
   protected OperationHandle getOperationHandle(Handle handle) throws ExploreException, HandleNotFoundException {
-    OperationInfo opInfo = handleMap.get(handle);
-    if (opInfo == null) {
-      throw new HandleNotFoundException("Invalid handle provided");
-    }
-    return opInfo.getOperationHandle();
+    return getOperationInfo(handle).getOperationHandle();
   }
 
   /**
@@ -193,11 +288,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @throws ExploreException
    */
   protected SessionHandle getSessionHandle(Handle handle) throws ExploreException, HandleNotFoundException {
-    OperationInfo opInfo = handleMap.get(handle);
-    if (opInfo == null) {
-      throw new HandleNotFoundException("Invalid handle provided");
-    }
-    return opInfo.getSessionHandle();
+    return getOperationInfo(handle).getSessionHandle();
   }
 
   /**
@@ -210,8 +301,45 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   protected Handle saveOperationInfo(OperationHandle operationHandle, SessionHandle sessionHandle,
                                      Map<String, String> sessionConf) {
     Handle handle = Handle.generate();
-    handleMap.put(handle, new OperationInfo(sessionHandle, operationHandle, sessionConf));
+    activeHandleCache.put(handle, new OperationInfo(sessionHandle, operationHandle, sessionConf));
     return handle;
+  }
+
+  /**
+   * Called after a handle has been used to fetch all its results. This handle can be timed out aggressively.
+   *
+   * @param handle operation handle.
+   */
+  private void timeoutAggresively(Handle handle) throws HandleNotFoundException {
+    OperationInfo opInfo = activeHandleCache.getIfPresent(handle);
+    if (opInfo == null) {
+      LOG.trace("Could not find OperationInfo for handle {}, it might already have been moved to inactive list",
+                handle);
+      return;
+    }
+    activeHandleCache.invalidate(handle);
+    inactiveHandleCache.put(handle, opInfo);
+  }
+
+  private OperationInfo getOperationInfo(Handle handle) throws HandleNotFoundException {
+    // First look in running handles and handles that still can be fetched.
+    OperationInfo opInfo = activeHandleCache.getIfPresent(handle);
+    if (opInfo != null) {
+      return opInfo;
+    }
+
+    // Next look into handles that have been fetched completely.
+    opInfo = inactiveHandleCache.getIfPresent(handle);
+    if (opInfo != null) {
+      return opInfo;
+    }
+
+    // Finally look into deleted handles.
+    opInfo = operationRemovalHandler.lookupDeletedHandles(handle);
+    if (opInfo != null) {
+      return opInfo;
+    }
+    throw new HandleNotFoundException("Invalid handle provided");
   }
 
   /**
@@ -222,24 +350,25 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       closeTransaction(handle);
     } finally {
-      handleMap.remove(handle);
+      activeHandleCache.invalidate(handle);
+      inactiveHandleCache.invalidate(handle);
     }
   }
 
   private Transaction startTransaction() throws IOException {
     TransactionSystemClient txClient = ContextManager.getTxClient(hiveConf);
     Transaction tx = txClient.startLong();
-    LOG.debug("Transaction {} started.", tx);
+    LOG.trace("Transaction {} started.", tx);
     return tx;
   }
 
   private void closeTransaction(Handle handle) {
     try {
-      OperationInfo opInfo = handleMap.get(handle);
+      OperationInfo opInfo = getOperationInfo(handle);
       Transaction tx = ConfigurationUtil.get(opInfo.getSessionConf(),
                                              Constants.Explore.TX_QUERY_KEY,
                                              TxnCodec.INSTANCE);
-      LOG.debug("Closing transaction {} for handle {}", tx, handle);
+      LOG.trace("Closing transaction {} for handle {}", tx, handle);
 
       TransactionSystemClient txClient = ContextManager.getTxClient(hiveConf);
       // Transaction doesn't involve any changes. We still commit it to take care of any side effect changes that
@@ -251,6 +380,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     } catch (Throwable e) {
       LOG.error("Got exception while closing transaction.", e);
     }
+  }
+
+  private void runCacheCleanup() {
+    activeHandleCache.cleanUp();
+    inactiveHandleCache.cleanUp();
   }
 
   /**

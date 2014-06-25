@@ -6,18 +6,16 @@
     <logger name="org.apache.hive" level="INFO"/>
     <logger name="org.mortbay.log" level="INFO"/>
 
-    <logger name="com.continuuity.explore" level="DEBUG"/>
+    <logger name="com.continuuity.explore" level="TRACE"/>
+    <logger name="com.continuuity.hive" level="DEBUG"/>
 
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
         </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
     </appender>
 
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="Console"/>
     </root>
 
