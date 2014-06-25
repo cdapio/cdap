@@ -189,8 +189,12 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
             placeholder: "Select Metric",
             query: function(query) {
 
-              var model = self.configuring.element;
-              var metrics = self.metricsCache.get(model.type);
+              var model = self.configuring.element, metrics;
+              
+              if ('type' in model) {
+                var metrics = self.metricsCache.get(model.type);  
+              }
+              
 
               if (metrics) {
 
@@ -446,6 +450,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
     hideConfigure: function () {
 
       $('#analyze-configurator').fadeOut(100);
+      $("#metricSelector").select2("enable", false);
 
     },
 
