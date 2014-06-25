@@ -52,6 +52,7 @@ function clean() {
 }
 
 function build_docs() {
+  clean
   sphinx-build -b html -d build/doctrees source build/html
 }
 
