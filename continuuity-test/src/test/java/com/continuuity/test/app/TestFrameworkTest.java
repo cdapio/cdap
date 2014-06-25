@@ -76,7 +76,7 @@ public class TestFrameworkTest extends ReactorTestBase {
       Gson gson = new Gson();
 
       int retryCount = 10;
-      while(retryCount >= 0) {
+      while (retryCount >= 0) {
         try {
           client.query("result", ImmutableMap.of("type", "highpass"));
           break;
