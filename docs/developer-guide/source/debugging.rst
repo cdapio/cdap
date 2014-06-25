@@ -126,7 +126,7 @@ method from the ``ReactorTestBase`` class::
 	// Deploy an Application
 	ApplicationManager appManager = deployApplication(TrafficAnalyticsApp.class);
 
-The MapReduce job reads from the ``logEventTable`` DataSet. As a first
+The MapReduce job reads from the ``logEventTable`` Dataset. As a first
 step, the data to the ``logEventTable`` should be populated by running
 the ``RequestCountFlow`` and sending the data to the ``logEventStream``
 Stream::
@@ -161,6 +161,33 @@ the counts::
 	Assert.assertEquals(2, result.size());
 
 The assertion will verify that the correct result was received.
+
+Validating Test Data with SQL
+-----------------------------
+Often the easiest way to verify that a test produced the right data is to run a SQL query - if the data sets involved
+in the test case are record-scannable [DOCNOTE: add a reference to the programming guide section - how?]. This can be
+done using a JDBC connection obtained from the test base::
+
+  // Obtain a JDBC connection
+  Connection connection = getQueryClient();
+  try {
+      // Run a query over the dataset
+      results = connection.prepareStatement("SELECT key FROM mytable WHERE value = '1'").executeQuery();
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("a", results.getString(1));
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("c", results.getString(1));
+      Assert.assertFalse(results.next());
+
+    } finally {
+      results.close();
+      connection.close();
+    }
+
+The JDBC connection does not implement the full JDBC functionality: it does not allow variable replacement and
+will not allow you to make any changes to datasets. But it is sufficient to perform test validation: you can create
+or prepare statements and execute queries, then iterate over the results set and validate its correctness.
+
 
 Debugging Reactor Applications
 ==============================
@@ -365,7 +392,7 @@ Here are the states a transaction goes through in its lifecycle:
   of the transactions present in the structure.
 - If there are no conflicts, all the writes of the transaction along with its write pointer
   are stored in the `committing change sets` structure.
-- The client—namely, a DataSet—can then ask the TM to commit the writes. These are retrieved from the
+- The client—namely, a Dataset—can then ask the TM to commit the writes. These are retrieved from the
   `committing change sets` structure. Since the `committed change sets` structure might
   have evolved since the last conflict check, another one is performed. If the
   transaction is in the `excluded set`, the commit will fail regardless
