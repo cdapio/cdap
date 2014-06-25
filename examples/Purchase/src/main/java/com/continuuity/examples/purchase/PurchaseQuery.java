@@ -39,6 +39,10 @@ public class PurchaseQuery extends AbstractProcedure {
   @SuppressWarnings("unused")
   public void history(ProcedureRequest request, ProcedureResponder responder) throws Exception {
     String customer = request.getArgument("customer");
+    if (customer == null) {
+      responder.error(ProcedureResponse.Code.CLIENT_ERROR, "Customer must be given as argument");
+      return;
+    }
     PurchaseHistory history = store.read(customer);
     if (history == null) {
       responder.error(ProcedureResponse.Code.NOT_FOUND, "No purchase history found for " + customer);
