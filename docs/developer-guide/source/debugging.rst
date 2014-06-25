@@ -165,8 +165,9 @@ The assertion will verify that the correct result was received.
 Validating Test Data with SQL
 -----------------------------
 Often the easiest way to verify that a test produced the right data is to run a SQL query - if the data sets involved
-in the test case are record-scannable [DOCNOTE: add a reference to the programming guide section - how?]. This can be
-done using a JDBC connection obtained from the test base::
+in the test case are record-scannable as described in :doc:`Querying Datasets with SQL </query>`_. 
+This can be done using a JDBC connection obtained from the test base::
+
 
   // Obtain a JDBC connection
   Connection connection = getQueryClient();

@@ -9,12 +9,14 @@ Continuuity Reactor Documentation
    Quick Start </quickstart>
    Examples </examples/index>
    Programming Guide </programming>
-   Advanced Features </advanced>
+   Querying Datasets with SQL </query>
    Security </security>
+   Advanced Features </advanced>
    Testing and Debugging </debugging>
    Operations Guide </operations>
    HTTP REST API </rest>
    /javadocs/index
+   Dependencies </licenses/index>
    Release Notes </releasenotes>
    FAQ </faq>
 
@@ -35,17 +37,6 @@ Examples
    /examples/PageViewAnalytics/index
    /examples/ResponseCodeAnalytics/index
    /examples/TrafficAnalytics/index
-
-..    Introduction </intro>
-..    Quick Start </quickstart>
-..    Examples </examples/index>
-..    Programming Guide </programming>
-..    Advanced Features </advanced>
-..    Querying Datasets with SQL </query>
-..    Security </security>
-..    Testing and Debugging </debugging>
-..    Operations Guide </operations>
-..    HTTP REST API </rest>
-..    /javadocs/index
-..    Release Notes </releasenotes>
-..    FAQ </faq>
+   /licenses/reactor-enterprise-dependencies
+   /licenses/reactor-level-1-dependencies
+   /licenses/reactor-singlenode-dependencies
