@@ -31,7 +31,7 @@ public final class HttpRequests {
    * @throws IOException
    */
   public static HttpResponse get(URL url) throws IOException {
-    return doRequest("GET", url, null, null, null);
+    return doRequest("GET", url, null, (byte[]) null, null);
   }
 
   /**
@@ -41,7 +41,7 @@ public final class HttpRequests {
    * @throws IOException
    */
   public static HttpResponse put(URL url) throws IOException {
-    return doRequest("GET", url, null, null, null);
+    return doRequest("GET", url, null, (byte[]) null, null);
   }
 
   /**
@@ -51,7 +51,7 @@ public final class HttpRequests {
    * @throws IOException
    */
   public static HttpResponse post(URL url) throws IOException {
-    return doRequest("POST", url, null, null, null);
+    return doRequest("POST", url, null, (byte[]) null, null);
   }
 
   /**
@@ -61,7 +61,7 @@ public final class HttpRequests {
    * @throws IOException
    */
   public static HttpResponse delete(URL url) throws IOException {
-    return doRequest("DELETE", url, null, null, null);
+    return doRequest("DELETE", url, null, (byte[]) null, null);
   }
 
   /**
@@ -79,7 +79,9 @@ public final class HttpRequests {
   /**
    * Same as {@link #post(java.net.URL, String, java.util.Map)}, accepts headers as string params for convenience
    */
-  public static HttpResponse post(URL url, @Nullable String body, String headerName, String headerValue) throws IOException {
+  public static HttpResponse post(URL url, @Nullable String body,
+                                  String headerName, String headerValue) throws IOException {
+
     return doRequest("POST", url, ImmutableMap.of(headerName, headerValue),
                      body != null ? body.getBytes(Charsets.UTF_8) : null, null);
   }
@@ -116,7 +118,9 @@ public final class HttpRequests {
   /**
    * Same as {@link #put(java.net.URL, String, java.util.Map)}, accepts headers as string params for convenience
    */
-  public static HttpResponse put(URL url, @Nullable String body, String headerName, String headerValue) throws IOException {
+  public static HttpResponse put(URL url, @Nullable String body,
+                                 String headerName, String headerValue) throws IOException {
+
     return doRequest("PUT", url, ImmutableMap.of(headerName, headerValue),
                      body != null ? body.getBytes(Charsets.UTF_8) : null, null);
   }
@@ -189,6 +193,24 @@ public final class HttpRequests {
     } finally {
       conn.disconnect();
     }
+  }
+
+
+  /**
+   * Executes an HTTP request to the url provided.
+   * @param requestMethod HTTP method of the request.
+   * @param url URL of the request.
+   * @param headers Headers of the request.
+   * @param body Body of the request. If provided, bodySrc must be null.
+   * @param bodySrc Body of the request as an {@link InputStream}. If provided, body must be null.
+   * @return repsonse of the request
+   * @throws IOException
+   */
+  public static HttpResponse doRequest(String requestMethod, URL url,
+                                       @Nullable Map<String, String> headers,
+                                       @Nullable String body,
+                                       @Nullable InputStream bodySrc) throws IOException {
+    return doRequest(requestMethod, url, headers, body != null ? body.getBytes(Charsets.UTF_8) : null, bodySrc);
   }
 
   private static boolean isSuccessful(int responseCode) {
