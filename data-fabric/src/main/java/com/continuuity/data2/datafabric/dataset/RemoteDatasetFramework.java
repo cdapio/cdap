@@ -10,6 +10,7 @@ import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.lang.jar.JarFinder;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
@@ -127,8 +128,10 @@ public class RemoteDatasetFramework implements DatasetFramework {
       return null;
     }
 
-    DatasetDefinition impl = getDatasetDefinition(instanceInfo.getType(), classLoader);
-    return (T) impl.getAdmin(instanceInfo.getSpec(), classLoader);
+    ImmutablePair<DatasetDefinition, ClassLoader> datasetDefinition = getDatasetDefinition(instanceInfo.getType(),
+                                                                                           classLoader);
+
+    return (T) datasetDefinition.getFirst().getAdmin(instanceInfo.getSpec(), datasetDefinition.getSecond());
   }
 
   @Override
@@ -140,8 +143,10 @@ public class RemoteDatasetFramework implements DatasetFramework {
       return null;
     }
 
-    DatasetDefinition impl = getDatasetDefinition(instanceInfo.getType(), classLoader);
-    return (T) impl.getDataset(instanceInfo.getSpec(), classLoader);
+    ImmutablePair<DatasetDefinition, ClassLoader> datasetDefinition = getDatasetDefinition(instanceInfo.getType(),
+                                                                                           classLoader);
+
+    return (T) datasetDefinition.getFirst().getDataset(instanceInfo.getSpec(), datasetDefinition.getSecond());
   }
 
   private void addModule(String moduleName, Class<?> typeClass) throws DatasetManagementException {
@@ -161,8 +166,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   // can be used directly if DatasetTypeMeta is known, like in create dataset by dataset ops executor service
-  public <T extends DatasetDefinition> T getDatasetDefinition(DatasetTypeMeta implementationInfo,
-                                                              ClassLoader classLoader)
+  public <T extends DatasetDefinition> ImmutablePair<T, ClassLoader>
+  getDatasetDefinition(DatasetTypeMeta implementationInfo, ClassLoader classLoader)
     throws DatasetManagementException {
 
     DatasetDefinitionRegistry registry = registryFactory.create();
@@ -192,6 +197,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
       module.register(registry);
     }
 
-    return registry.get(implementationInfo.getName());
+    return new ImmutablePair<T, ClassLoader>((T) registry.get(implementationInfo.getName()), classLoader);
   }
 }

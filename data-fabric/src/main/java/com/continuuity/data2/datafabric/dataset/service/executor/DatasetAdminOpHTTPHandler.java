@@ -74,7 +74,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     DatasetProperties props = GSON.fromJson(propsHeader, DatasetProperties.class);
     DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
 
-    DatasetDefinition def = dsFramework.getDatasetDefinition(typeMeta, null);
+    DatasetDefinition def = dsFramework.getDatasetDefinition(typeMeta, null).getFirst();
 
     if (def == null) {
       String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
@@ -104,7 +104,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     DatasetSpecification spec = GSON.fromJson(specHeader, DatasetSpecification.class);
     DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
 
-    DatasetDefinition def = dsFramework.getDatasetDefinition(typeMeta, null);
+    DatasetDefinition def = dsFramework.getDatasetDefinition(typeMeta, null).getFirst();
 
     if (def == null) {
       String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);

@@ -33,7 +33,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
   public DatasetSpecification create(String instanceName, DatasetTypeMeta typeMeta, DatasetProperties props)
     throws Exception {
 
-    DatasetDefinition def = client.getDatasetDefinition(typeMeta, null);
+    DatasetDefinition def = client.getDatasetDefinition(typeMeta, null).getFirst();
 
     if (def == null) {
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
@@ -48,7 +48,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
   @Override
   public void drop(DatasetSpecification spec, DatasetTypeMeta typeMeta) throws Exception {
-    DatasetDefinition def = client.getDatasetDefinition(typeMeta, null);
+    DatasetDefinition def = client.getDatasetDefinition(typeMeta, null).getFirst();
 
     if (def == null) {
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
