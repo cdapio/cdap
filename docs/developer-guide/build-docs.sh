@@ -70,10 +70,13 @@ function make_zip() {
 
 function stage_docs() {
   echo "Deploying..."
+  echo "rsync -vz $SCRIPT_PATH/$BUILD/$ZIP_FILE \"$USER@$STAGING_SERVER:$ZIP_FILE\""
   rsync -vz $SCRIPT_PATH/$BUILD/$ZIP_FILE "$USER@$STAGING_SERVER:$ZIP_FILE"
   echo ""
   echo "To install on server:"
-  echo "cd /var/www/reactor; sudo unzip ~/$ZIP_FILE; sudo mv $HTML <final-dirname>"
+  echo "cd /var/www/reactor"
+  echo "sudo rm -rf *"
+  echo "sudo unzip ~/$ZIP_FILE; sudo mv $HTML <final-dirname>"
   echo ""
   login_staging_server
 }

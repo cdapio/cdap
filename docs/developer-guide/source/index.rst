@@ -41,7 +41,7 @@ Examples
 ..    Examples </examples/index>
 ..    Programming Guide </programming>
 ..    Advanced Features </advanced>
-..    Querying DataSets with SQL </query>
+..    Querying Datasets with SQL </query>
 ..    Security </security>
 ..    Testing and Debugging </debugging>
 ..    Operations Guide </operations>
