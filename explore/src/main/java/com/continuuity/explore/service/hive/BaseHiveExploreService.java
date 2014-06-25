@@ -52,6 +52,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final HiveConf hiveConf;
+  private final TransactionSystemClient txClient;
 
   // Handles that are running, or not yet completely fetched, they have longer timeout
   private final Cache<Handle, OperationInfo> activeHandleCache;
@@ -86,10 +87,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         .build();
 
     this.cliService = new CLIService();
+
     this.scheduledExecutorService =
       Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("explore-handle-timeout"));
 
-    ContextManager.initialize(txClient, datasetFramework);
+    this.txClient = txClient;
+    ContextManager.saveContext(datasetFramework);
 
     cleanupJobSchedule = cConf.getLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS);
 
@@ -356,7 +359,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   private Transaction startTransaction() throws IOException {
-    TransactionSystemClient txClient = ContextManager.getTxClient(hiveConf);
     Transaction tx = txClient.startLong();
     LOG.trace("Transaction {} started.", tx);
     return tx;
@@ -370,7 +372,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                                              TxnCodec.INSTANCE);
       LOG.trace("Closing transaction {} for handle {}", tx, handle);
 
-      TransactionSystemClient txClient = ContextManager.getTxClient(hiveConf);
       // Transaction doesn't involve any changes. We still commit it to take care of any side effect changes that
       // SplitReader may have.
       if (!(txClient.canCommit(tx, ImmutableList.<byte[]>of()) && txClient.commit(tx))) {
