@@ -182,6 +182,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
       }
 
       final String[] argArray = RuntimeArgumentsUtil.toPosixArray(userArgMapBuilder.build());
+      LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(
+        program.getAccountId(), program.getApplicationId(), program.getName(), runnableName));
       delegate.initialize(new ForwardingTwillContext(context) {
         @Override
         public String[] getApplicationArguments() {
@@ -221,8 +223,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void run() {
-    LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(
-      program.getAccountId(), program.getApplicationId(), program.getName(), runnableName));
     Futures.getUnchecked(
       Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
 
