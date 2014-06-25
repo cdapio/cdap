@@ -34,7 +34,7 @@ for /f "tokens=* delims= " %%f in ('%JAVACMD% -version 2^>^&1') do @(
   if "!counter!"=="0" set line=%%f
   set /a counter+=1
 )
-set line=%line:java version "1.=!!%
+set line=%line:java version "1.=!!%"
 set line=%line:~0,1%
 if NOT "%line%" == "6" (
   if NOT "%line%" == "7" (
@@ -46,7 +46,20 @@ endlocal
 
 mkdir %CONTINUUITY_HOME%\logs > NUL 2>&1
 
-%JAVACMD% -classpath %CLASSPATH% com.continuuity.data2.transaction.TransactionManagerDebuggerMain %*
+set auth_file=%HOMEPATH%\.continuuity.accesstoken
+REM check if token-file is provided. if not use the default file
+set tokenFileProvided=false
+for %%a in (%*) do (
+  if "%%a" == "--token-file" (
+    set tokenFileProvided=true
+  )
+)
 
+if "%tokenFileProvided%" == "true" (
+  %JAVACMD% -classpath %CLASSPATH% com.continuuity.data2.transaction.TransactionManagerDebuggerMain %*
+)
+if "%tokenFileProvided%" == "false" (
+  %JAVACMD% -classpath %CLASSPATH% com.continuuity.data2.transaction.TransactionManagerDebuggerMain %* --token-file %auth_file%
+)
 :FINALLY
 

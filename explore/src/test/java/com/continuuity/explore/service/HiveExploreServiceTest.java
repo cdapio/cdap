@@ -3,15 +3,43 @@ package com.continuuity.explore.service;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetServiceModules;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.explore.client.DiscoveryExploreClient;
+import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.ExploreClientUtil;
 import com.continuuity.test.SlowTests;
+
 import com.google.common.collect.Lists;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.File;
+import java.net.InetSocketAddress;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyValue;
@@ -108,10 +136,10 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     runCommand("select key, value from continuuity_user_my_table",
         true,
         Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
-            new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
+                           new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
         Lists.newArrayList(
-            new Result(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-            new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+          new Result(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
+          new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
     runCommand("select key, value from continuuity_user_my_table where key = '1'",
@@ -140,6 +168,41 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                Lists.newArrayList(
                  new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
+  }
+
+  @Test
+  public void exploreDriverTest() throws Exception {
+    // Register explore jdbc driver
+    Class.forName("com.continuuity.explore.jdbc.ExploreDriver");
+
+    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    Discoverable discoverable = new RandomEndpointStrategy(discoveryServiceClient.discover(
+      Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();
+
+    InetSocketAddress addr = discoverable.getSocketAddress();
+    String serviceUrl = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, addr.getHostName(), addr.getPort());
+
+    Connection connection = DriverManager.getConnection(serviceUrl);
+    PreparedStatement stmt;
+    ResultSet rowSet;
+
+    stmt = connection.prepareStatement("show tables");
+    rowSet = stmt.executeQuery();
+    Assert.assertTrue(rowSet.next());
+    Assert.assertEquals("continuuity_user_my_table", rowSet.getString(1));
+    stmt.close();
+
+    stmt = connection.prepareStatement("select key, value from continuuity_user_my_table");
+    rowSet = stmt.executeQuery();
+    Assert.assertTrue(rowSet.next());
+    Assert.assertEquals(1, rowSet.getInt(1));
+    Assert.assertEquals("{\"name\":\"first\",\"ints\":[1,2,3,4,5]}", rowSet.getString(2));
+    Assert.assertTrue(rowSet.next());
+    Assert.assertEquals(2, rowSet.getInt(1));
+    Assert.assertEquals("{\"name\":\"two\",\"ints\":[10,11,12,13,14]}", rowSet.getString(2));
+    stmt.close();
+
+    connection.close();
   }
 
   @Test

@@ -18,10 +18,11 @@ public final class Constants {
     public static final String STREAMS = "streams";
     public static final String REACTOR_SERVICES = "reactor.services";
     public static final String METRICS_PROCESSOR = "metrics.processor";
-    public static final String DATASET_MANAGER = "dataset.manager";
+    public static final String DATASET_MANAGER = "dataset.service";
     public static final String DATASET_EXECUTOR = "dataset.executor";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
-    public static final String EXPLORE_HTTP_USER_SERVICE = "explore.http.user.service";
+    public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
+    public static final String SERVICE_INSTANCE_TABLE_NAME = "reactor.services.instances";
   }
 
   /**
@@ -336,6 +337,9 @@ public final class Constants {
     public static final String NUM_CORES = "metrics.processor.num.cores";
     public static final String MEMORY_MB = "metrics.processor.memory.mb";
     public static final String MAX_INSTANCES = "metrics.processor.max.instances";
+
+    public static final String METRICS_PROCESSOR_STATUS_HANDLER = "metrics.processor.status.handler";
+    public static final String ADDRESS = "metrics.processor.status.bind.address";
   }
 
   /**
@@ -345,6 +349,9 @@ public final class Constants {
     public static final String NUM_INSTANCES = "log.saver.num.instances";
     public static final String MEMORY_MB = "log.saver.run.memory.megs";
     public static final String MAX_INSTANCES = "log.saver.max.instances";
+
+    public static final String LOG_SAVER_STATUS_HANDLER = "log.saver.status.handler";
+    public static final String ADDRESS = "log.saver.status.bind.address";
   }
 
   /**
@@ -434,12 +441,20 @@ public final class Constants {
 
     public static final String CFG_LOCAL_DATA_DIR = "hive.local.data.dir";
     public static final String CFG_EXPLORE_ENABLED = "reactor.explore.enabled";
+
     //max-instances of explore HTTP service
     public static final String MAX_INSTANCES = "explore.executor.max.instances";
 
     public static final String ACTIVE_OPERATION_TIMEOUT_SECS = "explore.active.operation.timeout.secs";
     public static final String INACTIVE_OPERATION_TIMEOUT_SECS = "explore.inactive.operation.timeout.secs";
     public static final String CLEANUP_JOB_SCHEDULE_SECS = "explore.cleanup.job.schedule.secs";
+
+    /**
+     * Explore JDBC constants.
+     */
+    public static final class Jdbc {
+      public static final String URL_PREFIX = "jdbc:reactor://";
+    }
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

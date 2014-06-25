@@ -12,16 +12,10 @@ public interface ReactorServiceManager {
   public boolean isServiceEnabled();
 
   /**
-   * Used to get the count of the instances of the Reactor Service that was requested.
-   * @return the number of instances of the Reactor Service requested.
+   * Used to get the count of the instances of the Reactor Service that are currently running.
+   * @return the number of instances of the Reactor Service instances alive.
    */
-  public int getRequestedInstances();
-
-  /**
-   * Used to get the count of the instances of the Reactor Service that is provisioned.
-   * @return the number of instances of the Reactor Service provisioned.
-   */
-  public int getProvisionedInstances();
+  public int getInstances();
 
   /**
    * Set the number of instances of the reactor service.
