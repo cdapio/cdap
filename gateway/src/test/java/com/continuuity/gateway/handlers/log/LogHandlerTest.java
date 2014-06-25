@@ -27,8 +27,16 @@ public class LogHandlerTest {
     testNextNoMax("testApp1", "flows", "testFlow1");
     testNextFilter("testApp1", "flows", "testFlow1");
     testNextNoFrom("testApp1", "flows", "testFlow1");
-
     testNext("testApp1", "flows", "testFlow1", false);
+  }
+
+  @Test
+  public void testServiceNext() throws Exception {
+    testNext("testApp4", "services", "testService1", true);
+    testNextNoMax("testApp4", "services", "testService1");
+    testNextFilter("testApp4", "services", "testService1");
+    testNextNoFrom("testApp4", "services", "testService1");
+    testNext("testApp4", "services", "testService1", false);
   }
 
   @Test
@@ -56,6 +64,14 @@ public class LogHandlerTest {
   }
 
   @Test
+  public void testServicePrev() throws Exception {
+    testPrev("testApp4", "services", "testService1");
+    testPrevNoMax("testApp4", "services", "testService1");
+    testPrevFilter("testApp4", "services", "testService1");
+    testPrevNoFrom("testApp4", "services", "testService1");
+  }
+
+  @Test
   public void testProcedurePrev() throws Exception {
     testPrev("testApp2", "procedures", "testProcedure1");
     testPrevNoMax("testApp2", "procedures", "testProcedure1");
@@ -75,6 +91,12 @@ public class LogHandlerTest {
   public void testFlowLogs() throws Exception {
     testLogs("testApp1", "flows", "testFlow1");
     testLogsFilter("testApp1", "flows", "testFlow1");
+  }
+
+  @Test
+  public void testServiceLogs() throws Exception {
+    testLogs("testApp4", "services", "testService1");
+    testLogsFilter("testApp4", "services", "testService1");
   }
 
   @Test

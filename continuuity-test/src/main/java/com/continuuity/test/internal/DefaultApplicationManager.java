@@ -332,6 +332,17 @@ public class DefaultApplicationManager implements ApplicationManager {
             throw Throwables.propagate(e);
           }
         }
+        public String status() {
+          try {
+            if (isRunning(serviceId)) {
+              return "RUNNING";
+            } else {
+              return "STOPPED";
+            }
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+        }
       };
     } catch (Exception e) {
       throw Throwables.propagate(e);

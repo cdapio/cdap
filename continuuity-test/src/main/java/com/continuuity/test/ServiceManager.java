@@ -8,4 +8,9 @@ public interface ServiceManager {
    * Stops the running service.
    */
   void stop();
+
+  /**
+   * Status of Service
+   */
+  String status();
 }

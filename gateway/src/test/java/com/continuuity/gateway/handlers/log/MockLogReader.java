@@ -30,6 +30,12 @@ public class MockLogReader implements LogReader {
       logMap.put(LogHandlerTest.account + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
     }
 
+    // Add log lines for app testApp1, flow testService1
+    for (int i = 0; i < MAX; ++i) {
+      logMap.put(LogHandlerTest.account + "/testApp4/userservice-testService1",
+                 new LogLine(i, "testService1<img>-" + i));
+    }
+
     // Add log lines for app testApp2, flow testProcedure1
     for (int i = 0; i < MAX; ++i) {
       logMap.put(LogHandlerTest.account + "/testApp2/procedure-testProcedure1",
@@ -41,6 +47,7 @@ public class MockLogReader implements LogReader {
       logMap.put(LogHandlerTest.account + "/testApp3/mapred-testMapReduce1",
                  new LogLine(i, "testMapReduce1<img>-" + i));
     }
+
   }
 
   @Override
@@ -54,7 +61,8 @@ public class MockLogReader implements LogReader {
     callback.init();
     try {
       int count = 0;
-      for (LogLine logLine : logMap.get(loggingContext.getLogPathFragment())) {
+      String path = loggingContext.getLogPathFragment();
+      for (LogLine logLine : logMap.get(path)) {
         if (logLine.getOffset() >= fromOffset) {
           if (++count > maxEvents) {
             break;
