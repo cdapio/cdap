@@ -1182,6 +1182,28 @@
                 </execution>
               </executions>
             </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-antrun-plugin</artifactId>
+              <version>1.7</version>
+              <executions>
+                <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
+                <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
+                <execution>
+                  <id>bin-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <failOnError>false</failOnError>
+                    <target>
+                      <chmod file="${stage.opt.dir}/bin/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
           </plugins>
         </pluginManagement>
 
@@ -1312,6 +1334,32 @@
                     </target>
                   </configuration>
                 </execution>
+                <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
+                <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
+                <execution>
+                  <id>rpm-init-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <target>
+                      <chmod file="${stage.dir}/etc/rc.d/init.d/continuuity-${service.name}" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+                <execution>
+                  <id>rpm-bin-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <target>
+                      <chmod file="${stage.opt.dir}/bin/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
               </executions>
             </plugin>
           </plugins>
@@ -1396,6 +1444,32 @@
                       <copy file="${project.build.directory}/dist/deb/continuuity-service" tofile="${stage.dir}-deb/etc/init.d/continuuity-${service.name}" />
                     </target>
                   </configuration>
+                </execution>
+                <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
+                <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
+                <execution>
+                  <id>deb-init-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <target>
+                      <chmod file="${stage.dir}-deb/etc/init.d/continuuity-${service.name}" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+                <execution>
+                  <id>deb-bin-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <target>
+                      <chmod file="${stage.dir}-deb/opt/continuuity/${project.artifactId}/bin/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
                 </execution>
               </executions>
             </plugin>
