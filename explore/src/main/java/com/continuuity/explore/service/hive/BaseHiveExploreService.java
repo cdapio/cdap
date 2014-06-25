@@ -91,11 +91,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     ContextManager.initialize(txClient, datasetFramework);
 
-    cleanupJobSchedule = cConf.getLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS, 60);
+    cleanupJobSchedule = cConf.getLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS);
 
     LOG.info("Active handle timeout = {} secs", cConf.getLong(Constants.Explore.ACTIVE_OPERATION_TIMEOUT_SECS));
     LOG.info("Inactive handle timeout = {} secs", cConf.getLong(Constants.Explore.INACTIVE_OPERATION_TIMEOUT_SECS));
-    LOG.info("Cleanup job schedule = {} secs", cConf.getLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS, 60));
+    LOG.info("Cleanup job schedule = {} secs", cleanupJobSchedule);
   }
 
   protected HiveConf getHiveConf() {
@@ -152,7 +152,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       inactiveHandleCache.invalidate(entry.getKey());
     }
 
-    // Run one final cleanup
+    // Run one final cleanup so that all pending handles are closed before stopping.
     operationRemovalHandler.run();
 
     cliService.stop();
@@ -335,7 +335,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
 
     // Finally look into deleted handles.
-    opInfo = operationRemovalHandler.lookupDeletedHandles(handle);
+    opInfo = operationRemovalHandler.getDeletedHandle(handle);
     if (opInfo != null) {
       return opInfo;
     }

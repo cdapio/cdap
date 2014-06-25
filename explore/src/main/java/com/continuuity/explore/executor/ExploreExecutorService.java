@@ -93,10 +93,8 @@ public class ExploreExecutorService extends AbstractIdleService {
         // Then stop HTTP service so that we don't send anymore requests to explore service.
         httpService.stopAndWait();
       } finally {
-        if (exploreService != null) {
-          // Finally stop explore service
-          exploreService.stopAndWait();
-        }
+        // Finally stop explore service
+        exploreService.stopAndWait();
       }
     }
   }

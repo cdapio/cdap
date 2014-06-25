@@ -33,7 +33,7 @@ public class OperationRemovalHandler implements Runnable, RemovalListener<Handle
     this.exploreService = exploreService;
   }
 
-  OperationInfo lookupDeletedHandles(Handle handle) {
+  OperationInfo getDeletedHandle(Handle handle) {
     return deletedHandleMap.get(handle);
   }
 

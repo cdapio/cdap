@@ -880,6 +880,11 @@
         <description>>Timeout value in seconds for a SQL operation which does not have any more results
             to be fetched</description>
     </property>
+    <property>
+        <name>explore.cleanup.job.schedule.secs</name>
+        <value>60</value>
+        <description>>Time in secs to schedule clean up job to timeout operations</description>
+    </property>
 
 
 
