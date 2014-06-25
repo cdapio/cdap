@@ -1,5 +1,5 @@
 .. :author: Continuuity, Inc.
-   :version: 2.2.0
+   :version: 2.3.0
    :description: HTTP Interface to the Continuuity Reactor
 
 =================================
@@ -12,6 +12,7 @@ Continuuity Reactor HTTP REST API
 .. rst2pdf: .. contents::
 .. rst2pdf: config _templates/pdf-config
 .. rst2pdf: stylesheets _templates/pdf-stylesheet
+.. rst2pdf: build ../build-pdf/
 
 Introduction
 ============
@@ -19,8 +20,8 @@ Introduction
 The Continuuity Reactor has an HTTP interface for a multitude of purposes:
 
 - **Stream:** sending data events to a Stream, or to inspect the contents of a Stream.
-- **Data:** interacting with DataSets (currently limited to Tables).
-- **Query:** sending ad-hoc queries to Reactor DataSets.
+- **Data:** interacting with Datasets (currently limited to Tables).
+- **Query:** sending ad-hoc queries to Reactor Datasets.
 - **Procedure:** sending calls to a stored Procedure.
 - **Reactor:** deploying and managing Applications.
 - **Logs:** retrieving Application logs.
@@ -72,7 +73,7 @@ Status Codes
 
 
 .. list-table::
-   :widths: 5 24 71
+   :widths: 10 30 60
    :header-rows: 1
 
    * - Code
@@ -353,6 +354,115 @@ analogous to how you send headers when posting an event to the Stream::
 
 	<stream-id>.<property>:<value>
 
+.. rst2pdf: PageBreak
+
+Truncating a Stream
+-------------------
+Truncation means the deletion of all events that were written to the Stream. 
+This is permanent and cannot be undone.
+A Stream can be truncated with an HTTP POST method to the URL::
+
+	POST <base-url>/streams/<stream-id>/truncate
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<stream-id>``
+     - Name of an existing Stream
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The Stream was successfully truncated
+   * - ``404 Not Found``
+     - The Stream ``<stream-id>`` does not exist
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``POST <base-url>/streams/mystream/truncate``
+   * - Description
+     - Delete all events in the Stream named *mystream*
+
+.. rst2pdf: PageBreak
+
+Setting Time-To-Live Property of a Stream
+------------------------------------------
+The Time-To-Live (TTL) property governs how long an event is valid for consumption since 
+it was written to the Stream.
+The default TTL for all Streams is infinite, meaning that events will never expire.
+The TTL property of a Stream can be changed with an HTTP PUT method to the URL::
+
+	PUT <base-url>/streams/<stream-id>/config
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<stream-id>``
+     - Name of an existing Stream
+
+The new TTL value is passed in the request body as::
+
+	{ "ttl" : <ttl-in-seconds> }
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<ttl-in-seconds>``
+     - Number of seconds that an event will be valid for since ingested
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The stream TTL was changed successfully
+   * - ``400 Bad Request``
+     - The TTL value is not a non-negative integer
+   * - ``404 Not Found``
+     - The Stream does not exist
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``POST <base-url>/streams/mystream/ttl``
+
+       with the new TTL value as a JSON string in the body::
+
+	  { "ttl" : 86400 }
+     
+   * - Description
+     - Change the TTL property of the Stream named *mystream* to 1 day
+
+.. rst2pdf: PageBreak
+
 Reading Multiple Events
 -----------------------
 Reading multiple events is not supported directly by the Stream HTTP API,
@@ -367,13 +477,431 @@ Run at the command line::
 
 for usage and documentation of options.
 
-Data HTTP API
-=============
+.. rst2pdf: PageBreak
 
-The Data API allows you to interact with Continuuity Reactor Tables (the core DataSets) through HTTP.
+Dataset HTTP API
+================
+
+The Dataset API allows you to interact with `Continuuity Reactor Datasets <advanced.html#dataset-system>`_ through HTTP.
+You can list, create, delete, and truncate Datasets.
+
+Listing all Datasets
+--------------------
+
+You can list all Datasets in the Continuuity Reactor by issuing an HTTP GET request to the URL::
+
+	GET <base-url>/data/datasets
+
+The response body will contain a JSON-formatted list of the existing Datasets::
+
+	{
+	   "name":"continuuity.user.purchases",
+	   "type":"com.continuuity.api.dataset.lib.ObjectStore",
+	   "properties":{
+	      "schema":"...",
+	      "type":"..."
+	   },
+	   "datasetSpecs":{
+	      ...
+	   }
+	 }
+
+Creating a Dataset
+------------------
+
+You can create a Dataset by issuing an HTTP POST request to the URL::
+
+	PUT <base-url>/data/datasets/<dataset-name>
+  
+with the name of the type as a header::
+
+	X-Continuuity-Type-Name: <type-name>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<dataset-name>``
+     - Name of the new Dataset
+   * - ``<type-name>``
+     - Type of the new Dataset
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Requested Dataset was successfully created
+   * - ``404 Not Found``
+     - Requested Dataset type was not found
+   * - ``409 Conflict``
+     - Dataset with the same name already exists
+
+.. rst2pdf: PageBreak
+
+Example
+.......
+.. list-table::
+   :widths: 25 75
+   :stub-columns: 1
+
+   * - HTTP Request
+     - ``PUT <base-url>/data/datasets/mydataset``
+   * - Header
+     - ``X-Continuuity-Type-Name: myDatasetType``
+   * - Description
+     - Creates a Dataset named "mydataset" of the type "myDatasetType"; the ``myDatasetType``
+       should be a Dataset type that's already been deployed in a Dataset module
+
+Deleting a Dataset
+------------------
+
+You can delete a Dataset by issuing an HTTP DELETE request to the URL::
+
+  DELETE <base-url>/data/datasets/<dataset-name>
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Dataset was successfully deleted
+   * - ``404 Not Found``
+     - Dataset named ``<dataset-name>`` could not be found
+
+Example
+.......
+.. list-table::
+   :widths: 25 75
+   :stub-columns: 1
+
+   * - HTTP Request
+     - ``DELETE <base-url>/data/datasets/mydataset``
+   * - Description
+     - Deletes the Dataset named "mydataset"
+
+.. rst2pdf: PageBreak
+
+Deleting all Datasets
+---------------------
+
+You can delete all Datasets by issuing an HTTP DELETE request to the URL::
+
+  DELETE <base-url>/data/unrecoverable/datasets
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - All Datasets were successfully deleted
+
+Truncating a Dataset
+--------------------
+
+You can truncate a Dataset by issuing an HTTP POST request to the URL::
+
+  POST <base-url>/data/datasets/<dataset-name>/admin/truncate
+
+This will clear the existing data from the Dataset. This cannot be undone.
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Dataset was successfully truncated
+
+.. rst2pdf: PageBreak
+
+Dataset Module HTTP API
+=======================
+
+The Dataset Module API allows you to interact with 
+`Continuuity Reactor Dataset Modules <advanced.html#dataset-system>`_ through HTTP.
+You can list, add, and delete Dataset modules.
+
+Listing all Dataset Modules
+---------------------------
+
+To list all modules, issue an HTTP GET request to the URL::
+
+	GET <base-url>/data/modules
+
+The response will be a JSON String representing a list of ``DatasetModuleMeta`` objects::
+
+	[
+	   {
+	      "name":"core",
+	      "className":"com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule",
+	      "types":[
+	         "table",
+	         "com.continuuity.api.dataset.table.Table",
+	         "keyValueTable",
+	         "com.continuuity.api.dataset.lib.KeyValueTable",
+	         "objectStore",
+	         "com.continuuity.api.dataset.lib.ObjectStore",
+	         "indexedObjectStore",
+	         "com.continuuity.api.dataset.lib.IndexedObjectStore",
+	         "indexedTable",
+	         "com.continuuity.api.dataset.lib.IndexedTable",
+	         "multiObjectStore",
+	         "com.continuuity.api.dataset.lib.MultiObjectStore",
+	         "timeseriesTable",
+	         "com.continuuity.api.dataset.lib.TimeseriesTable"
+	      ],
+	      "usesModules":[
+	         "orderedTable-leveldb"
+	      ],
+	      "usedByModules":[
+	
+	      ]
+	   },
+	   {
+	      "name":"orderedTable-leveldb",
+	      "className":"com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule",
+	      "types":[
+	         "orderedTable",
+	         "com.continuuity.api.dataset.table.OrderedTable"
+	      ],
+	      "usesModules":[
+	
+	      ],
+	      "usedByModules":[
+	         "core"
+	      ]
+	   }
+	]
+
+.. rst2pdf: PageBreak
+
+Adding a Dataset Module
+-----------------------
+
+To add a module, issue an HTTP POST request to the URL::
+
+  PUT <base-url>/data/modules/<module-name>
+
+with the class name of the Dataset Module as a header::
+
+  X-Continuuity-Class-Name: <class-name>
+
+with a jar containing the class implementing ``DatasetModule`` and all its dependencies 
+in the body of the request.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<module-name>``
+     - Name of the new module
+   * - ``<class-name>``
+     - Class name of the class implementing ``DatasetModule``
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The event was successfully received and the module was either created or already exists
+   * - ``400 Bad Request``
+     - The Dataset module jar was not provided in the body of the request
+   * - ``409 Conflict``
+     - Either a Dataset module with the same name or one of the types declared by this module, already exists
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``POST <base-url>/data/modules/my-module``
+   * - Headers
+     - X-Continuuity-Class-Name: com.example.dataset.MyModule
+   * - Body
+     - Contents a jar file containing the class ``MyModule`` along with other supporting class files and resources
+   * - Description
+     - Adds a Dataset module named *my-module*, with the class name 
+       ``com.example.dataset.MyModule``
+
+.. rst2pdf: PageBreak
+
+Deleting a Dataset Module
+-------------------------
+
+To delete a module, issue an HTTP DELETE request to the URL::
+
+  DELETE <base-url>/data/modules/<module-name>
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Module was successfully deleted
+   * - ``409 Conflict``
+     - Module with provided <module-name> cannot be deleted because either there's another module that 
+       depends on it or there is an existing Dataset of the type that is declared by this module
+   * - ``404 Not Found``
+     - Module with provided <module-name> could not be found
+
+Deleting all Dataset Modules
+----------------------------
+
+To delete all modules, issue an HTTP DELETE request to the URL::
+
+  DELETE <base-url>/data/modules
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Dataset modules were successfully deleted
+   * - ``409 Conflict``
+     - Dataset modules cannot be deleted because there are existing Datasets that use the types declared
+       by these modules
+
+.. rst2pdf: PageBreak
+
+Dataset Type HTTP API
+=====================
+
+The Dataset Type API allows you to interact with 
+`Continuuity Reactor Dataset Types <advanced.html#dataset-system>`_ through HTTP.
+You can list all Dataset types and get information about each type. Dataset types are declared by the Dataset modules added to Continuuity Reactor.
+To delete a Dataset type, you delete the Dataset module that contains the type as described under
+`Deleting a Dataset Module <#deleting-a-dataset-module>`_.
+
+
+Listing all Dataset Types
+-------------------------
+
+To list all types provided by the existing modules, issue an HTTP GET request to the URL::
+
+  GET <base-url>/data/types
+
+The response will be a JSON array containing JSON objects representing the Dataset types in the format described
+below under `Getting a Dataset Type`_.
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/data/types``
+   * - Description
+     - List all Dataset types
+
+Getting a Dataset Type
+----------------------
+
+To get detailed information about a single type, issue an HTTP GET request to the URL::
+
+  GET <base-url>/data/types/<type-name>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<type-name>``
+     - Name of the Dataset type
+
+.. rst2pdf: PageBreak
+
+The response will be a JSON String representing a Dataset type metadata along with a list of Dataset modules it depends on::
+
+	{
+	   "name":"table",
+	   "modules":[
+	      {
+	         "name":"orderedTable-leveldb",
+	         "className":"com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule",
+	         "types":[
+	            "orderedTable",
+	            "com.continuuity.api.dataset.table.OrderedTable"
+	         ],
+	         "usesModules":[
+	
+	         ],
+	         "usedByModules":[
+	            "core"
+	         ]
+	      },
+	      {
+	         "name":"core",
+	         "className":"com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule",
+	         "types":[
+	            "table",
+	            "com.continuuity.api.dataset.table.Table",
+	            "keyValueTable",
+	            "com.continuuity.api.dataset.lib.KeyValueTable",
+	            "objectStore",
+	            "com.continuuity.api.dataset.lib.ObjectStore",
+	            "indexedObjectStore",
+	            "com.continuuity.api.dataset.lib.IndexedObjectStore",
+	            "indexedTable",
+	            "com.continuuity.api.dataset.lib.IndexedTable",
+	            "multiObjectStore",
+	            "com.continuuity.api.dataset.lib.MultiObjectStore",
+	            "timeseriesTable",
+	            "com.continuuity.api.dataset.lib.TimeseriesTable"
+	         ],
+	         "usesModules":[
+	            "orderedTable-leveldb"
+	         ],
+	         "usedByModules":[
+	
+	         ]
+	      }
+	   ]
+	}
+
+
+Data HTTP API (Deprecated)
+==========================
+
+The Data API allows you to interact with Continuuity Reactor Tables (the core Datasets) through HTTP.
 You can create Tables, truncate Tables, and read, write, modify, or delete data.
 
-For DataSets other than Tables, you can truncate the DataSet using this API.
+For Datasets other than Tables, you can truncate the Dataset using this API.
 
 Creating a new Table
 --------------------
@@ -402,7 +930,7 @@ HTTP Responses
    * - ``200 OK``
      - The event was successfully received and the Table was either created or already exists
    * - ``409 Conflict``
-     - A DataSet of a different type already exists with the given name
+     - A Dataset of a different type already exists with the given name
 
 Example
 .......
@@ -422,7 +950,7 @@ Table names should only contain ASCII letters, digits and hyphens.
 If a Table with the same name already exists, no error is returned,
 and the existing Table remains in place.
 
-However, if a DataSet of a different type exists with the same name—for example,
+However, if a Dataset of a different type exists with the same name—for example,
 a key/value Table or ``KeyValueTable``—this call will return a ``409 Conflict`` error.
 
 .. rst2pdf: PageBreak
@@ -678,10 +1206,10 @@ See the examples under `Reading Data from a Table`_.
 
 .. rst2pdf: PageBreak
 
-Deleting Data from a DataSet
+Deleting Data from a Dataset
 ----------------------------
 
-To clear a DataSet of all data, submit an HTTP POST request::
+To clear a Dataset of all data, submit an HTTP POST request::
 
 	POST <base-url>/datasets/<dataset-name>/truncate
 
@@ -692,7 +1220,7 @@ To clear a DataSet of all data, submit an HTTP POST request::
    * - Parameter
      - Description
    * - ``<dataset-name>``
-     - Name of the DataSet to be truncated
+     - Name of the Dataset to be truncated
 
 HTTP Responses
 ..............
@@ -703,9 +1231,9 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event successfully deleted the data of the DataSet
+     - The event successfully deleted the data of the Dataset
    * - ``404 Not Found``
-     - A DataSet with the given name does not exist
+     - A Dataset with the given name does not exist
 
 Example
 .......
@@ -716,11 +1244,11 @@ Example
    * - HTTP Method
      - ``POST <base-url>/datasets/mydataset/truncate``
    * - Description
-     - Delete all of the data from an existing DataSet named *mydataset*
+     - Delete all of the data from an existing Dataset named *mydataset*
 
 Comments
 ........
-Note that this works not only for Tables but with other DataSets, including user-defined Custom DataSets.
+Note that this works not only for Tables but with other Datasets, including user-defined Custom Datasets.
 
 .. rst2pdf: PageBreak
 
@@ -810,7 +1338,7 @@ This allows you to specify values as numeric strings while using a different enc
 Query HTTP API
 ==============
 
-This interface supports submitting SQL queries over DataSets. Executing a query is asynchronous: 
+This interface supports submitting SQL queries over Datasets. Executing a query is asynchronous: 
 
 - first, **submit** the query;
 - then poll for the query's **status** until it is finished;
@@ -1119,7 +1647,7 @@ To delete an Application together with all of its Flows, Procedures and MapReduc
 Note that the ``<application-name>`` in this URL is the name of the Application 
 as configured by the Application Specification,
 and not necessarily the same as the name of the JAR file that was used to deploy the Application.
-Note also that this does not delete the Streams and DataSets associated with the Application
+Note also that this does not delete the Streams and Datasets associated with the Application
 because they belong to your account, not the Application.
 
 .. rst2pdf: PageBreak
@@ -1656,7 +2184,7 @@ Continuuity Reactor Operations Guide.
 
 .. rst2pdf: CutStart
 
-(:doc:`Operations Guide </operations>`)
+(`Operations Guide </operations.html>`)
 
 .. rst2pdf: CutStop
 
@@ -1714,7 +2242,7 @@ Comments
 ........
 The scope must be either ``reactor`` for system metrics or ``user`` for user-defined metrics.
 
-System metrics are either Application metrics (about Applications and their Flows, Procedures, MapReduce and WorkFlows) or they are Data metrics (relating to Streams or DataSets).
+System metrics are either Application metrics (about Applications and their Flows, Procedures, MapReduce and WorkFlows) or they are Data metrics (relating to Streams or Datasets).
 
 User metrics are always in the Application context.
 
@@ -1847,25 +2375,25 @@ Stream metrics are only available at the Stream level and the only available con
    * - A single Stream
      - ``/streams/<stream-id>``
 
-DataSet metrics are available at the DataSet level, but they can also be queried down to the
+Dataset metrics are available at the Dataset level, but they can also be queried down to the
 Flowlet, Procedure, Mapper, or Reducer level:
 
 .. list-table::
    :header-rows: 1
    :widths: 30 70
 
-   * - DataSet Metric
+   * - Dataset Metric
      - Context
-   * - A single DataSet in the context of a single Flowlet
+   * - A single Dataset in the context of a single Flowlet
      - ``/datasets/<dataset-id>/apps/<app-id>/flows/``
        ``<flow-id>/flowlets/<flowlet-id>``
-   * - A single DataSet in the context of a single Flow
+   * - A single Dataset in the context of a single Flow
      - ``/datasets/<dataset-id>/apps/<app-id>/flows/<flow-id>``
-   * - A single DataSet in the context of a specific Application
+   * - A single Dataset in the context of a specific Application
      - ``/datasets/<dataset-id>/<any application context>``
-   * - A single DataSet across all Applications
+   * - A single Dataset across all Applications
      - ``/datasets/<dataset-id>``
-   * - All DataSets across all Applications
+   * - All Datasets across all Applications
      - ``/``
 
 .. rst2pdf: PageBreak
@@ -1895,13 +2423,13 @@ These metrics are available in the Flowlet context:
    * - ``process.events.out``
      - Number of events emitted by the Flowlet
    * - ``store.bytes``
-     - Number of bytes written to DataSets
+     - Number of bytes written to Datasets
    * - ``store.ops``
-     - Operations (writes and read) performed on DataSets
+     - Operations (writes and read) performed on Datasets
    * - ``store.reads``
-     - Read operations performed on DataSets
+     - Read operations performed on Datasets
    * - ``store.writes``
-     - Write operations performed on DataSets
+     - Write operations performed on Datasets
 
 These metrics are available in the Mappers and Reducers context:
 
@@ -1944,13 +2472,13 @@ These metrics are available in the Streams context:
    * - ``collect.bytes``
      - Number of bytes collected by the Stream
 
-These metrics are available in the DataSets context:
+These metrics are available in the Datasets context:
 
 .. list-table::
    :header-rows: 1
    :widths: 40 60
 
-   * - DataSets Metric
+   * - Datasets Metric
      - Description
    * - ``store.bytes``
      - Number of bytes written
@@ -2026,3 +2554,5 @@ the last of our documentation is:
   a complete Javadoc of the Continuuity Reactor Java APIs.
 
 .. rst2pdf: CutStop
+
+

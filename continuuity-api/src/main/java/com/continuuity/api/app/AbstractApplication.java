@@ -1,3 +1,7 @@
+/*
+ * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.app;
 
 import com.continuuity.api.annotation.Beta;
@@ -16,6 +20,8 @@ import org.apache.twill.api.TwillApplication;
  * A support class for {@link Application}s which reduces repetition and results in
  * a more readable configuration. Simply implement {@link #configure()} to define your application.
  */
+ 
+ 
 @Beta
 public abstract class AbstractApplication implements Application {
   private ApplicationContext context;
@@ -89,7 +95,7 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * Calls {@link #createDataSet(String, String, DatasetProperties) and passes epty properties.
+   * Calls {@link #createDataSet(String, String, DatasetProperties)} and passes empty properties.
    */
   protected void createDataSet(String datasetInstanceName, String typeName) {
     configurer.createDataSet(datasetInstanceName, typeName, DatasetProperties.EMPTY);
