@@ -333,7 +333,8 @@ public class HttpRequestsTest {
     @POST
     @Path("/testPost")
     public void testPost(HttpRequest request, HttpResponder responder) throws Exception {
-      responder.sendString(HttpResponseStatus.OK, request.getContent().toString(Charsets.UTF_8) + request.getHeader("sdf"));
+      responder.sendString(HttpResponseStatus.OK,
+                           request.getContent().toString(Charsets.UTF_8) + request.getHeader("sdf"));
     }
 
     @POST
