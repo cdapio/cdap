@@ -16,7 +16,6 @@
 package com.continuuity.examples.purchase;
 
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.mapreduce.AbstractMapReduce;
 import com.continuuity.api.mapreduce.MapReduceContext;
@@ -78,7 +77,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   /**
    * Reducer class.
    */
-  public static class PerUserReducer extends Reducer<Text, Text, byte[], PurchaseHistory> {
+  public static class PerUserReducer extends Reducer<Text, Text, String, PurchaseHistory> {
     @UseDataSet("frequentCustomers")
     private KeyValueTable frequentCustomers;
     private Metrics reduceMetrics;
@@ -98,7 +97,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
         frequentCustomers.write(customer.toString(), String.valueOf(numPurchases));
       }
 
-      context.write(Bytes.toBytes(customer.toString()), purchases);
+      context.write(customer.toString(), purchases);
     }
   }
 }

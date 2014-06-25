@@ -17,7 +17,6 @@ package com.continuuity.examples.purchase;
 
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.dataset.lib.ObjectStore;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
@@ -29,7 +28,7 @@ import com.continuuity.api.procedure.ProcedureResponse;
 public class PurchaseQuery extends AbstractProcedure {
 
   @UseDataSet("history")
-  private ObjectStore<PurchaseHistory> store;
+  private PurchaseHistoryStore store;
 
   /**
    * Return the specified customer's purchases as a JSON history object.
@@ -40,7 +39,7 @@ public class PurchaseQuery extends AbstractProcedure {
   @SuppressWarnings("unused")
   public void history(ProcedureRequest request, ProcedureResponder responder) throws Exception {
     String customer = request.getArgument("customer");
-    PurchaseHistory history = store.read(customer.getBytes());
+    PurchaseHistory history = store.read(customer);
     if (history == null) {
       responder.error(ProcedureResponse.Code.NOT_FOUND, "No purchase history found for " + customer);
     } else {
