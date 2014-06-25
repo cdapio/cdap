@@ -94,6 +94,8 @@ public final class InMemoryConfigurator implements Configurator {
         Manifest manifest = BundleJarUtil.getManifest(archive);
         Preconditions.checkArgument(manifest != null, "Failed to load manifest from %s", archive.toURI());
         String mainClassName = manifest.getMainAttributes().getValue(ManifestFields.MAIN_CLASS);
+        Preconditions.checkArgument(mainClassName != null && mainClassName.isEmpty(),
+                                    "Main class attribute cannot be empty");
 
         File unpackedJarDir = Files.createTempDir();
         try {
