@@ -97,7 +97,7 @@ public class MapReduceProgramRunnerTest {
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     dataSetInstantiator =
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
-                              datasetFramework,
+                              datasetFramework, injector.getInstance(CConfiguration.class),
                               getClass().getClassLoader());
   }
 

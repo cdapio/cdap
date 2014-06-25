@@ -15,6 +15,7 @@ import com.continuuity.api.data.dataset.table.MemoryTable;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.metrics.MeteredDataset;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.Fields;
 import com.continuuity.common.lang.InstantiatorFactory;
@@ -23,8 +24,10 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataFabric;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.table.RuntimeMemoryTable;
 import com.continuuity.data.table.RuntimeTable;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -54,6 +57,7 @@ public class DataSetInstantiationBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataSetInstantiationBase.class);
 
+  private final CConfiguration configuration;
   // the class loader to use for data set classes
   private final ClassLoader classLoader;
   // the known data set specifications
@@ -65,13 +69,16 @@ public class DataSetInstantiationBase {
   private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
 
   private final InstantiatorFactory instantiatorFactory = new InstantiatorFactory(false);
+  private final ReactorDatasetNamespace namespace;
 
-  public DataSetInstantiationBase() {
-    this(null);
+  public DataSetInstantiationBase(CConfiguration configuration) {
+    this(configuration, null);
   }
 
-  public DataSetInstantiationBase(ClassLoader classLoader) {
+  public DataSetInstantiationBase(CConfiguration configuration, ClassLoader classLoader) {
+    this.configuration = configuration;
     this.classLoader = classLoader;
+    this.namespace = new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER);
   }
 
   /**
@@ -426,6 +433,7 @@ public class DataSetInstantiationBase {
 
   public void setMetricsCollector(final MetricsCollectionService metricsCollectionService,
                                   final MetricsCollector programContextMetrics) {
+
     final MetricsCollector dataSetMetrics =
       metricsCollectionService.getCollector(MetricsScope.REACTOR, Constants.Metrics.DATASET_CONTEXT, "0");
 
@@ -474,7 +482,8 @@ public class DataSetInstantiationBase {
 
       // datasets API V2
       if (txAware.getKey() instanceof MeteredDataset) {
-        final String dataSetName = txAware.getValue();
+        // TODO: fix namespacing - see REACTOR-217
+        final String dataSetName = namespace.namespace(txAware.getValue());
         MeteredDataset.MetricsCollector metricsCollector = new MeteredDataset.MetricsCollector() {
           @Override
           public void recordRead(int opsCount, int dataSize) {
