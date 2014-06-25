@@ -1,11 +1,11 @@
 .. :Author: Continuuity, Inc.
-   :Description: Introduction to Programming Applications for the Continuuity Reactor
+   :Description: Introduction to Testing, Debugging, and Troubleshooting Continuuity Reactor Applications
 
 ===============================================
 Testing and Debugging Guide
 ===============================================
 
-Introduction to Testing and Troubleshooting Applications for the Continuuity Reactor
+**Introduction to Testing, Debugging, and Troubleshooting Continuuity Reactor Applications**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
