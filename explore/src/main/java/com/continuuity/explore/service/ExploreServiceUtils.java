@@ -4,8 +4,11 @@ import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -16,6 +19,7 @@ import java.net.URLClassLoader;
 public class ExploreServiceUtils {
   // todo populate this with whatever hive version CDH4.3 runs with - REACTOR-229
   private static final String[] SUPPORTED_VERSIONS = new String[] { "0.12", "0.13" };
+  private static final Logger LOG = LoggerFactory.getLogger(ExploreServiceUtils.class);
 
   private static Iterable<URL> getClassPath(String hiveClassPath) {
     if (hiveClassPath == null) {
@@ -49,22 +53,23 @@ public class ExploreServiceUtils {
    * Check that Hive is in the class path - with a right version.
    */
   public static void checkHiveVersion(ClassLoader hiveClassLoader) {
-//    try {
-//      Class hiveVersionClass = hiveClassLoader.loadClass("org.apache.hive.common.util.HiveVersionInfo");
-//      Method m = hiveVersionClass.getDeclaredMethod("getVersion");
-//      String version = (String) m.invoke(null);
-//      for (String supportedVersion : SUPPORTED_VERSIONS) {
-//        if (version.startsWith(supportedVersion)) {
-//          return;
-//        }
-//      }
+    try {
+      Class hiveVersionClass = hiveClassLoader.loadClass("org.apache.hive.common.util.HiveVersionInfo");
+      Method m = hiveVersionClass.getDeclaredMethod("getVersion");
+      String version = (String) m.invoke(null);
+      LOG.info("Hive version reported {}", version);
+      for (String supportedVersion : SUPPORTED_VERSIONS) {
+        if (version.startsWith(supportedVersion)) {
+          return;
+        }
+      }
 //      throw new RuntimeException("Hive version " + version + " is not supported. " +
 //          "Versions supported begin with one of the following: " +
 //          StringUtils.arrayToString(SUPPORTED_VERSIONS));
-//    } catch (RuntimeException e) {
-//      throw e;
-//    } catch (Throwable e) {
-//      throw new RuntimeException("Hive jars not present in classpath", e);
-//    }
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Throwable e) {
+      throw new RuntimeException("Hive jars not present in classpath", e);
+    }
   }
 }
