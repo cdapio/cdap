@@ -198,7 +198,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final ProgramRuntimeService runtimeService;
 
-
   /**
    * Client talking to transaction system.
    */
@@ -239,6 +238,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private final StreamAdmin streamAdmin;
 
   private final StreamConsumerFactory streamConsumerFactory;
+
+  private final ReactorDatasetNamespace namespace;
 
   /**
    * Number of seconds for timing out a service endpoint discovery.
@@ -323,6 +324,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.dsClient = dsClient;
     this.datasetInstantiator = datasetInstantiator;
     this.dataSetAccessor = dataSetAccessor;
+    this.namespace = new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER);
   }
 
   /**
@@ -2964,8 +2966,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             typeName = spec.getType();
           } else {
             // trying to see if that is Dataset V2
-            ReactorDatasetNamespace namespace = new ReactorDatasetNamespace(configuration,
-                                                                            DataSetAccessor.Namespace.USER);
             // TODO: fix namespacing - see REACTOR-217
             String namespacedDsName = namespace.namespace(dsName);
             DatasetInstanceMeta meta = getDatasetInstanceMeta(namespacedDsName);
