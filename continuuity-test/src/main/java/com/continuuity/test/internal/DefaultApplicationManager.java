@@ -202,7 +202,6 @@ public class DefaultApplicationManager implements ApplicationManager {
                                "Procedure %s is already running", procedureName);
       try {
         AppFabricTestHelper.startProgram(httpHandler, applicationId, procedureName, "procedures", arguments);
-
       } catch (Exception e) {
         runningProcessses.remove(procedureName);
         throw Throwables.propagate(e);
