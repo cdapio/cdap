@@ -207,6 +207,18 @@ echo %MyPID% > %~dsp0MyProg.pid
 SET lastPid=%MyPID%
 attrib +h %~dsp0MyProg.pid >NUL
 
+:GrepLogs
+findstr "Failed to start server" %CONTINUUITY_HOME%\logs\reactor.log > NUL 2>&1
+if %errorlevel% == 0 GOTO ServerError
+
+findstr "Reactor started successfully" %CONTINUUITY_HOME%\logs\reactor.log > NUL 2>&1
+if not %errorlevel% == 0 GOTO GrepLogs
+:EndGrepLogs
+
+:ServerError
+echo Failed to start, please check logs for more information
+GOTO STOP
+
 IF NOT "!DEBUG_OPTIONS!" == "" (
   echo Remote debugger agent started on port !port!.
 )
