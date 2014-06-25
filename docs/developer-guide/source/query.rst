@@ -203,7 +203,7 @@ implementation of the underlying Tables and Datasets. For example, if your Datas
 
 While this is straightforward, it is even easier if your Dataset already implements ``BatchReadable``.
 In that case, you can reuse its implementation of ``getSplits()`` and implement the split record scanner
-with a helper method [DOCNOTE: what's the import?]
+with a helper method [DOCNOTE: what's the import? Andreas: Do we need the imports in every code sample?]
 (``Scannables.splitRecordScanner``) already defined by Reactor. It takes a split reader and a ``RecordMaker``
 that transforms a key and value, as produced by the ``BatchReadable``'s split reader,
 into a record::
@@ -231,8 +231,8 @@ defining::
 	  return Scannables.valueRecordScanner(table.createSplitReader(split));
 	}
 
-An example demonstrating these implementations is included in the Continuuity Reactor SDK in the directory
-``examples/SQLQuery``. [DOCNOTE: FIXME! To be created. Or we could extend the Purchase app to support querying]
+An example demonstrating an implementation of ``RecordScannable`` is included in the Continuuity Reactor SDK in the
+directory ``examples/Purchase``, namely the ``PurchaseHistoryStore``.
 
 Formulating Queries
 -------------------
@@ -243,6 +243,6 @@ When creating your queries, keep these limitations in mind:
 - These SQL commands are not allowed on Reactor Datasets: ``INSERT``, ``UPDATE``, ``DELETE``.
 - When addressing your datasets in queries, you need to prefix the data set name with the Reactor
   namespace. For example, if your Dataset is named ``ProductCatalog``, then the corresponding table
-  name is ``continuuity_user_ProductCatalog``. [DOCNOTE: FIXME! verify this prefix is correct]
+  name is ``continuuity_user_ProductCatalog``.
 
 
