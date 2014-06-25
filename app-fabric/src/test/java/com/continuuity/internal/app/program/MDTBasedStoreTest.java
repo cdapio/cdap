@@ -371,17 +371,19 @@ public class MDTBasedStoreTest {
     store.addApplication(appId, appSpec, new LocalLocationFactory().create("/appwithservicestestdelete"));
 
     AbstractApplication newApp = new AppWithNoServices();
+
+    // get the delete program specs after deploying AppWithNoServices
     List<ProgramSpecification> programSpecs = store.getDeletedProgramSpecifications(appId, getAppSpec(newApp));
 
+    //verify the result.
     Assert.assertEquals(1, programSpecs.size());
-    Assert.assertEquals("NoOpService", programSpecs.get(0).getName());   }
+    Assert.assertEquals("NoOpService", programSpecs.get(0).getName());
+  }
 
-  ApplicationSpecification getAppSpec(Application application) {
+  private ApplicationSpecification getAppSpec(Application application) {
     DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(application);
     application.configure(appConfigurer, new ApplicationContext());
-
     return appConfigurer.createApplicationSpec();
-
   }
 
   @Test
