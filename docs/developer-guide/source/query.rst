@@ -1,11 +1,11 @@
 .. :Author: Continuuity, Inc.
-   :Description: Ad-hoc Querying of Continuuity Reactor DataSets using SQL 
+   :Description: Ad-hoc Querying of Continuuity Reactor Datasets using SQL 
 
 ==========================
-Querying DataSets with SQL
+Querying Datasets with SQL
 ==========================
 
-Ad-hoc Querying of Continuuity Reactor DataSets using SQL 
+Ad-hoc Querying of Continuuity Reactor Datasets using SQL 
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
@@ -203,7 +203,7 @@ implementation of the underlying Tables and Datasets. For example, if your Datas
 
 While this is straightforward, it is even easier if your Dataset already implements ``BatchReadable``.
 In that case, you can reuse its implementation of ``getSplits()`` and implement the split record scanner
-with a helper method [DOCNOTE: what's the import? Andreas: Do we need the imports in every code sample?]
+with a helper method
 (``Scannables.splitRecordScanner``) already defined by Reactor. It takes a split reader and a ``RecordMaker``
 that transforms a key and value, as produced by the ``BatchReadable``'s split reader,
 into a record::

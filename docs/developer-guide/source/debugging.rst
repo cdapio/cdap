@@ -126,7 +126,7 @@ method from the ``ReactorTestBase`` class::
 	// Deploy an Application
 	ApplicationManager appManager = deployApplication(TrafficAnalyticsApp.class);
 
-The MapReduce job reads from the ``logEventTable`` DataSet. As a first
+The MapReduce job reads from the ``logEventTable`` Dataset. As a first
 step, the data to the ``logEventTable`` should be populated by running
 the ``RequestCountFlow`` and sending the data to the ``logEventStream``
 Stream::
@@ -392,7 +392,7 @@ Here are the states a transaction goes through in its lifecycle:
   of the transactions present in the structure.
 - If there are no conflicts, all the writes of the transaction along with its write pointer
   are stored in the `committing change sets` structure.
-- The client—namely, a DataSet—can then ask the TM to commit the writes. These are retrieved from the
+- The client—namely, a Dataset—can then ask the TM to commit the writes. These are retrieved from the
   `committing change sets` structure. Since the `committed change sets` structure might
   have evolved since the last conflict check, another one is performed. If the
   transaction is in the `excluded set`, the commit will fail regardless
