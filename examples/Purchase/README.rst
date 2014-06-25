@@ -33,6 +33,8 @@ and write to another.
     customers' purchase history in the *history* DataSet.
   - Execute the ``PurchaseQuery`` procedure to query the *history* DataSet to discover the 
     purchase history of each user.
+  - Execute a SQL query over the ``history`` dataset. You can do this using a series of ``curl``
+    calls.
 
 **Note:** Because by default the PurchaseHistoryWorkFlow process doesn't run until 4:00 A.M.,
 you'll have to wait until the next day (or manually or programmatically execute the
@@ -46,47 +48,45 @@ The Purchase Application
 As in the other `examples <http://continuuity.com/developers/examples>`__, the components
 of the Application are tied together by the class ``PurchaseApp``::
 
-public class PurchaseApp implements Application {
+  public class PurchaseApp extends AbstractApplication {
 
-  @Override
-  public ApplicationSpecification configure() {
-    try {
-      return ApplicationSpecification.Builder.with()
-        .setName("PurchaseHistory")
-        .setDescription("Purchase history app")
-        .withStreams()
-          .add(new Stream("purchaseStream"))
-        .withDataSets()
-          .add(new ObjectStore<PurchaseHistory>("history", PurchaseHistory.class))
-          .add(new ObjectStore<Purchase>("purchases", Purchase.class))
-          .add(new KeyValueTable("frequentCustomers"))
-        .withFlows()
-          .add(new PurchaseFlow())
-        .withProcedures()
-          .add(new PurchaseProcedure())
-        .noMapReduce()
-        .withWorkflows()
-          .add(new PurchaseHistoryWorkflow())
-        .build();
-    } catch (UnsupportedTypeException e) {
-      // This exception is thrown by ObjectStore if its parameter type cannot be 
-      // (de)serialized (for example, if it is an interface and not a class, then there is
-      // no auto-magic way deserialize an object.) In this case that
-      // cannot happen because PurchaseHistory is an actual class.
-      throw new RuntimeException(e);
+    @Override
+    public void configure() {
+      setName("PurchaseHistory");
+      setDescription("Purchase history app");
+      addStream(new Stream("purchaseStream"));
+      createDataSet("frequentCustomers", KeyValueTable.class);
+      addFlow(new PurchaseFlow());
+      addProcedure(new PurchaseQuery());
+      addWorkflow(new PurchaseHistoryWorkflow());
+
+      try {
+        createDataSet("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());
+        ObjectStores.createObjectStore(getConfigurer(), "purchases", Purchase.class);
+      } catch (UnsupportedTypeException e) {
+        // this exception is thrown by ObjectStore if its parameter type cannot be (de)serialized (for example, if it is
+        // an interface and not a class, then there is no auto-magic way deserialize an object. In this case that
+        // cannot happen because PurchaseHistory is an actual class.
+        throw new RuntimeException(e);
+      }
     }
   }
-}
+
 
 ``PurchaseHistory`` and ``Purchase``: ObjectStore Data Storage
 --------------------------------------------------------------
-The data is stored in two ObjectStore DataSets, ```PurchaseHistory`` and ``Purchase``,
-with this method defined in ``PurchaseStore``:
+The raw purchase data is stored in an ObjectStore DataSet, ``Purchase``,
+with this method defined in ``PurchaseStore``::
 
-``process(Purchase purchase)``
+  ``process(Purchase purchase)``
 
-   This method is what actually puts data into the ``Purchase`` DataSet, by writing to the
-   DataSet with each purchase's timestamp and the purchase Object.
+This method is what actually puts data into the ``Purchase`` DataSet, by writing to the
+DataSet with each purchase's timestamp and the purchase Object.
+
+The purchase history for each customer is compiled by the ``PurchaseHistoryWorkflow``, which uses a Map/Reduce job,
+``PurchaseHistoryBuilder`` to process all purchases in batch. It writes to the ``history`` dataset,
+a custom dataset that embeds an ``ObjectStore`` and also implements the ``RecordScannable`` interface to allow SQL
+queries over this dataset.
 
 
 ``PurchaseProcedure``: Stored Procedure
@@ -105,8 +105,8 @@ In this example, you need to build the app from source and then deploy the compi
 You start a Continuuity Reactor, deploy the app, and then run the example by
 injecting sentence entries into the app. 
 
-As you do so, you can query the app to see the results
-of its processing of the sentences.
+Then you can start the workflow that builds purchase histories, and after that is finished, you can use SQL
+queries to explore the results.
 
 When finished, stop the Application as described below.
 
@@ -136,7 +136,7 @@ On Windows::
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
-#. Drag and drop the Application .JAR file (``target/Purchase-1.0.jar``)
+#. Drag and drop the Application .JAR file (``target/Purchase-2.3.0.jar``)
    onto your browser window.
    Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
 #. Once loaded, select the ``Purchase`` Application from the list.
@@ -164,9 +164,20 @@ On Windows::
 
 	~SDK> bin\inject-data
 
+
+Starting the Workflow
+.....................
+The easiest way to start the ``PurchaseHistoryWorkflow`` is to click on the workflow in the application page of the
+Reactor dashboard and then click the start button. You can then also see the status of the workflow and when it
+finishes.
+
+Alternatively, you can send a ``curl`` request to the Reactor::
+
+  curl -v -X POST http://localhost:10000/v2/apps/Purchase/procedures/PurchaseQuery/start
+
 Querying the Results
 ....................
-There are two ways to query the *history* ObjectStore DataSet:
+There are two ways to query the *history* ObjectStore DataSet through the ``PurchaseQuery`` procedure:
 
 - Send a query via an HTTP request using the ``curl`` command. For example::
 
@@ -201,6 +212,41 @@ There are two ways to query the *history* ObjectStore DataSet:
 
 		{"[DOCNOTE: RUN AND ENTER RESULTS"}
 
+
+Exploring the results using SQL
+...............................
+You can use SQL to formulate ad-hoc queries over the ``history`` dataset. This is done by a series of ``curl`` calls.
+The first call is to submit the query for execution::
+
+  curl -v -d '{"query": "SELECT * FROM continuuity_user_history"}' -X POST http://localhost:10000/v2/data/queries
+
+On success, this will return a handle for the query::
+
+  {"handle":"363f8ceb-29fe-493d-810f-858ed0440782"}
+
+This handle is needed to inquire about the status of the query and to retrieve query results. To get the status,
+issue a GET to the query's URL::
+
+  curl -v -X GET http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782/status
+
+Because a SQL query can run for several minutes, you may have to repeat this call until it returns a status of finished:
+
+  {"status":"FINISHED","hasResults":true}
+
+Now that the execution is finished, you can retrieve the results of the query::
+
+  curl -v -X POST http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782/next
+
+This will return upto a limited number of results in JSON format, for example::
+
+  [{"columns":["alex","[{\"customer\":\"alex\",\"product\":\"apple\",\"quantity\":4,\"price\":10,\"purchasetime\":1403655267460}]"]}]
+
+[DOCNOTE: FIXME: use the data from the script]
+
+You can repeat this step until the ``curl`` call returns an empty list. That means you have rerieved all results and
+you can now close the query::
+
+  curl -v -X DELETE http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782
 
 Stopping the Application
 ------------------------
