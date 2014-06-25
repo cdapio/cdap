@@ -5,7 +5,7 @@
 Continuuity Reactor Operations Guide
 ====================================
 
-Running Big Data Applications
+**Introduction to Running Applications and Operating the Continuuity Reactor**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::

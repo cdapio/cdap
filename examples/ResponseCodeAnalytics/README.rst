@@ -1,13 +1,11 @@
-.. :Author: John Jackson
+.. :Author: Continuuity. Inc.
    :Description: Continuuity Reactor Apache Log Event Logger
 
 =============================
 ResponseCodeAnalytics Example
 =============================
 
----------------------------------------------------------------------------------------
-A Continuuity Reactor Application demonstrating Streams, Flows, DataSets and Procedures
----------------------------------------------------------------------------------------
+**A Continuuity Reactor Application Demonstrating Streams, Flows, DataSets and Procedures**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
@@ -224,4 +222,4 @@ Either:
 
 Downloading the Example
 =======================
-`Download the example </developers/examples-files/continuuity-ResponseCodeAnalytics-2.2.0.zip>`_
+`Download the example </developers/examples-files/continuuity-ResponseCodeAnalytics-2.3.0.zip>`_

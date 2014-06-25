@@ -41,8 +41,8 @@
     <module>ResourceSpammer</module>
     <module>ResponseCodeAnalytics</module>
     <!-- Sentiment analysis showcases running external processes in flowlets -->
-    <!-- assumes Linux style path for locating python. Commenting out to support windows -->
-    <!-- <module>SentimentAnalysis</module> -->
+    <!-- assumes Linux style path for locating python. -->
+    <module>SentimentAnalysis</module>
     <module>SimpleWriteAndRead</module>
     <module>Ticker</module>
     <module>TrafficAnalytics</module>

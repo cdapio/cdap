@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
  */
 
 /**
@@ -7,10 +7,10 @@
  *   Application definition.
  * </p>
  * <p>
- *   Every Application must implement {@link Application} interface.
+ *   Every Application must implement the {@link com.continuuity.api.app.Application} interface.
  * </p>
  * <p>
- *   Extending {@link AbstractApplication} will help produce cleaner code.
+ *   Extending {@link com.continuuity.api.app.AbstractApplication} will help produce cleaner code.
  * </p>
  */
 package com.continuuity.api.app;

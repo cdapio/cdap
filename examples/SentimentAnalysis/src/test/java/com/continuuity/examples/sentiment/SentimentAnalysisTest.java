@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.continuuity.examples.sentimentAnalysis;
+package com.continuuity.examples.sentiment;
 
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
@@ -41,7 +41,7 @@ public class SentimentAnalysisTest extends ReactorTestBase {
   @Test
   public void test() throws Exception {
     try {
-      ApplicationManager appManager = deployApplication(SentimentAnalysis.class);
+      ApplicationManager appManager = deployApplication(SentimentAnalysisApp.class);
 
       // Starts a Flow
       FlowManager flowManager = appManager.startFlow("analysis");
@@ -67,23 +67,23 @@ public class SentimentAnalysisTest extends ReactorTestBase {
         String response = procedureManager.getClient().query("aggregates", Collections.<String, String>emptyMap());
 
         // Verify the aggregates
-        Map<String, Long> result = new Gson().fromJson(response, new TypeToken<Map<String, Long>>(){}.getType());
+        Map<String, Long> result = new Gson().fromJson(response, new TypeToken<Map<String, Long>>() { }.getType());
         Assert.assertEquals(2, result.get("positive").intValue());
         Assert.assertEquals(1, result.get("negative").intValue());
         Assert.assertEquals(1, result.get("neutral").intValue());
 
         // Verify retrieval of sentiments
         response = procedureManager.getClient().query("sentiments", ImmutableMap.of("sentiment", "positive"));
-        result = new Gson().fromJson(response, new TypeToken<Map<String, Long>>(){}.getType());
+        result = new Gson().fromJson(response, new TypeToken<Map<String, Long>>() { }.getType());
         Assert.assertEquals(ImmutableSet.of("i love movie", "i am happy today that I got this working."),
                             result.keySet());
 
         response = procedureManager.getClient().query("sentiments", ImmutableMap.of("sentiment", "negative"));
-        result = new Gson().fromJson(response, new TypeToken<Map<String, Long>>(){}.getType());
+        result = new Gson().fromJson(response, new TypeToken<Map<String, Long>>() { }.getType());
         Assert.assertEquals(ImmutableSet.of("i hate movie"), result.keySet());
 
         response = procedureManager.getClient().query("sentiments", ImmutableMap.of("sentiment", "neutral"));
-        result = new Gson().fromJson(response, new TypeToken<Map<String, Long>>(){}.getType());
+        result = new Gson().fromJson(response, new TypeToken<Map<String, Long>>() { }.getType());
         Assert.assertEquals(ImmutableSet.of("i am neutral to movie"), result.keySet());
       } finally {
         procedureManager.stop();
