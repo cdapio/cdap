@@ -11,7 +11,7 @@ import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.explore.client.AsyncExploreClient;
+import com.continuuity.explore.client.DiscoveryExploreClient;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.ExploreClientUtil;
 import com.continuuity.explore.executor.ExploreExecutorService;
@@ -55,7 +55,7 @@ public class BaseHiveExploreServiceTest {
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
 
-    exploreClient = injector.getInstance(AsyncExploreClient.class);
+    exploreClient = injector.getInstance(DiscoveryExploreClient.class);
     Assert.assertTrue(exploreClient.isAvailable());
   }
 
