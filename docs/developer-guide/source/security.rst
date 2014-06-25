@@ -7,18 +7,19 @@ Reactor Security
 
 Enabling Security
 ==================
-To enable security in the Continuuity Reactor, add this property to ``continuuity-site.xml``:
+To enable security in the Continuuity Reactor, add these properties to ``continuuity-site.xml``:
 
 ==========================================  ===========
    Property                                   Value
 ==========================================  ===========
 security.enabled                              true
+security.auth.server.address                  <hostname>
 ==========================================  ===========
 
 
 Configuring SSL
 ================
-To configure SSL, add these properties to ``continuuity-site.xml``:
+To configure the granting of ``AccessToken``\s via SSL, add these properties to ``continuuity-site.xml``:
 
 ==========================================  ===========
    Property                                   Value

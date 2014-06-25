@@ -13,9 +13,8 @@ import com.continuuity.security.auth.KeyIdentifier;
 import com.continuuity.security.auth.KeyIdentifierCodec;
 import com.continuuity.security.auth.TokenManager;
 import com.continuuity.security.auth.TokenValidator;
-import com.continuuity.security.server.AbstractAuthenticationHandler;
 import com.continuuity.security.server.ExternalAuthenticationServer;
-import com.continuuity.security.server.GrantAccessTokenHandler;
+import com.continuuity.security.server.GrantAccessToken;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -49,13 +48,13 @@ public abstract class SecurityModule extends PrivateModule {
 
     bind(ExternalAuthenticationServer.class).in(Scopes.SINGLETON);
 
-    MapBinder<String, Handler> handlerBinder = MapBinder.newMapBinder(binder(), String.class, Handler.class,
+    MapBinder<String, Object> handlerBinder = MapBinder.newMapBinder(binder(), String.class, Object.class,
                                                                       Names.named("security.handlers.map"));
 
     handlerBinder.addBinding(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER)
                  .toProvider(AuthenticationHandlerProvider.class);
     handlerBinder.addBinding(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER)
-                 .to(GrantAccessTokenHandler.class);
+                 .to(GrantAccessToken.class);
     bind(HashMap.class).annotatedWith(Names.named("security.handlers"))
                        .toProvider(AuthenticationHandlerMapProvider.class)
                        .in(Scopes.SINGLETON);
@@ -92,17 +91,11 @@ public abstract class SecurityModule extends PrivateModule {
   }
 
   private static final class AuthenticationHandlerMapProvider implements Provider<HashMap> {
-    private final HashMap<String, Handler> handlerMap;
+    private final HashMap<String, Object> handlerMap;
 
     @Inject
-    public AuthenticationHandlerMapProvider(@Named("security.handlers.map") Map<String, Handler> handlers) {
-      handlerMap = new HashMap<String, Handler>();
-      Handler securityHandler = handlers.get(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER);
-      Handler grantAccessTokenHandler = handlers.get(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER);
-      ((AbstractAuthenticationHandler) securityHandler).setHandler(grantAccessTokenHandler);
-
-      handlerMap.put(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER, securityHandler);
-      handlerMap.put(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER, grantAccessTokenHandler);
+    public AuthenticationHandlerMapProvider(@Named("security.handlers.map") Map<String, Object> handlers) {
+      handlerMap = new HashMap<String, Object>(handlers);
     }
 
     @Override

@@ -18,6 +18,6 @@
  * Package for ResourceSpammer Application that demonstrates CPU limits.
  * 
  */
-package com.continuuity.examples.resourcespanner;
+package com.continuuity.examples.resourcespammer;
 
 

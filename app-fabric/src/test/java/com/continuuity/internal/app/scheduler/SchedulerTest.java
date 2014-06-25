@@ -7,14 +7,17 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
+import com.continuuity.internal.app.runtime.schedule.ScheduleStoreTableUtil;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.test.SlowTests;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
@@ -33,6 +36,7 @@ import java.util.List;
 /**
 *
 */
+@Category(SlowTests.class)
 public class SchedulerTest {
 
   private static Injector injector;
@@ -55,7 +59,7 @@ public class SchedulerTest {
     throws SchedulerException, UnsupportedTypeException {
     JobStore js;
     if (enablePersistence) {
-      js = new DataSetBasedScheduleStore(factory, accessor);
+      js = new DataSetBasedScheduleStore(factory, new ScheduleStoreTableUtil(accessor));
     } else {
       js = new RAMJobStore();
     }

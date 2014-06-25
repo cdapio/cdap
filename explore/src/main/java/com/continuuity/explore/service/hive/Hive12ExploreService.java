@@ -6,10 +6,9 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Row;
+import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -19,7 +18,6 @@ import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationState;
-import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.thrift.TColumnValue;
 import org.apache.hive.service.cli.thrift.TRow;
 import org.apache.hive.service.cli.thrift.TRowSet;
@@ -60,7 +58,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
       Class cliServiceClass = getCliService().getClass();
       Method m = cliServiceClass.getMethod("getOperationStatus", OperationHandle.class);
       OperationState operationState = (OperationState) m.invoke(getCliService(), operationHandle);
-      Status status = new Status(Status.State.valueOf(operationState.toString()), operationHandle.hasResultSet());
+      Status status = new Status(Status.OpStatus.valueOf(operationState.toString()), operationHandle.hasResultSet());
       LOG.trace("Status of handle {} is {}", handle, status);
       return status;
     } catch (HandleNotFoundException e) {
@@ -74,7 +72,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  public List<Row> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
+  public List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
     try {
       LOG.trace("Getting results for handle {}", handle);
       OperationHandle operationHandle = getOperationHandle(handle);
@@ -86,13 +84,13 @@ public class Hive12ExploreService extends BaseHiveExploreService {
         Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
         TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
 
-        ImmutableList.Builder<Row> rowsBuilder = ImmutableList.builder();
+        ImmutableList.Builder<Result> rowsBuilder = ImmutableList.builder();
         for (TRow tRow : tRowSet.getRows()) {
           ImmutableList.Builder<Object> colsBuilder = ImmutableList.builder();
           for (TColumnValue tColumnValue : tRow.getColVals()) {
             colsBuilder.add(columnToObject(tColumnValue));
           }
-          rowsBuilder.add(new Row(colsBuilder.build()));
+          rowsBuilder.add(new Result(colsBuilder.build()));
         }
         return rowsBuilder.build();
       } else {

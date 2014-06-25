@@ -13,6 +13,7 @@ import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.filter.AndFilter;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.save.LogSaver;
+import com.continuuity.logging.save.LogSaverTableUtil;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.logging.write.FileMetaDataManager;
 import com.google.common.base.Preconditions;
@@ -61,8 +62,8 @@ public class SingleNodeLogReader implements LogReader {
 
     try {
       this.schema = new LogSchema().getAvroSchema();
-      this.fileMetaDataManager = new FileMetaDataManager(LogSaver.getMetaTable(dataSetAccessor), txClient,
-                                                         locationFactory);
+      this.fileMetaDataManager = new FileMetaDataManager(new LogSaverTableUtil(dataSetAccessor).getMetaTable(),
+                                                         txClient, locationFactory);
 
     } catch (Exception e) {
       LOG.error("Got exception", e);

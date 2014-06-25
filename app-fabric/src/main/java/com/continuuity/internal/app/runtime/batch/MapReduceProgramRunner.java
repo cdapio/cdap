@@ -2,9 +2,9 @@ package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
+import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.stream.StreamBatchReadable;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
@@ -26,6 +26,7 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
+import com.continuuity.data.dataset.DatasetCreationSpec;
 import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data.stream.TextStreamInputFormat;
 import com.continuuity.data2.dataset2.DatasetFramework;
@@ -41,6 +42,7 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.DataSetFieldSetter;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.continuuity.internal.lang.Reflections;
@@ -75,6 +77,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -96,6 +99,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   private final TransactionSystemClient txSystemClient;
   private final TransactionExecutorFactory txExecutorFactory;
+  private final ProgramServiceDiscovery serviceDiscovery;
 
   private Job jobConf;
   private MapReduceProgramController controller;
@@ -108,7 +112,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
-                                TransactionExecutorFactory txExecutorFactory) {
+                                TransactionExecutorFactory txExecutorFactory,
+                                ProgramServiceDiscovery serviceDiscovery) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -118,6 +123,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.txExecutorFactory = txExecutorFactory;
+    this.serviceDiscovery = serviceDiscovery;
   }
 
   @Inject (optional = true)
@@ -157,7 +163,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework,
                                                                       program.getClassLoader());
     Map<String, DataSetSpecification> dataSetSpecs = program.getSpecification().getDataSets();
-    Map<String, DatasetInstanceCreationSpec> datasetSpecs = program.getSpecification().getDatasets();
+    Map<String, DatasetCreationSpec> datasetSpecs = program.getSpecification().getDatasets();
     dataSetInstantiator.setDataSets(dataSetSpecs.values(), datasetSpecs.values());
 
     Map<String, Closeable> dataSets = DataSets.createDataSets(dataSetInstantiator,
@@ -168,8 +174,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 dataSets, spec,
                                 dataSetInstantiator.getTransactionAware(),
                                 logicalStartTime,
-                                workflowBatch,
-                                metricsCollectionService);
+                                workflowBatch, serviceDiscovery, metricsCollectionService);
 
     try {
       MapReduce job = program.<MapReduce>getMainClass().newInstance();
@@ -346,7 +351,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private void beforeSubmit(final MapReduce job,
                             final BasicMapReduceContext context,
                             final DataSetInstantiator dataSetInstantiator)
-    throws TransactionFailureException {
+    throws TransactionFailureException, InterruptedException {
     TransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     // TODO: retry on txFailure or txConflict? Implement retrying TransactionExecutor
     txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -367,7 +372,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                         final BasicMapReduceContext context,
                         final DataSetInstantiator dataSetInstantiator,
                         final boolean succeeded)
-    throws TransactionFailureException {
+    throws TransactionFailureException, InterruptedException {
     TransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     // TODO: retry on txFailure or txConflict? Implement retrying TransactionExecutor
     txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -501,9 +506,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
         if (inputDataSetName.startsWith("stream://")) {
           batchReadable = new StreamBatchReadable(inputDataSetName.substring("stream://".length()));
         } else {
-          BatchReadable inputDataSet = (BatchReadable) mapReduceContext.getDataSet(inputDataSetName);
           // We checked on validation phase that it implements BatchReadable
-          mapReduceContext.setInput(inputDataSet, inputDataSet.getSplits());
+          BatchReadable inputDataSet = (BatchReadable) mapReduceContext.getDataSet(inputDataSetName);
+          List<Split> inputSplits = mapReduceContext.getInputDataSelection();
+          if (inputSplits == null) {
+            inputSplits = inputDataSet.getSplits();
+          }
+          mapReduceContext.setInput(inputDataSet, inputSplits);
         }
       }
     }

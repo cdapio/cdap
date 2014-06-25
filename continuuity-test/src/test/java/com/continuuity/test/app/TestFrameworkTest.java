@@ -1,15 +1,11 @@
 package com.continuuity.test.app;
 
 import com.continuuity.api.app.Application;
-import com.continuuity.api.data.batch.RowScannable;
-import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.app.program.RunRecord;
-import com.continuuity.common.conf.Constants;
-import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
 import com.continuuity.test.FlowManager;
@@ -19,8 +15,11 @@ import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.ReactorTestBase;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.RuntimeStats;
+import com.continuuity.test.ServiceManager;
+import com.continuuity.test.SlowTests;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.test.WorkflowManager;
+import com.continuuity.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -30,6 +29,7 @@ import com.google.gson.Gson;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +46,7 @@ import java.util.concurrent.TimeoutException;
 /**
  *
  */
+@Category(SlowTests.class)
 public class TestFrameworkTest extends ReactorTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTest.class);
 
@@ -82,6 +83,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
+  @Category(XSlowTests.class)
   @Test
   public void testDeployWorkflowApp() throws InterruptedException {
     ApplicationManager applicationManager = deployApplication(AppWithSchedule.class);
@@ -134,6 +136,7 @@ public class TestFrameworkTest extends ReactorTestBase {
 
   }
 
+  @Category(XSlowTests.class)
   @Test(timeout = 240000)
   public void testMultiInput() throws InterruptedException, IOException, TimeoutException {
     ApplicationManager applicationManager = deployApplication(JoinMultiStreamApp.class);
@@ -170,14 +173,29 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
+  @Category(XSlowTests.class)
   @Test(timeout = 360000)
   public void testApp() throws InterruptedException, IOException, TimeoutException {
     testApp(WordCountApp2.class, false, "text2");
   }
 
+  @Category(XSlowTests.class)
   @Test(timeout = 360000)
   public void testAppWithDatasetV2() throws InterruptedException, IOException, TimeoutException {
     testApp(WordCountAppV2.class, true, "text");
+  }
+
+  @Test
+  public void testAppwithServices() throws Exception {
+    ApplicationManager applicationManager = deployApplication(AppWithServices.class);
+    LOG.info("Deployed.");
+    ServiceManager serviceManager = applicationManager.startService("NoOpService");
+    LOG.info("Service Started");
+    serviceManager.stop();
+    LOG.info("Service Stopped");
+    // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the REACTOR scope test in
+    // TestMetricsCollectionService
+
   }
 
   // todo: passing stream name as a workaround for not cleaning up streams during reset()
@@ -255,6 +273,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
+  @Category(SlowTests.class)
   @Test
   public void testGenerator() throws InterruptedException, IOException, TimeoutException {
     ApplicationManager applicationManager = deployApplication(GenSinkApp2.class);
@@ -354,14 +373,14 @@ public class TestFrameworkTest extends ReactorTestBase {
   @Test(timeout = 60000L)
   public void testAppWithExistingDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("keyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyProcedure");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("keyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyProcedureWithUseDataSetAnnotation");
   }
 
@@ -395,20 +414,39 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
-  public static <ROW> String generateCreateStatement(String name, RowScannable<ROW> scannable) {
-    String hiveSchema;
+  @Test(timeout = 60000L)
+  public void testSQLQuery() throws Exception {
+
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    ApplicationManager appManager = deployApplication(AppsWithDataset.AppWithAutoCreate.class);
+    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
+        appManager.getDataSet("myTable");
+    AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = myTableManager.get();
+    kvTable.put("a", "1");
+    kvTable.put("b", "2");
+    kvTable.put("c", "1");
+    myTableManager.flush();
+
+    Connection connection = getQueryClient();
     try {
-      hiveSchema = Scannables.hiveSchemaFor(scannable);
-    } catch (UnsupportedTypeException e) {
-      LOG.error(String.format(
-        "Can't create Hive table for dataset '%s' because its row type is not supported", name), e);
-      return null;
+      // list the tables and make sure the table is there
+      ResultSet results = connection.prepareStatement("show tables").executeQuery();
+      Assert.assertTrue(results.next());
+      Assert.assertTrue("continuuity_user_myTable".equalsIgnoreCase(results.getString(1)));
+
+      // run a query over the dataset
+      results = connection.prepareStatement("select first from continuuity_user_mytable where second = '1'")
+          .executeQuery();
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("a", results.getString(1));
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("c", results.getString(1));
+      Assert.assertFalse(results.next());
+
+    } finally {
+      connection.close();
+      appManager.stopAll();
     }
-    String hiveStatement = String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Continuuity Reactor Dataset\" " +
-                                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
-                                         name, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
-                                         Constants.Explore.DATASET_NAME, name);
-    LOG.info("Command for Hive: {}", hiveStatement);
-    return hiveStatement;
   }
+
 }

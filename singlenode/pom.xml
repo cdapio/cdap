@@ -8,7 +8,7 @@
   <parent>
     <groupId>com.continuuity</groupId>
     <artifactId>parent</artifactId>
-    <version>2.3.0-SNAPSHOT</version>
+    <version>2.4.0-SNAPSHOT</version>
     <relativePath>../parent/pom.xml</relativePath>
   </parent>
 
@@ -78,5 +78,277 @@
     </dependency>
 
   </dependencies>
+
+  <profiles>
+    <profile>
+      <id>dist</id>
+      <properties>
+        <sdk.dir>${project.build.directory}/sdk</sdk.dir>
+        <stage.opt.dir>${sdk.dir}/continuuity-sdk-${project.version}</stage.opt.dir>
+        <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>com.continuuity</groupId>
+          <artifactId>web-app</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>2.4</version>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.8</version>
+            <executions>
+              <execution>
+                <id>copy-dependencies</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-dependencies</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.lib.dir}</outputDirectory>
+                  <overWriteReleases>false</overWriteReleases>
+                  <overWriteSnapshots>false</overWriteSnapshots>
+                  <overWriteIfNewer>true</overWriteIfNewer>
+                  <excludeGroupIds>org.apache.hbase,com.google.protobuf,asm,org.apache.zookeeper,org.apache.kafka,org.scala-lang</excludeGroupIds>
+                  <excludeArtifactIds>hadoop-hdfs,zkclient</excludeArtifactIds>
+                  <silent>true</silent>
+                  <includeScope>compile</includeScope>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <version>2.6</version>
+            <configuration>
+              <outputDirectory>${stage.opt.dir}/conf</outputDirectory>
+            </configuration>
+            <executions>
+              <execution>
+                <id>copy-opt</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>${project.basedir}/src/dist</directory>
+                      <includes>
+                        <include>README</include>
+                      </includes>
+                      <filtering>true</filtering>
+                    </resource>
+                    <resource>
+                      <directory>${project.basedir}/src/dist</directory>
+                      <excludes>
+                        <!-- Exclude README as it needs filtering and is done above -->
+                        <exclude>README</exclude>
+                      </excludes>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.parent.basedir}/distributions</directory>
+                      <includes>
+                        <include>VERSION</include>
+                      </includes>
+                      <filtering>true</filtering>
+                    </resource>
+                    <resource>
+                      <directory>${project.basedir}/bin</directory>
+                      <targetPath>bin</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.parent.basedir}/gateway/bin</directory>
+                      <targetPath>bin</targetPath>
+                      <excludes>
+                        <exclude>flume-client</exclude>
+                      </excludes>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.parent.basedir}/data-fabric/bin</directory>
+                      <targetPath>bin</targetPath>
+                      <includes>
+                        <include>tx-debugger*</include>
+                      </includes>
+                    </resource>
+                    <!-- Copy binaries for Windows -->
+                    <resource>
+                      <directory>${project.basedir}/libexec</directory>
+                      <targetPath>libexec</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.parent.basedir}/continuuity-test/src/main/resources</directory>
+                      <targetPath>libexec/bin</targetPath>
+                      <includes>
+                        <include>*.exe</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.parent.basedir}/continuuity-test/src/main/resources</directory>
+                      <targetPath>lib/native</targetPath>
+                      <includes>
+                        <include>*.dll</include>
+                      </includes>
+                    </resource>
+                    <!-- Copy continuuity-api jars -->
+                    <resource>
+                      <directory>${project.parent.parent.basedir}/continuuity-api/target</directory>
+                      <includes>
+                        <include>continuuity-api-${project.version}*.jar</include>
+                      </includes>
+                    </resource>
+                    <!-- Copy web-app -->
+                    <resource>
+                      <directory>${project.parent.parent.basedir}/web-app/target/local</directory>
+                      <targetPath>web-app/local</targetPath>
+                    </resource>
+                    <!-- Copy continuuity-api javadocs -->
+                    <resource>
+                      <directory>${project.parent.parent.basedir}/continuuity-api/target/apidocs</directory>
+                      <targetPath>javadocs</targetPath>
+                    </resource>
+                    <!-- Copy examples. The assume the example is already built -->
+                    <resource>
+                      <directory>${project.parent.parent.basedir}/examples</directory>
+                      <targetPath>examples</targetPath>
+                      <includes>
+                        <include>**/src/**</include>
+                        <include>**/bin/*</include>
+                        <include>**/pom.xml</include>
+                        <include>**/target/*.jar</include>
+                      </includes>
+                      <excludes>
+                        <exclude>pom.xml</exclude>
+                        <exclude>build.gradle</exclude>
+                        <exclude>README.rst</exclude>
+                        <exclude>**/target/original*.jar</exclude>
+                      </excludes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <!-- Copy example deploy pom -->
+              <execution>
+                <id>copy-examples-pom</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${project.build.directory}/examples</outputDirectory>
+                  <delimiters>
+                    <delimiter>@</delimiter>
+                  </delimiters>
+                  <useDefaultDelimiters>false</useDefaultDelimiters>
+                  <resources>
+                    <resource>
+                      <directory>${project.parent.parent.basedir}/examples</directory>
+                      <includes>
+                        <include>deploy_pom.xml</include>
+                      </includes>
+                      <filtering>true</filtering>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.7</version>
+            <executions>
+              <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
+              <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
+              <execution>
+                <id>bin-permission</id>
+                <phase>prepare-package</phase>
+                <configuration>
+                  <target>
+                    <chmod file="${stage.opt.dir}/bin/**" perm="755"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+              <!-- Rename examples deploy_pom.xml to pom.xml -->
+              <execution>
+                <id>rename-pom</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <copy file="${project.build.directory}/examples/deploy_pom.xml" tofile="${stage.opt.dir}/examples/pom.xml" />
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>2.4</version>
+            <executions>
+              <execution>
+                <!-- Override the one in parent as singlenode build zip, not tgz -->
+                <id>tgz-package</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <descriptors>
+                    <descriptor>${project.basedir}/src/main/assembly/sdk.xml</descriptor>
+                  </descriptors>
+                  <appendAssemblyId>false</appendAssemblyId>
+                  <attach>false</attach>
+                  <finalName>continuuity-sdk-${project.version}</finalName>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <!-- Extra deployment for reactor sdk -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <version>2.8</version>
+            <executions>
+              <execution>
+                <id>deploy-sdk</id>
+                <phase>deploy</phase>
+                <goals>
+                  <goal>deploy-file</goal>
+                </goals>
+                <configuration>
+                  <version>${project.version}</version>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>continuuity-sdk</artifactId>
+                  <packaging>zip</packaging>
+                  <generatePom>false</generatePom>
+                  <file>${project.build.directory}/continuuity-sdk-${project.version}.zip</file>
+                  <repositoryId>continuuity</repositoryId>
+                  <url>${deploy.url}</url>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
 </project>

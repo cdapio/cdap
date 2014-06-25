@@ -18,7 +18,7 @@ package com.continuuity.examples.purchase;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.ObjectStore;
+import com.continuuity.api.dataset.lib.ObjectStore;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 
 /**

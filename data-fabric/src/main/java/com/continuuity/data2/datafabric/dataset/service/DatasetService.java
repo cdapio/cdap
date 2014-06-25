@@ -1,25 +1,19 @@
 package com.continuuity.data2.datafabric.dataset.service;
 
-import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.hooks.MetricsReporterHook;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
-import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
-import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.explore.client.DatasetExploreFacade;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -28,8 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -43,37 +35,29 @@ public class DatasetService extends AbstractIdleService {
   private final DatasetOpExecutor opExecutorClient;
   private Cancellable cancelDiscovery;
 
-  private final DatasetInstanceManager instanceManager;
   private final DatasetTypeManager typeManager;
 
-  private final DatasetFramework mdsDatasetFramework;
-  private final Map<String, DatasetModule> defaultModules;
+
+  private final MDSDatasetsRegistry mdsDatasets;
 
   @Inject
   public DatasetService(CConfiguration cConf,
                         LocationFactory locationFactory,
                         DiscoveryService discoveryService,
-                        @Named("datasetMDS") DatasetFramework mdsDatasetFramework,
-                        @Named("defaultDatasetModules")
-                        Map<String, DatasetModule> defaultModules,
-                        TransactionSystemClient txSystemClient,
+                        DatasetTypeManager typeManager,
+                        DatasetInstanceManager instanceManager,
                         MetricsCollectionService metricsCollectionService,
-                        DatasetOpExecutor opExecutorClient) throws Exception {
+                        DatasetOpExecutor opExecutorClient,
+                        MDSDatasetsRegistry mdsDatasets,
+                        DatasetExploreFacade datasetExploreFacade) throws Exception {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
 
-    // todo: refactor once DataSetAccessor is removed.
-    this.mdsDatasetFramework =
-      new NamespacedDatasetFramework(mdsDatasetFramework,
-                                     new ReactorDatasetNamespace(cConf, DataSetAccessor.Namespace.SYSTEM));
-    // NOTE: order matters
-    this.defaultModules = Maps.newLinkedHashMap(defaultModules);
-    this.typeManager = new DatasetTypeManager(mdsDatasetFramework, txSystemClient, locationFactory, defaultModules);
-    this.instanceManager = new DatasetInstanceManager(mdsDatasetFramework, txSystemClient);
+    this.typeManager = typeManager;
 
     builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
-                                             new DatasetInstanceHandler(typeManager, instanceManager,
-                                                                        opExecutorClient)));
+                                             new DatasetInstanceHandler(typeManager, instanceManager, opExecutorClient,
+                                                                        datasetExploreFacade, cConf)));
 
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.DATASET_MANAGER)));
@@ -92,21 +76,17 @@ public class DatasetService extends AbstractIdleService {
     this.httpService = builder.build();
     this.discoveryService = discoveryService;
     this.opExecutorClient = opExecutorClient;
+    this.mdsDatasets = mdsDatasets;
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting DatasetService...");
 
-    // adding default modules to init dataset manager used by mds (directly)
-    for (Map.Entry<String, DatasetModule> module : defaultModules.entrySet()) {
-      mdsDatasetFramework.addModule(module.getKey(), module.getValue());
-    }
-
+    mdsDatasets.startUp();
     typeManager.startAndWait();
-    instanceManager.startAndWait();
-
     opExecutorClient.startAndWait();
+
     httpService.startAndWait();
 
     // Register the service
@@ -129,8 +109,9 @@ public class DatasetService extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.info("Stopping DatasetService...");
 
+    mdsDatasets.shutDown();
+
     typeManager.stopAndWait();
-    instanceManager.stopAndWait();
 
     // Unregister the service
     cancelDiscovery.cancel();

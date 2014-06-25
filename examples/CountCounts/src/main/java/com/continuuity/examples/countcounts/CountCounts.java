@@ -15,33 +15,24 @@
  */
 package com.continuuity.examples.countcounts;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
 
 /**
  * CountCountsDemo application contains a Flow {@code CountCounts} and is attached
  * to a Stream named "text".
  */
-public class CountCounts implements Application {
+public class CountCounts extends AbstractApplication {
 
   public static final String TABLE_NAME = "countCounterTable";
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("CountCounts")
-      .setDescription("Application for counting counts of words")
-      .withStreams()
-        .add(new Stream("text"))
-      .withDataSets()
-        .add(new CountCounterTable(TABLE_NAME))
-      .withFlows()
-        .add(new CountCountsFlow())
-      .withProcedures()
-        .add(new CountCountsProcedure())
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("CountCounts");
+    setDescription("Application for counting counts of words");
+    addStream(new Stream("text"));
+    createDataSet(TABLE_NAME, CountCounterTable.class);
+    addFlow(new CountCountsFlow());
+    addProcedure(new CountCountsProcedure());
   }
 }

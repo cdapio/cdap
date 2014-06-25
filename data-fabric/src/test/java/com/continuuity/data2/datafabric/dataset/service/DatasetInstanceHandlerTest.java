@@ -5,17 +5,19 @@ import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
+import com.continuuity.api.dataset.lib.CompositeDatasetAdmin;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Put;
 import com.continuuity.api.dataset.table.Table;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.http.HttpRequests;
+import com.continuuity.common.http.ObjectResponse;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
-import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
-import com.continuuity.data2.dataset2.lib.CompositeDatasetAdmin;
 import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
@@ -25,13 +27,7 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,7 +44,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   public void testBasics() throws Exception {
 
     // nothing has been created, modules and types list is empty
-    List<DatasetSpecification> instances = getInstances().value;
+    List<DatasetSpecification> instances = getInstances().getResponseObject();
 
     // nothing in the beginning
     Assert.assertEquals(0, instances.size());
@@ -64,15 +60,21 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     // create dataset instance
     Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", props));
 
+    // verify module cannot be deleted which type is used for the dataset
+    int modulesBeforeDelete = getModules().getResponseObject().size();
+    Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModule("module2"));
+    Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModules());
+    Assert.assertEquals(modulesBeforeDelete, getModules().getResponseObject().size());
+
     // verify instance was created
-    instances = getInstances().value;
+    instances = getInstances().getResponseObject();
     Assert.assertEquals(1, instances.size());
     // verifying spec is same as expected
     DatasetSpecification dataset1Spec = createSpec("dataset1", "datasetType2", props);
     Assert.assertEquals(dataset1Spec, instances.get(0));
 
     // verify created instance info can be retrieved
-    DatasetInstanceMeta datasetInfo = getInstance("dataset1").value;
+    DatasetInstanceMeta datasetInfo = getInstance("dataset1").getResponseObject();
     Assert.assertEquals(dataset1Spec, datasetInfo.getSpec());
     Assert.assertEquals(dataset1Spec.getType(), datasetInfo.getType().getName());
     // type meta should have 2 modules that has to be loaded to create type's class and in the order they must be loaded
@@ -84,19 +86,19 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
                                   ImmutableList.of("module1"), Collections.<String>emptyList());
 
     // try to retrieve non-existed instance
-    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getInstance("non-existing-dataset").status);
+    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getInstance("non-existing-dataset").getResponseCode());
 
     // cannot create instance with same name again
     Assert.assertEquals(HttpStatus.SC_CONFLICT, createInstance("dataset1", "datasetType2", props));
-    Assert.assertEquals(1, getInstances().value.size());
+    Assert.assertEquals(1, getInstances().getResponseObject().size());
 
     // cannot delete non-existing dataset instance
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, deleteInstance("non-existing-dataset"));
-    Assert.assertEquals(1, getInstances().value.size());
+    Assert.assertEquals(1, getInstances().getResponseObject().size());
 
     // delete dataset instance
     Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1"));
-    Assert.assertEquals(0, getInstances().value.size());
+    Assert.assertEquals(0, getInstances().getResponseObject().size());
 
     // delete dataset modules
     Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module2"));
@@ -118,7 +120,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     // cannot create instance with same name again
     Assert.assertEquals(HttpStatus.SC_OK, createInstance(table1Name, "table", DatasetProperties.EMPTY));
     Assert.assertEquals(HttpStatus.SC_OK, createInstance(table2Name, "table", DatasetProperties.EMPTY));
-    Assert.assertEquals(2, getInstances().value.size());
+    Assert.assertEquals(2, getInstances().getResponseObject().size());
 
     // we want to verify that data is also gone, so we write smth to tables first
     final Table table1 = dsFramework.getDataset("myTable1", null);
@@ -146,11 +148,11 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
     // delete table, check that it is deleted, create again and verify that it is empty
     Assert.assertEquals(HttpStatus.SC_OK, deleteInstance(table1Name));
-    Response<List<DatasetSpecification>> instances = getInstances();
-    Assert.assertEquals(1, instances.value.size());
-    Assert.assertEquals(table2Name, instances.value.get(0).getName());
+    ObjectResponse<List<DatasetSpecification>> instances = getInstances();
+    Assert.assertEquals(1, instances.getResponseObject().size());
+    Assert.assertEquals(table2Name, instances.getResponseObject().get(0).getName());
     Assert.assertEquals(HttpStatus.SC_OK, createInstance(table1Name, "table", DatasetProperties.EMPTY));
-    Assert.assertEquals(2, getInstances().value.size());
+    Assert.assertEquals(2, getInstances().getResponseObject().size());
 
     // verify that table1 is empty. Note: it is ok for test purpose to re-use the table clients
     txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -165,10 +167,10 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
     // delete all tables, check that they deleted, create again and verify that they are empty
     Assert.assertEquals(HttpStatus.SC_OK, deleteInstances());
-    Assert.assertEquals(0, getInstances().value.size());
+    Assert.assertEquals(0, getInstances().getResponseObject().size());
     Assert.assertEquals(HttpStatus.SC_OK, createInstance(table1Name, "table", DatasetProperties.EMPTY));
     Assert.assertEquals(HttpStatus.SC_OK, createInstance(table2Name, "table", DatasetProperties.EMPTY));
-    Assert.assertEquals(2, getInstances().value.size());
+    Assert.assertEquals(2, getInstances().getResponseObject().size());
 
     // verify that tables are empty. Note: it is ok for test purpose to re-use the table clients
     txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -185,38 +187,24 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   }
 
   private int createInstance(String instanceName, String typeName, DatasetProperties props) throws IOException {
-    HttpPost post = new HttpPost(getUrl("/data/instances/" + instanceName));
-    post.addHeader("type-name", typeName);
-    post.setEntity(new StringEntity(new Gson().toJson(props)));
-
-    DefaultHttpClient client = new DefaultHttpClient();
-    HttpResponse response = client.execute(post);
-
-    return response.getStatusLine().getStatusCode();
+    return HttpRequests.put(getUrl("/data/datasets/" + instanceName),
+                            new Gson().toJson(new DatasetInstanceHandler.DatasetTypeAndProperties(typeName, props)))
+      .getResponseCode();
   }
 
-  private Response<List<DatasetSpecification>> getInstances() throws IOException {
-    HttpGet get = new HttpGet(getUrl("/data/instances"));
-    DefaultHttpClient client = new DefaultHttpClient();
-    return parseResponse(client.execute(get), new TypeToken<List<DatasetSpecification>>() { }.getType());
+  private ObjectResponse<List<DatasetSpecification>> getInstances() throws IOException {
+    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/datasets")),
+                                       new TypeToken<List<DatasetSpecification>>() {
+                                       }.getType());
   }
 
-  private Response<DatasetInstanceMeta> getInstance(String instanceName) throws IOException {
-    HttpGet get = new HttpGet(getUrl("/data/instances/" + instanceName));
-    DefaultHttpClient client = new DefaultHttpClient();
-    return parseResponse(client.execute(get), DatasetInstanceMeta.class);
+  private ObjectResponse<DatasetInstanceMeta> getInstance(String instanceName) throws IOException {
+    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/datasets/" + instanceName)),
+                                       DatasetInstanceMeta.class);
   }
 
   private int deleteInstance(String instanceName) throws IOException {
-    HttpDelete delete = new HttpDelete(getUrl("/data/instances/" + instanceName));
-    HttpResponse response = new DefaultHttpClient().execute(delete);
-    return response.getStatusLine().getStatusCode();
-  }
-
-  private int deleteInstances() throws IOException {
-    HttpDelete delete = new HttpDelete(getUrl("/data/instances"));
-    HttpResponse response = new DefaultHttpClient().execute(delete);
-    return response.getStatusLine().getStatusCode();
+    return HttpRequests.delete(getUrl("/data/datasets/" + instanceName)).getResponseCode();
   }
 
   /**
@@ -249,12 +237,12 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       }
 
       @Override
-      public DatasetAdmin getAdmin(DatasetSpecification spec) {
+      public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) {
         return new CompositeDatasetAdmin(Collections.<DatasetAdmin>emptyList());
       }
 
       @Override
-      public Dataset getDataset(DatasetSpecification spec) {
+      public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) {
         return null;
       }
     };

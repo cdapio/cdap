@@ -22,10 +22,12 @@ import com.continuuity.metrics.data.DefaultMetricsTableFactory;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsProcessorModule;
+import com.continuuity.metrics.guice.MetricsProcessorStatusServiceModule;
 import com.continuuity.metrics.process.KafkaConsumerMetaTable;
 import com.continuuity.metrics.process.KafkaMetricsProcessorServiceFactory;
 import com.continuuity.metrics.process.MessageCallbackFactory;
 import com.continuuity.metrics.process.MetricsMessageCallbackFactory;
+import com.continuuity.metrics.process.MetricsProcessorStatusService;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -54,6 +56,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
   private KafkaMetricsProcessorService kafkaMetricsProcessorService;
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
+  private MetricsProcessorStatusService metricsProcessorStatusService;
 
   public MetricsProcessorTwillRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
@@ -62,7 +65,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
   @Override
   protected void doInit(TwillContext context) {
     try {
-      getCConfiguration().set(Constants.Metrics.ADDRESS, context.getHost().getCanonicalHostName());
+      getCConfiguration().set(Constants.MetricsProcessor.ADDRESS, context.getHost().getCanonicalHostName());
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
       injector.getInstance(LogAppenderInitializer.class).initialize();
       LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
@@ -76,6 +79,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
       zkClientService = injector.getInstance(ZKClientService.class);
       kafkaClientService = injector.getInstance(KafkaClientService.class);
       kafkaMetricsProcessorService = injector.getInstance(KafkaMetricsProcessorService.class);
+      metricsProcessorStatusService = injector.getInstance(MetricsProcessorStatusService.class);
       LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
@@ -88,6 +92,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
     services.add(zkClientService);
     services.add(kafkaClientService);
     services.add(kafkaMetricsProcessorService);
+    services.add(metricsProcessorStatusService);
   }
 
   public static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
@@ -102,7 +107,8 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
       new LoggingModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
-      new KafkaMetricsProcessorModule()
+      new KafkaMetricsProcessorModule(),
+      new MetricsProcessorStatusServiceModule()
      );
   }
 

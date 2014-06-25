@@ -5,7 +5,6 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.stream.StreamSpecification;
@@ -39,8 +38,10 @@ import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
+import com.continuuity.data2.datafabric.dataset.DatasetMetaTableUtil;
 import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.dataset.api.DataSetManager;
@@ -172,13 +173,14 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private static final long UPLOAD_TIMEOUT = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
 
-  private static final Map<String, Type> RUNNABLE_TYPE_MAP = ImmutableMap.of(
-    "mapreduce", Type.MAPREDUCE,
-    "flows", Type.FLOW,
-    "procedures", Type.PROCEDURE,
-    "workflows", Type.WORKFLOW,
-    "webapp", Type.WEBAPP
-  );
+  private static final Map<String, Type> RUNNABLE_TYPE_MAP = new ImmutableMap.Builder<String, Type>()
+    .put("mapreduce", Type.MAPREDUCE)
+    .put("flows", Type.FLOW)
+    .put("procedures", Type.PROCEDURE)
+    .put("workflows", Type.WORKFLOW)
+    .put("webapp", Type.WEBAPP)
+    .put("services", Type.SERVICE)
+    .build();
 
   /**
    * Configuration object passed from higher up.
@@ -705,6 +707,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }
       if (status == AppFabricServiceStatus.INTERNAL_ERROR) {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        return;
       }
       responder.sendString(status.getCode(), status.getMessage());
     } catch (SecurityException e) {
@@ -3234,6 +3237,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       // Don't truncate log table too - we would like to retain logs across resets.
       datasetsToKeep.add(LoggingConfiguration.LOG_META_DATA_TABLE);
+      // Don't remove datasets
+      datasetsToKeep.add(DatasetMetaTableUtil.META_TABLE_NAME);
+      datasetsToKeep.add(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
 
       // NOTE: there could be services running at the moment that rely on the system datasets to be available.
       dataSetAccessor.truncateAllExceptBlacklist(DataSetAccessor.Namespace.SYSTEM, datasetsToKeep);

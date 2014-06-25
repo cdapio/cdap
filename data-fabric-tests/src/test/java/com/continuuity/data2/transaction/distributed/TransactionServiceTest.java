@@ -140,7 +140,9 @@ public class TransactionServiceTest {
   }
 
   private void verifyGetAndPut(final OrderedColumnarTable table, TransactionExecutor txExecutor,
-                               final String verifyGet, final String toPut) throws TransactionFailureException {
+                               final String verifyGet, final String toPut)
+    throws TransactionFailureException, InterruptedException {
+
     txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {

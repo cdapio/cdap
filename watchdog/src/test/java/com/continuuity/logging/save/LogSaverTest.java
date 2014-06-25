@@ -22,6 +22,7 @@ import com.continuuity.logging.read.AvroFileLogReader;
 import com.continuuity.logging.read.DistributedLogReader;
 import com.continuuity.logging.read.LogEvent;
 import com.continuuity.logging.serialize.LogSchema;
+import com.continuuity.test.SlowTests;
 import com.continuuity.watchdog.election.MultiLeaderElection;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
@@ -33,7 +34,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.fs.FileUtil;
-import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
@@ -47,6 +47,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,6 +67,7 @@ import static com.continuuity.logging.appender.LoggingTester.LogCallback;
 /**
  * Test LogSaver and Distributed Log Reader.
  */
+@Category(SlowTests.class)
 public class LogSaverTest extends KafkaTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverTest.class);
 
@@ -74,6 +76,7 @@ public class LogSaverTest extends KafkaTestBase {
 
   private static InMemoryTxSystemClient txClient = null;
   private static InMemoryDataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor(CConfiguration.create());
+  private static LogSaverTableUtil tableUtil;
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
@@ -108,9 +111,11 @@ public class LogSaverTest extends KafkaTestBase {
     KafkaClientService kafkaClient = new ZKKafkaClientService(zkClientService);
     kafkaClient.startAndWait();
 
+    tableUtil = new LogSaverTableUtil(dataSetAccessor);
     LogSaver logSaver =
-      new LogSaver(dataSetAccessor, txClient, kafkaClient,
-                   cConf, new LocalLocationFactory(), new InMemoryDiscoveryService());
+      new LogSaver(tableUtil, txClient, kafkaClient,
+                   cConf, new LocalLocationFactory());
+
     logSaver.startAndWait();
 
     MultiLeaderElection multiElection = new MultiLeaderElection(zkClientService, "log-saver", 2, logSaver);
@@ -134,7 +139,7 @@ public class LogSaverTest extends KafkaTestBase {
 
   @AfterClass
   public static void testCheckpoint() throws Exception {
-    CheckpointManager checkpointManager = new CheckpointManager(LogSaver.getMetaTable(dataSetAccessor),
+    CheckpointManager checkpointManager = new CheckpointManager(tableUtil.getMetaTable(),
                                                                 txClient, KafkaTopic.getTopic());
     Assert.assertEquals(60, checkpointManager.getCheckpoint(0));
     Assert.assertEquals(120, checkpointManager.getCheckpoint(1));

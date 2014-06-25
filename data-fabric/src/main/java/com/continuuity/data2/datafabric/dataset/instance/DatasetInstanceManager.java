@@ -1,59 +1,23 @@
 package com.continuuity.data2.datafabric.dataset.instance;
 
-import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
-import com.continuuity.api.dataset.table.OrderedTable;
-import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
-import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasets;
+import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
+import com.continuuity.data2.dataset2.tx.TxCallable;
+import com.google.inject.Inject;
 
 import java.util.Collection;
-import java.util.concurrent.Callable;
 
 /**
  * Manages dataset instances metadata
  */
-// todo: there's ugly work with Datasets & Transactions (incl. exceptions inside txnl code) which will be revised as
-//       part of open-sourcing Datasets effort
-public class DatasetInstanceManager extends AbstractIdleService {
+public class DatasetInstanceManager {
 
-  private final TransactionSystemClient txClient;
-  private final DatasetFramework mdsDatasetFramework;
+  private final MDSDatasetsRegistry mdsDatasets;
 
-  /** dataset types metadata store */
-  private DatasetInstanceMDS mds;
-
-  private TransactionAware txAware;
-
-  /**
-   * Ctor
-   * @param mdsDatasetFramework dataset manager to be used to access the metadata store
-   * @param txSystemClient tx client to be used to operate on the metadata store
-   */
-  public DatasetInstanceManager(DatasetFramework mdsDatasetFramework,
-                                TransactionSystemClient txSystemClient) {
-    this.mdsDatasetFramework = mdsDatasetFramework;
-    this.txClient = txSystemClient;
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-    // "null" for class being in system classpath, for mds it is always true
-    OrderedTable table = DatasetsUtil.getOrCreateDataset(mdsDatasetFramework, "datasets.instance", "orderedTable",
-                                                         DatasetProperties.EMPTY, null);
-
-    this.txAware = (TransactionAware) table;
-    this.mds = new DatasetInstanceMDS(table);
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    mds.close();
+  @Inject
+  public DatasetInstanceManager(MDSDatasetsRegistry mdsDatasets) {
+    this.mdsDatasets = mdsDatasets;
   }
 
   /**
@@ -61,10 +25,11 @@ public class DatasetInstanceManager extends AbstractIdleService {
    * @param spec {@link com.continuuity.api.dataset.DatasetSpecification} of the dataset instance to be added
    */
   public void add(final DatasetSpecification spec) {
-    getTxExecutor().executeUnchecked(new TransactionExecutor.Subroutine() {
+    mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, Void>() {
       @Override
-      public void apply() throws Exception {
-        mds.write(spec);
+      public Void call(MDSDatasets datasets) throws Exception {
+        datasets.getInstanceMDS().write(spec);
+        return null;
       }
     });
   }
@@ -74,10 +39,10 @@ public class DatasetInstanceManager extends AbstractIdleService {
    * @return dataset instance's {@link com.continuuity.api.dataset.DatasetSpecification}
    */
   public DatasetSpecification get(final String instanceName) {
-    return getTxExecutor().executeUnchecked(new Callable<DatasetSpecification>() {
+    return mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, DatasetSpecification>() {
       @Override
-      public DatasetSpecification call() throws Exception {
-        return mds.get(instanceName);
+      public DatasetSpecification call(MDSDatasets datasets) throws Exception {
+        return datasets.getInstanceMDS().get(instanceName);
       }
     });
   }
@@ -86,10 +51,10 @@ public class DatasetInstanceManager extends AbstractIdleService {
    * @return collection of {@link com.continuuity.api.dataset.DatasetSpecification} of all dataset instances
    */
   public Collection<DatasetSpecification> getAll() {
-    return getTxExecutor().executeUnchecked(new Callable<Collection<DatasetSpecification>>() {
+    return mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, Collection<DatasetSpecification>>() {
       @Override
-      public Collection<DatasetSpecification> call() throws Exception {
-        return mds.getAll();
+      public Collection<DatasetSpecification> call(MDSDatasets datasets) throws Exception {
+        return datasets.getInstanceMDS().getAll();
       }
     });
   }
@@ -100,15 +65,11 @@ public class DatasetInstanceManager extends AbstractIdleService {
    * @return true if deletion succeeded, false otherwise
    */
   public boolean delete(final String instanceName) {
-    return getTxExecutor().executeUnchecked(new Callable<Boolean>() {
+    return mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, Boolean>() {
       @Override
-      public Boolean call() throws Exception {
-        return mds.delete(instanceName);
+      public Boolean call(MDSDatasets datasets) throws Exception {
+        return datasets.getInstanceMDS().delete(instanceName);
       }
     });
-  }
-
-  private TransactionExecutor getTxExecutor() {
-    return new DefaultTransactionExecutor(txClient, ImmutableList.of(txAware));
   }
 }

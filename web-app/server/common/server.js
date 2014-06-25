@@ -64,6 +64,11 @@ WebAppServer.prototype.config = {};
 WebAppServer.prototype.configSet = false;
 
 /**
+ * How often to call security server in case no response is found.
+ */
+WebAppServer.prototype.SECURITY_TIMER = 1000;
+
+/**
  * Globals
  */
 var PRODUCT_VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
@@ -73,34 +78,38 @@ var PRODUCT_VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
  */
 var SECURITY_ENABLED, AUTH_SERVER_ADDRESSES;
 
-WebAppServer.prototype.setSecurityStatus = function(setAddress) {
-  // Hit any endpoint to check if authentication is enabled.
-  var options = {
-    host: this.config['gateway.server.address'],
-    port: this.config['gateway.server.port'],
-    path: '/' + this.API_VERSION + '/apps',
-    method: 'GET'
-  };
-
-  var req = this.lib.request(options, function (response) {
-      var data = '';
-      response.on("data", function(chunk) {
-          data += chunk;
-      });
-
-      response.on('end', function () {
+/**
+ * Determines security status. Continues until it is able to determine if security is enabled if
+ * reactor is down.
+ * @param  {Function} callback to call after security status is determined.
+ */
+WebAppServer.prototype.setSecurityStatus = function (callback) {
+  var self = this;
+  
+  var path = '/' + this.API_VERSION + '/apps';
+  var url = ('http://' + this.config['gateway.server.address'] + ':' 
+    + this.config['gateway.server.port'] + path);
+  var interval = setInterval(function () {
+    self.logger.info('Calling security endpoint: ', url);
+    request({
+      method: 'GET',
+      url: url
+    }, function (err, response, body) {
+      if (!err && response && body) {
+        clearInterval(interval);
         if (response.statusCode === 401) {
           SECURITY_ENABLED = true;
-          AUTH_SERVER_ADDRESSES = JSON.parse(data).auth_uri;
+          AUTH_SERVER_ADDRESSES = JSON.parse(body).auth_uri;
         } else {
           SECURITY_ENABLED = false;
         }
-        if (typeof setAddress === 'function') {
-          setAddress();
+        self.logger.info('Security configuration found. Security is enabled: ', SECURITY_ENABLED);
+        if (typeof callback === 'function') {
+          callback();
         }
-      });
-  });
-  req.end();
+      }
+    });
+  }, self.SECURITY_TIMER);
 };
 
 /**
@@ -111,7 +120,7 @@ WebAppServer.prototype.getAuthServerAddress = function() {
     return null;
   }
   return AUTH_SERVER_ADDRESSES[Math.floor(Math.random() * AUTH_SERVER_ADDRESSES.length)];
-}
+};
 
 /**
  * Sets version if a version file exists.
@@ -195,7 +204,7 @@ WebAppServer.prototype.getServerInstance = function(app) {
 
 WebAppServer.prototype.checkAuth = function(req, res, next) {
   if (!('token' in req.cookies)) {
-    req.cookies.token = 'DUMMY';
+    req.cookies.token = '';
   }
   next();
 };
@@ -693,8 +702,10 @@ WebAppServer.prototype.bindRoutes = function() {
 
   // Security endpoints.
   this.app.get('/getsession', function (req, res) {
+    var headerOpts = {};
     var token = '';
-    if ('token' in req.cookies && req.cookies.token !== 'DUMMY') {
+    if ('token' in req.cookies && req.cookies.token !== '') {
+      headerOpts['Authorization'] = "Bearer " + req.cookies.token;
       token = req.cookies.token;
     }
 
@@ -703,10 +714,7 @@ WebAppServer.prototype.bindRoutes = function() {
       port: self.config['gateway.server.port'],
       path: '/' + self.API_VERSION + '/deploy/status',
       method: 'GET',
-      headers: {
-        'X-Continuuity-ApiKey': '',
-        'Authorization': 'Bearer ' + token
-      }
+      headers: headerOpts
     };
 
     var request = self.lib.request(options, function (response) {
@@ -774,7 +782,7 @@ WebAppServer.prototype.bindRoutes = function() {
 
           request(options, function (nerr, nres, nbody) {
             if (nerr || nres.statusCode !== 200) {
-              res.locals.errorMessage = "Please specify a valid username and password";
+              res.locals.errorMessage = "Please specify a valid username and password.";
               res.redirect('/#/login');
             } else {
               var nbody = JSON.parse(nbody);
@@ -792,6 +800,44 @@ WebAppServer.prototype.bindRoutes = function() {
         res.redirect('/#/login');
       })
    });
+
+  this.app.post('/accesstoken', function (req, res) {
+     req.session.regenerate(function () {
+       var auth_uri = self.getAuthServerAddress();
+       auth_uri = auth_uri.slice(0, -5);
+       auth_uri += "extendedtoken";
+       if (auth_uri === null) {
+         res.send(500, "No Authentication service to connect to was found.");
+       } else {
+         var post = req.body;
+         var options = {
+           url: auth_uri,
+           auth: {
+             user: post.username,
+             password: post.password
+           },
+           rejectUnauthorized: false,
+           requestCert: true,
+           agent: false
+         }
+
+         request(options, function (nerr, nres, nbody) {
+           if (nerr || nres.statusCode !== 200) {
+             res.send(400, "Please specify a valid username and password.");
+           } else {
+             var nbody = JSON.parse(nbody);
+             res.send(nbody);
+           }
+         });
+       }
+     });
+  });
+
+  this.app.get('/download-access-token/*', function (req, res) {
+    var accessToken = req.params[0];
+    res.attachment('.continuuity.accesstoken');
+    res.end(accessToken, 'utf-8');
+  });
 
   /**
    * Check for new version.

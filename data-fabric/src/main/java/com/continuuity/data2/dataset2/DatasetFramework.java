@@ -33,7 +33,8 @@ public interface DatasetFramework {
    * Adds dataset types by adding dataset module to the system.
    * @param moduleName dataset module name
    * @param module dataset module
-   * @throws ModuleConflictException when module with same name is already registered
+   * @throws ModuleConflictException when module with same name is already registered or this module registers a type
+   *         with a same name as one of the already registered by another module types
    * @throws DatasetManagementException in case of problems
    */
   void addModule(String moduleName, DatasetModule module)
@@ -42,7 +43,7 @@ public interface DatasetFramework {
   /**
    * Deletes dataset module and its types from the system.
    * @param moduleName dataset module name
-   * @throws ModuleConflictException when module cannot be deleted because of its dependants
+   * @throws ModuleConflictException when module cannot be deleted because of its dependant modules or instances
    * @throws DatasetManagementException
    */
   void deleteModule(String moduleName)
@@ -79,6 +80,12 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    */
   boolean hasInstance(String instanceName) throws DatasetManagementException;
+
+  /**
+   * @return true if type exists, false otherwise
+   * @throws DatasetManagementException
+   */
+  boolean hasType(String typeName) throws DatasetManagementException;
 
   /**
    * Deletes dataset instance from the system.

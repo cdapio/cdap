@@ -2,9 +2,9 @@ package com.continuuity.data2.dataset2.lib.table.hbase;
 
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
+import com.continuuity.api.dataset.table.ConflictDetection;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
-import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -40,7 +40,7 @@ public class HBaseOrderedTableDefinition
   }
 
   @Override
-  public HBaseOrderedTable getDataset(DatasetSpecification spec) throws IOException {
+  public HBaseOrderedTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     // -1 means no purging, keep data "forever"
@@ -49,7 +49,7 @@ public class HBaseOrderedTableDefinition
   }
 
   @Override
-  public HBaseOrderedTableAdmin getAdmin(DatasetSpecification spec) throws IOException {
+  public HBaseOrderedTableAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     return new HBaseOrderedTableAdmin(spec, hConf, hBaseTableUtil, conf, locationFactory);
   }
 }

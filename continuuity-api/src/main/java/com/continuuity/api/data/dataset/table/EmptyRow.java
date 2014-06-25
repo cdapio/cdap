@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.dataset.table;
 
 import java.util.Collections;
@@ -6,7 +10,10 @@ import javax.annotation.Nullable;
 
 /**
  * Represents an empty row (a row with no columns).
+ *
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.table.EmptyRow}
  */
+@Deprecated
 public class EmptyRow implements Row {
   private final byte[] row;
 

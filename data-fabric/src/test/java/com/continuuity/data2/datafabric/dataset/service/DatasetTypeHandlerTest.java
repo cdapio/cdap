@@ -5,19 +5,19 @@ import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
+import com.continuuity.common.http.HttpRequests;
+import com.continuuity.common.http.ObjectResponse;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
-import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,46 +35,46 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
   @Test
   public void testBasics() throws Exception {
-    cleanModules();
-
     // nothing has been deployed, modules and types list is empty
-    List<DatasetModuleMeta> modules = getModules().value;
+    List<DatasetModuleMeta> modules = getModules().getResponseObject();
     Assert.assertEquals(0, modules.size());
-    List<DatasetTypeMeta> types = getTypes().value;
+    List<DatasetTypeMeta> types = getTypes().getResponseObject();
     Assert.assertEquals(0, types.size());
 
     // deploy module
     Assert.assertEquals(HttpStatus.SC_OK, deployModule("module1", TestModule1.class));
 
     // verify deployed module present in a list
-    modules = getModules().value;
+    modules = getModules().getResponseObject();
     Assert.assertEquals(1, modules.size());
     verify(modules.get(0),
            "module1", TestModule1.class, ImmutableList.of("datasetType1"),
            Collections.<String>emptyList(), Collections.<String>emptyList());
 
     // verify deployed module info can be retrieved
-    verify(getModule("module1").value, "module1", TestModule1.class, ImmutableList.of("datasetType1"),
+    verify(getModule("module1").getResponseObject(), "module1", TestModule1.class, ImmutableList.of("datasetType1"),
            Collections.<String>emptyList(), Collections.<String>emptyList());
-    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getType("datasetType2").status);
+    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getType("datasetType2").getResponseCode());
 
     // verify type information can be retrieved
-    verify(getType("datasetType1").value, "datasetType1", ImmutableList.of("module1"));
-    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getType("datasetType2").status);
+    verify(getType("datasetType1").getResponseObject(), "datasetType1", ImmutableList.of("module1"));
+    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getType("datasetType2").getResponseCode());
 
-    types = getTypes().value;
+    types = getTypes().getResponseObject();
     Assert.assertEquals(1, types.size());
     verify(types.get(0), "datasetType1", ImmutableList.of("module1"));
 
 
     // cannot deploy same module again
     Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("module1", TestModule1.class));
-    
+    // cannot deploy module with same types
+    Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("not-module1", TestModule1.class));
+
     // deploy another module which depends on the first one
     Assert.assertEquals(HttpStatus.SC_OK, deployModule("module2", TestModule2.class));
 
     // verify deployed module present in a list
-    modules = getModules().value;
+    modules = getModules().getResponseObject();
     Assert.assertEquals(2, modules.size());
     for (DatasetModuleMeta module : modules) {
       if ("module1".equals(module.getName())) {
@@ -89,14 +89,14 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     }
 
     // verify deployed module info can be retrieved
-    verify(getModule("module2").value, "module2", TestModule2.class, ImmutableList.of("datasetType2"),
+    verify(getModule("module2").getResponseObject(), "module2", TestModule2.class, ImmutableList.of("datasetType2"),
            ImmutableList.of("module1"), Collections.<String>emptyList());
 
     // verify type information can be retrieved
-    verify(getType("datasetType1").value, "datasetType1", ImmutableList.of("module1"));
-    verify(getType("datasetType2").value, "datasetType2", ImmutableList.of("module1", "module2"));
+    verify(getType("datasetType1").getResponseObject(), "datasetType1", ImmutableList.of("module1"));
+    verify(getType("datasetType2").getResponseObject(), "datasetType2", ImmutableList.of("module1", "module2"));
 
-    types = getTypes().value;
+    types = getTypes().getResponseObject();
     Assert.assertEquals(2, types.size());
     for (DatasetTypeMeta type : types) {
       if ("datasetType1".equals(type.getName())) {
@@ -111,45 +111,39 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, deleteModule("non-existing-module"));
     // cannot delete module1 since module2 depends on it, verify that nothing has been deleted
     Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModule("module1"));
-    verify(getModule("module1").value, "module1", TestModule1.class, ImmutableList.of("datasetType1"),
+    verify(getModule("module1").getResponseObject(), "module1", TestModule1.class, ImmutableList.of("datasetType1"),
            Collections.<String>emptyList(), ImmutableList.of("module2"));
-    verify(getType("datasetType1").value, "datasetType1", ImmutableList.of("module1"));
-    Assert.assertEquals(2, getTypes().value.size());
+    verify(getType("datasetType1").getResponseObject(), "datasetType1", ImmutableList.of("module1"));
+    Assert.assertEquals(2, getTypes().getResponseObject().size());
 
     // delete module2, should be removed from usedBy list everywhere and all its types should no longer be available
     Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module2"));
-    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getType("datasetType2").status);
-    verify(getModule("module1").value, "module1", TestModule1.class, ImmutableList.of("datasetType1"),
+    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getType("datasetType2").getResponseCode());
+    verify(getModule("module1").getResponseObject(), "module1", TestModule1.class, ImmutableList.of("datasetType1"),
            Collections.<String>emptyList(), Collections.<String>emptyList());
 
-    Assert.assertEquals(1, getModules().value.size());
-    Assert.assertEquals(1, getTypes().value.size());
+    Assert.assertEquals(1, getModules().getResponseObject().size());
+    Assert.assertEquals(1, getTypes().getResponseObject().size());
 
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, deleteModule("module2"));
     Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
-    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getType("datasetType1").status);
+    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getType("datasetType1").getResponseCode());
 
-    Assert.assertEquals(0, getModules().value.size());
-    Assert.assertEquals(0, getTypes().value.size());
-  }
-
-  private void cleanModules() throws Exception {
-    List<DatasetModuleMeta> modules = getModules().value;
-    for (DatasetModuleMeta moduleMeta : modules) {
-      Assert.assertEquals(HttpStatus.SC_OK, deleteModule(moduleMeta.getName()));
-    }
+    Assert.assertEquals(0, getModules().getResponseObject().size());
+    Assert.assertEquals(0, getTypes().getResponseObject().size());
   }
 
   private void verify(DatasetTypeMeta typeMeta, String typeName, List<String> modules) {
     Assert.assertEquals(typeName, typeMeta.getName());
-    Assert.assertArrayEquals(modules.toArray(), Lists.transform(typeMeta.getModules(),
-                                                                new Function<DatasetModuleMeta, String>() {
-      @Nullable
-      @Override
-      public String apply(@Nullable DatasetModuleMeta input) {
-        return input == null ? null : input.getName();
-      }
-    }).toArray());
+    Assert.assertArrayEquals(modules.toArray(),
+                             Lists.transform(typeMeta.getModules(),
+                                             new Function<DatasetModuleMeta, String>() {
+                                               @Nullable
+                                               @Override
+                                               public String apply(@Nullable DatasetModuleMeta input) {
+                                                 return input == null ? null : input.getName();
+                                               }
+                                             }).toArray());
   }
 
   static void verify(DatasetModuleMeta moduleMeta, String moduleName, Class moduleClass,
@@ -165,29 +159,20 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     Assert.assertTrue(new File(moduleMeta.getJarLocation()).exists());
   }
 
-  private Response<List<DatasetModuleMeta>> getModules() throws IOException {
-    HttpGet get = new HttpGet(getUrl("/data/modules"));
-    DefaultHttpClient client = new DefaultHttpClient();
-    return parseResponse(client.execute(get), new TypeToken<List<DatasetModuleMeta>>() {
-    }.getType());
+  private ObjectResponse<List<DatasetTypeMeta>> getTypes() throws IOException {
+    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/types")),
+                                       new TypeToken<List<DatasetTypeMeta>>() {
+                                       }.getType());
   }
 
-  private Response<List<DatasetTypeMeta>> getTypes() throws IOException {
-    HttpGet get = new HttpGet(getUrl("/data/types"));
-    DefaultHttpClient client = new DefaultHttpClient();
-    return parseResponse(client.execute(get), new TypeToken<List<DatasetTypeMeta>>() { }.getType());
+  private ObjectResponse<DatasetModuleMeta> getModule(String moduleName) throws IOException {
+    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/modules/" + moduleName)),
+                                       DatasetModuleMeta.class);
   }
 
-  private Response<DatasetModuleMeta> getModule(String moduleName) throws IOException {
-    HttpGet get = new HttpGet(getUrl("/data/modules/" + moduleName));
-    DefaultHttpClient client = new DefaultHttpClient();
-    return parseResponse(client.execute(get), DatasetModuleMeta.class);
-  }
-
-  private Response<DatasetTypeMeta> getType(String typeName) throws IOException {
-    HttpGet get = new HttpGet(getUrl("/data/types/" + typeName));
-    DefaultHttpClient client = new DefaultHttpClient();
-    return parseResponse(client.execute(get), DatasetTypeMeta.class);
+  private ObjectResponse<DatasetTypeMeta> getType(String typeName) throws IOException {
+    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/types/" + typeName)),
+                                       DatasetTypeMeta.class);
   }
 
   /**
@@ -220,12 +205,12 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
       }
 
       @Override
-      public DatasetAdmin getAdmin(DatasetSpecification spec) {
+      public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) {
         return null;
       }
 
       @Override
-      public Dataset getDataset(DatasetSpecification spec) {
+      public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) {
         return null;
       }
     };

@@ -7,14 +7,14 @@ import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.batch.SplitReaderAdapter;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.lib.AbstractDataset;
+import com.continuuity.api.dataset.lib.CompositeDatasetDefinition;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Put;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
-import com.continuuity.data2.dataset2.lib.AbstractDataset;
-import com.continuuity.data2.dataset2.lib.CompositeDatasetDefinition;
 import com.continuuity.data2.dataset2.lib.table.TableDefinition;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -33,8 +33,10 @@ public class MyKeyValueTableDefinition
   }
 
   @Override
-  public MyKeyValueTableDefinition.KeyValueTable getDataset(DatasetSpecification spec) throws IOException {
-    return new MyKeyValueTableDefinition.KeyValueTable(spec.getName(), getDataset("table", Table.class, spec));
+  public MyKeyValueTableDefinition.KeyValueTable getDataset(DatasetSpecification spec,
+                                                            ClassLoader classLoader) throws IOException {
+    return new MyKeyValueTableDefinition.KeyValueTable(spec.getName(),
+                                                       getDataset("table", Table.class, spec, classLoader));
   }
 
   /**
@@ -98,7 +100,7 @@ public class MyKeyValueTableDefinition
     @Override
     public void register(DatasetDefinitionRegistry registry) {
       TableDefinition tableDefinition = registry.get("table");
-      MyKeyValueTableDefinition keyValueTable = new MyKeyValueTableDefinition("keyValueTable", tableDefinition);
+      MyKeyValueTableDefinition keyValueTable = new MyKeyValueTableDefinition("myKeyValueTable", tableDefinition);
       registry.add(keyValueTable);
     }
   }

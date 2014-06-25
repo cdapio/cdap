@@ -2,8 +2,8 @@ package com.continuuity.data2.dataset2.lib.table.inmemory;
 
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
-import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
-import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
+import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
+import com.continuuity.api.dataset.table.ConflictDetection;
 
 import java.io.IOException;
 
@@ -25,14 +25,14 @@ public class InMemoryOrderedTableDefinition
   }
 
   @Override
-  public InMemoryOrderedTable getDataset(DatasetSpecification spec) throws IOException {
+  public InMemoryOrderedTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     return new InMemoryOrderedTable(spec.getName(), conflictDetection);
   }
 
   @Override
-  public InMemoryOrderedTableAdmin getAdmin(DatasetSpecification spec) throws IOException {
+  public InMemoryOrderedTableAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     // todo: or pass the full spec?
     return new InMemoryOrderedTableAdmin(spec.getName());
   }

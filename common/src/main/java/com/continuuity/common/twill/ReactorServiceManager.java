@@ -5,9 +5,15 @@ package com.continuuity.common.twill;
  * Each individual service must provide an implementation.
  */
 public interface ReactorServiceManager {
+
   /**
-   * Used to get the count of the instances of the Reactor Service.
-   * @return the number of instances of the Reactor Service.
+   * @return true if the configured to be available, false otherwise.
+   */
+  public boolean isServiceEnabled();
+
+  /**
+   * Used to get the count of the instances of the Reactor Service that are currently running.
+   * @return the number of instances of the Reactor Service instances alive.
    */
   public int getInstances();
 

@@ -12,6 +12,7 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.LogAppender;
 import com.continuuity.logging.save.LogSaver;
+import com.continuuity.logging.save.LogSaverTableUtil;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.logging.serialize.LoggingEvent;
 import com.continuuity.logging.write.AvroFileWriter;
@@ -48,7 +49,7 @@ public class FileLogAppender extends LogAppender {
 
   public static final String APPENDER_NAME = "FileLogAppender";
 
-  private final DataSetAccessor dataSetAccessor;
+  private final LogSaverTableUtil tableUtil;
   private final TransactionSystemClient txClient;
   private final LocationFactory locationFactory;
   private final Location logBaseDir;
@@ -71,7 +72,7 @@ public class FileLogAppender extends LogAppender {
                          LocationFactory locationFactory) {
     setName(APPENDER_NAME);
 
-    this.dataSetAccessor = dataSetAccessor;
+    this.tableUtil = new LogSaverTableUtil(dataSetAccessor);
     this.txClient = txClient;
     this.locationFactory = locationFactory;
 
@@ -117,7 +118,7 @@ public class FileLogAppender extends LogAppender {
     super.start();
     try {
       logSchema = new LogSchema().getAvroSchema();
-      FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(LogSaver.getMetaTable(dataSetAccessor),
+      FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil.getMetaTable(),
                                                                         txClient,
                                                                         locationFactory);
 

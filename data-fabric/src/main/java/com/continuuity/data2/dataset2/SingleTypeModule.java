@@ -3,11 +3,11 @@ package com.continuuity.data2.dataset2;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.lib.CompositeDatasetDefinition;
 import com.continuuity.api.dataset.module.DataSetType;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.module.EmbeddedDataSet;
-import com.continuuity.data2.dataset2.lib.CompositeDatasetDefinition;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -130,7 +130,7 @@ public class SingleTypeModule implements DatasetModule {
 
     CompositeDatasetDefinition def = new CompositeDatasetDefinition(typeName, defs) {
       @Override
-      public Dataset getDataset(DatasetSpecification spec) throws IOException {
+      public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
         Object[] params = new Object[ctorParams.length];
         for (int i = 0; i < ctorParams.length; i++) {
           params[i] = ctorParams[i] != null ? ctorParams[i].getValue(defs, spec) : null;
@@ -218,7 +218,7 @@ public class SingleTypeModule implements DatasetModule {
 
     @Override
     public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec) throws IOException {
-      return defs.get(name).getDataset(spec.getSpecification(name));
+      return defs.get(name).getDataset(spec.getSpecification(name), null);
     }
   }
 }

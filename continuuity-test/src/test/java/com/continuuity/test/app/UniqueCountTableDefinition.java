@@ -2,13 +2,13 @@ package com.continuuity.test.app;
 
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.lib.AbstractDataset;
+import com.continuuity.api.dataset.lib.CompositeDatasetDefinition;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Increment;
 import com.continuuity.api.dataset.table.Table;
-import com.continuuity.data2.dataset2.lib.AbstractDataset;
-import com.continuuity.data2.dataset2.lib.CompositeDatasetDefinition;
 import com.continuuity.data2.dataset2.lib.table.TableDefinition;
 import com.google.common.collect.ImmutableMap;
 
@@ -23,10 +23,10 @@ public class UniqueCountTableDefinition
   }
 
   @Override
-  public UniqueCountTable getDataset(DatasetSpecification spec) throws IOException {
+  public UniqueCountTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     return new UniqueCountTable(spec.getName(),
-                                getDataset("entryCountTable", Table.class, spec),
-                                getDataset("uniqueCountTable", Table.class, spec));
+                                getDataset("entryCountTable", Table.class, spec, classLoader),
+                                getDataset("uniqueCountTable", Table.class, spec, classLoader));
   }
 
   public static class UniqueCountTable extends AbstractDataset {

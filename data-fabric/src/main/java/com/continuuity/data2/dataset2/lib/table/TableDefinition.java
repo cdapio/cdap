@@ -4,9 +4,9 @@ import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
 import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.api.dataset.table.Table;
-import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
 
 import java.io.IOException;
 
@@ -31,13 +31,13 @@ public class TableDefinition extends AbstractDatasetDefinition<Table, DatasetAdm
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification(""));
+  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(spec.getSpecification(""), classLoader);
   }
 
   @Override
-  public Table getDataset(DatasetSpecification spec) throws IOException {
-    OrderedTable table = tableDef.getDataset(spec.getSpecification(""));
+  public Table getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    OrderedTable table = tableDef.getDataset(spec.getSpecification(""), classLoader);
     return new TableDataset(spec.getName(), table);
   }
 }

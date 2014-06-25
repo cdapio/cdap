@@ -3,15 +3,17 @@ package com.continuuity.test.app;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.app.AbstractApplication;
-import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.api.data.batch.RecordScannable;
+import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
-import com.continuuity.api.data.batch.SplitRowScanner;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.lib.AbstractDataset;
+import com.continuuity.api.dataset.lib.CompositeDatasetDefinition;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.module.EmbeddedDataSet;
@@ -23,8 +25,6 @@ import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data2.dataset2.lib.AbstractDataset;
-import com.continuuity.data2.dataset2.lib.CompositeDatasetDefinition;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -53,7 +53,7 @@ public class AppsWithDataset {
   public static class AppWithAutoCreate extends AbstractApplication {
     @Override
     public void configure() {
-      createDataSet("myTable", "keyValueTable", DatasetProperties.EMPTY);
+      createDataSet("myTable", "myKeyValueTable", DatasetProperties.EMPTY);
       addProcedure(new MyProcedure());
     }
   }
@@ -64,7 +64,7 @@ public class AppsWithDataset {
   public static class AppWithAutoDeploy extends AbstractApplication {
     @Override
     public void configure() {
-      createDataSet("myTable", "keyValueTable", DatasetProperties.EMPTY);
+      createDataSet("myTable", "myKeyValueTable", DatasetProperties.EMPTY);
       addDataSetModule("my-kv", KeyValueTableDefinition.Module.class);
       addProcedure(new MyProcedure());
     }
@@ -178,14 +178,16 @@ public class AppsWithDataset {
     }
 
     @Override
-    public KeyValueTableDefinition.KeyValueTable getDataset(DatasetSpecification spec) throws IOException {
-      return new KeyValueTable(spec, getDataset("data", Table.class, spec));
+    public KeyValueTableDefinition.KeyValueTable getDataset(DatasetSpecification spec,
+                                                            ClassLoader classLoader) throws IOException {
+      return new KeyValueTable(spec, getDataset("data", Table.class, spec, classLoader));
     }
 
     /**
      * Custom dataset example: key-value table
      */
-    public static class KeyValueTable extends AbstractDataset implements RowScannable<ImmutablePair<String, String>> {
+    public static class KeyValueTable extends AbstractDataset
+        implements RecordScannable<ImmutablePair<String, String>> {
 
       private static final byte[] COL = new byte[0];
 
@@ -206,7 +208,7 @@ public class AppsWithDataset {
       }
 
       @Override
-      public Type getRowType() {
+      public Type getRecordType() {
         return new TypeToken<ImmutablePair<String, String>>() { }.getType();
       }
 
@@ -216,15 +218,16 @@ public class AppsWithDataset {
       }
 
       @Override
-      public SplitRowScanner<ImmutablePair<String, String>> createSplitScanner(Split split) {
-        return Scannables.splitRowScanner(
-          table.createSplitReader(split),
-          new Scannables.RowMaker<byte[], Row, ImmutablePair<String, String>>() {
-            @Override
-            public ImmutablePair<String, String> makeRow(byte[] key, Row row) {
-              return ImmutablePair.of(Bytes.toString(key), Bytes.toString(row.get(COL)));
+      public RecordScanner<ImmutablePair<String, String>> createSplitRecordScanner(Split split) {
+        return Scannables.splitRecordScanner(
+            table.createSplitReader(split),
+            new Scannables.RecordMaker<byte[], Row, ImmutablePair<String, String>>() {
+              @Override
+              public ImmutablePair<String, String> makeRecord(byte[] key, Row row) {
+                return ImmutablePair.of(Bytes.toString(key), Bytes.toString(row.get(COL)));
+              }
             }
-          });
+        );
       }
     }
 
@@ -235,7 +238,7 @@ public class AppsWithDataset {
       @Override
       public void register(DatasetDefinitionRegistry registry) {
         DatasetDefinition<Table, DatasetAdmin> tableDefinition = registry.get("table");
-        KeyValueTableDefinition keyValueTable = new KeyValueTableDefinition("keyValueTable", tableDefinition);
+        KeyValueTableDefinition keyValueTable = new KeyValueTableDefinition("myKeyValueTable", tableDefinition);
         registry.add(keyValueTable);
       }
     }
