@@ -61,8 +61,7 @@ public class MockLogReader implements LogReader {
     callback.init();
     try {
       int count = 0;
-      String path = loggingContext.getLogPathFragment();
-      for (LogLine logLine : logMap.get(path)) {
+      for (LogLine logLine : logMap.get(loggingContext.getLogPathFragment())) {
         if (logLine.getOffset() >= fromOffset) {
           if (++count > maxEvents) {
             break;

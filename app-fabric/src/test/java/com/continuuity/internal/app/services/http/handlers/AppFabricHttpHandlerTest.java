@@ -1,7 +1,6 @@
 package com.continuuity.internal.app.services.http.handlers;
 
 import com.continuuity.AppWithSchedule;
-import com.continuuity.AppWithServices;
 import com.continuuity.AppWithWorkflow;
 import com.continuuity.DummyAppWithTrackingTable;
 import com.continuuity.MultiStreamApp;
