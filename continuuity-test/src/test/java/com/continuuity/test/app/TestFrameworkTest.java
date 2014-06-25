@@ -75,6 +75,17 @@ public class TestFrameworkTest extends ReactorTestBase {
       ProcedureClient client = queryManager.getClient();
       Gson gson = new Gson();
 
+      int retryCount = 10;
+      while(retryCount >= 0) {
+        try {
+          client.query("result", ImmutableMap.of("type", "highpass"));
+          break;
+        } catch (IOException e) {
+          retryCount--;
+          TimeUnit.SECONDS.sleep(1);
+        }
+      }
+
       Assert.assertEquals("1",
                           gson.fromJson(client.query("result", ImmutableMap.of("type", "highpass")), String.class));
     } finally {
@@ -106,6 +117,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     wfmanager.getSchedule(scheduleId).suspend();
     Assert.assertEquals("SUSPENDED", wfmanager.getSchedule(scheduleId).status());
 
+    TimeUnit.SECONDS.sleep(3);
     history = wfmanager.getHistory();
     workflowRuns = history.size();
 
