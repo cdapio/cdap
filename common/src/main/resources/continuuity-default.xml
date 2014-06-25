@@ -876,7 +876,7 @@
     </property>
     <property>
         <name>explore.inactive.operation.timeout.secs</name>
-        <value>600</value>
+        <value>3600</value>
         <description>>Timeout value in seconds for a SQL operation which does not have any more results
             to be fetched</description>
     </property>
