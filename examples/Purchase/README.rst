@@ -64,9 +64,10 @@ of the Application are tied together by the class ``PurchaseApp``::
         createDataSet("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());
         ObjectStores.createObjectStore(getConfigurer(), "purchases", Purchase.class);
       } catch (UnsupportedTypeException e) {
-        // this exception is thrown by ObjectStore if its parameter type cannot be (de)serialized (for example, if it is
-        // an interface and not a class, then there is no auto-magic way deserialize an object. In this case that
-        // cannot happen because PurchaseHistory is an actual class.
+        // This exception is thrown by ObjectStore if its parameter type cannot be (de)serialized
+        // (for example, if it is an interface and not a class), as there is no auto-magic way to
+        // de-serialize an object. In this case, that cannot happen because PurchaseHistory is an 
+        // actual class.
         throw new RuntimeException(e);
       }
     }
@@ -229,7 +230,7 @@ issue a GET to the query's URL::
 
   curl -v -X GET http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782/status
 
-Because a SQL query can run for several minutes, you may have to repeat this call until it returns a status of finished:
+Because a SQL query can run for several minutes, you may have to repeat this call until it returns a status of finished::
 
   {"status":"FINISHED","hasResults":true}
 
@@ -237,13 +238,13 @@ Now that the execution is finished, you can retrieve the results of the query::
 
   curl -v -X POST http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782/next
 
-This will return upto a limited number of results in JSON format, for example::
+This will return up to a limited number of results in JSON format, for example::
 
   [{"columns":["alex","[{\"customer\":\"alex\",\"product\":\"apple\",\"quantity\":4,\"price\":10,\"purchasetime\":1403655267460}]"]}]
 
-[DOCNOTE: FIXME: use the data from the script]
+[DOCNOTE: FIXME: use the data & results (pretty-printed) from the script]
 
-You can repeat this step until the ``curl`` call returns an empty list. That means you have rerieved all results and
+You can repeat this step until the ``curl`` call returns an empty list. That means you have retrieved all results and
 you can now close the query::
 
   curl -v -X DELETE http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782
