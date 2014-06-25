@@ -376,7 +376,7 @@ public class MDTBasedStoreTest {
     Assert.assertEquals(1, programSpecs.size());
     Assert.assertEquals("NoOpService", programSpecs.get(0).getName());   }
 
-  ApplicationSpecification getAppSpec(Application application){
+  ApplicationSpecification getAppSpec(Application application) {
     DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(application);
     application.configure(appConfigurer, new ApplicationContext());
 
