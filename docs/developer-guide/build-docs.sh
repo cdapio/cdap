@@ -43,6 +43,9 @@ function usage() {
   echo "    login       Logs you into $STAGING_SERVER"
   echo "    reactor     Path to Reactor source for javadocs, if not $REACTOR_PATH"
   echo "    zip         Zips docs into $ZIP_FILE"
+  echo "  or "
+  echo "    depends     Build Site listing dependencies"  
+  echo "    sdk         Build SDK"  
   echo " "
   exit 1
 }
@@ -97,6 +100,16 @@ function build() {
    make_zip
 }
 
+function build_sdk() {
+  cd $REACTOR_PATH
+  mvn clean package -DskipTests -P examples && mvn package -pl singlenode -am -DskipTests -P dist,release
+}
+
+function build_dependencies() {
+  cd $REACTOR_PATH
+  mvn clean package site -am -Pjavadocs -DskipTests
+}
+
 if [ $# -lt 1 ]; then
   usage
   exit 1
@@ -106,7 +119,9 @@ case "$1" in
   build )      build; exit 1;;
   build-docs ) build_docs; exit 1;;
   javadocs )   javadocs; exit 1;;
+  depends )    build_dependencies; exit 1;;
   login )      login_staging_server; exit 1;;
+  sdk )        build_sdk; exit 1;;
   stage )      stage_docs; exit 1;;
   zip )        make_zip; exit 1;;
   * )          usage; exit 1;;
