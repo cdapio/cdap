@@ -113,46 +113,46 @@ Partitioning can be combined with batch execution::
 	   ...
 
 
-DataSet System
+Dataset System
 ==============
-**DataSets** are your interface to the data. Instead of having to manipulate data with low-level APIs, DataSets provide higher level abstractions and generic, reusable Java implementations of common data patterns. A DataSet represents both the API and the actual data itself; it is a named collection of data with associated metadata, and it is manipulated through a DataSet class.
+**Datasets** are your interface to the data. Instead of having to manipulate data with low-level APIs, Datasets provide higher level abstractions and generic, reusable Java implementations of common data patterns. A Dataset represents both the API and the actual data itself; it is a named collection of data with associated metadata, and it is manipulated through a Dataset class.
 
-Types of DataSets
+Types of Datasets
 -----------------
-A DataSet is a Java class that extends the abstract DataSet class with its own, custom methods. The implementation of a DataSet typically relies on one or more underlying (embedded) DataSets. For example, the ``IndexedTable`` DataSet can be implemented by two underlying Table DataSets – one holding the data and one holding the index.
+A Dataset is a Java class that extends the abstract Dataset class with its own, custom methods. The implementation of a Dataset typically relies on one or more underlying (embedded) Datasets. For example, the ``IndexedTable`` Dataset can be implemented by two underlying Table Datasets – one holding the data and one holding the index.
 
-We distinguish three categories of DataSets: *core*, *system*, and *custom* DataSets:
+We distinguish three categories of Datasets: *core*, *system*, and *custom* Datasets:
 
-- The **core** DataSet of the Reactor is a Table. Its implementation is
-  hidden from developers and it may use private DataSet interfaces that are not available to you.
+- The **core** Dataset of the Reactor is a Table. Its implementation is
+  hidden from developers and it may use private Dataset interfaces that are not available to you.
 
-- A **system** DataSet is bundled with the Reactor and is built around
-  one or more underlying core or system DataSets to implement a specific data pattern.
+- A **system** Dataset is bundled with the Reactor and is built around
+  one or more underlying core or system Datasets to implement a specific data pattern.
 
-- A **custom** DataSet is implemented by you and can have arbitrary code and methods.
-  It is typically built around one or more Tables (or other DataSets)
-  to implement a specific data pattern. A custom DataSet can only manipulate data
-  through its underlying DataSets.
+- A **custom** Dataset is implemented by you and can have arbitrary code and methods.
+  It is typically built around one or more Tables (or other Datasets)
+  to implement a specific data pattern. A custom Dataset can only manipulate data
+  through its underlying Datasets.
 
-.. - A **system** DataSet is bundled with the Reactor but implemented
-.. in the same way as a custom DataSet, relying on one or more underlying core or system DataSets.
+.. - A **system** Dataset is bundled with the Reactor but implemented
+.. in the same way as a custom Dataset, relying on one or more underlying core or system Datasets.
 
-Each DataSet instance has exactly one DataSet class to manipulate it—think of the class
-as the type or the interface of the DataSet. Every instance of a DataSet has a unique name
+Each Dataset instance has exactly one Dataset class to manipulate it—think of the class
+as the type or the interface of the Dataset. Every instance of a Dataset has a unique name
 (unique within the account that it belongs to) and metadata that defines its behavior.
 For example, every ``IndexedTable`` has a name and indexes a particular column of its primary table: the name of that column is a metadata property of each instance.
 
-Every Application must declare all DataSets that it uses in its application specification. 
-The specification of the DataSet must include its name and all of its metadata, including
-the specifications of its underlying DataSets. This creates the DataSet—if it does not
+Every Application must declare all Datasets that it uses in its application specification. 
+The specification of the Dataset must include its name and all of its metadata, including
+the specifications of its underlying Datasets. This creates the Dataset—if it does not
 exist yet—and stores its metadata at the time of deployment of the application.
-Application code (a Flow or Procedure) can then use a DataSet by giving only its name and
-type—the runtime system uses the stored metadata to create an instance of the DataSet
+Application code (a Flow or Procedure) can then use a Dataset by giving only its name and
+type—the runtime system uses the stored metadata to create an instance of the Dataset
 class with all required metadata.
 
-Core DataSets
+Core Datasets
 -------------
-**Tables** are the only core DataSets, and all other DataSets are built using one or more
+**Tables** are the only core Datasets, and all other Datasets are built using one or more
 core Tables. These Tables are similar to tables in a relational database with a few key differences:
 
 - Tables have no fixed schema. Unlike relational database tables where every
@@ -332,9 +332,9 @@ Note that specifying a set of columns helps to perform delete operation faster.
 When you want to delete all the columns of a row and you know all of them,
 passing all of them will make the deletion faster.
 
-System DataSets
+System Datasets
 ---------------
-The Continuuity Reactor comes with several system-defined DataSets, including key/value Tables, indexed Tables and time series. Each of them is defined with the help of one or more embedded Tables, but defines its own interface. For example:
+The Continuuity Reactor comes with several system-defined Datasets, including key/value Tables, indexed Tables and time series. Each of them is defined with the help of one or more embedded Tables, but defines its own interface. For example:
 
 - The ``KeyValueTable`` implements a key/value store as a Table with a single column.
 
@@ -345,19 +345,19 @@ The Continuuity Reactor comes with several system-defined DataSets, including ke
   and allows querying that data over ranges of time.
 
 See the `Javadocs <javadocs/index.html>`__ for these classes and `the examples <examples/index.html>`
-to learn more about these DataSets.
+to learn more about these Datasets.
 
-Custom DataSets
+Custom Datasets
 ---------------
-You can define your own DataSet classes to implement common data patterns specific to your code. Suppose you want to define a counter table that, in addition to counting words,
-counts how many unique words it has seen. The DataSet will be built on top two underlying DataSets, one Table (``entryCountTable``) to count all the words and a second Table (``uniqueCountTable``) for the unique count::
+You can define your own Dataset classes to implement common data patterns specific to your code. Suppose you want to define a counter table that, in addition to counting words,
+counts how many unique words it has seen. The Dataset will be built on top two underlying Datasets, one Table (``entryCountTable``) to count all the words and a second Table (``uniqueCountTable``) for the unique count::
 
 	public class UniqueCountTable extends DataSet {
 
 	  private Table entryCountTable;
 	  private Table uniqueCountTable;
 
-Custom DataSets can also optionally implement ``configure()`` and ``initialize()`` methods. The ``configure()`` method returns a specification which we can use to save metadata about the DataSet (such as configuration parameters). The ``initialize()`` method is called at execution time. It should be noted that any operations on the data of this DataSet are prohibited in ``initialize()``.
+Custom Datasets can also optionally implement ``configure()`` and ``initialize()`` methods. The ``configure()`` method returns a specification which we can use to save metadata about the Dataset (such as configuration parameters). The ``initialize()`` method is called at execution time. It should be noted that any operations on the data of this Dataset are prohibited in ``initialize()``.
 
 Now we can begin with the implementation of the ``UniqueCountTable`` logic. We start with a few constants::
 
@@ -382,26 +382,26 @@ Finally, we write a method to retrieve the number of unique words seen::
 	                         .getLong(UNIQUE_COUNT, 0);
 	}
 
-A complete application demonstrating use of a Custom DataSet is included in our `PageViewAnalytics <examples/PageViewAnalytics/index.html>` example.
+A complete application demonstrating use of a Custom Dataset is included in our `PageViewAnalytics <examples/PageViewAnalytics/index.html>` example.
 
-DataSets & MapReduce
+Datasets & MapReduce
 --------------------
 
-A MapReduce job can interact with a DataSet by using it as an input or an output.
-The DataSet needs to implement specific interfaces to support this.
+A MapReduce job can interact with a Dataset by using it as an input or an output.
+The Dataset needs to implement specific interfaces to support this.
 
-When you run a MapReduce job, you can configure it to read its input from a DataSet. The source DataSet must implement the ``BatchReadable`` interface, which requires two methods::
+When you run a MapReduce job, you can configure it to read its input from a Dataset. The source Dataset must implement the ``BatchReadable`` interface, which requires two methods::
 
 	public interface BatchReadable<KEY, VALUE> {
 	  List<Split> getSplits();
 	  SplitReader<KEY, VALUE> createSplitReader(Split split);
 	}
 
-These two methods complement each other: ``getSplits()`` must return all splits of the DataSet that the MapReduce job will read; ``createSplitReader()`` is then called in every Mapper to read one of the splits. Note that the ``KEY`` and ``VALUE`` type parameters of the split reader must match the input key and value type parameters of the Mapper.
+These two methods complement each other: ``getSplits()`` must return all splits of the Dataset that the MapReduce job will read; ``createSplitReader()`` is then called in every Mapper to read one of the splits. Note that the ``KEY`` and ``VALUE`` type parameters of the split reader must match the input key and value type parameters of the Mapper.
 
-Because ``getSplits()`` has no arguments, it will typically create splits that cover the entire DataSet. If you want to use a custom selection of the input data, define another method in your DataSet with additional parameters and explicitly set the input in the ``beforeSubmit()`` method.
+Because ``getSplits()`` has no arguments, it will typically create splits that cover the entire Dataset. If you want to use a custom selection of the input data, define another method in your Dataset with additional parameters and explicitly set the input in the ``beforeSubmit()`` method.
 
-For example, the system DataSet ``KeyValueTable`` implements ``BatchReadable<byte[], byte[]>`` with an extra method that allows specification of the number of splits and a range of keys::
+For example, the system Dataset ``KeyValueTable`` implements ``BatchReadable<byte[], byte[]>`` with an extra method that allows specification of the number of splits and a range of keys::
 
 	public class KeyValueTable extends DataSet
 	                           implements BatchReadable<byte[], byte[]> {
@@ -420,13 +420,13 @@ To read a range of keys and give a hint that you want 16 splits, write::
 	  context.setInput(kvTable, kvTable.getSplits(16, startKey, stopKey);
 	}
 
-Similarly to reading input from a DataSet, you have the option to write to a DataSet as the output destination of a MapReduce job—if that DataSet implements the ``BatchWritable`` interface::
+Similarly to reading input from a Dataset, you have the option to write to a Dataset as the output destination of a MapReduce job—if that Dataset implements the ``BatchWritable`` interface::
 
 	public interface BatchWritable<KEY, VALUE> {
 	  void write(KEY key, VALUE value);
 	}
 
-The ``write()`` method is used to redirect all writes performed by a Reducer to the DataSet.
+The ``write()`` method is used to redirect all writes performed by a Reducer to the Dataset.
 Again, the ``KEY`` and ``VALUE`` type parameters must match the output key and value type parameters of the Reducer.
 
 
@@ -510,7 +510,7 @@ You will need to judge whether the increase in performance offsets the increased
 
 Transactions in MapReduce
 -------------------------
-When you run a MapReduce job that interacts with DataSets, the system creates a long-running transaction. Similar to the transaction of a Flowlet or a Procedure, here are some rules to follow:
+When you run a MapReduce job that interacts with Datasets, the system creates a long-running transaction. Similar to the transaction of a Flowlet or a Procedure, here are some rules to follow:
 
 - Reads can only see the writes of other transactions that were committed
   at the time the long-running transaction was started.
@@ -522,30 +522,30 @@ When you run a MapReduce job that interacts with DataSets, the system creates a 
 
 However, there is a key difference: long-running transactions do not participate in conflict detection. If another transaction overlaps with the long-running transaction and writes to the same row, it will not cause a conflict but simply overwrite it.
 
-It is not efficient to fail the long-running job based on a single conflict. Because of this, it is not recommended to write to the same DataSet from both real-time and MapReduce programs. It is better to use different DataSets, or at least ensure that the real-time processing writes to a disjoint set of columns.
+It is not efficient to fail the long-running job based on a single conflict. Because of this, it is not recommended to write to the same Dataset from both real-time and MapReduce programs. It is better to use different Datasets, or at least ensure that the real-time processing writes to a disjoint set of columns.
 
-It's important to note that the MapReduce framework will reattempt a task (Mapper or Reducer) if it fails. If the task is writing to a DataSet, the reattempt of the task will most likely repeat the writes that were already performed in the failed attempt. Therefore it is highly advisable that all writes performed by MapReduce programs be idempotent.
+It's important to note that the MapReduce framework will reattempt a task (Mapper or Reducer) if it fails. If the task is writing to a Dataset, the reattempt of the task will most likely repeat the writes that were already performed in the failed attempt. Therefore it is highly advisable that all writes performed by MapReduce programs be idempotent.
 
 Best Practices for Developing Applications
 ==========================================
 
 Initializing Instance Fields
 ----------------------------
-There are three ways to initialize instance fields used in DataSets, Flowlets and Procedures:
+There are three ways to initialize instance fields used in Datasets, Flowlets and Procedures:
 
 #. Using the default constructor;
-#. Using ``initialize()`` method of the DataSets, Flowlets and Procedures; and
+#. Using ``initialize()`` method of the Datasets, Flowlets and Procedures; and
 #. Using ``@Property`` annotations.
 
 To initialize using Property annotations, simply annotate the field definition with ``@Property``. 
 
-An example demonstrating this is the ``Ticker`` example, where it is used in the custom DataSet 
+An example demonstrating this is the ``Ticker`` example, where it is used in the custom Dataset 
 ``MultiIndexedTable`` to set a instance field ``timestampField``.
 
 The instance field ``timestampFieldName`` is annotated with ``@Property``, and
-when the DataSet is instantiated and deployed, a value is inserted into ``timestampFieldName``.
+when the Dataset is instantiated and deployed, a value is inserted into ``timestampFieldName``.
 
-When the DataSet is initialized, the value is then used to set ``timestampField``::
+When the Dataset is initialized, the value is then used to set ``timestampField``::
 
 	public class MultiIndexedTable extends DataSet {
 	  . . .

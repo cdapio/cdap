@@ -63,6 +63,10 @@ function clean() {
   rm -rf $SCRIPT_PATH/$BUILD
 }
 
+function build_javadocs() {
+  cd $REACTOR_PATH
+  mvn clean package site -pl continuuity-api -am -Pjavadocs -DskipTests
+}
 function build_docs() {
   clean
   sphinx-build -b html -d build/doctrees source build/html
@@ -81,14 +85,17 @@ function copy_license_pdfs() {
 }
 
 function copy_example_jars() {
-  cd $BUILD_PATH/$HTML/$EXAMPLES/$EXAMPLE_PVA
-  cp $SOURCE_PATH/$EXAMPLES/$EXAMPLE_PVA/*.zip .
-  
-  cd $BUILD_PATH/$HTML/$EXAMPLES/$EXAMPLE_RCA
-  cp $SOURCE_PATH/$EXAMPLES/$EXAMPLE_RCA/*.zip .
-  
-  cd $BUILD_PATH/$HTML/$EXAMPLES/$EXAMPLE_TA
-  cp $SOURCE_PATH/$EXAMPLES/$EXAMPLE_TA/*.zip .
+# This needs to get the real zips from where they are actually built.
+# and put them in html/_downloads
+#   cd $BUILD_PATH/$HTML/$EXAMPLES/$EXAMPLE_PVA
+#   cp $SOURCE_PATH/$EXAMPLES/$EXAMPLE_PVA/*.zip .
+#   
+#   cd $BUILD_PATH/$HTML/$EXAMPLES/$EXAMPLE_RCA
+#   cp $SOURCE_PATH/$EXAMPLES/$EXAMPLE_RCA/*.zip .
+#   
+#   cd $BUILD_PATH/$HTML/$EXAMPLES/$EXAMPLE_TA
+#   cp $SOURCE_PATH/$EXAMPLES/$EXAMPLE_TA/*.zip .
+  cd .
 }
 
 function make_zip() {
@@ -110,20 +117,18 @@ function stage_docs() {
 }
 
 function login_staging_server() {
+  echo "Logging into:"
+  echo "ssh \"$USER@$STAGING_SERVER\""
   ssh "$USER@$STAGING_SERVER"
 }
 
-function javadocs() {
-  cd $REACTOR_PATH
-  mvn clean package site -pl continuuity-api -am -Pjavadocs -DskipTests
-}
 
 function build() {
-   clean
    build_docs
+   build_javadocs
    copy_javadocs
    copy_license_pdfs
-   copy_example_jars
+#   copy_example_jars
    make_zip
 }
 
@@ -144,11 +149,12 @@ fi
 
 case "$1" in
   build )             build; exit 1;;
+  build-javadocs )    build_javadocs; exit 1;;
   build-docs )        build_docs; exit 1;;
   copy_javadocs )     copy_javadocs; exit 1;;
   copy_license_pdfs ) copy_license_pdfs; exit 1;;
   copy_example_jars ) copy_example_jars; exit 1;;
-  javadocs )          javadocs; exit 1;;
+  javadocs )          build_javadocs; exit 1;;
   depends )           build_dependencies; exit 1;;
   login )             login_staging_server; exit 1;;
   sdk )               build_sdk; exit 1;;
