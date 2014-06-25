@@ -109,7 +109,7 @@ Strategies in Testing MapReduce Jobs
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce jobs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
-found under :doc:`TrafficAnalytics </examples/TrafficAnalytics/index>`.
+found under `TrafficAnalytics </examples/TrafficAnalytics/index.html>`__.
 
 The ``TrafficAnalyticsTest`` class should extend from
 ``ReactorTestBase`` similar to `Strategies in Testing Flows`.
@@ -165,7 +165,7 @@ The assertion will verify that the correct result was received.
 Validating Test Data with SQL
 -----------------------------
 Often the easiest way to verify that a test produced the right data is to run a SQL query - if the data sets involved
-in the test case are record-scannable as described in :doc:`Querying Datasets with SQL </query>`_. 
+in the test case are record-scannable as described in `Querying Datasets with SQL <query.html>`__. 
 This can be done using a JDBC connection obtained from the test base::
 
 
@@ -338,7 +338,7 @@ Debugging with Eclipse
 Debugging the Transaction Manager (Advanced Use)
 ------------------------------------------------
 In this advanced use section, we will explain in depth how transactions work internally.
-Transactions are introduced in the :doc:`Advanced Features <advanced>` guide.
+Transactions are introduced in the `Advanced Features <advanced.html>`__ guide.
 
 A transaction is defined by an identifier, which contains the time stamp, in milliseconds,
 of its creation. This identifier—also called the `write pointer`—represents the version
