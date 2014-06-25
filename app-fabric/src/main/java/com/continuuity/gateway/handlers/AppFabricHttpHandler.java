@@ -2966,6 +2966,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             // trying to see if that is Dataset V2
             ReactorDatasetNamespace namespace = new ReactorDatasetNamespace(configuration,
                                                                             DataSetAccessor.Namespace.USER);
+            // TODO: fix namespacing - see REACTOR-217
             String namespacedDsName = namespace.namespace(dsName);
             DatasetInstanceMeta meta = getDatasetInstanceMeta(namespacedDsName);
             if (meta != null) {

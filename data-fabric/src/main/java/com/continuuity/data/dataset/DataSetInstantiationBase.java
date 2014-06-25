@@ -69,6 +69,7 @@ public class DataSetInstantiationBase {
   private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
 
   private final InstantiatorFactory instantiatorFactory = new InstantiatorFactory(false);
+  private final ReactorDatasetNamespace namespace;
 
   public DataSetInstantiationBase(CConfiguration configuration) {
     this(configuration, null);
@@ -77,6 +78,7 @@ public class DataSetInstantiationBase {
   public DataSetInstantiationBase(CConfiguration configuration, ClassLoader classLoader) {
     this.configuration = configuration;
     this.classLoader = classLoader;
+    this.namespace = new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER);
   }
 
   /**
@@ -431,6 +433,7 @@ public class DataSetInstantiationBase {
 
   public void setMetricsCollector(final MetricsCollectionService metricsCollectionService,
                                   final MetricsCollector programContextMetrics) {
+
     final MetricsCollector dataSetMetrics =
       metricsCollectionService.getCollector(MetricsScope.REACTOR, Constants.Metrics.DATASET_CONTEXT, "0");
 
@@ -479,7 +482,7 @@ public class DataSetInstantiationBase {
 
       // datasets API V2
       if (txAware.getKey() instanceof MeteredDataset) {
-        ReactorDatasetNamespace namespace = new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER);
+        // TODO: fix namespacing - see REACTOR-217
         final String dataSetName = namespace.namespace(txAware.getValue());
         MeteredDataset.MetricsCollector metricsCollector = new MeteredDataset.MetricsCollector() {
           @Override
