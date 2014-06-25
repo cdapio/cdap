@@ -8,7 +8,6 @@ import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -38,7 +37,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException {
+  protected Status fetchStatus(Handle handle) throws ExploreException, HandleNotFoundException {
     try {
       OperationHandle operationHandle = getOperationHandle(handle);
       OperationStatus operationStatus = getCliService().getOperationStatus(operationHandle);
@@ -52,7 +51,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  public List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
+  protected List<Result> fetchNextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
     try {
       LOG.trace("Getting results for handle {}", handle);
       OperationHandle operationHandle = getOperationHandle(handle);
