@@ -16,15 +16,18 @@ import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateTestBase;
+import com.continuuity.test.SlowTests;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.experimental.categories.Category;
 
 /**
  *
  */
+@Category(SlowTests.class)
 public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
 
   private static HBaseTestBase testHBase;

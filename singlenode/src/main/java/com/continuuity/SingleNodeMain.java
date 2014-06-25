@@ -5,6 +5,7 @@ package com.continuuity;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
+import com.continuuity.app.guice.ServiceStoreModules;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -44,11 +45,9 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.util.List;
@@ -61,7 +60,6 @@ public class SingleNodeMain {
   private static final Logger LOG = LoggerFactory.getLogger(SingleNodeMain.class);
 
   private final WebCloudAppService webCloudAppService;
-  private final CConfiguration configuration;
   private final NettyRouter router;
   private final Gateway gatewayV2;
   private final MetricsQueryService metricsQueryService;
@@ -79,10 +77,7 @@ public class SingleNodeMain {
 
   private ExploreExecutorService exploreExecutorService;
 
-  private InMemoryZKServer zookeeper;
-
   public SingleNodeMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
-    this.configuration = configuration;
     this.webCloudAppService = new WebCloudAppService(webAppPath);
 
     Injector injector = Guice.createInjector(modules);
@@ -130,14 +125,6 @@ public class SingleNodeMain {
    */
   protected void startUp(String[] args) throws Exception {
     logAppenderInitializer.initialize();
-
-    File zkDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR) + "/zookeeper");
-    //noinspection ResultOfMethodCallIgnored
-    zkDir.mkdir();
-    zookeeper = InMemoryZKServer.builder().setDataDir(zkDir).build();
-    zookeeper.startAndWait();
-
-    configuration.set(Constants.Zookeeper.QUORUM, zookeeper.getConnectionStr());
 
     // Start all the services.
     txService.startAndWait();
@@ -190,7 +177,6 @@ public class SingleNodeMain {
     if (exploreExecutorService != null) {
       exploreExecutorService.stopAndWait();
     }
-    zookeeper.stopAndWait();
     logAppenderInitializer.close();
   }
 
@@ -313,7 +299,8 @@ public class SingleNodeMain {
       new RouterModules().getInMemoryModules(),
       new SecurityModules().getInMemoryModules(),
       new StreamServiceRuntimeModule().getInMemoryModules(),
-      new ExploreRuntimeModule().getInMemoryModules()
+      new ExploreRuntimeModule().getInMemoryModules(),
+      new ServiceStoreModules().getInMemoryModule()
     );
   }
 
@@ -360,7 +347,8 @@ public class SingleNodeMain {
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
       new StreamServiceRuntimeModule().getSingleNodeModules(),
-      new ExploreRuntimeModule().getSingleNodeModules()
+      new ExploreRuntimeModule().getSingleNodeModules(),
+      new ServiceStoreModules().getSingleNodeModule()
     );
   }
 }

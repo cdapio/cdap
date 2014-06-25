@@ -130,7 +130,7 @@ public class SingleTypeModule implements DatasetModule {
 
     CompositeDatasetDefinition def = new CompositeDatasetDefinition(typeName, defs) {
       @Override
-      public Dataset getDataset(DatasetSpecification spec) throws IOException {
+      public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
         Object[] params = new Object[ctorParams.length];
         for (int i = 0; i < ctorParams.length; i++) {
           params[i] = ctorParams[i] != null ? ctorParams[i].getValue(defs, spec) : null;
@@ -218,7 +218,7 @@ public class SingleTypeModule implements DatasetModule {
 
     @Override
     public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec) throws IOException {
-      return defs.get(name).getDataset(spec.getSpecification(name));
+      return defs.get(name).getDataset(spec.getSpecification(name), null);
     }
   }
 }

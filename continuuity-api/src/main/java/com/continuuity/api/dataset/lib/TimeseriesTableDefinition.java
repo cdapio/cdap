@@ -32,13 +32,13 @@ public class TimeseriesTableDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("ts"));
+  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(spec.getSpecification("ts"), classLoader);
   }
 
   @Override
-  public TimeseriesTable getDataset(DatasetSpecification spec) throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("ts"));
+  public TimeseriesTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    Table table = tableDef.getDataset(spec.getSpecification("ts"), classLoader);
     return new TimeseriesTable(spec, table);
   }
 }

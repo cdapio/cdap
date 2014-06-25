@@ -5,9 +5,7 @@
 PageViewAnalytics Example
 ============================
 
----------------------------------------------------------------------------
-A Continuuity Reactor Application demonstrating Custom DataSets and Metrics
----------------------------------------------------------------------------
+**A Continuuity Reactor Application Demonstrating Custom DataSets and Metrics**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
@@ -230,4 +228,4 @@ Either:
 
 Downloading the Example
 =======================
-Download the example: :download:`continuuity-PageViewAnalytics-2.2.0.zip </examples/PageViewAnalytics/continuuity-PageViewAnalytics-2.2.0.zip>`
+Download the example: :download:`continuuity-PageViewAnalytics-2.3.0.zip </examples/PageViewAnalytics/continuuity-PageViewAnalytics-2.3.0.zip>`

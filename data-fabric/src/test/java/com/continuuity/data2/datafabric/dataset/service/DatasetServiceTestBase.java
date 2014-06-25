@@ -20,9 +20,9 @@ import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
-import com.continuuity.explore.client.AsyncExploreClient;
 import com.continuuity.explore.client.DatasetExploreFacade;
-import com.google.common.base.Charsets;
+import com.continuuity.explore.client.DiscoveryExploreClient;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.reflect.TypeToken;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
@@ -62,6 +62,7 @@ public abstract class DatasetServiceTestBase {
     }
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
+    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 
     // Starting DatasetService service
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
@@ -92,7 +93,7 @@ public abstract class DatasetServiceTestBase {
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  mdsDatasetsRegistry,
-                                 new DatasetExploreFacade(new AsyncExploreClient(discoveryService), cConf));
+                                 new DatasetExploreFacade(new DiscoveryExploreClient(discoveryService), cConf));
     service.startAndWait();
     port = discoveryService.discover(Constants.Service.DATASET_MANAGER).iterator().next().getSocketAddress().getPort();
   }
@@ -130,7 +131,7 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected int deleteInstances() throws IOException {
-    return HttpRequests.delete(getUrl("/data/datasets")).getResponseCode();
+    return HttpRequests.delete(getUrl("/data/unrecoverable/datasets")).getResponseCode();
   }
 
   protected int deleteModule(String moduleName) throws Exception {

@@ -6,11 +6,13 @@ package com.continuuity.metrics.collect;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
+import com.continuuity.test.SlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -23,6 +25,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class AggregatedMetricsCollectionServiceTest {
 
+  @Category(SlowTests.class)
   @Test
   public void testPublish() throws InterruptedException {
     final BlockingQueue<MetricsRecord> published = new LinkedBlockingQueue<MetricsRecord>();

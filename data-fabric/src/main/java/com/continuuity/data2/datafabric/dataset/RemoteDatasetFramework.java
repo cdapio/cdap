@@ -126,9 +126,9 @@ public class RemoteDatasetFramework implements DatasetFramework {
     if (instanceInfo == null) {
       return null;
     }
-    DatasetDefinition impl = getDatasetDefinition(instanceInfo.getType(), classLoader);
 
-    return (T) impl.getAdmin(instanceInfo.getSpec());
+    DatasetDefinition impl = getDatasetDefinition(instanceInfo.getType(), classLoader);
+    return (T) impl.getAdmin(instanceInfo.getSpec(), classLoader);
   }
 
   @Override
@@ -139,16 +139,9 @@ public class RemoteDatasetFramework implements DatasetFramework {
     if (instanceInfo == null) {
       return null;
     }
+
     DatasetDefinition impl = getDatasetDefinition(instanceInfo.getType(), classLoader);
-
-    // Temporarily use caller's classloader as default.
-    // TODO: This is to avoid passing classloader to DatasetDefinition.getDataset(). Should be done cleaner
-    ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(classLoader);
-    T dataset = (T) impl.getDataset(instanceInfo.getSpec());
-    Thread.currentThread().setContextClassLoader(contextClassLoader);
-
-    return dataset;
+    return (T) impl.getDataset(instanceInfo.getSpec(), classLoader);
   }
 
   private void addModule(String moduleName, Class<?> typeClass) throws DatasetManagementException {
