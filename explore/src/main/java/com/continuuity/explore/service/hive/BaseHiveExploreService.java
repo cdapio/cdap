@@ -64,12 +64,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   protected HiveConf getHiveConf() {
     // TODO figure out why this hive conf does not contain our env properties - REACTOR-270
     // return hiveConf;
-
-    // TODO print out where the conf comes from, make sure it comes
-    // from the correct file of the container classpath
-    HiveConf conf = new HiveConf();
-    LOG.info("Hive site URL: {}", conf.getHiveSiteLocation());
-    return conf;
+    return new HiveConf();
   }
 
   protected CLIService getCliService() {
@@ -87,7 +82,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Stopping {}...", Hive13ExploreService.class.getSimpleName());
+    LOG.info("Stopping {}...", BaseHiveExploreService.class.getSimpleName());
     cliService.stop();
   }
 

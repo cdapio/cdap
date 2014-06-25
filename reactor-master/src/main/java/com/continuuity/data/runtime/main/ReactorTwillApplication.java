@@ -15,9 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.net.URISyntaxException;
+import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * TwillApplication wrapper for Reactor YARN Services.
@@ -198,26 +199,26 @@ public class ReactorTwillApplication implements TwillApplication {
       .setInstances(cConf.getInt(Constants.Explore.CONTAINER_INSTANCES, 1))
       .build();
 
-    // HIVE_CLASSPATH will be defined in startup scripts if Hive is installed.
-    String hiveClassPathStr = System.getProperty(Constants.Explore.HIVE_CLASSPATH);
-    if (hiveClassPathStr == null) {
-      throw new RuntimeException("System property " + Constants.Explore.HIVE_CLASSPATH + " is not set.");
-    }
-    Iterable<URL> hiveJars = ExploreServiceUtils.getClassPathJars(hiveClassPathStr);
-
     TwillSpecification.Builder.MoreFile twillSpecs =
       builder.add(new ExploreServiceTwillRunnable("explore.executor", "cConf.xml", "hConf.xml"), resourceSpec)
         .withLocalFiles()
         .add("cConf.xml", cConfFile.toURI())
         .add("hConf.xml", hConfFile.toURI());
 
+    // HIVE_CLASSPATH will be defined in startup scripts if Hive is installed.
+    String hiveClassPathStr = System.getProperty(Constants.Explore.HIVE_CLASSPATH);
+    if (hiveClassPathStr == null) {
+      throw new RuntimeException("System property " + Constants.Explore.HIVE_CLASSPATH + " is not set.");
+    }
+
     try {
-      for (URL url : hiveJars) {
-        twillSpecs = twillSpecs.add(url.getFile().substring(url.getFile().lastIndexOf("/") + 1), url.toURI());
+      // Ship jars needed by Hive to the container
+      Set<File> jars = ExploreServiceUtils.traceExploreDependencies(hiveClassPathStr);
+      for (File jarFile : jars) {
+        twillSpecs = twillSpecs.add(jarFile.getName(), jarFile);
       }
-    } catch (URISyntaxException e) {
-      LOG.error("Hive jar URL format is incorrect", e);
-      throw new RuntimeException(e);
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to trace Explore dependencies", e);
     }
 
     return twillSpecs.apply();

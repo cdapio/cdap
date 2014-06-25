@@ -59,11 +59,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.InetAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -357,9 +357,6 @@ public class ReactorServiceMain extends DaemonMain {
       return preparer;
     }
 
-    // TODO ship hive jars instead of just passing hive class path: hive jars
-    // may not be at the same location on every machine of the cluster.
-
     // HIVE_CLASSPATH will be defined in startup scripts if Hive is installed.
     String hiveClassPathStr = System.getProperty(Constants.Explore.HIVE_CLASSPATH);
     LOG.debug("Hive classpath = {}", hiveClassPathStr);
@@ -367,20 +364,37 @@ public class ReactorServiceMain extends DaemonMain {
       throw new RuntimeException("System property " + Constants.Explore.HIVE_CLASSPATH + " is not set.");
     }
 
-    // Here we need to get a different class loader that contains all the hive jars, to have access to them.
-    // We use a separate class loader because Hive ships a lot of dependencies that conflicts with ours.
-    ClassLoader hiveCL = ExploreServiceUtils.buildHiveClassLoader(hiveClassPathStr);
+    // Here we need to get a different class loader that contains all the hive jars,
+    // because Hive ships a lot of dependencies that conflicts with ours.
+    ClassLoader hiveCL = ExploreServiceUtils.buildClassLoader(hiveClassPathStr);
 
     // This checking will throw an exception if Hive is not present or if its version is unsupported
     ExploreServiceUtils.checkHiveVersion(hiveCL);
 
-    Iterable<URL> hiveJars = ExploreServiceUtils.getClassPathJars(hiveClassPathStr);
+    try {
+      // Put jars needed by Hive to in the containers classpath
+      Set<File> jars = ExploreServiceUtils.traceExploreDependencies(hiveCL);
+      for (File jarFile : jars) {
+        LOG.info("File name {}", jarFile.getName());
+        preparer = preparer.withClassPaths(jarFile.getName());
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to trace Explore dependencies", e);
+    }
 
-    for (URL url : hiveJars) {
-      int i = url.getFile().lastIndexOf("/") + 1;
-      String s = url.getFile().substring(i);
-      LOG.info("index {} str {}", i, s);
-      preparer = preparer.withClassPaths(s);
+    // HIVE_CONF_FILES will be defined in startup scripts if Hive is installed.
+    String hiveConfFiles = System.getProperty(Constants.Explore.HIVE_CONF_FILES);
+    LOG.debug("Hive conf files = {}", hiveConfFiles);
+    if (hiveConfFiles == null) {
+      throw new RuntimeException("System property " + Constants.Explore.HIVE_CONF_FILES + " is not set.");
+    }
+
+    // Add all the conf files needed by hive as resources available to containers
+    Iterable<File> hiveConfFilesFiles = ExploreServiceUtils.getClassPathJarsFiles(hiveConfFiles);
+    for (File file : hiveConfFilesFiles) {
+      if (file.getName().matches(".*\\.xml")) {
+        preparer.withResources(file.toURI());
+      }
     }
 
     return preparer;
