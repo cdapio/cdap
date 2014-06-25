@@ -22,6 +22,7 @@ import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.ScheduleManager;
 import com.continuuity.test.ServiceManager;
+import com.continuuity.test.ServiceStatus;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.test.WorkflowManager;
 import com.google.common.base.Preconditions;
@@ -332,12 +333,12 @@ public class DefaultApplicationManager implements ApplicationManager {
             throw Throwables.propagate(e);
           }
         }
-        public String status() {
+        public ServiceStatus status() {
           try {
             if (isRunning(serviceId)) {
-              return "RUNNING";
+              return ServiceStatus.RUNNING;
             } else {
-              return "STOPPED";
+              return ServiceStatus.STOPPED;
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);

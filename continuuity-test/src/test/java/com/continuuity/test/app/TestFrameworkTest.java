@@ -16,6 +16,7 @@ import com.continuuity.test.ReactorTestBase;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.ServiceManager;
+import com.continuuity.test.ServiceStatus;
 import com.continuuity.test.SlowTests;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.test.WorkflowManager;
@@ -190,10 +191,10 @@ public class TestFrameworkTest extends ReactorTestBase {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
     ServiceManager serviceManager = applicationManager.startService("NoOpService");
-    Assert.assertEquals("RUNNING", serviceManager.status());
+    Assert.assertEquals(ServiceStatus.RUNNING, serviceManager.status());
     LOG.info("Service Started");
     serviceManager.stop();
-    Assert.assertEquals("STOPPED", serviceManager.status());
+    Assert.assertEquals(ServiceStatus.STOPPED, serviceManager.status());
     LOG.info("Service Stopped");
     // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the REACTOR scope test in
     // TestMetricsCollectionService

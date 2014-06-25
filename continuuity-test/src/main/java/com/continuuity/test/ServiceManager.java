@@ -12,5 +12,5 @@ public interface ServiceManager {
   /**
    * Status of Service
    */
-  String status();
+  ServiceStatus status();
 }
