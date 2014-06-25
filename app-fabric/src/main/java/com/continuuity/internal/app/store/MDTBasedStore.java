@@ -312,6 +312,7 @@ public class MDTBasedStore implements Store {
                                                                       .putAll(existingAppSpec.getWorkflows())
                                                                       .putAll(existingAppSpec.getFlows())
                                                                       .putAll(existingAppSpec.getProcedures())
+                                                                      .putAll(existingAppSpec.getServices())
                                                                       .build();
 
       ImmutableMap<String, ProgramSpecification> newSpec = new ImmutableMap.Builder<String, ProgramSpecification>()
@@ -319,6 +320,7 @@ public class MDTBasedStore implements Store {
                                                                       .putAll(appSpec.getWorkflows())
                                                                       .putAll(appSpec.getFlows())
                                                                       .putAll(appSpec.getProcedures())
+                                                                      .putAll(appSpec.getServices())
                                                                       .build();
 
 
