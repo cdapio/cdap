@@ -3,7 +3,7 @@ package com.continuuity.metadata;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
-import com.continuuity.data2.transaction.TransactionExecutorFactory;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.test.SlowTests;
 import com.google.common.base.Throwables;
@@ -21,7 +21,7 @@ public class HBaseSerializingMetaDataStoreTest extends HBaseMetaDataStoreTest {
   @BeforeClass
   public static void setupMDS() throws Exception {
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
-    mds = new SerializingMetaDataTable(injector.getInstance(TransactionExecutorFactory.class),
+    mds = new SerializingMetaDataTable(injector.getInstance(TransactionSystemClient.class),
                                         injector.getInstance(DataSetAccessor.class));
   }
 

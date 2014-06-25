@@ -25,6 +25,9 @@ public abstract class AbstractTransactionExecutor implements TransactionExecutor
       return execute(function, input);
     } catch (TransactionFailureException e) {
       throw Throwables.propagate(e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
     }
   }
 
@@ -33,6 +36,9 @@ public abstract class AbstractTransactionExecutor implements TransactionExecutor
     try {
       execute(procedure, input);
     } catch (TransactionFailureException e) {
+      throw Throwables.propagate(e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw Throwables.propagate(e);
     }
   }
@@ -43,6 +49,9 @@ public abstract class AbstractTransactionExecutor implements TransactionExecutor
       return execute(callable);
     } catch (TransactionFailureException e) {
       throw Throwables.propagate(e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
     }
   }
 
@@ -51,6 +60,9 @@ public abstract class AbstractTransactionExecutor implements TransactionExecutor
     try {
       execute(subroutine);
     } catch (TransactionFailureException e) {
+      throw Throwables.propagate(e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw Throwables.propagate(e);
     }
   }

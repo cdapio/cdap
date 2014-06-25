@@ -6,12 +6,7 @@ package com.continuuity.common.twill;
 public class InMemoryReactorServiceManager implements ReactorServiceManager {
 
   @Override
-  public int getRequestedInstances() {
-    return 1;
-  }
-
-  @Override
-  public int getProvisionedInstances() {
+  public int getInstances() {
     return 1;
   }
 
@@ -42,6 +37,11 @@ public class InMemoryReactorServiceManager implements ReactorServiceManager {
 
   @Override
   public boolean isServiceAvailable() {
+    return true;
+  }
+
+  @Override
+  public boolean isServiceEnabled() {
     return true;
   }
 }

@@ -9,6 +9,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataSets;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import org.apache.twill.api.RunId;
 
 import java.io.Closeable;
@@ -26,11 +27,11 @@ final class BasicProcedureContextFactory {
   private final Arguments userArguments;
   private final ProcedureSpecification procedureSpec;
   private final MetricsCollectionService collectionService;
-
+  private final ProgramServiceDiscovery serviceDiscovery;
 
   BasicProcedureContextFactory(Program program, RunId runId, int instanceId, int instanceCount,
                                Arguments userArguments, ProcedureSpecification procedureSpec,
-                               MetricsCollectionService collectionService) {
+                               MetricsCollectionService collectionService, ProgramServiceDiscovery serviceDiscovery) {
     this.program = program;
     this.runId = runId;
     this.instanceId = instanceId;
@@ -38,6 +39,7 @@ final class BasicProcedureContextFactory {
     this.userArguments = userArguments;
     this.procedureSpec = procedureSpec;
     this.collectionService = collectionService;
+    this.serviceDiscovery = serviceDiscovery;
   }
 
   BasicProcedureContext create(DataFabricFacade dataFabricFacade) {
@@ -45,8 +47,8 @@ final class BasicProcedureContextFactory {
     Map<String, Closeable> dataSets = DataSets.createDataSets(dataSetContext,
                                                             procedureSpec.getDataSets());
     BasicProcedureContext context = new BasicProcedureContext(program, runId, instanceId, instanceCount,
-                                                              dataSets, userArguments,
-                                                              procedureSpec, collectionService);
+                                                              dataSets, userArguments, procedureSpec,
+                                                              collectionService, serviceDiscovery);
 
     // hack for propagating metrics collector to datasets
     if (dataSetContext instanceof DataSetInstantiationBase) {

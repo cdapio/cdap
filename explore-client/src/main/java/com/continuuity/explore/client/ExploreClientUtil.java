@@ -1,5 +1,6 @@
 package com.continuuity.explore.client;
 
+import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
@@ -25,8 +26,8 @@ public class ExploreClientUtil {
    * @throws HandleNotFoundException
    * @throws InterruptedException
    */
-  public static Status waitForCompletionStatus(ExploreClient exploreClient, Handle handle,
-                                                long sleepTime, TimeUnit timeUnit, int maxTries)
+  public static Status waitForCompletionStatus(Explore exploreClient, Handle handle,
+                                               long sleepTime, TimeUnit timeUnit, int maxTries)
     throws ExploreException, HandleNotFoundException, InterruptedException {
     Status status;
     int tries = 0;

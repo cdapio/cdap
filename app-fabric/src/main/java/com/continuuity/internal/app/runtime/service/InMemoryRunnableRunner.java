@@ -84,6 +84,7 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       Class<? extends TwillRunnable> runnableClass = (Class<? extends TwillRunnable>) clz;
 
       RunId twillRunId = RunIds.generate();
+      //todo : service discovery using ProgramServiceDiscovery
       twillContext = new BasicTwillContext(twillRunId, runId, InetAddress.getLocalHost(), null, null,
                                            runnableSpec.getRunnableSpecification(), instanceId, null, null,
                                            instanceCount, runnableSpec.getResourceSpecification().getMemorySize(),
