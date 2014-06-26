@@ -140,7 +140,7 @@ guide). In order to authenticate, all client requests must supply this access to
 
    Authorization: Bearer wohng8Xae7thahfohshahphaeNeeM5ie
 
-For Reactor issued access tokens, the authentication scheme must always be ``Bearer``.
+For Reactor-issued access tokens, the authentication scheme must always be ``Bearer``.
 
 
 Stream HTTP API
