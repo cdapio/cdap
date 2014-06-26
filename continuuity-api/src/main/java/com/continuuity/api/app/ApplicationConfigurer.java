@@ -54,33 +54,33 @@ public interface ApplicationConfigurer {
    * @param moduleName name of the module to deploy
    * @param moduleClass class of the module
    */
-  void addDataSetModule(String moduleName, Class<? extends DatasetModule> moduleClass);
+  void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass);
 
   /**
-   * Same as {@link #addDataSetModule(String, Class)} but uses {@link Dataset} as a base for {@link DatasetModule}.
+   * Same as {@link #addDatasetModule(String, Class)} but uses {@link Dataset} as a base for {@link DatasetModule}.
    * The module will have single dataset type of name equals to name of the class in datasetClass param.
    * @param datasetClass class of the dataset. Name of the module is same as name of the class in datasetClass param.
    */
-  void addDataSetType(Class<? extends Dataset> datasetClass);
+  void addDatasetType(Class<? extends Dataset> datasetClass);
 
   /**
    * Adds a dataset instance to be created automatically (if not exists) by application components.
    * See {@link com.continuuity.api.dataset.DatasetDefinition} for more details.
-   * @param datasetInstanceName name of the dataset instance
+   * @param datasetName name of the dataset instance
    * @param typeName name of the dataset type
    * @param properties dataset instance properties
    */
-  void createDataSet(String datasetInstanceName, String typeName, DatasetProperties properties);
+  void createDataset(String datasetName, String typeName, DatasetProperties properties);
 
   /**
    * Adds a dataset instance to be created automatically (if not exists) by application components
-   * and deploys dataset type as per {@link #addDataSetType(Class)} using datasetClass parameter as dataset class.
+   * and deploys dataset type as per {@link #addDatasetType(Class)} using datasetClass parameter as dataset class.
    *
-   * @param datasetInstanceName dataset instance name
+   * @param datasetName dataset instance name
    * @param datasetClass dataset class to create type from
    * @param props dataset instance properties
    */
-  void createDataSet(String datasetInstanceName,
+  void createDataset(String datasetName,
                      Class<? extends Dataset> datasetClass,
                      DatasetProperties props);
 

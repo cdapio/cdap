@@ -18,7 +18,7 @@ package com.continuuity.examples.wordcount;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDataset;
-import com.continuuity.api.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.module.EmbeddedDataset;
 import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Table;
 
@@ -40,8 +40,8 @@ public class UniqueCountTable extends AbstractDataset {
   private Table entryCountTable;
 
   public UniqueCountTable(DatasetSpecification spec,
-                          @EmbeddedDataSet("unique") Table uniqueCountTable,
-                          @EmbeddedDataSet("entry") Table entryCountTable) {
+                          @EmbeddedDataset("unique") Table uniqueCountTable,
+                          @EmbeddedDataset("entry") Table entryCountTable) {
     super(spec.getName(), uniqueCountTable, entryCountTable);
     this.uniqueCountTable = uniqueCountTable;
     this.entryCountTable = entryCountTable;

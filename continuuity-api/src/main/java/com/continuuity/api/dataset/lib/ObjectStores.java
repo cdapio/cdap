@@ -34,7 +34,7 @@ public final class ObjectStores {
                                        String datasetName, Type type, DatasetProperties props)
     throws UnsupportedTypeException {
 
-    configurer.createDataSet(datasetName, ObjectStore.class, objectStoreProperties(type, props));
+    configurer.createDataset(datasetName, ObjectStore.class, objectStoreProperties(type, props));
   }
 
   /**
@@ -59,7 +59,7 @@ public final class ObjectStores {
                                             String datasetName, Type type, DatasetProperties props)
     throws UnsupportedTypeException {
 
-    configurer.createDataSet(datasetName, MultiObjectStore.class, objectStoreProperties(type, props));
+    configurer.createDataset(datasetName, MultiObjectStore.class, objectStoreProperties(type, props));
   }
 
   /**
@@ -84,7 +84,7 @@ public final class ObjectStores {
                                               String datasetName, Type type, DatasetProperties props)
     throws UnsupportedTypeException {
 
-    configurer.createDataSet(datasetName, IndexedObjectStore.class, objectStoreProperties(type, props));
+    configurer.createDataset(datasetName, IndexedObjectStore.class, objectStoreProperties(type, props));
   }
 
   /**

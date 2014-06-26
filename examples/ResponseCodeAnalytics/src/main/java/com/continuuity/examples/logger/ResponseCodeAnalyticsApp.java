@@ -58,7 +58,7 @@ public class ResponseCodeAnalyticsApp extends AbstractApplication {
     // Ingest data into the app via Streams
     addStream(new Stream("logEventStream"));
     // Store processed data in DataSets
-    createDataSet("statusCodeTable", Table.class);
+    createDataset("statusCodeTable", Table.class);
     // Process log events in real-time using Flows
     addFlow(new LogAnalyticsFlow());
     // Query the processed data using Procedures
