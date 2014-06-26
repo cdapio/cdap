@@ -373,9 +373,6 @@ There are four methods in the interface:
    using an implementation of the ``Dataset`` interface. It does not require a developer to implement
    any specific methods, and instead leaves it to the developer to define all of the data operations.
 
-To implement a Dataset built on top of existing Datasets, there is a handy ``CompositeDatasetDefinition``
-class that delegates the work to specified underlying Datasets wherever possible. 
-
 In this case, our  ``UniqueCountTableDefinition`` will have two underlying Datasets: 
 an ``entryCountTable`` and an ``uniqueCountTable``, both of type ``Table``::
 
@@ -463,7 +460,7 @@ that configures the dependencies between Dataset implementations::
   }
 
 You can deploy the Dataset module jar using either the `Continuuity Reactor HTTP REST API <rest.html>`__
-or command line tools. You can also configure an application to deploy the module if it doesn't exists::
+or command line tools. You can also configure an application to deploy the module if it doesn't exist::
 
   Class MyApp extends AbstractApplication {
     public void configure() {
@@ -526,8 +523,8 @@ Here's a simpler look at our ``UniqueCountTable``::
   }
 
 In this case, the class must have one constructor that takes a ``DatasetSpecification`` as a first
-parameter and any number of ``Dataset``\s annotated with the ``@Embeddeddataset`` annotation as the
-remaining parameters. ``@Embeddeddataset`` takes the embedded Dataset's name as a parameter.
+parameter and any number of ``Dataset``\s annotated with the ``@EmbeddedDataset`` annotation as the
+remaining parameters. ``@EmbeddedDataset`` takes the embedded Dataset's name as a parameter.
 
 All administrative operations (such as create, drop, truncate) will be delegated to the embedded Datasets
 in the order they are defined in the constructor. ``DatasetProperties`` that are passed during creation of
