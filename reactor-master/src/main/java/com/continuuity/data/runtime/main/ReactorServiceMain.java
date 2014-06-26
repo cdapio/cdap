@@ -62,7 +62,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -351,13 +353,46 @@ public class ReactorServiceMain extends DaemonMain {
     return iterable;
   }
 
-  private TwillPreparer addHiveDependenciesToPreparer(TwillPreparer preparer) {
+  /**
+   * Prepare the specs of the twill application for the Explore twill runnable.
+   * Add jars needed by the Explore module in the classpath of the containers, and
+   * add conf files (hive_site.xml, etc) as resources available for the Explore twill
+   * runnable.
+   */
+  private TwillPreparer addHiveDependenciesToPreparer(TwillPreparer preparer, ClassLoader classLoader) {
+    try {
+      // Put jars needed by Hive in the containers classpath. Those jars are localized in the Explore
+      // container by ReactorTwillApplication, so they are available for ExploreServiceTwillRunnable
+      Set<File> jars = ExploreServiceUtils.traceExploreDependencies(classLoader);
+      for (File jarFile : jars) {
+        LOG.trace("Adding jar file to classpath: {}", jarFile.getName());
+        preparer = preparer.withClassPaths(jarFile.getName());
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to trace Explore dependencies", e);
+    }
+
+    // HIVE_CONF_FILES will be defined in startup scripts if Hive is installed.
+    String hiveConfFiles = System.getProperty(Constants.Explore.HIVE_CONF_FILES);
+    LOG.debug("Hive conf files = {}", hiveConfFiles);
+    if (hiveConfFiles == null) {
+      throw new RuntimeException("System property " + Constants.Explore.HIVE_CONF_FILES + " is not set.");
+    }
+
+    // Add all the conf files needed by hive as resources available to containers
+    Iterable<File> hiveConfFilesFiles = ExploreServiceUtils.getClassPathJarsFiles(hiveConfFiles);
+    for (File file : hiveConfFilesFiles) {
+      if (file.getName().matches(".*\\.xml")) {
+        preparer = preparer.withResources(file.toURI());
+      }
+    }
+    return preparer;
+  }
+
+  private TwillPreparer prepareHiveContainer(TwillPreparer preparer) {
     if (!isHiveEnabled) {
       return preparer;
     }
-
-    // TODO ship hive jars instead of just passing hive class path: hive jars
-    // may not be at the same location on every machine of the cluster.
 
     // HIVE_CLASSPATH will be defined in startup scripts if Hive is installed.
     String hiveClassPathStr = System.getProperty(Constants.Explore.HIVE_CLASSPATH);
@@ -366,21 +401,20 @@ public class ReactorServiceMain extends DaemonMain {
       throw new RuntimeException("System property " + Constants.Explore.HIVE_CLASSPATH + " is not set.");
     }
 
-    // Here we need to get a different class loader that contains all the hive jars, to have access to them.
-    // We use a separate class loader because Hive ships a lot of dependencies that conflicts with ours.
-    ClassLoader hiveCL = ExploreServiceUtils.buildHiveClassLoader(hiveClassPathStr);
+    // Here we need to get a different class loader that contains all the hive jars,
+    // because Hive ships a lot of dependencies that conflicts with ours.
+    ClassLoader hiveCL = ExploreServiceUtils.buildClassLoader(hiveClassPathStr);
 
     // This checking will throw an exception if Hive is not present or if its version is unsupported
-    ExploreServiceUtils.checkHiveVersion(hiveCL);
+    ExploreServiceUtils.checkHiveSupport(hiveCL);
 
-    return preparer.withClassPaths(hiveClassPathStr);
+    return addHiveDependenciesToPreparer(preparer, hiveCL);
   }
 
   private TwillPreparer getPreparer() {
     TwillPreparer preparer = twillRunnerService.prepare(twillApplication)
-        .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
-    preparer = addHiveDependenciesToPreparer(preparer);
-
+      .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+    preparer = prepareHiveContainer(preparer);
     return prepare(preparer);
   }
 

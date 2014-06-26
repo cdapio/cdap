@@ -1,5 +1,6 @@
 package com.continuuity.internal.app.runtime.service;
 
+import com.continuuity.api.common.RuntimeArguments;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.metrics.ServiceRunnableMetrics;
@@ -12,6 +13,7 @@ import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.lang.Reflections;
 import com.continuuity.logging.context.UserServiceLoggingContext;
 import com.google.common.base.Preconditions;
@@ -21,12 +23,18 @@ import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillRunnable;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.internal.BasicTwillContext;
 import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  * Runs runnable-service in single-node
@@ -36,15 +44,21 @@ public class InMemoryRunnableRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryRunnableRunner.class);
 
   private final MetricsCollectionService metricsCollectionService;
+  private final ProgramServiceDiscovery serviceDiscovery;
+  private final DiscoveryService dsService;
 
   @Inject
-  public InMemoryRunnableRunner(MetricsCollectionService metricsCollectionService) {
+  public InMemoryRunnableRunner(MetricsCollectionService metricsCollectionService,
+                                ProgramServiceDiscovery serviceDiscovery,
+                                DiscoveryService dsService) {
     this.metricsCollectionService = metricsCollectionService;
+    this.serviceDiscovery = serviceDiscovery;
+    this.dsService = dsService;
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public ProgramController run(Program program, ProgramOptions options) {
+  public ProgramController run(final Program program, ProgramOptions options) {
     BasicTwillContext twillContext = null;
     try {
       // Extract and verify parameters
@@ -82,12 +96,39 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
 
       Class<? extends TwillRunnable> runnableClass = (Class<? extends TwillRunnable>) clz;
-
       RunId twillRunId = RunIds.generate();
-      //todo : service discovery using ProgramServiceDiscovery
-      twillContext = new BasicTwillContext(twillRunId, runId, InetAddress.getLocalHost(), null, null,
-                                           runnableSpec.getRunnableSpecification(), instanceId, null, null,
-                                           instanceCount, runnableSpec.getResourceSpecification().getMemorySize(),
+      final String[] argArray = RuntimeArguments.toPosixArray(options.getUserArguments());
+
+      DiscoveryService dService = new DiscoveryService() {
+        @Override
+        public Cancellable register(final Discoverable discoverable) {
+          return dsService.register(new Discoverable() {
+            @Override
+            public String getName() {
+              return String.format("service.%s.%s.%s.%s", program.getAccountId(),
+                                   program.getApplicationId(), program.getName(), discoverable.getName());
+            }
+
+            @Override
+            public InetSocketAddress getSocketAddress() {
+              return discoverable.getSocketAddress();
+            }
+          });
+        }
+      };
+
+      DiscoveryServiceClient dClient = new DiscoveryServiceClient() {
+        @Override
+        public ServiceDiscovered discover(String s) {
+          return serviceDiscovery.discover(program.getAccountId(), program.getApplicationId(),
+                                           program.getName(), s);
+        }
+      };
+
+      twillContext = new BasicTwillContext(twillRunId, runId, InetAddress.getLocalHost(), new String[0], argArray,
+                                           runnableSpec.getRunnableSpecification(), instanceId, dService,
+                                           dClient, instanceCount,
+                                           runnableSpec.getResourceSpecification().getMemorySize(),
                                            runnableSpec.getResourceSpecification().getVirtualCores());
 
       TypeToken<? extends  TwillRunnable> runnableType = TypeToken.of(runnableClass);
@@ -95,8 +136,8 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       InMemoryRunnableDriver driver = new
         InMemoryRunnableDriver(runnable, twillContext, new UserServiceLoggingContext(program.getAccountId(),
                                                                                      program.getApplicationId(),
-                                                                                     runId.getId(),
-                                                                                     twillRunId.getId()));
+                                                                                     processorName,
+                                                                                     runnableName));
 
       //Injecting Metrics
       Reflections.visit(runnable, runnableType,
