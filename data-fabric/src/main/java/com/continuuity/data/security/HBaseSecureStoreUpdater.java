@@ -4,13 +4,17 @@
 package com.continuuity.data.security;
 
 import com.continuuity.common.conf.Constants;
+import com.google.common.base.Throwables;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.Credentials;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.SecureStore;
 import org.apache.twill.api.SecureStoreUpdater;
+import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.yarn.YarnUtils;
 import org.apache.twill.yarn.YarnSecureStore;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.security.Credentials;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -19,12 +23,23 @@ import java.util.concurrent.TimeUnit;
 public final class HBaseSecureStoreUpdater implements SecureStoreUpdater {
 
   private final Configuration hConf;
+  private final LocationFactory locationFactory;
   private long nextUpdateTime = -1;
   private Credentials credentials;
 
-  public HBaseSecureStoreUpdater(Configuration hConf) {
+  public HBaseSecureStoreUpdater(Configuration hConf, LocationFactory locationFactory) {
     this.hConf = hConf;
-    this.credentials = HBaseTokenUtils.obtainToken(hConf, new Credentials());
+    this.locationFactory = locationFactory;
+    this.credentials = new Credentials();
+  }
+
+  private void refreshCredentials() {
+    try {
+      HBaseTokenUtils.obtainToken(hConf, credentials);
+      YarnUtils.addDelegationTokens(hConf, locationFactory, credentials);
+    } catch (IOException ioe) {
+      throw Throwables.propagate(ioe);
+    }
   }
 
   /**
@@ -41,8 +56,7 @@ public final class HBaseSecureStoreUpdater implements SecureStoreUpdater {
     long now = System.currentTimeMillis();
     if (now >= nextUpdateTime) {
       nextUpdateTime = now + getUpdateInterval();
-
-      HBaseTokenUtils.obtainToken(hConf, credentials);
+      refreshCredentials();
     }
     return YarnSecureStore.create(credentials);
   }

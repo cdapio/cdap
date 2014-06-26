@@ -40,6 +40,7 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Services;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.yarn.YarnSecureStore;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -84,6 +85,8 @@ public class ReactorServiceMain extends DaemonMain {
   private AppFabricServer appFabricServer;
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
+  private LocationFactory locationFactory;
+  private HBaseSecureStoreUpdater secureStoreUpdater;
 
   private String serviceName;
   private TwillApplication twillApplication;
@@ -122,6 +125,9 @@ public class ReactorServiceMain extends DaemonMain {
     zkClientService = baseInjector.getInstance(ZKClientService.class);
     kafkaClientService = baseInjector.getInstance(KafkaClientService.class);
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
+
+    locationFactory = baseInjector.getInstance(LocationFactory.class);
+    secureStoreUpdater = new HBaseSecureStoreUpdater(hConf, locationFactory);
   }
 
   @Override
@@ -185,15 +191,15 @@ public class ReactorServiceMain extends DaemonMain {
 
   private void scheduleSecureStoreUpdate(TwillRunner twillRunner) {
     if (User.isHBaseSecurityEnabled(hConf)) {
-      HBaseSecureStoreUpdater updater = new HBaseSecureStoreUpdater(hConf);
-      twillRunner.scheduleSecureStoreUpdate(updater, 30000L, updater.getUpdateInterval(), TimeUnit.MILLISECONDS);
+      twillRunner.scheduleSecureStoreUpdate(secureStoreUpdater, 30000L, secureStoreUpdater.getUpdateInterval(),
+                                            TimeUnit.MILLISECONDS);
     }
   }
 
 
   private TwillPreparer prepare(TwillPreparer preparer) {
     return preparer.withDependencies(new HBaseTableUtilFactory().get().getClass())
-      .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())));
+      .addSecureStore(secureStoreUpdater.update(null, null)); // HBaseSecureStoreUpdater.update() ignores parameters
   }
 
   private void runTwillApps() {
