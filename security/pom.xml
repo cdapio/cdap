@@ -86,6 +86,9 @@
   <profiles>
     <profile>
       <id>dist</id>
+      <properties>
+        <service.name>auth-server</service.name>
+      </properties>
       <build>
         <plugins>
           <plugin>
