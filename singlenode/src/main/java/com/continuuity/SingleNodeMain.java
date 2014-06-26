@@ -100,7 +100,7 @@ public class SingleNodeMain {
     }
 
     boolean exploreEnabled = configuration.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
-    ExploreServiceUtils.checkHiveVersion(this.getClass().getClassLoader());
+    ExploreServiceUtils.checkHiveSupport(this.getClass().getClassLoader());
     if (exploreEnabled) {
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     }

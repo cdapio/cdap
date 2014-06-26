@@ -5,7 +5,7 @@
 Advanced Continuuity Reactor Features
 =====================================
 
-**Flow, Dataset, and Transaction Systems, and Best Practices for the Continuuity Reactor**
+The Flow, Dataset, and Transaction Systems with Best Practices for Developing Applications
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
@@ -113,42 +113,40 @@ Partitioning can be combined with batch execution::
 	   ...
 
 
-Dataset System
-==============
-**Datasets** are your interface to the data. Instead of having to manipulate data with low-level APIs, Datasets provide higher level abstractions and generic, reusable Java implementations of common data patterns. A Dataset represents both the API and the actual data itself; it is a named collection of data with associated metadata, and it is manipulated through a Dataset class.
+Datasets System
+===============
+**Datasets** are your interface to the data. Instead of having to manipulate data with
+low-level APIs, Datasets provide higher level abstractions and generic, reusable Java
+implementations of common data patterns.
+
+A Dataset represents both the API and the actual data itself; it is a named collection
+of data with associated metadata, and it is manipulated through a Dataset class.
+
 
 Types of Datasets
 -----------------
-A Dataset is a Java class that extends the abstract Dataset class with its own, custom methods. The implementation of a Dataset typically relies on one or more underlying (embedded) Datasets. For example, the ``IndexedTable`` Dataset can be implemented by two underlying Table Datasets – one holding the data and one holding the index.
+A Dataset abstraction is defined with a Java class that implements the ``DatasetDefinition`` interface.
+The implementation of a Dataset typically relies on one or more underlying (embedded) Datasets.
+For example, the ``IndexedTable`` Dataset can be implemented by two underlying Table Datasets –
+one holding the data and one holding the index.
 
 We distinguish three categories of Datasets: *core*, *system*, and *custom* Datasets:
 
-- The **core** Dataset of the Reactor is a Table. Its implementation is
-  hidden from developers and it may use private Dataset interfaces that are not available to you.
+- The **core** Dataset of the Reactor is a Table. Its implementation may use internal
+  Continuuity classes hidden from developers.
 
 - A **system** Dataset is bundled with the Reactor and is built around
   one or more underlying core or system Datasets to implement a specific data pattern.
 
 - A **custom** Dataset is implemented by you and can have arbitrary code and methods.
   It is typically built around one or more Tables (or other Datasets)
-  to implement a specific data pattern. A custom Dataset can only manipulate data
-  through its underlying Datasets.
+  to implement a specific data pattern.
 
-.. - A **system** Dataset is bundled with the Reactor but implemented
-.. in the same way as a custom Dataset, relying on one or more underlying core or system Datasets.
+Each Dataset is associated with exactly one Dataset implementation to
+manipulate it. Every Dataset has a unique name and metadata that defines its behavior.
+For example, every ``IndexedTable`` has a name and indexes a particular column of its primary table:
+the name of that column is a metadata property of each Dataset of this type.
 
-Each Dataset instance has exactly one Dataset class to manipulate it—think of the class
-as the type or the interface of the Dataset. Every instance of a Dataset has a unique name
-(unique within the account that it belongs to) and metadata that defines its behavior.
-For example, every ``IndexedTable`` has a name and indexes a particular column of its primary table: the name of that column is a metadata property of each instance.
-
-Every Application must declare all Datasets that it uses in its application specification. 
-The specification of the Dataset must include its name and all of its metadata, including
-the specifications of its underlying Datasets. This creates the Dataset—if it does not
-exist yet—and stores its metadata at the time of deployment of the application.
-Application code (a Flow or Procedure) can then use a Dataset by giving only its name and
-type—the runtime system uses the stored metadata to create an instance of the Dataset
-class with all required metadata.
 
 Core Datasets
 -------------
@@ -235,9 +233,9 @@ A ``get`` operation reads all columns or selection of columns of a single row::
 	// Read only one column in one row byte[]
 	value = t.get(rowKey1, columnX);
 
-The ``Row`` object provides access to the Row data including its columns. If only a 
-selection of row columns is requested, the returned Row object will contain only these columns.
-The Row object provides an extensive API for accessing returned column values::
+The ``Row`` object provides access to the row data including its columns. If only a 
+selection of row columns is requested, the returned ``Row`` object will contain only these columns.
+The ``Row`` object provides an extensive API for accessing returned column values::
 
 	// Get column value as a byte array
 	byte[] value = row.get("column1");
@@ -247,7 +245,7 @@ The Row object provides an extensive API for accessing returned column values::
 	Integer valueAsInteger = row.getInt("column1");
 
 When requested, the value of a column is converted to a specific type automatically.
-If the column is absent in a Row, the returned value is ``null``. To return primitive types,
+If the column is absent in a row, the returned value is ``null``. To return primitive types,
 the corresponding methods accepts default value to be returned when the column is absent::
 
 	// Get column value as a primitive type or 0 if column is absent
@@ -344,45 +342,223 @@ The Continuuity Reactor comes with several system-defined Datasets, including ke
 - The ``TimeseriesTable`` uses a Table to store keyed data over time
   and allows querying that data over ranges of time.
 
-See the `Javadocs <javadocs/index.html>`__ for these classes and `the examples <examples/index.html>`
+See the `Javadocs <javadocs/index.html>`__ for these classes and `the examples <examples/index.html>`__
 to learn more about these Datasets.
 
 Custom Datasets
 ---------------
-You can define your own Dataset classes to implement common data patterns specific to your code. Suppose you want to define a counter table that, in addition to counting words,
-counts how many unique words it has seen. The Dataset will be built on top two underlying Datasets, one Table (``entryCountTable``) to count all the words and a second Table (``uniqueCountTable``) for the unique count::
+You can define your own Dataset classes to implement common data patterns specific to your code.
 
-	public class UniqueCountTable extends DataSet {
+Suppose you want to define a counter table that, in addition to counting words,
+counts how many unique words it has seen. The Dataset can be built on top two underlying Datasets,
+a first Table (``entryCountTable``) to count all the words and a second Table (``uniqueCountTable``) for the unique count.
 
-	  private Table entryCountTable;
-	  private Table uniqueCountTable;
+To define a Dataset you need to implement the ``DatasetDefinition`` interface::
 
-Custom Datasets can also optionally implement ``configure()`` and ``initialize()`` methods. The ``configure()`` method returns a specification which we can use to save metadata about the Dataset (such as configuration parameters). The ``initialize()`` method is called at execution time. It should be noted that any operations on the data of this Dataset are prohibited in ``initialize()``.
+  public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
+    String getName();
+    DatasetSpecification configure(String instanceName, DatasetProperties props);
+    A getAdmin(DatasetSpecification spec, ClassLoader cl) throws IOException;
+    D getDataset(DatasetSpecification spec, ClassLoader cl) throws IOException;
+  }
 
-Now we can begin with the implementation of the ``UniqueCountTable`` logic. We start with a few constants::
+There are four methods in the interface:
 
-	// Column name used for storing count of each entry.
-	private static final byte[] ENTRY_COUNT = Bytes.toBytes("count");
-	// Row and column name used for storing the unique count.
-	private static final byte [] UNIQUE_COUNT = Bytes.toBytes("unique");
+#. The implementation must provide a unique name for the Dataset instance.
+#. The implementation must provide a method to configure the Dataset instance based on properties
+   provided by a user at run-time.
+#. The implementation must provide a method to administer the Dataset using an implementation of the
+   ``DatasetAdmin`` interface. It performs such operations as create, truncate, and drop a Dataset.
+#. Finally, the Dataset implementation must provide a method for the manipulation of the Dataset's data
+   using an implementation of the ``Dataset`` interface. It does not require a developer to implement
+   any specific methods, and instead leaves it to the developer to define all of the data operations.
 
-The ``UniqueCountTable`` stores a counter for each word in its own row of the entry count table. For each word the counter is incremented. If the result of the increment is 1, then this is the first time we've encountered the word, hence we have a new unique word and we increment the unique counter::
+In this case, our  ``UniqueCountTableDefinition`` will have two underlying Datasets: 
+an ``entryCountTable`` and an ``uniqueCountTable``, both of type ``Table``::
 
-	public void updateUniqueCount(String entry) {
-	  long newCount = entryCountTable.increment(Bytes.toBytes(entry), ENTRY_COUNT, 1L);
-	  if (newCount == 1L) {
-	    uniqueCountTable.increment(UNIQUE_COUNT, UNIQUE_COUNT, 1L);
+	public class UniqueCountTableDefinition
+	  extends AbstractDatasetDefinition<UniqueCountTable, DatasetAdmin> {
+	
+	  private final DatasetDefinition<? extends Table, ?> tableDef;
+	
+	  public UniqueCountTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
+	    super(name);
+	    Preconditions.checkArgument(tableDef != null, "Table definition is required");
+	    this.tableDef = tableDef;
+	  }
+	
+	  @Override
+	  public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
+	    return DatasetSpecification.builder(instanceName, getName())
+	      .properties(properties.getProperties())
+	      .datasets(tableDef.configure("entryCountTable", properties))
+	      .datasets(tableDef.configure("uniqueCountTable", properties))
+	      .build();
+	  }
+	
+	  @Override
+	  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader cl) throws IOException {
+	    return new CompositeDatasetAdmin(tableDef.getAdmin(spec.getSpecification("entryCountTable"), cl),
+	                                     tableDef.getAdmin(spec.getSpecification("uniqueCountTable"), cl));
+	  }
+	
+	  @Override
+	  public UniqueCountTable getDataset(DatasetSpecification spec, ClassLoader cl) throws IOException {
+	    return new UniqueCountTable(spec.getName(),
+	                                tableDef.getDataset(spec.getSpecification("entryCountTable"), cl),
+	                                tableDef.getDataset(spec.getSpecification("uniqueCountTable"), cl));
 	  }
 	}
 
+Note that you need to implement the ``UniqueCountTable`` that defines the data operations of the Dataset.
+All administrative operations will be delegated to the underlying Dataset implementations.
+
+``UniqueCountTable`` uses two underlying tables that were passed into the constructor by ``UniqueCountTableDefinition``::
+
+  public static class UniqueCountTable extends AbstractDataset {
+
+    private final Table entryCountTable;
+    private final Table uniqueCountTable;
+
+    public UniqueCountTable(String instanceName,
+                            Table entryCountTable,
+                            Table uniqueCountTable) {
+      super(instanceName, entryCountTable, uniqueCountTable);
+      this.entryCountTable = entryCountTable;
+      this.uniqueCountTable = uniqueCountTable;
+    }
+
+The ``UniqueCountTable`` stores a counter for each word in its own row of the entry count table.
+For each word the counter is incremented. If the result of the increment is 1, then this is the first time
+we've encountered that word, hence we have a new unique word and we then increment the unique counter::
+
+    public void updateUniqueCount(String entry) {
+      long newCount = entryCountTable.increment(new Increment(entry, "count", 1L)).getInt("count");
+      if (newCount == 1L) {
+        uniqueCountTable.increment(new Increment("unique_count", "count", 1L));
+      }
+    }
+
 Finally, we write a method to retrieve the number of unique words seen::
 
-	public Long readUniqueCount() {
-	  return uniqueCountTable.get(new Get(UNIQUE_COUNT, UNIQUE_COUNT))
-	                         .getLong(UNIQUE_COUNT, 0);
-	}
+    public Long readUniqueCount() {
+      return uniqueCountTable.get(new Get("unique_count", "count")).getLong("count");
+    }
 
-A complete application demonstrating use of a Custom Dataset is included in our `PageViewAnalytics <examples/PageViewAnalytics/index.html>` example.
+You can make available your custom Dataset for applications in Continuuity Reactor by deploying it
+packaged into a jar. Along with the classes implementing the interface, include a Dataset module class
+that configures the dependencies between Dataset implementations::
+
+  public static class MyDatasetLibrary implements DatasetModule {
+    @Override
+    public void register(DatasetDefinitionRegistry registry) {
+      TableDefinition tableDefinition = registry.get("table");
+      UniqueCountTableDefinition keyValueTable = 
+	   new UniqueCountTableDefinition("UniqueCountTable", tableDefinition);
+      registry.add(keyValueTable);
+    }
+  }
+
+You can deploy the Dataset module jar using either the `Continuuity Reactor HTTP REST API <rest.html>`__
+or command line tools. You can also configure an application to deploy the module if it doesn't exist::
+
+  Class MyApp extends AbstractApplication {
+    public void configure() {
+      addDatasetModule("UniqueCountTableModule", UniqueCountTableDefinition.Module.class);
+      ...
+    }
+  }
+
+After the new Dataset implementation is deployed, applications use it to create new Datasets::
+
+  Class MyApp extends AbstractApplication {
+    public void configure() {
+      createDataSet("myCounters", "UniqueCountTable")
+      ...
+    }
+  }
+
+Application components can access it via ``@UseDataSet``::
+
+  Class MyFowlet extends AbstractFlowlet {
+    @UseDataSet("myCounters")
+    private UniqueCountTable counters;
+    ...
+  }
+
+
+Custom Datasets: Simplified APIs
+--------------------------------
+
+When your custom Dataset is built on top of one or more existing Datasets, the simplest way to implement
+it is to just define the data operations (by implementing the Dataset interface) and delegating all other
+work (such as  administrative operations) to the embedded Dataset. 
+
+To do this, you need only to implement the Dataset class and define the embedded Datasets by annotating 
+its constructor parameters.
+
+Here's a simpler look at our ``UniqueCountTable``::
+
+  public class UniqueCountTable extends AbstractDataset {
+
+    private final Table entryCountTable;
+    private final Table uniqueCountTable;
+
+    public UniqueCountTable(DatasetSpecification spec,
+                            @EmbeddedDataSet("entryCountTable") Table entryCountTable,
+                            @EmbeddedDataSet("uniqueCountTable") Table uniqueCountTable) {
+      super(spec.getName(), entryCountTable, uniqueCountTable);
+      this.entryCountTable = entryCountTable;
+      this.uniqueCountTable = uniqueCountTable;
+    }
+
+    public void updateUniqueCount(String entry) {
+      // ...
+    }
+
+
+    public Long readUniqueCount() {
+      // ...
+    }
+  }
+
+In this case, the class must have one constructor that takes a ``DatasetSpecification`` as a first
+parameter and any number of ``Dataset``\s annotated with the ``@EmbeddedDataset`` annotation as the
+remaining parameters. ``@EmbeddedDataset`` takes the embedded Dataset's name as a parameter.
+
+All administrative operations (such as create, drop, truncate) will be delegated to the embedded Datasets
+in the order they are defined in the constructor. ``DatasetProperties`` that are passed during creation of
+the Dataset will be passed as-is to the embedded Datasets.
+
+Having the ``UniqueCountTable`` class above is equivalent to having the ``UniqueCountTableDefinition``,
+``UniqueCountTable``, and ``MyDatasetLibrary`` classes from the example in the previous section. The
+approach described here simplifies implementation of custom Datasets in cases where higher flexibility is
+not needed.
+
+To deploy an implementation of this ``UniqueCountTable`` custom Dataset and make it available for
+applications to use, add into the Application implementation::
+
+  Class MyApp extends AbstractApplication {
+    public void configure() {
+      createDataSet("myCounters", UniqueCountTable.class)
+      ...
+    }
+  }
+
+As with the previous example, deploy the custom Dataset packaged into a jar. No separate action of
+deploying the Dataset type is needed in this case: Continuuity Reactor will do it
+"under the covers" using the class of ``UniqueCountTable`` passed in the ``createDataSet`` method.
+
+Application components can access it via ``@UseDataSet``::
+
+  Class MyFowlet extends AbstractFlowlet {
+    @UseDataSet("myCounters")
+    private UniqueCountTable counters;
+    ...
+  }
+
+A complete application demonstrating the use of a custom Dataset is included in our 
+`PageViewAnalytics </examples/PageViewAnalytics/index.html>`__ example.
 
 Datasets & MapReduce
 --------------------

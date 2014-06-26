@@ -1,7 +1,6 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
-import com.continuuity.explore.service.Result;
 
 import java.sql.Array;
 import java.sql.Blob;
@@ -315,6 +314,11 @@ public class ExploreConnection implements Connection {
   }
 
   public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
+    // JDK 1.7
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  public String getSchema() throws SQLException {
     // JDK 1.7
     throw new SQLFeatureNotSupportedException();
   }
