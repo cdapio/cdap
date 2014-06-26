@@ -113,47 +113,47 @@ Partitioning can be combined with batch execution::
 	   ...
 
 
-DataSet System
-==============
-**DataSets** are your interface to the data. Instead of having to manipulate data with
-low-level APIs, DataSets provide higher level abstractions and generic, reusable Java
+Datasets System
+===============
+**Datasets** are your interface to the data. Instead of having to manipulate data with
+low-level APIs, datasets provide higher level abstractions and generic, reusable Java
 implementations of common data patterns.
 
-A DataSet represents both the API and the actual data itself; it is a named collection
-of data with associated metadata, and it is manipulated through a DataSet class.
+A dataset represents both the API and the actual data itself; it is a named collection
+of data with associated metadata, and it is manipulated through a dataset class.
 
 
-Types of DataSets
+Types of Datasets
 -----------------
-A DataSet abstraction is defined with Java class that implements DatasetDefinition interface.
-The implementation of a DataSet typically relies on one or more underlying (embedded) DataSets.
-For example, the ``IndexedTable`` DataSet can be implemented by two underlying Table DataSets –
+A dataset abstraction is defined with Java class that implements DatasetDefinition interface.
+The implementation of a dataset typically relies on one or more underlying (embedded) datasets.
+For example, the ``IndexedTable`` dataset can be implemented by two underlying Table datasets –
 one holding the data and one holding the index.
 
-We distinguish three categories of DataSets: *core*, *system*, and *custom* DataSets:
+We distinguish three categories of datasets: *core*, *system*, and *custom* datasets:
 
-- The **core** DataSet of the Reactor is a Table. Its implementation may use internal
+- The **core** dataset of the Reactor is a Table. Its implementation may use internal
   Continuuity classes hidden from developers.
 
-- A **system** DataSet is bundled with the Reactor and is built around
-  one or more underlying core or system DataSets to implement a specific data pattern.
+- A **system** dataset is bundled with the Reactor and is built around
+  one or more underlying core or system datasets to implement a specific data pattern.
 
-- A **custom** DataSet is implemented by you and can have arbitrary code and methods.
-  It is typically built around one or more Tables (or other DataSets)
+- A **custom** dataset is implemented by you and can have arbitrary code and methods.
+  It is typically built around one or more Tables (or other datasets)
   to implement a specific data pattern.
 
-.. - A **system** DataSet is bundled with the Reactor but implemented
-.. in the same way as a custom DataSet, relying on one or more underlying core or system DataSets.
+.. - A **system** dataset is bundled with the Reactor but implemented
+.. in the same way as a custom dataset, relying on one or more underlying core or system datasets.
 
-Each DataSet is associated with exactly one DataSet implementation to
-manipulate it. Every DataSet has a unique name and metadata that defines its behavior.
+Each dataset is associated with exactly one dataset implementation to
+manipulate it. Every dataset has a unique name and metadata that defines its behavior.
 For example, every ``IndexedTable`` has a name and indexes a particular column of its primary table:
-the name of that column is a metadata property of each DataSet of this type.
+the name of that column is a metadata property of each dataset of this type.
 
 
-Core DataSets
+Core datasets
 -------------
-**Tables** are the only core DataSets, and all other DataSets are built using one or more
+**Tables** are the only core datasets, and all other datasets are built using one or more
 core Tables. These Tables are similar to tables in a relational database with a few key differences:
 
 - Tables have no fixed schema. Unlike relational database tables where every
@@ -333,9 +333,9 @@ Note that specifying a set of columns helps to perform delete operation faster.
 When you want to delete all the columns of a row and you know all of them,
 passing all of them will make the deletion faster.
 
-System DataSets
+System datasets
 ---------------
-The Continuuity Reactor comes with several system-defined DataSets, including key/value Tables, indexed Tables and time series. Each of them is defined with the help of one or more embedded Tables, but defines its own interface. For example:
+The Continuuity Reactor comes with several system-defined datasets, including key/value Tables, indexed Tables and time series. Each of them is defined with the help of one or more embedded Tables, but defines its own interface. For example:
 
 - The ``KeyValueTable`` implements a key/value store as a Table with a single column.
 
@@ -346,16 +346,16 @@ The Continuuity Reactor comes with several system-defined DataSets, including ke
   and allows querying that data over ranges of time.
 
 See the `Javadocs <javadocs/index.html>`__ for these classes and `the examples <examples/index.html>`
-to learn more about these DataSets.
+to learn more about these datasets.
 
-Custom DataSets
+Custom Datasets
 ---------------
-You can define your own DataSet classes to implement common data patterns specific to your code.
+You can define your own dataset classes to implement common data patterns specific to your code.
 Suppose you want to define a counter table that, in addition to counting words,
-counts how many unique words it has seen. The DataSet will be built on top two underlying DataSets,
+counts how many unique words it has seen. The dataset will be built on top two underlying datasets,
 one Table (``entryCountTable``) to count all the words and a second Table (``uniqueCountTable``) for the unique count.
 
-To define a DataSet you need to implement ``DatasetDefinition`` interface::
+To define a dataset you need to implement ``DatasetDefinition`` interface::
 
   public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
     String getName();
@@ -364,20 +364,20 @@ To define a DataSet you need to implement ``DatasetDefinition`` interface::
     D getDataset(DatasetSpecification spec, ClassLoader cl) throws IOException;
   }
 
-First, the DataSet implementation provides a way to configure DataSet instance based on properties provided by
+First, the dataset implementation provides a way to configure dataset instance based on properties provided by
 user at run-time.
 
-Then, the DataSet implementation provides a way to administer DataSet instance with an implementation of
-``DatasetAdmin`` interface. It performs such operations as create, truncate, and drop DataSet.
+Then, the dataset implementation provides a way to administer dataset with an implementation of
+``DatasetAdmin`` interface. It performs such operations as create, truncate, and drop dataset.
 
-Finally, the DataSet implementation provides a way to manipulate the data of DataSet with an implementation of
+Finally, the dataset implementation provides a way to manipulate the data of dataset with an implementation of
 ``Dataset`` interface. It does not require developer implementing any specific methods and leaves freedom to the the
 developer to define all the data operations.
 
 
 
-To implement a DataSet built on top of existing DataSets there is a handy ``CompositeDatasetDefinition`` class that
-delegates the work to the specified underlying DataSets where possible. In this case we have two underlying DataSets
+To implement a dataset built on top of existing datasets there is a handy ``CompositeDatasetDefinition`` class that
+delegates the work to the specified underlying datasets where possible. In this case we have two underlying datasets
 ``entryCountTable`` and ``uniqueCountTable`` of type ``Table``::
 
 public class UniqueCountTableDefinition
@@ -414,8 +414,8 @@ public class UniqueCountTableDefinition
   }
 }
 
-Note that you need to implement ``UniqueCountTable`` that defines data operations of the DataSet, while all
-administrative operations will be simply delegated to underlying DataSet implementations.
+Note that you need to implement ``UniqueCountTable`` that defines data operations of the dataset, while all
+administrative operations will be simply delegated to underlying dataset implementations.
 
 ``UniqueCountTable`` uses two underlying tables that were passed into constructor by ``UniqueCountTableDefinition``::
 
@@ -449,8 +449,8 @@ Finally, we write a method to retrieve the number of unique words seen::
       return uniqueCountTable.get(new Get("unique_count", "count")).getLong("count");
     }
 
-You can make available your custom DataSet for applications in Continuuity Reactor by deploying it packaged into a jar
-with a DataSet Module class configuring dependencies between DataSet implementations::
+You can make available your custom dataset for applications in Continuuity Reactor by deploying it packaged into a jar
+with a dataset module class configuring dependencies between dataset implementations::
 
   public static class MyDatasetLibrary implements DatasetModule {
     @Override
@@ -461,7 +461,7 @@ with a DataSet Module class configuring dependencies between DataSet implementat
     }
   }
 
-You can deploy the DataSet module jar using either `Continuuity Reactor HTTP REST API <rest.html>`__
+You can deploy the dataset module jar using either `Continuuity Reactor HTTP REST API <rest.html>`__
 or command line tools. Alternatively, you can also configure application to deploy the module if it doesn't exists::
 
   Class MyApp extends AbstractApplication {
@@ -471,7 +471,7 @@ or command line tools. Alternatively, you can also configure application to depl
     }
   }
 
-After the new DataSet implementation is deployed, application use it to create new DataSet instances::
+After the new dataset implementation is deployed, application use it to create new datasets::
 
   Class MyApp extends AbstractApplication {
     public void configure() {
@@ -489,12 +489,12 @@ Application components can access it via ``@UseDataSet``::
   }
 
 
-Custom DataSets: Simplified APIs
+Custom Datasets: Simplified APIs
 --------------------------------
 
-When your custom DataSet is built on top of one or more existing DataSets the simplest way to implement it is by
+When your custom dataset is built on top of one or more existing datasets the simplest way to implement it is by
 defining data operations via implementing Dataset interface and delegating all other work (like administrative operations)
-to embedded DataSet. To do that you need to implement only Dataset class and define embedded datasets by annotating its
+to embedded dataset. To do that you need to implement only Dataset class and define embedded datasets by annotating its
 constructor parameters::
 
   public class UniqueCountTable extends AbstractDataset {
@@ -521,7 +521,7 @@ constructor parameters::
   }
 
 In this case the class must have one constructor that takes DatasetSpecification as a first parameter and any number of
-``Dataset``s annotated with ``@EmbeddedDataSet`` annotation as rest of the parameters. ``@EmbeddedDataSet`` takes embedded
+``Dataset``s annotated with ``@Embeddeddataset`` annotation as rest of the parameters. ``@Embeddeddataset`` takes embedded
 dataset name as parameter.
 
 All administrative operations such as create, drop, truncate will be delegated to the embedded datasets in the order
@@ -553,7 +553,7 @@ Application components can access it via ``@UseDataSet``::
     ...
   }
 
-A complete application demonstrating use of a Custom DataSet is included in our `PageViewAnalytics <examples/PageViewAnalytics/index.html>` example.
+A complete application demonstrating use of a custom dataset is included in our `PageViewAnalytics <examples/PageViewAnalytics/index.html>` example.
 
 DataSets & MapReduce
 --------------------
