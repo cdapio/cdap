@@ -371,7 +371,7 @@ public class ReactorServiceMain extends DaemonMain {
     ClassLoader hiveCL = ExploreServiceUtils.buildHiveClassLoader(hiveClassPathStr);
 
     // This checking will throw an exception if Hive is not present or if its version is unsupported
-    ExploreServiceUtils.checkHiveVersion(hiveCL);
+    ExploreServiceUtils.checkHiveSupport(hiveCL);
 
     return preparer.withClassPaths(hiveClassPathStr);
   }

@@ -17,38 +17,22 @@ import java.net.URLClassLoader;
  * Utility class for the explore service.
  */
 public class ExploreServiceUtils {
-  // todo populate this with whatever hive version CDH4.3 runs with - REACTOR-229
-
   /**
-   * Hive supported versions enum.
+   * Hive support enum.
    */
-  public enum HiveSupportedVersions {
-    HIVE_12("0.12", Hive12ExploreService.class),
-    HIVE_13("0.13", Hive13ExploreService.class);
+  public enum HiveSuport {
+    // todo populate this with whatever hive version CDH4.3 runs with - REACTOR-229
+    HIVE_12(Hive12ExploreService.class),
+    HIVE_13(Hive13ExploreService.class);
 
-    private String versionPrefix;
     private Class hiveExploreServiceClass;
 
-    private HiveSupportedVersions(String versionPrefix, Class hiveExploreServiceClass) {
-      this.versionPrefix = versionPrefix;
+    private HiveSuport(Class hiveExploreServiceClass) {
       this.hiveExploreServiceClass = hiveExploreServiceClass;
-    }
-
-    public String getVersionPrefix() {
-      return versionPrefix;
     }
 
     public Class getHiveExploreServiceClass() {
       return hiveExploreServiceClass;
-    }
-
-    public static String getSupportedVersionsStr() {
-      StringBuilder sb = new StringBuilder();
-      for (HiveSupportedVersions version : HiveSupportedVersions.values()) {
-        sb.append(version.getVersionPrefix());
-        sb.append(",");
-      }
-      return sb.toString();
     }
   }
 
@@ -81,33 +65,41 @@ public class ExploreServiceUtils {
   }
 
   public static Class getHiveService() {
-    HiveSupportedVersions hiveVersion = checkHiveVersion(null);
-    return hiveVersion.getHiveExploreServiceClass();
+    HiveSuport hiveVersion = checkHiveSupport(null);
+    Class hiveServiceCl = hiveVersion.getHiveExploreServiceClass();
+    return hiveServiceCl;
   }
 
   /**
    * Check that Hive is in the class path - with a right version.
    *
-   * @param hiveClassLoader class loader to use to check hive version.
+   * @param hiveClassLoader class loader to use to load hive classes.
    *                        If null, the class loader of this class is used.
    */
-  public static HiveSupportedVersions checkHiveVersion(ClassLoader hiveClassLoader) {
+  public static HiveSuport checkHiveSupport(ClassLoader hiveClassLoader) {
     try {
       ClassLoader usingCL = hiveClassLoader;
       if (usingCL == null) {
         usingCL = ExploreServiceUtils.class.getClassLoader();
       }
-      Class hiveVersionClass = usingCL.loadClass("org.apache.hive.common.util.HiveVersionInfo");
-      Method m = hiveVersionClass.getDeclaredMethod("getVersion");
-      String version = (String) m.invoke(null);
-      for (HiveSupportedVersions supportedVersion : HiveSupportedVersions.values()) {
-        if (version.startsWith(supportedVersion.getVersionPrefix())) {
-          return supportedVersion;
-        }
+
+      // In Hive 12, CLIService.getOperationStatus returns OperationState.
+      // In Hive 13, CLIService.getOperationStatus returns OperationStatus.
+      Class cliServiceClass = usingCL.loadClass("org.apache.hive.service.cli.CLIService");
+      Class operationHandleCl = usingCL.loadClass("org.apache.hive.service.cli.OperationHandle");
+      Method getOperationMethod = cliServiceClass.getDeclaredMethod("getOperationStatus", operationHandleCl);
+
+      // Rowset is an interface in Hive 13, but a class in Hive 12
+      Class rowSetClass = usingCL.loadClass("org.apache.hive.service.cli.RowSet");
+
+      if (rowSetClass.isInterface()
+        && getOperationMethod.getReturnType() == usingCL.loadClass("org.apache.hive.service.cli.OperationStatus")) {
+        return HiveSuport.HIVE_13;
+      } else if (!rowSetClass.isInterface()
+        && getOperationMethod.getReturnType() == usingCL.loadClass("org.apache.hive.service.cli.OperationState")) {
+        return HiveSuport.HIVE_12;
       }
-      throw new RuntimeException("Hive version " + version + " is not supported. " +
-                                 "Versions supported begin with one of the following: " +
-                                 HiveSupportedVersions.getSupportedVersionsStr());
+      throw new RuntimeException("Hive distribution not supported.");
     } catch (RuntimeException e) {
       throw e;
     } catch (Throwable e) {
