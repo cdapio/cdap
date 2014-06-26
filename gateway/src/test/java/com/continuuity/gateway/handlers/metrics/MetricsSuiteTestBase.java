@@ -104,27 +104,31 @@ public class MetricsSuiteTestBase {
       conf.set(Constants.Metrics.CLUSTER_NAME, CLUSTER);
 
       injector = startMetricsService(conf);
-      init(injector, tmpFolder);
+      StoreFactory storeFactory = injector.getInstance(StoreFactory.class);
+      store = storeFactory.create();
+      locationFactory = injector.getInstance(LocationFactory.class);
+      tmpFolder.create();
+      dataDir = tmpFolder.newFolder();
+      init();
     }
 
     @Override
     protected void after() {
       stopMetricsService(conf);
       try {
-        finish(tmpFolder);
+        finish();
       } catch (OperationException e) {
         e.printStackTrace();
+      } finally {
+        tmpFolder.delete();
       }
     }
   };
 
-  public static void init(Injector storeInjector, TemporaryFolder tmpFolder) throws IOException, OperationException {
-    tmpFolder.create();
-    dataDir = tmpFolder.newFolder();
-
+  public static void init() throws IOException, OperationException {
     CConfiguration cConf = CConfiguration.create();
 
-    // use this injector instead of the one in MetricsServiceTestsSuite because that one uses a
+    // use this injector instead of the one in startsMetricsService because that one uses a
     // mock metrics collection service while we need a real one.
     Injector injector = Guice.createInjector(Modules.override(
       new ConfigModule(cConf),
@@ -142,14 +146,10 @@ public class MetricsSuiteTestBase {
 
     collectionService = injector.getInstance(MetricsCollectionService.class);
     collectionService.startAndWait();
-
-    StoreFactory storeFactory = storeInjector.getInstance(StoreFactory.class);
-    store = storeFactory.create();
-    locationFactory = storeInjector.getInstance(LocationFactory.class);
     setupMeta();
   }
 
-  public static void finish(TemporaryFolder tmpFolder) throws OperationException {
+  public static void finish() throws OperationException {
     collectionService.stopAndWait();
     store.removeApplication(wordCountAppId);
     store.removeApplication(wCountAppId);
@@ -167,7 +167,6 @@ public class MetricsSuiteTestBase {
       }
       file = files.peekLast();
     }
-    tmpFolder.delete();
   }
 
   public static Injector startMetricsService(CConfiguration conf) {
