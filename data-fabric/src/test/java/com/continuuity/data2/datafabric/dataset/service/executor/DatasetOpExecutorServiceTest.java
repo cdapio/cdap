@@ -34,6 +34,7 @@ import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
@@ -222,11 +223,8 @@ public class DatasetOpExecutorServiceTest {
   }
 
   private DatasetAdminOpResponse getResponse(byte[] body) {
-    if (body == null) {
-      return new DatasetAdminOpResponse(null, null);
-    }
-
-    return GSON.fromJson(new String(body), DatasetAdminOpResponse.class);
+    return Objects.firstNonNull(GSON.fromJson(new String(body), DatasetAdminOpResponse.class),
+                                new DatasetAdminOpResponse(null, null));
   }
 
 }

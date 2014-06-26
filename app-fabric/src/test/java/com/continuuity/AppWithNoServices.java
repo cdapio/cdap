@@ -6,16 +6,13 @@ import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.data2.OperationException;
-import org.apache.twill.api.AbstractTwillRunnable;
-import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillSpecification;
 
 import java.io.IOException;
 
 /**
- * Test Application with services for the new application API.
+ *
  */
-public class AppWithServices extends AbstractApplication {
+public class AppWithNoServices extends AbstractApplication {
   /**
    * Override this method to configure the application.
    */
@@ -24,27 +21,6 @@ public class AppWithServices extends AbstractApplication {
     setName("AppWithServices");
     setDescription("Application with Services");
     addProcedure(new NoOpProcedure());
-    addService(new DummyTwillApplication());
-  }
-
-  public static final class DummyTwillApplication implements TwillApplication {
-   @Override
-    public TwillSpecification configure() {
-      return TwillSpecification.Builder.with()
-               .setName("NoOpService")
-               .withRunnable()
-               .add(new DummyService())
-               .noLocalFiles()
-               .anyOrder()
-               .build();
-     }
-  }
-
-  public static final class DummyService extends AbstractTwillRunnable {
-    @Override
-    public void run() {
-     //No-op
-    }
   }
 
   public static final class NoOpProcedure extends AbstractProcedure {
