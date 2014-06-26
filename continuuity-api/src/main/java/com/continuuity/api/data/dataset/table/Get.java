@@ -1,10 +1,17 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.dataset.table;
 
 import java.util.Collection;
 
 /**
  * A Get reads one, multiple, or all columns of a row.
+ *
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.table.Get}
  */
+@Deprecated
 public class Get extends RowColumns<Get> {
   /**
    * Get all of the columns of a row.

@@ -10,6 +10,7 @@ import com.continuuity.app.program.DefaultProgram;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.app.runtime.Arguments;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.lang.jar.BundleJarUtil;
 import com.continuuity.common.lang.jar.ProgramClassLoader;
 import com.continuuity.common.metrics.MetricsCollectionService;
@@ -21,6 +22,7 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.app.runtime.DataSets;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.workflow.WorkflowMapReduceProgram;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.google.common.base.Preconditions;
@@ -112,9 +114,11 @@ public abstract class AbstractMapReduceContextBuilder {
 
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
+    CConfiguration configuration = injector.getInstance(CConfiguration.class);
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
-    DataSetInstantiator dataSetContext = new DataSetInstantiator(dataFabric, datasetFramework, classLoader);
+    DataSetInstantiator dataSetContext = new DataSetInstantiator(dataFabric, datasetFramework,
+                                                                 configuration, classLoader);
     ApplicationSpecification programSpec = program.getSpecification();
     dataSetContext.setDataSets(programSpec.getDataSets().values(),
                                programSpec.getDatasets().values());
@@ -130,13 +134,15 @@ public abstract class AbstractMapReduceContextBuilder {
     Map<String, Closeable> dataSets = DataSets.createDataSets(
       dataSetContext, Sets.union(programSpec.getDataSets().keySet(), programSpec.getDatasets().keySet()));
 
+    ProgramServiceDiscovery serviceDiscovery = injector.getInstance(ProgramServiceDiscovery.class);
+
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getSpecification().getMapReduce().get(program.getName());
     BasicMapReduceContext context =
       new BasicMapReduceContext(program, type, RunIds.fromString(runId),
                                 runtimeArguments, dataSets, spec,
                                 dataSetContext.getTransactionAware(), logicalStartTime,
-                                workflowBatch, metricsCollectionService);
+                                workflowBatch, serviceDiscovery, metricsCollectionService);
 
     if (type == MapReduceMetrics.TaskType.Mapper) {
       dataSetContext.setMetricsCollector(metricsCollectionService, context.getSystemMapperMetrics());

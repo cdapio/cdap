@@ -23,7 +23,6 @@ while [ -h "$PRG" ] ; do
         PRG=`dirname "$PRG"`"/$link"
     fi
 done
-
 SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.."
 APP_HOME="`pwd -P`"
@@ -40,6 +39,20 @@ fi
 # Load the configuration too.
 if [ -d "$conf" ]; then
   CLASSPATH=$CLASSPATH:"$conf"/
+fi
+
+auth_file="$HOME/.continuuity.accesstoken"
+# add token file arg with default token file if one is not provided
+containsTokenFileArg=0
+for var in "$@"
+do
+  if [ "$var" = "--token-file" ]; then
+    containsTokenFileArg=1
+  fi
+done
+
+if [ $containsTokenFileArg -eq 0 ]; then
+  set -- "$@" "--token-file" "$auth_file"
 fi
 
 java -cp ${CLASSPATH} -Dscript=$script com.continuuity.gateway.tools.StreamClient "$@"

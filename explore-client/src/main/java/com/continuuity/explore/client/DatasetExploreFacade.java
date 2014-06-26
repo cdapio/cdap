@@ -30,7 +30,7 @@ public class DatasetExploreFacade {
   private final boolean exploreEnabled;
 
   @Inject
-  public DatasetExploreFacade(AsyncExploreClient exploreClient, CConfiguration cConf) {
+  public DatasetExploreFacade(DiscoveryExploreClient exploreClient, CConfiguration cConf) {
     this.exploreClient = exploreClient;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
     if (!exploreEnabled) {
@@ -146,7 +146,6 @@ public class DatasetExploreFacade {
   static String hiveSchemaFor(Type type) throws UnsupportedTypeException {
 
     Schema schema = new ReflectionSchemaGenerator().generate(type);
-    // TODO: support other types too, not just record - REACTOR-265
     if (!Schema.Type.RECORD.equals(schema.getType())) {
       throw new UnsupportedTypeException("type must be a RECORD but is " + schema.getType().name());
     }

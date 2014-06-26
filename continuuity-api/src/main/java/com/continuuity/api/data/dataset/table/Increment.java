@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.dataset.table;
 
 import com.continuuity.api.common.Bytes;
@@ -19,7 +23,10 @@ import java.util.Map;
  *     An increment operation should at least change the value of one column.
  *   </li>
  * </ul>
+ *
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.table.Increment}
  */
+@Deprecated
 public class Increment {
   /** 
    * Row to change. 

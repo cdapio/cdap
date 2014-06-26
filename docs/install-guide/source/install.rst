@@ -1,9 +1,9 @@
 .. :author: Continuuity, Inc.
-   :version: 2.2.0
+   :version: 2.3.0
    :description: Installation guide for Continuuity Reactor on Linux systems
 
 =========================
-Continuuity Reactor 2.2.0
+Continuuity Reactor 2.3.0
 =========================
 
 ------------------------------------

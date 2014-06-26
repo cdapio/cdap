@@ -130,10 +130,10 @@ public class SingleTypeModule implements DatasetModule {
 
     CompositeDatasetDefinition def = new CompositeDatasetDefinition(typeName, defs) {
       @Override
-      public Dataset getDataset(DatasetSpecification spec) throws IOException {
+      public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
         Object[] params = new Object[ctorParams.length];
         for (int i = 0; i < ctorParams.length; i++) {
-          params[i] = ctorParams[i] != null ? ctorParams[i].getValue(defs, spec) : null;
+          params[i] = ctorParams[i] != null ? ctorParams[i].getValue(defs, spec, classLoader) : null;
         }
 
         try {
@@ -199,12 +199,13 @@ public class SingleTypeModule implements DatasetModule {
   }
 
   private interface DatasetCtorParam {
-    Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec) throws IOException;
+    Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec, ClassLoader cl)
+      throws IOException;
   }
 
   private static final class DatasetSpecificationParam implements DatasetCtorParam {
     @Override
-    public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec) {
+    public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec, ClassLoader cl) {
       return spec;
     }
   }
@@ -217,8 +218,10 @@ public class SingleTypeModule implements DatasetModule {
     }
 
     @Override
-    public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec) throws IOException {
-      return defs.get(name).getDataset(spec.getSpecification(name));
+    public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec, ClassLoader cl)
+      throws IOException {
+
+      return defs.get(name).getDataset(spec.getSpecification(name), cl);
     }
   }
 }

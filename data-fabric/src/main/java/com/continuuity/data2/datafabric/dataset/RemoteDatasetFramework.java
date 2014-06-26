@@ -2,7 +2,6 @@ package com.continuuity.data2.datafabric.dataset;
 
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetAdmin;
-import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
@@ -126,9 +125,9 @@ public class RemoteDatasetFramework implements DatasetFramework {
     if (instanceInfo == null) {
       return null;
     }
-    DatasetDefinition impl = getDatasetDefinition(instanceInfo.getType(), classLoader);
 
-    return (T) impl.getAdmin(instanceInfo.getSpec());
+    DatasetType type = getDatasetType(instanceInfo.getType(), classLoader);
+    return (T) type.getAdmin(instanceInfo.getSpec());
   }
 
   @Override
@@ -139,16 +138,9 @@ public class RemoteDatasetFramework implements DatasetFramework {
     if (instanceInfo == null) {
       return null;
     }
-    DatasetDefinition impl = getDatasetDefinition(instanceInfo.getType(), classLoader);
 
-    // Temporarily use caller's classloader as default.
-    // TODO: This is to avoid passing classloader to DatasetDefinition.getDataset(). Should be done cleaner
-    ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(classLoader);
-    T dataset = (T) impl.getDataset(instanceInfo.getSpec());
-    Thread.currentThread().setContextClassLoader(contextClassLoader);
-
-    return dataset;
+    DatasetType type = getDatasetType(instanceInfo.getType(), classLoader);
+    return (T) type.getDataset(instanceInfo.getSpec());
   }
 
   private void addModule(String moduleName, Class<?> typeClass) throws DatasetManagementException {
@@ -168,8 +160,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   // can be used directly if DatasetTypeMeta is known, like in create dataset by dataset ops executor service
-  public <T extends DatasetDefinition> T getDatasetDefinition(DatasetTypeMeta implementationInfo,
-                                                              ClassLoader classLoader)
+  public <T extends DatasetType> T getDatasetType(DatasetTypeMeta implementationInfo,
+                                                  ClassLoader classLoader)
     throws DatasetManagementException {
 
     DatasetDefinitionRegistry registry = registryFactory.create();
@@ -199,6 +191,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
       module.register(registry);
     }
 
-    return registry.get(implementationInfo.getName());
+    return (T) new DatasetType(registry.get(implementationInfo.getName()), classLoader);
   }
 }

@@ -2,6 +2,8 @@ package com.continuuity.data.runtime.main;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
+import com.continuuity.app.guice.ServiceStoreModules;
+import com.continuuity.app.store.ServiceStore;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -26,9 +28,9 @@ import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
@@ -58,7 +60,9 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -93,6 +97,8 @@ public class ReactorServiceMain extends DaemonMain {
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
   private DatasetService dsService;
+  private ServiceStore serviceStore;
+  private Map<String, String> systemServiceInstanceMap;
 
   private String serviceName;
   private TwillApplication twillApplication;
@@ -108,13 +114,7 @@ public class ReactorServiceMain extends DaemonMain {
   @Override
   public void init(String[] args) {
     isHiveEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
-    twillApplication = createTwillApplication();
-    if (twillApplication == null) {
-      throw new IllegalArgumentException("TwillApplication cannot be null");
-    }
-
-    serviceName = twillApplication.configure().getName();
-
+    serviceName = Constants.Service.REACTOR_SERVICES;
     cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
 
     baseInjector = Guice.createInjector(
@@ -131,13 +131,17 @@ public class ReactorServiceMain extends DaemonMain {
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModule(),
       new DataFabricModules().getDistributedModules(),
-      new MetricsClientRuntimeModule().getDistributedModules()
+      new MetricsClientRuntimeModule().getDistributedModules(),
+      new ServiceStoreModules().getDistributedModule()
     );
+
     // Initialize ZK client
     zkClientService = baseInjector.getInstance(ZKClientService.class);
     kafkaClientService = baseInjector.getInstance(KafkaClientService.class);
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
     dsService = baseInjector.getInstance(DatasetService.class);
+    serviceStore = baseInjector.getInstance(ServiceStore.class);
+    systemServiceInstanceMap = getConfigKeys();
   }
 
   @Override
@@ -147,6 +151,12 @@ public class ReactorServiceMain extends DaemonMain {
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
       public void leader() {
+        Map<String, Integer> instanceCount = getSystemServiceInstances();
+        twillApplication = createTwillApplication(instanceCount);
+        if (twillApplication == null) {
+          throw new IllegalArgumentException("TwillApplication cannot be null");
+        }
+
         LOG.info("Became leader.");
         Injector injector = baseInjector.createChildInjector();
 
@@ -158,7 +168,6 @@ public class ReactorServiceMain extends DaemonMain {
         appFabricServer.startAndWait();
         scheduleSecureStoreUpdate(twillRunnerService);
         runTwillApps();
-
         isLeader.set(true);
       }
 
@@ -206,9 +215,40 @@ public class ReactorServiceMain extends DaemonMain {
     }
   }
 
-  private TwillApplication createTwillApplication() {
+  private Map<String, String> getConfigKeys() {
+    Map<String, String> instanceCountMap = Maps.newHashMap();
+    instanceCountMap.put(Constants.Service.LOGSAVER, Constants.LogSaver.NUM_INSTANCES);
+    instanceCountMap.put(Constants.Service.TRANSACTION, Constants.Transaction.Container.NUM_INSTANCES);
+    instanceCountMap.put(Constants.Service.METRICS_PROCESSOR, Constants.MetricsProcessor.NUM_INSTANCES);
+    instanceCountMap.put(Constants.Service.METRICS, Constants.Metrics.NUM_INSTANCES);
+    instanceCountMap.put(Constants.Service.STREAMS, Constants.Stream.CONTAINER_INSTANCES);
+    instanceCountMap.put(Constants.Service.DATASET_EXECUTOR, Constants.Dataset.Executor.CONTAINER_INSTANCES);
+    return instanceCountMap;
+  }
+
+  private Map<String, Integer> getSystemServiceInstances() {
+    Map<String, Integer> instanceCountMap = new HashMap<String, Integer>();
+    for (Map.Entry<String, String> entry : systemServiceInstanceMap.entrySet()) {
+      String service = entry.getKey();
+      String instanceVariable = entry.getValue();
+      try {
+        Integer savedCount = serviceStore.getServiceInstance(service);
+        if (savedCount == null) {
+          savedCount = cConf.getInt(instanceVariable);
+        }
+
+        instanceCountMap.put(service, savedCount);
+        LOG.info("Setting instance count of {} Service to {}", service, savedCount);
+      } catch (Exception e) {
+        LOG.error("Couldn't retrieve instance count {} : {}", service, e.getMessage(), e);
+      }
+    }
+    return instanceCountMap;
+  }
+
+  private TwillApplication createTwillApplication(final Map<String, Integer> instanceCountMap) {
     try {
-      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf(), isHiveEnabled);
+      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf(), isHiveEnabled, instanceCountMap);
     } catch (Exception e) {
       throw  Throwables.propagate(e);
     }

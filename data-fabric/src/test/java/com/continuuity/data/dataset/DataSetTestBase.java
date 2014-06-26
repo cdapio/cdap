@@ -2,7 +2,7 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
@@ -41,6 +41,7 @@ public class DataSetTestBase {
   protected static DataFabric fabric;
   protected static DatasetFramework datasetFramework;
   protected static TransactionSystemClient txSystemClient;
+  protected static CConfiguration configuration;
 
   protected static List<DataSetSpecification> specs;
   protected static DataSetInstantiator instantiator;
@@ -61,6 +62,7 @@ public class DataSetTestBase {
                                bind(LocationFactory.class).to(LocalLocationFactory.class);
                              }
                            });
+    configuration = injector.getInstance(CConfiguration.class);
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
@@ -89,8 +91,8 @@ public class DataSetTestBase {
       specs.add(dataset.configure());
     }
     // create an instantiator the resulting list of data set specs
-    instantiator = new DataSetInstantiator(fabric, datasetFramework, null);
-    instantiator.setDataSets(specs, Collections.<DatasetInstanceCreationSpec>emptyList());
+    instantiator = new DataSetInstantiator(fabric, datasetFramework, configuration, null);
+    instantiator.setDataSets(specs, Collections.<DatasetCreationSpec>emptyList());
   }
 
   /**

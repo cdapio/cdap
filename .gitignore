@@ -1,6 +1,6 @@
 *.class
 .*.swp
-
+.beamer
 # Package Files #
 *.jar
 *.war
