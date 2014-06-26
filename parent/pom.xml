@@ -465,8 +465,6 @@
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-hdfs</artifactId>
         <version>${hadoop.version}</version>
-        <exclusions>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -601,8 +599,6 @@
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-common</artifactId>
         <version>${hbase96.version}</version>
-        <exclusions>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
@@ -619,8 +615,6 @@
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-protocol</artifactId>
         <version>${hbase96.version}</version>
-        <exclusions>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
