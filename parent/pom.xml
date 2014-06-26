@@ -1109,6 +1109,7 @@
               <executions>
                 <execution>
                   <id>jar</id>
+                  <phase>prepare-package</phase>
                   <configuration>
                     <outputDirectory>${stage.lib.dir}</outputDirectory>
                     <addMavenDescriptor>${maven.descriptor}</addMavenDescriptor>
