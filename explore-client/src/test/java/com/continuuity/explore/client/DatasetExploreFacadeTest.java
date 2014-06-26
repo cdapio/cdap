@@ -1,11 +1,13 @@
 package com.continuuity.explore.client;
 
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -134,6 +136,26 @@ public class DatasetExploreFacadeTest {
 
     Assert.assertEquals("(key STRING, value STRUCT<ints:ARRAY<INT>, name:STRING>)",
                         DatasetExploreFacade.hiveSchemaFor(KeyValue.class));
+  }
+
+
+  private void verifyUnsupportedSchema(Type type) {
+    String schema;
+    try {
+      schema = DatasetExploreFacade.hiveSchemaFor(type);
+    } catch (UnsupportedTypeException e) {
+      // expected
+      return;
+    }
+    Assert.fail("Type " + type + " should not be supported and cause exception but returned " + schema);
+  }
+
+  @Test
+  public void testUnsupportedTypes() {
+    verifyUnsupportedSchema(Integer.class);
+    verifyUnsupportedSchema(String.class);
+    verifyUnsupportedSchema(new TypeToken<List<Integer>>() { }.getType());
+    verifyUnsupportedSchema(new TypeToken<Map<String, Integer>>() { }.getType());
   }
 
 }
