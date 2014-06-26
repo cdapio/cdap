@@ -20,8 +20,8 @@ import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
 
 /**
- * Implements a simple Workflow with one Workflow action to run the PurchaseHistoryBuilder MapReduce job with a schedule
- * that runs every day at 4:00 A.M.
+ * Implements a simple Workflow with one Workflow action to run the PurchaseHistoryBuilder 
+ * MapReduce job with a schedule that runs every day at 4:00 A.M.
  */
 public class PurchaseHistoryWorkflow implements Workflow {
 
