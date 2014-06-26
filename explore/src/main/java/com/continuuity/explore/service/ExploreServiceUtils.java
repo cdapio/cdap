@@ -1,9 +1,10 @@
 package com.continuuity.explore.service;
 
-import com.continuuity.common.conf.StringUtils;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
+import com.continuuity.explore.service.hive.Hive12ExploreService;
+import com.continuuity.explore.service.hive.Hive13ExploreService;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -29,8 +30,24 @@ import java.util.Set;
  */
 public class ExploreServiceUtils {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreServiceUtils.class);
-  // todo populate this with whatever hive version CDH4.3 runs with - REACTOR-229
-  private static final String[] SUPPORTED_VERSIONS = new String[] { "0.12", "0.13" };
+  /**
+   * Hive support enum.
+   */
+  public enum HiveSuport {
+    // todo populate this with whatever hive version CDH4.3 runs with - REACTOR-229
+    HIVE_12(Hive12ExploreService.class),
+    HIVE_13(Hive13ExploreService.class);
+
+    private Class hiveExploreServiceClass;
+
+    private HiveSuport(Class hiveExploreServiceClass) {
+      this.hiveExploreServiceClass = hiveExploreServiceClass;
+    }
+
+    public Class getHiveExploreServiceClass() {
+      return hiveExploreServiceClass;
+    }
+  }
 
   // Caching the dependencies so that we don't trace them twice
   private static Set<File> exploreDependencies = null;
@@ -68,22 +85,42 @@ public class ExploreServiceUtils {
                               ClassLoader.getSystemClassLoader());
   }
 
+  public static Class getHiveService() {
+    HiveSuport hiveVersion = checkHiveSupport(null);
+    Class hiveServiceCl = hiveVersion.getHiveExploreServiceClass();
+    return hiveServiceCl;
+  }
+
   /**
    * Check that Hive is in the class path - with a right version.
+   *
+   * @param hiveClassLoader class loader to use to load hive classes.
+   *                        If null, the class loader of this class is used.
    */
-  public static void checkHiveVersion(ClassLoader hiveClassLoader) {
+  public static HiveSuport checkHiveSupport(ClassLoader hiveClassLoader) {
     try {
-      Class hiveVersionClass = hiveClassLoader.loadClass("org.apache.hive.common.util.HiveVersionInfo");
-      Method m = hiveVersionClass.getDeclaredMethod("getVersion");
-      String version = (String) m.invoke(null);
-      for (String supportedVersion : SUPPORTED_VERSIONS) {
-        if (version.startsWith(supportedVersion)) {
-          return;
-        }
+      ClassLoader usingCL = hiveClassLoader;
+      if (usingCL == null) {
+        usingCL = ExploreServiceUtils.class.getClassLoader();
       }
-      throw new RuntimeException("Hive version " + version + " is not supported. " +
-                                 "Versions supported begin with one of the following: " +
-                                 StringUtils.arrayToString(SUPPORTED_VERSIONS));
+
+      // In Hive 12, CLIService.getOperationStatus returns OperationState.
+      // In Hive 13, CLIService.getOperationStatus returns OperationStatus.
+      Class cliServiceClass = usingCL.loadClass("org.apache.hive.service.cli.CLIService");
+      Class operationHandleCl = usingCL.loadClass("org.apache.hive.service.cli.OperationHandle");
+      Method getOperationMethod = cliServiceClass.getDeclaredMethod("getOperationStatus", operationHandleCl);
+
+      // Rowset is an interface in Hive 13, but a class in Hive 12
+      Class rowSetClass = usingCL.loadClass("org.apache.hive.service.cli.RowSet");
+
+      if (rowSetClass.isInterface()
+        && getOperationMethod.getReturnType() == usingCL.loadClass("org.apache.hive.service.cli.OperationStatus")) {
+        return HiveSuport.HIVE_13;
+      } else if (!rowSetClass.isInterface()
+        && getOperationMethod.getReturnType() == usingCL.loadClass("org.apache.hive.service.cli.OperationState")) {
+        return HiveSuport.HIVE_12;
+      }
+      throw new RuntimeException("Hive distribution not supported.");
     } catch (RuntimeException e) {
       throw e;
     } catch (Throwable e) {

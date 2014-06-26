@@ -11,17 +11,13 @@ import com.continuuity.explore.executor.ExplorePingHandler;
 import com.continuuity.explore.executor.QueryExecutorHttpHandler;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.ExploreServiceUtils;
-import com.continuuity.explore.service.hive.Hive12ExploreService;
 import com.continuuity.explore.service.hive.Hive13ExploreService;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.hive.datasets.DatasetStorageHandler;
 import com.continuuity.http.HttpHandler;
 import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
@@ -34,13 +30,11 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.mapreduce.MRConfig;
-import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -164,8 +158,10 @@ public class ExploreRuntimeModule extends RuntimeModule {
     @Override
     protected void configure() {
       try {
-        // Current version of hive used in distributed (with loom) is Hive 12
-        bind(ExploreService.class).to(Hive12ExploreService.class).in(Scopes.SINGLETON);
+        // Figure out which HiveExploreService class to load
+        Class hiveExploreServiceCl = ExploreServiceUtils.getHiveService();
+        LOG.info("Using Explore service class {}", hiveExploreServiceCl.getName());
+        bind(ExploreService.class).to(hiveExploreServiceCl).in(Scopes.SINGLETON);
         expose(ExploreService.class);
 
         setupClasspath();
