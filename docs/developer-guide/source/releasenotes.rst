@@ -49,10 +49,20 @@ New Reactor Services Features
 - Facility to see into Reactor system components via the Reactor Dashboard
 - The number of Reactor system component instances can be scaled via the Reactor Dashboard
 
+Documentation Changes
+=====================
+- New developer guides (`Querying <query.html>`__ and `Security <security.html>`_) with new features
+- Additional sections on Datasets added to the `Advanced guide <advanced.html#datasets-system>`_ 
+  explaining new features
+- `Programming Guide <programming.html>`_ was restructured for easier access to its sections
+- Sidebar with the Table of Contents was made "sticky" to help navigate longer documents
+
 Major Reactor Bug Fixes
 =======================
-<To Be Disclosed> [DOCNOTE: FIXME!]
 
+- Fixed a problem with empty log directories not being deleted after the log files in them were deleted
+- Fixed an issue in the Reactor Dashboard's Metric Explorer, where the user interface controls for 
+  selecting metrics were enabled inappropriately
 
 Other Reactor Changes
 =====================
