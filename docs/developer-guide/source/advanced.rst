@@ -487,8 +487,9 @@ Application components can access it via ``@UseDataSet``::
   }
 
 
-You can also pass ``DatasetProperties`` as a third parameter to ``createDataset`` method. These properties will be used
-by ``DatasetDefinition`` when configuring Dataset with ``configure`` method.
+You can also pass ``DatasetProperties`` as a third parameter to the ``createDataset`` method.
+These properties will be used by ``DatasetDefinition`` when configuring a Dataset with the 
+``configure`` method.
 
 Custom Datasets: Simplified APIs
 --------------------------------
@@ -710,36 +711,38 @@ Best Practices for Developing Applications
 
 Initializing Instance Fields
 ----------------------------
-There are three ways to initialize instance fields used in WorkflowActions, Flowlets and Procedures:
+There are three ways to initialize instance fields used in Flowlets and Procedures:
 
 #. Using the default constructor;
-#. Using ``initialize()`` method of the WorkflowActions, Flowlets and Procedures; and
+#. Using the ``initialize()`` method of the Flowlets and Procedures; and
 #. Using ``@Property`` annotations.
 
-To initialize using Property annotations, simply annotate the field definition with ``@Property``. 
+To initialize using an Property annotation, simply annotate the field definition with ``@Property``. 
 
-The following example demonstrates the convenience of using ``@Property`` in ``WordFilter`` flowlet that filters out specific word::
+The following example demonstrates the convenience of using ``@Property`` in a ``WordFilter`` flowlet
+that filters out specific words::
 
-  public static class WordFilter extends AbstractFlowlet {
+	public static class WordFilter extends AbstractFlowlet {
+	
+	  private OutputEmitter<String> out;
+	
+	  @Property
+	  private final String toFilterOut;
+	
+	  public CountByField(String toFilterOut) {
+	    this.toFilterOut = toFilterOut;
+	  }
+	
+	  @ProcessInput()
+	  public void process(String word) {
+	    if (!toFilterOut.equals(word)) {
+	      out.emit(word);
+	    }
+	  }
+	}
 
-    private OutputEmitter<String> out;
 
-    @Property
-    private final String toFilterOut;
-
-    public CountByField(String toFilterOut) {
-      this.toFilterOut = toFilterOut;
-    }
-
-    @ProcessInput()
-    public void process(String word) {
-      if (!toFilterOut.equals(word)) {
-        out.emit(word);
-      }
-    }
-  }
-
-The flowlet constuctor with the parameter is called when flow is configured::
+The Flowlet constructor is called with the parameter when the Flow is configured::
 
   public static class WordCountFlow implements Flow {
     @Override
@@ -758,7 +761,7 @@ The flowlet constuctor with the parameter is called when flow is configured::
   }
 
 
-At run-time, when flowlet is started a value is injected into ``toFilterOut`` fied.
+At run-time, when the Flowlet is started, a value is injected into the ``toFilterOut`` field.
 
 Field types that are supported using the ``@Property`` annotation are primitives,
 boxed types (e.g. ``Integer``), ``String`` and ``enum``.
