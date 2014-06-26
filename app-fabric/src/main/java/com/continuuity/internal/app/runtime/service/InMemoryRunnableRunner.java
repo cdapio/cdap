@@ -6,7 +6,6 @@ import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.metrics.ServiceRunnableMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
@@ -19,7 +18,6 @@ import com.continuuity.internal.lang.Reflections;
 import com.continuuity.logging.context.UserServiceLoggingContext;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
@@ -37,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Map;
 
 /**
  * Runs runnable-service in single-node
@@ -99,15 +96,8 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
 
       Class<? extends TwillRunnable> runnableClass = (Class<? extends TwillRunnable>) clz;
-
       RunId twillRunId = RunIds.generate();
-
-      ImmutableMap.Builder<String, String> userArgMapBuilder = ImmutableMap.builder();
-      Arguments userargs = options.getUserArguments();
-      for (Map.Entry<String, String> kv : userargs) {
-        userArgMapBuilder.put(kv);
-      }
-      final String[] argArray = RuntimeArgumentsUtil.toPosixArray(userArgMapBuilder.build());
+      final String[] argArray = RuntimeArgumentsUtil.toPosixArray(options.getUserArguments());
 
       DiscoveryService dService = new DiscoveryService() {
         @Override

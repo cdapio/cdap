@@ -175,13 +175,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
                                                                           program.getApplicationId(),
                                                                           program.getName(), runnableName)));
 
-      ImmutableMap.Builder<String, String> userArgMapBuilder = ImmutableMap.builder();
-      Arguments userargs = programOpts.getUserArguments();
-      for (Map.Entry<String, String> kv : userargs) {
-        userArgMapBuilder.put(kv);
-      }
-
-      final String[] argArray = RuntimeArgumentsUtil.toPosixArray(userArgMapBuilder.build());
+      final String[] argArray = RuntimeArgumentsUtil.toPosixArray(programOpts.getUserArguments());
       LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(
         program.getAccountId(), program.getApplicationId(), program.getName(), runnableName));
       delegate.initialize(new ForwardingTwillContext(context) {

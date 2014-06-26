@@ -1,6 +1,7 @@
 package com.continuuity.api.common;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
@@ -24,5 +25,13 @@ public final class RuntimeArgumentsUtil {
       argArray[index++] = String.format("--%s=%s", kv.getKey(), kv.getValue());
     }
     return argArray;
+  }
+
+  public static String[] toPosixArray(Iterable<Map.Entry<String, String>> iterable) {
+    ImmutableMap.Builder<String, String> userArgMapBuilder = ImmutableMap.builder();
+    for (Map.Entry<String, String> kv : iterable) {
+      userArgMapBuilder.put(kv);
+    }
+    return toPosixArray(userArgMapBuilder.build());
   }
 }

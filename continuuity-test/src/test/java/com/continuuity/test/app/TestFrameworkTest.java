@@ -75,6 +75,7 @@ public class TestFrameworkTest extends ReactorTestBase {
       ProcedureClient client = queryManager.getClient();
       Gson gson = new Gson();
 
+      //Adding retry logic so that the test does not fail if the procedure takes sometime to start on slow machines.
       int retryCount = 10;
       while (retryCount >= 0) {
         try {

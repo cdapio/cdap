@@ -1,6 +1,7 @@
 package com.continuuity;
 
 import com.continuuity.api.common.RuntimeArgumentsUtil;
+import com.continuuity.internal.app.runtime.BasicArguments;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
@@ -26,6 +27,9 @@ public class RuntimeArgumentsUtilTest {
     String [] receivedArray = RuntimeArgumentsUtil.toPosixArray(testMap);
     Arrays.sort(receivedArray);
     Assert.assertArrayEquals(receivedArray, expectedArray);
+    receivedArray = RuntimeArgumentsUtil.toPosixArray(new BasicArguments(testMap));
+    Arrays.sort(receivedArray);
+    Assert.assertArrayEquals(receivedArray, expectedArray);
   }
 
   @Test
@@ -36,5 +40,4 @@ public class RuntimeArgumentsUtilTest {
     expectedMap.put("key2", "val2");
     Assert.assertTrue(expectedMap.equals(RuntimeArgumentsUtil.toMap(argArray)));
   }
-
 }
