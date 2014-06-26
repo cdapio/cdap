@@ -1,11 +1,11 @@
 #!/bin/bash
 #
 # chkconfig: 2345 96 15
-# description: Starts and stops the @service.name@ service
+# description: Starts and stops the @servicename@ service
 # 
 ### BEGIN INIT INFO
-# Provides:          continuuity-@service.name@
-# Short-Description: Continuuity @service.name@
+# Provides:          continuuity-@servicename@
+# Short-Description: Continuuity @servicename@
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Required-Start:    $syslog $remote_fs
@@ -15,11 +15,11 @@
 ### END INIT INFO
 
 # source configuration, if it exists
-if [[ -r /etc/default/continuuity-@service.name@ ]]; then
-  . /etc/default/continuuity-@service.name@
+if [[ -r /etc/default/continuuity-@servicename@ ]]; then
+  . /etc/default/continuuity-@servicename@
 fi
 
-SVC_COMMAND="/opt/continuuity/@package.name@/bin/svc-@service.name@ $*"
+SVC_COMMAND="/opt/continuuity/@package.name@/bin/svc-@servicename@ $*"
 K5PID="/var/continuuity/run/k5start.pid"
 KRB_COMMAND="k5start -b -L -K 10 -p $K5PID -f $REACTOR_KEYTAB -u $REACTOR_PRINCIPAL"
 
