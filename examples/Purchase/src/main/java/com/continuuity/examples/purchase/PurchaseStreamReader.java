@@ -43,7 +43,7 @@ public class PurchaseStreamReader extends AbstractFlowlet {
     }
     int quantity = Integer.parseInt(tokens[2]);
     String item = tokens[3];
-    if (quantity != 1 && item.length() > 1) {
+    if (quantity != 1 && item.length() > 1 && item.endsWith("s")) {
       item = item.substring(0, item.length() - 1);
     }
     if (!"for".equals(tokens[4])) {
