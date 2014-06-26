@@ -272,13 +272,12 @@ define([], function () {
 
 					C.Util.interrupt();
 
-					this.HTTP.del('rest', 'apps', app.id, function (response) {
-
-						if (response !== "") {
+					this.HTTP.del('rest', 'apps', app.id, function (err, status) {
+						if (err !== "") {
 
 							C.Util.proceed(function () {
 								setTimeout(function () {
-									C.Modal.show("Could not Delete", response);
+									C.Modal.show("Could not Delete", status);
 								}, 500);
 							});
 

@@ -20,7 +20,6 @@ import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
-import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.explore.service.ExploreServiceUtils;
@@ -61,7 +60,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -107,7 +105,7 @@ public class ReactorServiceMain extends DaemonMain {
   private TwillApplication twillApplication;
   private long lastRunTimeMs = System.currentTimeMillis();
   private int currentRun = 0;
-  private boolean isHiveEnabled;
+  private boolean isExploreEnabled;
 
   public static void main(final String[] args) throws Exception {
     LOG.info("Starting Reactor Service Main...");
@@ -116,7 +114,7 @@ public class ReactorServiceMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
-    isHiveEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
+    isExploreEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
     serviceName = Constants.Service.REACTOR_SERVICES;
     cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
 
@@ -148,6 +146,21 @@ public class ReactorServiceMain extends DaemonMain {
 
     locationFactory = baseInjector.getInstance(LocationFactory.class);
     secureStoreUpdater = new HBaseSecureStoreUpdater(hConf, locationFactory);
+
+    checkExploreRequirements();
+  }
+
+  /**
+   * Check that if Explore is enabled, the correct jars are present on reactor-master node,
+   * and that the distribution of Hive is supported.
+   */
+  private void checkExploreRequirements() {
+    if (!isExploreEnabled) {
+      return;
+    }
+
+    // This checking will throw an exception if Hive is not present or if its distribution is unsupported
+    ExploreServiceUtils.checkHiveSupport();
   }
 
   @Override
@@ -204,7 +217,9 @@ public class ReactorServiceMain extends DaemonMain {
       twillController.stopAndWait();
     }
 
-    leaderElection.stopAndWait();
+    if (leaderElection != null) {
+      leaderElection.stopAndWait();
+    }
     Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService);
   }
 
@@ -254,7 +269,7 @@ public class ReactorServiceMain extends DaemonMain {
 
   private TwillApplication createTwillApplication(final Map<String, Integer> instanceCountMap) {
     try {
-      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf(), isHiveEnabled, instanceCountMap);
+      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf(), isExploreEnabled, instanceCountMap);
     } catch (Exception e) {
       throw  Throwables.propagate(e);
     }
@@ -363,11 +378,15 @@ public class ReactorServiceMain extends DaemonMain {
    * add conf files (hive_site.xml, etc) as resources available for the Explore twill
    * runnable.
    */
-  private TwillPreparer addHiveDependenciesToPreparer(TwillPreparer preparer, ClassLoader classLoader) {
+  private TwillPreparer prepareExploreContainer(TwillPreparer preparer) {
+    if (!isExploreEnabled) {
+      return preparer;
+    }
+
     try {
       // Put jars needed by Hive in the containers classpath. Those jars are localized in the Explore
       // container by ReactorTwillApplication, so they are available for ExploreServiceTwillRunnable
-      Set<File> jars = ExploreServiceUtils.traceExploreDependencies(classLoader);
+      Set<File> jars = ExploreServiceUtils.traceExploreDependencies();
       for (File jarFile : jars) {
         LOG.trace("Adding jar file to classpath: {}", jarFile.getName());
         preparer = preparer.withClassPaths(jarFile.getName());
@@ -390,35 +409,14 @@ public class ReactorServiceMain extends DaemonMain {
         preparer = preparer.withResources(file.toURI());
       }
     }
+
     return preparer;
-  }
-
-  private TwillPreparer prepareHiveContainer(TwillPreparer preparer) {
-    if (!isHiveEnabled) {
-      return preparer;
-    }
-
-    // HIVE_CLASSPATH will be defined in startup scripts if Hive is installed.
-    String hiveClassPathStr = System.getProperty(Constants.Explore.HIVE_CLASSPATH);
-    LOG.debug("Hive classpath = {}", hiveClassPathStr);
-    if (hiveClassPathStr == null) {
-      throw new RuntimeException("System property " + Constants.Explore.HIVE_CLASSPATH + " is not set.");
-    }
-
-    // Here we need to get a different class loader that contains all the hive jars,
-    // because Hive ships a lot of dependencies that conflicts with ours.
-    ClassLoader hiveCL = ExploreServiceUtils.buildClassLoader(hiveClassPathStr);
-
-    // This checking will throw an exception if Hive is not present or if its version is unsupported
-    ExploreServiceUtils.checkHiveSupport(hiveCL);
-
-    return addHiveDependenciesToPreparer(preparer, hiveCL);
   }
 
   private TwillPreparer getPreparer() {
     TwillPreparer preparer = twillRunnerService.prepare(twillApplication)
       .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
-    preparer = prepareHiveContainer(preparer);
+    preparer = prepareExploreContainer(preparer);
     return prepare(preparer);
   }
 
