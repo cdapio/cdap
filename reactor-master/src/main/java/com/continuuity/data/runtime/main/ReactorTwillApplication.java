@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Map;
 import java.util.Set;
 
@@ -205,15 +204,9 @@ public class ReactorTwillApplication implements TwillApplication {
         .add("cConf.xml", cConfFile.toURI())
         .add("hConf.xml", hConfFile.toURI());
 
-    // HIVE_CLASSPATH will be defined in startup scripts if Hive is installed.
-    String hiveClassPathStr = System.getProperty(Constants.Explore.HIVE_CLASSPATH);
-    if (hiveClassPathStr == null) {
-      throw new RuntimeException("System property " + Constants.Explore.HIVE_CLASSPATH + " is not set.");
-    }
-
     try {
       // Ship jars needed by Hive to the container
-      Set<File> jars = ExploreServiceUtils.traceExploreDependencies(hiveClassPathStr);
+      Set<File> jars = ExploreServiceUtils.traceExploreDependencies();
       for (File jarFile : jars) {
         twillSpecs = twillSpecs.add(jarFile.getName(), jarFile);
       }

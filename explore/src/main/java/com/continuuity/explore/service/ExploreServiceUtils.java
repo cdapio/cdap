@@ -1,5 +1,6 @@
 package com.continuuity.explore.service;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
@@ -33,14 +34,14 @@ public class ExploreServiceUtils {
   /**
    * Hive support enum.
    */
-  public enum HiveSuport {
+  public enum HiveSupport {
     // todo populate this with whatever hive version CDH4.3 runs with - REACTOR-229
     HIVE_12(Hive12ExploreService.class),
     HIVE_13(Hive13ExploreService.class);
 
     private Class hiveExploreServiceClass;
 
-    private HiveSuport(Class hiveExploreServiceClass) {
+    private HiveSupport(Class hiveExploreServiceClass) {
       this.hiveExploreServiceClass = hiveExploreServiceClass;
     }
 
@@ -51,7 +52,12 @@ public class ExploreServiceUtils {
 
   // Caching the dependencies so that we don't trace them twice
   private static Set<File> exploreDependencies = null;
+  // Caching explore class loader
+  private static ClassLoader exploreClassLoader = null;
 
+  /**
+   * Get all the files contained in a class path.
+   */
   public static Iterable<File> getClassPathJarsFiles(String hiveClassPath) {
     if (hiveClassPath == null) {
       return null;
@@ -70,8 +76,19 @@ public class ExploreServiceUtils {
   /**
    * Builds a class loader with the class path provided.
    */
-  public static ClassLoader buildClassLoader(String classPathStr) {
-    Iterable<File> hiveClassPath = getClassPathJarsFiles(classPathStr);
+  public static ClassLoader getExploreClassLoader() {
+    if (exploreClassLoader != null) {
+      return exploreClassLoader;
+    }
+
+    // HIVE_CLASSPATH will be defined in startup scripts if Hive is installed.
+    String exploreClassPathStr = System.getProperty(Constants.Explore.HIVE_CLASSPATH);
+    LOG.debug("Explore classpath = {}", exploreClassPathStr);
+    if (exploreClassPathStr == null) {
+      throw new RuntimeException("System property " + Constants.Explore.HIVE_CLASSPATH + " is not set.");
+    }
+
+    Iterable<File> hiveClassPath = getClassPathJarsFiles(exploreClassPathStr);
     ImmutableList.Builder<URL> builder = ImmutableList.builder();
     for (File jar : hiveClassPath) {
       try {
@@ -81,14 +98,24 @@ public class ExploreServiceUtils {
         Throwables.propagate(e);
       }
     }
-    return new URLClassLoader(Iterables.toArray(builder.build(), URL.class),
-                              ClassLoader.getSystemClassLoader());
+    exploreClassLoader = new URLClassLoader(Iterables.toArray(builder.build(), URL.class),
+                                            ClassLoader.getSystemClassLoader());
+    return exploreClassLoader;
   }
 
   public static Class getHiveService() {
-    HiveSuport hiveVersion = checkHiveSupport(null);
+    HiveSupport hiveVersion = checkHiveSupport(null);
     Class hiveServiceCl = hiveVersion.getHiveExploreServiceClass();
     return hiveServiceCl;
+  }
+
+  /**
+   * Check that Hive is in the class path - with a right version. Use a separate class loader to load Hive classes,
+   * built using the explore classpath passed as a system property to reactor-master.
+   */
+  public static HiveSupport checkHiveSupport() {
+    ClassLoader classLoader = getExploreClassLoader();
+    return checkHiveSupport(classLoader);
   }
 
   /**
@@ -97,7 +124,7 @@ public class ExploreServiceUtils {
    * @param hiveClassLoader class loader to use to load hive classes.
    *                        If null, the class loader of this class is used.
    */
-  public static HiveSuport checkHiveSupport(ClassLoader hiveClassLoader) {
+  public static HiveSupport checkHiveSupport(ClassLoader hiveClassLoader) {
     try {
       ClassLoader usingCL = hiveClassLoader;
       if (usingCL == null) {
@@ -108,23 +135,25 @@ public class ExploreServiceUtils {
       // In Hive 13, CLIService.getOperationStatus returns OperationStatus.
       Class cliServiceClass = usingCL.loadClass("org.apache.hive.service.cli.CLIService");
       Class operationHandleCl = usingCL.loadClass("org.apache.hive.service.cli.OperationHandle");
-      Method getOperationMethod = cliServiceClass.getDeclaredMethod("getOperationStatus", operationHandleCl);
+      Method getStatusMethod = cliServiceClass.getDeclaredMethod("getOperationStatus", operationHandleCl);
 
       // Rowset is an interface in Hive 13, but a class in Hive 12
       Class rowSetClass = usingCL.loadClass("org.apache.hive.service.cli.RowSet");
 
       if (rowSetClass.isInterface()
-        && getOperationMethod.getReturnType() == usingCL.loadClass("org.apache.hive.service.cli.OperationStatus")) {
-        return HiveSuport.HIVE_13;
+        && getStatusMethod.getReturnType() == usingCL.loadClass("org.apache.hive.service.cli.OperationStatus")) {
+        return HiveSupport.HIVE_13;
       } else if (!rowSetClass.isInterface()
-        && getOperationMethod.getReturnType() == usingCL.loadClass("org.apache.hive.service.cli.OperationState")) {
-        return HiveSuport.HIVE_12;
+        && getStatusMethod.getReturnType() == usingCL.loadClass("org.apache.hive.service.cli.OperationState")) {
+        return HiveSupport.HIVE_12;
       }
-      throw new RuntimeException("Hive distribution not supported.");
+      throw new RuntimeException("Hive distribution not supported. Set the configuration reactor.explore.enabled " +
+                                 "to false to start up Reactor without Explore.");
     } catch (RuntimeException e) {
       throw e;
     } catch (Throwable e) {
-      throw new RuntimeException("Hive jars not present in classpath", e);
+      throw new RuntimeException("Hive jars not present in classpath. Set the configuration reactor.explore.enabled " +
+                                 "to false to start up Reactor without Explore.", e);
     }
   }
 
@@ -146,18 +175,17 @@ public class ExploreServiceUtils {
   }
 
   /**
-   * Trace the jar dependencies needed by the Explore container, using
-   * a class loader will be built with the class path given in parameter.
+   * Trace the jar dependencies needed by the Explore container. Uses a separate class loader to load Hive classes,
+   * built using the explore classpath passed as a system property to reactor-master.
    *
-   * @param hiveClassPathStr Class path to use to build the custom class loader.
    * @return an ordered set of jar files.
    */
-  public static Set<File> traceExploreDependencies(String hiveClassPathStr) throws IOException {
+  public static Set<File> traceExploreDependencies() throws IOException {
     if (exploreDependencies != null) {
       return exploreDependencies;
     }
 
-    ClassLoader classLoader = buildClassLoader(hiveClassPathStr);
+    ClassLoader classLoader = getExploreClassLoader();
     return traceExploreDependencies(classLoader);
   }
 
