@@ -17,6 +17,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.log4j.Level;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -40,6 +41,11 @@ public abstract class ClientToolBase {
    * when true, program will print the stack trace after the usage.
    */
   public static boolean debug = false;
+
+  static {
+    // this turns off all logging but we don't need that for a cmdline tool
+    org.apache.log4j.Logger.getRootLogger().setLevel(Level.OFF);
+  }
 
   private String toolName;
   protected static final Gson GSON = new Gson();
