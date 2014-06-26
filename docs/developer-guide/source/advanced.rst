@@ -473,7 +473,7 @@ After the new Dataset implementation is deployed, applications use it to create 
 
   Class MyApp extends AbstractApplication {
     public void configure() {
-      createDataSet("myCounters", "UniqueCountTable")
+      createDataset("myCounters", "UniqueCountTable")
       ...
     }
   }
@@ -486,6 +486,10 @@ Application components can access it via ``@UseDataSet``::
     ...
   }
 
+
+You can also pass ``DatasetProperties`` as a third parameter to the ``createDataset`` method.
+These properties will be used by ``DatasetDefinition`` when configuring a Dataset with the 
+``configure`` method.
 
 Custom Datasets: Simplified APIs
 --------------------------------
@@ -505,8 +509,8 @@ Here's a simpler look at our ``UniqueCountTable``::
     private final Table uniqueCountTable;
 
     public UniqueCountTable(DatasetSpecification spec,
-                            @EmbeddedDataSet("entryCountTable") Table entryCountTable,
-                            @EmbeddedDataSet("uniqueCountTable") Table uniqueCountTable) {
+                            @EmbeddedDataset("entryCountTable") Table entryCountTable,
+                            @EmbeddedDataset("uniqueCountTable") Table uniqueCountTable) {
       super(spec.getName(), entryCountTable, uniqueCountTable);
       this.entryCountTable = entryCountTable;
       this.uniqueCountTable = uniqueCountTable;
@@ -540,14 +544,14 @@ applications to use, add into the Application implementation::
 
   Class MyApp extends AbstractApplication {
     public void configure() {
-      createDataSet("myCounters", UniqueCountTable.class)
+      createDataset("myCounters", UniqueCountTable.class)
       ...
     }
   }
 
 As with the previous example, deploy the custom Dataset packaged into a jar. No separate action of
 deploying the Dataset type is needed in this case: Continuuity Reactor will do it
-"under the covers" using the class of ``UniqueCountTable`` passed in the ``createDataSet`` method.
+"under the covers" using the class of ``UniqueCountTable`` passed in the ``createDataset`` method.
 
 Application components can access it via ``@UseDataSet``::
 
@@ -579,7 +583,7 @@ Because ``getSplits()`` has no arguments, it will typically create splits that c
 
 For example, the system Dataset ``KeyValueTable`` implements ``BatchReadable<byte[], byte[]>`` with an extra method that allows specification of the number of splits and a range of keys::
 
-	public class KeyValueTable extends DataSet
+	public class KeyValueTable extends AbstractDataset
 	                           implements BatchReadable<byte[], byte[]> {
 	  ...
 	  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop);
@@ -707,42 +711,57 @@ Best Practices for Developing Applications
 
 Initializing Instance Fields
 ----------------------------
-There are three ways to initialize instance fields used in Datasets, Flowlets and Procedures:
+There are three ways to initialize instance fields used in Flowlets and Procedures:
 
 #. Using the default constructor;
-#. Using ``initialize()`` method of the Datasets, Flowlets and Procedures; and
+#. Using the ``initialize()`` method of the Flowlets and Procedures; and
 #. Using ``@Property`` annotations.
 
-To initialize using Property annotations, simply annotate the field definition with ``@Property``. 
+To initialize using an Property annotation, simply annotate the field definition with ``@Property``. 
 
-An example demonstrating this is the ``Ticker`` example, where it is used in the custom Dataset 
-``MultiIndexedTable`` to set a instance field ``timestampField``.
+The following example demonstrates the convenience of using ``@Property`` in a ``WordFilter`` flowlet
+that filters out specific words::
 
-The instance field ``timestampFieldName`` is annotated with ``@Property``, and
-when the Dataset is instantiated and deployed, a value is inserted into ``timestampFieldName``.
-
-When the Dataset is initialized, the value is then used to set ``timestampField``::
-
-	public class MultiIndexedTable extends DataSet {
-	  . . .
-	  // String representation of the field storing timestamp values
+	public static class WordFilter extends AbstractFlowlet {
+	
+	  private OutputEmitter<String> out;
+	
 	  @Property
-	  private String timestampFieldName;
-	  . . .
-	  public MultiIndexedTable(String name, byte[] timestampField, Set<byte[]> doNotIndex) {
-	    super(name);
-	    this.table = new Table(name);
-	    this.indexTable = new Table(name + INDEX_SUFFIX);
-	    this.timestampFieldName = Bytes.toString(timestampField);
-	    this.ignoreIndexing = doNotIndex;
+	  private final String toFilterOut;
+	
+	  public CountByField(String toFilterOut) {
+	    this.toFilterOut = toFilterOut;
 	  }
 	
-	  @Override
-	  public void initialize(DataSetSpecification spec, DataSetContext context) {
-	    super.initialize(spec, context);
-	    this.timestampField = Bytes.toBytes(timestampFieldName);
+	  @ProcessInput()
+	  public void process(String word) {
+	    if (!toFilterOut.equals(word)) {
+	      out.emit(word);
+	    }
 	  }
-	  . . .
+	}
+
+
+The Flowlet constructor is called with the parameter when the Flow is configured::
+
+  public static class WordCountFlow implements Flow {
+    @Override
+    public FlowSpecification configure() {
+      return FlowSpecification.Builder.with()
+        .setName("WordCountFlow")
+        .setDescription("Flow for counting words")
+        .withFlowlets().add(new Tokenizer())
+                       .add(new WordsFilter("the"))
+                       .add(new WordsCounter())
+        .connect().fromStream("text").to("Tokenizer")
+                  .from("Tokenizer").to("WordsFilter")
+                  .from("WordsFilter").to("WordsCounter")
+        .build();
+    }
+  }
+
+
+At run-time, when the Flowlet is started, a value is injected into the ``toFilterOut`` field.
 
 Field types that are supported using the ``@Property`` annotation are primitives,
 boxed types (e.g. ``Integer``), ``String`` and ``enum``.
