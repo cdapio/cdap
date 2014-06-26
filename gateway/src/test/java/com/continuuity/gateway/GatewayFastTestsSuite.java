@@ -68,13 +68,12 @@ public class GatewayFastTestsSuite {
     if (headers != null) {
       get.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
     } else {
-
       get.setHeader(AUTH_HEADER);
     }
     return client.execute(get);
   }
 
-  public static org.apache.http.HttpResponse doPut(String resource) throws Exception {
+  public static HttpResponse doPut(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     HttpPut put = new HttpPut(GatewayTestBase.getEndPoint(resource));
     put.setHeader(AUTH_HEADER);
