@@ -119,11 +119,6 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
-      <artifactId>http</artifactId>
-      <version>0.2.0</version>
-    </dependency>
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
@@ -161,6 +156,11 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>com.continuuity</groupId>
+        <artifactId>http</artifactId>
+        <version>0.2.0</version>
+      </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-io</artifactId>

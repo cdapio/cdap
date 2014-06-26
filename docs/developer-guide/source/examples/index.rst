@@ -5,7 +5,7 @@
 Examples
 ============================
 
-Example Applications demonstrating Continuuity Reactor Features
+**Example Applications Demonstrating Continuuity Reactor Features**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::

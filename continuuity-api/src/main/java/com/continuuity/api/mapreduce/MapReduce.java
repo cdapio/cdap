@@ -15,9 +15,11 @@ public interface MapReduce {
    * Invoked before starting a MapReduce job.
    * <p>
    * Users can access and modify the job configuration via {@link MapReduceContext#getHadoopJob()}, which returns
-   * an instance of {@link org.apache.hadoop.mapreduce.Job}.
-   * @param context Job execution context.
-   * @throws Exception If there's an error during this method invocation.
+   * an instance of {@link <a href="http://hadoop.apache.org/docs/r2.3.0/api/org/apache/hadoop/mapreduce/Job.html">
+   * org.apache.hadoop.mapreduce.Job</a>}.
+   *
+   * @param context job execution context
+   * @throws Exception if there's an error during this method invocation
    */
   void beforeSubmit(MapReduceContext context) throws Exception;
 
@@ -31,9 +33,9 @@ public interface MapReduce {
    *     </li>
    *   </ul>
    * </p>
-   * @param succeeded Defines the result of job execution: true if job succeeded, false otherwise
-   * @param context Job execution context.
-   * @throws Exception If there's an error during this method invocation.
+   * @param succeeded defines the result of job execution: true if job succeeded, false otherwise
+   * @param context job execution context
+   * @throws Exception if there's an error during this method invocation.
    */
   void onFinish(boolean succeeded, MapReduceContext context) throws Exception;
 }

@@ -427,6 +427,7 @@ public final class Constants {
     public static final String DATASET_NAME = "reactor.dataset.name";
     public static final String DATASET_STORAGE_HANDLER_CLASS = "com.continuuity.hive.datasets.DatasetStorageHandler";
     public static final String HIVE_CLASSPATH = "hive.classpath";
+    public static final String HIVE_CONF_FILES = "hive.conf.files";
 
     public static final String SERVER_ADDRESS = "explore.service.bind.address";
 
@@ -444,6 +445,10 @@ public final class Constants {
 
     //max-instances of explore HTTP service
     public static final String MAX_INSTANCES = "explore.executor.max.instances";
+
+    public static final String ACTIVE_OPERATION_TIMEOUT_SECS = "explore.active.operation.timeout.secs";
+    public static final String INACTIVE_OPERATION_TIMEOUT_SECS = "explore.inactive.operation.timeout.secs";
+    public static final String CLEANUP_JOB_SCHEDULE_SECS = "explore.cleanup.job.schedule.secs";
 
     /**
      * Explore JDBC constants.
