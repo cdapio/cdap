@@ -5,6 +5,31 @@
 Reactor Security
 =====================================
 
+Continuuity Reactor supports securing clusters using a perimeter security model.  With perimeter
+security, access to cluster nodes is restricted through a firewall.  Cluster nodes can communicate
+with each other, but outside clients can only communicate with the cluster through a secured
+gateway.  Using Reactor security, the Reactor authentication server issues credentials (access
+tokens) to authenticated clients.  Clients then send these credentials on requests to Reactor.
+Calls that lack valid access tokens will be rejected, limiting access to only authenticated
+clients.
+
+Authentication in Reactor consists of two components:
+
+- **Authentication Server** - the authentication server integrates with different authentication
+  backends (LDAP, JASPI plugins) using a plugin API.  Clients must first authenticate with the
+  authentication server through this configured backend.  Once authenticated, clients are issued
+  an access token representing their identity.
+- **Reactor Router** - the Reactor router serves as the secured gateway in the perimeter security
+  model.  All client calls to the cluster go through the router, and must present a valid access
+  token when security is enabled.
+
+For more details on the authentication process, see `Client Authentication`_.
+
+By enabling perimeter security for Reactor, you can prevent access by any clients without valid
+credentials.  In addition, access logging can be enabled in Reactor to provide an audit log of all
+operations.
+
+
 Enabling Security
 ==================
 To enable security in the Continuuity Reactor, add these properties to ``continuuity-site.xml``:
@@ -253,36 +278,33 @@ security components are working as expected:
 
 
 
-==============================
-Developing with Secure Reactor
-==============================
-
 Client Authentication
 =====================
 Reactor provides support for authenticating clients using OAuth 2 Bearer tokens, which are issued
 by the Reactor authentication server.  The authentication server provides the integration point
-for all external authentication systems.  Clients authenticate with Auth Server as follows:
+for all external authentication systems.  Clients authenticate with the authentication server as
+follows:
 
 .. image:: _images/auth_flow_simple.png
 
   
-#. Client initiates authentication, supplying credentials
+#. Client initiates authentication, supplying credentials.
 
-   #. Authentication server validates supplied credentials against an external identity service,
-      according to configuration (LDAP, Active Directory, custom)
+#. Authentication server validates supplied credentials against an external identity service,
+   according to configuration (LDAP, Active Directory, custom).
 
-      #. If validation succeeds, the authentication server returns an Access Token to the client
-         (see Access Tokens below).
-      #. If validation fails, the authentication server returns a failure message, at which point
-         the client can retry.
+   #. If validation succeeds, the authentication server returns an Access Token to the client.
+   #. If validation fails, the authentication server returns a failure message, at which point
+      the client can retry.
 
 #. The client stores the resulting Access Token and supplies it in subsequent requests.
 #. Reactor processes validate the supplied Access Token on each request.
 
    #. If validation succeeds, processing continues to authorization.
-   #. If the submitted token is invalid, an InvalidToken error is returned.
-   #. If the submitted token is expired, an ExpiredToken error is returned.  In this case, the
+   #. If the submitted token is invalid, an "invalid token" error is returned.
+   #. If the submitted token is expired, an "expired token" error is returned.  In this case, the
       client should restart authorization from step #1. 
+
 
 
 Obtaining an Access Token
@@ -334,7 +356,7 @@ Example
 
 Sample request::
 
-   POST /token HTTP/1.1
+   GET /token HTTP/1.1
    Host: server.example.com
    Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
 
@@ -365,7 +387,7 @@ Comments
 Authentication with REST Endpoints
 ----------------------------------
 When security is enabled on a Reactor cluster, only requests with a valid access token will be
-allowed by the Router.  Clients accessing REST endpoints will first need to obtain an access token
+allowed by Reactor.  Clients accessing REST endpoints will first need to obtain an access token
 from the authentication server, as described above, which will be passed to the Router daemon on
 subsequent HTTP requests.
 
@@ -404,15 +426,15 @@ Error Response Fields
    * - Response Fields
      - Description
    * - ``error``
-     - An error code describing the type of failure (see table below).
+     - An error code describing the type of failure (see `Error Code Values`_)
    * - ``error_description``
-     - A human readable description of the error that occurred.
+     - A human readable description of the error that occurred
    * - ``auth_uri``
      - List of URIs for running authentication servers.  If a client receives a ``401
        Unauthorized`` response, it can use one of the values from this list to request a new
        access token.
 
-``error`` values
+Error Code Values
 ,,,,,,,,,,,,,,,,
 .. list-table::
    :widths: 20 80
@@ -421,13 +443,13 @@ Error Response Fields
    * - Response Fields
      - Description
    * - ``invalid_request``
-     - The request is missing a required parameter or is otherwise malformed.
+     - The request is missing a required parameter or is otherwise malformed
    * - ``invalid_token``
      - The supplied access token is expired, malformed, or otherwise invalid.  The client may
        request a new access token from the authorization server and try the call again.
    * - ``insufficient_scope``
      - The supplied access token was valid, but the authenticated identity failed authorization
-       for the requested resource.
+       for the requested resource
 
 Example
 .......
