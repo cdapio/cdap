@@ -31,7 +31,7 @@ Services can be configured by implementing `configure` method of the Application
           }
         }
 
-The lifecycle of the services in an is controlled using a TwillApplication. The TwillApplication can have one or more runnables that implement the custom services.
+The lifecycle of the services in a Reactor application is controlled using a ``TwillApplication``. The TwillApplication can have one or more runnables that implement the custom services.
 
         public class IpGeoLookupService implements TwillApplication {
           @Override
@@ -68,6 +68,11 @@ The service logic is implemented by extending the AbstractTwillRunnable and impl
            public void destroy() {
              // called before shutting down the service
            }
+
+           @Override
+           public void stop() {
+             // called to stop the running the service
+           }
       }
 
 Services integration with Metrics and Logging
@@ -76,7 +81,7 @@ Services are integrated with Reactor Metrics and Logging framework. Programs imp
 
 	public class IpGeoRunnable extends AbstractTwillRunnable {
 	  private Metrics metrics;
-          private static final Logger LOG = LoggerFactory.getLogger(IpGeoRunnable.class);
+	  private static final Logger LOG = LoggerFactory.getLogger(IpGeoRunnable.class);
 
 	  @Override
 	  public void run() {
