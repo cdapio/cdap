@@ -26,6 +26,7 @@ public class InMemoryRunnableDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void startUp() {
+    LoggingContextAccessor.setLoggingContext(loggingContext);
     runnable.initialize(context);
   }
 
@@ -42,7 +43,6 @@ public class InMemoryRunnableDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void run() throws Exception {
-    LoggingContextAccessor.setLoggingContext(loggingContext);
     try {
       runnable.run();
     } catch (Exception ex) {

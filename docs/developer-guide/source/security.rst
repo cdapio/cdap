@@ -277,7 +277,6 @@ security components are working as expected:
   Entering the credentials should let you work with the Reactor Dashboard as normally.
 
 
-
 Client Authentication
 =====================
 Reactor provides support for authenticating clients using OAuth 2 Bearer tokens, which are issued
@@ -490,5 +489,13 @@ Comments
 ........
 - The ``auth_uri`` value in the error responses indicates where the authentication server(s) are
   running, allowing clients to discover instances from which they can obtain access tokens.
+
+
+Where to Go Next
+================
+Now that you've secured your Continuuity Reactor, take a look at:
+
+- `Operating a Continuuity Reactor <operations.html>`__,
+  which covers putting Continuuity Reactor into production.
 
 .. rst2pdf: PageBreak

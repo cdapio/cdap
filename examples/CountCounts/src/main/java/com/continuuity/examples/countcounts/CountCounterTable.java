@@ -18,7 +18,7 @@ package com.continuuity.examples.countcounts;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDataset;
-import com.continuuity.api.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.module.EmbeddedDataset;
 import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
@@ -35,7 +35,7 @@ public class CountCounterTable extends AbstractDataset {
 
   private static final byte[] KEY_ONLY_COLUMN = new byte[]{'c'};
 
-  public CountCounterTable(DatasetSpecification spec, @EmbeddedDataSet("cct") Table table) {
+  public CountCounterTable(DatasetSpecification spec, @EmbeddedDataset("cct") Table table) {
     super(spec.getName(), table);
     this.table = table;
   }

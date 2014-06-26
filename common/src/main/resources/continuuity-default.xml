@@ -289,7 +289,7 @@
 
     <property>
       <name>stream.container.num.cores</name>
-      <value>32</value>
+      <value>2</value>
       <description>Number of virtual core for the YARN container that runs the stream handler</description>
     </property>
 
@@ -868,6 +868,22 @@
         <name>explore.executor.max.instances</name>
         <value>1</value>
         <description>Maximum number of explore executor instances</description>
+    </property>
+    <property>
+        <name>explore.active.operation.timeout.secs</name>
+        <value>86400</value>
+        <description>Timeout value in seconds for a SQL operation whose result is not fetched completely</description>
+    </property>
+    <property>
+        <name>explore.inactive.operation.timeout.secs</name>
+        <value>3600</value>
+        <description>>Timeout value in seconds for a SQL operation which does not have any more results
+            to be fetched</description>
+    </property>
+    <property>
+        <name>explore.cleanup.job.schedule.secs</name>
+        <value>60</value>
+        <description>>Time in secs to schedule clean up job to timeout operations</description>
     </property>
 
 

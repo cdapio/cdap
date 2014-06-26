@@ -5,7 +5,7 @@
 Querying Datasets with SQL
 ==========================
 
-Ad-hoc Querying of Continuuity Reactor Datasets using SQL 
+**Ad-hoc Querying of Continuuity Reactor Datasets using SQL**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
@@ -245,4 +245,10 @@ When creating your queries, keep these limitations in mind:
   namespace. For example, if your Dataset is named ``ProductCatalog``, then the corresponding table
   name is ``continuuity_user_ProductCatalog``.
 
+Where to Go Next
+----------------
+Now that you've seen ad-hoc querying, take a look at:
+
+- `Continuuity Reactor Testing and Debugging Guide <debugging.html>`__,
+  which covers both testing and debugging of Continuuity Reactor applications.
 

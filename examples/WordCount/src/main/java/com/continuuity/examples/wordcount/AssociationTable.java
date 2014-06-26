@@ -18,7 +18,7 @@ package com.continuuity.examples.wordcount;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDataset;
-import com.continuuity.api.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.module.EmbeddedDataset;
 import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
@@ -36,7 +36,7 @@ public class AssociationTable extends AbstractDataset {
 
   private Table table;
 
-  public AssociationTable(DatasetSpecification spec, @EmbeddedDataSet("word_assoc") Table table) {
+  public AssociationTable(DatasetSpecification spec, @EmbeddedDataset("word_assoc") Table table) {
     super(spec.getName(), table);
     this.table = table;
   }
