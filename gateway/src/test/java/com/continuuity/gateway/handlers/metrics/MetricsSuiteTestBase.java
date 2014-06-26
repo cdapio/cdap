@@ -128,7 +128,7 @@ public class MetricsSuiteTestBase {
   public static void init() throws IOException, OperationException {
     CConfiguration cConf = CConfiguration.create();
 
-    // use this injector instead of the one in startsMetricsService because that one uses a
+    // use this injector instead of the one in startMetricsService because that one uses a
     // mock metrics collection service while we need a real one.
     Injector injector = Guice.createInjector(Modules.override(
       new ConfigModule(cConf),
