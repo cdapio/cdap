@@ -29,10 +29,10 @@ public class WordCount extends AbstractApplication {
     setName("WordCount");
     setDescription("Example Word Count Application");
     addStream(new Stream("wordStream"));
-    createDataSet("wordStats", Table.class);
-    createDataSet("wordCounts", KeyValueTable.class);
-    createDataSet("uniqueCount", UniqueCountTable.class);
-    createDataSet("wordAssocs", AssociationTable.class);
+    createDataset("wordStats", Table.class);
+    createDataset("wordCounts", KeyValueTable.class);
+    createDataset("uniqueCount", UniqueCountTable.class);
+    createDataset("wordAssocs", AssociationTable.class);
     addFlow(new WordCounter());
     addProcedure(new RetrieveCounts());
   }

@@ -452,7 +452,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST <base-url>/streams/mystream/ttl``
+     - ``PUT <base-url>/streams/mystream/config``
 
        with the new TTL value as a JSON string in the body::
 
@@ -1489,8 +1489,8 @@ The value at each position has the type that was returned in the result schema f
 For example, if the returned type was ``INT``, then the value will be an integer literal,
 whereas for ``STRING`` or ``VARCHAR`` the value will be a string literal.
 
-Repeat the query to retrieve subsequent results. If all results of the query have already been retrieved, then the returned list is empty. 
-[DOCNOTE: FIXME! How do you reset the query retrieval to the start? Can you?]
+Repeat the query to retrieve subsequent results. If all results of the query have already 
+been retrieved, then the returned list is empty. 
 
 
 Closing a Query

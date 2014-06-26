@@ -62,7 +62,7 @@ public final class Tables {
                                  ConflictDetection level, int ttl,
                                  DatasetProperties props) {
 
-    configurer.createDataSet(datasetName, Table.class, tableProperties(level, ttl, props));
+    configurer.createDataset(datasetName, Table.class, tableProperties(level, ttl, props));
   }
 
   /**

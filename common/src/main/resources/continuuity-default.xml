@@ -289,7 +289,7 @@
 
     <property>
       <name>stream.container.num.cores</name>
-      <value>32</value>
+      <value>2</value>
       <description>Number of virtual core for the YARN container that runs the stream handler</description>
     </property>
 

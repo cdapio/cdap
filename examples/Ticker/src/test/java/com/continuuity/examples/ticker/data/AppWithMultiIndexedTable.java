@@ -32,7 +32,7 @@ public class AppWithMultiIndexedTable extends AbstractApplication {
     Set<byte[]> ignoredFields = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
     setName("AppWithMultiIndexedTable");
     setDescription("Simple app with indexed table dataset");
-    createDataSet("indexedTable", MultiIndexedTable.class,
+    createDataset("indexedTable", MultiIndexedTable.class,
                   MultiIndexedTable.properties(Bytes.toBytes("ts"), ignoredFields));
     addProcedure(new AbstractProcedure("fooProcedure") {
     });
