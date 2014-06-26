@@ -29,7 +29,7 @@ public class CountRandom extends AbstractApplication {
   public void configure() {
     setName("CountRandom");
     setDescription("Example random count application");
-    createDataSet(TABLE_NAME, KeyValueTable.class);
+    createDataset(TABLE_NAME, KeyValueTable.class);
     addFlow(new CountRandomFlow());
   }
 }

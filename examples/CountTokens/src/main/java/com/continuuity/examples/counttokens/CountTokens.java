@@ -32,7 +32,7 @@ public class CountTokens extends AbstractApplication {
     setName("CountTokens");
     setDescription("Example applicaiton that counts tokens");
     addStream(new Stream("text"));
-    createDataSet(TABLE_NAME, KeyValueTable.class);
+    createDataset(TABLE_NAME, KeyValueTable.class);
     addFlow(new CountTokensFlow());
   }
 }

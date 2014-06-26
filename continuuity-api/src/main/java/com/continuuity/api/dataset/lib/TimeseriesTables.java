@@ -15,7 +15,7 @@ public final class TimeseriesTables {
    * @param datasetName data set name
    */
   public static void createTable(ApplicationConfigurer configurer, String datasetName, int timeIntervalToStorePerRow) {
-    configurer.createDataSet(datasetName, TimeseriesTable.class.getName(),
+    configurer.createDataset(datasetName, TimeseriesTable.class.getName(),
                              timeseriesTableProperties(timeIntervalToStorePerRow, DatasetProperties.EMPTY));
   }
 

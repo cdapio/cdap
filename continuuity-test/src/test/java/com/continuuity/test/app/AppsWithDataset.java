@@ -16,7 +16,7 @@ import com.continuuity.api.dataset.lib.AbstractDataset;
 import com.continuuity.api.dataset.lib.CompositeDatasetDefinition;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
-import com.continuuity.api.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.module.EmbeddedDataset;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
 import com.continuuity.api.procedure.AbstractProcedure;
@@ -53,7 +53,7 @@ public class AppsWithDataset {
   public static class AppWithAutoCreate extends AbstractApplication {
     @Override
     public void configure() {
-      createDataSet("myTable", "myKeyValueTable", DatasetProperties.EMPTY);
+      createDataset("myTable", "myKeyValueTable", DatasetProperties.EMPTY);
       addProcedure(new MyProcedure());
     }
   }
@@ -64,8 +64,8 @@ public class AppsWithDataset {
   public static class AppWithAutoDeploy extends AbstractApplication {
     @Override
     public void configure() {
-      createDataSet("myTable", "myKeyValueTable", DatasetProperties.EMPTY);
-      addDataSetModule("my-kv", KeyValueTableDefinition.Module.class);
+      createDataset("myTable", "myKeyValueTable", DatasetProperties.EMPTY);
+      addDatasetModule("my-kv", KeyValueTableDefinition.Module.class);
       addProcedure(new MyProcedure());
     }
   }
@@ -76,8 +76,8 @@ public class AppsWithDataset {
   public static class AppWithAutoDeployType extends AbstractApplication {
     @Override
     public void configure() {
-      createDataSet("myTable", KeyValueTableDefinition.KeyValueTable.class.getName(), DatasetProperties.EMPTY);
-      addDataSetType(KeyValueTableDefinition.KeyValueTable.class);
+      createDataset("myTable", KeyValueTableDefinition.KeyValueTable.class.getName(), DatasetProperties.EMPTY);
+      addDatasetType(KeyValueTableDefinition.KeyValueTable.class);
       addProcedure(new MyProcedure());
     }
   }
@@ -88,7 +88,7 @@ public class AppsWithDataset {
   public static class AppWithAutoDeployTypeShortcut extends AbstractApplication {
     @Override
     public void configure() {
-      createDataSet("myTable", KeyValueTableDefinition.KeyValueTable.class, DatasetProperties.EMPTY);
+      createDataset("myTable", KeyValueTableDefinition.KeyValueTable.class, DatasetProperties.EMPTY);
       addProcedure(new MyProcedure());
     }
   }
@@ -194,7 +194,7 @@ public class AppsWithDataset {
       private final Table table;
 
       public KeyValueTable(DatasetSpecification spec,
-                           @EmbeddedDataSet("data") Table table) {
+                           @EmbeddedDataset("data") Table table) {
         super(spec.getName(), (Dataset) table);
         this.table = table;
       }

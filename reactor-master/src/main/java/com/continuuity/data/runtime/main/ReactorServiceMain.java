@@ -39,7 +39,6 @@ import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.security.User;
-import org.apache.hadoop.security.Credentials;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
@@ -48,8 +47,8 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Services;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.yarn.YarnSecureStore;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,6 +100,8 @@ public class ReactorServiceMain extends DaemonMain {
   private DatasetService dsService;
   private ServiceStore serviceStore;
   private Map<String, String> systemServiceInstanceMap;
+  private LocationFactory locationFactory;
+  private HBaseSecureStoreUpdater secureStoreUpdater;
 
   private String serviceName;
   private TwillApplication twillApplication;
@@ -144,6 +145,9 @@ public class ReactorServiceMain extends DaemonMain {
     dsService = baseInjector.getInstance(DatasetService.class);
     serviceStore = baseInjector.getInstance(ServiceStore.class);
     systemServiceInstanceMap = getConfigKeys();
+
+    locationFactory = baseInjector.getInstance(LocationFactory.class);
+    secureStoreUpdater = new HBaseSecureStoreUpdater(hConf, locationFactory);
   }
 
   @Override
@@ -258,15 +262,15 @@ public class ReactorServiceMain extends DaemonMain {
 
   private void scheduleSecureStoreUpdate(TwillRunner twillRunner) {
     if (User.isHBaseSecurityEnabled(hConf)) {
-      HBaseSecureStoreUpdater updater = new HBaseSecureStoreUpdater(hConf);
-      twillRunner.scheduleSecureStoreUpdate(updater, 30000L, updater.getUpdateInterval(), TimeUnit.MILLISECONDS);
+      twillRunner.scheduleSecureStoreUpdate(secureStoreUpdater, 30000L, secureStoreUpdater.getUpdateInterval(),
+                                            TimeUnit.MILLISECONDS);
     }
   }
 
 
   private TwillPreparer prepare(TwillPreparer preparer) {
     return preparer.withDependencies(new HBaseTableUtilFactory().get().getClass())
-      .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())));
+      .addSecureStore(secureStoreUpdater.update(null, null)); // HBaseSecureStoreUpdater.update() ignores parameters
   }
 
   private void runTwillApps() {
