@@ -9,10 +9,10 @@ Continuuity Reactor Documentation
    Quick Start </quickstart>
    Examples </examples/index>
    Programming Guide </programming>
-   Querying Datasets with SQL </query>
-   Security </security>
    Advanced Features </advanced>
+   Querying Datasets with SQL </query>
    Testing and Debugging </debugging>
+   Security </security>
    Operations Guide </operations>
    HTTP REST API </rest>
    /javadocs/index

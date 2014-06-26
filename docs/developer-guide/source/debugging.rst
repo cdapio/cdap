@@ -481,7 +481,7 @@ from the concerned Tables.
 
 Where to Go Next
 ================
-Now that you've had an introduction to Continuuity Reactor, take a look at:
+Now that you've fixed all your bugs with Continuuity Reactor, take a look at:
 
-- `Operating a Continuuity Reactor <operations.html>`__,
-  which covers putting Continuuity Reactor into production.
+- `Reactor Security <security.html>`__,
+  which covers enabling security in a production Continuuity Reactor.

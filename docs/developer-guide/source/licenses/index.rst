@@ -5,7 +5,7 @@
 Continuuity Reactor Dependencies
 ================================
 
-Continuuity Reactor Dependent Packages, Licenses and License URLs
+**Continuuity Reactor Dependent Packages, Licenses and License URLs**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::

@@ -5,7 +5,7 @@
 Advanced Continuuity Reactor Features
 =====================================
 
-The Flow, Dataset, and Transaction Systems with Best Practices for Developing Applications
+**The Flow, Dataset, and Transaction Systems with Best Practices for Developing Applications**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
@@ -747,10 +747,9 @@ When the Dataset is initialized, the value is then used to set ``timestampField`
 Field types that are supported using the ``@Property`` annotation are primitives,
 boxed types (e.g. ``Integer``), ``String`` and ``enum``.
 
-
 Where to Go Next
 ================
-Now that you've had an introduction to Continuuity Reactor, take a look at:
+Now that you've looked at the advanced features of Continuuity Reactor, take a look at:
 
-- `Continuuity Reactor Testing and Debugging Guide <debugging.html>`__,
-  which covers both testing and debugging of Continuuity Reactor applications.
+- `Querying Datasets with SQL <query.html>`__,
+  which covers ad-hoc querying of Continuuity Reactor Datasets using SQL.

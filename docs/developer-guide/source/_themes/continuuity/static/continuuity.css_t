@@ -149,6 +149,10 @@ div.sphinxsidebar input[type=text]{
     margin-left: 20px;
 }
 
+a.current {
+	font-weight: bold;
+}
+
 /* -- body styles ----------------------------------------------------------- */
 
 a {
