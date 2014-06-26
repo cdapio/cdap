@@ -18,8 +18,6 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Console;
@@ -35,10 +33,6 @@ import java.util.Random;
  * Client to get an AccessToken using username:password authentication.
  */
 public class AccessTokenClient {
-  static {
-    // this turns off all logging but we don't need that for a cmdline tool
-    Logger.getRootLogger().setLevel(Level.OFF);
-  }
 
   /**
    * for debugging. should only be set to true in unit tests.
