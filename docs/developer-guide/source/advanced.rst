@@ -7,106 +7,123 @@
 Advanced Continuuity Reactor Features
 =====================================
 
-**Custom User services, Flow, Dataset, and Transaction Systems, and Best Practices for the Continuuity Reactor**
+**Custom User Services, Flow, Dataset, and Transaction Systems, 
+with Best Practices for the Continuuity Reactor**
 
 Custom User Services
 ====================
+In addition to Flows, MapReduce jobs, and Procedures, additional services can be run in a 
+Reactor Application. Users can implement custom user services to interface with a legacy 
+system and perform additional processing beyond the Continuuity processing paradigms. 
+Examples could include running an IP-to-Geo lookup and serving user-profiles.
 
-In addition to Flows, MapReduce and Procedures additional services can be run in a Reactor Application. Users can implement services to interface with a legacy system, perform additional processing beyond continuuity processing paradigms - for example running an IP to Geo lookup, serving user-profiles etc.
-Services are implemented as TwillApplication and are run in YARN. Life-cycle of the services can be controlled by using REST endpoints. 
+Services are implemented as TwillApplication and are run in YARN. Life-cycle of the 
+services can be controlled by using REST endpoints. 
 
-Services can be configured by implementing `configure` method of the Application Api and adding service using `addService` method.
+Services can be configured by implementing `configure` method of the Application API and adding service using `addService` method::
 
-        public class AnalyticsApp extends AbstractApplication {
-          @Override
-          public void configure() {
-            setName("AnalyticsApp");
-            setDescription("Application for generating mobile analytics");
-            addStream(new Stream("event"));
-            addFlow(new EventProcessingFlow());
-            ....
-            addService(new IpGeoLookupService());
-            addService(new UserLookupServiceService());
-            ...
-          }
-        }
+	public class AnalyticsApp extends AbstractApplication {
+	  @Override
+	  public void configure() {
+	    setName("AnalyticsApp");
+	    setDescription("Application for generating mobile analytics");
+	    addStream(new Stream("event"));
+	    addFlow(new EventProcessingFlow());
+	    ....
+	    addService(new IpGeoLookupService());
+	    addService(new UserLookupServiceService());
+	    ...
+	  }
+	}
 
-The lifecycle of the services in a Reactor application is controlled using a ``TwillApplication``. The TwillApplication can have one or more runnables that implement the custom services.
 
-        public class IpGeoLookupService implements TwillApplication {
-          @Override
-          public TwillSpecification configure() {
-            return TwillSpecification.Builder.with()
-              .setName("IpGeoApplication")
-              .withRunnable()
-              .add(new IpGeoRunnable())
-              .noLocalFiles()
-              .anyOrder()
-              .build();
-         }
-       }
+The lifecycle of the services in a Reactor application is controlled using a ``TwillApplication``.
+The TwillApplication can have one or more runnables that implement the custom services::
 
-The service logic is implemented by extending the AbstractTwillRunnable and implementing the three methods:
+	 public class IpGeoLookupService implements TwillApplication {
+	   @Override
+	   public TwillSpecification configure() {
+	     return TwillSpecification.Builder.with()
+	       .setName("IpGeoApplication")
+	       .withRunnable()
+	       .add(new IpGeoRunnable())
+	       .noLocalFiles()
+	       .anyOrder()
+	       .build();
+	  }
+	}
 
-       * `intialize()`
-       * `run()`
-       * `destroy()`
+The service logic is implemented by extending the ``AbstractTwillRunnable`` and implementing these
+methods:
 
-       public final class IpGeoRunnable extends AbstractTwillRunnable {
-   
-          @Override
-          public void initialize(TwillContext context) {
-            // service initialization
-          }
+- ``intialize()``
+- ``run()``
+- ``stop()``
+- ``destroy()``
 
-           @Override
-           public void run() {
-             // Start the custom service
-           }
-   
-           @Override
-           public void destroy() {
-             // called before shutting down the service
-           }
+::
 
-           @Override
-           public void stop() {
-             // called to stop the running the service
-           }
-      }
+	public final class IpGeoRunnable extends AbstractTwillRunnable {
+	
+	   @Override
+	   public void initialize(TwillContext context) {
+	     // service initialization
+	   }
+	
+	   @Override
+	   public void run() {
+	     // Start the custom service
+	   }
+	
+	   @Override
+	   public void stop() {
+	     // called to stop the running the service
+	   }
+	
+	   @Override
+	   public void destroy() {
+	     // called before shutting down the service
+	   }
+	}
 
-Services integration with Metrics and Logging
+
+Services Integration with Metrics and Logging
 ---------------------------------------------
-Services are integrated with Reactor Metrics and Logging framework. Programs implementing the custom services can declare Metrics and Logger (SLF4J) member variables, the appropriate implementation will be injected by the run-time.
+Services are integrated with the Reactor Metrics and Logging framework. Programs implementing custom services can declare Metrics and Logger (SLF4J) member variables and the appropriate implementation will be injected by the run-time.
+
+::
 
 	public class IpGeoRunnable extends AbstractTwillRunnable {
 	  private Metrics metrics;
 	  private static final Logger LOG = LoggerFactory.getLogger(IpGeoRunnable.class);
-
+	
 	  @Override
 	  public void run() {
 	    LOG.info("Running ip geo lookup service");
-            metrics.count("ipgeo.instance", 1);
+	           metrics.count("ipgeo.instance", 1);
 	  }
 	}
 
-The metrics and logs that are emitted by the service is aggreagted and accessed similar to other program types. Refer to sections in operations guide on accessing logs and metrics.
-DOCNOTE: Refer to the sections.
+The metrics and logs that are emitted by the service are aggregated and accessed similar to other program types. See the sections in the `Continuuity Reactor Operations Guide <operations.html>`__ on accessing 
+`logs <operations.html#logging>`__ and `metrics <operations.html#metrics>`__. 
 
-Service discovery
+
+Service Discovery
 -----------------
-Services can announce the host and port they are running on so that they can be discovered by other programs (flows, procedures and map-reduce jobs) at to access. 
+Services announce the host and port they are running on so that they can be discovered by other programs (Flows, Procedures and MapReduce jobs) and provide access.
 
-To announce simply call the `announce` method from TwillContext during initialize. The announce method takes in a name which the service can register under and a port where the service is running on. The application name, service and hostname required for registering the service is automatically obtained.
+To announce a service, call the `announce` method from TwillContext during the initialize method. The announce method takes a name which the service can register under and the port which the service is running on. The application name, service, and hostname required for registering the service are automatically obtained.
+
+::
 
 	@Override
-    	public void initialize (TwillContext context) {
-      	  context.announce("GeoLookup", 7000);
-   	}
+	public void initialize (TwillContext context) {
+	  context.announce("GeoLookup", 7000);
+	}
 
-The service can be discovered in flows, procedures and map-reduce job using appropriate program contexts. 
 
-For example, 
+The service can then be discovered in Flows, Procedures and MapReduce jobs using appropriate program
+contexts. For example::
 
 	public class GeoFlowlet extends AbstractFlowlet {
 	

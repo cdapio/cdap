@@ -1655,9 +1655,7 @@ because they belong to your account, not the Application.
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
 After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce 
-elements, Workflows or Services,
-
-and query for their status using HTTP POST and GET methods::
+jobs, Workflows, and Services, and query for their status using HTTP POST and GET methods::
 
 	POST <base-url>/apps/<app-id>/<element-type>/<element-id>/<operation>
 	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/status
@@ -1673,7 +1671,7 @@ and query for their status using HTTP POST and GET methods::
    * - ``<element-type>``
      - One of ``flows``, ``procedures``, ``mapreduce``, ``workflows`` or ``services``
    * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce*, *WorkFlow*, or *Service*) being called
+     - Name of the element (*Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Service*) being called
    * - ``<operation>``
      - One of ``start`` or ``stop``
 
@@ -1757,7 +1755,6 @@ Example::
 
 The response is formatted in JSON; an example of this is shown in the 
 `Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`_.
-
 
 To find out the address of a Service's container host and the container's debug port, you can query the
 Reactor for the live info of a Service's Twill Runnable via an HTTP GET method::
@@ -2425,12 +2422,12 @@ These metrics are available in the Datasets context:
 
 Monitor HTTP API
 ================
-Reactor internally uses a variety of system services that are critical to its functionality. This section describes REST Apis that can be used to get more visibility into system services
+Reactor internally uses a variety of system services that are critical to its functionality. This section describes the REST APIs that can be used to see into system services.
 
-Get details of all available system services
-............................................
+Details of All Available System Services
+----------------------------------------
 
-To get the detailed information of all available System services use:
+For the detailed information of all available System services, use::
 
 	GET <base-url>/system/services
 
@@ -2445,10 +2442,9 @@ HTTP Responses
    * - ``200 OK``
      - The event successfully called the method, and the body contains the results
 
-Checking status of all Reactor system services
-..............................................
-
-To check the status of all the system service use:
+Checking Status of All Reactor System Services
+----------------------------------------------
+To check the status of all the system service, use::
 
 	GET <base-url>/system/services/status
 
@@ -2463,14 +2459,13 @@ HTTP Responses
    * - ``200 OK``
      - The event successfully called the method, and the body contains the results
 
-Checking status of a specific Reactor system service
-....................................................
-
-To check the status of a specific system service use:
+Checking Status of a Specific Reactor System Service
+----------------------------------------------------
+To check the status of a specific system service, use::
 
 	GET <base-url>/system/services/<service-name>/status
 
-The status of these Reactor services can be checked.
+The status of these Reactor services can be checked:
 
 .. list-table::
    :header-rows: 1
@@ -2497,18 +2492,17 @@ The status of these Reactor services can be checked.
    * - ``Metrics Processor``
      - ``metrics.processor``
      - Service that aggregates all system and application metrics 
-   * - ``DataSet executor``
+   * - ``Dataset Executor``
      - ``dataset.executor``
-     - Service that handles all data related HTTP requests 
-   * - ``Explore service``
+     - Service that handles all data-related HTTP requests 
+   * - ``Explore Service``
      - ``explore.service``
-     - Service that handles all HTTP requests for adhoc data exploration
-   
+     - Service that handles all HTTP requests for ad-hoc data exploration
 
 Note that the service status checks are more useful when the Reactor is running in a distributed cluster mode and that some of the status checks may not work in the Local Reactor mode.
 
 Example
--------
+.......
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -2519,7 +2513,7 @@ Example
      - Returns the status of the Metrics Service
 
 HTTP Responses
---------------
+..............
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -2529,15 +2523,14 @@ HTTP Responses
    * - ``200 OK``
      - The service is up and running
    * - ``404 Not Found``
-     - The service is not running or not found
+     - The service is either not running or not found
 
-Scaling system services
-.......................
+Scaling System Services
+-----------------------
+The number of instances for system services can be queried and changed by using these commands::
 
-The number of instances for system services can be queried and changed by using the following API:
-
-        GET <base-url>/system/services/<service-name>/instances
-        PUT <base-url>/system/services/<service-name>/instances
+	GET <base-url>/system/services/<service-name>/instances
+	PUT <base-url>/system/services/<service-name>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -2564,7 +2557,7 @@ Examples
      - ``GET <base-url>/system/services/metrics/instances``
        ``instances``
    * - Description
-     - Find out the number of instances of the metrics HTTP service 
+     - Determine the number of instances being used for the metrics HTTP service 
 
 .. list-table::
    :widths: 20 80
@@ -2578,7 +2571,7 @@ Examples
 
           { "instances" : 2 }
    * - Description
-     - Change the number of instances of the metrics HTTP service to 2
+     - Sets the number of instances of the metrics HTTP service to 2
 
 .. rst2pdf: CutStart
 
