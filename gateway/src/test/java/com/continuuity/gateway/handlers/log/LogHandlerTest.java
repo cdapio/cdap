@@ -1,6 +1,5 @@
 package com.continuuity.gateway.handlers.log;
 
-import com.continuuity.gateway.MetricsServiceTestsSuite;
 import com.continuuity.gateway.handlers.metrics.MetricsSuiteTestBase;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
@@ -92,9 +91,8 @@ public class LogHandlerTest extends MetricsSuiteTestBase {
 
   private void testNext(String appId, String entityType, String entityId, boolean escape) throws Exception {
     String img = escape ? "&lt;img&gt;" : "<img>";
-    HttpResponse response = MetricsServiceTestsSuite.doGet(
-      String.format("/v2/apps/%s/%s/%s/logs/next?fromOffset=5&max=10&escape=%s",
-                    appId, entityType, entityId, escape)
+    HttpResponse response = doGet(String.format("/v2/apps/%s/%s/%s/logs/next?fromOffset=5&max=10&escape=%s",
+                                                appId, entityType, entityId, escape)
     );
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -111,9 +109,8 @@ public class LogHandlerTest extends MetricsSuiteTestBase {
   }
 
   private void testNextNoMax(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response = MetricsServiceTestsSuite.doGet(
-      String.format("/v2/apps/%s/%s/%s/logs/next?fromOffset=10", appId, entityType, entityId)
-    );
+    HttpResponse response = doGet(String.format("/v2/apps/%s/%s/%s/logs/next?fromOffset=10",
+                                                appId, entityType, entityId));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
     List<LogLine> logLines = new Gson().fromJson(out, LIST_LOGLINE_TYPE);
@@ -129,9 +126,8 @@ public class LogHandlerTest extends MetricsSuiteTestBase {
   }
 
   private void testNextFilter(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response = MetricsServiceTestsSuite.doGet(
-      String.format("/v2/apps/%s/%s/%s/logs/next?fromOffset=12&max=16&filter=loglevel=EVEN",
-                    appId, entityType, entityId));
+    HttpResponse response = doGet(String.format("/v2/apps/%s/%s/%s/logs/next?fromOffset=12&max=16&filter=loglevel=EVEN",
+                                                appId, entityType, entityId));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
     List<LogLine> logLines = new Gson().fromJson(out, LIST_LOGLINE_TYPE);
@@ -147,9 +143,7 @@ public class LogHandlerTest extends MetricsSuiteTestBase {
   }
 
   private void testNextNoFrom(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response = MetricsServiceTestsSuite.doGet(
-      String.format("/v2/apps/%s/%s/%s/logs/next", appId, entityType, entityId)
-    );
+    HttpResponse response = doGet(String.format("/v2/apps/%s/%s/%s/logs/next", appId, entityType, entityId));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
     List<LogLine> logLines = new Gson().fromJson(out, LIST_LOGLINE_TYPE);
@@ -165,10 +159,8 @@ public class LogHandlerTest extends MetricsSuiteTestBase {
   }
 
   private void testPrev(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response =
-      MetricsServiceTestsSuite.doGet(
-        String.format("/v2/apps/%s/%s/%s/logs/prev?fromOffset=25&max=10",
-                      appId, entityType, entityId));
+    HttpResponse response = doGet(String.format("/v2/apps/%s/%s/%s/logs/prev?fromOffset=25&max=10",
+                                                appId, entityType, entityId));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
     List<LogLine> logLines = new Gson().fromJson(out, LIST_LOGLINE_TYPE);
@@ -184,9 +176,8 @@ public class LogHandlerTest extends MetricsSuiteTestBase {
   }
 
   private void testPrevNoMax(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response = MetricsServiceTestsSuite.doGet(
-      String.format("/v2/apps/%s/%s/%s/logs/prev?fromOffset=70", appId, entityType, entityId)
-    );
+    HttpResponse response = doGet(String.format("/v2/apps/%s/%s/%s/logs/prev?fromOffset=70",
+                                                appId, entityType, entityId));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
     List<LogLine> logLines = new Gson().fromJson(out, LIST_LOGLINE_TYPE);
@@ -202,9 +193,8 @@ public class LogHandlerTest extends MetricsSuiteTestBase {
   }
 
   private void testPrevFilter(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response = MetricsServiceTestsSuite.doGet(
-      String.format("/v2/apps/%s/%s/%s/logs/prev?fromOffset=41&max=16&filter=loglevel=EVEN",
-                    appId, entityType, entityId));
+    HttpResponse response = doGet(String.format("/v2/apps/%s/%s/%s/logs/prev?fromOffset=41&max=16&filter=loglevel=EVEN",
+                                                appId, entityType, entityId));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
     List<LogLine> logLines = new Gson().fromJson(out, LIST_LOGLINE_TYPE);
@@ -220,9 +210,7 @@ public class LogHandlerTest extends MetricsSuiteTestBase {
   }
 
   private void testPrevNoFrom(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response = MetricsServiceTestsSuite.doGet(
-      String.format("/v2/apps/%s/%s/%s/logs/prev", appId, entityType, entityId)
-    );
+    HttpResponse response = doGet(String.format("/v2/apps/%s/%s/%s/logs/prev", appId, entityType, entityId));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
     List<LogLine> logLines = new Gson().fromJson(out, LIST_LOGLINE_TYPE);
@@ -238,9 +226,8 @@ public class LogHandlerTest extends MetricsSuiteTestBase {
   }
 
   private void testLogs(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response = MetricsServiceTestsSuite.doGet(
-      String.format("/v2/apps/%s/%s/%s/logs?start=20&stop=35", appId, entityType, entityId)
-    );
+    HttpResponse response = doGet(String.format("/v2/apps/%s/%s/%s/logs?start=20&stop=35",
+                                                appId, entityType, entityId));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
     List<String> logLines = Lists.newArrayList(Splitter.on("\n").split(out));
@@ -255,9 +242,8 @@ public class LogHandlerTest extends MetricsSuiteTestBase {
   }
 
   private void testLogsFilter(String appId, String entityType, String entityId) throws Exception {
-    HttpResponse response = MetricsServiceTestsSuite.doGet(
-      String.format("/v2/apps/%s/%s/%s/logs?start=20&stop=35&filter=loglevel=EVEN", appId, entityType, entityId)
-    );
+    HttpResponse response = doGet(String.format("/v2/apps/%s/%s/%s/logs?start=20&stop=35&filter=loglevel=EVEN",
+                                                appId, entityType, entityId));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
     List<String> logLines = Lists.newArrayList(Splitter.on("\n").split(out));

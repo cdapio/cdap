@@ -36,6 +36,7 @@ import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.ObjectArrays;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -43,12 +44,19 @@ import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.junit.ClassRule;
-import org.junit.rules.ExternalResource;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -62,9 +70,13 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Provides base test class for MetricsServiceTestsSuite.
  */
-public class MetricsSuiteTestBase {
+public abstract class MetricsSuiteTestBase {
+
+  // Controls for test suite for whether to run BeforeClass/AfterClass
+  public static boolean runBefore = true;
+  public static boolean runAfter = true;
 
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
@@ -85,47 +97,49 @@ public class MetricsSuiteTestBase {
   protected static List<String> malformedResources;
   protected static List<String> nonExistingResources;
   private static CConfiguration conf;
+  private static TemporaryFolder tmpFolder;
 
   private static Injector injector;
 
-  @ClassRule
-  public static ExternalResource resources = new ExternalResource() {
-
-    private final TemporaryFolder tmpFolder = new TemporaryFolder();
-
-    @Override
-    protected void before() throws Throwable {
-      conf = CConfiguration.create();
-      conf.set(Constants.Metrics.ADDRESS, hostname);
-      conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
-      conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
-      conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-      conf.setBoolean(Constants.Metrics.CONFIG_AUTHENTICATION_REQUIRED, true);
-      conf.set(Constants.Metrics.CLUSTER_NAME, CLUSTER);
-
-      injector = startMetricsService(conf);
-      StoreFactory storeFactory = injector.getInstance(StoreFactory.class);
-      store = storeFactory.create();
-      locationFactory = injector.getInstance(LocationFactory.class);
-      tmpFolder.create();
-      dataDir = tmpFolder.newFolder();
-      init();
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    if (!runBefore) {
+      return;
     }
+    tmpFolder = new TemporaryFolder();
+    conf = CConfiguration.create();
+    conf.set(Constants.Metrics.ADDRESS, hostname);
+    conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
+    conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
+    conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+    conf.setBoolean(Constants.Metrics.CONFIG_AUTHENTICATION_REQUIRED, true);
+    conf.set(Constants.Metrics.CLUSTER_NAME, CLUSTER);
 
-    @Override
-    protected void after() {
-      stopMetricsService(conf);
-      try {
-        finish();
-      } catch (OperationException e) {
-        e.printStackTrace();
-      } finally {
-        tmpFolder.delete();
-      }
+    injector = startMetricsService(conf);
+    StoreFactory storeFactory = injector.getInstance(StoreFactory.class);
+    store = storeFactory.create();
+    locationFactory = injector.getInstance(LocationFactory.class);
+    tmpFolder.create();
+    dataDir = tmpFolder.newFolder();
+    initialize();
+  }
+
+  @AfterClass
+  public static void afterClass() throws Exception {
+    if (!runAfter) {
+      return;
     }
-  };
+    stopMetricsService(conf);
+    try {
+      stop();
+    } catch (OperationException e) {
+      e.printStackTrace();
+    } finally {
+      tmpFolder.delete();
+    }
+  }
 
-  public static void init() throws IOException, OperationException {
+  public static void initialize() throws IOException, OperationException {
     CConfiguration cConf = CConfiguration.create();
 
     // use this injector instead of the one in startMetricsService because that one uses a
@@ -149,7 +163,7 @@ public class MetricsSuiteTestBase {
     setupMeta();
   }
 
-  public static void finish() throws OperationException {
+  public static void stop() throws OperationException {
     collectionService.stopAndWait();
     store.removeApplication(wordCountAppId);
     store.removeApplication(wCountAppId);
@@ -289,5 +303,75 @@ public class MetricsSuiteTestBase {
 
   public static URI getEndPoint(String path) throws URISyntaxException {
     return new URI("http://" + hostname + ":" + port + path);
+  }
+
+  public static HttpResponse doGet(String resource) throws Exception {
+    return doGet(resource, null);
+  }
+
+  public static HttpResponse doGet(String resource, Header[] headers) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpGet get = new HttpGet(MetricsSuiteTestBase.getEndPoint(resource));
+    if (headers != null) {
+      get.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
+    } else {
+      get.setHeader(AUTH_HEADER);
+    }
+    return client.execute(get);
+  }
+
+  public static HttpResponse doPut(String resource) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpPut put = new HttpPut(MetricsSuiteTestBase.getEndPoint(resource));
+    put.setHeader(AUTH_HEADER);
+    return client.execute(put);
+  }
+
+  public static HttpResponse doPut(String resource, String body) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpPut put = new HttpPut(MetricsSuiteTestBase.getEndPoint(resource));
+    if (body != null) {
+      put.setEntity(new StringEntity(body));
+    }
+    put.setHeader(AUTH_HEADER);
+    return client.execute(put);
+  }
+
+  public static HttpResponse doPost(HttpPost post) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    post.setHeader(AUTH_HEADER);
+    return client.execute(post);
+  }
+
+  public static HttpPost getPost(String resource) throws Exception {
+    HttpPost post = new HttpPost(MetricsSuiteTestBase.getEndPoint(resource));
+    post.setHeader(AUTH_HEADER);
+    return post;
+  }
+
+  public static HttpResponse doPost(String resource, String body) throws Exception {
+    return doPost(resource, body, null);
+  }
+
+  public static HttpResponse doPost(String resource, String body, Header[] headers) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpPost post = new HttpPost(MetricsSuiteTestBase.getEndPoint(resource));
+    if (body != null) {
+      post.setEntity(new StringEntity(body));
+    }
+
+    if (headers != null) {
+      post.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
+    } else {
+      post.setHeader(AUTH_HEADER);
+    }
+    return client.execute(post);
+  }
+
+  public static HttpResponse doDelete(String resource) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpDelete delete = new HttpDelete(MetricsSuiteTestBase.getEndPoint(resource));
+    delete.setHeader(AUTH_HEADER);
+    return client.execute(delete);
   }
 }

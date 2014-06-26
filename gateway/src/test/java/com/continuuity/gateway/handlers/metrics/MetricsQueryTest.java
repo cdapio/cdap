@@ -7,7 +7,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.gateway.MetricsServiceTestsSuite;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
@@ -56,11 +55,11 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
     TimeUnit.SECONDS.sleep(2);
 
     // Query for queue length
-    HttpPost post = MetricsServiceTestsSuite.getPost("/v2/metrics");
+    HttpPost post = getPost("/v2/metrics");
     post.setHeader("Content-type", "application/json");
     post.setEntity(new StringEntity(
       "[\"/reactor/apps/WordCount/flows/WordCounter/flowlets/unique/process.events.pending?aggregate=true\"]"));
-    HttpResponse response = MetricsServiceTestsSuite.doPost(post);
+    HttpResponse response = doPost(post);
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     try {
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -111,7 +110,7 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
       "/reactor/services/appfabrics/handlers/AppFabricHttpHandler/methods/getAllApps/" +
         "request.received?aggregate=true";
 
-    HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + methodRequest);
+    HttpResponse response = doGet("/v2/metrics" + methodRequest);
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     try {
       Assert.assertEquals("GET " + methodRequest + " did not return 404 NOT-FOUND status.",
@@ -154,7 +153,7 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
     String runnableRequest =
       "/user/apps/WordCount/service/CounterService/runnables/CountRunnable/reads?aggregate=true";
 
-    HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + runnableRequest);
+    HttpResponse response = doGet("/v2/metrics" + runnableRequest);
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     try {
       Assert.assertEquals("GET " + runnableRequest + " did not return 404 status.",
@@ -170,7 +169,7 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
   }
 
   private static void testSingleMetricWithGet(String resource, int value) throws Exception {
-    HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + resource);
+    HttpResponse response = doGet("/v2/metrics" + resource);
     Assert.assertEquals("GET " + resource + " did not return 200 status.",
                         HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
     String content = new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8);
@@ -179,10 +178,10 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
   }
 
   private static void testSingleMetricWithPost(String resource, int value) throws Exception {
-    HttpPost post = MetricsServiceTestsSuite.getPost("/v2/metrics");
+    HttpPost post = getPost("/v2/metrics");
     post.setHeader("Content-type", "application/json");
     post.setEntity(new StringEntity("[\"" + resource + "\"]"));
-    HttpResponse response = MetricsServiceTestsSuite.doPost(post);
+    HttpResponse response = doPost(post);
     Assert.assertEquals("POST " + resource + " did not return 200 status.",
                         HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
     String content = new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8);
@@ -225,7 +224,7 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
     TimeUnit.SECONDS.sleep(2);
 
     for (String resource : validResources) {
-      HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + resource);
+      HttpResponse response = doGet("/v2/metrics" + resource);
       Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
       try {
         Assert.assertEquals("GET " + resource + " did not return 200 status.",
@@ -253,14 +252,14 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
   public void testMalformedPathReturns404() throws Exception {
     for (String resource : malformedResources) {
       // test GET request fails with 404
-      HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + resource);
+      HttpResponse response = doGet("/v2/metrics" + resource);
       Assert.assertEquals("GET " + resource + " did not return 404 as expected.",
                           HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
       // test POST also fails, but with 400
-      HttpPost post = MetricsServiceTestsSuite.getPost("/v2/metrics");
+      HttpPost post = getPost("/v2/metrics");
       post.setHeader("Content-type", "application/json");
       post.setEntity(new StringEntity("[\"" + resource + "\"]"));
-      response = MetricsServiceTestsSuite.doPost(post);
+      response = doPost(post);
       Assert.assertEquals("POST for " + resource + " did not return 400 as expected.",
                           HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
     }

@@ -5,7 +5,6 @@ package com.continuuity.gateway.handlers.metrics;
 
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
-import com.continuuity.gateway.MetricsServiceTestsSuite;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -52,7 +51,7 @@ public class MetricsDiscoveryQueryTest extends MetricsSuiteTestBase {
     reads.add("contexts", readContexts);
     expected.add(reads);
 
-    HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics/available/apps/WCount");
+    HttpResponse response = doGet("/v2/metrics/available/apps/WCount");
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     try {
       Assert.assertEquals("did not return 200 status.",
@@ -78,8 +77,7 @@ public class MetricsDiscoveryQueryTest extends MetricsSuiteTestBase {
     expected.add(expectedReads);
     expected.add(expectedWrites());
 
-    HttpResponse response =
-      MetricsServiceTestsSuite.doGet("/v2/metrics/available/apps/WordCount/flows/WordCounter/flowlets/splitter");
+    HttpResponse response = doGet("/v2/metrics/available/apps/WordCount/flows/WordCounter/flowlets/splitter");
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     try {
       Assert.assertEquals("did not return 200 status.",
@@ -100,7 +98,7 @@ public class MetricsDiscoveryQueryTest extends MetricsSuiteTestBase {
       base + "/apps/WordCount/flows/WordCounter/flowlet/splitter",
     };
     for (String resource : resources) {
-      HttpResponse response = MetricsServiceTestsSuite.doGet(resource);
+      HttpResponse response = doGet(resource);
       Assert.assertEquals(resource + " did not return 404 as expected.",
                           HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
     }
