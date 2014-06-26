@@ -19,7 +19,7 @@ if [[ -r /etc/default/continuuity-@servicename@ ]]; then
   . /etc/default/continuuity-@servicename@
 fi
 
-SVC_COMMAND="/opt/continuuity/@package.name@/bin/svc-@servicename@ $*"
+SVC_COMMAND="/opt/continuuity/@packagename@/bin/svc-@servicename@ $*"
 K5PID="/var/continuuity/run/k5start.pid"
 KRB_COMMAND="k5start -b -L -K 10 -p $K5PID -f $REACTOR_KEYTAB -u $REACTOR_PRINCIPAL"
 
