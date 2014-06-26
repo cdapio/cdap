@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class MetricsDiscoveryQueryTest extends BaseMetricsQueryTest {
+public class MetricsDiscoveryQueryTest extends MetricsSuiteTestBase {
 
   @BeforeClass
   public static void setup() throws InterruptedException {

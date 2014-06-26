@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class MetricsDeleteTest extends BaseMetricsQueryTest {
+public class MetricsDeleteTest extends MetricsSuiteTestBase {
 
   @Test
   public void testContextDelete() throws Exception {

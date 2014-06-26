@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class MetricsQueryTest extends BaseMetricsQueryTest {
+public class MetricsQueryTest extends MetricsSuiteTestBase {
 
   @Test
   public void testQueueLength() throws Exception {

@@ -1,6 +1,7 @@
 package com.continuuity.gateway.handlers.log;
 
 import com.continuuity.gateway.MetricsServiceTestsSuite;
+import com.continuuity.gateway.handlers.metrics.MetricsSuiteTestBase;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -17,7 +18,7 @@ import java.util.List;
 /**
  * Test LogHandler.
  */
-public class LogHandlerTest {
+public class LogHandlerTest extends MetricsSuiteTestBase {
   private static final Type LIST_LOGLINE_TYPE = new TypeToken<List<LogLine>>() { }.getType();
   public static String account = "developer";
 
