@@ -5,7 +5,7 @@
 Programming Guide
 =================
 
-**Introduction to Programming Applications for the Continuuity Reactor**
+Introduction to Programming Applications for the Continuuity Reactor
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
@@ -116,52 +116,27 @@ Applications
 An **Application** is a collection of `Streams`_, `DataSets`_, `Flows`_,
 `Procedures`_, `MapReduce`_ jobs, and `Workflows`_.
 
-To create an Application, implement the ``Application`` interface, specifying
+To create an Application, implement the ``Application`` interface
+or subclass from ``AbstractApplication`` class, specifying
 the Application metadata and declaring and configuring each of the Application elements::
 
-      public class MyApp implements Application {
+      public class MyApp extends AbstractApplication {
         @Override
-        public ApplicationSpecification configure() {
-          try {
-            return ApplicationSpecification.Builder.with()
-              .setName("myApp")
-              .setDescription("My Sample Application")
-              .withStreams()
-                .add(new Stream("myAppStream"))
-              .withDataSets()
-                .add(new KeyValueTable("myAppDataStorage")
-              .withFlows()
-                .add(new MyAppFlow())
-              .withProcedures()
-                .add(new MyAppQuery())
-              .noMapReduce()
-              .withWorkflows()
-                .add(new MyAppWorkflow())
-              .build();
-          } catch (UnsupportedTypeException e) {
-            throw new RuntimeException(e);
-          }
+        public void configure() {
+          setName("myApp");
+          setDescription("My Sample Application");
+          addStream(new Stream("myAppStream"));
+          addFlow(new MyAppFlow());
+          addProcedure(new MyAppQuery());
+          addMapReduce(new MyMapReduceJob());
+          addWorkflow(new MyAppWorkflow());
         }
       }
 
-You must specify all of the Continuuity Reactor elements. You can
-specify that an Application does not use a particular element—for
-example, no Streams—by using a ``.no...`` method::
-
-	      ...
-	      .setDescription("My Sample Application")
-	      .noStream()
-	      .withDataSets()
-	        .add(...) ...
-
-and so forth for each of the elements.
-
-All elements must be specified, either using ``.with...`` or ``.no...``.
-
-Notice that in coding the application, *Streams* and *DataSets* are
-defined using Continuuity classes, and are referenced by names, while
-*Flows*, *Flowlets* and *Procedures* are defined using user-written
-classes that implement Continuuity classes and are referenced by passing
+Notice that *Streams* are
+defined using provided `Stream` class, and are referenced by names, while
+other components are defined using user-written
+classes that implement correspondent interfaces and are referenced by passing
 an object, in addition to being assigned a unique name.
 
 Names used for *Streams* and *DataSets* need to be unique across the
@@ -176,8 +151,7 @@ Collecting Data: Streams
 from external systems into the Reactor in realtime.
 You specify a Stream in your `Application`__ metadata::
 
-	.withStreams()
-	  .add(new Stream("myStream")) ...
+	addStream(new Stream("myStream"));
 
 __ applications_
 
@@ -723,14 +697,15 @@ Tables. A number of useful DataSets—we refer to them as system DataSets—are
 included with Reactor, including key/value tables, indexed tables and
 time series.
 
-For your Application to use a DataSet, you must declare it in the
-Application specification. For example, to specify that your Application
-uses a ``KeyValueTable`` DataSet named *myCounters*, write::
+You can create a DataSet in Continuuity Reactor using either
+`Continuuity Reactor HTTP REST API <rest.html>`__ or command line tools.
 
-	public ApplicationSpecification configure() {
-	  return ApplicationSpecification.Builder.with()
-	    ...
-	    .withDataSets().add(new KeyValueTable("myCounters"))
+You can also specify to create a DataSet by Application components if one doesn't
+exist. For that you must declare its details in Application specification.
+For example, to create a DataSet named *myCounters* of type `KeyValueTable`, write::
+
+	public void configure() {
+	    createDataSet("myCounters", "KeyValueTable")
 	    ...
 
 To use the DataSet in a Flowlet or a Procedure, instruct the runtime
@@ -749,10 +724,11 @@ The runtime system reads the DataSet specification for the key/value
 table *myCounters* from the metadata store and injects a functional
 instance of the DataSet class into the Application.
 
-You can also implement custom DataSets by extending the ``DataSet`` base
-class or by extending existing DataSet types. See the `PageViewAnalytics
+You can also implement custom DataSets e.g. by implementing the ``Dataset``
+interface or by extending existing DataSet types. See the `PageViewAnalytics
 <examples/PageViewAnalytics/index.html>`__ example for an implementation of a
-Custom DataSet.
+Custom DataSet. For more details, refer to
+`Advanced Continuuity Reactor Features <advanced.html>`.
 
 .. _Procedures:
 
