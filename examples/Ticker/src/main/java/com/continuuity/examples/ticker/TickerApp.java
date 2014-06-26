@@ -43,8 +43,8 @@ public class TickerApp extends AbstractApplication {
     addStream(new Stream("tickers"));
     addStream(new Stream("orders"));
     TimeseriesTables.createTable(getConfigurer(), "tickTimeseries", 60 * 60);
-    createDataSet("tickerSet", KeyValueTable.class);
-    createDataSet("orderIndex", MultiIndexedTable.class,
+    createDataset("tickerSet", KeyValueTable.class);
+    createDataset("orderIndex", MultiIndexedTable.class,
                   MultiIndexedTable.properties(OrderDataSaver.TIMESTAMP_COL, doNotIndexFields));
     addFlow(new TickStreamFlow());
     addFlow(new OrderStreamFlow());

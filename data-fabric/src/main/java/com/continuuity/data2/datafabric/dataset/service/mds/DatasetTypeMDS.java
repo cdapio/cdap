@@ -2,7 +2,7 @@ package com.continuuity.data2.datafabric.dataset.service.mds;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetSpecification;
-import com.continuuity.api.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.module.EmbeddedDataset;
 import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
@@ -30,7 +30,7 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
    */
   private static final byte[] TYPE_TO_MODULE_PREFIX = Bytes.toBytes("t_");
 
-  public DatasetTypeMDS(DatasetSpecification spec, @EmbeddedDataSet("") OrderedTable table) {
+  public DatasetTypeMDS(DatasetSpecification spec, @EmbeddedDataset("") OrderedTable table) {
     super(spec, table);
   }
 

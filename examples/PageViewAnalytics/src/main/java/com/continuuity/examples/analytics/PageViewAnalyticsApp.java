@@ -55,7 +55,7 @@ public class PageViewAnalyticsApp extends AbstractApplication {
     setName("PageViewAnalytics");
     setDescription("Page view analysis");
     addStream(new Stream("logEventStream"));
-    createDataSet("pageViewCDS", PageViewStore.class);
+    createDataset("pageViewCDS", PageViewStore.class);
     addFlow(new LogAnalyticsFlow());
     addProcedure(new PageViewProcedure());
   }

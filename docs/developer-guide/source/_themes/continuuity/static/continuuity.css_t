@@ -1,8 +1,8 @@
 /*
- * nature.css_t
- * ~~~~~~~~~~~~
+ * continuuity.css_t
+ * ~~~~~~~~~~~~~~~~~
  *
- * Sphinx stylesheet -- nature theme.
+ * Sphinx stylesheet -- continuuity theme.
  *
  * :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
  * :license: BSD, see LICENSE for details.
@@ -29,6 +29,10 @@ body {
     padding: 0;
 }
 
+div.document {
+    background-color: #eee;
+}
+
 div.documentwrapper {
     float: left;
     width: 100%;
@@ -42,15 +46,12 @@ hr {
     border: 1px solid #B1B4B6;
 }
 
-div.document {
-    background-color: #eee;
-}
-
 div.body {
     background-color: #ffffff;
     color: #3E4349;
     padding: 0 30px 30px 30px;
     font-size: 0.9em;
+    min-height: 600px;
 }
 
 div.footer {
@@ -88,6 +89,12 @@ div.sphinxsidebar {
     font-size: 0.75em;
     line-height: 1.5em;
     width: 270px;
+    top: 30px;
+    bottom: 0;
+    margin: 0;
+    position: fixed;
+    overflow: auto;
+    height: auto;
 }
 
 div.sphinxsidebarwrapper{
@@ -140,6 +147,10 @@ div.sphinxsidebar input {
 
 div.sphinxsidebar input[type=text]{
     margin-left: 20px;
+}
+
+a.current {
+	font-weight: bold;
 }
 
 /* -- body styles ----------------------------------------------------------- */

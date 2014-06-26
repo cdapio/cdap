@@ -2,7 +2,7 @@ package com.continuuity.data2.datafabric.dataset.service.mds;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetSpecification;
-import com.continuuity.api.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.module.EmbeddedDataset;
 import com.continuuity.api.dataset.table.OrderedTable;
 import com.google.common.collect.Lists;
 
@@ -23,7 +23,7 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
    */
   private static final byte[] INSTANCE_PREFIX = Bytes.toBytes("i_");
 
-  public DatasetInstanceMDS(DatasetSpecification spec, @EmbeddedDataSet("") OrderedTable table) {
+  public DatasetInstanceMDS(DatasetSpecification spec, @EmbeddedDataset("") OrderedTable table) {
     super(spec, table);
   }
 
