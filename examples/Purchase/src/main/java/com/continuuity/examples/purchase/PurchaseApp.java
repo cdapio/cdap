@@ -33,13 +33,13 @@ public class PurchaseApp extends AbstractApplication {
     setName("PurchaseHistory");
     setDescription("Purchase history app");
     addStream(new Stream("purchaseStream"));
-    createDataSet("frequentCustomers", KeyValueTable.class);
+    createDataset("frequentCustomers", KeyValueTable.class);
     addFlow(new PurchaseFlow());
     addProcedure(new PurchaseQuery());
     addWorkflow(new PurchaseHistoryWorkflow());
 
     try {
-      createDataSet("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());
+      createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());
       ObjectStores.createObjectStore(getConfigurer(), "purchases", Purchase.class);
     } catch (UnsupportedTypeException e) {
       // this exception is thrown by ObjectStore if its parameter type cannot be (de)serialized (for example, if it is

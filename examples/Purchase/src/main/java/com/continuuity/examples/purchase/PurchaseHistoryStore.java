@@ -10,7 +10,7 @@ import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDataset;
 import com.continuuity.api.dataset.lib.ObjectStore;
 import com.continuuity.api.dataset.lib.ObjectStores;
-import com.continuuity.api.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.module.EmbeddedDataset;
 import com.continuuity.internal.io.UnsupportedTypeException;
 
 import java.lang.reflect.Type;
@@ -55,7 +55,7 @@ public class PurchaseHistoryStore
    * @param objStore the embedded object store
    */
   public PurchaseHistoryStore(DatasetSpecification spec,
-                              @EmbeddedDataSet("store") ObjectStore<PurchaseHistory> objStore) {
+                              @EmbeddedDataset("store") ObjectStore<PurchaseHistory> objStore) {
     super(spec.getName(), objStore);
     this.store = objStore;
   }

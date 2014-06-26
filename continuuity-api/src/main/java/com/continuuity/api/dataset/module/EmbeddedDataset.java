@@ -16,8 +16,8 @@ import java.lang.annotation.Target;
  * This is used when creating {@link com.continuuity.api.dataset.DatasetDefinition} from only
  * {@link com.continuuity.api.dataset.Dataset} implementation.
  * See
- * {@link com.continuuity.api.app.ApplicationConfigurer#addDataSetType
- * com.continuuity.api.app.ApplicationConfigurer#addDataSetType(Class &lt;&#63; extends Dataset&gt; datasetClass)
+ * {@link com.continuuity.api.app.ApplicationConfigurer#addDatasetType
+ * com.continuuity.api.app.ApplicationConfigurer#addDatasetType(Class &lt;&#63; extends Dataset&gt; datasetClass)
  * }
  * for details. 
  *
@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
  * <pre>
  * <code>
  *  public class SimpleKVTable extends AbstractDataset {
- *    public SimpleKVTable(DatasetSpecification spec, {@literal @}EmbeddedDataSet("data") Table table) {
+ *    public SimpleKVTable(DatasetSpecification spec, {@literal @}EmbeddedDataset("data") Table table) {
  *      super(spec.getName(), table);
  *    }
  *
@@ -41,7 +41,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface EmbeddedDataSet {
+public @interface EmbeddedDataset {
 
   static final String DEFAULT_TYPE_NAME = "";
 
