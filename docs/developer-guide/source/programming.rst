@@ -701,7 +701,7 @@ exist. For that you must declare its details in the Application specification.
 For example, to create a DataSet named *myCounters* of type `KeyValueTable`, write::
 
 	public void configure() {
-	    createDataSet("myCounters", "KeyValueTable")
+	    createDataset("myCounters", "KeyValueTable")
 	    ...
 
 To use the Dataset in a Flowlet or a Procedure, instruct the runtime
