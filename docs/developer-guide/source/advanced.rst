@@ -7,8 +7,8 @@ Advanced Continuuity Reactor Features
 
 **Custom User services, Flow, Dataset, and Transaction Systems, and Best Practices for the Continuuity Reactor**
 
-Services
---------
+Custom User Services
+--------------------
 
 In addition to Flows, MapReduce and Procedures additional services can be run in a Reactor Application. Users can implement services to interface with a legacy system, perform additional processing beyond continuuity processing paradigms - for example running an IP to Geo lookup, serving user-profiles etc.
 Services are implemented as TwillApplication and are run in YARN. Life-cycle of the services can be controlled by using REST endpoints. 
