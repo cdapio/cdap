@@ -131,7 +131,7 @@ set_classpath()
 set_hive_classpath() {
   if [ "x$HIVE_HOME" = "x" ] || [ "x$HIVE_CONF_DIR" = "x" ]; then
     if [ `which hive` ]; then
-        HIVE_VAR_OUT=`hive -e 'set -v' 2>/dev/null`
+      HIVE_VAR_OUT=`hive -e 'set -v' 2>/dev/null`
 
       if [ "x$HIVE_HOME" = "x" ]; then
         HIVE_HOME=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep 'HIVE_HOME' | cut -f 2 -d '='`

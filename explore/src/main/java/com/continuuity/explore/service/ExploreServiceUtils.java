@@ -32,6 +32,9 @@ public class ExploreServiceUtils {
   // todo populate this with whatever hive version CDH4.3 runs with - REACTOR-229
   private static final String[] SUPPORTED_VERSIONS = new String[] { "0.12", "0.13" };
 
+  // Caching the dependencies so that we don't trace them twice
+  private static Set<File> exploreDependencies = null;
+
   public static Iterable<File> getClassPathJarsFiles(String hiveClassPath) {
     if (hiveClassPath == null) {
       return null;
@@ -113,6 +116,10 @@ public class ExploreServiceUtils {
    * @return an ordered set of jar files.
    */
   public static Set<File> traceExploreDependencies(String hiveClassPathStr) throws IOException {
+    if (exploreDependencies != null) {
+      return exploreDependencies;
+    }
+
     ClassLoader classLoader = buildClassLoader(hiveClassPathStr);
     return traceExploreDependencies(classLoader);
   }
@@ -126,6 +133,10 @@ public class ExploreServiceUtils {
    */
   public static Set<File> traceExploreDependencies(ClassLoader classLoader)
     throws IOException {
+    if (exploreDependencies != null) {
+      return exploreDependencies;
+    }
+
     ClassLoader usingCL = classLoader;
     if (classLoader == null) {
       usingCL = ExploreRuntimeModule.class.getClassLoader();
@@ -149,6 +160,7 @@ public class ExploreServiceUtils {
                                                  bootstrapClassPaths, usingCL));
     orderedDependencies.addAll(traceDependencies("org.apache.hadoop.mapred.YarnClientProtocolProvider",
                                                  bootstrapClassPaths, usingCL));
+    exploreDependencies = orderedDependencies;
     return orderedDependencies;
   }
 
