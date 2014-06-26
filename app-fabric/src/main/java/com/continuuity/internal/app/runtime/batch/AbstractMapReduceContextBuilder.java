@@ -10,6 +10,7 @@ import com.continuuity.app.program.DefaultProgram;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.app.runtime.Arguments;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.lang.jar.BundleJarUtil;
 import com.continuuity.common.lang.jar.ProgramClassLoader;
 import com.continuuity.common.metrics.MetricsCollectionService;
@@ -113,9 +114,11 @@ public abstract class AbstractMapReduceContextBuilder {
 
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
+    CConfiguration configuration = injector.getInstance(CConfiguration.class);
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
-    DataSetInstantiator dataSetContext = new DataSetInstantiator(dataFabric, datasetFramework, classLoader);
+    DataSetInstantiator dataSetContext = new DataSetInstantiator(dataFabric, datasetFramework,
+                                                                 configuration, classLoader);
     ApplicationSpecification programSpec = program.getSpecification();
     dataSetContext.setDataSets(programSpec.getDataSets().values(),
                                programSpec.getDatasets().values());

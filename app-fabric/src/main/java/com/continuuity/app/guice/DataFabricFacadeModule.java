@@ -4,6 +4,7 @@
 package com.continuuity.app.guice;
 
 import com.continuuity.app.program.Program;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.queue.QueueClientFactory;
@@ -80,9 +81,10 @@ public final class DataFabricFacadeModule extends PrivateModule {
                                        QueueClientFactory queueClientFactory,
                                        StreamConsumerFactory streamConsumerFactory,
                                        LocationFactory locationFactory,
+                                       CConfiguration configuration,
                                        @Assisted Program program) {
       super(txSystemClient, txExecutorFactory, dataSetAccessor, datasetFramework,
-            queueClientFactory, streamConsumerFactory, locationFactory, program);
+            queueClientFactory, streamConsumerFactory, locationFactory, program, configuration);
     }
   }
 
@@ -99,9 +101,10 @@ public final class DataFabricFacadeModule extends PrivateModule {
                                     QueueClientFactory queueClientFactory,
                                     StreamConsumerFactory streamConsumerFactory,
                                     LocationFactory locationFactory,
+                                    CConfiguration configuration,
                                     @Assisted Program program) {
       super(txSystemClient, txExecutorFactory, dataSetAccessor, datasetFramework,
-            queueClientFactory, streamConsumerFactory, locationFactory, program);
+            queueClientFactory, streamConsumerFactory, locationFactory, program, configuration);
     }
   }
 }
