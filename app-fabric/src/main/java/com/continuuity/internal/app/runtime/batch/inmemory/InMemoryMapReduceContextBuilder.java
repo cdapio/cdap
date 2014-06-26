@@ -10,9 +10,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.auth.AuthModule;
-import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
-import com.continuuity.internal.app.runtime.service.InMemoryProgramServiceDiscovery;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.collect.ImmutableList;
@@ -21,7 +19,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provides;
-import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
@@ -65,14 +62,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getNoopModules(),
-      new LoggingModules().getInMemoryModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          //install discovery service modules
-          bind(ProgramServiceDiscovery.class).to(InMemoryProgramServiceDiscovery.class).in(Scopes.SINGLETON);
-        }
-      }
+      new LoggingModules().getInMemoryModules()
     );
 
     return Guice.createInjector(inMemoryModules);
@@ -89,14 +79,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new DataFabricModules().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getMapReduceModules(taskContext),
-      new LoggingModules().getSingleNodeModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          //install discovery service modules
-          bind(ProgramServiceDiscovery.class).to(InMemoryProgramServiceDiscovery.class).in(Scopes.SINGLETON);
-        }
-      }
+      new LoggingModules().getSingleNodeModules()
     );
     return Guice.createInjector(singleNodeModules);
   }
