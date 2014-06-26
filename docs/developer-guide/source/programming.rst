@@ -5,7 +5,7 @@
 Programming Guide
 =================
 
-Introduction to Programming Applications for the Continuuity Reactor
+**Introduction to Programming Applications for the Continuuity Reactor**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::

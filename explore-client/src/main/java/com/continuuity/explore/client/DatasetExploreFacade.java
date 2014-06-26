@@ -146,7 +146,6 @@ public class DatasetExploreFacade {
   static String hiveSchemaFor(Type type) throws UnsupportedTypeException {
 
     Schema schema = new ReflectionSchemaGenerator().generate(type);
-    // TODO: support other types too, not just record - REACTOR-265
     if (!Schema.Type.RECORD.equals(schema.getType())) {
       throw new UnsupportedTypeException("type must be a RECORD but is " + schema.getType().name());
     }
