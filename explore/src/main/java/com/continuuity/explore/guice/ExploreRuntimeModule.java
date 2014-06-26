@@ -10,7 +10,7 @@ import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.executor.ExplorePingHandler;
 import com.continuuity.explore.executor.QueryExecutorHttpHandler;
 import com.continuuity.explore.service.ExploreService;
-import com.continuuity.explore.service.hive.Hive12ExploreService;
+import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.explore.service.hive.Hive13ExploreService;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.hive.datasets.DatasetStorageHandler;
@@ -161,8 +161,10 @@ public class ExploreRuntimeModule extends RuntimeModule {
     @Override
     protected void configure() {
       try {
-        // Current version of hive used in distributed (with loom) is Hive 12
-        bind(ExploreService.class).to(Hive12ExploreService.class).in(Scopes.SINGLETON);
+        // Figure out which HiveExploreService class to load
+        Class hiveExploreServiceCl = ExploreServiceUtils.getHiveService();
+        LOG.info("Using Explore service class {}", hiveExploreServiceCl.getName());
+        bind(ExploreService.class).to(hiveExploreServiceCl).in(Scopes.SINGLETON);
         expose(ExploreService.class);
 
         setupClasspath();
