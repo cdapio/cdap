@@ -10,7 +10,7 @@ public interface ServiceManager {
   void stop();
 
   /**
-   * Status of Service
+   * Checks if Service is Running
    */
   boolean isRunning();
 }

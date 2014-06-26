@@ -36,7 +36,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
   private final String logPattern;
 
   private enum EntityType {
-    FLOWS, PROCEDURES, MAPREDUCE, SERVICES
+    flows, procedures, mapreduce, services
   }
 
   @Inject
@@ -106,7 +106,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
-                                               entityId, getEntityType(EntityType.valueOf(entityType.toUpperCase())));
+                                               entityId, getEntityType(EntityType.valueOf(entityType)));
       ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
       logReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter, logCallback);
     } catch (SecurityException e) {
@@ -160,7 +160,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
-                                               entityId, getEntityType(EntityType.valueOf(entityType.toUpperCase())));
+                                               entityId, getEntityType(EntityType.valueOf(entityType)));
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
 
       logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback);
@@ -214,7 +214,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
-                                               entityId, getEntityType(EntityType.valueOf(entityType.toUpperCase())));
+                                               entityId, getEntityType(EntityType.valueOf(entityType)));
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
       logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback);
     } catch (SecurityException e) {
@@ -308,13 +308,13 @@ public class LogHandler extends AuthenticatedHttpHandler {
     }
 
     switch (entityType) {
-      case FLOWS:
+      case flows:
         return LoggingContextHelper.EntityType.FLOW;
-      case PROCEDURES:
+      case procedures:
         return LoggingContextHelper.EntityType.PROCEDURE;
-      case MAPREDUCE:
+      case mapreduce:
         return LoggingContextHelper.EntityType.MAP_REDUCE;
-      case SERVICES:
+      case services:
         return LoggingContextHelper.EntityType.SERVICE;
       default:
         throw new IllegalArgumentException(String.format("Illegal program type %s", entityType));

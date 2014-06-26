@@ -191,10 +191,10 @@ public class TestFrameworkTest extends ReactorTestBase {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
     ServiceManager serviceManager = applicationManager.startService("NoOpService");
-    Assert.assertEquals(true, serviceManager.isRunning());
+    Assert.assertTrue(serviceManager.isRunning());
     LOG.info("Service Started");
     serviceManager.stop();
-    Assert.assertEquals(false, serviceManager.isRunning());
+    Assert.assertFalse(serviceManager.isRunning());
     LOG.info("Service Stopped");
     // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the REACTOR scope test in
     // TestMetricsCollectionService
