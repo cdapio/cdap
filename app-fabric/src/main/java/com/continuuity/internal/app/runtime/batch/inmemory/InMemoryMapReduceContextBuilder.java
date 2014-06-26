@@ -12,7 +12,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
-import com.continuuity.internal.app.runtime.distributed.DistributedProgramServiceDiscovery;
+import com.continuuity.internal.app.runtime.service.InMemoryProgramServiceDiscovery;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.collect.ImmutableList;
@@ -70,7 +70,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
         @Override
         protected void configure() {
           //install discovery service modules
-          bind(ProgramServiceDiscovery.class).to(DistributedProgramServiceDiscovery.class).in(Scopes.SINGLETON);
+          bind(ProgramServiceDiscovery.class).to(InMemoryProgramServiceDiscovery.class).in(Scopes.SINGLETON);
         }
       }
     );
@@ -94,7 +94,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
         @Override
         protected void configure() {
           //install discovery service modules
-          bind(ProgramServiceDiscovery.class).to(DistributedProgramServiceDiscovery.class).in(Scopes.SINGLETON);
+          bind(ProgramServiceDiscovery.class).to(InMemoryProgramServiceDiscovery.class).in(Scopes.SINGLETON);
         }
       }
     );
