@@ -2071,6 +2071,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return GSON.toJson(appSpec.getMapReduce().get(id.getId()));
       } else if (type == Type.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
         return GSON.toJson(appSpec.getWorkflows().get(id.getId()));
+      } else if (type == Type.SERVICE && appSpec.getServices().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getServices().get(id.getId()));
       }
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
