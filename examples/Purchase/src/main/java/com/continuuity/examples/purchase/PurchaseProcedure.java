@@ -32,8 +32,9 @@ public class PurchaseProcedure extends AbstractProcedure {
 
   /**
    * Return the specified customer's purchases as a JSON history object.
+   *
    * @param request The request, which must contain the "customer" argument. 
-   *        Example: history() method with a request parameter for a customer named Tom: history({"customer":"Tom"});
+   *        Example: history method with a request parameter for a customer named Tom: history({"customer":"Tom"}).
    */
   @Handle("history")
   @SuppressWarnings("unused")

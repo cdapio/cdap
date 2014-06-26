@@ -1,4 +1,4 @@
-.. :Author: Continuuity, Inc.git
+.. :Author: Continuuity, Inc.
    :Description: Continuuity Reactor Purchase Application
 
 ============================
@@ -17,7 +17,7 @@ Overview
 This example demonstrates use of all the Reactor elements: Streams, Flow, Flowlets,
 Datasets, Queries, Procedures, MapReduce jobs, and Workflows in a single Application.
 
-The application uses a scheduled MapReduce job and Workflows to read from one ObjectStore dataset
+The application uses a scheduled MapReduce job and Workflow to read from one ObjectStore dataset
 and write to another.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the ``purchaseStream``.
@@ -37,7 +37,7 @@ and write to another.
     calls, or more conveniently using the ``send-query`` script.
 
 **Note:** Because the PurchaseHistoryWorkFlow is only scheduled to run at 4:00 A.M.,
-you should or start it manually after entering the first customers' purchases, or the
+you should not start it manually until after entering the first customers' purchases, or the
 PurchaseProcedure will return a "not found" error.
 
 Let's look at some of these elements, and then run the Application and see the results.
@@ -65,8 +65,8 @@ of the Application are tied together by the class ``PurchaseApp``::
       } catch (UnsupportedTypeException e) {
         // This exception is thrown by ObjectStore if its parameter type cannot be (de)serialized
         // (for example, if it is an interface and not a class), as there is no auto-magic way to
-        // de-serialize an object. In this case, that cannot happen because PurchaseHistory is an 
-        // actual class.
+        // de-serialize an object. In this case, that cannot happen because both PurchaseHistoryStore
+        // and Purchase are actual classes.
         throw new RuntimeException(e);
       }
     }
@@ -75,23 +75,23 @@ of the Application are tied together by the class ``PurchaseApp``::
 
 ``PurchaseHistory`` and ``Purchase``: ObjectStore Data Storage
 --------------------------------------------------------------
-The raw purchase data is stored in an ObjectStore dataset, ``Purchase``,
+The raw purchase data is stored in an ObjectStore dataset, *purchases*,
 with this method defined in ``PurchaseStore``::
 
   ``process(Purchase purchase)``
 
-This method is what actually puts data into the ``Purchase`` dataset, by writing to the
-dataset with each purchase's timestamp and the purchase Object.
+This method is what actually puts data into the *purchases* dataset, by writing to the
+dataset with each purchase's timestamp and the ``Purchase`` Object.
 
 The purchase history for each customer is compiled by the ``PurchaseHistoryWorkflow``, which uses a Map/Reduce job,
-``PurchaseHistoryBuilder``, to aggregate all purchases into per-customer purchase history. It writes to the *history*
+``PurchaseHistoryBuilder``, to aggregate all purchases into a per-customer purchase history. It writes to the *history*
 dataset, a custom dataset that embeds an ``ObjectStore`` and also implements the ``RecordScannable`` interface to
-allow SQL queries over this dataset.
+allow SQL queries over the dataset.
 
 
 ``PurchaseProcedure``: Procedure
 --------------------------------
-This procedure has a ``history`` method to obtain the purchase history of one given customer.
+This procedure has a ``history`` method to obtain the purchase history of a given customer.
 
 
 Building and Running the Application and Example
@@ -110,7 +110,7 @@ you can use the procedure or a SQL query to explore the results.
 
 When finished, stop the Application as described below.
 
-Building Purchase Application
+Building the Purchase Application
 ----------------------------------
 From the project root, build ``Purchase`` with the
 `Apache Maven <http://maven.apache.org>`__ command::
