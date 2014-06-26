@@ -63,8 +63,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final ScheduledExecutorService scheduledExecutorService;
   private final long cleanupJobSchedule;
 
-  protected abstract Status fetchStatus(Handle handle) throws ExploreException, HandleNotFoundException;
-  protected abstract List<Result> fetchNextResults(Handle handle, int size) throws ExploreException,
+  protected abstract Status fetchStatus(Handle handle) throws HiveSQLException, ExploreException,
+    HandleNotFoundException;
+  protected abstract List<Result> fetchNextResults(Handle handle, int size) throws HiveSQLException, ExploreException,
     HandleNotFoundException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
@@ -157,7 +158,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
       LOG.trace("Executing statement: {} with handle {}", statement, handle);
       return handle;
-    } catch (Exception e) {
+    } catch (HiveSQLException e) {
+      throw getSqlException(e);
+    } catch (IOException e) {
       throw new ExploreException(e);
     }
   }
@@ -171,14 +174,18 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return inactiveOperationInfo.getStatus();
     }
 
-    // Fetch status from Hive
-    Status status = fetchStatus(handle);
-    if ((status.getStatus() == Status.OpStatus.FINISHED && !status.hasResults()) ||
-      status.getStatus() == Status.OpStatus.ERROR) {
-      // No results or error, so can be timed out aggressively
-      timeoutAggresively(handle, getResultSchema(handle), status);
+    try {
+      // Fetch status from Hive
+      Status status = fetchStatus(handle);
+      if ((status.getStatus() == Status.OpStatus.FINISHED && !status.hasResults()) ||
+        status.getStatus() == Status.OpStatus.ERROR) {
+        // No results or error, so can be timed out aggressively
+        timeoutAggresively(handle, getResultSchema(handle), status);
+      }
+      return status;
+    } catch (HiveSQLException e) {
+      throw getSqlException(e);
     }
-    return status;
   }
 
   @Override
@@ -190,15 +197,19 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return ImmutableList.of();
     }
 
-    // Fetch results from Hive
-    List<Result> results = fetchNextResults(handle, size);
+    try {
+      // Fetch results from Hive
+      List<Result> results = fetchNextResults(handle, size);
 
-    Status status = getStatus(handle);
-    if (results.isEmpty() && status.getStatus() == Status.OpStatus.FINISHED) {
-      // Since operation has fetched all the results, handle can be timed out aggressively.
-      timeoutAggresively(handle, getResultSchema(handle), status);
+      Status status = getStatus(handle);
+      if (results.isEmpty() && status.getStatus() == Status.OpStatus.FINISHED) {
+        // Since operation has fetched all the results, handle can be timed out aggressively.
+        timeoutAggresively(handle, getResultSchema(handle), status);
+      }
+      return results;
+    } catch (HiveSQLException e) {
+      throw getSqlException(e);
     }
-    return results;
   }
 
   @Override
@@ -224,7 +235,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       }
       return listBuilder.build();
     } catch (HiveSQLException e) {
-      throw new ExploreException(e);
+      throw getSqlException(e);
     }
   }
 
@@ -244,7 +255,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // Since operation is cancelled, we can aggressively time it out.
       timeoutAggresively(handle, ImmutableList.<ColumnDesc>of(), new Status(Status.OpStatus.CANCELED, false));
     } catch (HiveSQLException e) {
-      throw new ExploreException(e);
+      throw getSqlException(e);
     }
   }
 
@@ -266,7 +277,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       LOG.trace("Closing operation {}", handle);
       cliService.closeOperation(opInfo.getOperationHandle());
     } catch (HiveSQLException e) {
-      throw new ExploreException(e);
+      throw getSqlException(e);
     } finally {
       try {
         closeSession(opInfo.getSessionHandle());
@@ -392,6 +403,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     LOG.trace("Running cache cleanup");
     activeHandleCache.cleanUp();
     inactiveHandleCache.cleanUp();
+  }
+
+  private RuntimeException getSqlException(HiveSQLException e) throws ExploreException {
+    if (e.getSQLState() != null) {
+      throw new IllegalArgumentException(String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+    }
+    throw new ExploreException(e);
   }
 
   /**

@@ -37,36 +37,30 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  protected Status fetchStatus(Handle handle) throws ExploreException, HandleNotFoundException {
-    try {
-      OperationHandle operationHandle = getOperationHandle(handle);
-      OperationStatus operationStatus = getCliService().getOperationStatus(operationHandle);
-      Status status = new Status(Status.OpStatus.valueOf(operationStatus.getState().toString()),
-                                 operationHandle.hasResultSet());
-      LOG.trace("Status of handle {} is {}", handle, status);
-      return status;
-    } catch (HiveSQLException e) {
-      throw new ExploreException(e);
-    }
+  protected Status fetchStatus(Handle handle) throws HiveSQLException, ExploreException, HandleNotFoundException {
+    OperationHandle operationHandle = getOperationHandle(handle);
+    OperationStatus operationStatus = getCliService().getOperationStatus(operationHandle);
+    Status status = new Status(Status.OpStatus.valueOf(operationStatus.getState().toString()),
+                               operationHandle.hasResultSet());
+    LOG.trace("Status of handle {} is {}", handle, status);
+    return status;
   }
 
   @Override
-  protected List<Result> fetchNextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
-    try {
-      LOG.trace("Getting results for handle {}", handle);
-      OperationHandle operationHandle = getOperationHandle(handle);
-      if (operationHandle.hasResultSet()) {
-        RowSet rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
-        ImmutableList.Builder<Result> rowsBuilder = ImmutableList.builder();
-        for (Object[] objects : rowSet) {
-          rowsBuilder.add(new Result(Lists.newArrayList(objects)));
-        }
-        return rowsBuilder.build();
-      } else {
-        return Collections.emptyList();
+  protected List<Result> fetchNextResults(Handle handle, int size)
+    throws HiveSQLException, ExploreException, HandleNotFoundException {
+
+    LOG.trace("Getting results for handle {}", handle);
+    OperationHandle operationHandle = getOperationHandle(handle);
+    if (operationHandle.hasResultSet()) {
+      RowSet rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
+      ImmutableList.Builder<Result> rowsBuilder = ImmutableList.builder();
+      for (Object[] objects : rowSet) {
+        rowsBuilder.add(new Result(Lists.newArrayList(objects)));
       }
-    } catch (HiveSQLException e) {
-      throw new ExploreException(e);
+      return rowsBuilder.build();
+    } else {
+      return Collections.emptyList();
     }
   }
 }

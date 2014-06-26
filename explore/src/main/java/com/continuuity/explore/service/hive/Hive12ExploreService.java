@@ -8,6 +8,7 @@ import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -23,6 +24,7 @@ import org.apache.hive.service.cli.thrift.TRowSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
@@ -47,7 +49,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  protected Status fetchStatus(Handle handle) throws ExploreException, HandleNotFoundException {
+  protected Status fetchStatus(Handle handle) throws HiveSQLException, ExploreException, HandleNotFoundException {
     try {
       OperationHandle operationHandle = getOperationHandle(handle);
       // In Hive 12, CLIService.getOperationStatus returns OperationState.
@@ -60,13 +62,12 @@ public class Hive12ExploreService extends BaseHiveExploreService {
       Status status = new Status(Status.OpStatus.valueOf(operationState.toString()), operationHandle.hasResultSet());
       LOG.trace("Status of handle {} is {}", handle, status);
       return status;
-    } catch (HandleNotFoundException e) {
-      throw e;
-    } catch (Throwable e) {
-      if (e instanceof HiveSQLException) {
-        throw new ExploreException(e);
-      }
-      throw new RuntimeException(e);
+    } catch (InvocationTargetException e) {
+      throw Throwables.propagate(e);
+    } catch (NoSuchMethodException e) {
+      throw  Throwables.propagate(e);
+    } catch (IllegalAccessException e) {
+      throw Throwables.propagate(e);
     }
   }
 
@@ -95,10 +96,16 @@ public class Hive12ExploreService extends BaseHiveExploreService {
       } else {
         return Collections.emptyList();
       }
+    } catch (ClassNotFoundException e) {
+      throw Throwables.propagate(e);
+    } catch (NoSuchMethodException e) {
+      throw Throwables.propagate(e);
     } catch (HiveSQLException e) {
-      throw new ExploreException(e);
-    } catch (Throwable e) {
-      throw new RuntimeException(e);
+      throw Throwables.propagate(e);
+    } catch (InvocationTargetException e) {
+      throw Throwables.propagate(e);
+    } catch (IllegalAccessException e) {
+      throw Throwables.propagate(e);
     }
   }
 
