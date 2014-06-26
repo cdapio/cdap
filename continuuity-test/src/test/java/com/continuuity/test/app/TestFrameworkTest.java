@@ -75,17 +75,9 @@ public class TestFrameworkTest extends ReactorTestBase {
       ProcedureClient client = queryManager.getClient();
       Gson gson = new Gson();
 
-      //Adding retry logic so that the test does not fail if the procedure takes sometime to start on slow machines.
-      int retryCount = 10;
-      while (retryCount >= 0) {
-        try {
-          client.query("result", ImmutableMap.of("type", "highpass"));
-          break;
-        } catch (IOException e) {
-          retryCount--;
-          TimeUnit.SECONDS.sleep(1);
-        }
-      }
+      //Adding sleep so that the test does not fail if the procedure takes sometime to start on slow machines.
+      //TODO : Can be removed after fixing JIRA - REACTOR-373
+      TimeUnit.SECONDS.sleep(2);
 
       Assert.assertEquals("1",
                           gson.fromJson(client.query("result", ImmutableMap.of("type", "highpass")), String.class));

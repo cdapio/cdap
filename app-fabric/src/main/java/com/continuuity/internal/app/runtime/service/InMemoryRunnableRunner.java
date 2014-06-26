@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.runtime.service;
 
-import com.continuuity.api.common.RuntimeArgumentsUtil;
+import com.continuuity.api.common.RuntimeArguments;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.metrics.ServiceRunnableMetrics;
@@ -97,7 +97,7 @@ public class InMemoryRunnableRunner implements ProgramRunner {
 
       Class<? extends TwillRunnable> runnableClass = (Class<? extends TwillRunnable>) clz;
       RunId twillRunId = RunIds.generate();
-      final String[] argArray = RuntimeArgumentsUtil.toPosixArray(options.getUserArguments());
+      final String[] argArray = RuntimeArguments.toPosixArray(options.getUserArguments());
 
       DiscoveryService dService = new DiscoveryService() {
         @Override

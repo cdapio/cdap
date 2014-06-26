@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.runtime.distributed;
 
-import com.continuuity.api.common.RuntimeArgumentsUtil;
+import com.continuuity.api.common.RuntimeArguments;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.metrics.ServiceRunnableMetrics;
@@ -175,7 +175,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
                                                                           program.getApplicationId(),
                                                                           program.getName(), runnableName)));
 
-      final String[] argArray = RuntimeArgumentsUtil.toPosixArray(programOpts.getUserArguments());
+      final String[] argArray = RuntimeArguments.toPosixArray(programOpts.getUserArguments());
       LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(
         program.getAccountId(), program.getApplicationId(), program.getName(), runnableName));
       delegate.initialize(new ForwardingTwillContext(context) {
