@@ -23,6 +23,14 @@ public class CompositeDatasetAdmin implements DatasetAdmin {
     this.delegates = ImmutableList.copyOf(admins);
   }
 
+  /**
+   * Constructor that takes list of dataset admins
+   * @param admins list of dataset admins
+   */
+  public CompositeDatasetAdmin(DatasetAdmin... admins) {
+    this.delegates = ImmutableList.copyOf(admins);
+  }
+
   @Override
   public boolean exists() throws IOException {
     boolean exists = true;
