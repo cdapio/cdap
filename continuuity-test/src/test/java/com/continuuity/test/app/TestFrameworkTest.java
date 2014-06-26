@@ -5,7 +5,6 @@ import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.dataset.DatasetProperties;
-import com.continuuity.app.ProgramStatus;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
