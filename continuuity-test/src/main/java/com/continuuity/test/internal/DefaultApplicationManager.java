@@ -1,6 +1,7 @@
 package com.continuuity.test.internal;
 
 import com.continuuity.app.ApplicationSpecification;
+import com.continuuity.app.ProgramStatus;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.queue.QueueName;
@@ -19,7 +20,6 @@ import com.continuuity.test.FlowManager;
 import com.continuuity.test.MapReduceManager;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
-import com.continuuity.test.ProgramStatus;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.ScheduleManager;
 import com.continuuity.test.ServiceManager;
@@ -147,7 +147,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       final ProgramId jobId = new ProgramId(applicationId, jobName, "mapreduce");
 
       // mapreduce job can stop by itself, so refreshing info about its state
-      if (!(status(jobId) == ProgramStatus.RUNNING)) {
+      if (!status(jobId)) {
         runningProcessses.remove(jobName);
       }
 
@@ -174,12 +174,12 @@ public class DefaultApplicationManager implements ApplicationManager {
 
         @Override
         public void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
-          while (timeout > 0 && (status(jobId) == ProgramStatus.RUNNING)) {
+          while (timeout > 0 && status(jobId)) {
             timeoutUnit.sleep(1);
             timeout--;
           }
 
-          if (timeout == 0 && (status(jobId) == ProgramStatus.RUNNING)) {
+          if (timeout == 0 && status(jobId)) {
             throw new TimeoutException("Time limit reached.");
           }
 
@@ -333,13 +333,9 @@ public class DefaultApplicationManager implements ApplicationManager {
             throw Throwables.propagate(e);
           }
         }
-        public ProgramStatus getStatus() {
+        public boolean isRunning() {
           try {
-            if (DefaultApplicationManager.this.status(serviceId) == ProgramStatus.RUNNING) {
-              return ProgramStatus.RUNNING;
-            } else {
-              return ProgramStatus.STOPPED;
-            }
+            return status(serviceId);
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }
@@ -392,7 +388,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       for (Map.Entry<String, ProgramId> entry : Iterables.consumingIterable(runningProcessses.entrySet())) {
         // have to do a check, since mapreduce jobs could stop by themselves earlier, and appFabricServer.stop will
         // throw error when you stop smth that is not running.
-        if (status(entry.getValue()) == ProgramStatus.RUNNING) {
+        if (status(entry.getValue())) {
           ProgramId id = entry.getValue();
           AppFabricTestHelper.stopProgram(httpHandler, id.getApplicationId(), id.getRunnableId(), id.getRunnableType());
         }
@@ -439,16 +435,13 @@ public class DefaultApplicationManager implements ApplicationManager {
     }
   }
 
-  private ProgramStatus status(ProgramId programId) {
+  private boolean status(ProgramId programId) {
     try {
 
       String status = AppFabricTestHelper.getStatus(httpHandler, programId.getApplicationId(),
                                                     programId.getRunnableId(), programId.getRunnableType());
-      // we can add more status as we need in Program Status and can add checks here.
-      if (status.equals("RUNNING")) {
-        return ProgramStatus.RUNNING;
-      }
-      return ProgramStatus.STOPPED;
+      // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
+      return "RUNNING".equals(status);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

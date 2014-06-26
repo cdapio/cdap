@@ -12,5 +12,5 @@ public interface ServiceManager {
   /**
    * Status of Service
    */
-  ProgramStatus getStatus();
+  boolean isRunning();
 }
