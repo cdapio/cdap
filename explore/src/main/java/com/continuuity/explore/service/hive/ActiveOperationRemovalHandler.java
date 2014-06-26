@@ -43,7 +43,7 @@ public class ActiveOperationRemovalHandler implements RemovalListener<Handle, Op
     @Override
     public void run() {
       try {
-        Status status = exploreService.getStatus(handle);
+        Status status = exploreService.fetchStatus(opInfo.getOperationHandle());
 
         // If operation is still not complete, cancel it.
         if (status.getStatus() != Status.OpStatus.FINISHED && status.getStatus() != Status.OpStatus.CLOSED &&

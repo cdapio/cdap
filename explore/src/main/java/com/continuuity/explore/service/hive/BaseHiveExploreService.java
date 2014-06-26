@@ -63,10 +63,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final ScheduledExecutorService scheduledExecutorService;
   private final long cleanupJobSchedule;
 
-  protected abstract Status fetchStatus(Handle handle) throws HiveSQLException, ExploreException,
+  protected abstract Status fetchStatus(OperationHandle handle) throws HiveSQLException, ExploreException,
     HandleNotFoundException;
-  protected abstract List<Result> fetchNextResults(Handle handle, int size) throws HiveSQLException, ExploreException,
-    HandleNotFoundException;
+  protected abstract List<Result> fetchNextResults(OperationHandle handle, int size)
+    throws HiveSQLException, ExploreException, HandleNotFoundException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
@@ -142,6 +142,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     runCacheCleanup();
 
     // Wait for all cleanup jobs to complete
+    scheduledExecutorService.awaitTermination(10, TimeUnit.SECONDS);
     scheduledExecutorService.shutdown();
 
     cliService.stop();
@@ -176,7 +177,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     try {
       // Fetch status from Hive
-      Status status = fetchStatus(handle);
+      Status status = fetchStatus(getOperationHandle(handle));
+      LOG.trace("Status of handle {} is {}", handle, status);
+
       if ((status.getStatus() == Status.OpStatus.FINISHED && !status.hasResults()) ||
         status.getStatus() == Status.OpStatus.ERROR) {
         // No results or error, so can be timed out aggressively
@@ -199,7 +202,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     try {
       // Fetch results from Hive
-      List<Result> results = fetchNextResults(handle, size);
+      LOG.trace("Getting results for handle {}", handle);
+      List<Result> results = fetchNextResults(getOperationHandle(handle), size);
 
       Status status = getStatus(handle);
       if (results.isEmpty() && status.getStatus() == Status.OpStatus.FINISHED) {
@@ -261,15 +265,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   @Override
   public void close(Handle handle) throws ExploreException, HandleNotFoundException {
-    InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
-    if (inactiveOperationInfo != null) {
-      // Operation has been made inactive, so it should already be closed.
-      LOG.trace("Not running close for inactive handle {}", handle);
-      return;
-    }
-
-    OperationInfo opInfo = getOperationInfo(handle);
-    closeInternal(handle, opInfo);
+    activeHandleCache.invalidate(handle);
   }
 
   void closeInternal(Handle handle, OperationInfo opInfo) throws ExploreException, HandleNotFoundException {

@@ -4,7 +4,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
@@ -21,8 +20,6 @@ import org.apache.hive.service.cli.OperationState;
 import org.apache.hive.service.cli.thrift.TColumnValue;
 import org.apache.hive.service.cli.thrift.TRow;
 import org.apache.hive.service.cli.thrift.TRowSet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -40,7 +37,6 @@ import java.util.List;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class Hive12ExploreService extends BaseHiveExploreService {
-  private static final Logger LOG = LoggerFactory.getLogger(Hive12ExploreService.class);
 
   @Inject
   public Hive12ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
@@ -49,9 +45,9 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  protected Status fetchStatus(Handle handle) throws HiveSQLException, ExploreException, HandleNotFoundException {
+  protected Status fetchStatus(OperationHandle operationHandle)
+    throws HiveSQLException, ExploreException, HandleNotFoundException {
     try {
-      OperationHandle operationHandle = getOperationHandle(handle);
       // In Hive 12, CLIService.getOperationStatus returns OperationState.
       // In Hive 13, CLIService.getOperationStatus returns OperationStatus.
       // Since we use Hive 13 for dev, we need the following workaround to get Hive 12 working.
@@ -59,9 +55,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
       Class cliServiceClass = getCliService().getClass();
       Method m = cliServiceClass.getMethod("getOperationStatus", OperationHandle.class);
       OperationState operationState = (OperationState) m.invoke(getCliService(), operationHandle);
-      Status status = new Status(Status.OpStatus.valueOf(operationState.toString()), operationHandle.hasResultSet());
-      LOG.trace("Status of handle {} is {}", handle, status);
-      return status;
+      return new Status(Status.OpStatus.valueOf(operationState.toString()), operationHandle.hasResultSet());
     } catch (InvocationTargetException e) {
       throw Throwables.propagate(e);
     } catch (NoSuchMethodException e) {
@@ -72,10 +66,9 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  protected List<Result> fetchNextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
+  protected List<Result> fetchNextResults(OperationHandle operationHandle, int size)
+    throws ExploreException, HandleNotFoundException {
     try {
-      LOG.trace("Getting results for handle {}", handle);
-      OperationHandle operationHandle = getOperationHandle(handle);
       if (operationHandle.hasResultSet()) {
         // Rowset is an interface in Hive 13, but a class in Hive 12, so we use reflection
         // so that the compiler does not make assumption on the return type of fetchResults
