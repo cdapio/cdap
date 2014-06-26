@@ -1,7 +1,6 @@
 package com.continuuity.test.internal;
 
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.ProgramStatus;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.queue.QueueName;
@@ -147,7 +146,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       final ProgramId jobId = new ProgramId(applicationId, jobName, "mapreduce");
 
       // mapreduce job can stop by itself, so refreshing info about its state
-      if (!status(jobId)) {
+      if (!isRunning(jobId)) {
         runningProcessses.remove(jobName);
       }
 
@@ -174,12 +173,12 @@ public class DefaultApplicationManager implements ApplicationManager {
 
         @Override
         public void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
-          while (timeout > 0 && status(jobId)) {
+          while (timeout > 0 && isRunning(jobId)) {
             timeoutUnit.sleep(1);
             timeout--;
           }
 
-          if (timeout == 0 && status(jobId)) {
+          if (timeout == 0 && isRunning(jobId)) {
             throw new TimeoutException("Time limit reached.");
           }
 
@@ -335,7 +334,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         }
         public boolean isRunning() {
           try {
-            return status(serviceId);
+            return DefaultApplicationManager.this.isRunning(serviceId);
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }
@@ -388,7 +387,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       for (Map.Entry<String, ProgramId> entry : Iterables.consumingIterable(runningProcessses.entrySet())) {
         // have to do a check, since mapreduce jobs could stop by themselves earlier, and appFabricServer.stop will
         // throw error when you stop smth that is not running.
-        if (status(entry.getValue())) {
+        if (isRunning(entry.getValue())) {
           ProgramId id = entry.getValue();
           AppFabricTestHelper.stopProgram(httpHandler, id.getApplicationId(), id.getRunnableId(), id.getRunnableType());
         }
@@ -435,7 +434,7 @@ public class DefaultApplicationManager implements ApplicationManager {
     }
   }
 
-  private boolean status(ProgramId programId) {
+  private boolean isRunning(ProgramId programId) {
     try {
 
       String status = AppFabricTestHelper.getStatus(httpHandler, programId.getApplicationId(),
