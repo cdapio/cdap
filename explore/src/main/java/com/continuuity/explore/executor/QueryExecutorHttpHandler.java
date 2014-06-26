@@ -60,7 +60,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     try {
       Map<String, String> args = decodeArguments(request);
       String query = args.get("query");
-      LOG.debug("Received query: {}", query);
+      LOG.trace("Received query: {}", query);
       Handle handle = exploreService.execute(query);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());

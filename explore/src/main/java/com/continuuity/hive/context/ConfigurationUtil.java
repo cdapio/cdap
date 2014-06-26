@@ -17,13 +17,13 @@ public class ConfigurationUtil {
 
   public static <T> void set(Configuration conf, String key, Codec<T> codec, T obj) throws IOException {
     String value = new String(codec.encode(obj), Charsets.UTF_8);
-    LOG.debug("Serializing {} {}", key, value);
+    LOG.trace("Serializing {} {}", key, value);
     conf.set(key, value);
   }
 
   public static <T> T get(Configuration conf, String key, Codec<T> codec) throws IOException {
     String value = conf.get(key);
-    LOG.debug("De-serializing {} {}", key, value);
+    LOG.trace("De-serializing {} {}", key, value);
     // Using Latin-1 encoding so that all bytes can be encoded as string. UTF-8 has some invalid bytes that will get
     // skipped.
     return codec.decode(value == null ? null : value.getBytes("ISO-8859-1"));
@@ -31,13 +31,13 @@ public class ConfigurationUtil {
 
   public static <T> void set(Map<String, String> conf, String key, Codec<T> codec, T obj) throws IOException {
     String value = new String(codec.encode(obj), Charsets.UTF_8);
-    LOG.debug("Serializing {} {}", key, value);
+    LOG.trace("Serializing {} {}", key, value);
     conf.put(key, value);
   }
 
   public static <T> T get(Map<String, String> conf, String key, Codec<T> codec) throws IOException {
     String value = conf.get(key);
-    LOG.debug("De-serializing {} {}", key, value);
+    LOG.trace("De-serializing {} {}", key, value);
     // Using Latin-1 encoding so that all bytes can be encoded as string. UTF-8 has some invalid bytes that will get
     // skipped.
     return codec.decode(value == null ? null : value.getBytes("ISO-8859-1"));
