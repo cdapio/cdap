@@ -13,6 +13,7 @@ import org.apache.hadoop.security.Credentials;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.yarn.YarnSecureStore;
 
 import java.util.concurrent.TimeUnit;
@@ -21,9 +22,11 @@ import java.util.concurrent.TimeUnit;
  * Run Gateway using twill.
  */
 public class GatewayTwillRunnerMain extends TwillRunnerMain {
+  private HBaseSecureStoreUpdater secureStoreUpdater;
 
   public GatewayTwillRunnerMain(CConfiguration cConf, Configuration hConf) {
     super(cConf, hConf);
+    this.secureStoreUpdater = new HBaseSecureStoreUpdater(hConf, new HDFSLocationFactory(hConf));
   }
 
   public static void main(String[] args) throws Exception {
@@ -45,14 +48,14 @@ public class GatewayTwillRunnerMain extends TwillRunnerMain {
   @Override
   protected void scheduleSecureStoreUpdate(TwillRunner twillRunner) {
     if (User.isHBaseSecurityEnabled(hConf)) {
-      HBaseSecureStoreUpdater updater = new HBaseSecureStoreUpdater(hConf);
-      twillRunner.scheduleSecureStoreUpdate(updater, 30000L, updater.getUpdateInterval(), TimeUnit.MILLISECONDS);
+      twillRunner.scheduleSecureStoreUpdate(secureStoreUpdater, 30000L, secureStoreUpdater.getUpdateInterval(),
+                                            TimeUnit.MILLISECONDS);
     }
   }
 
   @Override
   protected TwillPreparer prepare(TwillPreparer preparer) {
     return preparer.withDependencies(new HBaseTableUtilFactory().get().getClass())
-      .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())));
+      .addSecureStore(secureStoreUpdater.update(null, null)); // HBaseSecureStoreUpdater.update() ignores parameters
   }
 }
