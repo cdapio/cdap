@@ -452,7 +452,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST <base-url>/streams/mystream/ttl``
+     - ``PUT <base-url>/streams/mystream/config``
 
        with the new TTL value as a JSON string in the body::
 
