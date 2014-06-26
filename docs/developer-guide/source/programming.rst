@@ -824,52 +824,6 @@ There is also a convenience method to respond with an error message::
 	    return;
 	  }
 
-Services
---------
-
-In addition to Flows, MapReduce and Procedures additional services can be run in a Reactor Application. For example running an IP to Geo lookup, serving user-profiles. 
-Services are implemented as TwillApplication and are run in YARN. Life-cycle of the services can be controlled by using REST endpoints. 
-
-:DOCNOTE: Figure out where we introduce the new API.
-
-Services can be configured by implementing `configure` method of the Application Api and adding service using `addService` method. 
-
-	public class WordCountApp extends AbstractApplication {
- 	  @Override
-  	  public void configure() {
-	    setName("AnalyticsApp");
-    	    setDescription("Application for generating mobile analytics");
-    	    addStream(new Stream("event"));
-            addFlow(new EventProcessingFlow());
-            ....
-            addService(new IpGeoLookupService());
-	  }
-        }
-
-	public class IpGeoLookupService implements TwillApplication {
-    	  @Override
-    	  public TwillSpecification configure() {
-            return TwillSpecification.Builder.with()
-              .setName("LoadGenService")
-              .withRunnable()
-              .add(new LookupService())
-              .noLocalFiles()
-              .anyOrder()
-              .build();
-         }
-       }      
-
-       public final class LookupService extends AbstractTwillRunnable {
-         private static final Logger LOG = LoggerFactory.getLogger(LookupService.class);
-         private Metrics metrics;
-         @Override
-           public void run() {
-	     // Implement the lookup logic.
-           }
-      }
-
-
-
 Where to Go Next
 ================
 Now that you've had an introduction to programming applications
