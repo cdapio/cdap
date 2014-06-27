@@ -45,6 +45,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.counters.Limits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -246,6 +247,11 @@ public class SingleNodeMain {
     Configuration hConf = new Configuration();
     hConf.addResource("mapred-site-local.xml");
     hConf.reloadConfiguration();
+    // Due to incredibly stupid design of Limits class, once it is initialized, it keeps its settings. We
+    // want to make sure it uses our settings in this hConf, so we have to force it initialize here before
+    // someone else initializes it.
+    Limits.init(hConf);
+
     String localDataDir = configuration.get(Constants.CFG_LOCAL_DATA_DIR);
     hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir);
     hConf.set(Constants.AppFabric.OUTPUT_DIR, configuration.get(Constants.AppFabric.OUTPUT_DIR));
