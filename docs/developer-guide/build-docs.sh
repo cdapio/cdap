@@ -26,6 +26,8 @@ SOURCE_PATH="$SCRIPT_PATH/$SOURCE"
 BUILD_PATH="$SCRIPT_PATH/$BUILD"
 HTML_PATH="$BUILD_PATH/$HTML"
 
+VERSION_TXT="version.txt"
+
 if [ "x$2" == "x" ]; then
   REACTOR_PATH="$SCRIPT_PATH/../../"
 else
@@ -107,11 +109,12 @@ function stage_docs() {
   echo "Deploying..."
   echo "rsync -vz $SCRIPT_PATH/$BUILD/$ZIP_FILE \"$USER@$STAGING_SERVER:$ZIP_FILE\""
   rsync -vz $SCRIPT_PATH/$BUILD/$ZIP_FILE "$USER@$STAGING_SERVER:$ZIP_FILE"
+  version
   echo ""
   echo "To install on server:"
   echo "cd /var/www/reactor; ls"
   echo "sudo rm -rf *"
-  echo "sudo unzip ~/$ZIP_FILE; sudo mv $HTML <final-dirname>"
+  echo "sudo unzip ~/$ZIP_FILE; sudo mv $HTML $reactor_version"
   echo ""
   login_staging_server
 }
@@ -142,6 +145,11 @@ function build_dependencies() {
   mvn clean package site -am -Pjavadocs -DskipTests
 }
 
+function version() {
+  cd $REACTOR_PATH
+  reactor_version=$(cat $VERSION_TXT)
+}
+
 if [ $# -lt 1 ]; then
   usage
   exit 1
@@ -159,6 +167,7 @@ case "$1" in
   login )             login_staging_server; exit 1;;
   sdk )               build_sdk; exit 1;;
   stage )             stage_docs; exit 1;;
+  version )           version; exit 1;;
   zip )               make_zip; exit 1;;
   * )                 usage; exit 1;;
 esac
