@@ -1151,7 +1151,7 @@
               <executions>
                 <execution>
                   <id>copy-opt</id>
-                  <phase>prepare-package</phase>
+                  <phase>process-resources</phase>
                   <goals>
                     <goal>copy-resources</goal>
                   </goals>
@@ -1307,18 +1307,20 @@
               <executions>
                 <execution>
                   <id>copy-rpm-scripts</id>
-                  <phase>prepare-package</phase>
+                  <phase>process-resources</phase>
                   <goals>
                     <goal>copy-resources</goal>
                   </goals>
                   <configuration>
                     <outputDirectory>${project.build.directory}/dist/rpm</outputDirectory>
+                    <!-- Copy it twice, one with filter, one without -->
                     <resources>
                       <resource>
                         <directory>${project.parent.parent.basedir}/distributions/src/rpm/init.d</directory>
-                        <includes>
-                          <include>continuuity-service</include>
-                        </includes>
+                        <targetPath>unfilter</targetPath>
+                      </resource>
+                      <resource>
+                        <directory>${project.parent.parent.basedir}/distributions/src/rpm/init.d</directory>
                         <filtering>true</filtering>
                       </resource>
                     </resources>
@@ -1333,7 +1335,7 @@
               <executions>
                 <execution>
                   <id>rename-rpm-service</id>
-                  <phase>prepare-package</phase>
+                  <phase>process-resources</phase>
                   <goals>
                     <goal>run</goal>
                   </goals>
@@ -1350,7 +1352,7 @@
                   <phase>prepare-package</phase>
                   <configuration>
                     <target>
-                      <chmod file="${stage.dir}/etc/rc.d/init.d/continuuity-${service.name}" perm="755"/>
+                      <chmod file="${stage.dir}/etc/rc.d/init.d/**" perm="755"/>
                     </target>
                   </configuration>
                   <goals>
@@ -1403,7 +1405,7 @@
               <executions>
                 <execution>
                   <id>copy-deb-staging</id>
-                  <phase>prepare-package</phase>
+                  <phase>process-resources</phase>
                   <goals>
                     <goal>copy-resources</goal>
                   </goals>
@@ -1418,18 +1420,20 @@
                 </execution>
                 <execution>
                   <id>copy-deb-scripts</id>
-                  <phase>prepare-package</phase>
+                  <phase>process-resources</phase>
                   <goals>
                     <goal>copy-resources</goal>
                   </goals>
                   <configuration>
                     <outputDirectory>${project.build.directory}/dist/deb</outputDirectory>
                     <resources>
+                      <!-- Copy it twice, one with filter, one without -->
                       <resource>
                         <directory>${project.parent.parent.basedir}/distributions/src/debian/init.d</directory>
-                        <includes>
-                          <include>continuuity-service</include>
-                        </includes>
+                        <targetPath>unfilter</targetPath>
+                      </resource>
+                      <resource>
+                        <directory>${project.parent.parent.basedir}/distributions/src/debian/init.d</directory>
                         <filtering>true</filtering>
                       </resource>
                     </resources>
@@ -1444,7 +1448,7 @@
               <executions>
                 <execution>
                   <id>rename-deb-service</id>
-                  <phase>prepare-package</phase>
+                  <phase>process-resources</phase>
                   <goals>
                     <goal>run</goal>
                   </goals>
@@ -1461,7 +1465,7 @@
                   <phase>prepare-package</phase>
                   <configuration>
                     <target>
-                      <chmod file="${stage.dir}-deb/etc/init.d/continuuity-${service.name}" perm="755"/>
+                      <chmod file="${stage.dir}-deb/etc/init.d/**" perm="755"/>
                     </target>
                   </configuration>
                   <goals>
