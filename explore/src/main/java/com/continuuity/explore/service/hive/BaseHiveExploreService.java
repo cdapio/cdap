@@ -405,6 +405,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     inactiveHandleCache.cleanUp();
   }
 
+  // Hive wraps all exceptions, including SQL exceptions in HiveSQLException. We would like to surface the SQL
+  // exception to the user, and not other Hive server exceptions. We are using a heuristic to determine whether a
+  // HiveSQLException is a SQL exception or not by inspecting the SQLState of HiveSQLException. If SQLState is not
+  // null then we surface the SQL exception.
   private RuntimeException getSqlException(HiveSQLException e) throws ExploreException, SQLException {
     if (e.getSQLState() != null) {
       throw e;
