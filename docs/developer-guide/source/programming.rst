@@ -61,7 +61,7 @@ Using the Reactor Maven Archetype
 To help you get started, Continuuity has created a Maven archetype to
 generate a skeleton for your Java project.
 
-`Maven <http://maven.apache.org>`_ is a very popular Java build and
+`Maven <http://maven.apache.org>`_ is the very popular Java build and
 dependencies management tool for creating and managing a Java
 application projects.
 
