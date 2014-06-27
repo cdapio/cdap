@@ -9,7 +9,8 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.DequeueResult;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
-import com.google.common.collect.Iterators;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,13 +26,16 @@ final class BasicInputDatum<S, T> implements InputDatum<T> {
   private final AtomicInteger retry;
   private final InputContext inputContext;
   private final QueueName queueName;
-  private final Function<S, T> decoder;
+  private final Iterable<T> events;
 
   BasicInputDatum(final QueueName queueName, DequeueResult<S> result, Function<S, T> decoder) {
     this.result = result;
     this.retry = new AtomicInteger(0);
     this.queueName = queueName;
-    this.decoder = decoder;
+    // Memorize the transformed Iterable so that decoder would only invoked once for each event no matter
+    // how many times iterator() is called. This is to save time as well as a need for the case where
+    // metrics has been logged inside the decoder.
+    this.events = result.isEmpty() ? ImmutableList.<T>of() : ImmutableList.copyOf(Iterables.transform(result, decoder));
     this.inputContext = new InputContext() {
       @Override
       public String getOrigin() {
@@ -59,7 +63,7 @@ final class BasicInputDatum<S, T> implements InputDatum<T> {
 
   @Override
   public Iterator<T> iterator() {
-    return Iterators.transform(result.iterator(), decoder);
+    return events.iterator();
   }
 
   @Override
