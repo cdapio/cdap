@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-bin=`dirname "${BASH_SOURCE-$0}"`
-bin=`cd "$bin"; pwd`
+dir=`dirname "${BASH_SOURCE-$0}"`
+dir=`cd "$dir"; pwd`
 script=`basename $0`
 user=$USER
 epoch=`date +%s`
@@ -83,10 +83,9 @@ if [ "x$action" == "x" ]; then
 fi
 
 app="Purchase"
-app_jar="Purchase-1.0.jar"
 
 if [ "x$action" == "xdeploy" ]; then
-  jar_path="target/$app_jar"
+  jar_path=`ls $dir/../target/Purchase-*.jar`
   deploy_action $app $jar_path $gateway
 else
   program_action $app "PurchaseFlow" "flow" $action $gateway
