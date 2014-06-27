@@ -13,11 +13,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
-import org.apache.hive.service.cli.OperationState;
+import org.apache.hive.service.cli.OperationStatus;
 import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.thrift.TColumnValue;
 import org.apache.hive.service.cli.thrift.TRow;
@@ -27,53 +26,32 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Hive 12 implementation of {@link com.continuuity.explore.service.ExploreService}.
- * There are 2 changes compared to Hive 13 implementation -
- * <ol>
- *   <li>{@link CLIService#getOperationStatus(org.apache.hive.service.cli.OperationHandle)} return type has
- *   changed</li>
- *   <li>{@link CLIService#fetchResults(org.apache.hive.service.cli.OperationHandle)} return type has changed</li>
- * </ol>
+ * Hive 13 patched for CDH5 implementation of {@link com.continuuity.explore.service.ExploreService}.
  */
-@SuppressWarnings("UnusedDeclaration")
-public class Hive12ExploreService extends BaseHiveExploreService {
+public class HiveCDH5ExploreService extends BaseHiveExploreService {
 
   @Inject
-  public Hive12ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                              CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
+  protected HiveCDH5ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
+                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
     super(txClient, datasetFramework, cConf, hConf, hiveConf);
   }
 
   @Override
-  protected Status fetchStatus(OperationHandle operationHandle)
+  protected Status fetchStatus(OperationHandle handle)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
-    try {
-      // In Hive 12, CLIService.getOperationStatus returns OperationState.
-      // In Hive 13, CLIService.getOperationStatus returns OperationStatus.
-      // Since we use Hive 13 for dev, we need the following workaround to get Hive 12 working.
-
-      Class cliServiceClass = getCliService().getClass();
-      Method m = cliServiceClass.getMethod("getOperationStatus", OperationHandle.class);
-      OperationState operationState = (OperationState) m.invoke(getCliService(), operationHandle);
-      return new Status(Status.OpStatus.valueOf(operationState.toString()), operationHandle.hasResultSet());
-    } catch (InvocationTargetException e) {
-      throw Throwables.propagate(e);
-    } catch (NoSuchMethodException e) {
-      throw  Throwables.propagate(e);
-    } catch (IllegalAccessException e) {
-      throw Throwables.propagate(e);
-    }
+    OperationStatus operationStatus = getCliService().getOperationStatus(handle);
+    return new Status(Status.OpStatus.valueOf(operationStatus.getState().toString()),
+                      handle.hasResultSet());
   }
 
   @Override
   protected List<Result> fetchNextResults(OperationHandle operationHandle, int size)
-    throws ExploreException, HandleNotFoundException, HiveSQLException {
+    throws ExploreException, HandleNotFoundException {
     try {
       if (operationHandle.hasResultSet()) {
-        // Rowset is an interface in Hive 13, but a class in Hive 12, so we use reflection
+        // Rowset is an interface in Hive 13, but a class in Hive 13 patched for CDH5, so we use reflection
         // so that the compiler does not make assumption on the return type of fetchResults
         Object rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
         Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
@@ -95,6 +73,8 @@ public class Hive12ExploreService extends BaseHiveExploreService {
     } catch (ClassNotFoundException e) {
       throw Throwables.propagate(e);
     } catch (NoSuchMethodException e) {
+      throw Throwables.propagate(e);
+    } catch (HiveSQLException e) {
       throw Throwables.propagate(e);
     } catch (InvocationTargetException e) {
       throw Throwables.propagate(e);

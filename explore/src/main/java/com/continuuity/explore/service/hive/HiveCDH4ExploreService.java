@@ -13,7 +13,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
@@ -27,24 +26,17 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Hive 12 implementation of {@link com.continuuity.explore.service.ExploreService}.
- * There are 2 changes compared to Hive 13 implementation -
- * <ol>
- *   <li>{@link CLIService#getOperationStatus(org.apache.hive.service.cli.OperationHandle)} return type has
- *   changed</li>
- *   <li>{@link CLIService#fetchResults(org.apache.hive.service.cli.OperationHandle)} return type has changed</li>
- * </ol>
+ *
  */
-@SuppressWarnings("UnusedDeclaration")
-public class Hive12ExploreService extends BaseHiveExploreService {
+public class HiveCDH4ExploreService extends BaseHiveExploreService {
 
   @Inject
-  public Hive12ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                              CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
+  protected HiveCDH4ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
+                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
     super(txClient, datasetFramework, cConf, hConf, hiveConf);
+    System.setProperty("hive.server2.blocking.query", "false");
   }
 
   @Override
@@ -70,7 +62,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
 
   @Override
   protected List<Result> fetchNextResults(OperationHandle operationHandle, int size)
-    throws ExploreException, HandleNotFoundException, HiveSQLException {
+    throws HiveSQLException, ExploreException, HandleNotFoundException {
     try {
       if (operationHandle.hasResultSet()) {
         // Rowset is an interface in Hive 13, but a class in Hive 12, so we use reflection
@@ -106,7 +98,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   @Override
   protected OperationHandle doExecute(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException {
-    return getCliService().executeStatementAsync(sessionHandle, statement, ImmutableMap.<String, String>of());
+    return getCliService().executeStatement(sessionHandle, statement, ImmutableMap.<String, String>of());
   }
 
   private Object columnToObject(TColumnValue tColumnValue) throws ExploreException {

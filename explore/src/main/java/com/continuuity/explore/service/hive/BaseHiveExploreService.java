@@ -68,6 +68,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     HandleNotFoundException;
   protected abstract List<Result> fetchNextResults(OperationHandle handle, int size)
     throws HiveSQLException, ExploreException, HandleNotFoundException;
+  protected abstract OperationHandle doExecute(SessionHandle sessionHandle, String statement)
+    throws HiveSQLException, ExploreException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
@@ -155,8 +157,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       Map<String, String> sessionConf = startSession();
       // TODO: allow changing of hive user and password - REACTOR-271
       SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
-      OperationHandle operationHandle = cliService.executeStatementAsync(sessionHandle, statement,
-                                                                         ImmutableMap.<String, String>of());
+      OperationHandle operationHandle = doExecute(sessionHandle, statement);
       Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
       LOG.trace("Executing statement: {} with handle {}", statement, handle);
       return handle;
