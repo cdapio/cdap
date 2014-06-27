@@ -218,7 +218,7 @@ if %errorlevel% == 0 GOTO :ServerSuccess
 
 :ServerError
 echo Failed to start, please check logs for more information
-GOTO STOP
+GOTO :STOP
 
 :ServerSuccess
 echo Reactor started succesfully.
