@@ -6,7 +6,6 @@ package com.continuuity.metrics.collect;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -64,7 +63,9 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
       taskContext.getCounter(counterGroup, counterName).increment(record.getValue());
       for (TagMetric tag : record.getTags()) {
         counterName = getCounterName(record.getName(), tag.getTag());
-        taskContext.getCounter(counterGroup, counterName).increment(tag.getValue());
+        if (counterName != null) {
+          taskContext.getCounter(counterGroup, counterName).increment(tag.getValue());
+        }
       }
     }
   }
@@ -74,11 +75,10 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
   }
 
   private String getCounterName(String metric, String tag) {
-    JsonObject name = new JsonObject();
-    name.addProperty("metric", metric);
-    if (tag != null) {
-      name.addProperty("tag", tag);
+    if (tag == null) {
+      return metric;
+    } else {
+      return metric + "," + tag;
     }
-    return name.toString();
   }
 }
