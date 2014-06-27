@@ -123,7 +123,9 @@ To announce a service, call the `announce` method from TwillContext during the i
 
 
 The service can then be discovered in Flows, Procedures and MapReduce jobs using appropriate program
-contexts. For example::
+contexts. 
+
+For example, in Flows::
 
 	public class GeoFlowlet extends AbstractFlowlet {
 	
@@ -132,19 +134,41 @@ contexts. For example::
 
 	  @Override
 	  public void intialize(FlowletContext context) {
-	     serviceDiscovered = context.discover("MyApp", "IpGeoLookupService", "GeoLookup"); 
+	    serviceDiscovered = context.discover("MyApp", "IpGeoLookupService", "GeoLookup"); 
 	  }
 
           @ProcessInput
           public void process(String ip) {
 	    Discoverable discoverable = Iterables.getFirst(serviceDiscovered, null);
 	    if (discoverable != null) {
-               String hostName = discoverable.getSocketAddress().getHostName();
-               int port = discoverable.getSocketAddress().getPort();
-               // access the appropriate service using host and port info
+              String hostName = discoverable.getSocketAddress().getHostName();
+              int port = discoverable.getSocketAddress().getPort();
+              // access the appropriate service using host and port info
 	    }
 	  }
 	}
+
+In MapReduce Mapper/Reducer jobs::
+
+        public class GeoMapper extends Mapper<byte[], Location, Text, Text> implements ProgramLifecycle<MapReduceContext> {
+         
+          private ServiceDiscovered serviceDiscovered;
+          
+          @Override
+          public void initialize(MapReduceContext mapReduceContext) throws Exception {
+            serviceDiscovered = mapReduceContext.discover("MyApp", "IpGeoLookupService", "GeoLookup");
+          }
+
+          @Override
+          public void map(byte[] key, Location location, Context context) throws IOException, InterruptedException {
+            Discoverable discoverable = Iterables.getFirst(serviceDiscovered, null);
+            if (discoverable != null) {
+              String hostName = discoverable.getSocketAddress().getHostName();
+              int port = discoverable.getSocketAddress().getPort();
+              // access the appropriate service using host and port info
+            }
+          }
+        }
 
 
 Flow System
