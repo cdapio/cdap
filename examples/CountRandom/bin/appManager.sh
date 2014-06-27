@@ -8,11 +8,11 @@ epoch=`date +%s`
 
 function usage() {
   echo "Application lifecycle management tool for the CountRandom application."
-  echo "Usage: $script --action <deploy|start|stop|status> [--gateway <hostname>]"
+  echo "Usage: $script --action <deploy|start|stop|status> [--host <hostname>]"
   echo ""
   echo "  Options"
-  echo "    --action    Specifies the action to be taken on the CountRandom application."
-  echo "    --gateway   Specifies the hostname the gateway is running on.(Default: localhost)"
+  echo "    --action    Specifies the action to be taken on the application."
+  echo "    --host      Specifies the host that Reactor is running on. (Default: localhost)"
   echo "    --help      This help message"
   echo ""
 }
