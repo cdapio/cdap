@@ -1668,8 +1668,7 @@ because they belong to your account, not the Application.
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
 After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce 
-elements and Workflows,
-and query for their status using HTTP POST and GET methods::
+jobs, Workflows, and Custom Services, and query for their status using HTTP POST and GET methods::
 
 	POST <base-url>/apps/<app-id>/<element-type>/<element-id>/<operation>
 	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/status
@@ -1683,9 +1682,10 @@ and query for their status using HTTP POST and GET methods::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<element-type>``
-     - One of ``flows``, ``procedures``, ``mapreduce``, or ``workflows``
+     - One of ``flows``, ``procedures``, ``mapreduce``, ``workflows`` or ``services``
    * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce*, or *WorkFlow*) being called
+     - Name of the element (*Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*)
+       being called
    * - ``<operation>``
      - One of ``start`` or ``stop``
 
@@ -1726,8 +1726,8 @@ with the arguments as a JSON string in the body::
 
 	{"foo":"bar","this":"that"}
 
-The Continuuity Reactor will use these these runtime arguments only for this single invocation of the element.
-To save the runtime arguments so that the Reactor will use them every time you start the element,
+The Continuuity Reactor will use these these runtime arguments only for this single invocation of the
+element. To save the runtime arguments so that the Reactor will use them every time you start the element,
 issue an HTTP PUT with the parameter ``runtimeargs``::
 
 	PUT <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
@@ -1739,73 +1739,6 @@ with the arguments as a JSON string in the body::
 To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET request to the element's URL using the same parameter ``runtimeargs``::
 
 	GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
-
-This will return the saved runtime arguments in JSON format.
-
-Services: Start, Stop, Status, and Runtime Arguments
-----------------------------------------------------
-Reactor Application can have Services that can be started, stopped and queried for their
-status using HTTP POST and GET methods::
-
-	POST <base-url>/apps/<app-id>/services/<service-id>/runnables/<operation>
-	GET <base-url>/apps/<app-id>/services/<service-id>/runnables/status
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<app-id>``
-     - Name of the Application being called
-   * - ``<service-id>``
-     - Name of the Service being called
-   * - ``<operation>``
-     - One of ``start`` or ``stop``
-
-Examples
-........
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``POST <base-url>/apps/HelloWorld/services/WhoService/runnables/start``
-   * - Description
-     - Start a Service *WhoService* in the Application *HelloWorld*
-
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``POST <base-url>/apps/WordCount/services/CountService/runnables/stop``
-   * - Description
-     - Stop the Service *CountService* in the Application *WordCount*
-
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/status``
-   * - Description
-     - Get the status of the Service *WhoService* in the Application *HelloWorld*
-
-
-To save the runtime arguments so that the Reactor will use them every time you start the Service,
-issue an HTTP PUT with the parameter ``runtimeargs``::
-
-	PUT <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/runtimeargs
-
-with the arguments as a JSON string in the body::
-
-	{"foo":"bar","this":"that"}
-
-To retrieve the runtime arguments saved for an Application's Service, issue an HTTP GET request to the Service's URL
-using the same parameter ``runtimeargs``::
-
-	GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/runtimeargs
 
 This will return the saved runtime arguments in JSON format.
 
@@ -1826,9 +1759,9 @@ the Reactor for a Procedure or Flow’s live info via an HTTP GET method::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<element-type>``
-     - One of either ``flows`` or ``procedures``
+     - One of ``flows``, ``procedures`` or ``services``
    * - ``<element-id>``
-     - Name of the element (*Flow* or *Procedure*)
+     - Name of the element (*Flow*, *Procedure* or *Custom Service*)
 
 Example::
 
@@ -1836,7 +1769,6 @@ Example::
 
 The response is formatted in JSON; an example of this is shown in the 
 `Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`_.
-
 
 To find out the address of a Service's container host and the container's debug port, you can query the
 Reactor for the live info of a Service's Twill Runnable via an HTTP GET method::
@@ -1852,7 +1784,7 @@ Reactor for the live info of a Service's Twill Runnable via an HTTP GET method::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<service-id>``
-     - Name of the Service being called
+     - Name of the Custom Service being called
    * - ``<runnable-id>``
      - Name of the Twill Runnable being called
 
@@ -2504,22 +2436,61 @@ These metrics are available in the Datasets context:
 
 Monitor HTTP API
 ================
-Reactor internally uses a variety of services that are critical to its functionality. Hence, the ability to check the health of those services can act as an useful initial debug step. This is faciliated by the Metrics HTTP API. To check the status of a service, send a HTTP GET request::
+Reactor internally uses a variety of System Services that are critical to its functionality. This section describes the REST APIs that can be used to see into System Services.
 
-	GET <base-url>/system/services/<service-id>/status
+Details of All Available System Services
+----------------------------------------
 
-The status of these Reactor services can be checked.
+For the detailed information of all available System Services, use::
+
+	GET <base-url>/system/services
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The event successfully called the method, and the body contains the results
+
+Checking Status of All Reactor System Services
+----------------------------------------------
+To check the status of all the System Services, use::
+
+	GET <base-url>/system/services/status
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The event successfully called the method, and the body contains the results
+
+Checking Status of a Specific Reactor System Service
+----------------------------------------------------
+To check the status of a specific System Service, use::
+
+	GET <base-url>/system/services/<service-name>/status
+
+The status of these Reactor System Servcies can be checked:
 
 .. list-table::
    :header-rows: 1
    :widths: 20 20 60
    
-   * - Service Name
-     - Service-Id
+   * - Service 
+     - Service-Name
      - Description of the Service
    * - ``Metrics``
      - ``metrics``
-     - Service that handles metrics related requests
+     - Service that handles metrics related HTTP requests
    * - ``Transaction``
      - ``transaction``
      - Service handling transactions 
@@ -2529,11 +2500,23 @@ The status of these Reactor services can be checked.
    * - ``App Fabric``
      - ``appfabric``
      - Service handling Application Fabric requests
+   * - ``Log Saver``
+     - ``log.saver``
+     - Service aggregating all system and application logs
+   * - ``Metrics Processor``
+     - ``metrics.processor``
+     - Service that aggregates all system and application metrics 
+   * - ``Dataset Executor``
+     - ``dataset.executor``
+     - Service that handles all data-related HTTP requests 
+   * - ``Explore Service``
+     - ``explore.service``
+     - Service that handles all HTTP requests for ad-hoc data exploration
 
-Note that the service status checks are more useful when the Reactor is running in a distributed cluster mode and that some of the status checks may not work in the Local Reactor mode.
+Note that the Service status checks are more useful when the Reactor is running in a distributed cluster mode.
 
 Example
--------
+.......
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -2544,7 +2527,7 @@ Example
      - Returns the status of the Metrics Service
 
 HTTP Responses
---------------
+..............
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -2554,7 +2537,55 @@ HTTP Responses
    * - ``200 OK``
      - The service is up and running
    * - ``404 Not Found``
-     - The service is not running or not found
+     - The service is either not running or not found
+
+Scaling System Services
+-----------------------
+The number of instances for system services can be queried and changed by using these commands::
+
+	GET <base-url>/system/services/<service-name>/instances
+	PUT <base-url>/system/services/<service-name>/instances
+
+with the arguments as a JSON string in the body::
+
+        { "instances" : <quantity> }
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<system-name>``
+     - Name of the system service 
+   * - ``<quantity>``
+     - Number of instances to be used
+
+Examples
+........
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/system/services/metrics/instances``
+       ``instances``
+   * - Description
+     - Determine the number of instances being used for the metrics HTTP service 
+
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``PUT <base-url>/system/services/metrics/instances``
+       ``instances``
+
+       with the arguments as a JSON string in the body::
+
+          { "instances" : 2 }
+   * - Description
+     - Sets the number of instances of the metrics HTTP service to 2
 
 .. rst2pdf: CutStart
 
