@@ -474,7 +474,6 @@ Example
    * - Description
      - Change the TTL property of the Stream named *mystream* to 1 day
 
-.. rst2pdf: PageBreak
 
 Reading Multiple Events
 -----------------------
@@ -484,11 +483,10 @@ but the command-line tool ``stream-client`` demonstrates how to view *all*, the 
 For more information, see the Stream Command Line Client ``stream-client`` in the ``/bin`` directory of the
 Continuuity Reactor SDK distribution.
 
-Run at the command line::
+For usage and documentation of options, run at the command line::
 
 	$ stream-client --help
 
-for usage and documentation of options.
 
 .. rst2pdf: PageBreak
 
@@ -1393,6 +1391,7 @@ used to identify the query in subsequent requests::
 
 	{ "handle":"<query-handle>" }
 
+.. rst2pdf: PageBreak
 
 Status of a Query
 -----------------
@@ -1505,6 +1504,7 @@ whereas for ``STRING`` or ``VARCHAR`` the value will be a string literal.
 Repeat the query to retrieve subsequent results. If all results of the query have already 
 been retrieved, then the returned list is empty. 
 
+.. rst2pdf: PageBreak
 
 Closing a Query
 ---------------
@@ -1735,6 +1735,8 @@ issue an HTTP PUT with the parameter ``runtimeargs``::
 with the arguments as a JSON string in the body::
 
 	{"foo":"bar","this":"that"}
+
+.. rst2pdf: PageBreak
 
 To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET request to the element's URL using the same parameter ``runtimeargs``::
 
@@ -2320,6 +2322,8 @@ Stream metrics are only available at the Stream level and the only available con
    * - A single Stream
      - ``/streams/<stream-id>``
 
+.. rst2pdf: PageBreak
+
 Dataset metrics are available at the Dataset level, but they can also be queried down to the
 Flowlet, Procedure, Mapper, or Reducer level:
 
@@ -2473,6 +2477,8 @@ HTTP Responses
    * - ``200 OK``
      - The event successfully called the method, and the body contains the results
 
+.. rst2pdf: PageBreak
+
 Checking Status of a Specific Reactor System Service
 ----------------------------------------------------
 To check the status of a specific System Service, use::
@@ -2538,6 +2544,8 @@ HTTP Responses
      - The service is up and running
    * - ``404 Not Found``
      - The service is either not running or not found
+
+.. rst2pdf: PageBreak
 
 Scaling System Services
 -----------------------
