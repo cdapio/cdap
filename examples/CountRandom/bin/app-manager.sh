@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 
-bin=`dirname "${BASH_SOURCE-$0}"`
-bin=`cd "$bin"; pwd`
+dir=`dirname "${BASH_SOURCE-$0}"`
+dir=`cd "$dir"; pwd`
 script=`basename $0`
 user=$USER
 epoch=`date +%s`
 
 function usage() {
-  echo "Application lifecycle management tool for the PageViewAnalytics."
-  echo "Usage: $script --action <deploy|start|stop|status> [--gateway <hostname>]"
+  echo "Application lifecycle management tool for the CountRandom application."
+  echo "Usage: $script --action <deploy|start|stop|status> [--host <hostname>]"
   echo ""
   echo "  Options"
-  echo "    --action    Specifies the action to be taken on the PageViewAnalytics application."
-  echo "    --gateway   Specifies the hostname the gateway is running on.(Default: localhost)"
+  echo "    --action    Specifies the action to be taken on the application."
+  echo "    --host      Specifies the host that Reactor is running on. (Default: localhost)"
   echo "    --help      This help message"
   echo ""
 }
@@ -82,13 +82,11 @@ if [ "x$action" == "x" ]; then
   echo "Action not specified."
 fi
 
-app="PageViewAnalytics"
-app_jar="PageViewAnalytics-1.0.jar"
+app="CountRandom"
 
 if [ "x$action" == "xdeploy" ]; then
-  jar_path="target/$app_jar"
+  jar_path=`ls $dir/../target/CountRandom-*.jar`
   deploy_action $app $jar_path $gateway
 else
-  program_action $app "PageViewFlow" "flow" $action $gateway
-  program_action $app "PageViewProcedure" "procedure" $action $gateway
+  program_action $app "CountRandom" "flow" $action $gateway
 fi
