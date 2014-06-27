@@ -140,16 +140,33 @@ set_hive_classpath() {
       if [ "x$HIVE_CONF_DIR" = "x" ]; then
         HIVE_CONF_DIR=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep 'HIVE_CONF_DIR' | cut -f 2 -d '='`
       fi
+
+      if [ "x$HADOOP_CONF_DIR" = "x" ]; then
+        HADOOP_CONF_DIR=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep 'HADOOP_CONF_DIR=' | cut -f 2 -d '='`
+      fi
     fi
   fi
 
-  # If Hive classpath is successfully determined, add it to classpath
-  if [ "x$HIVE_HOME" != "x" -a "x$HIVE_CONF_DIR" != "x" ]; then
+  # If Hive classpath is successfully determined, export it to use it in the launch command
+  if [ "x$HIVE_HOME" != "x" -a "x$HIVE_CONF_DIR" != "x" -a "x$HADOOP_CONF_DIR" != "x" ]; then
+    # Reference the conf files needed by Hive
+    HIVE_CONF_FILES=''
+    for a in `ls $HIVE_CONF_DIR`; do
+      HIVE_CONF_FILES=$HIVE_CONF_FILES:$HIVE_CONF_DIR/$a;
+    done
+    for a in `ls $HADOOP_CONF_DIR`; do
+      HIVE_CONF_FILES=$HIVE_CONF_FILES:$HADOOP_CONF_DIR/$a;
+    done
+    # Remove leading ':'
+    HIVE_CONF_FILES=${HIVE_CONF_FILES:1:${#HIVE_CONF_FILES}-1}
+    export HIVE_CONF_FILES
+
     # Hive exec has a HiveConf class that needs to be loaded before the HiveConf class from
     # hive-common for joins operations to work
     HIVE_EXEC=`ls $HIVE_HOME/lib/hive-exec-*`
     OTHER_HIVE_JARS=`ls $HIVE_HOME/lib/*.jar | tr '\n' ':'`
-    HIVE_CLASSPATH=$HIVE_CONF_DIR:$HIVE_EXEC:$OTHER_HIVE_JARS:$HBASE_CP
+    HIVE_CLASSPATH=$HIVE_EXEC:$OTHER_HIVE_JARS:$HBASE_CP
+
     export HIVE_CLASSPATH
   fi
 }

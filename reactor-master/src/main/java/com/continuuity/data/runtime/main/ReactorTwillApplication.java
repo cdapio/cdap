@@ -3,6 +3,7 @@ package com.continuuity.data.runtime.main;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.AbortOnTimeoutEventHandler;
+import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.logging.run.LogSaverTwillRunnable;
 import com.continuuity.metrics.runtime.MetricsProcessorTwillRunnable;
 import com.continuuity.metrics.runtime.MetricsTwillRunnable;
@@ -14,7 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * TwillApplication wrapper for Reactor YARN Services.
@@ -195,10 +198,22 @@ public class ReactorTwillApplication implements TwillApplication {
       .setInstances(cConf.getInt(Constants.Explore.CONTAINER_INSTANCES, 1))
       .build();
 
-    return builder.add(new ExploreServiceTwillRunnable("explore.executor", "cConf.xml", "hConf.xml"), resourceSpec)
-      .withLocalFiles()
-      .add("cConf.xml", cConfFile.toURI())
-      .add("hConf.xml", hConfFile.toURI())
-      .apply();
+    TwillSpecification.Builder.MoreFile twillSpecs =
+      builder.add(new ExploreServiceTwillRunnable("explore.executor", "cConf.xml", "hConf.xml"), resourceSpec)
+        .withLocalFiles()
+        .add("cConf.xml", cConfFile.toURI())
+        .add("hConf.xml", hConfFile.toURI());
+
+    try {
+      // Ship jars needed by Hive to the container
+      Set<File> jars = ExploreServiceUtils.traceExploreDependencies();
+      for (File jarFile : jars) {
+        twillSpecs = twillSpecs.add(jarFile.getName(), jarFile);
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to trace Explore dependencies", e);
+    }
+
+    return twillSpecs.apply();
   }
 }

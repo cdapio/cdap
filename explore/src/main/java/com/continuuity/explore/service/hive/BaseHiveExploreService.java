@@ -131,7 +131,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Stopping {}...", Hive13ExploreService.class.getSimpleName());
+    LOG.info("Stopping {}...", BaseHiveExploreService.class.getSimpleName());
 
     // By this time we should not get anymore new requests, since HTTP service has already been stopped.
     // Close all handles

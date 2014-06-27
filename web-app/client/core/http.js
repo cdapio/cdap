@@ -173,7 +173,7 @@ define([], function () {
 					callback(response, status);
 				}
 			}).fail(function (xhr, status, error) {
-				callback(error, status);
+				callback(error, xhr.responseText);
 			});
 
 		},

@@ -1,3 +1,18 @@
+/**
+ * Copyright 2013-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.continuuity.examples.purchase;
 
 import com.continuuity.api.data.batch.BatchWritable;
@@ -10,7 +25,7 @@ import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDataset;
 import com.continuuity.api.dataset.lib.ObjectStore;
 import com.continuuity.api.dataset.lib.ObjectStores;
-import com.continuuity.api.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.module.EmbeddedDataset;
 import com.continuuity.internal.io.UnsupportedTypeException;
 
 import java.lang.reflect.Type;
@@ -55,7 +70,7 @@ public class PurchaseHistoryStore
    * @param objStore the embedded object store
    */
   public PurchaseHistoryStore(DatasetSpecification spec,
-                              @EmbeddedDataSet("store") ObjectStore<PurchaseHistory> objStore) {
+                              @EmbeddedDataset("store") ObjectStore<PurchaseHistory> objStore) {
     super(spec.getName(), objStore);
     this.store = objStore;
   }

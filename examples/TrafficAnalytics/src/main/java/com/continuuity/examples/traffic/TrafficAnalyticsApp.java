@@ -69,8 +69,8 @@ public class TrafficAnalyticsApp extends AbstractApplication {
     setName("TrafficAnalytics");
     setDescription("HTTP request counts on an hourly basis");
     addStream(new Stream("logEventStream"));
-    createDataSet("logEventTable", TimeseriesTable.class, DatasetProperties.EMPTY);
-    createDataSet("countTable", TimeseriesTable.class, DatasetProperties.EMPTY);
+    createDataset("logEventTable", TimeseriesTable.class, DatasetProperties.EMPTY);
+    createDataset("countTable", TimeseriesTable.class, DatasetProperties.EMPTY);
     addFlow(new LogAnalyticsFlow());
     addProcedure(new LogCountProcedure());
     addMapReduce(new LogCountMapReduce());

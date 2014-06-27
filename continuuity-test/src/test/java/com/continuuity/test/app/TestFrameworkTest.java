@@ -75,6 +75,10 @@ public class TestFrameworkTest extends ReactorTestBase {
       ProcedureClient client = queryManager.getClient();
       Gson gson = new Gson();
 
+      //Adding sleep so that the test does not fail if the procedure takes sometime to start on slow machines.
+      //TODO : Can be removed after fixing JIRA - REACTOR-373
+      TimeUnit.SECONDS.sleep(2);
+
       Assert.assertEquals("1",
                           gson.fromJson(client.query("result", ImmutableMap.of("type", "highpass")), String.class));
     } finally {
@@ -106,6 +110,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     wfmanager.getSchedule(scheduleId).suspend();
     Assert.assertEquals("SUSPENDED", wfmanager.getSchedule(scheduleId).status());
 
+    TimeUnit.SECONDS.sleep(3);
     history = wfmanager.getHistory();
     workflowRuns = history.size();
 
@@ -190,8 +195,10 @@ public class TestFrameworkTest extends ReactorTestBase {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
     ServiceManager serviceManager = applicationManager.startService("NoOpService");
+    Assert.assertTrue(serviceManager.isRunning());
     LOG.info("Service Started");
     serviceManager.stop();
+    Assert.assertFalse(serviceManager.isRunning());
     LOG.info("Service Stopped");
     // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the REACTOR scope test in
     // TestMetricsCollectionService

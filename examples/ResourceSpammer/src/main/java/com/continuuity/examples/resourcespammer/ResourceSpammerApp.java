@@ -26,8 +26,8 @@ public class ResourceSpammerApp extends AbstractApplication {
   public void configure() {
     setName("ResourceSpammerApp");
     setDescription("Application that uses lots of system resources");
-    createDataSet("input", KeyValueTable.class);
-    createDataSet("output", KeyValueTable.class);
+    createDataset("input", KeyValueTable.class);
+    createDataset("output", KeyValueTable.class);
     addFlow(new CPUSpammerFlow());
     addProcedure(new CPUSpamProcedure());
   }

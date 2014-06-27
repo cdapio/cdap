@@ -2,7 +2,7 @@ package com.continuuity.data2.dataset2;
 
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetSpecification;
-import com.continuuity.api.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.module.EmbeddedDataset;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -77,25 +77,25 @@ public class SingleTypeModuleTest {
   }
 
   public static final class Good2 extends AbstractDataset {
-    public Good2(DatasetSpecification spec, @EmbeddedDataSet("foo") Dataset ds) {
+    public Good2(DatasetSpecification spec, @EmbeddedDataset("foo") Dataset ds) {
     }
   }
 
   public static final class Bad7 extends AbstractDataset {
-    public Bad7(DatasetSpecification spec, @EmbeddedDataSet("foo") Dataset ds, int i) {
+    public Bad7(DatasetSpecification spec, @EmbeddedDataset("foo") Dataset ds, int i) {
     }
   }
 
   public static final class Good3 extends AbstractDataset {
-    public Good3(DatasetSpecification spec, @EmbeddedDataSet("foo") Dataset ds, @EmbeddedDataSet("bar") Dataset bar) {
+    public Good3(DatasetSpecification spec, @EmbeddedDataset("foo") Dataset ds, @EmbeddedDataset("bar") Dataset bar) {
     }
   }
 
   public static final class Bad8 extends AbstractDataset {
     public Bad8(DatasetSpecification spec,
-                @EmbeddedDataSet("foo") Dataset ds, 
+                @EmbeddedDataset("foo") Dataset ds,
                 int i,
-                @EmbeddedDataSet("bar") Dataset bar) {
+                @EmbeddedDataset("bar") Dataset bar) {
     }
   }
 
@@ -103,7 +103,7 @@ public class SingleTypeModuleTest {
   public static final class Bad9 extends AbstractDataset {
     public Bad9(DatasetSpecification spec,
                 DatasetSpecification spec2,
-                @EmbeddedDataSet("foo") Dataset ds) {
+                @EmbeddedDataset("foo") Dataset ds) {
     }
   }
 

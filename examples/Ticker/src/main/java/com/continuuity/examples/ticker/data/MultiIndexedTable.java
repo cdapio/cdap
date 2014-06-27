@@ -19,7 +19,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDataset;
-import com.continuuity.api.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.module.EmbeddedDataset;
 import com.continuuity.api.dataset.table.Delete;
 import com.continuuity.api.dataset.table.Put;
 import com.continuuity.api.dataset.table.Row;
@@ -72,8 +72,8 @@ public class MultiIndexedTable extends AbstractDataset {
   }
 
   public MultiIndexedTable(DatasetSpecification spec,
-                           @EmbeddedDataSet("data") Table dataTable,
-                           @EmbeddedDataSet("idx") Table idxTable) {
+                           @EmbeddedDataset("data") Table dataTable,
+                           @EmbeddedDataset("idx") Table idxTable) {
     super(spec.getName(), dataTable, idxTable);
     this.table = dataTable;
     this.indexTable = idxTable;

@@ -18,7 +18,7 @@ package com.continuuity.examples.analytics;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDataset;
-import com.continuuity.api.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.module.EmbeddedDataset;
 import com.continuuity.api.dataset.table.Increment;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
@@ -34,7 +34,7 @@ public class PageViewStore extends AbstractDataset {
   // Define the underlying table
   private Table table;
 
-  public PageViewStore(DatasetSpecification spec, @EmbeddedDataSet("tracks") Table table) {
+  public PageViewStore(DatasetSpecification spec, @EmbeddedDataset("tracks") Table table) {
     super(spec.getName(), table);
     this.table = table;
   }

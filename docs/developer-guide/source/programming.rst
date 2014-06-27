@@ -14,7 +14,7 @@ Introduction
 ============
 
 This document covers in detail the Continuuity Reactor core
-elements—Applications, Streams, DataSets, Flows, Procedures, MapReduce,
+elements—Applications, Streams, Datasets, Flows, Procedures, MapReduce,
 and Workflows—and how you work with them in Java to build a Big Data
 application.
 
@@ -45,7 +45,7 @@ are to replace it with your value, perhaps in this case *mystream*::
 	PUT /v2/streams/mystream
 
 Writing a Continuuity Reactor Application
------------------------------------------
+=========================================
 
 Note that the Continuuity Reactor API is written in a
 `"fluent" interface style <http://en.wikipedia.org/wiki/Fluent_interface>`_,
@@ -106,78 +106,50 @@ dropping it anywhere on the Reactor Dashboard and it will be deployed.
 
 The remainder of this document covers what to put in that JAR file.
 
+.. _applications:
 
-Programming APIs
-================
+Programming APIs: Applications
+==============================
 
-Applications
-------------
-
-An **Application** is a collection of `Streams`_, `DataSets`_, `Flows`_,
+An **Application** is a collection of `Streams`_, `Datasets`_, `Flows`_,
 `Procedures`_, `MapReduce`_ jobs, and `Workflows`_.
 
-To create an Application, implement the ``Application`` interface, specifying
+To create an Application, implement the ``Application`` interface
+or subclass from ``AbstractApplication`` class, specifying
 the Application metadata and declaring and configuring each of the Application elements::
 
-      public class MyApp implements Application {
+      public class MyApp extends AbstractApplication {
         @Override
-        public ApplicationSpecification configure() {
-          try {
-            return ApplicationSpecification.Builder.with()
-              .setName("myApp")
-              .setDescription("My Sample Application")
-              .withStreams()
-                .add(new Stream("myAppStream"))
-              .withDataSets()
-                .add(new KeyValueTable("myAppDataStorage")
-              .withFlows()
-                .add(new MyAppFlow())
-              .withProcedures()
-                .add(new MyAppQuery())
-              .noMapReduce()
-              .withWorkflows()
-                .add(new MyAppWorkflow())
-              .build();
-          } catch (UnsupportedTypeException e) {
-            throw new RuntimeException(e);
-          }
+        public void configure() {
+          setName("myApp");
+          setDescription("My Sample Application");
+          addStream(new Stream("myAppStream"));
+          addFlow(new MyAppFlow());
+          addProcedure(new MyAppQuery());
+          addMapReduce(new MyMapReduceJob());
+          addWorkflow(new MyAppWorkflow());
         }
       }
 
-You must specify all of the Continuuity Reactor elements. You can
-specify that an Application does not use a particular element—for
-example, no Streams—by using a ``.no...`` method::
-
-	      ...
-	      .setDescription("My Sample Application")
-	      .noStream()
-	      .withDataSets()
-	        .add(...) ...
-
-and so forth for each of the elements.
-
-All elements must be specified, either using ``.with...`` or ``.no...``.
-
-Notice that in coding the application, *Streams* and *DataSets* are
-defined using Continuuity classes, and are referenced by names, while
-*Flows*, *Flowlets* and *Procedures* are defined using user-written
-classes that implement Continuuity classes and are referenced by passing
+Notice that *Streams* are
+defined using provided `Stream` class, and are referenced by names, while
+other components are defined using user-written
+classes that implement correspondent interfaces and are referenced by passing
 an object, in addition to being assigned a unique name.
 
-Names used for *Streams* and *DataSets* need to be unique across the
+Names used for *Streams* and *Datasets* need to be unique across the
 Reactor instance, while names used for *Flows*, *Flowlets* and
 *Procedures* need to be unique only to the application.
 
 .. _streams:
 
 Collecting Data: Streams
-------------------------
+========================
 **Streams** are the primary means for bringing data
 from external systems into the Reactor in realtime.
 You specify a Stream in your `Application`__ metadata::
 
-	.withStreams()
-	  .add(new Stream("myStream")) ...
+	addStream(new Stream("myStream"));
 
 __ applications_
 
@@ -202,7 +174,7 @@ between applications, so they require a unique name.
 .. _flows:
 
 Processing Data: Flows
-----------------------
+======================
 
 **Flows** are developer-implemented, real-time Stream processors. They
 are comprised of one or more `Flowlets`_ that are wired together into a
@@ -232,7 +204,7 @@ from an external source.
 
 The ``Flow`` interface allows you to specify the Flow’s metadata, `Flowlets`_,
 `Flowlet connections <#connection>`_, `Stream to Flowlet connections <#connection>`_,
-and any `DataSets`_ used in the Flow.
+and any `Datasets`_ used in the Flow.
 
 To create a Flow, implement ``Flow`` via a ``configure`` method that
 returns a ``FlowSpecification`` using ``FlowSpecification.Builder()``::
@@ -258,7 +230,7 @@ Flowlets, and *connections* are specified before building the Flow.
 .. _flowlets:
 
 Processing Data: Flowlets
--------------------------
+=========================
 **Flowlets**, the basic building blocks of a Flow, represent each
 individual processing node within a Flow. Flowlets consume data objects
 from their inputs and execute custom logic on each data object, allowing
@@ -350,7 +322,7 @@ origin name::
 	}
 
 Input Context
-.............
+-------------
 A process method can have an additional parameter, the ``InputContext``.
 The input context provides information about the input object, such as
 its origin and the number of times the object has been retried. For
@@ -378,7 +350,7 @@ context to decide which tokenizer to use::
 	}
 
 Type Projection
-...............
+---------------
 Flowlets perform an implicit projection on the input objects if they do
 not match exactly what the process method accepts as arguments. This
 allows you to write a single process method that can accept multiple
@@ -444,7 +416,7 @@ interact well with inheritance. If a Flowlet can process a specific
 object class, then it can also process any subclass of that class.
 
 Stream Event
-............
+------------
 A Stream event is a special type of object that comes in via Streams. It
 consists of a set of headers represented by a map from String to String,
 and a byte array as the body of the event. To consume a Stream with a
@@ -458,8 +430,7 @@ Flow, define a Flowlet that processes data of type ``StreamEvent``::
 	  }
 
 Flowlet Method and @Tick Annotation
-...................................
-
+-----------------------------------
 A Flowlet’s method can be annotated with ``@Tick``. Instead of
 processing data objects from a Flowlet input, this method is invoked
 periodically, without arguments. This can be used, for example, to
@@ -482,7 +453,7 @@ method in the Flowlet emits random numbers::
 	}
 
 Connection
-..........
+----------
 There are multiple ways to connect the Flowlets of a Flow. The most
 common form is to use the Flowlet name. Because the name of each Flowlet
 defaults to its class name, when building the Flow specification you can
@@ -506,10 +477,10 @@ If you have multiple Flowlets of the same class, you can give them explicit name
 .. _mapreduce:
 
 Processing Data: MapReduce
---------------------------
+==========================
 **MapReduce** is used to process data in batch. MapReduce jobs can be
 written as in a conventional Hadoop system. Additionally, Reactor
-**DataSets** can be accessed from MapReduce jobs as both input and
+**Datasets** can be accessed from MapReduce jobs as both input and
 output.
 
 To process data using MapReduce, specify ``withMapReduce()`` in your
@@ -544,7 +515,7 @@ implementation of three methods:
 
 The configure method is similar to the one found in Flow and
 Application. It defines the name and description of the MapReduce job.
-You can also specify DataSets to be used as input or output for the job.
+You can also specify Datasets to be used as input or output for the job.
 
 The ``beforeSubmit()`` method is invoked at runtime, before the
 MapReduce job is executed. Through a passed instance of the
@@ -603,18 +574,17 @@ Continuuity Reactor ``Mapper`` and ``Reducer`` implement the standard Hadoop API
 	  }
 	}
 
-MapReduce and DataSets
-......................
-
+MapReduce and Datasets
+----------------------
 Both Continuuity Reactor ``Mapper`` and ``Reducer`` can directly read
-from a DataSet or write to a DataSet similar to the way a Flowlet or
+from a Dataset or write to a Dataset similar to the way a Flowlet or
 Procedure can.
 
-To access a DataSet directly in Mapper or Reducer, you need (1) a
+To access a Dataset directly in Mapper or Reducer, you need (1) a
 declaration and (2) an injection:
 
-#. Declare the DataSet in the MapReduce job’s configure() method.
-   For example, to have access to a DataSet named *catalog*::
+#. Declare the Dataset in the MapReduce job’s configure() method.
+   For example, to have access to a Dataset named *catalog*::
 
 	public class MyMapReduceJob implements MapReduce {
 	  @Override
@@ -624,7 +594,7 @@ declaration and (2) an injection:
 	    .useDataSet("catalog")
 	      ...
 
-#. Inject the DataSet into the mapper or reducer that uses it::
+#. Inject the Dataset into the mapper or reducer that uses it::
 
 	public static class CatalogJoinMapper extends Mapper<byte[], Purchase, ...> {
 	  @UseDataSet("catalog")
@@ -642,7 +612,7 @@ declaration and (2) an injection:
 .. _Workflows:
 
 Processing Data: Workflows
---------------------------
+==========================
 **Workflows** are used to execute a series of `MapReduce`_ jobs. A
 Workflow is given a sequence of jobs that follow each other, with an
 optional schedule to run the Workflow periodically. On successful
@@ -696,45 +666,46 @@ the Workflow::
 	  }
 	}
 
-.. _DataSets:
+.. _Datasets:
 
-Store Data: DataSets
---------------------
-**DataSets** store and retrieve data. DataSets are your means of reading
+Store Data: Datasets
+====================
+**Datasets** store and retrieve data. Datasets are your means of reading
 from and writing data to the Reactor’s storage capabilities. Instead of
-requiring you to manipulate data with low-level APIs, DataSets provide
+requiring you to manipulate data with low-level APIs, Datasets provide
 higher-level abstractions and generic, reusable Java implementations of
 common data patterns.
 
-The core DataSet of the Reactor is a Table. Unlike relational database
+The core Dataset of the Reactor is a Table. Unlike relational database
 systems, these tables are not organized into rows with a fixed schema.
 They are optimized for efficient storage of semi-structured data, data
 with unknown or variable schema, or sparse data.
 
-Other DataSets are built on top of Tables. A DataSet can implement
+Other Datasets are built on top of Tables. A Dataset can implement
 specific semantics around a Table, such as a key/value Table or a
-counter Table. A DataSet can also combine multiple DataSets to create a
+counter Table. A Dataset can also combine multiple Datasets to create a
 complex data pattern. For example, an indexed Table can be implemented
 by using one Table for the data to index and a second Table for the
 index itself.
 
-You can implement your own data patterns as custom DataSets on top of
-Tables. A number of useful DataSets—we refer to them as system DataSets—are
+You can implement your own data patterns as custom Datasets on top of
+Tables. A number of useful Datasets—we refer to them as system Datasets—are
 included with Reactor, including key/value tables, indexed tables and
 time series.
 
-For your Application to use a DataSet, you must declare it in the
-Application specification. For example, to specify that your Application
-uses a ``KeyValueTable`` DataSet named *myCounters*, write::
+You can create a Dataset in Continuuity Reactor using either
+`Continuuity Reactor HTTP REST API <rest.html>`__ or command line tools.
 
-	public ApplicationSpecification configure() {
-	  return ApplicationSpecification.Builder.with()
-	    ...
-	    .withDataSets().add(new KeyValueTable("myCounters"))
+You can also specify to create a Dataset by Application components if one doesn't
+exist. For that you must declare its details in the Application specification.
+For example, to create a DataSet named *myCounters* of type `KeyValueTable`, write::
+
+	public void configure() {
+	    createDataset("myCounters", "KeyValueTable")
 	    ...
 
-To use the DataSet in a Flowlet or a Procedure, instruct the runtime
-system to inject an instance of the DataSet with the ``@UseDataSet``
+To use the Dataset in a Flowlet or a Procedure, instruct the runtime
+system to inject an instance of the Dataset with the ``@UseDataSet``
 annotation::
 
 	Class MyFowlet extends AbstractFlowlet {
@@ -745,20 +716,21 @@ annotation::
 	    counters.increment(key.getBytes());
 	  }
 
-The runtime system reads the DataSet specification for the key/value
+The runtime system reads the Dataset specification for the key/value
 table *myCounters* from the metadata store and injects a functional
-instance of the DataSet class into the Application.
+instance of the Dataset class into the Application.
 
-You can also implement custom DataSets by extending the ``DataSet`` base
-class or by extending existing DataSet types. See the `PageViewAnalytics
-<examples/PageViewAnalytics/index.html>`__ example for an implementation of a
-Custom DataSet.
+You can also implement custom Datasets by implementing the ``Dataset``
+interface or by extending existing Dataset types. See the 
+`PageViewAnalytics <examples/PageViewAnalytics/index.html>`__ 
+example for an implementation of a Custom Dataset. For more details, refer to
+`Advanced Continuuity Reactor Features <advanced.html>`__.
 
 .. _Procedures:
 
 Query Data: Procedures
-----------------------
-To query the Reactor and its DataSets and retrieve results, you use Procedures.
+======================
+To query the Reactor and its Datasets and retrieve results, you use Procedures.
 
 Procedures allow you to make synchronous calls into the Reactor from an external system
 and perform server-side processing on-demand, similar to a stored procedure in a
@@ -766,7 +738,7 @@ traditional database.
 
 Procedures are typically used to post-process data at query time. This
 post-processing can include filtering, aggregating, or joins over
-multiple DataSets—in fact, a Procedure can perform all the same
+multiple Datasets—in fact, a Procedure can perform all the same
 operations as a Flowlet with the same consistency and durability
 guarantees. They are deployed into the same pool of application
 containers as Flows, and you can run multiple instances to increase the
@@ -830,4 +802,4 @@ Now that you've had an introduction to programming applications
 for the Continuuity Reactor, take a look at:
 
 - `Advanced Continuuity Reactor Features <advanced.html>`__,
-  with details of the Flow, DataSet and Transaction systems.
+  with details of the Flow, Dataset and Transaction systems.

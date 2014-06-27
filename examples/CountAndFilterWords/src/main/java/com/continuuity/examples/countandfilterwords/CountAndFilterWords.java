@@ -32,7 +32,7 @@ public class CountAndFilterWords extends AbstractApplication {
     setName("CountAndFilterWords");
     setDescription("Example word filter and count Application");
     addStream(new Stream("text"));
-    createDataSet(TABLE_NAME, KeyValueTable.class);
+    createDataset(TABLE_NAME, KeyValueTable.class);
     addFlow(new CountAndFilterWordsFlow());
   }
 }

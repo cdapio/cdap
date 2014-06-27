@@ -198,7 +198,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final ProgramRuntimeService runtimeService;
 
-
   /**
    * Client talking to transaction system.
    */
@@ -239,6 +238,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private final StreamAdmin streamAdmin;
 
   private final StreamConsumerFactory streamConsumerFactory;
+
+  private final ReactorDatasetNamespace namespace;
 
   /**
    * Number of seconds for timing out a service endpoint discovery.
@@ -323,6 +324,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.dsClient = dsClient;
     this.datasetInstantiator = datasetInstantiator;
     this.dataSetAccessor = dataSetAccessor;
+    this.namespace = new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER);
   }
 
   /**
@@ -2069,6 +2071,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return GSON.toJson(appSpec.getMapReduce().get(id.getId()));
       } else if (type == Type.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
         return GSON.toJson(appSpec.getWorkflows().get(id.getId()));
+      } else if (type == Type.SERVICE && appSpec.getServices().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getServices().get(id.getId()));
       }
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
@@ -2958,15 +2962,18 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           if (spec == null) {
             spec = store.getDataSet(account, dsName);
           }
+
           if (spec != null) {
+            // Dataset V1
             typeName = spec.getType();
           } else {
             // trying to see if that is Dataset V2
-            ReactorDatasetNamespace namespace = new ReactorDatasetNamespace(configuration,
-                                                                            DataSetAccessor.Namespace.USER);
-            DatasetInstanceMeta meta = getDatasetInstanceMeta(namespace.namespace(dsName));
+            // TODO: fix namespacing - see REACTOR-217
+            String namespacedDsName = namespace.namespace(dsName);
+            DatasetInstanceMeta meta = getDatasetInstanceMeta(namespacedDsName);
             if (meta != null) {
               typeName = meta.getType().getName();
+              dsName = namespacedDsName;
             }
           }
           result.add(makeDataSetRecord(dsName, typeName, null));

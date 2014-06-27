@@ -4,6 +4,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.dataset.DataSetTestBase;
@@ -171,7 +172,7 @@ public class MultiObjectStoreTest extends DataSetTestBase {
       }
     };
     // create an instantiator that uses the dummy class loader
-    DataSetInstantiator inst = new DataSetInstantiator(fabric, datasetFramework, loader);
+    DataSetInstantiator inst = new DataSetInstantiator(fabric, datasetFramework, CConfiguration.create(), loader);
     inst.setDataSets(specs, Collections.<DatasetCreationSpec>emptyList());
     // use that instantiator to get a data set instance
     inst.getDataSet("customs");

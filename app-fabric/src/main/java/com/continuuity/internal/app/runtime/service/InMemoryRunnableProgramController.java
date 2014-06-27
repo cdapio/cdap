@@ -28,7 +28,6 @@ public class InMemoryRunnableProgramController extends AbstractProgramController
   @Override
   protected void doStop() throws Exception {
     driver.stopAndWait();
-
   }
 
   @Override
