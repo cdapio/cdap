@@ -2500,7 +2500,7 @@ The status of these Reactor services can be checked:
      - ``appfabric``
      - Service handling Application Fabric requests
    * - ``Log Saver``
-     - ``saver``
+     - ``log.saver``
      - Service aggregating all system and application logs
    * - ``Metrics Processor``
      - ``metrics.processor``
