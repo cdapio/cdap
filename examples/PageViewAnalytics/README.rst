@@ -54,7 +54,7 @@ of the Application are tied together by the class ``PageViewAnalyticsApp``::
       setName("PageViewAnalytics");
       setDescription("Page view analysis");
       addStream(new Stream("logEventStream"));
-      createDataSet("pageViewCDS", PageViewStore.class);
+      createDataset("pageViewCDS", PageViewStore.class);
       addFlow(new LogAnalyticsFlow());
       addProcedure(new PageViewProcedure());
     }

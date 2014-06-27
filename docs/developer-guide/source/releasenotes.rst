@@ -29,7 +29,7 @@ New Ad-hoc Querying Feature
 ===========================
 - Reactor now supports ad-hoc SQL queries over Datasets
 - A new API that allows developers to expose the schema of the Dataset and make it query able
-- A new REST API to submit SQL queries and retrieve the results
+- A new REST API to submit SQL queries over Datasets and retrieve the results
 
 New Security Features
 =====================
@@ -68,5 +68,8 @@ Other Reactor Changes
 =====================
 - `A list of deprecated Interfaces, Classes and Methods <javadocs/deprecated-list.html>`__ 
   is included in the Javadocs
-- The term "DataSet" has been standardized in both the APIs and the documentation as either 
-  "Dataset" or "dataset", depending on the context, to reduce errors from the internal capitalization
+
+.. For later
+.. - The term "DataSet" has been standardized in both the APIs and the documentation as either 
+..  "Dataset" or "dataset", depending on the context, to reduce errors from the internal capitalization
+
