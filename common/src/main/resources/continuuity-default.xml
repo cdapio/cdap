@@ -301,7 +301,7 @@
 
     <property>
       <name>stream.container.instances</name>
-      <value>2</value>
+      <value>1</value>
       <description>Number of YARN container instances for the stream handler</description>
     </property>
 
@@ -686,7 +686,7 @@
 
     <property>
         <name>metrics.processor.num.instances</name>
-        <value>2</value>
+        <value>1</value>
         <description>Number of instances for Metrics Processor Service Twill Runnable</description>
     </property>
 
@@ -863,6 +863,11 @@
     <property>
         <name>hive.local.data.dir</name>
         <value>${local.data.dir}/hive</value>
+    </property>
+    <property>
+        <name>explore.executor.container.instances</name>
+        <value>1</value>
+        <description>Number of explore executor instances</description>
     </property>
     <property>
         <name>explore.executor.max.instances</name>

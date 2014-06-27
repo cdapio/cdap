@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.DELETE;
@@ -65,6 +66,13 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -81,6 +89,9 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
         exploreService.close(handle);
       }
       responder.sendStatus(HttpResponseStatus.OK);
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -99,6 +110,13 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
         exploreService.cancel(handle);
       }
       responder.sendStatus(HttpResponseStatus.OK);
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -120,6 +138,13 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
         status = Status.NO_OP;
       }
       responder.sendJson(HttpResponseStatus.OK, status);
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -141,6 +166,13 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
         schema = Lists.newArrayList();
       }
       responder.sendJson(HttpResponseStatus.OK, schema);
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -164,6 +196,13 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
         results = exploreService.nextResults(handle, size);
       }
       responder.sendJson(HttpResponseStatus.OK, results);
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
