@@ -5,8 +5,6 @@ import com.continuuity.common.metrics.MetricsScope;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
@@ -35,14 +33,12 @@ public class MapReduceMetricsWriter {
   private final BasicMapReduceContext context;
   private final Table<MetricsScope, String, Integer> previousMapStats;
   private final Table<MetricsScope, String, Integer> previousReduceStats;
-  private final JsonParser parser;
 
   public MapReduceMetricsWriter(Job jobConf, BasicMapReduceContext context) {
     this.jobConf = jobConf;
     this.context = context;
     this.previousMapStats = HashBasedTable.create();
     this.previousReduceStats = HashBasedTable.create();
-    this.parser = new JsonParser();
   }
 
   public void reportStats() throws IOException, InterruptedException {
@@ -154,11 +150,12 @@ public class MapReduceMetricsWriter {
       // emitting to the metrics system.
       int emitValue = calcDiffAndSetTableValue(previousStats, scope, counter.getName(), counter.getValue());
 
-      // json object with "metric":[metricname] and optionally "tag":[tagname]
-      JsonObject counterObj = (JsonObject) parser.parse(counter.getName());
-      String metric = counterObj.get("metric").getAsString();
-      if (counterObj.has("tag")) {
-        String tag = counterObj.get("tag").getAsString();
+      // "<metric>" or "<metric>,<tag>" if tag is present
+      String[] parts = counter.getName().split(",", 2);
+      String metric = parts[0];
+      if (parts.length == 2) {
+        // has tag
+        String tag = parts[1];
         collector.gauge(metric, emitValue, tag);
         int tagCountSoFar = (metricTagValues.containsKey(metric)) ? metricTagValues.get(metric) : 0;
         metricTagValues.put(metric, tagCountSoFar + emitValue);
