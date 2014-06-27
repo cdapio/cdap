@@ -79,6 +79,9 @@ set_hbase()
       0.96*)
         hbasecompat="$CONTINUUITY_HOME/hbase-compat-0.96/lib/*"
         ;;
+      0.98*)
+        hbasecompat="$CONTINUUITY_HOME/hbase-compat-0.96/lib/*"
+        ;;
       *)
         echo "ERROR: Unknown/unsupported version of HBase found: $HBASE_VERSION"
         exit 1
