@@ -149,7 +149,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Note: today explore enable is not transactional with dataset create - REACTOR-314
     try {
       datasetExploreFacade.enableExplore(name);
-    } catch (ExploreException e) {
+    } catch (Exception e) {
       String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
                                  name, typeAndProps.getProperties(), e.getMessage());
       LOG.error(msg, e);

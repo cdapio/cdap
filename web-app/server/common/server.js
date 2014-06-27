@@ -344,9 +344,10 @@ WebAppServer.prototype.bindRoutes = function() {
       } else {
         self.logger.error('Could not DELETE', path, body, error,  response.statusCode);
         if (error && error.code === 'ECONNREFUSED') {
-          res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
+          res.send(response.statusCode,
+            'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
-          res.send(500, body || error || response.statusCode);
+          res.send(response.statusCode, body || error || response.statusCode);
         }
       }
     });

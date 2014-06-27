@@ -30,8 +30,8 @@ public class SentimentAnalysisApp extends AbstractApplication {
     setName("sentiment");
     setDescription("Sentiment Analysis");
     addStream(new Stream("sentence"));
-    createDataSet("sentiments", Table.class);
-    createDataSet("text-sentiments", TimeseriesTable.class);
+    createDataset("sentiments", Table.class);
+    createDataset("text-sentiments", TimeseriesTable.class);
     addFlow(new SentimentAnalysisFlow());
     addProcedure(new SentimentAnalysisProcedure());
   }

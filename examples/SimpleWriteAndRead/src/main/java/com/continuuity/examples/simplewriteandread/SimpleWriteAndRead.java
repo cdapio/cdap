@@ -32,7 +32,7 @@ public class SimpleWriteAndRead extends AbstractApplication {
     setName("SimpleWriteAndRead");
     setDescription("Flow that writes key=value then reads back the key");
     addStream(new Stream("keyValues"));
-    createDataSet(TABLE_NAME, KeyValueTable.class);
+    createDataset(TABLE_NAME, KeyValueTable.class);
     addFlow(new SimpleWriteAndReadFlow());
   }
 }

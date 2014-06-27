@@ -130,6 +130,19 @@ and that you authenticate your request by sending your API key in an HTTP header
        `Continuuity Accounts <http://accounts.continuuity.com>`__
 
 
+Working with Reactor Security
+-----------------------------
+When working with a Reactor cluster with security enabled (``security.enabled=true`` in
+``continuuity-site.xml``), all calls to the HTTP APIs must be authenticated.  Clients must first
+obtain an access token from the authentication server (see the "Security" section of the
+guide). In order to authenticate, all client requests must supply this access token in the
+``Authorization`` header of the request::
+
+   Authorization: Bearer wohng8Xae7thahfohshahphaeNeeM5ie
+
+For Reactor-issued access tokens, the authentication scheme must always be ``Bearer``.
+
+
 Stream HTTP API
 ===============
 This interface supports creating Streams, sending events to a Stream, and reading single events from a Stream.
@@ -452,7 +465,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST <base-url>/streams/mystream/ttl``
+     - ``PUT <base-url>/streams/mystream/config``
 
        with the new TTL value as a JSON string in the body::
 
@@ -1489,8 +1502,8 @@ The value at each position has the type that was returned in the result schema f
 For example, if the returned type was ``INT``, then the value will be an integer literal,
 whereas for ``STRING`` or ``VARCHAR`` the value will be a string literal.
 
-Repeat the query to retrieve subsequent results. If all results of the query have already been retrieved, then the returned list is empty. 
-[DOCNOTE: FIXME! How do you reset the query retrieval to the start? Can you?]
+Repeat the query to retrieve subsequent results. If all results of the query have already 
+been retrieved, then the returned list is empty. 
 
 
 Closing a Query

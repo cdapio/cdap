@@ -116,7 +116,7 @@ basic abstractions:
 - `Streams <programming.html#streams>`__ for real-time data collection from any external system;
 - `Flows <programming.html#flows>`__ for performing elastically scalable, real-time stream
   or batch processing;
-- `DataSets <programming.html#datasets>`__ for storing data in simple and scalable ways without
+- `Datasets <programming.html#datasets>`__ for storing data in simple and scalable ways without
   worrying about details of the storage schema; and
 - `Procedures <programming.html#procedures>`__ for exposing data to external systems through
   stored queries.
@@ -125,7 +125,7 @@ These are grouped into Applications for configuring and packaging.
 
 Applications are built in Java using the Continuuity Core APIs. Once an application is 
 deployed and running, you can easily interact with it from virtually any external system 
-by accessing the Streams, DataSets, and Procedures using the Java APIs, REST or other 
+by accessing the Streams, Datasets, and Procedures using the Java APIs, REST or other 
 network protocols.
 
 In the next section, we will compare three application architectures and their pros and cons.

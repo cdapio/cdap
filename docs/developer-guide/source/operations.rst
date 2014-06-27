@@ -214,8 +214,8 @@ Store
 .. image:: _images/dashboard/dashboard_05_store.png
    :width: 600px
 
-The **Store** pane shows all the DataSets currently specified in the Reactor, along with their name
-(a link to the detail pane for the DataSet), type (the Java class), storage in use,
+The **Store** pane shows all the Datasets currently specified in the Reactor, along with their name
+(a link to the detail pane for the Dataset), type (the Java class), storage in use,
 a realtime write-rate graph and the current write rate (bytes per second).
 
 .. _Query:
@@ -265,7 +265,7 @@ The button in the upper right of the pane allows you to delete the current Appli
 However, before an Application can be deleted, all Process—Flows and MapReduce Jobs—and Queries (Procedures), must be stopped.
 An error message will be given if you attempt to delete an Application with running components.
 
-Note that Streams and DataSets, even though they are specified and created at the time of deployment of the Application,
+Note that Streams and Datasets, even though they are specified and created at the time of deployment of the Application,
 are persistent and are not deleted when an Application is deleted.
 
 To delete these, the Reactor needs to be reset using the `Reset button <#reset>`__ located at the bottom of each pane.
@@ -411,15 +411,15 @@ Workflow
 For a Workflow, the time until the next scheduled run is shown, along with status and management controls for starting, stopping and configuration.
 
 
-DataSet
+Dataset
 -------
 
 .. image:: _images/dashboard/dashboard_15_dataset.png
    :width: 600px
 
-For a DataSet, write rate (in both bytes and operations per second), read rate and total storage is shown,
+For a Dataset, write rate (in both bytes and operations per second), read rate and total storage is shown,
 along with a list of Flows attached to the
-DataSet and their processing rate and `busyness`_.
+Dataset and their processing rate and `busyness`_.
 
 
 Procedure

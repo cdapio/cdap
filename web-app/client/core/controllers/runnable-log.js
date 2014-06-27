@@ -232,22 +232,23 @@ define([], function () {
 		 * transitioning.
 		 */
 		logUp: function () {
+			var self = this;
 
 			// If logs are currently being fetched, don't do anything.
 			if (this.get('logUpPending')) {
 				return;
 			}
 
-			this.set('logUpPending', true);
-
-			var self = this;
-			var model = this.get('model');
-			var maxSize = this.get('maxSize');
-			var initialOffset = this.get('initialOffset');
 			if (C.currentPath !== self.get('expectedPath')) {
 				clearInterval(self.interval);
 				return;
 			}
+
+			this.set('logUpPending', true);
+
+			var model = this.get('model');
+			var maxSize = this.get('maxSize') || 50;
+			var initialOffset = this.get('initialOffset') || -1;
 
 			this.HTTP.rest(model.get('context'), 'logs', 'prev',
 					{

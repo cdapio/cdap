@@ -13,4 +13,8 @@
             See LocalClientProtocolProvider for more info
         </description>
     </property>
+    <property>
+      <name>mapreduce.job.counters.counter.name.max</name>
+      <value>256</value>
+    </property>
 </configuration>
