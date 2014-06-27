@@ -27,14 +27,14 @@ KRB_COMMAND="k5start -b -L -K 10 -p $K5PID -f $REACTOR_KEYTAB -u $REACTOR_PRINCI
 if [[ -n $REACTOR_KEYTAB ]] && [[ -n $REACTOR_PRINCIPAL ]]; then
   # Check for k5start and exit if it doesn't exist
   if [[ $(which k5start) ]]; then
-    continue
+    :
   else
     echo 'Fatal: Missing k5start command! Please install k5start!'
     exit 1
   fi
   if [[ $1 =~ "start" ]]; then
     if [[ $UID -eq 0 ]]; then
-      su continuuity -c $KRB_COMMAND
+      su continuuity -c "$KRB_COMMAND"
     else
       $KRB_COMMAND
     fi
