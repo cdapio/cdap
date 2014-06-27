@@ -1668,7 +1668,7 @@ because they belong to your account, not the Application.
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
 After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce 
-jobs, Workflows, and Services, and query for their status using HTTP POST and GET methods::
+jobs, Workflows, and Custom Services, and query for their status using HTTP POST and GET methods::
 
 	POST <base-url>/apps/<app-id>/<element-type>/<element-id>/<operation>
 	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/status
@@ -1684,7 +1684,8 @@ jobs, Workflows, and Services, and query for their status using HTTP POST and GE
    * - ``<element-type>``
      - One of ``flows``, ``procedures``, ``mapreduce``, ``workflows`` or ``services``
    * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Service*) being called
+     - Name of the element (*Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*)
+       being called
    * - ``<operation>``
      - One of ``start`` or ``stop``
 
@@ -1725,8 +1726,8 @@ with the arguments as a JSON string in the body::
 
 	{"foo":"bar","this":"that"}
 
-The Continuuity Reactor will use these these runtime arguments only for this single invocation of the element.
-To save the runtime arguments so that the Reactor will use them every time you start the element,
+The Continuuity Reactor will use these these runtime arguments only for this single invocation of the
+element. To save the runtime arguments so that the Reactor will use them every time you start the element,
 issue an HTTP PUT with the parameter ``runtimeargs``::
 
 	PUT <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
@@ -1760,7 +1761,7 @@ the Reactor for a Procedure or Flow’s live info via an HTTP GET method::
    * - ``<element-type>``
      - One of ``flows``, ``procedures`` or ``services``
    * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure* or *Service*)
+     - Name of the element (*Flow*, *Procedure* or *Custom Service*)
 
 Example::
 
@@ -1783,7 +1784,7 @@ Reactor for the live info of a Service's Twill Runnable via an HTTP GET method::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<service-id>``
-     - Name of the Service being called
+     - Name of the Custom Service being called
    * - ``<runnable-id>``
      - Name of the Twill Runnable being called
 
@@ -2435,12 +2436,12 @@ These metrics are available in the Datasets context:
 
 Monitor HTTP API
 ================
-Reactor internally uses a variety of system services that are critical to its functionality. This section describes the REST APIs that can be used to see into system services.
+Reactor internally uses a variety of System Services that are critical to its functionality. This section describes the REST APIs that can be used to see into System Services.
 
 Details of All Available System Services
 ----------------------------------------
 
-For the detailed information of all available System services, use::
+For the detailed information of all available System Services, use::
 
 	GET <base-url>/system/services
 
@@ -2457,7 +2458,7 @@ HTTP Responses
 
 Checking Status of All Reactor System Services
 ----------------------------------------------
-To check the status of all the system service, use::
+To check the status of all the System Services, use::
 
 	GET <base-url>/system/services/status
 
@@ -2474,11 +2475,11 @@ HTTP Responses
 
 Checking Status of a Specific Reactor System Service
 ----------------------------------------------------
-To check the status of a specific system service, use::
+To check the status of a specific System Service, use::
 
 	GET <base-url>/system/services/<service-name>/status
 
-The status of these Reactor services can be checked:
+The status of these Reactor System Servcies can be checked:
 
 .. list-table::
    :header-rows: 1
@@ -2500,7 +2501,7 @@ The status of these Reactor services can be checked:
      - ``appfabric``
      - Service handling Application Fabric requests
    * - ``Log Saver``
-     - ``saver``
+     - ``log.saver``
      - Service aggregating all system and application logs
    * - ``Metrics Processor``
      - ``metrics.processor``
@@ -2512,7 +2513,7 @@ The status of these Reactor services can be checked:
      - ``explore.service``
      - Service that handles all HTTP requests for ad-hoc data exploration
 
-Note that the service status checks are more useful when the Reactor is running in a distributed cluster mode and that some of the status checks may not work in the Local Reactor mode.
+Note that the Service status checks are more useful when the Reactor is running in a distributed cluster mode.
 
 Example
 .......

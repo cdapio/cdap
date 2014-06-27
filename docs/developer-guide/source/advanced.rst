@@ -1,26 +1,27 @@
 .. :Author: Continuuity, Inc.
    :Description: Advanced Reactor Features
-.. reST Editor: .. section-numbering::
-.. reST Editor: .. contents::
 
 =====================================
 Advanced Continuuity Reactor Features
 =====================================
 
-**Custom User Services, Flow, Dataset, and Transaction Systems, 
+**Custom Services, Flow, Dataset, and Transaction Systems, 
 with Best Practices for the Continuuity Reactor**
 
-Custom User Services
-====================
-In addition to Flows, MapReduce jobs, and Procedures, additional services can be run in a 
-Reactor Application. Users can implement custom user services to interface with a legacy 
-system and perform additional processing beyond the Continuuity processing paradigms. 
-Examples could include running an IP-to-Geo lookup and serving user-profiles.
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
 
-Services are implemented as TwillApplication and are run in YARN. Life-cycle of the 
-services can be controlled by using REST endpoints. 
+Custom Services
+===============
+In addition to Flows, MapReduce jobs, and Procedures, additional Services can be run in a 
+Reactor Application. Developers can implement Custom Services that run in program containers,
+to interface with a legacy system and perform additional processing beyond the Continuuity processing
+paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
 
-Services can be configured by implementing `configure` method of the Application API and adding service using `addService` method::
+Services are implemented as `Twill applications <http://twill.incubator.apache.org>`__ and are run in
+YARN. A service's lifecycle can be controlled by using REST endpoints. 
+
+You can add services to your application by calling the ``addService`` method in the Application's ``configure`` method::
 
 	public class AnalyticsApp extends AbstractApplication {
 	  @Override
@@ -37,8 +38,10 @@ Services can be configured by implementing `configure` method of the Application
 	}
 
 
-The lifecycle of the services in a Reactor application is controlled using a ``TwillApplication``.
-The TwillApplication can have one or more runnables that implement the custom services::
+A Custom Service is implemented as a Twill application, with one or more runnables. See the 
+`Apache Twill guide <http://twill.incubator.apache.org>`__ for additional information.
+
+::
 
 	 public class IpGeoLookupService implements TwillApplication {
 	   @Override
@@ -67,7 +70,7 @@ methods:
 	
 	   @Override
 	   public void initialize(TwillContext context) {
-	     // service initialization
+	     // Service initialization
 	   }
 	
 	   @Override
@@ -77,19 +80,19 @@ methods:
 	
 	   @Override
 	   public void stop() {
-	     // called to stop the running the service
+	     // Called to stop the running the service
 	   }
 	
 	   @Override
 	   public void destroy() {
-	     // called before shutting down the service
+	     // Called before shutting down the service
 	   }
 	}
 
 
 Services Integration with Metrics and Logging
 ---------------------------------------------
-Services are integrated with the Reactor Metrics and Logging framework. Programs implementing custom services can declare Metrics and Logger (SLF4J) member variables and the appropriate implementation will be injected by the run-time.
+Services are integrated with the Reactor Metrics and Logging framework. Programs implementing Custom Services can declare Metrics and Logger (SLF4J) member variables and the appropriate implementation will be injected by the run-time.
 
 ::
 
@@ -110,9 +113,11 @@ The metrics and logs that are emitted by the service are aggregated and accessed
 
 Service Discovery
 -----------------
-Services announce the host and port they are running on so that they can be discovered by other programs (Flows, Procedures and MapReduce jobs) and provide access.
+Services announce the host and port they are running on so that they can be discovered by—and provide
+access to—other programs: Flows, Procedures, MapReduce jobs, and other Custom Services.
 
-To announce a service, call the `announce` method from TwillContext during the initialize method. The announce method takes a name which the service can register under and the port which the service is running on. The application name, service, and hostname required for registering the service are automatically obtained.
+To announce a Service, call the ``announce`` method from ``TwillContext`` during the initialize method.
+The announce method takes a name—which the Service can register under—and the port which the Service is running on. The application name, service ID, and hostname required for registering the Service are automatically obtained.
 
 ::
 
@@ -122,30 +127,35 @@ To announce a service, call the `announce` method from TwillContext during the i
 	}
 
 
-The service can then be discovered in Flows, Procedures and MapReduce jobs using appropriate program
-contexts. For example::
+The service can then be discovered in Flows, Procedures, MapReduce jobs, and other Services using
+appropriate program contexts. For example::
 
 	public class GeoFlowlet extends AbstractFlowlet {
 	
-          // Service discovery for ip-geo service
-          private ServiceDiscovered serviceDiscovered;
-
+	  // Service discovery for ip-geo service
+	  private ServiceDiscovered serviceDiscovered;
+	
 	  @Override
 	  public void intialize(FlowletContext context) {
-	     serviceDiscovered = context.discover("MyApp", "IpGeoLookupService", "GeoLookup"); 
+	    serviceDiscovered = context.discover("MyApp", "IpGeoLookupService", "GeoLookup"); 
 	  }
-
-          @ProcessInput
-          public void process(String ip) {
+	
+	  @ProcessInput
+	  public void process(String ip) {
 	    Discoverable discoverable = Iterables.getFirst(serviceDiscovered, null);
 	    if (discoverable != null) {
-               String hostName = discoverable.getSocketAddress().getHostName();
-               int port = discoverable.getSocketAddress().getPort();
-               // access the appropriate service using host and port info
+	      String hostName = discoverable.getSocketAddress().getHostName();
+	      int port = discoverable.getSocketAddress().getPort();
+	      // Access the appropriate service using the host and port info
+	      ...
 	    }
 	  }
 	}
 
+[DOCNOTE: FIXME! Add a MapReduce example here
+
+Andreas: Please make sure that you show an example for how to do that in a mapper and reducer, and how in a beforeSubmit/onSuccess of the M/R job. I think the APIs are different in each case.
+Also make sure that a mapper/reducer can actually discover services. (We talked about it today) ]
 
 Flow System
 ===========
