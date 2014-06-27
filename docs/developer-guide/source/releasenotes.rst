@@ -66,5 +66,7 @@ Major Reactor Bug Fixes
 
 Other Reactor Changes
 =====================
-- [DOCNOTE: FIXME! Should we add which APIs have been deprecated?]
-- [DOCNOTE: FIXME! Should we add about changing from "DataSet" to "Dataset"?]
+- `A list of deprecated Interfaces, Classes and Methods <javadocs/deprecated-list.html>`__ 
+  is included in the Javadocs
+- The term "DataSet" has been standardized in both the APIs and the documentation as either 
+  "Dataset" or "dataset", depending on the context, to reduce errors from the internal capitalization

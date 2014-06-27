@@ -35,36 +35,27 @@ The TrafficAnalytics Application
 As in the other :doc:`examples </examples/index>`, the components 
 of the application are tied together by the class ``TrafficAnalyticsApp``::
 
-	public class TrafficAnalyticsApp implements Application {
-	  // The row key of SimpleTimeseriesTable.
-	  private static final byte[] ROW_KEY = Bytes.toBytes("f");
-	  // The time window of 1 day converted into milliseconds.
-	  private static final long TIME_WINDOW = TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS);
-	
-	  @Override
-	  public ApplicationSpecification configure() {
-	    return ApplicationSpecification.Builder.with()
-	      .setName("TrafficAnalytics")
-	      .setDescription("HTTP request counts on an hourly basis")
-	      // Ingest data into the Application via Streams.
-	      .withStreams()
-	        .add(new Stream("logEventStream"))
-	      // Store processed data in Datasets.
-	      .withDataSets()
-	        .add(new SimpleTimeseriesTable("logEventTable"))
-	        .add(new SimpleTimeseriesTable("countTable"))
-	      // Process log data in real-time using Flows.
-	      .withFlows()
-	        .add(new LogAnalyticsFlow())
-	      // Query the processed data using Procedures.
-	      .withProcedures()
-	        .add(new LogCountProcedure())
-	      // Process log data in MapReduce.
-	      .withMapReduce()
-	        .add(new LogCountMapReduce())
-	      .noWorkflow()
-	      .build();
-	  }
+	public class TrafficAnalyticsApp extends AbstractApplication {
+    @Override
+    public void configure() {
+      setName("TrafficAnalytics");
+      setDescription("HTTP request counts on an hourly basis");
+      
+      // Ingest data into the Application via Streams
+      addStream(new Stream("logEventStream"));
+      
+      // Store processed data in Datasets
+      createDataSet("logEventTable", TimeseriesTable.class, DatasetProperties.EMPTY);
+      
+      // Process log events in real-time using Flows
+      addFlow(new LogAnalyticsFlow());
+      
+      // Query the processed data using a Procedure
+      addProcedure(new LogCountProcedure());
+      
+      // Run a MapReduce job on the acquired data
+      addMapReduce(new LogCountMapReduce());
+    }
 
 Many elements are similar, but there are a few new entries.
 
@@ -150,7 +141,7 @@ Building and Running the Application and Example
 In this remainder of this document, we refer to the Continuuity Reactor runtime as "Reactor", and the
 example code that is running on it as an "Application".
 
-We show the Windows prompt as ``>`` to indicate a command prompt opened in the SDK directory.
+We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
 
 In this example, you can either build the Application from source or deploy the already-compiled JAR file.
 In either case, you then start a Continuuity Reactor, deploy the Application, and then run the example by
@@ -183,7 +174,7 @@ From within the SDK root directory, this command will start Reactor in local mod
 
 On Windows::
 
-	> bin\reactor start
+	~SDK> bin\reactor start
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
@@ -201,8 +192,8 @@ Command line tools are also available to deploy and manage apps. From within the
 
 On Windows:
 
-#. To deploy the App JAR file, run ``> bin\appManager deploy``
-#. To start the App, run ``> bin\appManager start``
+#. To deploy the App JAR file, run ``~SDK> bin\appManager deploy``
+#. To start the App, run ``~SDK> bin\appManager start``
 
 Running the Example
 -------------------
@@ -220,7 +211,7 @@ to the Stream named *logEventStream* in the ``AccessLogApp``::
 
 On Windows::
 
-	> bin\inject-data
+	~SDK> bin\inject-data
 
 Running the MapReduce Job
 .........................
@@ -272,7 +263,7 @@ Either:
 
   :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
 
-  On Windows, run ``> bin\appManager stop``
+  On Windows, run ``~SDK> bin\appManager stop``
 
 
 Downloading the Example

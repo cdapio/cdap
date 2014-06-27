@@ -132,7 +132,7 @@ the Application metadata and declaring and configuring each of the Application e
       }
 
 Notice that *Streams* are
-defined using provided `Stream` class, and are referenced by names, while
+defined using provided ``Stream`` class, and are referenced by names, while
 other components are defined using user-written
 classes that implement correspondent interfaces and are referenced by passing
 an object, in addition to being assigned a unique name.
