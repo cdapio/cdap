@@ -128,7 +128,9 @@ The announce method takes a name—which the Service can register under—and th
 
 
 The service can then be discovered in Flows, Procedures, MapReduce jobs, and other Services using
-appropriate program contexts. For example::
+appropriate program contexts.
+
+For example, in Flows::
 
 	public class GeoFlowlet extends AbstractFlowlet {
 	
@@ -152,10 +154,30 @@ appropriate program contexts. For example::
 	  }
 	}
 
-[DOCNOTE: FIXME! Add a MapReduce example here
+In MapReduce Mapper/Reducer jobs::
 
-Andreas: Please make sure that you show an example for how to do that in a mapper and reducer, and how in a beforeSubmit/onSuccess of the M/R job. I think the APIs are different in each case.
-Also make sure that a mapper/reducer can actually discover services. (We talked about it today) ]
+	public class GeoMapper extends Mapper<byte[], Location, Text, Text> 
+	    implements ProgramLifecycle<MapReduceContext> {
+	
+	  private ServiceDiscovered serviceDiscovered;
+	  
+	  @Override
+	  public void initialize(MapReduceContext mapReduceContext) throws Exception {
+	    serviceDiscovered = mapReduceContext.discover("MyApp", "IpGeoLookupService", "GeoLookup");
+	  }
+	  
+	  @Override
+	  public void map(byte[] key, Location location, Context context) throws IOException, InterruptedException {
+	    Discoverable discoverable = Iterables.getFirst(serviceDiscovered, null);
+	    if (discoverable != null) {
+	      String hostName = discoverable.getSocketAddress().getHostName();
+	      int port = discoverable.getSocketAddress().getPort();
+	      // Access the appropriate service using the host and port info
+	    }
+	  }
+	}
+
+
 
 Flow System
 ===========
