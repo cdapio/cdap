@@ -7,7 +7,7 @@ package com.continuuity.api.metrics;
 public interface Metrics {
   /**
    * Increases the value of the specific counter by delta.
-   * @param counterName Name of the counter.
+   * @param counterName Name of the counter. Use alphanumeric characters in metric names.
    * @param delta The value to increase by.
    */
   void count(String counterName, int delta);

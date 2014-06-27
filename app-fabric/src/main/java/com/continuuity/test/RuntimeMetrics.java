@@ -48,4 +48,16 @@ public interface RuntimeMetrics {
    * @throws java.util.concurrent.TimeoutException If the timeout time passed and still not seeing that many count.
    */
   void waitForException(long count, long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException;
-}
+
+  /**
+   * Waits until the metric value of the given metric name reached or exceeded the given count.
+   *
+   * @param name Name of the metric
+   * @param count Minimum value to wait for
+   * @param timeout Maximum time to wait for
+   * @param timeoutUnit {@link java.util.concurrent.TimeUnit} for the timeout time.
+   * @throws TimeoutException If the timeout time passed and still not seeing that many count.
+   */
+  void waitFor(String name, long count, long timeout,
+               TimeUnit timeoutUnit) throws TimeoutException, InterruptedException;
+  }

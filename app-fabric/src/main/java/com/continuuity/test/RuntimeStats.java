@@ -69,22 +69,28 @@ public final class RuntimeStats {
       @Override
       public void waitForinput(long count, long timeout, TimeUnit timeoutUnit)
                                           throws TimeoutException, InterruptedException {
-        waitFor(inputName, count, timeout, timeoutUnit);
+        doWaitFor(inputName, count, timeout, timeoutUnit);
       }
 
       @Override
       public void waitForProcessed(long count, long timeout, TimeUnit timeoutUnit)
                                           throws TimeoutException, InterruptedException {
-        waitFor(processedName, count, timeout, timeoutUnit);
+        doWaitFor(processedName, count, timeout, timeoutUnit);
       }
 
       @Override
       public void waitForException(long count, long timeout, TimeUnit timeoutUnit)
                                           throws TimeoutException, InterruptedException {
-        waitFor(exceptionName, count, timeout, timeoutUnit);
+        doWaitFor(exceptionName, count, timeout, timeoutUnit);
       }
 
-      private void waitFor(String name, long count, long timeout, TimeUnit timeoutUnit)
+      @Override
+      public void waitFor(String name, long count,
+                          long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
+        doWaitFor(prefix + "." + name, count, timeout, timeoutUnit);
+      }
+
+      private void doWaitFor(String name, long count, long timeout, TimeUnit timeoutUnit)
                                           throws TimeoutException, InterruptedException {
         AtomicLong value = counters.get(name);
         while (timeout > 0 && (value == null || value.get() < count)) {

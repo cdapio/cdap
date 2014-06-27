@@ -192,38 +192,42 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "my_table_1", DatasetProperties.EMPTY);
 
-    Transaction tx1 = transactionManager.startShort(100);
+    try {
+      Transaction tx1 = transactionManager.startShort(100);
 
-    // Accessing dataset instance to perform data operations
-    KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table_1", null);
-    Assert.assertNotNull(table);
-    table.startTx(tx1);
+      // Accessing dataset instance to perform data operations
+      KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table_1", null);
+      Assert.assertNotNull(table);
+      table.startTx(tx1);
 
-    KeyValue.Value value1 = new KeyValue.Value("two", Lists.newArrayList(10, 11, 12, 13, 14));
-    KeyValue.Value value2 = new KeyValue.Value("third", Lists.newArrayList(10, 11, 12, 13, 14));
-    table.put("2", value1);
-    table.put("3", value2);
-    Assert.assertEquals(value1, table.get("2"));
+      KeyValue.Value value1 = new KeyValue.Value("two", Lists.newArrayList(10, 11, 12, 13, 14));
+      KeyValue.Value value2 = new KeyValue.Value("third", Lists.newArrayList(10, 11, 12, 13, 14));
+      table.put("2", value1);
+      table.put("3", value2);
+      Assert.assertEquals(value1, table.get("2"));
 
-    Assert.assertTrue(table.commitTx());
+      Assert.assertTrue(table.commitTx());
 
-    transactionManager.canCommit(tx1, table.getTxChanges());
-    transactionManager.commit(tx1);
+      transactionManager.canCommit(tx1, table.getTxChanges());
+      transactionManager.commit(tx1);
 
-    table.postTxCommit();
+      table.postTxCommit();
 
 
-    runCommand("select continuuity_user_my_table.key, continuuity_user_my_table.value from continuuity_user_my_table " +
-               "join continuuity_user_my_table_1 on (continuuity_user_my_table.key=continuuity_user_my_table_1.key)",
-        true,
-        Lists.newArrayList(new ColumnDesc("continuuity_user_my_table.key", "STRING", 1, null),
-                           new ColumnDesc("continuuity_user_my_table.value",
-                                          "struct<name:string,ints:array<int>>", 2, null)),
-        Lists.newArrayList(
-            new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
-    );
-
-    datasetFramework.deleteInstance("my_table_1");
+      runCommand("select continuuity_user_my_table.key, continuuity_user_my_table.value from " +
+                   "continuuity_user_my_table" +
+                   " " +
+                 "join continuuity_user_my_table_1 on (continuuity_user_my_table.key=continuuity_user_my_table_1.key)",
+          true,
+          Lists.newArrayList(new ColumnDesc("continuuity_user_my_table.key", "STRING", 1, null),
+                             new ColumnDesc("continuuity_user_my_table.value",
+                                            "struct<name:string,ints:array<int>>", 2, null)),
+          Lists.newArrayList(
+              new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+      );
+    } finally {
+      datasetFramework.deleteInstance("my_table_1");
+    }
   }
 
   @Test
