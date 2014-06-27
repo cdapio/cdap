@@ -8,10 +8,10 @@ epoch=`date +%s`
 
 function usage() {
   echo "Application lifecycle management tool for the Purchase application."
-  echo "Usage: $script --action <deploy|start|stop|status> [--host <hostname>]"
+  echo "Usage: $script --action <deploy|start|run|stop|status> [--host <hostname>]"
   echo ""
   echo "  Options"
-  echo "    --action    Specifies the action to be taken on the application."
+  echo "    --action    Specifies the action to be taken on the application. Use 'run' to run the map/reduce."
   echo "    --host      Specifies the host that Reactor is running on. (Default: localhost)"
   echo "    --help      This help message"
   echo ""
@@ -44,10 +44,19 @@ function program_action() {
     http=""
   fi
 
-  maction="$(tr '[:lower:]' '[:upper:]' <<< ${action:0:1})${action:1}"
-  echo " - ${maction/Stop/Stopp}ing $type $program... "
+  types="$type";
+  if [ "$type" != "mapreduce" ]; then
+    types="${type}s";
+  fi
 
-  status=$(curl -s $http http://$host:10000/v2/apps/$app/${type}s/$program/$action 2>/dev/null)
+  if [ "x$action" == "xstatus" ]; then
+    echo -n " - Status for $type $program: "
+  else
+    maction="$(tr '[:lower:]' '[:upper:]' <<< ${action:0:1})${action:1}"
+    echo " - ${maction/Stop/Stopp}ing $type $program... "
+  fi
+
+  status=$(curl -s $http http://$host:10000/v2/apps/$app/$types/$program/$action 2>/dev/null)
 
   if [ $? -ne 0 ]; then
    echo "Action '$action' failed."
@@ -56,7 +65,6 @@ function program_action() {
       echo $status
     fi
   fi
-
 }
 
 if [ $# -lt 1 ]; then
@@ -82,11 +90,17 @@ if [ "x$action" == "x" ]; then
   echo "Action not specified."
 fi
 
-app="Purchase"
+app="PurchaseHistory"
 
 if [ "x$action" == "xdeploy" ]; then
   jar_path=`ls $dir/../target/Purchase-*.jar`
   deploy_action $app $jar_path $host
+elif [ "x$action" == "xrun" ]; then
+  program_action $app "PurchaseHistoryWorkflow_PurchaseHistoryBuilder" "mapreduce" "start" $host
+elif [ "x$action" == "xstatus" ]; then
+  program_action $app "PurchaseFlow" "flow" $action $host
+  program_action $app "PurchaseProcedure" "procedure" $action $host
+  program_action $app "PurchaseHistoryWorkflow_PurchaseHistoryBuilder" "mapreduce" $action $host
 else
   program_action $app "PurchaseFlow" "flow" $action $host
   program_action $app "PurchaseProcedure" "procedure" $action $host

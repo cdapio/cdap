@@ -37,17 +37,26 @@ function program_action() {
   local program=$1; shift;
   local type=$1; shift;
   local action=$1; shift;
-  local gateway=$1; shift
+  local host=$1; shift
 
   http="-X POST"
   if [ "x$action" == "xstatus" ]; then
     http=""
   fi
 
-  maction="$(tr '[:lower:]' '[:upper:]' <<< ${action:0:1})${action:1}"
-  echo " - ${maction/Stop/Stopp}ing $type $program... "
+  types="$type";
+  if [ "$type" != "mapreduce" ]; then
+    types="${type}s";
+  fi
 
-  status=$(curl -s $http http://$gateway:10000/v2/apps/$app/${type}s/$program/$action 2>/dev/null)
+  if [ "x$action" == "xstatus" ]; then
+    echo -n " - Status for $type $program: "
+  else
+    maction="$(tr '[:lower:]' '[:upper:]' <<< ${action:0:1})${action:1}"
+    echo " - ${maction/Stop/Stopp}ing $type $program... "
+  fi
+
+  status=$(curl -s $http http://$host:10000/v2/apps/$app/$types/$program/$action 2>/dev/null)
 
   if [ $? -ne 0 ]; then
    echo "Action '$action' failed."
@@ -56,7 +65,6 @@ function program_action() {
       echo $status
     fi
   fi
-
 }
 
 if [ $# -lt 1 ]; then
