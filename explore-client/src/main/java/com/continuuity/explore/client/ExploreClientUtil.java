@@ -6,6 +6,7 @@ import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Status;
 
+import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -28,7 +29,7 @@ public class ExploreClientUtil {
    */
   public static Status waitForCompletionStatus(Explore exploreClient, Handle handle,
                                                long sleepTime, TimeUnit timeUnit, int maxTries)
-    throws ExploreException, HandleNotFoundException, InterruptedException {
+    throws ExploreException, HandleNotFoundException, InterruptedException, SQLException {
     Status status;
     int tries = 0;
     do {

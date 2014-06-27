@@ -1,5 +1,6 @@
 package com.continuuity.explore.service;
 
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -14,7 +15,7 @@ public interface Explore {
    * @return {@link Handle} representing the operation.
    * @throws ExploreException on any error executing statement.
    */
-  Handle execute(String statement) throws ExploreException;
+  Handle execute(String statement) throws ExploreException, SQLException;
 
   /**
    * Fetch the status of a running Hive operation.
@@ -23,7 +24,7 @@ public interface Explore {
    * @throws ExploreException on any error fetching status.
    * @throws HandleNotFoundException when handle is not found.
    */
-  Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException;
+  Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException, SQLException;
 
   /**
    * Fetch the schema of the result of a Hive operation. This can be called only after the state of the operation is
@@ -33,7 +34,7 @@ public interface Explore {
    * @throws ExploreException on any error fetching schema.
    * @throws HandleNotFoundException when handle is not found.
    */
-  List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException, HandleNotFoundException;
+  List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException, HandleNotFoundException, SQLException;
 
   /**
    * Fetch the results of a Hive operation. This can be called only after the state of the operation is
@@ -45,7 +46,7 @@ public interface Explore {
    * @throws ExploreException on any error fetching results.
    * @throws HandleNotFoundException when handle is not found.
    */
-  List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException;
+  List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException, SQLException;
 
   /**
    * Cancel a running Hive operation. After the operation moves into a {@link Status.OpStatus#CANCELED},
@@ -54,7 +55,7 @@ public interface Explore {
    * @throws ExploreException on any error cancelling operation.
    * @throws HandleNotFoundException when handle is not found.
    */
-  void cancel(Handle handle) throws ExploreException, HandleNotFoundException;
+  void cancel(Handle handle) throws ExploreException, HandleNotFoundException, SQLException;
 
   /**
    * Release resources associated with a Hive operation. After this call, handle of the operation becomes invalid.

@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.DELETE;
@@ -68,6 +69,10 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -108,6 +113,10 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -132,6 +141,10 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -156,6 +169,10 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -182,6 +199,10 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {

@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -149,7 +150,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public Handle execute(String statement) throws ExploreException {
+  public Handle execute(String statement) throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
       // TODO: allow changing of hive user and password - REACTOR-271
@@ -167,7 +168,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException {
+  public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException, SQLException {
     InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
     if (inactiveOperationInfo != null) {
       // Operation has been made inactive, so return the saved status.
@@ -192,7 +193,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
+  public List<Result> nextResults(Handle handle, int size)
+    throws ExploreException, HandleNotFoundException, SQLException {
     InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
     if (inactiveOperationInfo != null) {
       // Operation has been made inactive, so all results should have been fetched already - return empty list.
@@ -217,7 +219,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException, HandleNotFoundException {
+  public List<ColumnDesc> getResultSchema(Handle handle)
+    throws ExploreException, HandleNotFoundException, SQLException {
     try {
       InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
       if (inactiveOperationInfo != null) {
@@ -244,7 +247,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public void cancel(Handle handle) throws ExploreException, HandleNotFoundException {
+  public void cancel(Handle handle) throws ExploreException, HandleNotFoundException, SQLException {
     try {
       InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
       if (inactiveOperationInfo != null) {
@@ -268,7 +271,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     activeHandleCache.invalidate(handle);
   }
 
-  void closeInternal(Handle handle, OperationInfo opInfo) throws ExploreException, HandleNotFoundException {
+  void closeInternal(Handle handle, OperationInfo opInfo)
+    throws ExploreException, HandleNotFoundException, SQLException {
     try {
       LOG.trace("Closing operation {}", handle);
       cliService.closeOperation(opInfo.getOperationHandle());
@@ -401,9 +405,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     inactiveHandleCache.cleanUp();
   }
 
-  private RuntimeException getSqlException(HiveSQLException e) throws ExploreException {
+  private RuntimeException getSqlException(HiveSQLException e) throws ExploreException, SQLException {
     if (e.getSQLState() != null) {
-      throw new IllegalArgumentException(String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+      throw e;
     }
     throw new ExploreException(e);
   }

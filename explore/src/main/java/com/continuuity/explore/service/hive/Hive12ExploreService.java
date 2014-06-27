@@ -67,7 +67,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
 
   @Override
   protected List<Result> fetchNextResults(OperationHandle operationHandle, int size)
-    throws ExploreException, HandleNotFoundException {
+    throws ExploreException, HandleNotFoundException, HiveSQLException {
     try {
       if (operationHandle.hasResultSet()) {
         // Rowset is an interface in Hive 13, but a class in Hive 12, so we use reflection
@@ -92,8 +92,6 @@ public class Hive12ExploreService extends BaseHiveExploreService {
     } catch (ClassNotFoundException e) {
       throw Throwables.propagate(e);
     } catch (NoSuchMethodException e) {
-      throw Throwables.propagate(e);
-    } catch (HiveSQLException e) {
       throw Throwables.propagate(e);
     } catch (InvocationTargetException e) {
       throw Throwables.propagate(e);

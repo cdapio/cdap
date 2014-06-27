@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.StringWriter;
 import java.lang.reflect.Type;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -42,7 +43,7 @@ public class DatasetExploreFacade {
    * Enables ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.
    * @param datasetInstance dataset instance name.
    */
-  public void enableExplore(String datasetInstance) throws ExploreException {
+  public void enableExplore(String datasetInstance) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
@@ -77,7 +78,7 @@ public class DatasetExploreFacade {
    * Disable ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.
    * @param datasetInstance dataset instance name.
    */
-  public void disableExplore(String datasetInstance) throws ExploreException {
+  public void disableExplore(String datasetInstance) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
