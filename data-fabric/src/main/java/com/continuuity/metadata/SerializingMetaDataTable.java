@@ -9,11 +9,13 @@ import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.transaction.DefaultTransactionExecutor;
+import com.continuuity.data2.transaction.RetryStrategies;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionConflictException;
 import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -27,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -36,7 +39,7 @@ public class SerializingMetaDataTable implements MetaDataTable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SerializingMetaDataTable.class);
 
-  private final TransactionExecutorFactory executorFactory;
+  private final TransactionSystemClient txClient;
   private final DataSetAccessor datasetAccessor;
 
   // To avoid the overhead of creating new serializer, table client and tx executor for every call,
@@ -53,7 +56,12 @@ public class SerializingMetaDataTable implements MetaDataTable {
         LOG.error("Failed to get a dataset client for meta data table.", e);
         throw Throwables.propagate(e);
       }
-      TransactionExecutor executor = executorFactory.createExecutor(ImmutableList.of((TransactionAware) table));
+
+      // NOTE: this code is old and needs major redoing. We don't want to break what was working for long time, hence
+      //       using no retries the most plain way
+      TransactionExecutor executor =
+        new DefaultTransactionExecutor(txClient, ImmutableList.of((TransactionAware) table),
+                                       RetryStrategies.noRetries());
       return new PerThread(new MetaDataSerializer(), table, executor);
     }
   };
@@ -71,8 +79,8 @@ public class SerializingMetaDataTable implements MetaDataTable {
   }
 
   @Inject
-  public SerializingMetaDataTable(TransactionExecutorFactory factory, DataSetAccessor accessor) {
-    this.executorFactory = factory;
+  public SerializingMetaDataTable(TransactionSystemClient txClient, DataSetAccessor accessor) {
+    this.txClient = txClient;
     this.datasetAccessor = accessor;
 
     // ensure the meta data table exists
@@ -164,6 +172,11 @@ public class SerializingMetaDataTable implements MetaDataTable {
       } catch (TransactionFailureException e) {
         // some other problem
         throw propagateException(e);
+
+      } catch (InterruptedException e) {
+        // should NEVER happen, since using NoRetryStrategy in tx executor
+        Thread.currentThread().interrupt();
+        throw Throwables.propagate(e);
       }
     }
     // we can only reach this point if there is a conflict and we have retried too many times
@@ -298,6 +311,11 @@ public class SerializingMetaDataTable implements MetaDataTable {
       } catch (TransactionFailureException e) {
         // some other problem
         throw propagateException(e);
+
+      } catch (InterruptedException e) {
+        // should NEVER happen, since using NoRetryStrategy in tx executor
+        Thread.currentThread().interrupt();
+        throw Throwables.propagate(e);
       }
     }
     // we can only reach this point if there is a conflict and we have retried too many times
@@ -390,6 +408,11 @@ public class SerializingMetaDataTable implements MetaDataTable {
     } catch (TransactionFailureException e) {
       // some other problem
       throw propagateException(e);
+
+    } catch (InterruptedException e) {
+      // should NEVER happen, since using NoRetryStrategy in tx executor
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
     }
   }
 
@@ -424,6 +447,11 @@ public class SerializingMetaDataTable implements MetaDataTable {
     } catch (TransactionFailureException e) {
       // some other problem
       throw propagateException(e);
+
+    } catch (InterruptedException e) {
+      // should NEVER happen, since using NoRetryStrategy in tx executor
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
     }
   }
 
@@ -453,6 +481,11 @@ public class SerializingMetaDataTable implements MetaDataTable {
     } catch (TransactionFailureException e) {
       // some other problem
       throw propagateException(e);
+
+    } catch (InterruptedException e) {
+      // should NEVER happen, since using NoRetryStrategy in tx executor
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
     }
   }
 
@@ -483,6 +516,11 @@ public class SerializingMetaDataTable implements MetaDataTable {
     } catch (TransactionFailureException e) {
       // some other problem
       throw propagateException(e);
+
+    } catch (InterruptedException e) {
+      // should NEVER happen, since using NoRetryStrategy in tx executor
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
     }
   }
 
@@ -490,7 +528,7 @@ public class SerializingMetaDataTable implements MetaDataTable {
   public List<MetaDataEntry> list(final OperationContext context, final String account,
                                   final String application, final String type,
                                   final String startId, final String stopId, final int count)
-                                  throws OperationException {
+    throws OperationException {
     Preconditions.checkNotNull(account, "account cannot be null");
     Preconditions.checkArgument(!account.isEmpty(), "account cannot be empty");
     Preconditions.checkArgument(application == null || !application.isEmpty(), "application cannot be empty");
@@ -516,6 +554,11 @@ public class SerializingMetaDataTable implements MetaDataTable {
     } catch (TransactionFailureException e) {
       // some other problem
       throw propagateException(e);
+
+    } catch (InterruptedException e) {
+      // should NEVER happen, since using NoRetryStrategy in tx executor
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
     }
   }
 
@@ -560,7 +603,7 @@ public class SerializingMetaDataTable implements MetaDataTable {
   }
 
   private List<MetaDataEntry> doList(byte[] row, byte[] start, byte[] stop, int count)
-                                    throws Exception {
+    throws Exception {
     Map<byte[], byte[]> result = getMetaTable().get(row, start, stop, count);
     List<MetaDataEntry> entries = Lists.newArrayList();
     for (byte[] bytes : result.values()) {
@@ -594,6 +637,11 @@ public class SerializingMetaDataTable implements MetaDataTable {
     } catch (TransactionFailureException e) {
       // some other problem
       throw propagateException(e);
+
+    } catch (InterruptedException e) {
+      // should NEVER happen, since using NoRetryStrategy in tx executor
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
     }
   }
 
@@ -632,6 +680,11 @@ public class SerializingMetaDataTable implements MetaDataTable {
     } catch (TransactionFailureException e) {
       // some other problem
       throw propagateException(e);
+
+    } catch (InterruptedException e) {
+      // should NEVER happen, since using NoRetryStrategy in tx executor
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
     }
   }
 
@@ -651,6 +704,13 @@ public class SerializingMetaDataTable implements MetaDataTable {
       scanner.close();
     }
     return accounts;
+  }
+
+  @Override
+  public void upgrade() throws Exception {
+    DataSetManager manager = datasetAccessor.getDataSetManager(OrderedColumnarTable.class,
+                                                               DataSetAccessor.Namespace.SYSTEM);
+    manager.upgrade(META_DATA_TABLE_NAME, new Properties());
   }
 
   /**

@@ -14,6 +14,7 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.test.XSlowTests;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
@@ -25,6 +26,7 @@ import org.apache.twill.common.Threads;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,7 @@ import java.io.IOException;
 /**
  *
  */
+@Category(XSlowTests.class)
 public class WorkflowTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowTest.class);
@@ -57,7 +60,7 @@ public class WorkflowTest {
   };
 
 
-  @Test
+  @Test(timeout = 120 * 1000L)
   public void testWorkflow() throws Exception {
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(WorkflowApp.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
@@ -95,7 +98,7 @@ public class WorkflowTest {
     completion.get();
   }
 
-  @Test
+  @Test(timeout = 120 * 1000L)
   public void testOneActionWorkflow() throws Exception {
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(OneActionWorkflowApp.class,
                                                                                          TEMP_FOLDER_SUPPLIER);

@@ -9,16 +9,18 @@ import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.BufferingOcTableClientTest;
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.inmemory.DetachedTxSystemClient;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
-
+import com.continuuity.test.SlowTests;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.util.concurrent.TimeUnit;
 
@@ -26,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
+@Category(SlowTests.class)
 public class HBaseOcTableClientTest extends BufferingOcTableClientTest<HBaseOcTableClient> {
   private static HBaseTestBase testHBase;
 
@@ -50,7 +53,7 @@ public class HBaseOcTableClientTest extends BufferingOcTableClientTest<HBaseOcTa
     Configuration hConf = testHBase.getConfiguration();
     CConfiguration conf = CConfiguration.create();
     conf.unset(Constants.CFG_HDFS_USER);
-    conf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
+    conf.setBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
     return new HBaseOcTableManager(conf, hConf, new HDFSLocationFactory(hConf), tableUtil);
   }

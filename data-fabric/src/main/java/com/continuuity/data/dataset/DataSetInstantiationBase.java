@@ -1,15 +1,21 @@
+/*
+ * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.dataset.FileDataSet;
 import com.continuuity.api.data.dataset.MultiObjectStore;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.MemoryTable;
 import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.metrics.MeteredDataset;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.Fields;
 import com.continuuity.common.lang.InstantiatorFactory;
@@ -18,14 +24,13 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataFabric;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.table.RuntimeMemoryTable;
 import com.continuuity.data.table.RuntimeTable;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.dataset.api.DataSetClient;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.metrics.MeteredDataset;
 import com.continuuity.internal.lang.ClassLoaders;
 import com.continuuity.internal.lang.Reflections;
 import com.google.common.base.Predicate;
@@ -45,31 +50,35 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This class implements the core logic of instantiating data set, including injection of the data fabric runtime and
- * built-in data sets.
+ * Implements the core logic of instantiating a dataset, including injection of the data fabric runtime and
+ * built-in datasets.
  */
 public class DataSetInstantiationBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataSetInstantiationBase.class);
 
+  private final CConfiguration configuration;
   // the class loader to use for data set classes
   private final ClassLoader classLoader;
   // the known data set specifications
   private final Map<String, DataSetSpecification> datasets = Maps.newHashMap();
-  private final Map<String, DatasetInstanceCreationSpec> datasetsV2 = Maps.newHashMap();
+  private final Map<String, DatasetCreationSpec> datasetsV2 = Maps.newHashMap();
 
   private final Set<TransactionAware> txAware = Sets.newIdentityHashSet();
   // in this collection we have only datasets initialized with getDataSet() which is OK for now...
   private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
 
   private final InstantiatorFactory instantiatorFactory = new InstantiatorFactory(false);
+  private final ReactorDatasetNamespace namespace;
 
-  public DataSetInstantiationBase() {
-    this(null);
+  public DataSetInstantiationBase(CConfiguration configuration) {
+    this(configuration, null);
   }
 
-  public DataSetInstantiationBase(ClassLoader classLoader) {
+  public DataSetInstantiationBase(CConfiguration configuration, ClassLoader classLoader) {
+    this.configuration = configuration;
     this.classLoader = classLoader;
+    this.namespace = new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER);
   }
 
   /**
@@ -79,11 +88,11 @@ public class DataSetInstantiationBase {
    * @param specs The list of DataSetSpecification's
    */
   public void setDataSets(Iterable<DataSetSpecification> specs,
-                          Iterable<DatasetInstanceCreationSpec> creationSpec) {
+                          Iterable<DatasetCreationSpec> creationSpec) {
     for (DataSetSpecification spec : specs) {
       this.datasets.put(spec.getName(), spec);
     }
-    for (DatasetInstanceCreationSpec spec : creationSpec) {
+    for (DatasetCreationSpec spec : creationSpec) {
       if (spec != null) {
         this.datasetsV2.put(spec.getInstanceName(), spec);
       }
@@ -116,7 +125,7 @@ public class DataSetInstantiationBase {
    *  @throws DataSetInstantiationException If failed to create the DataSet.
    */
   @SuppressWarnings("unchecked")
-  public <T extends Closeable> T getDataSet(String dataSetName, DataFabric fabric, DatasetManager datasetManager)
+  public <T extends Closeable> T getDataSet(String dataSetName, DataFabric fabric, DatasetFramework datasetFramework)
     throws DataSetInstantiationException {
 
     // find the data set specification
@@ -125,7 +134,7 @@ public class DataSetInstantiationBase {
       return (T) getDataSet(spec, fabric, dataSetName);
     }
 
-    T dataSet = (T) getDataset(dataSetName, datasetManager);
+    T dataSet = (T) getDataset(dataSetName, datasetFramework);
     if (dataSet != null) {
       return dataSet;
     }
@@ -133,10 +142,10 @@ public class DataSetInstantiationBase {
     throw logAndException(null, "No data set named %s can be instantiated.", dataSetName);
   }
 
-  public <T extends Dataset> T getDataset(String dataSetName, DatasetManager datasetManager)
+  public <T extends Dataset> T getDataset(String dataSetName, DatasetFramework datasetFramework)
     throws DataSetInstantiationException {
 
-    T dataset = getOrCreateDataset(dataSetName, datasetManager);
+    T dataset = getOrCreateDataset(dataSetName, datasetFramework);
 
     if (dataset instanceof TransactionAware) {
       txAware.add((TransactionAware) dataset);
@@ -146,37 +155,23 @@ public class DataSetInstantiationBase {
     return dataset;
   }
 
-  private <T extends Dataset> T getOrCreateDataset(String datasetName, DatasetManager datasetManager)
+  private <T extends Dataset> T getOrCreateDataset(String datasetName, DatasetFramework datasetFramework)
     throws DataSetInstantiationException {
-    // First, get admin to check if dataset instance exists. If doesn't exist - create.
-    // If admin is null, then dataset meta doesn't exist, in which case try to create from scratch.
-    DatasetAdmin admin;
     try {
-      admin = datasetManager.getAdmin(datasetName, classLoader);
-      if (admin != null) {
-        if (!admin.exists()) {
-          admin.create();
-        }
-      } else {
-        DatasetInstanceCreationSpec creationSpec = datasetsV2.get(datasetName);
+      if (!datasetFramework.hasInstance(datasetName)) {
+        DatasetCreationSpec creationSpec = datasetsV2.get(datasetName);
         if (creationSpec == null) {
           return null;
         }
         try {
-          datasetManager.addInstance(creationSpec.getTypeName(), creationSpec.getInstanceName(),
-                                     creationSpec.getProperties());
-          admin = datasetManager.getAdmin(datasetName, classLoader);
-          if (admin == null) {
-            throw new DataSetInstantiationException("Added instance meta to the system " + datasetName +
-                                                      " but still cannot access it");
-          }
-          admin.create();
+          datasetFramework.addInstance(creationSpec.getTypeName(), creationSpec.getInstanceName(),
+                                       creationSpec.getProperties());
         } catch (Exception e) {
           throw new DataSetInstantiationException("could not create dataset " + datasetName, e);
         }
       }
 
-      Dataset dataset = datasetManager.getDataset(datasetName, classLoader);
+      Dataset dataset = datasetFramework.getDataset(datasetName, classLoader);
       if (dataset == null) {
         throw new DataSetInstantiationException("Attempted to create dataset " + datasetName +
                                                   " but still cannot access it");
@@ -438,6 +433,7 @@ public class DataSetInstantiationBase {
 
   public void setMetricsCollector(final MetricsCollectionService metricsCollectionService,
                                   final MetricsCollector programContextMetrics) {
+
     final MetricsCollector dataSetMetrics =
       metricsCollectionService.getCollector(MetricsScope.REACTOR, Constants.Metrics.DATASET_CONTEXT, "0");
 
@@ -486,7 +482,8 @@ public class DataSetInstantiationBase {
 
       // datasets API V2
       if (txAware.getKey() instanceof MeteredDataset) {
-        final String dataSetName = txAware.getValue();
+        // TODO: fix namespacing - see REACTOR-217
+        final String dataSetName = namespace.namespace(txAware.getValue());
         MeteredDataset.MetricsCollector metricsCollector = new MeteredDataset.MetricsCollector() {
           @Override
           public void recordRead(int opsCount, int dataSize) {

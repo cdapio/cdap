@@ -1,11 +1,9 @@
 package com.continuuity.security.auth;
 
-import com.continuuity.security.io.Codec;
+import com.continuuity.common.io.Codec;
 import com.google.common.util.concurrent.Service;
 
-import java.io.IOException;
 import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * Maintains secret keys used to sign and validate authentication tokens.

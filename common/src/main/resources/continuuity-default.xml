@@ -174,6 +174,14 @@
         <description>Number of netty server worker threads</description>
     </property>
 
+    <!-- Monitor Handler Parameters -->
+
+    <property>
+      <name>monitor.handler.service.discovery.timeout.seconds</name>
+      <value>1</value>
+      <description>Timeout in seconds for service discovery used in Monitor Handler Service Status check</description>
+    </property>
+
     <!-- Reactor YARN Services Parameters -->
 
     <property>
@@ -186,6 +194,12 @@
         <name>reactor.service.memory.mb</name>
         <value>512</value>
         <description>Size of Memory in MB for Reactor Service Twill Runnables</description>
+    </property>
+
+    <property>
+        <name>reactor.service.max.instances</name>
+        <value>5</value>
+        <description>Maximum Number of Reactor Service Instances</description>
     </property>
 
     <!-- Reactor Services HTTP handles -->
@@ -243,6 +257,13 @@
     </property>
 
     <property>
+        <name>stream.event.ttl</name>
+        <!-- Long.MAX_VALUE !-->
+        <value>9223372036854775807</value>
+        <description>Default time to live in milliseconds for stream events</description>
+    </property>
+
+    <property>
         <name>stream.file.prefix</name>
         <value>file</value>
         <description>Prefix of file name for stream file</description>
@@ -268,7 +289,7 @@
 
     <property>
       <name>stream.container.num.cores</name>
-      <value>32</value>
+      <value>2</value>
       <description>Number of virtual core for the YARN container that runs the stream handler</description>
     </property>
 
@@ -282,6 +303,12 @@
       <name>stream.container.instances</name>
       <value>2</value>
       <description>Number of YARN container instances for the stream handler</description>
+    </property>
+
+    <property>
+      <name>stream.file.cleanup.period</name>
+      <value>300000</value>
+      <description>How often to run stream file cleanup process in milliseconds</description>
     </property>
 
     <!--
@@ -354,6 +381,15 @@
     </property>
 
     <property>
+        <name>data.tx.snapshot.codecs</name>
+        <value>
+          com.continuuity.data2.transaction.snapshot.SnapshotCodecV1,
+          com.continuuity.data2.transaction.snapshot.SnapshotCodecV2
+        </value>
+        <description>Specifies the class names of all supported transaction state codecs.</description>
+    </property>
+
+    <property>
         <name>data.tx.snapshot.dir</name>
         <value>${hdfs.namespace}/tx.snapshot</value>
         <description>Directory in HDFS used to store snapshots and logs of
@@ -391,6 +427,11 @@
     <property>
         <name>data.tx.num.instances</name>
         <value>1</value>
+    </property>
+
+    <property>
+        <name>data.tx.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
     </property>
 
     <property>
@@ -515,9 +556,15 @@
     </property>
 
     <property>
-        <name>dataset.service.bind.port</name>
-        <value>45055</value>
-        <description>DataSet service port</description>
+        <name>dataset.executor.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
+        <description>Maximum Number of DataSet Executor Instances</description>
+    </property>
+
+    <property>
+        <name>dataset.executor.container.instances</name>
+        <value>1</value>
+        <description>Number of DataSet Executor Instances</description>
     </property>
 
     <property>
@@ -619,6 +666,11 @@
     </property>
 
     <property>
+        <name>metrics.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
+    </property>
+
+    <property>
         <name>metrics.num.cores</name>
         <value>${reactor.service.num.cores}</value>
     </property>
@@ -639,6 +691,11 @@
     </property>
 
     <property>
+        <name>metrics.processor.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
+    </property>
+
+    <property>
         <name>metrics.processor.num.cores</name>
         <value>1</value>
         <description>Number of cores for Metrics Processor Service Twill Runnable</description>
@@ -648,6 +705,12 @@
         <name>metrics.processor.memory.mb</name>
         <value>512</value>
         <description>Size of Memory in MB for Metrics Processor Service Twill Runnable</description>
+    </property>
+
+    <property>
+        <name>metrics.processor.status.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>Default inet address for binding metrics processor http service.</description>
     </property>
 
     <!--
@@ -696,9 +759,20 @@
     </property>
 
     <property>
+        <name>log.saver.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
+    </property>
+
+    <property>
         <name>log.saver.run.memory.megs</name>
         <value>1024</value>
         <description>Memory in MB for log saver instances to run in yarn</description>
+    </property>
+
+    <property>
+        <name>log.saver.status.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>Default inet address for binding logsaver http service.</description>
     </property>
 
     <!--
@@ -775,6 +849,45 @@
         <value>10000</value>
     </property>
 
+    <!---
+         Hive Server Settings.
+     -->
+    <property>
+        <name>hive.server.bind.address</name>
+        <value>localhost</value>
+    </property>
+    <property>
+        <name>reactor.explore.enabled</name>
+        <value>false</value>
+    </property>
+    <property>
+        <name>hive.local.data.dir</name>
+        <value>${local.data.dir}/hive</value>
+    </property>
+    <property>
+        <name>explore.executor.max.instances</name>
+        <value>1</value>
+        <description>Maximum number of explore executor instances</description>
+    </property>
+    <property>
+        <name>explore.active.operation.timeout.secs</name>
+        <value>86400</value>
+        <description>Timeout value in seconds for a SQL operation whose result is not fetched completely</description>
+    </property>
+    <property>
+        <name>explore.inactive.operation.timeout.secs</name>
+        <value>3600</value>
+        <description>>Timeout value in seconds for a SQL operation which does not have any more results
+            to be fetched</description>
+    </property>
+    <property>
+        <name>explore.cleanup.job.schedule.secs</name>
+        <value>60</value>
+        <description>>Time in secs to schedule clean up job to timeout operations</description>
+    </property>
+
+
+
     <!--
         External Authentication Settings
     -->
@@ -789,7 +902,12 @@
     </property>
 
     <property>
-        <name>security.server.port</name>
+      <name>security.auth.server.address</name>
+      <value>127.0.0.1</value>
+    </property>
+
+    <property>
+        <name>security.auth.server.port</name>
         <value>10009</value>
     </property>
 
@@ -809,11 +927,35 @@
         <value>${local.data.dir}/security/keyfile</value>
     </property>
 
+    <!--
+     External Authentication login module settings
+    -->
+    <property>
+        <name>security.authentication.handlerClassName</name>
+        <value></value>
+    </property>
+
+    <property>
+        <name>security.authentication.loginmodule.className</name>
+        <value></value>
+    </property>
+
+    <property>
+      <name>security.authentication.basic.realmfile</name>
+      <value></value>
+    </property>
+
     <property>
         <name>security.token.digest.key.expiration.ms</name>
         <value>3600000</value>
         <description>Time duration (in milliseconds) after which an active secret key used
         for signing tokens should be retired.</description>
+    </property>
+
+    <property>
+        <name>security.server.extended.token.expiration.ms</name>
+        <description>AccessToken expiration time in milliseconds (defaults to 1 week)</description>
+        <value>604800000</value>
     </property>
 
     <property>
@@ -835,5 +977,25 @@
         <name>security.realm</name>
         <value>continuuity</value>
         <description>Security realm used for authentication</description>
+    </property>
+
+    <property>
+      <name>security.server.ssl.enabled</name>
+      <value>false</value>
+    </property>
+
+    <property>
+      <name>security.server.ssl.port</name>
+      <value>10010</value>
+    </property>
+
+    <property>
+      <name>security.server.ssl.keystore.path</name>
+      <value></value>
+    </property>
+
+    <property>
+      <name>security.server.ssl.keystore.password</name>
+      <value></value>
     </property>
 </configuration>

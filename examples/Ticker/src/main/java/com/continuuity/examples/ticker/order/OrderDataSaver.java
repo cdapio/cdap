@@ -18,7 +18,7 @@ package com.continuuity.examples.ticker.order;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.table.Put;
+import com.continuuity.api.dataset.table.Put;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.examples.ticker.data.MultiIndexedTable;
 import org.slf4j.Logger;

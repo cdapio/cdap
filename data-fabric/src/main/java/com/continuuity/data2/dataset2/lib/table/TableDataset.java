@@ -5,17 +5,16 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.dataset.DataSetException;
-import com.continuuity.data2.dataset2.lib.AbstractDataset;
-import com.continuuity.internal.data.dataset.lib.table.Delete;
-import com.continuuity.internal.data.dataset.lib.table.Get;
-import com.continuuity.internal.data.dataset.lib.table.Increment;
-import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
-import com.continuuity.internal.data.dataset.lib.table.Put;
-import com.continuuity.internal.data.dataset.lib.table.Row;
-import com.continuuity.internal.data.dataset.lib.table.Scanner;
-import com.continuuity.internal.data.dataset.lib.table.Table;
-import com.continuuity.internal.data.dataset.lib.table.TableSplit;
-
+import com.continuuity.api.dataset.lib.AbstractDataset;
+import com.continuuity.api.dataset.table.Delete;
+import com.continuuity.api.dataset.table.Get;
+import com.continuuity.api.dataset.table.Increment;
+import com.continuuity.api.dataset.table.OrderedTable;
+import com.continuuity.api.dataset.table.Put;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
+import com.continuuity.api.dataset.table.Table;
+import com.continuuity.api.dataset.table.TableSplit;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -210,6 +209,17 @@ class TableDataset extends AbstractDataset implements Table {
   }
 
   @Override
+  public boolean compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) {
+    try {
+      return table.compareAndSwap(row, column, expectedValue, newValue);
+    } catch (Exception e) {
+      String msg = "compareAndSwap failed for table: " + getName();
+      LOG.debug(msg, e);
+      throw new DataSetException(msg, e);
+    }
+  }
+
+  @Override
   public Scanner scan(byte[] startRow, byte[] stopRow) {
     try {
       return table.scan(startRow, stopRow);
@@ -234,6 +244,7 @@ class TableDataset extends AbstractDataset implements Table {
    * @return list of {@link Split}
    */
   @Beta
+  @Override
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
     try {
       return table.getSplits(numSplits, start, stop);

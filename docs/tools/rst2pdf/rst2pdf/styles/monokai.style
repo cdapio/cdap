@@ -1,0 +1,86 @@
+styles:
+    pygments-bp: {parent: code, textColor: #f8f8f2}
+    pygments-c: {parent: code, textColor: #75715e}
+    pygments-c1: {parent: code, textColor: #75715e}
+    pygments-cm: {parent: code, textColor: #75715e}
+    pygments-cp: {parent: code, textColor: #75715e}
+    pygments-cs: {parent: code, textColor: #75715e}
+    pygments-err:
+        backColor: #1e0010
+        parent: code
+        textColor: #960050
+
+    pygments-g: {parent: code, textColor: black}
+    pygments-gd: {parent: code, textColor: black}
+    pygments-ge:
+        fontName: stdMonoItalic
+        parent: code
+        textColor: black
+
+    pygments-gh: {parent: code, textColor: black}
+    pygments-gi: {parent: code, textColor: black}
+    pygments-go: {parent: code, textColor: black}
+    pygments-gp: {parent: code, textColor: black}
+    pygments-gr: {parent: code, textColor: black}
+    pygments-gs:
+        fontName: stdMonoBold
+        parent: code
+        textColor: black
+
+    pygments-gt: {parent: code, textColor: black}
+    pygments-gu: {parent: code, textColor: black}
+    pygments-hll:
+        backColor: #49483e
+        parent: code
+        textColor: black
+
+    pygments-il: {parent: code, textColor: #ae81ff}
+    pygments-k: {parent: code, textColor: #66d9ef}
+    pygments-kc: {parent: code, textColor: #66d9ef}
+    pygments-kd: {parent: code, textColor: #66d9ef}
+    pygments-kn: {parent: code, textColor: #f92672}
+    pygments-kp: {parent: code, textColor: #66d9ef}
+    pygments-kr: {parent: code, textColor: #66d9ef}
+    pygments-kt: {parent: code, textColor: #66d9ef}
+    pygments-l: {parent: code, textColor: #ae81ff}
+    pygments-ld: {parent: code, textColor: #e6db74}
+    pygments-m: {parent: code, textColor: #ae81ff}
+    pygments-mf: {parent: code, textColor: #ae81ff}
+    pygments-mh: {parent: code, textColor: #ae81ff}
+    pygments-mi: {parent: code, textColor: #ae81ff}
+    pygments-mo: {parent: code, textColor: #ae81ff}
+    pygments-n: {parent: code, textColor: #f8f8f2}
+    pygments-na: {parent: code, textColor: #a6e22e}
+    pygments-nb: {parent: code, textColor: #f8f8f2}
+    pygments-nc: {parent: code, textColor: #a6e22e}
+    pygments-nd: {parent: code, textColor: #a6e22e}
+    pygments-ne: {parent: code, textColor: #a6e22e}
+    pygments-nf: {parent: code, textColor: #a6e22e}
+    pygments-ni: {parent: code, textColor: #f8f8f2}
+    pygments-nl: {parent: code, textColor: #f8f8f2}
+    pygments-nn: {parent: code, textColor: #f8f8f2}
+    pygments-no: {parent: code, textColor: #66d9ef}
+    pygments-nt: {parent: code, textColor: #f92672}
+    pygments-nv: {parent: code, textColor: #f8f8f2}
+    pygments-nx: {parent: code, textColor: #a6e22e}
+    pygments-o: {parent: code, textColor: #f92672}
+    pygments-ow: {parent: code, textColor: #f92672}
+    pygments-p: {parent: code, textColor: #f8f8f2}
+    pygments-py: {parent: code, textColor: #f8f8f2}
+    pygments-s: {parent: code, textColor: #e6db74}
+    pygments-s1: {parent: code, textColor: #e6db74}
+    pygments-s2: {parent: code, textColor: #e6db74}
+    pygments-sb: {parent: code, textColor: #e6db74}
+    pygments-sc: {parent: code, textColor: #e6db74}
+    pygments-sd: {parent: code, textColor: #e6db74}
+    pygments-se: {parent: code, textColor: #ae81ff}
+    pygments-sh: {parent: code, textColor: #e6db74}
+    pygments-si: {parent: code, textColor: #e6db74}
+    pygments-sr: {parent: code, textColor: #e6db74}
+    pygments-ss: {parent: code, textColor: #e6db74}
+    pygments-sx: {parent: code, textColor: #e6db74}
+    pygments-vc: {parent: code, textColor: #f8f8f2}
+    pygments-vg: {parent: code, textColor: #f8f8f2}
+    pygments-vi: {parent: code, textColor: #f8f8f2}
+    pygments-w: {parent: code, textColor: #f8f8f2}
+    pygments-x: {parent: code, textColor: black}

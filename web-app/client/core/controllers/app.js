@@ -33,7 +33,7 @@ define([], function () {
 			/*
 			 * Load Streams
 			 */
-			this.HTTP.rest('apps', model.id, 'streams', {cache: true}, function (objects) {
+			this.HTTP.rest('apps', model.id, 'streams', function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -49,7 +49,7 @@ define([], function () {
 			/*
 			 * Load Flows
 			 */
-			this.HTTP.rest('apps', model.id, 'flows', {cache: true}, function (objects) {
+			this.HTTP.rest('apps', model.id, 'flows', function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -63,7 +63,7 @@ define([], function () {
       /*
        * Load Mapreduce
        */
-      this.HTTP.rest('apps', model.id, 'mapreduce', {cache: true}, function (objects) {
+      this.HTTP.rest('apps', model.id, 'mapreduce', function (objects) {
 
           var i = objects.length;
           while (i--) {
@@ -77,7 +77,7 @@ define([], function () {
       /*
        * Load Workflows
        */
-      this.HTTP.rest('apps', model.id, 'workflows', {cache: true}, function (objects) {
+      this.HTTP.rest('apps', model.id, 'workflows', function (objects) {
 
           var i = objects.length;
           while (i--) {
@@ -91,7 +91,7 @@ define([], function () {
 			/*
 			 * Load Datasets
 			 */
-			this.HTTP.rest('apps', model.id, 'datasets', {cache: true}, function (objects) {
+			this.HTTP.rest('apps', model.id, 'datasets', function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -105,7 +105,7 @@ define([], function () {
 			/*
 			 * Load Procedures
 			 */
-			this.HTTP.rest('apps', model.id, 'procedures', {cache: true}, function (objects) {
+			this.HTTP.rest('apps', model.id, 'procedures', function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -272,13 +272,12 @@ define([], function () {
 
 					C.Util.interrupt();
 
-					this.HTTP.del('rest', 'apps', app.id, function (response) {
-
-						if (response !== "") {
+					this.HTTP.del('rest', 'apps', app.id, function (err, status) {
+						if (err !== "") {
 
 							C.Util.proceed(function () {
 								setTimeout(function () {
-									C.Modal.show("Could not Delete", response);
+									C.Modal.show("Could not Delete", status);
 								}, 500);
 							});
 

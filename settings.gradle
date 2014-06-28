@@ -9,8 +9,16 @@ project(':singlenode').buildFileName = 'package.gradle'
 // HBase compatibility modules
 include 'hbase-compat-0.94', 'hbase-compat-0.96'
 
+include 'explore'
+include 'explore-client'
+
 include 'data-fabric-tests'
 include 'watchdog-tests'
 
 // Test framework
 include 'test-framework:performance'
+
+// transactions
+include 'tx-core'
+include 'tx-hbase-compat-0.94'
+include 'tx-hbase-compat-0.96'

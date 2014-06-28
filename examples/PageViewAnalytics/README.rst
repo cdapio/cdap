@@ -1,13 +1,11 @@
-.. :Author: John Jackson
+.. :Author: Continuuity. Inc.
    :Description: Continuuity Reactor Advanced Apache Log Event Logger
 
 ============================
 PageViewAnalytics Example
 ============================
 
----------------------------------------------------------------------------
-A Continuuity Reactor Application demonstrating Custom DataSets and Metrics
----------------------------------------------------------------------------
+**A Continuuity Reactor Application Demonstrating Custom DataSets and Metrics**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
@@ -50,29 +48,16 @@ The PageViewAnalytics Application
 As in the other `examples <http://continuuity.com/developers/examples>`__, the components
 of the Application are tied together by the class ``PageViewAnalyticsApp``::
 
-	public class PageViewAnalyticsApp implements Application {
-	
-	  @Override
-	  public ApplicationSpecification configure() {
-	    return ApplicationSpecification.Builder.with()
-	      .setName("PageViewAnalytics")
-	      .setDescription("Page view analysis")
-	      // Ingest data into the Application via Streams
-	      .withStreams()
-	        .add(new Stream("logEventStream"))
-	      // Store processed data in DataSets
-	      .withDataSets()
-	        .add(new PageViewStore("pageViewCDS"))
-	      // Process log events in real-time using Flows
-	      .withFlows()
-	        .add(new LogAnalyticsFlow())
-	      // Query the processed data using Procedures
-	      .withProcedures()
-	        .add(new PageViewProcedure())
-	      .noMapReduce()
-	      .noWorkflow()
-	      .build();
-	  }
+	public class PageViewAnalyticsApp extends AbstractApplication {
+    @Override
+    public void configure() {
+      setName("PageViewAnalytics");
+      setDescription("Page view analysis");
+      addStream(new Stream("logEventStream"));
+      createDataSet("pageViewCDS", PageViewStore.class);
+      addFlow(new LogAnalyticsFlow());
+      addProcedure(new PageViewProcedure());
+    }
 
 
 ``PageViewStore``: Custom Data Storage
@@ -230,4 +215,4 @@ Either:
 
 Downloading the Example
 =======================
-`Download the example </developers/examples-files/continuuity-PageViewAnalytics-2.2.0.zip>`_
+`Download the example </developers/examples-files/continuuity-PageViewAnalytics-2.3.0.zip>`_

@@ -15,6 +15,7 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueTest;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -33,12 +34,12 @@ public class LevelDBQueueTest extends QueueTest {
   @BeforeClass
   public static void init() throws Exception {
     CConfiguration conf = CConfiguration.create();
-    conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
       new ConfigModule(conf),
       new LocationRuntimeModule().getSingleNodeModules(),
-      new DataFabricLevelDBModule(conf));
+      new DataFabricLevelDBModule(),
+      new TransactionMetricsModule());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     transactionManager.startAndWait();

@@ -1,11 +1,11 @@
 package com.continuuity.data2.datafabric.dataset;
 
-import com.continuuity.data2.dataset2.manager.DatasetManagementException;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
-import com.continuuity.data2.dataset2.manager.InstanceConflictException;
-import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.DatasetManagementException;
+import com.continuuity.data2.dataset2.InstanceConflictException;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,19 +22,30 @@ public final class DatasetsUtil {
   private DatasetsUtil() {}
 
   /**
-   * Gets instance of {@link Dataset}, while add instance to {@link DatasetManager} and creating the physical data set
+   * Gets instance of {@link Dataset}, while add instance to
+   * {@link com.continuuity.data2.dataset2.DatasetFramework} and creating the physical data set
    * if that one doesn't exist.
    * NOTE: does poor job guarding against races, i.e. only one client for this dataset instance is supported at a time
    */
-  public static <T extends Dataset> T getOrCreateDataset(DatasetManager datasetManager,
+  public static <T extends Dataset> T getOrCreateDataset(DatasetFramework datasetFramework,
                                                    String instanceName, String typeName,
-                                                   DatasetInstanceProperties props, ClassLoader cl)
+                                                   DatasetProperties props, ClassLoader cl)
     throws DatasetManagementException, IOException {
-    // making sure dataset instance is added
-    DatasetAdmin admin = datasetManager.getAdmin(instanceName, cl);
-    if (admin == null) {
+
+    createIfNotExists(datasetFramework, instanceName, typeName, props);
+    return (T) datasetFramework.getDataset(instanceName, null);
+  }
+
+  /**
+   * Creates instance of the data set if not exists
+   */
+  public static void createIfNotExists(DatasetFramework datasetFramework,
+                                       String instanceName, String typeName,
+                                       DatasetProperties props) throws DatasetManagementException, IOException {
+
+    if (!datasetFramework.hasInstance(instanceName)) {
       try {
-        datasetManager.addInstance(typeName, instanceName, props);
+        datasetFramework.addInstance(typeName, instanceName, props);
       } catch (InstanceConflictException e) {
         // Do nothing: someone created this instance in between, just continuing
       } catch (DatasetManagementException e) {
@@ -42,19 +53,15 @@ public final class DatasetsUtil {
                   instanceName, typeName, props, e);
         throw Throwables.propagate(e);
       }
-      admin = datasetManager.getAdmin(instanceName, cl);
     }
-
-    try {
-      if (!admin.exists()) {
-        admin.create();
-      }
-    } finally {
-      admin.close();
-    }
-
-    return (T) datasetManager.getDataset(instanceName, null);
   }
 
-
+  /**
+   * Performs an upgrade of a dataset instance.
+   */
+  public static void upgradeDataset(DatasetFramework datasetFramework, String instanceName, ClassLoader cl)
+    throws Exception {
+    DatasetAdmin admin = datasetFramework.getAdmin(instanceName, cl);
+    admin.upgrade();
+  }
 }

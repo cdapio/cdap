@@ -11,14 +11,9 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import org.apache.twill.filesystem.LocationFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 
 /**
  *

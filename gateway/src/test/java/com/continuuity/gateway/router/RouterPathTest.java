@@ -1,7 +1,7 @@
 package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.gateway.GatewayFastTestsSuite;
+import com.continuuity.gateway.auth.NoAuthenticator;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -22,7 +22,7 @@ public class RouterPathTest {
 
   @BeforeClass
   public static void init() throws Exception {
-    pathLookup = GatewayFastTestsSuite.getInjector().getInstance(RouterPathLookup.class);
+    pathLookup = new RouterPathLookup(new NoAuthenticator());
   }
 
   @Test
@@ -146,17 +146,17 @@ public class RouterPathTest {
     flowPath = "//v2///streams/HelloStream//flows///";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.STREAM_HANDLER, result);
+    Assert.assertEquals(Constants.Service.STREAMS, result);
 
     flowPath = "//v2///streams/HelloStream//flows///";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.STREAM_HANDLER, result);
+    Assert.assertEquals(Constants.Service.STREAMS, result);
 
     flowPath = "v2//streams//flows///";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.STREAM_HANDLER, result);
+    Assert.assertEquals(Constants.Service.STREAMS, result);
 
     flowPath = "v2//streams/InvalidStreamName/flows/";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
@@ -166,12 +166,12 @@ public class RouterPathTest {
     flowPath = "v2//streams/InvalidStreamName/flows/";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.STREAM_HANDLER, result);
+    Assert.assertEquals(Constants.Service.STREAMS, result);
 
     flowPath = "v2//streams/InvalidStreamName/info/";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.STREAM_HANDLER, result);
+    Assert.assertEquals(Constants.Service.STREAMS, result);
   }
 
   @Test

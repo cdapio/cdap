@@ -6,7 +6,7 @@ import com.google.inject.Scopes;
 /**
 *
 */
-final class HbaseTableTestModule extends AbstractModule {
+public final class HbaseTableTestModule extends AbstractModule {
 
   @Override
   protected void configure() {

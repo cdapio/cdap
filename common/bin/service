@@ -103,6 +103,9 @@ start() {
       # Setup classpaths.
       set_classpath $COMPONENT_HOME $CONTINUUITY_CONF
 
+      # Setup hive classpath if hive is installed, this has to be run after HBASE_CP is setup by set_classpath.
+      set_hive_classpath
+
       # sets the JAVA variable.
       set_java
 
@@ -115,7 +118,9 @@ start() {
       echo "`date` Starting Java $APP service on `hostname`" >> $loglog
       echo "`ulimit -a`" >> $loglog 2>&1
 
-      nohup nice -n $NICENESS "$JAVA" -Dcontinuuity.service=$APP "$OPTS" -cp $CLASSPATH "$JAVA_HEAPMAX" $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >>$loglog 2>&1 &
+      nohup nice -n $NICENESS "$JAVA" -Dcontinuuity.service=$APP -Dhive.conf.files=$HIVE_CONF_FILES \
+        -Dhive.classpath=$HIVE_CLASSPATH "$OPTS" \
+        -cp $CLASSPATH "$JAVA_HEAPMAX" $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >>$loglog 2>&1 &
       echo $! >$pid
 
     else
@@ -183,6 +188,34 @@ ub_status() {
     status_of_proc -p $pid "$0" "$APP"
 }
 
+# Executes a specific class' main method with the classpath and environment setup
+run() {
+    classname=$1
+    shift
+    if [ -z "$classname" ]; then
+        echo "ERROR: No classname was given!"
+        echo "Usage: $0 run <fully qualified classname> [arguments]"
+        exit 1
+    fi
+    # Check and set classpath if in development environment. 
+    check_and_set_classpath_for_dev_environment $CONTINUUITY_HOME
+
+    # Setup classpaths.
+    set_classpath $COMPONENT_HOME $CONTINUUITY_CONF
+
+    # Setup hive classpath if hive is installed.
+    set_hive_classpath
+
+    # sets the JAVA variable.
+    set_java
+
+    # Adds the correct HBase support lib to the classpath
+    set_hbase
+
+    echo "Running class $classname"
+    "$JAVA" -Dhive.classpath=$HIVE_CLASSPATH "$OPTS" -cp $CLASSPATH "$JAVA_HEAPMAX" $classname $@
+}
+
 case "$1" in
   start)
     $1  
@@ -213,11 +246,18 @@ case "$1" in
 
   classpath)
     set_classpath $COMPONENT_HOME $CONTINUUITY_CONF
+    set_java
+    set_hbase
     echo $CLASSPATH
   ;;
 
+  run)
+    shift
+    run $@
+  ;;
+
   *)
-    echo "Usage: $0 {start|stop|restart|status}"
+    echo "Usage: $0 {start|stop|restart|status|run}"
     exit 1
   ;;
 

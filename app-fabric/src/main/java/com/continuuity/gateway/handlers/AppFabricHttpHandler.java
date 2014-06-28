@@ -5,10 +5,10 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.stream.StreamSpecification;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
@@ -35,10 +35,14 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
+import com.continuuity.data2.datafabric.dataset.DatasetMetaTableUtil;
+import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
@@ -46,8 +50,10 @@ import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
+import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.http.BodyConsumer;
 import com.continuuity.http.HttpResponder;
@@ -60,6 +66,7 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.internal.app.runtime.flow.FlowUtils;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.filesystem.LocationCodec;
@@ -72,11 +79,13 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
@@ -136,11 +145,12 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
+
 /**
  *  HttpHandler class for app-fabric requests.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION) //this will be removed/changed when gateway goes.
-public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
+public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
 
   private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE
@@ -163,13 +173,14 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   private static final long UPLOAD_TIMEOUT = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
 
-  private static final Map<String, Type> RUNNABLE_TYPE_MAP = ImmutableMap.of(
-    "mapreduce", Type.MAPREDUCE,
-    "flows", Type.FLOW,
-    "procedures", Type.PROCEDURE,
-    "workflows", Type.WORKFLOW,
-    "webapp", Type.WEBAPP
-  );
+  private static final Map<String, Type> RUNNABLE_TYPE_MAP = new ImmutableMap.Builder<String, Type>()
+    .put("mapreduce", Type.MAPREDUCE)
+    .put("flows", Type.FLOW)
+    .put("procedures", Type.PROCEDURE)
+    .put("workflows", Type.WORKFLOW)
+    .put("webapp", Type.WEBAPP)
+    .put("services", Type.SERVICE)
+    .build();
 
   /**
    * Configuration object passed from higher up.
@@ -187,7 +198,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   private final ProgramRuntimeService runtimeService;
 
-
   /**
    * Client talking to transaction system.
    */
@@ -196,7 +206,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   /**
    * Access Dataset Service
    */
-  private final DatasetManagerServiceClient dsClient;
+  private final DatasetServiceClient dsClient;
 
   /**
    * App fabric output directory.
@@ -227,6 +237,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
   private final StreamAdmin streamAdmin;
 
+  private final StreamConsumerFactory streamConsumerFactory;
+
+  private final ReactorDatasetNamespace namespace;
+
   /**
    * Number of seconds for timing out a service endpoint discovery.
    */
@@ -237,15 +251,12 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   private final String archiveDir;
 
-  private final ManagerFactory managerFactory;
+  private final ManagerFactory<Location, ApplicationWithPrograms> managerFactory;
   private final Scheduler scheduler;
-
-
 
   private static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private static final java.lang.reflect.Type LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
-
 
   private enum AppFabricServiceStatus {
 
@@ -285,17 +296,20 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
                               DataSetAccessor dataSetAccessor, LocationFactory locationFactory,
-                              ManagerFactory managerFactory, StoreFactory storeFactory,
+                              ManagerFactory<Location, ApplicationWithPrograms> managerFactory,
+                              StoreFactory storeFactory,
                               ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
+                              StreamConsumerFactory streamConsumerFactory,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
                               DataSetInstantiatorFromMetaData datasetInstantiator,
-                              DatasetManagerServiceClient dsClient) {
+                              DatasetServiceClient dsClient) {
 
     super(authenticator);
     this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
     this.streamAdmin = streamAdmin;
+    this.streamConsumerFactory = streamConsumerFactory;
     this.configuration = configuration;
     this.runtimeService = runtimeService;
     this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
@@ -310,6 +324,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.dsClient = dsClient;
     this.datasetInstantiator = datasetInstantiator;
     this.dataSetAccessor = dataSetAccessor;
+    this.namespace = new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER);
   }
 
   /**
@@ -524,7 +539,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                            @PathParam("app-id") final String appId,
                            @PathParam("runnable-type") final String runnableType,
                            @PathParam("runnable-id") final String runnableId) {
-    if (!("flows".equals(runnableType) || "procedures".equals(runnableType))) {
+    if (!("flows".equals(runnableType) || "procedures".equals(runnableType) || "services".equals(runnableType))) {
       responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
       return;
     }
@@ -694,6 +709,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       }
       if (status == AppFabricServiceStatus.INTERNAL_ERROR) {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        return;
       }
       responder.sendString(status.getCode(), status.getMessage());
     } catch (SecurityException e) {
@@ -701,23 +717,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
-      return ImmutableMap.of();
-    }
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
-    try {
-      Map<String, String> args = GSON.fromJson(reader, STRING_MAP_TYPE);
-      return args == null ? ImmutableMap.<String, String>of() : args;
-    } catch (JsonSyntaxException e) {
-      LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
-      throw e;
-    } finally {
-      reader.close();
     }
   }
 
@@ -849,7 +848,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, appId, procedureId);
-      short instances = getInstances(request);
+      int instances = getInstances(request);
       if (instances < 1) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
         return;
@@ -865,13 +864,13 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private void setProgramInstances(Id.Program programId, short instances) throws Exception {
+  private void setProgramInstances(Id.Program programId, int instances) throws Exception {
     try {
       store.setProcedureInstances(programId, instances);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, Type.PROCEDURE);
       if (runtimeInfo != null) {
         runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                            ImmutableMap.of(programId.getId(), (int) instances)).get();
+                                            ImmutableMap.of(programId.getId(), instances)).get();
       }
     } catch (Throwable throwable) {
       LOG.warn("Exception when getting instances for {}.{} to {}. {}",
@@ -920,7 +919,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   public void setFlowletInstances(HttpRequest request, HttpResponder responder,
                                   @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId,
                                   @PathParam("flowlet-id") final String flowletId) {
-    Short instances = 0;
+    int instances = 0;
     try {
       instances = getInstances(request);
       if (instances < 1) {
@@ -936,13 +935,13 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programID = Id.Program.from(accountId, appId, flowId);
       int oldInstances = store.getFlowletInstances(programID, flowletId);
-      if (oldInstances != (int) instances) {
+      if (oldInstances != instances) {
         store.setFlowletInstances(programID, flowletId, instances);
         ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(accountId, appId, flowId, Type.FLOW);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.FLOWLET_INSTANCES,
                                               ImmutableMap.of("flowlet", flowletId,
-                                                              "newInstances", String.valueOf((int) instances),
+                                                              "newInstances", String.valueOf(instances),
                                                               "oldInstances", String.valueOf(oldInstances))).get();
         }
       }
@@ -990,16 +989,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-
-  private short getInstances(HttpRequest request) throws IOException, NumberFormatException {
-    String instanceCount = "";
-    Map<String, String> arguments = decodeArguments(request);
-    if (!arguments.isEmpty()) {
-      instanceCount = arguments.get("instances");
-    }
-    return Short.parseShort(instanceCount);
   }
 
   private ProgramStatus getProgramStatus(Id.Program id, Type type)
@@ -1506,6 +1495,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       }
 
       // Construct URL for promotion of application to remote cluster
+
       Map<String, String> split = Splitter.on(',').withKeyValueSeparator(":").split(
         configuration.get(Constants.Router.FORWARD, Constants.Router.DEFAULT_FORWARD));
 
@@ -1513,6 +1503,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
       String url = String.format("%s://%s:%s/v2/apps/%s",
                                  schema, hostname, portForwards.inverse().get(Constants.Service.GATEWAY), appId);
+
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)
         .setRequestTimeoutInMs((int) UPLOAD_TIMEOUT)
@@ -1785,8 +1776,25 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
     deleteMetrics(identifier.getAccountId(), identifier.getApplicationId());
 
-    // also delete all queue state of each flow
+    // Delete all streams and queues state of each flow
+    // TODO: This should be unified with the DeletedProgramHandlerStage
     for (FlowSpecification flowSpecification : spec.getFlows().values()) {
+      Id.Program flowProgramId = Id.Program.from(appId, flowSpecification.getName());
+
+      // Collects stream name to all group ids consuming that stream
+      Multimap<String, Long> streamGroups = HashMultimap.create();
+      for (FlowletConnection connection : flowSpecification.getConnections()) {
+        if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
+          long groupId = FlowUtils.generateConsumerGroupId(flowProgramId, connection.getTargetName());
+          streamGroups.put(connection.getSourceName(), groupId);
+        }
+      }
+      // Remove all process states and group states for each stream
+      String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
+      for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
+        streamConsumerFactory.dropAll(QueueName.fromStream(entry.getKey()), namespace, entry.getValue());
+      }
+
       queueAdmin.dropAllForFlow(identifier.getApplicationId(), flowSpecification.getName());
     }
     deleteProgramLocations(appId);
@@ -2063,6 +2071,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         return GSON.toJson(appSpec.getMapReduce().get(id.getId()));
       } else if (type == Type.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
         return GSON.toJson(appSpec.getWorkflows().get(id.getId()));
+      } else if (type == Type.SERVICE && appSpec.getServices().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getServices().get(id.getId()));
       }
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
@@ -2917,6 +2927,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         for (DataSetSpecification spec : specs) {
           result.add(makeDataSetRecord(spec.getName(), spec.getType(), null));
         }
+        // also add datasets2 instances
+        Collection<DatasetSpecification> instances = dsClient.getAllInstances();
+        for (DatasetSpecification instance : instances) {
+          result.add(makeDataSetRecord(instance.getName(), instance.getType(), null));
+        }
         return GSON.toJson(result);
       } else if (type == Data.STREAM) {
         Collection<StreamSpecification> specs = store.getAllStreams(new Id.Account(programId.getAccountId()));
@@ -2947,13 +2962,18 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           if (spec == null) {
             spec = store.getDataSet(account, dsName);
           }
+
           if (spec != null) {
+            // Dataset V1
             typeName = spec.getType();
           } else {
             // trying to see if that is Dataset V2
-            DatasetInstanceMeta meta = getDatasetInstanceMeta(dsName);
+            // TODO: fix namespacing - see REACTOR-217
+            String namespacedDsName = namespace.namespace(dsName);
+            DatasetInstanceMeta meta = getDatasetInstanceMeta(namespacedDsName);
             if (meta != null) {
               typeName = meta.getType().getName();
+              dsName = namespacedDsName;
             }
           }
           result.add(makeDataSetRecord(dsName, typeName, null));
@@ -3224,9 +3244,15 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
       // Don't truncate log table too - we would like to retain logs across resets.
       datasetsToKeep.add(LoggingConfiguration.LOG_META_DATA_TABLE);
+      // Don't remove datasets
+      datasetsToKeep.add(DatasetMetaTableUtil.META_TABLE_NAME);
+      datasetsToKeep.add(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
 
       // NOTE: there could be services running at the moment that rely on the system datasets to be available.
       dataSetAccessor.truncateAllExceptBlacklist(DataSetAccessor.Namespace.SYSTEM, datasetsToKeep);
+
+      dsClient.deleteInstances();
+      dsClient.deleteModules();
 
       LOG.info("All data for account '" + account + "' deleted.");
       responder.sendStatus(HttpResponseStatus.OK);

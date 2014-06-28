@@ -1,13 +1,11 @@
-.. :Author: John Jackson
+.. :Author: Continuuity. Inc.
    :Description: Continuuity Reactor Apache Log Event Logger
 
 =============================
 ResponseCodeAnalytics Example
 =============================
 
----------------------------------------------------------------------------------------
-A Continuuity Reactor Application demonstrating Streams, Flows, DataSets and Procedures
----------------------------------------------------------------------------------------
+**A Continuuity Reactor Application Demonstrating Streams, Flows, DataSets and Procedures**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
@@ -39,31 +37,20 @@ an implementation of ``com.continuuity.api.Application``.
 
 ::
 
-	public class ResponseCodeAnalyticsApp implements Application {
-	  // The constant to define the row key of a table
-	  private static final byte [] ROW_KEY = Bytes.toBytes("status");
-	
+	public class ResponseCodeAnalyticsApp extends AbstractApplication {
 	  @Override
-	  public ApplicationSpecification configure() {
-	    return ApplicationSpecification.Builder.with()
-	      .setName("ResponseCodeAnalytics")
-	      .setDescription("HTTP response code analytics")
-	      // Ingest data into the Application via Streams
-	      .withStreams()
-	        .add(new Stream("logEventStream"))
-	      // Store processed data in Datasets
-	      .withDataSets()
-	        .add(new Table("statusCodeTable"))
-	      // Process log events in real-time using Flows
-	      .withFlows()
-	        .add(new LogAnalyticsFlow())
-	      // Query the processed data using Procedures
-	      .withProcedures()
-	        .add(new StatusCodeProcedure())
-	      .noMapReduce()
-	      .noWorkflow()
-	      .build();
-	  }
+    public void configure() {
+      setName("ResponseCodeAnalytics");
+      setDescription("HTTP response code analytics");
+      // Ingest data into the app via Streams
+      addStream(new Stream("logEventStream"));
+      // Store processed data in DataSets
+      createDataSet("statusCodeTable", Table.class);
+      // Process log events in real-time using Flows
+      addFlow(new LogAnalyticsFlow());
+      // Query the processed data using Procedures
+      addProcedure(new StatusCodeProcedure());
+    }
 
 Notice that in coding the Application, *Streams* and *DataSets* are defined
 using Continuuity classes, and are referenced by names, 
@@ -235,4 +222,4 @@ Either:
 
 Downloading the Example
 =======================
-`Download the example </developers/examples-files/continuuity-ResponseCodeAnalytics-2.2.0.zip>`_
+`Download the example </developers/examples-files/continuuity-ResponseCodeAnalytics-2.3.0.zip>`_

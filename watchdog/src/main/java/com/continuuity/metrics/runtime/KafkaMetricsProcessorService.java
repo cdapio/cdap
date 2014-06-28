@@ -37,13 +37,11 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
                                       ZKClientService zkClientService,
                                       KafkaMetricsProcessorServiceFactory kafkaMetricsProcessorServiceFactory) {
     this.tableMigrator = tableMigrator;
-
     int partitionSize = conf.getInt(MetricsConstants.ConfigKeys.KAFKA_PARTITION_SIZE,
                                     MetricsConstants.DEFAULT_KAFKA_PARTITION_SIZE);
     multiElection = new MultiLeaderElection(
       zkClientService, "metrics-processor", partitionSize,
       createPartitionChangeHandler(kafkaMetricsProcessorServiceFactory));
-
     this.completion = SettableFuture.create();
   }
 

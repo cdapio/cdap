@@ -5,7 +5,6 @@ package com.continuuity.gateway.handlers.metrics;
 
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
-import com.continuuity.gateway.MetricsServiceTestsSuite;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -23,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class MetricsDiscoveryQueryTest extends BaseMetricsQueryTest {
+public class MetricsDiscoveryQueryTest extends MetricsSuiteTestBase {
 
   @BeforeClass
   public static void setup() throws InterruptedException {
@@ -52,7 +51,7 @@ public class MetricsDiscoveryQueryTest extends BaseMetricsQueryTest {
     reads.add("contexts", readContexts);
     expected.add(reads);
 
-    HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics/available/apps/WCount");
+    HttpResponse response = doGet("/v2/metrics/available/apps/WCount");
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     try {
       Assert.assertEquals("did not return 200 status.",
@@ -78,8 +77,7 @@ public class MetricsDiscoveryQueryTest extends BaseMetricsQueryTest {
     expected.add(expectedReads);
     expected.add(expectedWrites());
 
-    HttpResponse response =
-      MetricsServiceTestsSuite.doGet("/v2/metrics/available/apps/WordCount/flows/WordCounter/flowlets/splitter");
+    HttpResponse response = doGet("/v2/metrics/available/apps/WordCount/flows/WordCounter/flowlets/splitter");
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     try {
       Assert.assertEquals("did not return 200 status.",
@@ -92,17 +90,15 @@ public class MetricsDiscoveryQueryTest extends BaseMetricsQueryTest {
   }
 
   @Test
-  public void testInvalidPathReturns404() throws Exception {
+  public void testMalformedPathReturns404() throws Exception {
     String base = "/v2/metrics/available";
     String[] resources = {
       base + "/apps/WordCount/flow/WordCounter",
       base + "/apps/WordCount/flows/WordCounter/flowlets",
       base + "/apps/WordCount/flows/WordCounter/flowlet/splitter",
-      base + "/apps/WordCoun/flows/WordCounter",
-      base + "/apps/WordCount/flows/WordCounter/flowlets/splitte"
     };
     for (String resource : resources) {
-      HttpResponse response = MetricsServiceTestsSuite.doGet(resource);
+      HttpResponse response = doGet(resource);
       Assert.assertEquals(resource + " did not return 404 as expected.",
                           HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
     }

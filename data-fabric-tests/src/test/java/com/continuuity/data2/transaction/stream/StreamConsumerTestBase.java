@@ -4,6 +4,7 @@
 package com.continuuity.data2.transaction.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.common.stream.StreamEventCodec;
@@ -18,17 +19,25 @@ import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.test.SlowTests;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Longs;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -36,6 +45,17 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public abstract class StreamConsumerTestBase {
+
+  private static final Comparator<StreamEvent> STREAM_EVENT_COMPARATOR = new Comparator<StreamEvent>() {
+    @Override
+    public int compare(StreamEvent o1, StreamEvent o2) {
+      int cmp = Longs.compare(o1.getTimestamp(), o2.getTimestamp());
+      if (cmp != 0) {
+        return cmp;
+      }
+      return o1.getBody().compareTo(o2.getBody());
+    }
+  };
 
   protected abstract QueueClientFactory getQueueClientFactory();
 
@@ -104,14 +124,32 @@ public abstract class StreamConsumerTestBase {
     consumer1.close();
   }
 
-  private void writeEvents(StreamConfig streamConfig, String msgPrefix, int count) throws IOException {
+  private List<StreamEvent> writeEvents(StreamConfig streamConfig, String msgPrefix,
+                                        int count, Clock clock) throws IOException {
+
+    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig, 0);
+    try {
+      return writeEvents(writer, msgPrefix, count, clock);
+    } finally {
+      writer.close();
+    }
+  }
+
+  private List<StreamEvent> writeEvents(FileWriter<StreamEvent> streamWriter,
+                                        String msgPrefix, int count, Clock clock) throws IOException {
     Map<String, String> headers = ImmutableMap.of();
-    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig.getName());
+    List<StreamEvent> result = Lists.newLinkedList();
     for (int i = 0; i < count; i++) {
       String msg = msgPrefix + i;
-      writer.append(new DefaultStreamEvent(headers, Charsets.UTF_8.encode(msg), System.currentTimeMillis()));
+      StreamEvent event = new DefaultStreamEvent(headers, Charsets.UTF_8.encode(msg), clock.getTime());
+      result.add(event);
+      streamWriter.append(event);
     }
-    writer.close();
+    return result;
+  }
+
+  private List<StreamEvent> writeEvents(StreamConfig streamConfig, String msgPrefix, int count) throws IOException {
+    return writeEvents(streamConfig, msgPrefix, count, new Clock());
   }
 
   @Test
@@ -283,7 +321,295 @@ public abstract class StreamConsumerTestBase {
     consumer.close();
   }
 
+  @Test
+  public void testTTL() throws Exception {
+    String stream = "testTTL";
+    QueueName streamName = QueueName.fromStream(stream);
+    StreamAdmin streamAdmin = getStreamAdmin();
+
+    // Create stream with ttl of 1 day
+    final long ttl = TimeUnit.DAYS.toMillis(1);
+    final long currentTime = System.currentTimeMillis();
+    final long increment = TimeUnit.SECONDS.toMillis(1);
+    final long approxEarliestNonExpiredTime = currentTime - TimeUnit.HOURS.toMillis(1);
+
+    Properties streamProperties = new Properties();
+    streamProperties.setProperty(Constants.Stream.TTL, Long.toString(ttl));
+    streamProperties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl));
+    streamAdmin.create(stream, streamProperties);
+
+    StreamConfig streamConfig = streamAdmin.getConfig(stream);
+    streamAdmin.configureInstances(streamName, 0L, 1);
+    StreamConsumerFactory consumerFactory = getConsumerFactory();
+
+    Assert.assertEquals(ttl, streamConfig.getTTL());
+    Assert.assertEquals(ttl, streamConfig.getPartitionDuration());
+
+    Set<StreamEvent> expectedEvents = Sets.newTreeSet(STREAM_EVENT_COMPARATOR);
+    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig, 0);
+
+    try {
+      // Write 10 expired messages
+      writeEvents(streamConfig, "Old event ", 20, new IncrementingClock(0, 1));
+      // Write 5 non-expired messages
+      expectedEvents.addAll(writeEvents(streamConfig, "New event ", 12,
+                                        new IncrementingClock(approxEarliestNonExpiredTime, increment)));
+    } finally {
+      writer.close();
+    }
+
+    // Dequeue from stream. Should only get the 5 unexpired events.
+    StreamConsumer consumer = consumerFactory.create(streamName, stream,
+                                                     new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
+    try {
+      verifyEvents(consumer, expectedEvents);
+
+      TransactionContext txContext = createTxContext(consumer);
+      txContext.start();
+      try {
+        // Should be no more pending events
+        DequeueResult<StreamEvent> result = consumer.poll(1, 2, TimeUnit.SECONDS);
+        Assert.assertTrue(result.isEmpty());
+      } finally {
+        txContext.finish();
+      }
+    } finally {
+      consumer.close();
+    }
+  }
+
+  @Test
+  public void testTTLMultipleEventsWithSameTimestamp() throws Exception {
+    String stream = "testTTLMultipleEventsWithSameTimestamp";
+    QueueName streamName = QueueName.fromStream(stream);
+    StreamAdmin streamAdmin = getStreamAdmin();
+
+    // Create stream with ttl of 1 day
+    final long ttl = TimeUnit.DAYS.toMillis(1);
+    final long currentTime = System.currentTimeMillis();
+    final long increment = TimeUnit.SECONDS.toMillis(1);
+    final long approxEarliestNonExpiredTime = currentTime - TimeUnit.HOURS.toMillis(1);
+
+    Properties streamProperties = new Properties();
+    streamProperties.setProperty(Constants.Stream.TTL, Long.toString(ttl));
+    streamProperties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl));
+    streamAdmin.create(stream, streamProperties);
+
+    StreamConfig streamConfig = streamAdmin.getConfig(stream);
+    streamAdmin.configureInstances(streamName, 0L, 1);
+    StreamConsumerFactory consumerFactory = getConsumerFactory();
+
+    Assert.assertEquals(ttl, streamConfig.getTTL());
+    Assert.assertEquals(ttl, streamConfig.getPartitionDuration());
+
+    // Write 100 expired messages to stream with expired timestamp
+    writeEvents(streamConfig, "Old event ", 10, new ConstantClock(0));
+
+    // Write 500 non-expired messages to stream with timestamp approxEarliestNonExpiredTime..currentTime
+    Set<StreamEvent> expectedEvents = Sets.newTreeSet(STREAM_EVENT_COMPARATOR);
+    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig, 0);
+
+    try {
+      expectedEvents.addAll(writeEvents(writer, "New event pre-flush ", 20,
+                                        new IncrementingClock(approxEarliestNonExpiredTime, increment, 5)));
+      writer.flush();
+      expectedEvents.addAll(writeEvents(writer, "New event post-flush ", 20,
+                                        new IncrementingClock(approxEarliestNonExpiredTime + 1, increment, 5)));
+    } finally {
+      writer.close();
+    }
+
+    StreamConsumer consumer = consumerFactory.create(streamName, stream,
+                                                     new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
+    verifyEvents(consumer, expectedEvents);
+
+    TransactionContext txContext = createTxContext(consumer);
+    txContext.start();
+    try {
+      // Should be no more pending events
+      DequeueResult<StreamEvent> result = consumer.poll(1, 1, TimeUnit.SECONDS);
+      Assert.assertTrue(result.isEmpty());
+    } finally {
+      txContext.finish();
+    }
+
+    consumer.close();
+  }
+
+  @Category(SlowTests.class)
+  @Test
+  public void testTTLStartingFile() throws Exception {
+    String stream = "testTTLStartingFile";
+    QueueName streamName = QueueName.fromStream(stream);
+    StreamAdmin streamAdmin = getStreamAdmin();
+
+    // Create stream with ttl of 3 seconds and partition duration of 3 seconds
+    final long ttl = TimeUnit.SECONDS.toMillis(3);
+
+    Properties streamProperties = new Properties();
+    streamProperties.setProperty(Constants.Stream.TTL, Long.toString(ttl));
+    streamProperties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl));
+    streamAdmin.create(stream, streamProperties);
+
+    StreamConfig streamConfig = streamAdmin.getConfig(stream);
+    streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1, 1L, 1));
+    StreamConsumerFactory consumerFactory = getConsumerFactory();
+
+    StreamConsumer consumer = consumerFactory.create(streamName, stream,
+                                                     new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
+    StreamConsumer newConsumer;
+    Set<StreamEvent> expectedEvents = Sets.newTreeSet(STREAM_EVENT_COMPARATOR);
+
+    try {
+      // Create a new consumer for second consumer verification.
+      // Need to create consumer before write event because in HBase, creation of consumer took couple seconds.
+      newConsumer = consumerFactory.create(streamName, stream,
+                                           new ConsumerConfig(1L, 0, 1, DequeueStrategy.FIFO, null));
+
+      // write 20 events in a partition that will be expired due to sleeping the TTL
+      writeEvents(streamConfig, "Phase 0 expired event ", 20);
+      Thread.sleep(ttl);
+      verifyEvents(consumer, expectedEvents);
+
+      // also verify for a new consumer
+      try {
+        verifyEvents(newConsumer, expectedEvents);
+      } finally {
+        newConsumer.close();
+      }
+
+      // Create a new consumer for second consumer verification (with clean state)
+      // Need to create consumer before write event because in HBase, creation of consumer took couple seconds.
+      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1));
+      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1, 1L, 1));
+      newConsumer = consumerFactory.create(streamName, stream,
+                                           new ConsumerConfig(1L, 0, 1, DequeueStrategy.FIFO, null));
+
+      // write 20 events in a partition and read it back immediately. They shouldn't expired.
+      expectedEvents.addAll(writeEvents(streamConfig, "Phase 1 non-expired event ", 20));
+      verifyEvents(consumer, expectedEvents);
+
+      // also verify for a new consumer
+      try {
+        verifyEvents(newConsumer, expectedEvents);
+      } finally {
+        newConsumer.close();
+      }
+
+      // Create a new consumer for second consumer verification (with clean state)
+      // Need to create consumer before write event because in HBase, creation of consumer took couple seconds.
+      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1));
+      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1, 1L, 1));
+      newConsumer = consumerFactory.create(streamName, stream,
+                                           new ConsumerConfig(1L, 0, 1, DequeueStrategy.FIFO, null));
+
+      // write 20 events in a partition that will be expired due to sleeping the TTL
+      // This will write to a new partition different then the first batch write.
+      // Also, because it sleep TTL time, the previous batch write would also get expired.
+      expectedEvents.clear();
+      writeEvents(streamConfig, "Phase 2 expired event ", 20);
+      Thread.sleep(ttl);
+      verifyEvents(consumer, expectedEvents);
+
+      // also verify for a new consumer
+      try {
+        verifyEvents(newConsumer, expectedEvents);
+      } finally {
+        newConsumer.close();
+      }
+
+
+      // Create a new consumer for second consumer verification (with clean state)
+      // Need to create consumer before write event because in HBase, creation of consumer took couple seconds.
+      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1));
+      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1, 1L, 1));
+      newConsumer = consumerFactory.create(streamName, stream,
+                                           new ConsumerConfig(1L, 0, 1, DequeueStrategy.FIFO, null));
+
+      // write 20 events in a partition and read it back immediately. They shouldn't expire.
+      expectedEvents.addAll(writeEvents(streamConfig, "Phase 3 non-expired event ", 20));
+      verifyEvents(consumer, expectedEvents);
+
+      // also verify for a new consumer
+      try {
+        verifyEvents(newConsumer, expectedEvents);
+      } finally {
+        newConsumer.close();
+      }
+
+      // Should be no more pending events
+      expectedEvents.clear();
+      verifyEvents(consumer, expectedEvents);
+    } finally {
+      consumer.close();
+    }
+  }
+
+  private void verifyEvents(StreamConsumer consumer, Collection<StreamEvent> expectedEvents) throws Exception {
+    TransactionContext txContext = createTxContext(consumer);
+    txContext.start();
+
+    try {
+      Set<StreamEvent> actualEvents = Sets.newTreeSet(STREAM_EVENT_COMPARATOR);
+      int size = expectedEvents.size();
+      DequeueResult<StreamEvent> result = consumer.poll(size == 0 ? 1 : size, 1, TimeUnit.SECONDS);
+      Iterables.addAll(actualEvents, result);
+      Assert.assertEquals(expectedEvents, actualEvents);
+    } finally {
+      txContext.finish();
+    }
+  }
+
   private TransactionContext createTxContext(TransactionAware... txAwares) {
     return new TransactionContext(getTransactionClient(), txAwares);
+  }
+
+  private class Clock {
+    public long getTime() {
+      return System.currentTimeMillis();
+    }
+  }
+
+  private class ConstantClock extends Clock {
+    private long time;
+
+    private ConstantClock(long time) {
+      this.time = time;
+    }
+
+    @Override
+    public long getTime() {
+      return time;
+    }
+  }
+
+  private class IncrementingClock extends Clock {
+    private final int repeatsPerTimestamp;
+    private final long increment;
+
+    private int currentRepeat;
+    private long current;
+
+    public IncrementingClock(long start, long increment, int repeatsPerTimestamp) {
+      Preconditions.checkArgument(repeatsPerTimestamp > 0);
+      this.increment = increment;
+      this.repeatsPerTimestamp = repeatsPerTimestamp;
+      this.current = start;
+      this.currentRepeat = 0;
+    }
+
+    public IncrementingClock(long start, long increment) {
+      this(start, increment, 1);
+    }
+
+    @Override
+    public long getTime() {
+      final long result = current;
+      if (currentRepeat % repeatsPerTimestamp == 0) {
+        current += increment;
+      }
+      currentRepeat++;
+      return result;
+    }
   }
 }

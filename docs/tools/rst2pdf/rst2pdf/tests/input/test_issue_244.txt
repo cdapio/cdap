@@ -1,0 +1,1 @@
+.. image:: test_issue_244.svg

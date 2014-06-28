@@ -1,56 +1,42 @@
-:orphan:
-
-.. _index_toplevel:
+=================================
+Continuuity Reactor Documentation
+=================================
 
 .. toctree::
-   :hidden:
+   :maxdepth: 2
    
-   intro
-   examples/index
-   examples/ResponseCodeAnalytics/index
-   examples/PageViewAnalytics/index
-   examples/TrafficAnalytics/index
-   quickstart
-   programming
-   operations
-   advanced
-   debugging
-   rest
-   faq
-
-   
-=====================
-Reactor Documentation
-=====================
-
-Documentation
-===============
-
-:doc:`advanced <advanced>`
-
-:doc:`debugging <debugging>`
-
-:doc:`faq <faq>`
-
-:doc:`intro <intro>`
-
-:doc:`operations <operations>`
-
-:doc:`programming <programming>`
-
-:doc:`quickstart <quickstart>`
-
-:doc:`rest <rest>`
-
+   Introduction </intro>
+   Quick Start </quickstart>
+   Examples </examples/index>
+   Programming Guide </programming>
+   Advanced Features </advanced>
+   Querying Datasets with SQL </query>
+   Testing and Debugging </debugging>
+   Security </security>
+   Operations Guide </operations>
+   HTTP REST API </rest>
+   /javadocs/index
+   Dependencies </licenses/index>
+   Release Notes </releasenotes>
+   FAQ </faq>
 
 Examples
 ==============
 
-:doc:`Index <examples/index>`
+:doc:`Overview <examples/index>`
 
-:doc:`PageViewAnalytics <examples/PageViewAnalytics/index>`
+:doc:`PageViewAnalytics Example <examples/PageViewAnalytics/index>`
 
-:doc:`ResponseCodeAnalytics <examples/ResponseCodeAnalytics/index>`
+:doc:`ResponseCodeAnalytics Example <examples/ResponseCodeAnalytics/index>`
 
-:doc:`TrafficAnalytics <examples/TrafficAnalytics/index>`
+:doc:`TrafficAnalytics Example <examples/TrafficAnalytics/index>`
 
+.. toctree::
+   :hidden:
+
+   /examples/PageViewAnalytics/index
+   /examples/ResponseCodeAnalytics/index
+   /examples/TrafficAnalytics/index
+   /licenses/reactor-enterprise-dependencies
+   /licenses/reactor-level-1-dependencies
+   /licenses/reactor-singlenode-dependencies

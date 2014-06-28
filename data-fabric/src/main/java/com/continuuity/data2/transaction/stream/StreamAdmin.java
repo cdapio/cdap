@@ -44,4 +44,10 @@ public interface StreamAdmin extends DataSetManager {
    * @throws IOException If the stream doesn't exists.
    */
   StreamConfig getConfig(String streamName) throws IOException;
+
+  /**
+   * Overwrites existing configuration for the given stream.
+   * @param config New configuration of the stream.
+   */
+  void updateConfig(StreamConfig config) throws IOException;
 }

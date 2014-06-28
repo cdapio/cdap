@@ -13,7 +13,7 @@ import org.apache.twill.discovery.Discoverable;
 /**
  * Describes the resource assignment as determined by {@link ResourceCoordinator}.
  */
-final class ResourceAssignment {
+public final class ResourceAssignment {
 
   private final String name;
   private final Multimap<Discoverable, PartitionReplica> assignments;

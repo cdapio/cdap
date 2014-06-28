@@ -6,6 +6,7 @@ package com.continuuity.data2.transaction.stream.leveldb;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.file.FileReader;
+import com.continuuity.data.file.ReadFilter;
 import com.continuuity.data.stream.StreamEventOffset;
 import com.continuuity.data.stream.StreamFileOffset;
 import com.continuuity.data.table.Scanner;
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.NavigableMap;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -46,8 +48,9 @@ public final class LevelDBStreamFileConsumer extends AbstractStreamFileConsumer 
   public LevelDBStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig,
                                    FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                    StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
+                                   @Nullable ReadFilter extraFilter,
                                    LevelDBOcTableCore tableCore, Object dbLock) {
-    super(streamConfig, consumerConfig, reader, stateStore, beginConsumerState);
+    super(streamConfig, consumerConfig, reader, stateStore, beginConsumerState, extraFilter);
     this.tableCore = tableCore;
     this.dbLock = dbLock;
     this.rowMapForClaim = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);

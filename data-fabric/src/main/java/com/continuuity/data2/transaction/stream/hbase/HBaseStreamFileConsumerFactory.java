@@ -8,6 +8,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.file.FileReader;
+import com.continuuity.data.file.ReadFilter;
 import com.continuuity.data.stream.StreamEventOffset;
 import com.continuuity.data.stream.StreamFileOffset;
 import com.continuuity.data.stream.StreamFileType;
@@ -37,6 +38,7 @@ import org.apache.twill.filesystem.Location;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * A {@link com.continuuity.data2.transaction.stream.StreamConsumerFactory} that reads from stream file
@@ -63,7 +65,8 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
   @Override
   protected StreamConsumer create(String tableName, StreamConfig streamConfig, ConsumerConfig consumerConfig,
                                   StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
-                                  FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader) throws IOException {
+                                  FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
+                                  @Nullable ReadFilter extraFilter) throws IOException {
 
     String hBaseTableName = HBaseTableUtil.getHBaseTableName(tableName);
     HTableDescriptor htd = new HTableDescriptor(hBaseTableName);
@@ -82,12 +85,23 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
     hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     return new HBaseStreamFileConsumer(streamConfig, consumerConfig, hTable, reader,
-                                       stateStore, beginConsumerState, HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR);
+                                       stateStore, beginConsumerState, extraFilter,
+                                       HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR);
+  }
+
+  @Override
+  protected void dropTable(String tableName) throws IOException {
+    HBaseAdmin admin = getAdmin();
+    if (admin.tableExists(tableName)) {
+      admin.disableTable(tableName);
+      admin.deleteTable(tableName);
+    }
   }
 
   @Override
   protected void getFileOffsets(Location partitionLocation,
-                                Collection<? super StreamFileOffset> fileOffsets) throws IOException {
+                                Collection<? super StreamFileOffset> fileOffsets,
+                                int generation) throws IOException {
     // TODO: Support dynamic writer instances discovery
     // Current assume it won't change and is based on cConf
     int instances = cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 0);
@@ -97,7 +111,7 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
       String streamFilePrefix = filePrefix + '.' + i;
       Location eventLocation = StreamUtils.createStreamLocation(partitionLocation, streamFilePrefix,
                                                                 0, StreamFileType.EVENT);
-      fileOffsets.add(new StreamFileOffset(eventLocation, 0));
+      fileOffsets.add(new StreamFileOffset(eventLocation, 0, generation));
     }
   }
 

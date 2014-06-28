@@ -1,8 +1,6 @@
 package com.continuuity.internal.app.runtime.schedule;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -37,18 +35,16 @@ import java.util.Set;
 public class DataSetBasedScheduleStore extends RAMJobStore {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataSetBasedScheduleStore.class);
-  private static final String SCHEDULE_STORE_DATASET_NAME = "schedulestore";
   private static final byte[] JOB_KEY = Bytes.toBytes("jobs");
   private static final byte[] TRIGGER_KEY = Bytes.toBytes("trigger");
 
-  private final DataSetAccessor dataSetAccessor;
-
   private final TransactionExecutorFactory factory;
+  private final ScheduleStoreTableUtil tableUtil;
   private OrderedColumnarTable table;
 
   @Inject
-  public DataSetBasedScheduleStore(TransactionExecutorFactory factory, DataSetAccessor dataSetAccessor) {
-    this.dataSetAccessor = dataSetAccessor;
+  public DataSetBasedScheduleStore(TransactionExecutorFactory factory, ScheduleStoreTableUtil tableUtil) {
+    this.tableUtil = tableUtil;
     this.factory = factory;
   }
 
@@ -56,22 +52,12 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
   public void initialize(ClassLoadHelper loadHelper, SchedulerSignaler schedSignaler) {
     super.initialize(loadHelper, schedSignaler);
     try {
-      createDatasetIfNotExists();
-      table = dataSetAccessor.getDataSetClient(SCHEDULE_STORE_DATASET_NAME,
-                                               OrderedColumnarTable.class,
-                                               DataSetAccessor.Namespace.SYSTEM);
-      Preconditions.checkNotNull(table, "Could not get dataset client for data set: %s", SCHEDULE_STORE_DATASET_NAME);
+      table = tableUtil.getMetaTable();
+      Preconditions.checkNotNull(table, "Could not get dataset client for data set: %s",
+                                 ScheduleStoreTableUtil.SCHEDULE_STORE_DATASET_NAME);
       readSchedulesFromPersistentStore();
     } catch (Throwable th) {
       throw Throwables.propagate(th);
-    }
-  }
-
-  private void createDatasetIfNotExists() throws Exception {
-    DataSetManager dataSetManager = dataSetAccessor.getDataSetManager(OrderedColumnarTable.class,
-                                                                      DataSetAccessor.Namespace.SYSTEM);
-    if (!dataSetManager.exists(SCHEDULE_STORE_DATASET_NAME)) {
-      dataSetManager.create(SCHEDULE_STORE_DATASET_NAME);
     }
   }
 

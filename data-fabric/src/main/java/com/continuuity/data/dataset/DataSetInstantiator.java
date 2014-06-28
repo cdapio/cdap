@@ -2,8 +2,9 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetInstantiationException;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataFabric;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
 
 import java.io.Closeable;
 
@@ -22,7 +23,7 @@ import java.io.Closeable;
 public class DataSetInstantiator extends DataSetInstantiationBase implements DataSetContext {
 
   private final DataFabric fabric;
-  private final DatasetManager datasetManager;
+  private final DatasetFramework datasetFramework;
 
   /**
    * Constructor from data fabric.
@@ -30,11 +31,11 @@ public class DataSetInstantiator extends DataSetInstantiationBase implements Dat
    * @param classLoader the class loader to use for loading data set classes.
    *                    If null, then the default class loader is used
    */
-  public DataSetInstantiator(DataFabric fabric, DatasetManager datasetManager,
-                             ClassLoader classLoader) {
-    super(classLoader);
+  public DataSetInstantiator(DataFabric fabric, DatasetFramework datasetFramework,
+                             CConfiguration configuration, ClassLoader classLoader) {
+    super(configuration, classLoader);
     this.fabric = fabric;
-    this.datasetManager = datasetManager;
+    this.datasetFramework = datasetFramework;
   }
 
   /**
@@ -46,6 +47,6 @@ public class DataSetInstantiator extends DataSetInstantiationBase implements Dat
   @Override
   public <T extends Closeable> T getDataSet(String dataSetName)
     throws DataSetInstantiationException {
-    return (T) super.getDataSet(dataSetName, this.fabric, this.datasetManager);
+    return (T) super.getDataSet(dataSetName, this.fabric, this.datasetFramework);
   }
 }

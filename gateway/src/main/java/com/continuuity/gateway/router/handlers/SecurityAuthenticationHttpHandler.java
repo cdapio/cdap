@@ -1,9 +1,11 @@
 package com.continuuity.gateway.router.handlers;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.security.auth.AccessTokenTransformer;
 import com.continuuity.security.auth.TokenState;
 import com.continuuity.security.auth.TokenValidator;
+import com.continuuity.security.server.GrantAccessToken;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
 import com.google.gson.JsonArray;
@@ -51,11 +53,13 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
   private final AccessTokenTransformer accessTokenTransformer;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final Iterable<Discoverable> discoverables;
+  private final CConfiguration configuration;
   private final String realm;
   private final DateFormat dateFormat = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z");
 
 
   public SecurityAuthenticationHttpHandler(String realm, TokenValidator tokenValidator,
+                                           CConfiguration configuration,
                                            AccessTokenTransformer accessTokenTransformer,
                                            DiscoveryServiceClient discoveryServiceClient) {
     this.realm = realm;
@@ -63,6 +67,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     this.accessTokenTransformer = accessTokenTransformer;
     this.discoveryServiceClient = discoveryServiceClient;
     this.discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
+    this.configuration = configuration;
   }
 
   /**
@@ -150,9 +155,21 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     boolean done = false;
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
+    String protocol;
+    int port;
+    if (configuration.getBoolean(Constants.Security.SSL_ENABLED)) {
+      protocol = "https";
+      port = configuration.getInt(Constants.Security.AUTH_SERVER_SSL_PORT);
+    } else {
+      protocol = "http";
+      port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
+    }
+
     do {
       for (Discoverable d : discoverables)  {
-        externalAuthenticationURIs.add(new JsonPrimitive(d.getSocketAddress().getHostName()));
+        String url = String.format("%s://%s:%d/%s", protocol, d.getSocketAddress().getHostName(), port,
+                                                                        GrantAccessToken.Paths.GET_TOKEN);
+        externalAuthenticationURIs.add(new JsonPrimitive(url));
         done = true;
       }
       if (!done) {

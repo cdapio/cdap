@@ -21,10 +21,12 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -292,11 +294,12 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
+      new AuthModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new DataFabricModules().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -318,6 +321,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
               return context.announce(serviceName, port);
             }
           });
+
+          //install discovery service modules
+          bind(ProgramServiceDiscovery.class).to(DistributedProgramServiceDiscovery.class).in(Scopes.SINGLETON);
         }
       }
     );

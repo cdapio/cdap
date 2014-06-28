@@ -10,20 +10,24 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateTestBase;
+import com.continuuity.test.SlowTests;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.experimental.categories.Category;
 
 /**
  *
  */
+@Category(SlowTests.class)
 public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
 
   private static HBaseTestBase testHBase;
@@ -41,7 +45,8 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new DataFabricDistributedModule(cConf, hConf)
+      new TransactionMetricsModule(),
+      new DataFabricDistributedModule()
     );
     streamAdmin = injector.getInstance(StreamAdmin.class);
     stateStoreFactory = injector.getInstance(StreamConsumerStateStoreFactory.class);

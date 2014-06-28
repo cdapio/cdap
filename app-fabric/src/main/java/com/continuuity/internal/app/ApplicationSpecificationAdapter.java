@@ -11,6 +11,7 @@ import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.schedule.Schedule;
+import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.ApplicationSpecification;
@@ -40,7 +41,6 @@ import java.io.Writer;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.SortedMap;
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -65,6 +65,7 @@ public final class ApplicationSpecificationAdapter {
                   .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
                   .registerTypeAdapter(Schedule.class, new ScheduleCodec())
                   .registerTypeAdapter(ResourceSpecification.class, new ResourceSpecificationCodec())
+                  .registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec())
                   .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory())
                   .create();
     return new ApplicationSpecificationAdapter(generator, gson);

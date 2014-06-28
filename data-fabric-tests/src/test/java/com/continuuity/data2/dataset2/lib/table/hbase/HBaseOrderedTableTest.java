@@ -1,23 +1,25 @@
 package com.continuuity.data2.dataset2.lib.table.hbase;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.table.ConflictDetection;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data2.dataset2.lib.table.BufferingOrederedTableTest;
-import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.DetachedTxSystemClient;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.continuuity.test.SlowTests;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
@@ -26,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
+@Category(SlowTests.class)
 public class HBaseOrderedTableTest extends BufferingOrederedTableTest<HBaseOrderedTable> {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -52,11 +55,11 @@ public class HBaseOrderedTableTest extends BufferingOrederedTableTest<HBaseOrder
 
   @Override
   protected HBaseOrderedTableAdmin getTableAdmin(String name) throws Exception {
-    return getAdmin(name, DatasetInstanceProperties.EMPTY);
+    return getAdmin(name, DatasetProperties.EMPTY);
   }
 
-  private HBaseOrderedTableAdmin getAdmin(String name, DatasetInstanceProperties props) throws IOException {
-    DatasetInstanceSpec spec = new HBaseOrderedTableDefinition("foo").configure(name, props);
+  private HBaseOrderedTableAdmin getAdmin(String name, DatasetProperties props) throws IOException {
+    DatasetSpecification spec = new HBaseOrderedTableDefinition("foo").configure(name, props);
     return new HBaseOrderedTableAdmin(spec, testHBase.getConfiguration(), hBaseTableUtil,
                                       CConfiguration.create(), new LocalLocationFactory(tmpFolder.newFolder()));
   }
@@ -66,8 +69,7 @@ public class HBaseOrderedTableTest extends BufferingOrederedTableTest<HBaseOrder
     // for the purpose of this test it is fine not to configure ttl when creating table: we want to see if it
     // applies on reading
     int ttl = 1000;
-    DatasetInstanceProperties props =
-      new DatasetInstanceProperties.Builder().property("ttl", String.valueOf(ttl)).build();
+    DatasetProperties props = DatasetProperties.builder().add("ttl", String.valueOf(ttl)).build();
     getAdmin("ttl", props).create();
     HBaseOrderedTable table = new HBaseOrderedTable("ttl", testHBase.getConfiguration(), ConflictDetection.ROW, ttl);
 

@@ -15,6 +15,7 @@
  */
 package com.continuuity.hbase.wd;
 
+import com.continuuity.test.XSlowTests;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.KeyValue;
@@ -37,6 +38,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.util.concurrent.Executors;
@@ -44,7 +46,13 @@ import java.util.concurrent.Executors;
 /**
  * Provides basic tests for row key distributor
  */
+@Category(XSlowTests.class)
 public abstract class RowKeyDistributorTestBase {
+
+  // Controls for test suite for whether to run BeforeClass/AfterClass
+  public static boolean runBefore = true;
+  public static boolean runAfter = true;
+
   protected static final String TABLE_NAME = "table";
   protected static final byte[] TABLE = Bytes.toBytes(TABLE_NAME);
   protected static final byte[] CF = Bytes.toBytes("colfam");
@@ -59,6 +67,10 @@ public abstract class RowKeyDistributorTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
+    if (!runBefore) {
+      return;
+    }
+
     testingUtility = new HBaseTestingUtility();
     Configuration hConf = testingUtility.getConfiguration();
     hConf.set("yarn.is.minicluster", "true");
@@ -81,6 +93,9 @@ public abstract class RowKeyDistributorTestBase {
 
   @AfterClass
   public static void afterClass() throws Exception {
+    if (!runAfter) {
+      return;
+    }
     testingUtility.shutdownMiniMapReduceCluster();
     testingUtility.shutdownMiniCluster();
   }

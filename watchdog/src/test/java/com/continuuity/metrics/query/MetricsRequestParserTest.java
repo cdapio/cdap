@@ -8,6 +8,7 @@ import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.data.Interpolators;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -20,8 +21,8 @@ public class MetricsRequestParserTest {
 
   @Test
   public void testPathStrip() {
-    String expected = "reactor/apps/app1/flows/flow1/metric?aggregate=true";
-    String path = Constants.Gateway.GATEWAY_VERSION + "/metrics/" + expected;
+    String expected = "/reactor/apps/app1/flows/flow1/metric?aggregate=true";
+    String path = Constants.Gateway.GATEWAY_VERSION + "/metrics" + expected;
     Assert.assertEquals(expected, MetricsRequestParser.stripVersionAndMetricsFromPath(path));
   }
 
@@ -227,6 +228,32 @@ public class MetricsRequestParserTest {
   }
 
   @Test
+  public void testUserServices() throws MetricsPathException  {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/services/serve1/reads?summary=true"));
+    Assert.assertEquals("app1.s.serve1", request.getContextPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/services/serve1/runnables/run1/reads?summary=true"));
+    Assert.assertEquals("app1.s.serve1.run1", request.getContextPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
+  }
+
+
+  @Test(expected = MetricsPathException.class)
+  public void testInvalidUserServices() throws MetricsPathException  {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/service/serve1/reads?summary=true"));
+  }
+
+  @Test(expected = MetricsPathException.class)
+  public void testInvalidUserServicesTooManyPath() throws MetricsPathException  {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/services/serve1/runnables/run1/random/reads?summary=true"));
+  }
+
+  @Test
   public void testDataset() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/reactor/datasets/dataset1/apps/app1/flows/flow1/flowlets/flowlet1/store.reads?summary=true"));
@@ -268,12 +295,56 @@ public class MetricsRequestParserTest {
     Assert.assertEquals("stream1", request.getTagPrefix());
   }
 
+
+  @Test
+  public void testService() throws MetricsPathException  {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/services/appfabric/request.received?aggregate=true"));
+    Assert.assertEquals("appfabric", request.getContextPrefix());
+    Assert.assertEquals("request.received", request.getMetricPrefix());
+  }
+
+
+  @Test
+  public void testHandler() throws MetricsPathException  {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/services/appfabric/handlers/AppFabricHttpHandler/response.server-error?aggregate=true"));
+    Assert.assertEquals("appfabric.AppFabricHttpHandler", request.getContextPrefix());
+    Assert.assertEquals("response.server-error", request.getMetricPrefix());
+  }
+
+  @Test
+  public void testMethod() throws MetricsPathException  {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/services/metrics/handlers/MetricsQueryHandler/methods/handleComponent/" +
+                   "response.successful?aggregate=true"));
+    Assert.assertEquals("metrics.MetricsQueryHandler.handleComponent", request.getContextPrefix());
+    Assert.assertEquals("response.successful", request.getMetricPrefix());
+  }
+
+  @Test(expected = MetricsPathException.class)
+  public void testInvalidRequest() throws MetricsPathException {
+    //handler instead of handlers
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/services/metrics/handler/MetricsQueryHandler/" +
+                   "response.successful?aggregate=true"));
+  }
+
   @Test
   public void testCluster() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/reactor/cluster/resources.total.storage?count=1&start=12345678&interpolate=step"));
     Assert.assertEquals("-.cluster", request.getContextPrefix());
     Assert.assertEquals("resources.total.storage", request.getMetricPrefix());
+  }
+
+
+  @Test
+  public void testTransactions() throws MetricsPathException  {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/transactions/invalid?count=1&start=12345678&interpolate=step"));
+    Assert.assertEquals("transactions", request.getContextPrefix());
+    Assert.assertEquals("invalid", request.getMetricPrefix());
   }
 
   @Test

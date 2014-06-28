@@ -1,82 +1,8 @@
 /*
  * Main entry point for Reactor UI
- * Defines routes and attaches mocks
  */
 
 define (['core/application', 'helpers/localstorage-adapter'], function (Application, SSAdapter) {
-
-	/*
-	 * Determine whether to swap out specific components with mocks.
-	 */
-    var mocks = window.location.search.split('?')[1];
-
-
-	if (mocks) {
-		mocks = mocks.split('=')[1];
-		if (mocks) {
-			mocks = mocks.split(',');
-		} else {
-			mocks = null;
-		}
-	} else {
-		mocks = null;
-	}
-
-	/*
-	 * Inject requested mocks into our controllers.
-	 */
-	if (mocks) {
-
-		Em.Application.initializer({
-			name: "mocks",
-			before: "resources",
-
-			initialize: function(container, application) {
-
-				var i = mocks.length;
-				while (i--) {
-					C.__mocked[mocks[i]] = true;
-					mocks[i] = 'mocks/' + mocks[i].toLowerCase();
-				}
-
-				/*
-				 * Note: This is async. The 'resources' initializer is not.
-				 */
-				require(mocks, function () {
-
-					mocks = [].slice.call(arguments, 0);
-
-					var i = mocks.length, type, resource;
-					while (i--) {
-
-						type = mocks[i].type;
-						container.optionsForType(type, { singleton: true });
-						container.register(type + ':main', mocks[i]);
-						container.typeInjection('controller', type, type + ':main');
-
-						/*
-						 * Check Application-level event handlers on the resource.
-						 * E.g. Socket.on('connect');
-						 */
-						if (typeof C.__handlers[type] === 'object') {
-
-							resource = container.lookup(type + ':main');
-							for (var event in C.__handlers[type]) {
-                if (C.__handlers[type].hasOwnProperty(event)) {
-                    resource.on(event, C.__handlers[type][event]);
-                }
-							}
-							if (typeof resource.connect === 'function') {
-								resource.connect();
-							}
-
-						}
-					}
-				});
-			}
-		});
-
-	}
 
 	/*
 	 * Instantiate the Application.
@@ -134,7 +60,15 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 	 */
 	C.Router.map(function() {
 
+		this.resource('Loading', { path: '/loading' } );
+    this.resource('ConnectionError', { path: '/connectionerror' } );
+		this.resource('Services', { path: '/services' } );
+    this.resource('Service', { path: '/services/:service_id' }, function() {
+      this.route('Log', { path: '/log' });
+    });
+
 		this.resource('Login', { path: '/login' } );
+		this.resource('AccessToken', { path: '/accesstoken' } );
 
 		this.resource('Overview', { path: '/overview' } );
 
@@ -229,10 +163,14 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		 * Check auth on every route transition.
 		 */
 		activate: function() {
-			var routeHandler = this;
-			if (C.Env.security_enabled === true) {
-				C.setupAuth(routeHandler);
-			}
+		  var routeHandler = this;
+		  if (C.Env.security_enabled) {
+		    C.setupAuth(routeHandler, function(){
+		      C.checkReactorReadiness(routeHandler);
+		    })
+		  } else {
+		    C.checkReactorReadiness(routeHandler);
+		  }
 		},
 
 		/*
@@ -255,7 +193,9 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		 * Override to unload the Controller once the Route has been deactivated.
 		 */
 		deactivate: function () {
-			this.controller.unload();
+      if ('controller' in this) {
+        this.controller.unload();
+      }
 		},
 		/*
 		 * Override to load a model based on parameter name and inject HTTP resource.
@@ -263,6 +203,62 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		model: modelFinder
 
 	});
+
+  /*
+   * Pages for lists of Elements use the List controller.
+   * @param {string} type ['App', 'Stream', 'Flow', ...]
+   */
+  function getListHandler(types) {
+    return {
+      /**
+       * Check auth on every route transition.
+       */
+      activate: function() {
+        var routeHandler = this;
+        if (C.Env.security_enabled) {
+          C.setupAuth(routeHandler, function(){
+            C.checkReactorReadiness(routeHandler);
+          })
+        } else {
+          C.checkReactorReadiness(routeHandler);
+        }
+      },
+      /*
+       * Override to load the Controller once the Route has been activated.
+       */
+      setupController: function  () {
+        for (var i=0, len=types.length; i<len; i++) {
+          this.controllerFor('List').load(types[i]);
+        }
+      },
+      /*
+       * Override the templates to be rendered and where.
+       */
+      renderTemplate: function () {
+        /*
+         * Render the List Page template (i.e. the header / time selector)
+         */
+        this.render('list-page', {
+          controller: 'List'
+        });
+        /*
+         * Render a list type partial into the List Page template
+         */
+        for (var i=0, len=types.length; i<len; i++) {
+          this.render('_' + types[i].toLowerCase() + 's-list', {
+            controller: 'List',
+            into: 'list-page'
+          });
+        }
+      },
+      /*
+       * Override to unload the Controller once the Route has been deactivated.
+       */
+      deactivate: function () {
+        this.controllerFor('List').unload();
+      }
+    };
+  }
 
 	/*
 	 * The following define the actual route handlers.
@@ -272,12 +268,30 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		ApplicationRoute: basicRouter.extend(),
 
 		IndexRoute: Ember.Route.extend({
+      model: modelFinder,
       redirect: function() {
         this.transitionTo('Overview');
       }
     }),
 
+    ServicesRoute: basicRouter.extend(),
+
+    ServiceRoute: Ember.Route.extend({
+      model: modelFinder
+    }),
+
+    ServiceLogRoute: basicRouter.extend({
+      model: function () {
+        return this.modelFor('Service');
+      },
+      renderTemplate: function () {
+        this.render('Runnable/Log');
+      }
+    }),
+
     LoginRoute: basicRouter.extend(),
+
+    AccessTokenRoute: basicRouter.extend(),
 
 		OverviewRoute: basicRouter.extend(),
 
@@ -433,61 +447,13 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 
 		AnalyzeRoute: basicRouter.extend(),
 
-		PageNotFoundRoute: Ember.Route.extend()
+		PageNotFoundRoute: Ember.Route.extend(),
+
+    LoadingRoute: basicRouter.extend(),
+
+    ConnectionErrorRoute: basicRouter.extend()
 
 	});
-
-	/*
-	 * Pages for lists of Elements use the List controller.
-	 * @param {string} type ['App', 'Stream', 'Flow', ...]
-	 */
-	function getListHandler(types) {
-		return {
-			/**
-			 * Check auth on every route transition.
-			 */
-			activate: function() {
-				var routeHandler = this;
-				if (C.Env.security_enabled === true) {
-				  C.setupAuth(routeHandler);
-				}
-	  	},
-			/*
-			 * Override to load the Controller once the Route has been activated.
-			 */
-			setupController: function  () {
-				for (var i=0, len=types.length; i<len; i++) {
-					this.controllerFor('List').load(types[i]);
-				}
-			},
-			/*
-			 * Override the templates to be rendered and where.
-			 */
-			renderTemplate: function () {
-				/*
-				 * Render the List Page template (i.e. the header / time selector)
-				 */
-				this.render('list-page', {
-					controller: 'List'
-				});
-				/*
-				 * Render a list type partial into the List Page template
-				 */
-				for (var i=0, len=types.length; i<len; i++) {
-					this.render('_' + types[i].toLowerCase() + 's-list', {
-						controller: 'List',
-						into: 'list-page'
-					});
-				}
-			},
-			/*
-			 * Override to unload the Controller once the Route has been deactivated.
-			 */
-			deactivate: function () {
-				this.controllerFor('List').unload();
-			}
-		};
-	}
 
 	$.extend(C, {
 
@@ -504,4 +470,30 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 	});
 
 	return C;
+});
+
+/**
+ * Helper to make equality work in Handlebars templates.
+ */
+Handlebars.registerHelper('ifCond', function (v1, operator, v2, options) {
+  switch (operator) {
+    case '==':
+      return (this.get(v1) == v2) ? options.fn(this) : options.inverse(this);
+    case '===':
+      return (this.get(v1) === v2) ? options.fn(this) : options.inverse(this);
+    case '<':
+      return (this.get(v1) < v2) ? options.fn(this) : options.inverse(this);
+    case '<=':
+      return (this.get(v1) <= v2) ? options.fn(this) : options.inverse(this);
+    case '>':
+      return (this.get(v1) > v2) ? options.fn(this) : options.inverse(this);
+    case '>=':
+      return (this.get(v1) >= v2) ? options.fn(this) : options.inverse(this);
+    case '&&':
+      return (this.get(v1) && v2) ? options.fn(this) : options.inverse(this);
+    case '||':
+      return (this.get(v1) || v2) ? options.fn(this) : options.inverse(this);
+    default:
+      return options.inverse(this);
+  }
 });

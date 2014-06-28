@@ -20,7 +20,9 @@ public interface ProgramRunnerFactory {
     PROCEDURE,
     MAPREDUCE,
     WORKFLOW,
-    WEBAPP
+    WEBAPP,
+    SERVICE,
+    RUNNABLE
   }
 
   ProgramRunner create(Type programType);

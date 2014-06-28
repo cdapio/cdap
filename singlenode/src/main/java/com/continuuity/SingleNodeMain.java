@@ -5,6 +5,7 @@ package com.continuuity;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
+import com.continuuity.app.guice.ServiceStoreModules;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -12,12 +13,15 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.stream.service.StreamHttpModule;
+import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.stream.service.StreamHttpService;
-import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data.stream.service.StreamServiceRuntimeModule;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionService;
+import com.continuuity.explore.executor.ExploreExecutorService;
+import com.continuuity.explore.guice.ExploreRuntimeModule;
+import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
@@ -41,11 +45,9 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.util.List;
@@ -58,7 +60,6 @@ public class SingleNodeMain {
   private static final Logger LOG = LoggerFactory.getLogger(SingleNodeMain.class);
 
   private final WebCloudAppService webCloudAppService;
-  private final CConfiguration configuration;
   private final NettyRouter router;
   private final Gateway gatewayV2;
   private final MetricsQueryService metricsQueryService;
@@ -69,19 +70,18 @@ public class SingleNodeMain {
   private final MetricsCollectionService metricsCollectionService;
 
   private final LogAppenderInitializer logAppenderInitializer;
-  private final InMemoryTransactionManager transactionManager;
+  private final InMemoryTransactionService txService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
-  private final DatasetManagerService datasetService;
+  private final DatasetService datasetService;
 
-  private InMemoryZKServer zookeeper;
+  private ExploreExecutorService exploreExecutorService;
 
   public SingleNodeMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
-    this.configuration = configuration;
     this.webCloudAppService = new WebCloudAppService(webAppPath);
 
     Injector injector = Guice.createInjector(modules);
-    transactionManager = injector.getInstance(InMemoryTransactionManager.class);
+    txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
     gatewayV2 = injector.getInstance(Gateway.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
@@ -90,13 +90,19 @@ public class SingleNodeMain {
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    datasetService = injector.getInstance(DatasetManagerService.class);
+    datasetService = injector.getInstance(DatasetService.class);
 
     streamHttpService = injector.getInstance(StreamHttpService.class);
 
     boolean securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
     if (securityEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
+    }
+
+    boolean exploreEnabled = configuration.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
+    ExploreServiceUtils.checkHiveSupport(this.getClass().getClassLoader());
+    if (exploreEnabled) {
+      exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     }
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -120,16 +126,8 @@ public class SingleNodeMain {
   protected void startUp(String[] args) throws Exception {
     logAppenderInitializer.initialize();
 
-    File zkDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR) + "/zookeeper");
-    //noinspection ResultOfMethodCallIgnored
-    zkDir.mkdir();
-    zookeeper = InMemoryZKServer.builder().setDataDir(zkDir).build();
-    zookeeper.startAndWait();
-
-    configuration.set(Constants.Zookeeper.QUORUM, zookeeper.getConnectionStr());
-
     // Start all the services.
-    transactionManager.startAndWait();
+    txService.startAndWait();
     metricsCollectionService.startAndWait();
     datasetService.startAndWait();
 
@@ -144,8 +142,13 @@ public class SingleNodeMain {
     flumeCollector.startAndWait();
     webCloudAppService.startAndWait();
     streamHttpService.startAndWait();
+
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.startAndWait();
+    }
+
+    if (exploreExecutorService != null) {
+      exploreExecutorService.startAndWait();
     }
 
     String hostname = InetAddress.getLocalHost().getHostName();
@@ -166,12 +169,14 @@ public class SingleNodeMain {
     gatewayV2.stopAndWait();
     metricsQueryService.stopAndWait();
     appFabricServer.stopAndWait();
-    transactionManager.stopAndWait();
+    txService.stopAndWait();
     datasetService.stopAndWait();
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.stopAndWait();
     }
-    zookeeper.stopAndWait();
+    if (exploreExecutorService != null) {
+      exploreExecutorService.stopAndWait();
+    }
     logAppenderInitializer.close();
   }
 
@@ -256,18 +261,19 @@ public class SingleNodeMain {
     configuration.setInt(Constants.Gateway.PORT, 0);
 
     //Run dataset service on random port
-    configuration.setInt(Constants.Dataset.Manager.PORT, Networks.getRandomPort());
-
     List<Module> modules = inMemory ? createInMemoryModules(configuration, hConf)
                                     : createPersistentModules(configuration, hConf);
 
-    SingleNodeMain main = new SingleNodeMain(modules, configuration, webAppPath);
+    SingleNodeMain main = null;
     try {
+      main = new SingleNodeMain(modules, configuration, webAppPath);
       main.startUp(args);
     } catch (Throwable e) {
       System.err.println("Failed to start server. " + e.getMessage());
       LOG.error("Failed to start server", e);
-      main.shutDown();
+      if (main != null) {
+        main.shutDown();
+      }
       System.exit(-2);
     }
   }
@@ -287,11 +293,14 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new GatewayModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
+      new DataSetServiceModules().getInMemoryModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
-      new SecurityModules().getSingleNodeModules(),
-      new StreamHttpModule()
+      new SecurityModules().getInMemoryModules(),
+      new StreamServiceRuntimeModule().getInMemoryModules(),
+      new ExploreRuntimeModule().getInMemoryModules(),
+      new ServiceStoreModules().getInMemoryModule()
     );
   }
 
@@ -331,11 +340,15 @@ public class SingleNodeMain {
       new AppFabricServiceRuntimeModule().getSingleNodeModules(),
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new GatewayModule().getSingleNodeModules(),
-      new DataFabricModules(configuration).getSingleNodeModules(),
+      new DataFabricModules().getSingleNodeModules(),
+      new DataSetServiceModules().getLocalModule(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
-      new StreamHttpModule());
+      new StreamServiceRuntimeModule().getSingleNodeModules(),
+      new ExploreRuntimeModule().getSingleNodeModules(),
+      new ServiceStoreModules().getSingleNodeModule()
+    );
   }
 }

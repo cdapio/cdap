@@ -21,7 +21,6 @@ import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -76,8 +75,8 @@ public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements Queu
   private final QueueConstants.QueueType type;
 
   @Inject
-  public HBaseQueueAdmin(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
-                         @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
+  public HBaseQueueAdmin(Configuration hConf,
+                         CConfiguration cConf,
                          DataSetAccessor dataSetAccessor,
                          LocationFactory locationFactory,
                          HBaseTableUtil tableUtil) throws IOException {

@@ -15,11 +15,13 @@ import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.app.runtime.AbstractContext;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.logging.context.MapReduceLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.io.Closeable;
 import java.util.Iterator;
@@ -31,6 +33,7 @@ import java.util.Map;
  */
 public class BasicMapReduceContext extends AbstractContext implements MapReduceContext {
 
+  private final String accountId;
   private final MapReduceSpecification spec;
   private final MapReduceLoggingContext loggingContext;
   private final Map<MetricsScope, MetricsCollector> systemMapperMetrics;
@@ -41,6 +44,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final String workflowBatch;
   private final Metrics mapredMetrics;
   private final MetricsCollectionService metricsCollectionService;
+  private final ProgramServiceDiscovery serviceDiscovery;
 
   private BatchReadable inputDataset;
   private List<Split> inputDataSelection;
@@ -58,9 +62,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                MapReduceSpecification spec,
                                Iterable<TransactionAware> txAwares,
                                long logicalStartTime,
-                               String workflowBatch) {
+                               String workflowBatch,
+                               ProgramServiceDiscovery serviceDiscovery) {
     this(program, type, runId, runtimeArguments, datasets,
-         spec, txAwares, logicalStartTime, workflowBatch, null);
+         spec, txAwares, logicalStartTime, workflowBatch, serviceDiscovery, null);
   }
 
 
@@ -73,11 +78,14 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                Iterable<TransactionAware> txAwares,
                                long logicalStartTime,
                                String workflowBatch,
+                               ProgramServiceDiscovery serviceDiscovery,
                                MetricsCollectionService metricsCollectionService) {
     super(program, runId, datasets);
+    this.accountId = program.getAccountId();
     this.runtimeArguments = runtimeArguments;
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
+    this.serviceDiscovery = serviceDiscovery;
     this.metricsCollectionService = metricsCollectionService;
 
     if (metricsCollectionService != null) {
@@ -227,6 +235,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       arguments.put(it.next());
     }
     return arguments.build();
+  }
+
+  @Override
+  public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
+    return serviceDiscovery.discover(accountId, appId, serviceId, serviceName);
   }
 
   public void flushOperations() throws Exception {

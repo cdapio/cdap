@@ -1,31 +1,25 @@
 package com.continuuity.gateway.handlers;
 
+import com.continuuity.app.store.ServiceStore;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.EndpointStrategy;
-import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
-import com.continuuity.http.AbstractHttpHandler;
+import com.continuuity.common.twill.ReactorServiceManager;
+import com.continuuity.gateway.auth.Authenticator;
+import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import com.continuuity.http.HttpResponder;
-import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import com.ning.http.client.Response;
-import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
@@ -33,43 +27,86 @@ import javax.ws.rs.PathParam;
  * Monitor Handler returns the status of different discoverable services
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
-public class MonitorHandler extends AbstractHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(MonitorHandler.class);
-  private static final String VERSION = Constants.Gateway.GATEWAY_VERSION;
-  private final DiscoveryServiceClient discoveryServiceClient;
-  private static final String STATUS_OK = "OK";
-  private static final String STATUS_NOTOK = "NOTOK";
-
-  /**
-   * Timeout to get response from discovered service.
-   */
-  private static final long SERVICE_PING_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
-
-  /**
-   * Number of seconds for timing out a service endpoint discovery.
-   */
-  private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
-
-  private enum Service {
-    METRICS (Constants.Service.METRICS),
-    TRANSACTION (Constants.Service.TRANSACTION),
-    STREAMS (Constants.Service.STREAM_HANDLER),
-    APPFABRIC (Constants.Service.APP_FABRIC_HTTP);
-
-    private final String name;
-
-    private Service(String name) {
-      this.name = name;
-    }
-
-    public String getName() { return name; }
-
-    public static Service valueofName(String name) { return valueOf(name.toUpperCase()); }
-  }
+public class MonitorHandler extends AbstractAppFabricHttpHandler {
+  private final Map<String, ReactorServiceManager> reactorServiceManagementMap;
+  private static final String STATUSOK = Constants.Monitor.STATUS_OK;
+  private static final String STATUSNOTOK = Constants.Monitor.STATUS_NOTOK;
+  private static final String NOTAPPLICABLE = "NA";
+  private static final Gson GSON = new Gson();
+  private final ServiceStore serviceStore;
 
   @Inject
-  public MonitorHandler(DiscoveryServiceClient discoveryServiceClient) {
-    this.discoveryServiceClient = discoveryServiceClient;
+  public MonitorHandler(Authenticator authenticator, Map<String, ReactorServiceManager> serviceMap,
+                        ServiceStore serviceStore) throws Exception {
+    super(authenticator);
+    this.reactorServiceManagementMap = serviceMap;
+    this.serviceStore = serviceStore;
+  }
+
+  /**
+   * Returns the number of instances of Reactor Services
+   */
+  @Path("/system/services/{service-name}/instances")
+  @GET
+  public void getServiceInstance(final HttpRequest request, final HttpResponder responder,
+                                 @PathParam("service-name") String serviceName) throws Exception {
+    JsonObject reply = new JsonObject();
+    if (!reactorServiceManagementMap.containsKey(serviceName)) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("Invalid service name %s", serviceName));
+      return;
+    }
+    ReactorServiceManager serviceManager = reactorServiceManagementMap.get(serviceName);
+    if (serviceManager.isServiceEnabled()) {
+      int actualInstance = reactorServiceManagementMap.get(serviceName).getInstances();
+      reply.addProperty("provisioned", actualInstance);
+      reply.addProperty("requested", getSystemServiceInstanceCount(serviceName));
+      responder.sendJson(HttpResponseStatus.OK, reply);
+    } else {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
+    }
+  }
+
+  /**
+   * Sets the number of instances of Reactor Services
+   */
+  @Path("/system/services/{service-name}/instances")
+  @PUT
+  public void setServiceInstance(final HttpRequest request, final HttpResponder responder,
+                                 @PathParam("service-name") final String serviceName) {
+    try {
+      if (!reactorServiceManagementMap.containsKey(serviceName)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Invalid Service Name");
+        return;
+      }
+
+      ReactorServiceManager serviceManager = reactorServiceManagementMap.get(serviceName);
+      int instance = getInstances(request);
+      if (!serviceManager.isServiceEnabled()) {
+        responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
+        return;
+      }
+
+      Integer currentInstance = getSystemServiceInstanceCount(serviceName);
+      if (instance < serviceManager.getMinInstances() || instance > serviceManager.getMaxInstances()) {
+        String response = String.format("Instance count should be between [%s,%s]", serviceManager.getMinInstances(),
+                                        serviceManager.getMaxInstances());
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, response);
+        return;
+      } else if (instance == currentInstance) {
+        responder.sendStatus(HttpResponseStatus.OK);
+        return;
+      }
+
+      serviceStore.setServiceInstance(serviceName, instance);
+      if (serviceManager.setInstances(instance)) {
+        responder.sendStatus(HttpResponseStatus.OK);
+      } else {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation did not succeed");
+      }
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           String.format("Error updating instances for service: %s", serviceName));
+    }
   }
 
   //Return the status of reactor services in JSON format
@@ -77,76 +114,81 @@ public class MonitorHandler extends AbstractHttpHandler {
   @GET
   public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
     Map<String, String> result = new HashMap<String, String>();
-    String json;
-    for (Service service : Service.values()) {
-      String serviceName = String.valueOf(service);
-      String status = discoverService(serviceName) ? STATUS_OK : STATUS_NOTOK;
-      result.put(serviceName, status);
+    for (String service : reactorServiceManagementMap.keySet()) {
+      ReactorServiceManager reactorServiceManager = reactorServiceManagementMap.get(service);
+      if (reactorServiceManager.isServiceEnabled() && reactorServiceManager.canCheckStatus()) {
+        String status = reactorServiceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK;
+        result.put(service, status);
+      }
     }
-
-    json = (new Gson()).toJson(result);
-    responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
-                            ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+    responder.sendJson(HttpResponseStatus.OK, result);
   }
 
-  @Path("/system/services/{service-id}/status")
+  @Path("/system/services/{service-name}/status")
   @GET
   public void monitor(final HttpRequest request, final HttpResponder responder,
-                      @PathParam("service-id") final String service) {
-    if (discoverService(service)) {
-      //Service is discoverable
-      String response = String.format("%s is OK\n", service);
-      responder.sendString(HttpResponseStatus.OK, response);
+                      @PathParam("service-name") final String serviceName) {
+    if (!reactorServiceManagementMap.containsKey(serviceName)) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("Invalid service name %s", serviceName));
+      return;
+    }
+    ReactorServiceManager reactorServiceManager = reactorServiceManagementMap.get(serviceName);
+    if (!reactorServiceManager.isServiceEnabled()) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
+      return;
+    }
+    if (reactorServiceManager.canCheckStatus() && reactorServiceManager.isServiceAvailable()) {
+      responder.sendString(HttpResponseStatus.OK, STATUSOK);
+    } else if (reactorServiceManager.canCheckStatus()) {
+      responder.sendString(HttpResponseStatus.OK, STATUSNOTOK);
     } else {
-      String response = String.format("%s not found\n", service);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, service);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation not valid for this service");
     }
   }
 
-  private boolean discoverService(String serviceName) {
-    try {
-      //TODO: Return true until we make txService health check work in both SingleNode and DistributedMode
-      if (Service.valueofName(serviceName).equals(Service.TRANSACTION)) {
-        return true;
+  @Path("/system/services")
+  @GET
+  public void getServiceSpec(final HttpRequest request, final HttpResponder responder) throws Exception {
+    List<JsonObject> serviceSpec = new ArrayList<JsonObject>();
+    SortedSet<String> services = new TreeSet<String>(reactorServiceManagementMap.keySet());
+    List<String> serviceList = new ArrayList<String>(services);
+    for (String service : serviceList) {
+      ReactorServiceManager serviceManager = reactorServiceManagementMap.get(service);
+      if (serviceManager.isServiceEnabled()) {
+        String logs = serviceManager.isLogAvailable() ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
+        String canCheck = serviceManager.canCheckStatus() ? (
+          serviceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK) : NOTAPPLICABLE;
+        String minInstance = String.valueOf(serviceManager.getMinInstances());
+        String maxInstance = String.valueOf(serviceManager.getMaxInstances());
+        String provInstance = String.valueOf(serviceManager.getInstances());
+        String reqInstance = String.valueOf(getSystemServiceInstanceCount(service));
+        JsonObject reply = new JsonObject();
+        reply.addProperty("name", service);
+        reply.addProperty("logs", logs);
+        reply.addProperty("status", canCheck);
+        reply.addProperty("min", minInstance);
+        reply.addProperty("max", maxInstance);
+        reply.addProperty("requested", reqInstance);
+        reply.addProperty("provisioned", provInstance);
+        //TODO: Add metric name for Event Rate monitoring
+        serviceSpec.add(reply);
       }
-
-      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Service.valueofName(
-        serviceName).getName());
-      EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
-        new RandomEndpointStrategy(discoverables), DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-      Discoverable discoverable = endpointStrategy.pick();
-      //Transaction Service will return null discoverable in SingleNode mode
-      if (discoverable == null) {
-        return false;
-      }
-
-      //Ping the discovered service to check its status.
-      String url = String.format("http://%s:%d/ping", discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort());
-      return checkGetStatus(url).equals(HttpResponseStatus.OK);
-    } catch (IllegalArgumentException e) {
-      return false;
-    } catch (Exception e) {
-      LOG.warn("Unable to ping {} : Reason : {}", serviceName, e.getMessage());
-      return false;
     }
+    responder.sendJson(HttpResponseStatus.OK, serviceSpec);
   }
 
-  private HttpResponseStatus checkGetStatus(String url) throws Exception {
-    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-      .setUrl(url)
-      .setRequestTimeoutInMs((int) SERVICE_PING_RESPONSE_TIMEOUT)
-      .build();
+  private int getSystemServiceInstanceCount(String serviceName) throws Exception {
+    Integer count = serviceStore.getServiceInstance(serviceName);
+    int provisioned = 0;
 
-    try {
-      Future<Response> future = client.get();
-      Response response = future.get(SERVICE_PING_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
-      return HttpResponseStatus.valueOf(response.getStatusCode());
-    } catch (Exception e) {
-      Throwables.propagate(e);
-    } finally {
-      client.close();
+    //If entry is not present in the table, create one by setting to provisioned instance count for the service
+    if (count == null) {
+      provisioned = reactorServiceManagementMap.get(serviceName).getInstances();
+    } else {
+      return count;
     }
-    return HttpResponseStatus.NOT_FOUND;
+
+    serviceStore.setServiceInstance(serviceName, provisioned);
+    return provisioned;
   }
 }

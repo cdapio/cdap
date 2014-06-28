@@ -18,9 +18,11 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.data2.transaction.stream.StreamConsumerTestBase;
+import com.continuuity.test.SlowTests;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -30,11 +32,13 @@ import org.apache.hadoop.conf.Configuration;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
 /**
  *
  */
+@Category(SlowTests.class)
 public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
 
   @ClassRule
@@ -64,7 +68,8 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      Modules.override(new DataFabricDistributedModule(cConf, hConf)).with(new AbstractModule() {
+      new TransactionMetricsModule(),
+      Modules.override(new DataFabricDistributedModule()).with(new AbstractModule() {
 
         @Override
         protected void configure() {

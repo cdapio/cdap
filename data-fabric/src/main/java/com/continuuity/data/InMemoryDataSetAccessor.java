@@ -10,7 +10,6 @@ import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableManager;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableService;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
 import java.util.Map;
 
@@ -19,7 +18,7 @@ import java.util.Map;
  */
 public class InMemoryDataSetAccessor extends AbstractDataSetAccessor {
   @Inject
-  public InMemoryDataSetAccessor(@Named("DataSetAccessorConfig") CConfiguration conf) {
+  public InMemoryDataSetAccessor(CConfiguration conf) {
     super(conf);
   }
 

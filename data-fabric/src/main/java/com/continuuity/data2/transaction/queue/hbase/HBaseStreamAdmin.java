@@ -10,7 +10,6 @@ import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.twill.filesystem.LocationFactory;
@@ -25,8 +24,8 @@ import java.util.List;
 public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
 
   @Inject
-  public HBaseStreamAdmin(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
-                          @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
+  public HBaseStreamAdmin(Configuration hConf,
+                          CConfiguration cConf,
                           DataSetAccessor dataSetAccessor,
                           LocationFactory locationFactory,
                           HBaseTableUtil tableUtil) throws IOException {
@@ -65,4 +64,10 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   public StreamConfig getConfig(String streamName) throws IOException {
     return null;
   }
+
+  @Override
+  public void updateConfig(StreamConfig config) throws IOException {
+
+  }
+
 }

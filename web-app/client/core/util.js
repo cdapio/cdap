@@ -32,6 +32,46 @@ define([], function () {
 
 	var Util = Em.Object.extend({
 
+    warningContainer: $('#warning'),
+    warningSpan: $('#warning .warning-text'),
+
+    METRICS_ENDPOINTS: {
+      metrics: {
+        location: '/reactor/services/metrics/request.received?aggregate=true',
+        name: 'Requests received'
+      },
+      streams: {
+        location: '/reactor/services/stream.handler/request.received?aggregate=true',
+        name: 'Requests received'
+      },
+      transaction: {
+        location: '/reactor/transactions/inprogress?aggregate=true',
+        name: 'Inprogress'
+      },
+      appfabric: {
+        location: '/reactor/services/appfabric/request.received?aggregate=true',
+        name: 'Requests received'
+      },
+      datasets: {
+        location: '/reactor/services/dataset.manager/request.recieved?aggregate=true',
+        name: 'Requests received'
+      }
+    },
+
+    getMetricEndpoint: function (name) {
+      if (!(name in this.METRICS_ENDPOINTS)) {
+        return '';
+      }
+      return this.METRICS_ENDPOINTS[name].location || '';
+    },
+
+    getMetricName: function (name) {
+      if (!(name in this.METRICS_ENDPOINTS)) {
+        return '';
+      }
+      return this.METRICS_ENDPOINTS[name].name || '';
+    },
+
 		/**
      * Looks up unique id for a record or generates it and adds it to index.
      * @param  {string} recordName.
@@ -60,6 +100,17 @@ define([], function () {
 
 		},
 
+    /**
+     * Shows warning popup.
+     * @param errorHTML HTML to show in the warning.
+     */
+    showWarning: function(errorHTML) {
+      var self = this;
+      self.warningContainer.hide()
+      self.warningSpan.html(errorHTML);
+      self.warningContainer.show();
+    },
+
 		enc: function (string) {
 
 			return encodeURIComponent(string).replace(/\./g, '%2E');
@@ -73,6 +124,7 @@ define([], function () {
 			APP_NAME: 'ResponseCodeAnalytics',
 			FLOW_NAME: 'LogAnalyticsFlow',
 			STREAM_NAME: 'logEventStream',
+			PROCEDURE_NAME: 'StatusCodeProcedure',
 			TITLES: [
 				'Welcome!',
 				'Flows',
@@ -216,7 +268,8 @@ define([], function () {
 							Ember.run.next(function () {
 
 								controller.set('injectValue', '165.225.156.91 - - [09/Jan/2014:21:28:53 -0400] ' +
-									'"GET /index.html HTTP/1.1" 200 225 "http://continuuity.com" "Mozilla/4.08 [en] (Win98; I ;Nav)"');
+									'"GET /index.html HTTP/1.1" 200 225 "http://continuuity.com" "Mozilla/4.08 [en]' +
+									' (Win98; I ;Nav)"');
 
 								$('.popup-inject-wrapper button').one('click', function () {
 									if (self.skipped) {
@@ -229,29 +282,33 @@ define([], function () {
 						}
 					break;
 					case 'controller:FlowLog':
-						self.popover('[href="#/apps/' + self.APP_NAME + '"]',
-							'bottom', self.TITLES[5], self.STRINGS[5]);
+						if (id === (self.APP_NAME + ':' + self.FLOW_NAME)) {
+							self.popover('[href="#/apps/' + self.APP_NAME + '"]',
+								'bottom', self.TITLES[5], self.STRINGS[5]);
+						}						
 					break;
 					case 'controller:ProcedureStatus':
-						if (!self.COMPLETE['Procedure']) {
-							self.popover('#method-name', 'top', self.TITLES[7], self.STRINGS[7]);
-							self.COMPLETE['Procedure'] = true;
+						if (id === (self.APP_NAME + ':' + self.PROCEDURE_NAME)) {
+							if (!self.COMPLETE['Procedure']) {
+								self.popover('#method-name', 'top', self.TITLES[7], self.STRINGS[7]);
+								self.COMPLETE['Procedure'] = true;
 
-							Ember.run.next(function () {
-								$('#method-name').one('click', function () {
-									$(this).val('getCounts');
-								});
+								Ember.run.next(function () {
+									$('#method-name').one('click', function () {
+										$(this).val('getCounts');
+									});
 
-								$('#execute-button').one('click', function () {
-									if (self.skipped) {
-										return;
-									}
-									setTimeout(function () {
-										$('#nux-completed-modal').fadeIn();
-										self.completed();
-									}, 1000);
+									$('#execute-button').one('click', function () {
+										if (self.skipped) {
+											return;
+										}
+										setTimeout(function () {
+											$('#nux-completed-modal').fadeIn();
+											self.completed();
+										}, 1000);
+									});
 								});
-							});
+							}
 						}
 				}
 			}
@@ -872,18 +929,34 @@ define([], function () {
 		},
 
 		/**
-		 * Pauses the thread for a predetermined amount of time, useful whenever execution needs to be
-		 * delayed.
+		 * Pauses the thread for a predetermined amount of time.
+     * !!! This will freeze the single running js thread, use carefully.!!!
 		 * @param  {number} milliseconds
 		 */
 		threadSleep: function (milliseconds) {
 			var time = new Date().getTime() + milliseconds;
 			while (new Date().getTime() <= time) {
-
 				$.noop();
-
 			}
 		},
+
+    /**
+     * Checks if loading is complete.
+     * @param statuses Object containing statuses.
+     * @return {boolean}
+     */
+    isLoadingComplete: function (statuses) {
+      for (var item in statuses) {
+        if (statuses[item] !== 'OK') {
+          return false;
+        }
+      }
+      return true;
+    },
+
+    capitaliseFirstLetter: function (string) {
+      return string.charAt(0).toUpperCase() + string.slice(1);
+    },
 
 		reset: function () {
 
