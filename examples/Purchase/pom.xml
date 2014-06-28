@@ -45,5 +45,9 @@
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
     </dependency>
+    <dependency>
+        <groupId>com.continuuity</groupId>
+        <artifactId>http</artifactId>
+    </dependency>
   </dependencies>
 </project>

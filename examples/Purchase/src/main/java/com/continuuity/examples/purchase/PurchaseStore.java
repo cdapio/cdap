@@ -20,6 +20,17 @@ import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.lib.ObjectStore;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletContext;
+import com.google.common.base.Charsets;
+import com.google.common.collect.Iterables;
+import com.google.common.io.ByteStreams;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.ServiceDiscovered;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * Store the incoming Purchase objects in the purchases DataSet.
@@ -28,9 +39,45 @@ public class PurchaseStore extends AbstractFlowlet {
 
   @UseDataSet("purchases")
   private ObjectStore<Purchase> store;
+  private static final Logger LOG = LoggerFactory.getLogger(PurchaseStore.class);
+  private ServiceDiscovered serviceDiscovered;
 
+  @Override
+  public void initialize(FlowletContext context) {
+    //Discover the UserInterestsLookup service via discovery service
+    serviceDiscovered = context.discover("PurchaseHistory", "CatalogLookupService",
+                                         "LookupByProductId");
+  }
   @ProcessInput
   public void process(Purchase purchase) {
+    Discoverable discoverable = Iterables.getFirst(serviceDiscovered, null);
+    if (discoverable != null) {
+      // Look up user preference by calling the HTTP service that is started by UserPreferenceService.
+      String hostName = discoverable.getSocketAddress().getHostName();
+      int port = discoverable.getSocketAddress().getPort();
+      String catalog = getCatalogId(hostName, port, purchase.getProduct());
+      purchase.setCatalogId(catalog);
+    }
+    LOG.info("Purchase info: Customer {}, ProductId {}, CatalogId {}", purchase.getCustomer(),
+                        purchase.getProduct(), purchase.getCatalogId());
     store.write(Bytes.toBytes(purchase.getPurchaseTime()), purchase);
   }
+
+  private String getCatalogId(String host, int port, String productId) {
+    try {
+      URL url = new URL(String.format("http://%s:%d/v1/product/%s/catalog", host, port, productId));
+      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+      if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
+        try {
+          return new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
+        } finally {
+          conn.disconnect();
+        }
+      }
+      return "";
+    } catch (Throwable th) {
+      return "";
+    }
+  }
+
 }
