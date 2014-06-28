@@ -508,7 +508,7 @@ For example, to add metrics to a Flowlet *NameSaver*::
 
 An example of user-defined metrics is in the `PageViewAnalytics example <examples/PageViewAnalytics/index.html>`_.
 
-For details on available system metrics, see the `Metrics section <rest.html#metrics>`__
+For details on available system metrics, see the `Metrics section <rest.html#metrics-http-api>`__
 in the `Continuuity Reactor HTTP REST API Guide <rest.html>`__.
 
 Using Metrics Explorer
