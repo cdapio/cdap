@@ -240,49 +240,9 @@ $(document).ready(function() {
 });
 
 /**
- * Check a href for an anchor. If exists, and in document, scroll to it.
- * If href argument ommited, assumes context (this) is HTML Element,
- * which will be the case when invoked by jQuery after an event
+ * Modification by Continuuity to scroll to anchors correctly.
+ # Takes into account height of header bar and space between header bar and first heading.
  */
-function scroll_if_anchor(href) {
-    href = typeof(href) == "string" ? href : $(this).attr("href");
-	alert('scroll_if_anchor1\n' + href);
-    // You could easily calculate this dynamically if you prefer
-    var fromTop = 50;
-    
-    // If our Href points to a valid, non-empty anchor, and is on the same page (e.g. #foo)
-    // Legacy jQuery and IE7 may have issues: http://stackoverflow.com/q/1593174
-    if(href.indexOf("#") == 0) {
-        var $target = $(href);
- 		alert('scroll_if_anchor2\n' + href+'\n'+href.indexOf("#"));
-        
-            //$('html, body').animate({ scrollTop: $target.offset().top - fromTop });
-            
-            alert('scroll_if_anchor3\n' + fromTop+'\n');
-
-            if(history && "pushState" in history) {
-                history.pushState({}, document.title, window.location.pathname + href);
-                return false;
-            }
-
-        // Older browser without pushState might flicker here, as they momentarily
-        // jump to the wrong position (IE < 10)
-		//alert('scroll_if_anchor2\n' + $target.length);
-//         if($target.length) {
-//             $('html, body').animate({ scrollTop: $target.offset().top - fromTop });
-//             if(history && "pushState" in history) {
-//                 history.pushState({}, document.title, window.location.pathname + href);
-//                 return false;
-//             }
-//         }
-    }
-}    
-
-// When our page loads, check to see if it contains and anchor
-// scroll_if_anchor(window.location.hash);
-
-// Intercept all anchor clicks
-// $("body").on("click", "a", scroll_if_anchor);
 
 function anchor_alert(msg){
 	alert('anchor_alert\n'+msg);
@@ -290,11 +250,15 @@ function anchor_alert(msg){
 
 function anchor_scroll(hash){
 // 	anchor_alert('hash:'+hash);
-	var fromTop = 32 + 20;
+	var fromTop = 32 + 20 - 2; // Top bar height + space - overlap
 	var $toElement = jQuery("[id="+hash+"]");
 	var toPosition = $toElement.position().top - fromTop;
 	// Scroll to element
 	$('html, body').animate({ scrollTop: toPosition });
+	// Update URL in browser
+	if(history && "pushState" in history) {
+		history.pushState({}, document.title, window.location.pathname + "#" + hash);
+	}
 }
 
 jQuery(function() {
@@ -307,7 +271,7 @@ jQuery(function() {
 			return false;
 		}
 	});
-	// Do the same with urls with hash too (so on page load it will slide nicely)
+	// Do the same with urls with hash (so on page load it will slide nicely)
 	if(location.hash){
   		window.scroll(0,0);
  		var hash = location.hash.substr(1);
