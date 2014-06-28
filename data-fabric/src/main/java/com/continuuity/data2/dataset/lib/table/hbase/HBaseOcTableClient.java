@@ -34,7 +34,7 @@ import javax.annotation.Nullable;
 // todo: extract separate "no delete inside tx" table?
 // todo: consider writing & reading using HTable to do in multi-threaded way
 public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
-  public static final String DELTA_WRITE = "continuuity.delta";
+  public static final String DELTA_WRITE = "d";
   private final HTable hTable;
   private final String hTableName;
   private final int ttl;

@@ -408,6 +408,20 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
   }
 
   @Override
+  public void incrementWrite(byte[] row, byte[][] columns, long[] amounts) throws Exception {
+    reportWrite(1, getSize(row) + getSize(columns) + getSize(amounts));
+    NavigableMap<byte[], Update> colVals = buff.get(row);
+    if (colVals == null) {
+      colVals = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      buff.put(row, colVals);
+      // ANDREAS: is this thread-safe?
+    }
+    for (int i = 0; i < columns.length; i++) {
+      colVals.put(columns[i], Updates.mergeUpdates(colVals.get(columns[i]), new IncrementValue(amounts[i])));
+    }
+  }
+
+  @Override
   public boolean compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) throws Exception {
     reportRead(1);
     reportWrite(1, getSize(row) + getSize(column) + getSize(newValue));

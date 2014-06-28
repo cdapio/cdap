@@ -33,6 +33,11 @@ public abstract class AbstractOrderedColumnarTable implements OrderedColumnarTab
   }
 
   @Override
+  public void incrementWrite(byte[] row, byte[] column, long amount) throws Exception {
+    incrementWrite(row, new byte[][] {column}, new long[] {amount});
+  }
+
+  @Override
   public void delete(byte[] row, byte[] column) throws Exception {
     delete(row, new byte[][] {column});
   }
