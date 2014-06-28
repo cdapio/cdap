@@ -5,6 +5,14 @@
 Reactor Security
 =====================================
 
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
+
+.. rst2pdf: .. contents::
+.. rst2pdf: config _templates/pdf-config
+.. rst2pdf: stylesheets _templates/pdf-stylesheet
+.. rst2pdf: build ../build-pdf/
+
 Continuuity Reactor supports securing clusters using a perimeter security model.  With perimeter
 security, access to cluster nodes is restricted through a firewall.  Cluster nodes can communicate
 with each other, but outside clients can only communicate with the cluster through a secured
@@ -138,7 +146,7 @@ To authenticate a user using JASPI add the following properties to ``continuuity
    Property                                         Value
 ================================================  ===========
 security.authentication.handlerClassName            com.continuuity.security.server.JASPIAuthenticationHandler
-security.authentication.loginmodule.className       <custom login module>
+security.authentication.loginmodule.className       <custom-login-module>
 ================================================  ===========
 
 In addition, any properties with the prefix ``security.authentication.handler.``,
@@ -292,14 +300,14 @@ follows:
 #. Authentication server validates supplied credentials against an external identity service,
    according to configuration (LDAP, Active Directory, custom).
 
-   #. If validation succeeds, the authentication server returns an Access Token to the client.
+   a. If validation succeeds, the authentication server returns an Access Token to the client.
    #. If validation fails, the authentication server returns a failure message, at which point
       the client can retry.
 
 #. The client stores the resulting Access Token and supplies it in subsequent requests.
 #. Reactor processes validate the supplied Access Token on each request.
 
-   #. If validation succeeds, processing continues to authorization.
+   a. If validation succeeds, processing continues to authorization.
    #. If the submitted token is invalid, an "invalid token" error is returned.
    #. If the submitted token is expired, an "expired token" error is returned.  In this case, the
       client should restart authorization from step #1. 
@@ -332,6 +340,7 @@ HTTP Responses
    * - ``401 Unauthorized``
      - Authentication failed
 
+
 Success Response Fields
 ~~~~~~~~~~~~~~~~~~~~~~~
 .. list-table::
@@ -344,11 +353,14 @@ Success Response Fields
      - The Access Token issued for the client.  The serialized token contents are base-64 encoded
        for safe transport over HTTP.
    * - ``token_type``
-     - In order to conform with the OAuth 2.0 Bearer Token Usage specification (RFC 6750), this
+     - In order to conform with the OAuth 2.0 Bearer Token Usage specification (`RFC 6750`__), this
        value must be "Bearer".
    * - ``expires_in``
      - Token validity lifetime in seconds.
 
+.. _rfc6750: http://tools.ietf.org/html/rfc6750
+
+__ rfc6750_
 
 Example
 .......
@@ -376,9 +388,9 @@ Sample response::
 
 Comments
 ........
-- Only ``Bearer`` tokens (RFC6750_) are currently supported
+- Only ``Bearer`` tokens (`RFC 6750`__) are currently supported
 
-.. _RFC6750 http://tools.ietf.org/html/rfc6750
+__ rfc6750_
 
 .. rst2pdf: PageBreak
 
@@ -434,7 +446,7 @@ Error Response Fields
        access token.
 
 Error Code Values
-,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,
 .. list-table::
    :widths: 20 80
    :header-rows: 1

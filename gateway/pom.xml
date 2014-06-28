@@ -102,6 +102,24 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
             <version>1.7</version>
+            <executions>
+              <execution>
+                <id>rename-rpm-router-service</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <copy file="${project.build.directory}/dist/rpm/unfilter/continuuity-service" tofile="${stage.dir}/etc/rc.d/init.d/continuuity-router">
+                      <filterSet>
+                        <filter token="service.name" value="router" />
+                      </filterSet>
+                    </copy>
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
@@ -120,6 +138,24 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
             <version>1.7</version>
+            <executions>
+              <execution>
+                <id>rename-deb-router-service</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <copy file="${project.build.directory}/dist/deb/unfilter/continuuity-service" tofile="${stage.dir}-deb/etc/init.d/continuuity-router">
+                      <filterSet>
+                        <filter token="service.name" value="router" />
+                      </filterSet>
+                    </copy>
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>

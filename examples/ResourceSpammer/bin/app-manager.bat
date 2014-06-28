@@ -1,16 +1,21 @@
 @echo OFF
-REM Application Manager for managing application lifecycle for Purchase application 
-SET APP_JAR_NAME=Purchase-1.0.jar
+REM Application Manager for managing application lifecycle for ResourceSpammer application 
+SET APP_JAR_PREFIX=ResourceSpammer
 
-SET APP_NAME=Purchase
-SET FLOW_NAME=PurchaseFlow
-SET PROCEDURE_NAME=PurchaseProcedure
+SET APP_NAME=ResourceSpammer
+SET FLOW_NAME=CPUSpammerFlow
+SET PROCEDURE_NAME=spamProcedure
 
 REM Set the base directory
 for %%i in ("%~dp0..\") do (SET APP_HOME=%%~dpi)
 
 REM Set path for curl.exe
 SET PATH=%APP_HOME%libexec
+
+for /r %APP_HOME%\target %%a in (%APP_JAR_PREFIX%*) do SET JAR_PATH=%%~dpnxa
+
+if %JAR_PATH% == "" (echo "Could not find application jar with name %APP_JAR_PREFIX%" 
+                     GOTO :EOF)
 
 REM Process Command line
 IF "%1" == "start" GOTO START
@@ -26,7 +31,7 @@ GOTO :EOF
 
 :DEPLOY
 echo Deploying application...
-FOR /F %%i IN ('curl -X POST -sL -w %%{http_code} -H "X-Archive-Name: %APP_JAR_NAME%" --data-binary @"target\%APP_JAR_NAME%" http://localhost:10000/v2/apps') DO SET RESPONSE=%%i
+FOR /F %%i IN ('curl -X POST -sL -w %%{http_code} -H "X-Archive-Name: %APP_JAR_NAME%" --data-binary @"%JAR_PATH%" http://localhost:10000/v2/apps') DO SET RESPONSE=%%i
 IF  %RESPONSE% == 200  (echo Deployed application 
                         GOTO :EOF)
 

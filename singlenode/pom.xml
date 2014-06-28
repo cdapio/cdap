@@ -222,6 +222,7 @@
                       <directory>${project.parent.parent.basedir}/examples</directory>
                       <targetPath>examples</targetPath>
                       <includes>
+                        <include>README.rst</include>
                         <include>**/src/**</include>
                         <include>**/bin/*</include>
                         <include>**/pom.xml</include>
@@ -230,7 +231,6 @@
                       <excludes>
                         <exclude>pom.xml</exclude>
                         <exclude>build.gradle</exclude>
-                        <exclude>README.rst</exclude>
                         <exclude>**/target/original*.jar</exclude>
                       </excludes>
                     </resource>
