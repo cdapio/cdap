@@ -538,7 +538,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
                                               Map<byte[], Update> buffered) {
     // overlay buffered values on persisted, applying increments where necessary
     for (Map.Entry<byte[], ? extends Update> entry : buffered.entrySet()) {
-      base.put(entry.getKey(), mergeUpdates(base.get(entry.getKey()), entry.getValue()));
+      base.put(entry.getKey(), Updates.mergeUpdates(base.get(entry.getKey()), entry.getValue()));
     }
   }
 
@@ -642,72 +642,5 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
 
   private static int getSize(byte[] item) {
     return item == null ? 0 : item.length;
-  }
-
-  protected static interface Update<T> {
-    T getValue();
-  }
-
-  protected static class IncrementValue implements Update<Long> {
-    private final Long value;
-
-    public IncrementValue(Long value) {
-      this.value = value;
-    }
-
-    public Long getValue() {
-      return value;
-    }
-  }
-
-  protected static class PutValue implements Update<byte[]> {
-    private final byte[] bytes;
-
-    public PutValue(byte[] bytes) {
-      this.bytes = bytes;
-    }
-
-    public byte[] getValue() {
-      return bytes;
-    }
-  }
-
-  private static final Function<byte[], Update> BYTES_TO_PUTS = new Function<byte[], Update>() {
-    @Nullable
-    @Override
-    public Update apply(@Nullable byte[] input) {
-      return new PutValue(input);
-    }
-  };
-
-  /**
-   * Merges together two Update instances:
-   * <ul>
-   *   <li>Put a + Put b = Put b</li>
-   *   <li>Put a + Increment b = new Put(a + b)</li>
-   *   <li>Increment a + Put b = Put b</li>
-   *   <li>Increment a + Increment b = new Increment(a + b)</li>
-   * </ul>
-   * @param base
-   * @param modifier
-   * @return
-   */
-  private static final Update mergeUpdates(Update base, Update modifier) {
-    if (base == null || modifier instanceof PutValue) {
-      return modifier;
-    }
-    if (modifier instanceof IncrementValue) {
-      IncrementValue increment = (IncrementValue) modifier;
-      if (base instanceof PutValue) {
-        PutValue put = (PutValue) base;
-        long newValue = Bytes.toLong(put.getValue()) + increment.getValue();
-        return new PutValue(Bytes.toBytes(newValue));
-      } else if (base instanceof IncrementValue) {
-        IncrementValue baseIncrement = (IncrementValue) base;
-        return new IncrementValue(baseIncrement.getValue() + increment.getValue());
-      }
-    }
-    // should not happen: modifier is neither Put nor Increment!
-    return base;
   }
 }

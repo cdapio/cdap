@@ -132,14 +132,14 @@ public class LevelDBOcTableCore {
     getDB().put(createPutKey(row, column, version), value);
   }
 
-  public void undo(Map<byte[], ? extends Map<byte[], byte[]>> persisted, long version) throws IOException {
+  public void undo(Map<byte[], ? extends Map<byte[], ?>> persisted, long version) throws IOException {
     if (persisted.isEmpty()) {
       return;
     }
     DB db = getDB();
     WriteBatch batch = db.createWriteBatch();
-    for (Map.Entry<byte[], ? extends Map<byte[], byte[]>> row : persisted.entrySet()) {
-      for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
+    for (Map.Entry<byte[], ? extends Map<byte[], ?>> row : persisted.entrySet()) {
+      for (Map.Entry<byte[], ?> column : row.getValue().entrySet()) {
         byte[] key = createPutKey(row.getKey(), column.getKey(), version);
         batch.delete(key);
       }

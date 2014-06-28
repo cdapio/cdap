@@ -4,6 +4,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
+import com.continuuity.data2.dataset.lib.table.Update;
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.collect.Maps;
 
@@ -37,32 +38,7 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   @Override
   protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> buff) {
     // split up the increments and puts
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> puts = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    NavigableMap<byte[], NavigableMap<byte[], Long>> increments = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    for (Map.Entry<byte[], NavigableMap<byte[], Update>> rowEntry : buff.entrySet()) {
-      for (Map.Entry<byte[], Update> colEntry : rowEntry.getValue().entrySet()) {
-        Update val = colEntry.getValue();
-        if (val instanceof IncrementValue) {
-          NavigableMap<byte[], Long> incrCols = increments.get(rowEntry.getKey());
-          if (incrCols == null) {
-            incrCols = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-            increments.put(rowEntry.getKey(), incrCols);
-          }
-          incrCols.put(colEntry.getKey(), ((IncrementValue) val).getValue());
-        } else if (val instanceof PutValue) {
-          NavigableMap<byte[], byte[]> putCols = puts.get(rowEntry.getKey());
-          if (putCols == null) {
-            putCols = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-            puts.put(rowEntry.getKey(), putCols);
-          }
-          putCols.put(colEntry.getKey(), ((PutValue) val).getValue());
-        }
-      }
-    }
-    InMemoryOcTableService.merge(getTableName(), puts, tx.getWritePointer());
-    for (Map.Entry<byte[], NavigableMap<byte[], Long>> incrRow : increments.entrySet()) {
-      InMemoryOcTableService.increment(getTableName(), incrRow.getKey(), incrRow.getValue());
-    }
+    InMemoryOcTableService.merge(getTableName(), buff, tx.getWritePointer());
   }
 
   @Override

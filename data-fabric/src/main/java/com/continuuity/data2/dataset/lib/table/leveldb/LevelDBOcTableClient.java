@@ -1,11 +1,17 @@
 package com.continuuity.data2.dataset.lib.table.leveldb;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
+import com.continuuity.data2.dataset.lib.table.IncrementValue;
+import com.continuuity.data2.dataset.lib.table.PutValue;
+import com.continuuity.data2.dataset.lib.table.Update;
 import com.continuuity.data2.transaction.Transaction;
+import com.google.common.collect.Maps;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.NavigableMap;
 import javax.annotation.Nullable;
 
@@ -36,13 +42,39 @@ public class LevelDBOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
-  protected void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes) throws Exception {
+  protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> changes) throws Exception {
     persistedVersion = tx == null ? System.currentTimeMillis() : tx.getWritePointer();
-    core.persist(changes, persistedVersion);
+
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> puts = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<byte[], Long>> increments = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (Map.Entry<byte[], NavigableMap<byte[], Update>> rowEntry : changes.entrySet()) {
+      for (Map.Entry<byte[], Update> colEntry : rowEntry.getValue().entrySet()) {
+        Update val = colEntry.getValue();
+        if (val instanceof IncrementValue) {
+          NavigableMap<byte[], Long> incrCols = increments.get(rowEntry.getKey());
+          if (incrCols == null) {
+            incrCols = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+            increments.put(rowEntry.getKey(), incrCols);
+          }
+          incrCols.put(colEntry.getKey(), ((IncrementValue) val).getValue());
+        } else if (val instanceof PutValue) {
+          NavigableMap<byte[], byte[]> putCols = puts.get(rowEntry.getKey());
+          if (putCols == null) {
+            putCols = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+            puts.put(rowEntry.getKey(), putCols);
+          }
+          putCols.put(colEntry.getKey(), ((PutValue) val).getValue());
+        }
+      }
+    }
+    for (Map.Entry<byte[], NavigableMap<byte[], Long>> incEntry : increments.entrySet()) {
+      core.increment(incEntry.getKey(), incEntry.getValue());
+    }
+    core.persist(puts, persistedVersion);
   }
 
   @Override
-  protected void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted) throws Exception {
+  protected void undo(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted) throws Exception {
     core.undo(persisted, persistedVersion);
   }
 

@@ -78,9 +78,9 @@ public abstract class BufferingOcTableClientTest<T extends BufferingOcTableClien
     // override persist to simulate failure in the middle
 
     @Override
-    protected void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> buff) throws Exception {
+    protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> buff) throws Exception {
       // persists only first change and throws exception
-      NavigableMap<byte[], NavigableMap<byte[], byte[]>> toPersist = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      NavigableMap<byte[], NavigableMap<byte[], Update>> toPersist = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
       if (buff.size() > 0) {
         toPersist.put(buff.firstEntry().getKey(), buff.firstEntry().getValue());
       }
@@ -91,7 +91,7 @@ public abstract class BufferingOcTableClientTest<T extends BufferingOcTableClien
     // implementing abstract methods
 
     @Override
-    protected void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted) throws Exception {
+    protected void undo(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted) throws Exception {
       delegate.undo(persisted);
     }
 

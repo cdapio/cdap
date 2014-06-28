@@ -7,6 +7,8 @@ import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.OperationResult;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
+import com.continuuity.data2.dataset.lib.table.Update;
+import com.continuuity.data2.dataset.lib.table.Updates;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
@@ -40,7 +42,11 @@ public class InMemoryMetricsTableClient implements MetricsTable {
 
   @Override
   public void put(Map<byte[], Map<byte[], byte[]>> updates) throws Exception {
-    InMemoryOcTableService.merge(tableName, updates, System.currentTimeMillis());
+    Map<byte[], Map<byte[], Update>> convertedUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (Map.Entry<byte[], Map<byte[], byte[]>> entry : updates.entrySet()) {
+      convertedUpdates.put(entry.getKey(), Maps.transformValues(entry.getValue(), Updates.BYTES_TO_PUTS));
+    }
+    InMemoryOcTableService.merge(tableName, convertedUpdates, System.currentTimeMillis());
   }
 
   @Override
