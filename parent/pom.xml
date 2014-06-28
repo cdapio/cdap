@@ -1405,7 +1405,7 @@
               <executions>
                 <execution>
                   <id>copy-deb-staging</id>
-                  <phase>process-resources</phase>
+                  <phase>prepare-package</phase>
                   <goals>
                     <goal>copy-resources</goal>
                   </goals>
@@ -1414,6 +1414,9 @@
                     <resources>
                       <resource>
                         <directory>${stage.dir}</directory>
+                        <includes>
+                          <include>opt/**</include>
+                        </includes>
                       </resource>
                     </resources>
                   </configuration>
