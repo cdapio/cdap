@@ -81,6 +81,9 @@
   <profiles>
     <profile>
       <id>dist</id>
+      <properties>
+        <package.args>opt</package.args>
+      </properties>
       <build>
         <plugins>
           <plugin>
