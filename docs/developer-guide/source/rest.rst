@@ -1748,9 +1748,9 @@ Container Information
 ---------------------
 
 To find out the address of an element's container host and the container’s debug port, you can query
-the Reactor for a Procedure or Flow’s live info via an HTTP GET method::
+the Reactor for a Procedure, Flow or Service’s live info via an HTTP GET method::
 
-	GET <base-url>/apps/<app-id>/<element-type>/live-info
+	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/live-info
 
 .. list-table::
    :widths: 20 80
@@ -2126,15 +2126,7 @@ As Applications process data, the Continuuity Reactor collects metrics about the
 
 Other metrics are user-defined and differ from Application to Application. 
 For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-Continuuity Reactor Operations Guide.
-
-
-.. rst2pdf: CutStart
-
-(`Operations Guide </operations.html>`)
-
-.. rst2pdf: CutStop
-
+`Continuuity Reactor Operations Guide. <operations.html>`__
 
 Metrics Requests
 ----------------
