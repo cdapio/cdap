@@ -108,6 +108,9 @@
   <profiles>
     <profile>
       <id>dist</id>
+      <properties>
+        <package.dirs>opt</package.dirs>
+      </properties>
       <build>
         <plugins>
           <plugin>
