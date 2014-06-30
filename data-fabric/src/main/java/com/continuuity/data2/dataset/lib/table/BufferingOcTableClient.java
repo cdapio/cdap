@@ -309,7 +309,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
     if (buffCols != null) {
       buffCols = getRange(buffCols, startColumn, stopColumn, limit);
       // null valued columns in in-memory buffer are deletes, so we need to delete them from the result list
-      mergeToPersisted(result, buffCols);
+      mergeToPersisted(result, buffCols, null);
     }
 
     // applying limit
@@ -474,7 +474,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
     result.putAll(persisted);
     if (buffCols != null) {
       // buffered should override those returned from persistent store
-      mergeToPersisted(result, buffCols);
+      mergeToPersisted(result, buffCols, null);
     }
 
     return unwrapDeletes(result);
@@ -520,7 +520,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
     }
 
     // overlay buffered values on persisted, applying increments where necessary
-    mergeToPersisted(result, buffCols);
+    mergeToPersisted(result, buffCols, columns);
 
     return unwrapDeletes(result);
   }
@@ -531,18 +531,31 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
    * @param persisted The map to modify with the buffered values.
    * @param buffered The buffered values to overlay on the persisted map.
    */
-  private void mergeToPersisted(Map<byte[], byte[]> persisted, Map<byte[], Update> buffered) {
+  private void mergeToPersisted(Map<byte[], byte[]> persisted, Map<byte[], Update> buffered, byte[][] columns) {
+    Iterable<byte[]> columnKeys = null;
+    if (columns != null) {
+      columnKeys = Arrays.asList(columns);
+    } else {
+      columnKeys = buffered.keySet();
+    }
     // overlay buffered values on persisted, applying increments where necessary
-    for (Map.Entry<byte[], ? extends Update> entry : buffered.entrySet()) {
-      Update val = entry.getValue();
+    for (byte[] key : columnKeys) {
+      Update val = buffered.get(key);
       if (val == null) {
-        persisted.remove(entry.getKey());
+        if (buffered.containsKey(key)) {
+          persisted.remove(key);
+        }
       } else if (val instanceof IncrementValue) {
-        long newValue = Bytes.toLong(persisted.get(entry.getKey())) + ((IncrementValue) val).getValue();
-        persisted.put(entry.getKey(), Bytes.toBytes(newValue));
+        long persistedValue = 0L;
+        byte[] persistedBytes = persisted.get(key);
+        if (persistedBytes != null) {
+          persistedValue = Bytes.toLong(persistedBytes);
+        }
+        long newValue = persistedValue + ((IncrementValue) val).getValue();
+        persisted.put(key, Bytes.toBytes(newValue));
       } else if (val instanceof PutValue) {
         // overwrite the current
-        persisted.put(entry.getKey(), ((PutValue) val).getValue());
+        persisted.put(key, ((PutValue) val).getValue());
       }
       // unknown type?!
     }

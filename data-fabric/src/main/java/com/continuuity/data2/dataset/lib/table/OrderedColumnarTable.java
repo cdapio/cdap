@@ -130,8 +130,8 @@ public interface OrderedColumnarTable {
   /**
    * Increments (atomically) the specified row and columns by the specified amounts, without returning the new values.
    *
-   * NOTE: depending on the implementation this may work faster than calling {@link #incrementWrite(byte[], byte[], long)}
-   *       multiple times (esp. in transaction that changes a lot of rows)
+   * NOTE: depending on the implementation this may work faster than calling
+   * {@link #incrementWrite(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of rows)
    *
    * @param row row which values to increment
    * @param columns columns to increment

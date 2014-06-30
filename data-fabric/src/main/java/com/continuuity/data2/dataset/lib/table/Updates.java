@@ -29,6 +29,10 @@ public final class Updates {
    */
   public static final NavigableMap<byte[], NavigableMap<Long, byte[]>> rowToBytes(
     NavigableMap<byte[], NavigableMap<Long, Update>> row) {
+    if (row == null) {
+      return null;
+    }
+
     NavigableMap<byte[], NavigableMap<Long, byte[]>> returnMap =
       new TreeMap<byte[], NavigableMap<Long, byte[]>>(Bytes.BYTES_COMPARATOR);
     // TODO: make this use a wrapper to represent the existing map as <Long, byte[]> instead of copying
@@ -83,5 +87,19 @@ public final class Updates {
     }
     // should not happen: modifier is neither Put nor Increment!
     return base;
+  }
+
+  /**
+   * Returns a new {@link PutValue} representing the update.
+   */
+  public static final PutValue toPut(Update update) {
+    if (update == null) {
+      return null;
+    } else if (update instanceof PutValue) {
+      return (PutValue) update;
+    } else if (update instanceof IncrementValue) {
+      return new PutValue(((IncrementValue) update).getBytes());
+    }
+    throw new IllegalArgumentException("Unknown update type " + update);
   }
 }

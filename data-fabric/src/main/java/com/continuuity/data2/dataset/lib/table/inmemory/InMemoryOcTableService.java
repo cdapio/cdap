@@ -90,7 +90,7 @@ public class InMemoryOcTableService {
         rowMap.put(keyVal.getKey(), colMap);
       }
       // put into the column with given version
-      Update merged = Updates.mergeUpdates(colMap.get(keyVal.getKey()), keyVal.getValue());
+      Update merged = Updates.mergeUpdates(colMap.get(version), keyVal.getValue());
       colMap.put(version, merged);
     }
   }
@@ -110,11 +110,14 @@ public class InMemoryOcTableService {
       IncrementValue increment = new IncrementValue(inc.getValue());
       // create the column in the row if it does not exist
       NavigableMap<Long, Update> colMap = rowMap.get(inc.getKey());
+      Update last = null;
       if (colMap == null) {
         colMap = Maps.newTreeMap();
         rowMap.put(inc.getKey(), colMap);
+      } else {
+        last = colMap.lastEntry().getValue();
       }
-      Update merged = Updates.mergeUpdates(colMap.get(inc.getKey()), increment);
+      Update merged = Updates.mergeUpdates(last, increment);
       // put into the column with given version
       long newValue = Bytes.toLong(merged.getBytes());
       resultMap.put(inc.getKey(), newValue);
