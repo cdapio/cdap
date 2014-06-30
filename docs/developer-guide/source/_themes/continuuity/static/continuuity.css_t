@@ -243,7 +243,7 @@ p.admonition-title:after {
 }
 
 em {
-    font-style: normal;
+    font-style: italic;
 }
 
 pre {

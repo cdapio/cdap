@@ -113,7 +113,7 @@ function stage_docs() {
   echo ""
   echo "To install on server:"
   echo "cd /var/www/reactor; ls"
-  echo "sudo rm -rf *"
+  echo "sudo rm -rf $reactor_version; ls"
   echo "sudo unzip ~/$ZIP_FILE; sudo mv $HTML $reactor_version"
   echo ""
   login_staging_server

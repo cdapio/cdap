@@ -1933,9 +1933,8 @@ Example
 
    * - HTTP Method
      - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/instances``
-       ``instances``
    * - Description
-     - Retreive the number of instances of the Twill Runnable *WhoRunnable* of the Service *WhoService*
+     - Retrieve the number of instances of the Twill Runnable *WhoRunnable* of the Service *WhoService*
 
 .. rst2pdf: PageBreak
 
@@ -2181,7 +2180,7 @@ Comments
 ........
 The scope must be either ``reactor`` for system metrics or ``user`` for user-defined metrics.
 
-System metrics are either Application metrics (about Applications and their Flows, Procedures, MapReduce and WorkFlows) or they are Data metrics (relating to Streams or Datasets).
+System metrics are either Application metrics (about Applications and their Flows, Procedures, MapReduce and Workflows) or they are Data metrics (relating to Streams or Datasets).
 
 User metrics are always in the Application context.
 
