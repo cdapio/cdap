@@ -82,7 +82,7 @@
     <profile>
       <id>dist</id>
       <properties>
-        <package.args>opt</package.args>
+        <package.dirs>opt</package.dirs>
       </properties>
       <build>
         <plugins>

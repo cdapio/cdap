@@ -1098,7 +1098,8 @@
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
         <service.name>${project.artifactId}</service.name>
         <package.name>${project.artifactId}</package.name>
-        <package.args>opt etc</package.args>
+        <package.depends>--depends continuuity</package.depends>
+        <package.dirs>opt etc</package.dirs>
       </properties>
       <build>
         <pluginManagement>
@@ -1530,12 +1531,12 @@
                         --architecture all
                         --url "http://www.continuuity.com/products"
                         --template-value "project=${project.artifactId}"
-                        --depends continuuity
                         --after-install "${project.parent.parent.basedir}/distributions/src/rpm/scripts/postinst"
                         --before-remove "${project.parent.parent.basedir}/distributions/src/rpm/scripts/prerm"
                         --after-remove "${project.parent.parent.basedir}/distributions/src/rpm/scripts/postrm"
                         --iteration 1
-                        ${package.args}
+                        ${package.depends}
+                        ${package.dirs}
                     </commandlineArgs>
                   </configuration>
                 </execution>
@@ -1581,12 +1582,12 @@
                       --architecture all
                       --url "http://www.continuuity.com/products"
                       --template-value "project=${project.artifactId}"
-                      --depends continuuity
                       --after-install "${project.parent.parent.basedir}/distributions/src/debian/scripts/postinst"
                       --before-remove "${project.parent.parent.basedir}/distributions/src/debian/scripts/prerm"
                       --after-remove "${project.parent.parent.basedir}/distributions/src/debian/scripts/postrm"
                       --iteration 1
-                      ${package.args}
+                      ${package.depends}
+                      ${package.dirs}
                     </commandlineArgs>
                   </configuration>
                 </execution>
