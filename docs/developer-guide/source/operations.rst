@@ -483,8 +483,10 @@ You embed user-defined metrics in the methods defining the elements of your appl
 They will then emit their metrics and you can retrieve them
 (along with system metrics) via the `Metrics Explorer`_ in the Dashboard or
 via the Continuuity Reactor’s `REST interfaces <rest.html>`__.
+The names given to the metrics (such as ``names.longnames`` and ``names.bytes`` as in the example below)
+should be composed only of alphanumeric characters.
 
-For example, to add metrics to a Flowlet *NameSaver*::
+To add metrics to a Flowlet *NameSaver*::
 
 	public static class NameSaver extends AbstractFlowlet {
 	  static final byte[] NAME = { 'n', 'a', 'm', 'e' };
