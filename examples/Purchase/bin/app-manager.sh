@@ -100,8 +100,10 @@ elif [ "x$action" == "xrun" ]; then
 elif [ "x$action" == "xstatus" ]; then
   program_action $app "PurchaseFlow" "flow" $action $host
   program_action $app "PurchaseProcedure" "procedure" $action $host
+  program_action $app "CatalogLookupService" "service" $action $host
   program_action $app "PurchaseHistoryWorkflow_PurchaseHistoryBuilder" "mapreduce" $action $host
 else
   program_action $app "PurchaseFlow" "flow" $action $host
   program_action $app "PurchaseProcedure" "procedure" $action $host
+  program_action $app "CatalogLookupService" "service" $action $host
 fi
