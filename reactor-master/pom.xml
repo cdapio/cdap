@@ -95,6 +95,9 @@
   <profiles>
     <profile>
       <id>dist</id>
+      <properties>
+        <package.depends>--depends continuuity --depends continuuity-hbase-compat-0.94 --depends continuuity-hbase-compat-0.96</package.depends>
+      </properties>
       <build>
         <plugins>
           <plugin>
