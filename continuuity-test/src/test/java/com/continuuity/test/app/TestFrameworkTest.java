@@ -205,6 +205,19 @@ public class TestFrameworkTest extends ReactorTestBase {
 
   }
 
+  @Test
+  public void testAppwithOnlyService() throws Exception {
+    //App with only service in it.
+    ApplicationManager applicationManager = deployApplication(AppWithOnlyService.class);
+    LOG.info("Deployed.");
+    ServiceManager serviceManager = applicationManager.startService("NoOpService");
+    Assert.assertTrue(serviceManager.isRunning());
+    LOG.info("Service Started");
+    serviceManager.stop();
+    Assert.assertFalse(serviceManager.isRunning());
+    LOG.info("Service Stopped");
+  }
+
   // todo: passing stream name as a workaround for not cleaning up streams during reset()
   private void testApp(Class<?> app, boolean datasetV2, String streamName)
     throws IOException, TimeoutException, InterruptedException {
