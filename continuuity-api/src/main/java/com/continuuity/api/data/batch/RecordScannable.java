@@ -1,5 +1,7 @@
 package com.continuuity.api.data.batch;
 
+import com.continuuity.api.annotation.Beta;
+
 import java.io.Closeable;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -9,6 +11,7 @@ import java.util.List;
  * {@link BatchReadable}.
  * @param <RECORD> the type of objects that represents a single record
  */
+@Beta
 public interface RecordScannable<RECORD> extends Closeable {
 
   /**
