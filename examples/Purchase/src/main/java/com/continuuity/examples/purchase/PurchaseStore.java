@@ -56,13 +56,19 @@ public class PurchaseStore extends AbstractFlowlet {
       String hostName = discoverable.getSocketAddress().getHostName();
       int port = discoverable.getSocketAddress().getPort();
       String catalog = getCatalogId(hostName, port, purchase.getProduct());
-      purchase.setCatalogId(catalog);
+      if (catalog != null) {
+        purchase.setCatalogId(catalog);
+      }
     }
     LOG.info("Purchase info: Customer {}, ProductId {}, CatalogId {}", purchase.getCustomer(),
                         purchase.getProduct(), purchase.getCatalogId());
     store.write(Bytes.toBytes(purchase.getPurchaseTime()), purchase);
   }
 
+  /**
+   * Make an HTTP call to the catalog service for a given product.
+   * @return the catalog ID of the product, or null in case of error
+   */
   private String getCatalogId(String host, int port, String productId) {
     try {
       URL url = new URL(String.format("http://%s:%d/v1/product/%s/catalog", host, port, productId));
@@ -74,10 +80,11 @@ public class PurchaseStore extends AbstractFlowlet {
           conn.disconnect();
         }
       }
-      return "";
+      LOG.warn("Unexpected response from Catalog Service: {} {}", conn.getResponseCode(), conn.getResponseMessage());
     } catch (Throwable th) {
-      return "";
+      LOG.warn("Error while callilng Catalog Service", th);
     }
+    return null;
   }
 
 }
