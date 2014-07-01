@@ -195,11 +195,11 @@ public class TestFrameworkTest extends ReactorTestBase {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
     ServiceManager serviceManager = applicationManager.startService("NoOpService");
-    serviceStatusCheck(true, serviceManager);
+    serviceStatusCheck(serviceManager, true);
     Assert.assertTrue(serviceManager.isRunning());
     LOG.info("Service Started");
     serviceManager.stop();
-    serviceStatusCheck(false, serviceManager);
+    serviceStatusCheck(serviceManager, false);
     Assert.assertFalse(serviceManager.isRunning());
     LOG.info("Service Stopped");
     // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the REACTOR scope test in
@@ -213,16 +213,16 @@ public class TestFrameworkTest extends ReactorTestBase {
     ApplicationManager applicationManager = deployApplication(AppWithOnlyService.class);
     LOG.info("Deployed.");
     ServiceManager serviceManager = applicationManager.startService("NoOpService");
-    serviceStatusCheck(true, serviceManager);
+    serviceStatusCheck(serviceManager, true);
     Assert.assertTrue(serviceManager.isRunning());
     LOG.info("Service Started");
     serviceManager.stop();
-    serviceStatusCheck(false, serviceManager);
+    serviceStatusCheck(serviceManager, false);
     Assert.assertFalse(serviceManager.isRunning());
     LOG.info("Service Stopped");
   }
 
-  private void serviceStatusCheck(boolean expected, ServiceManager serviceManger) throws InterruptedException {
+  private void serviceStatusCheck(ServiceManager serviceManger, boolean expected) throws InterruptedException {
     int trial = 0;
     boolean state;
     while (trial++ < 5) {
