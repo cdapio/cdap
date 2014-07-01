@@ -44,10 +44,19 @@ function program_action() {
     http=""
   fi
 
-  maction="$(tr '[:lower:]' '[:upper:]' <<< ${action:0:1})${action:1}"
-  echo " - ${maction/Stop/Stopp}ing $type $program... "
+  types="$type";
+  if [ "$type" != "mapreduce" ]; then
+    types="${type}s";
+  fi
 
-  status=$(curl -s $http http://$host:10000/v2/apps/$app/${type}s/$program/$action 2>/dev/null)
+  if [ "x$action" == "xstatus" ]; then
+    echo -n " - Status for $type $program: "
+  else
+    maction="$(tr '[:lower:]' '[:upper:]' <<< ${action:0:1})${action:1}"
+    echo " - ${maction/Stop/Stopp}ing $type $program... "
+  fi
+
+  status=$(curl -s $http http://$host:10000/v2/apps/$app/$types/$program/$action 2>/dev/null)
 
   if [ $? -ne 0 ]; then
    echo "Action '$action' failed."
@@ -56,7 +65,6 @@ function program_action() {
       echo $status
     fi
   fi
-
 }
 
 if [ $# -lt 1 ]; then
@@ -87,6 +95,12 @@ app="TrafficAnalytics"
 if [ "x$action" == "xdeploy" ]; then
   jar_path=`ls $dir/../target/TrafficAnalytics-*.jar`
   deploy_action $app $jar_path $host
+elif [ "x$action" == "xrun" ]; then
+  program_action $app "RequestCountMapReduce" "mapreduce" "start" $host
+elif [ "x$action" == "xstatus" ]; then
+  program_action $app "PurchaseFlow" "flow" $action $host
+  program_action $app "PurchaseProcedure" "procedure" $action $host
+  program_action $app "RequestCountMapReduce" "mapreduce" $action $host
 else
   program_action $app "RequestCountFlow" "flow" $action $host
   program_action $app "LogCountProcedure" "procedure" $action $host
