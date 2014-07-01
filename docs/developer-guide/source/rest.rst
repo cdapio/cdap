@@ -492,9 +492,20 @@ For usage and documentation of options, run at the command line::
 
 Dataset HTTP API
 ================
+The Dataset API allows you to interact with Datasets through HTTP. You can list, create, delete, and truncate Datasets. For details, see the Developer Guide:
 
-The Dataset API allows you to interact with `Continuuity Reactor Datasets <advanced.html#dataset-system>`_ through HTTP.
-You can list, create, delete, and truncate Datasets.
+.. rst2pdf: CutStart
+
+.. only:: html
+
+	`Continuuity Reactor Advanced Features, Datasets section <advanced.html#datasets-system>`__
+
+.. only:: pdf
+
+.. rst2pdf: CutStop
+
+	`Continuuity Reactor Advanced Features, Datasets section <http://continuuity.com/docs/reactor/current/en/advanced.html#datasets-system>`__
+
 
 Listing all Datasets
 --------------------
@@ -647,8 +658,21 @@ Dataset Module HTTP API
 =======================
 
 The Dataset Module API allows you to interact with 
-`Continuuity Reactor Dataset Modules <advanced.html#dataset-system>`_ through HTTP.
-You can list, add, and delete Dataset modules.
+Continuuity Reactor Dataset Modules through HTTP.
+You can list, add, and delete Dataset modules. For details, see the Developer Guide:
+
+.. rst2pdf: CutStart
+
+.. only:: html
+
+	`Continuuity Reactor Advanced Features, Datasets section <advanced.html#datasets-system>`__
+
+.. only:: pdf
+
+.. rst2pdf: CutStop
+
+	`Continuuity Reactor Advanced Features, Datasets section <http://continuuity.com/docs/reactor/current/en/advanced.html#datasets-system>`__
+
 
 Listing all Dataset Modules
 ---------------------------
@@ -702,7 +726,6 @@ The response will be a JSON String representing a list of ``DatasetModuleMeta`` 
 	   }
 	]
 
-.. rst2pdf: PageBreak
 
 Adding a Dataset Module
 -----------------------
@@ -812,10 +835,24 @@ Dataset Type HTTP API
 =====================
 
 The Dataset Type API allows you to interact with 
-`Continuuity Reactor Dataset Types <advanced.html#dataset-system>`_ through HTTP.
+Continuuity Reactor Dataset Types through HTTP.
 You can list all Dataset types and get information about each type. Dataset types are declared by the Dataset modules added to Continuuity Reactor.
 To delete a Dataset type, you delete the Dataset module that contains the type as described under
 `Deleting a Dataset Module <#deleting-a-dataset-module>`_.
+
+For details on Datasets, see the Developer Guide:
+
+.. rst2pdf: CutStart
+
+.. only:: html
+
+	`Continuuity Reactor Advanced Features, Datasets section <advanced.html#datasets-system>`__
+
+.. only:: pdf
+
+.. rst2pdf: CutStop
+
+	`Continuuity Reactor Advanced Features, Datasets section <http://continuuity.com/docs/reactor/current/en/advanced.html#datasets-system>`__
 
 
 Listing all Dataset Types
@@ -1769,8 +1806,19 @@ Example::
 
 	GET <base-url>/apps/WordCount/flows/WordCounter/live-info
 
-The response is formatted in JSON; an example of this is shown in the 
-`Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`_.
+The response is formatted in JSON; an example of this is shown in: 
+
+.. rst2pdf: CutStart
+
+.. only:: html
+
+	`Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`__
+
+.. only:: pdf
+
+.. rst2pdf: CutStop
+
+	`Continuuity Reactor Testing and Debugging Guide <http://continuuity.com/docs/reactor/current/en/debugging.html#debugging-reactor-applications>`__
 
 To find out the address of a Service's container host and the container's debug port, you can query the
 Reactor for the live info of a Service's Twill Runnable via an HTTP GET method::
@@ -2125,7 +2173,20 @@ As Applications process data, the Continuuity Reactor collects metrics about the
 
 Other metrics are user-defined and differ from Application to Application. 
 For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-`Continuuity Reactor Operations Guide. <operations.html>`__
+the Developer Guide:
+
+.. rst2pdf: CutStart
+
+.. only:: html
+
+	`Continuuity Reactor Operations Guide <operations.html>`__
+
+.. only:: pdf
+
+.. rst2pdf: CutStop
+
+	`Continuuity Reactor Operations Guide <http://continuuity.com/docs/reactor/current/en/operations.html>`__
+
 
 Metrics Requests
 ----------------
