@@ -21,10 +21,8 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
-import com.continuuity.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
-import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
-import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -47,15 +45,12 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,13 +66,12 @@ import java.util.concurrent.TimeUnit;
 public class DatasetOpExecutorServiceTest {
 
   private static final Gson GSON = new Gson();
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetOpExecutorServiceTest.class);
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private DatasetService managerService;
-  private RemoteDatasetFramework dsFramework;
+  private DatasetFramework dsFramework;
   private TimeLimitEndpointStrategy endpointStrategy;
   private InMemoryTransactionManager txManager;
 
@@ -124,14 +118,7 @@ public class DatasetOpExecutorServiceTest {
     managerService = injector.getInstance(DatasetService.class);
     managerService.startAndWait();
 
-    // initialize client
-    DatasetServiceClient serviceClient = new DatasetServiceClient(
-      injector.getInstance(DiscoveryServiceClient.class));
-
-    dsFramework = new RemoteDatasetFramework(
-      serviceClient, cConf,
-      injector.getInstance(LocationFactory.class),
-      new InMemoryDefinitionRegistryFactory());
+    dsFramework = injector.getInstance(DatasetFramework.class);
 
     // find host
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);

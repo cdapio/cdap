@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * A simple implementation of {@link com.continuuity.data2.dataset2.DatasetFramework} that keeps its state in
@@ -57,6 +58,11 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public void deleteAllModules() throws DatasetManagementException {
+    modules.clear();
+  }
+
+  @Override
   public synchronized void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
     throws InstanceConflictException, IOException {
     if (instances.get(datasetInstanceName) != null) {
@@ -72,8 +78,14 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public Collection<String> getInstances() {
-    return Collections.unmodifiableSet(instances.keySet());
+  public Collection<DatasetSpecification> getInstances() {
+    return Collections.unmodifiableCollection(instances.values());
+  }
+
+  @Nullable
+  @Override
+  public DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException {
+    return instances.get(name);
   }
 
   @Override
@@ -91,6 +103,11 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     DatasetSpecification spec = instances.remove(datasetInstanceName);
     DatasetDefinition def = registry.get(spec.getType());
     def.getAdmin(spec, null).create();
+  }
+
+  @Override
+  public void deleteAllInstances() throws DatasetManagementException, IOException {
+    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   @Override

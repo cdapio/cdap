@@ -10,7 +10,6 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
 import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
-import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import com.continuuity.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
@@ -22,7 +21,6 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.explore.client.DatasetExploreFacade;
 import com.continuuity.explore.client.DiscoveryExploreClient;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.reflect.TypeToken;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
@@ -74,7 +72,7 @@ public abstract class DatasetServiceTestBase {
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
     LocalLocationFactory locationFactory = new LocalLocationFactory();
-    dsFramework = new RemoteDatasetFramework(new DatasetServiceClient(discoveryService), cConf,
+    dsFramework = new RemoteDatasetFramework(discoveryService, cConf,
                                              locationFactory, new InMemoryDefinitionRegistryFactory());
 
     ImmutableMap<String, ? extends DatasetModule> defaultModules =
