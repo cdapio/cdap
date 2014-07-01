@@ -174,9 +174,9 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
+      int oldInstances = store.getServiceRunnableInstances(programId, runnableName);
       store.setServiceRunnableInstances(programId, runnableName, instances);
 
-      int oldInstances = store.getServiceRunnableInstances(programId, runnableName);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getAccountId(),
                                                                       programId.getApplicationId(),
                                                                       programId.getId(),
