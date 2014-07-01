@@ -47,6 +47,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     datasetDir.mkdirs();
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
+    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 
     // Starting DatasetService service
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
@@ -58,13 +59,12 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
     LocalLocationFactory locationFactory = new LocalLocationFactory();
-    framework = new RemoteDatasetFramework(discoveryService, cConf,
-                                           locationFactory, new InMemoryDefinitionRegistryFactory());
+    framework = new RemoteDatasetFramework(discoveryService, locationFactory, new InMemoryDefinitionRegistryFactory());
 
     MDSDatasetsRegistry mdsDatasetsRegistry =
       new MDSDatasetsRegistry(txSystemClient,
                               ImmutableMap.of("memoryTable", new InMemoryOrderedTableModule()),
-                              new InMemoryDatasetFramework(), cConf);
+                              new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory()), cConf);
 
     service = new DatasetService(cConf,
                                  locationFactory,

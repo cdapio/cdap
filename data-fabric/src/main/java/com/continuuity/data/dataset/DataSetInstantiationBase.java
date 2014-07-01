@@ -48,6 +48,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Implements the core logic of instantiating a dataset, including injection of the data fabric runtime and
@@ -125,7 +126,8 @@ public class DataSetInstantiationBase {
    *  @throws DataSetInstantiationException If failed to create the DataSet.
    */
   @SuppressWarnings("unchecked")
-  public <T extends Closeable> T getDataSet(String dataSetName, DataFabric fabric, DatasetFramework datasetFramework)
+  public <T extends Closeable> T getDataSet(String dataSetName, DataFabric fabric,
+                                            @Nullable DatasetFramework datasetFramework)
     throws DataSetInstantiationException {
 
     // find the data set specification
@@ -134,9 +136,11 @@ public class DataSetInstantiationBase {
       return (T) getDataSet(spec, fabric, dataSetName);
     }
 
-    T dataSet = (T) getDataset(dataSetName, datasetFramework);
-    if (dataSet != null) {
-      return dataSet;
+    if (datasetFramework != null) {
+      T dataSet = (T) getDataset(dataSetName, datasetFramework);
+      if (dataSet != null) {
+        return dataSet;
+      }
     }
 
     throw logAndException(null, "No data set named %s can be instantiated.", dataSetName);

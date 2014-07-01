@@ -9,15 +9,12 @@ import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.lang.jar.JarFinder;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DatasetManagementException;
-import com.continuuity.data2.dataset2.DatasetNamespace;
 import com.continuuity.data2.dataset2.SingleTypeModule;
 import com.continuuity.data2.dataset2.module.lib.DatasetModules;
 import com.continuuity.internal.lang.ClassLoaders;
@@ -44,18 +41,15 @@ public class RemoteDatasetFramework implements DatasetFramework {
   private final DatasetServiceClient client;
   private final DatasetDefinitionRegistryFactory registryFactory;
   private final LocationFactory locationFactory;
-  private final DatasetNamespace namespace;
 
   @Inject
   public RemoteDatasetFramework(DiscoveryServiceClient discoveryClient,
-                                CConfiguration conf,
                                 LocationFactory locationFactory,
                                 DatasetDefinitionRegistryFactory registryFactory) {
 
     this.client = new DatasetServiceClient(discoveryClient);
     this.locationFactory = locationFactory;
     this.registryFactory = registryFactory;
-    this.namespace = new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.USER);
   }
 
   @Override
@@ -94,7 +88,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   public void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException {
 
-    client.addInstance(namespace(datasetInstanceName), datasetType, props);
+    client.addInstance(datasetInstanceName, datasetType, props);
   }
 
   @Override
@@ -111,7 +105,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   @Override
   public boolean hasInstance(String instanceName) throws DatasetManagementException {
-    return client.getInstance(namespace(instanceName)) != null;
+    return client.getInstance(instanceName) != null;
   }
 
   @Override
@@ -121,7 +115,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   @Override
   public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
-    client.deleteInstance(namespace(datasetInstanceName));
+    client.deleteInstance(datasetInstanceName);
   }
 
   @Override
@@ -133,7 +127,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   public <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, ClassLoader classLoader)
     throws DatasetManagementException, IOException {
 
-    DatasetInstanceMeta instanceInfo = client.getInstance(namespace(datasetInstanceName));
+    DatasetInstanceMeta instanceInfo = client.getInstance(datasetInstanceName);
     if (instanceInfo == null) {
       return null;
     }
@@ -146,7 +140,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   public <T extends Dataset> T getDataset(String datasetInstanceName, ClassLoader classLoader)
     throws DatasetManagementException, IOException {
 
-    DatasetInstanceMeta instanceInfo = client.getInstance(namespace(datasetInstanceName));
+    DatasetInstanceMeta instanceInfo = client.getInstance(datasetInstanceName);
     if (instanceInfo == null) {
       return null;
     }
@@ -165,10 +159,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
     }
 
     client.addModule(moduleName, typeClass.getName(), tempJarPath);
-  }
-
-  private String namespace(String datasetInstanceName) {
-    return namespace.namespace(datasetInstanceName);
   }
 
   // can be used directly if DatasetTypeMeta is known, like in create dataset by dataset ops executor service

@@ -150,6 +150,7 @@ public final class DatasetSpecification {
     }
     DatasetSpecification ds = (DatasetSpecification) other;
     return this.getName().equals(ds.getName())
+        && this.type.equals(ds.type)
         && this.properties.equals(ds.properties)
         && this.datasetSpecs.equals(ds.datasetSpecs);
   }
@@ -159,7 +160,7 @@ public final class DatasetSpecification {
    */
   @Override
   public int hashCode() {
-    return Objects.hashCode(this.name, this.properties, this.datasetSpecs);
+    return Objects.hashCode(this.name, this.type, this.properties, this.datasetSpecs);
   }
 
   /**

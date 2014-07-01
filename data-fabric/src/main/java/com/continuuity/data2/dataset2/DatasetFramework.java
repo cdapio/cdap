@@ -53,6 +53,7 @@ public interface DatasetFramework {
 
   /**
    * Deletes dataset modules and its types from the system.
+   * @throws ModuleConflictException when some of modules can't be deleted because of its dependant modules or instances
    * @throws DatasetManagementException
    */
   void deleteAllModules()

@@ -72,14 +72,15 @@ public abstract class DatasetServiceTestBase {
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
     LocalLocationFactory locationFactory = new LocalLocationFactory();
-    dsFramework = new RemoteDatasetFramework(discoveryService, cConf,
-                                             locationFactory, new InMemoryDefinitionRegistryFactory());
+    dsFramework = new RemoteDatasetFramework(discoveryService, locationFactory,
+                                             new InMemoryDefinitionRegistryFactory());
 
     ImmutableMap<String, ? extends DatasetModule> defaultModules =
       ImmutableMap.of("memoryTable", new InMemoryOrderedTableModule());
 
     MDSDatasetsRegistry mdsDatasetsRegistry =
-      new MDSDatasetsRegistry(txSystemClient, defaultModules, new InMemoryDatasetFramework(), cConf);
+      new MDSDatasetsRegistry(txSystemClient, defaultModules,
+                              new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory()), cConf);
 
     service = new DatasetService(cConf,
                                  locationFactory,

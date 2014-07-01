@@ -25,20 +25,15 @@ import javax.annotation.Nullable;
  */
 public class InMemoryDatasetFramework implements DatasetFramework {
   private final Set<String> modules = Sets.newHashSet();
-  private final DatasetDefinitionRegistry registry;
+  private final DatasetDefinitionRegistryFactory registryFactory;
   private final Map<String, DatasetSpecification> instances = Maps.newHashMap();
 
-  public InMemoryDatasetFramework() {
-    this(new InMemoryDatasetDefinitionRegistry());
-  }
+  private DatasetDefinitionRegistry registry;
 
   @Inject
   public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory) {
+    this.registryFactory = registryFactory;
     this.registry = registryFactory.create();
-  }
-
-  public InMemoryDatasetFramework(DatasetDefinitionRegistry registry) {
-    this.registry = registry;
   }
 
   @Override
@@ -59,7 +54,13 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public void deleteAllModules() throws DatasetManagementException {
+    if (!instances.isEmpty()) {
+      // todo: quick check - not enough though
+      throw new ModuleConflictException("Cannot delete all modules, some datasets use them");
+    }
     modules.clear();
+    registry = registryFactory.create();
+    // todo: remove from registry & check for conflicts. It is fine for now, as we don't use delete with in-mem version
   }
 
   @Override
@@ -107,7 +108,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public void deleteAllInstances() throws DatasetManagementException, IOException {
-    //To change body of implemented methods use File | Settings | File Templates.
+    instances.clear();
   }
 
   @Override
