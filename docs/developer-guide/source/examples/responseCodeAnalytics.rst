@@ -223,5 +223,4 @@ Either:
 
 Downloading the Example
 =======================
-`Download the example <http://continuuity.com/docs/reactor/current/en/_downloads/continuuity-ResponseCodeAnalytics-2.3.0.zip>`_
-
+This example (and more!) is included with our `software development kit <http://continuuity.com/download>`__.

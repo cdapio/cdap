@@ -45,7 +45,7 @@ Let's look at some of these elements, and then run the Application and see the r
 
 The PageViewAnalytics Application
 ---------------------------------
-As in the other `examples <http://continuuity.com/docs/reactor/current/en/examples/>`__, the components
+As in the other `examples <index.html>`__, the components
 of the Application are tied together by the class ``PageViewAnalyticsApp``::
 
 	public class PageViewAnalyticsApp extends AbstractApplication {
@@ -54,7 +54,7 @@ of the Application are tied together by the class ``PageViewAnalyticsApp``::
       setName("PageViewAnalytics");
       setDescription("Page view analysis");
       addStream(new Stream("logEventStream"));
-      createDataset("pageViewCDS", PageViewStore.class);
+      createDataSet("pageViewCDS", PageViewStore.class);
       addFlow(new LogAnalyticsFlow());
       addProcedure(new PageViewProcedure());
     }
@@ -215,4 +215,4 @@ Either:
 
 Downloading the Example
 =======================
-`Download the example <http://continuuity.com/docs/reactor/current/en/_downloads/continuuity-PageViewAnalytics-2.3.0.zip>`_
+This example (and more!) is included with our `software development kit <http://continuuity.com/download>`__.

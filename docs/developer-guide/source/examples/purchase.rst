@@ -14,26 +14,26 @@ A Continuuity Reactor Application demonstrating all Reactor elements
 
 Overview
 ========
-This example demonstrates use of all the Reactor elements: Streams, Flow, Flowlets,
+This example demonstrates use of each of the Reactor elements: Streams, Flows, Flowlets,
 Datasets, Queries, Procedures, MapReduce jobs, and Workflows in a single Application.
 
-The application uses a scheduled MapReduce job and Workflow to read from one ObjectStore dataset
+The application uses a scheduled MapReduce job and Workflow to read from one ObjectStore Dataset
 and write to another.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the ``purchaseStream``.
     You can send sentences either by using a ``curl`` call, using the ``inject-data`` script
     included in the example's ``/bin`` directory, or using the Continuuity Reactor Dashboard.
   - The ``PurchaseFlow`` reads the ``purchaseStream`` and converts every input String into a
-    Purchase object and stores the object in the *purchases* dataset.
+    Purchase object and stores the object in the *purchases* Dataset.
   - When scheduled by the ``PurchaseHistoryWorkFlow``, the ``PurchaseHistoryBuilder`` MapReduce
-    job reads the *purchases* dataset, creates a purchase history, and stores the purchase
-    history in the *history* dataset every morning at 4:00 A.M.
+    job reads the *purchases* Dataset, creates a purchase history, and stores the purchase
+    history in the *history* Dataset every morning at 4:00 A.M.
   - You can either manually (in the Process screen of the Reactor Dashboard) or 
     programmatically execute the ``PurchaseHistoryBuilder`` MapReduce job to store 
-    customers' purchase history in the *history* dataset.
-  - Execute the ``PurchaseProcedure`` procedure to query the *history* dataset to discover the
+    customers' purchase history in the *history* Dataset.
+  - Execute the ``PurchaseProcedure`` procedure to query the *history* Dataset to discover the
     purchase history of each user.
-  - Execute a SQL query over the *history* dataset. You can do this using a series of ``curl``
+  - Execute a SQL query over the *history* Dataset. You can do this using a series of ``curl``
     calls, or more conveniently using the ``send-query`` script.
 
 **Note:** Because the PurchaseHistoryWorkFlow is only scheduled to run at 4:00 A.M.,
@@ -44,7 +44,7 @@ Let's look at some of these elements, and then run the Application and see the r
 
 The Purchase Application
 ------------------------
-As in the other `examples <http://continuuity.com/developers/examples>`__, the components
+As in the other `examples <index.html>`__, the components
 of the Application are tied together by the class ``PurchaseApp``::
 
   public class PurchaseApp extends AbstractApplication {
@@ -75,18 +75,18 @@ of the Application are tied together by the class ``PurchaseApp``::
 
 ``PurchaseHistory`` and ``Purchase``: ObjectStore Data Storage
 --------------------------------------------------------------
-The raw purchase data is stored in an ObjectStore dataset, *purchases*,
+The raw purchase data is stored in an ObjectStore Dataset, *purchases*,
 with this method defined in ``PurchaseStore``::
 
   ``process(Purchase purchase)``
 
-This method is what actually puts data into the *purchases* dataset, by writing to the
-dataset with each purchase's timestamp and the ``Purchase`` Object.
+This method is what actually puts data into the *purchases* Dataset, by writing to the
+Dataset with each purchase's timestamp and the ``Purchase`` Object.
 
 The purchase history for each customer is compiled by the ``PurchaseHistoryWorkflow``, which uses a Map/Reduce job,
 ``PurchaseHistoryBuilder``, to aggregate all purchases into a per-customer purchase history. It writes to the *history*
-dataset, a custom dataset that embeds an ``ObjectStore`` and also implements the ``RecordScannable`` interface to
-allow SQL queries over the dataset.
+Dataset, a custom Dataset that embeds an ``ObjectStore`` and also implements the ``RecordScannable`` interface to
+allow SQL queries over the Dataset.
 
 
 ``PurchaseProcedure``: Procedure
@@ -172,8 +172,8 @@ Reactor dashboard and then click the start button. You can then also see the sta
 finishes.
 
 Alternatively, you can send a ``curl`` request to the Reactor::
-
-  curl -v -X POST http://localhost:10000/v2/apps/Purchase/procedures/PurchaseQuery/start
+  
+  curl -v -X POST http://localhost:10000/v2/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/start
 
 Querying the Results
 ....................
@@ -199,7 +199,7 @@ There are two ways to query the *history* ObjectStore through the ``PurchaseProc
 
 Exploring the results using SQL
 ...............................
-You can use SQL to formulate ad-hoc queries over the *history* dataset. This is done by a series of ``curl`` calls, as
+You can use SQL to formulate ad-hoc queries over the *history* Dataset. This is done by a series of ``curl`` calls, as
 described in the REST API section of the Developer Guide. For your convenience, this example includes a script,
 ``send-query`` to execute this series of calls::
 
@@ -218,12 +218,12 @@ The first call is to submit the query for execution::
   curl -v -d '{"query": "'"SELECT * FROM continuuity_user_history WHERE customer IN ('Alice','Bob')"'"}' -X POST http://localhost:10000/v2/data/queries
 
 Note that due to the mix and repetition of single and double quotes, it can be tricky to escape all quotes correctly
-at the shell command prompt. On success, this will return a handle for the query::
+at the shell command prompt. On success, this will return a handle for the query, such as::
 
   {"handle":"363f8ceb-29fe-493d-810f-858ed0440782"}
 
 This handle is needed to inquire about the status of the query and to retrieve query results. To get the status,
-issue a GET to the query's URL::
+issue a GET to the query's URL using the handle::
 
   curl -v -X GET http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782/status
 
@@ -231,7 +231,7 @@ Because a SQL query can run for several minutes, you may have to repeat this cal
 
   {"status":"FINISHED","hasResults":true}
 
-Now that the execution is finished, you can retrieve the results of the query::
+Now that the execution is finished, you can retrieve the results of the query, once again using the handle::
 
   curl -v -X POST http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782/next
 
@@ -255,3 +255,7 @@ Either:
 
   On Windows, run ``~SDK> bin\appManager stop``
 
+
+Downloading the Example
+=======================
+This example (and more!) is included with our `software development kit <http://continuuity.com/download>`__.
