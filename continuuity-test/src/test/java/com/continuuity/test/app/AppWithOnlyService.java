@@ -1,6 +1,5 @@
 package com.continuuity.test.app;
 
-
 import com.continuuity.api.app.AbstractApplication;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillApplication;
@@ -12,7 +11,6 @@ import org.slf4j.LoggerFactory;
  * App with just a single service.
  */
 public class AppWithOnlyService extends AbstractApplication {
-
   private static final Logger LOG = LoggerFactory.getLogger(AppWithOnlyService.class);
 
   @Override
@@ -20,7 +18,6 @@ public class AppWithOnlyService extends AbstractApplication {
     setName("ServiceOnlyApp");
     addService(new TwillService());
   }
-
 
   public static class TwillService implements TwillApplication {
     @Override
@@ -46,5 +43,4 @@ public class AppWithOnlyService extends AbstractApplication {
       LOG.info("Runnable DummyService Stopped");
     }
   }
-
 }
