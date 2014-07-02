@@ -13,6 +13,11 @@ import org.apache.twill.filesystem.Location;
 public interface Program {
 
   /**
+   * Returns the name of the main class in the program.
+   */
+  String getMainClassName();
+
+  /**
    * Loads and returns the main class of the program
    * @throws ClassNotFoundException If fails to load the class.
    */

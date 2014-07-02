@@ -44,7 +44,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -115,7 +114,7 @@ public class MDTBasedStore implements Store {
                                   "Newer program update time than the specification update time. " +
                                   "Application must be redeployed");
 
-      return Programs.create(programLocation, Files.createTempDir());
+      return Programs.create(programLocation);
     } catch (OperationException e) {
       throw new IOException(e);
     }
@@ -516,9 +515,7 @@ public class MDTBasedStore implements Store {
     FlowletDefinition flowletDef = getFlowletDefinitionSafely(flowSpec, flowletId, id);
 
     final FlowletDefinition adjustedFlowletDef = new FlowletDefinition(flowletDef, count);
-    ApplicationSpecification newAppSpec = replaceFlowletInAppSpec(appSpec, id, flowSpec, adjustedFlowletDef);
-
-    return newAppSpec;
+    return replaceFlowletInAppSpec(appSpec, id, flowSpec, adjustedFlowletDef);
   }
 
   @Override
@@ -532,8 +529,6 @@ public class MDTBasedStore implements Store {
   public void setProcedureInstances(Id.Program id, int count) throws OperationException {
     Preconditions.checkArgument(count > 0, "cannot change number of program instances to negative number: " + count);
 
-    long timestamp = System.currentTimeMillis();
-
     ApplicationSpecification appSpec = getAppSpecSafely(id);
     ProcedureSpecification specification = getProcedureSpecSafely(id, appSpec);
 
@@ -546,6 +541,9 @@ public class MDTBasedStore implements Store {
                                                                                  count);
 
     ApplicationSpecification newAppSpec = replaceProcedureInAppSpec(appSpec, id, newSpecification);
+    replaceAppSpecInProgramJar(id, newAppSpec, Type.PROCEDURE);
+
+    long timestamp = System.currentTimeMillis();
     storeAppSpec(id.getApplication(), newAppSpec, timestamp);
 
     LOG.trace("Setting program instances: account: {}, application: {}, procedure: {}, new instances count: {}",
@@ -565,7 +563,6 @@ public class MDTBasedStore implements Store {
   public void setServiceRunnableInstances(Id.Program id, String runnable, int count) throws OperationException {
 
     Preconditions.checkArgument(count > 0, "cannot change number of program instances to negative number: " + count);
-    long timestamp = System.currentTimeMillis();
 
     ApplicationSpecification appSpec = getAppSpecSafely(id);
     ServiceSpecification serviceSpec = getServiceSpecSafely(id, appSpec);
@@ -583,6 +580,9 @@ public class MDTBasedStore implements Store {
 
     ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(),
                                                              replaceRuntimeSpec(runnable, serviceSpec, newRuntimeSpec));
+    replaceAppSpecInProgramJar(id, newAppSpec, Type.SERVICE);
+
+    long timestamp = System.currentTimeMillis();
     storeAppSpec(id.getApplication(), newAppSpec, timestamp);
 
     LOG.trace("Setting program instances: account: {}, application: {}, service: {}, runnable: {}," +
@@ -639,17 +639,13 @@ public class MDTBasedStore implements Store {
   }
 
   private void replaceAppSpecInProgramJar(Id.Program id, ApplicationSpecification appSpec, Type type) {
-    Location programLocation;
     try {
-      programLocation = getProgramLocation(id, Type.FLOW);
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
+      Location programLocation = getProgramLocation(id, type);
+      ArchiveBundler bundler = new ArchiveBundler(programLocation);
 
-    ArchiveBundler bundler = new ArchiveBundler(programLocation);
+      Program program = Programs.create(programLocation);
+      String className = program.getMainClassName();
 
-    String className = appSpec.getFlows().get(id.getId()).getClassName();
-    try {
       Location tmpProgramLocation = programLocation.getTempFile("");
       try {
         ProgramBundle.create(id.getApplication(), bundler, tmpProgramLocation, id.getId(), className, type, appSpec);
