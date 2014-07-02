@@ -21,7 +21,8 @@ paradigms. Examples could include running an IP-to-Geo lookup and serving user-p
 Services are implemented as `Twill applications <http://twill.incubator.apache.org>`__ and are run in
 YARN. A service's lifecycle can be controlled by using REST endpoints. 
 
-You can add services to your application by calling the ``addService`` method in the Application's ``configure`` method::
+You can add services to your application by calling the ``addService`` method in the 
+Application's ``configure`` method::
 
 	public class AnalyticsApp extends AbstractApplication {
 	  @Override
@@ -92,7 +93,9 @@ methods:
 
 Services Integration with Metrics and Logging
 ---------------------------------------------
-Services are integrated with the Reactor Metrics and Logging framework. Programs implementing Custom Services can declare Metrics and Logger (SLF4J) member variables and the appropriate implementation will be injected by the run-time.
+Services are integrated with the Reactor Metrics and Logging framework. Programs 
+implementing Custom Services can declare Metrics and Logger (SLF4J) member variables and 
+the appropriate implementation will be injected by the run-time.
 
 ::
 
@@ -107,7 +110,9 @@ Services are integrated with the Reactor Metrics and Logging framework. Programs
 	  }
 	}
 
-The metrics and logs that are emitted by the service are aggregated and accessed similar to other program types. See the sections in the `Continuuity Reactor Operations Guide <operations.html>`__ on accessing 
+The metrics and logs that are emitted by the service are aggregated and accessed similar 
+to other program types. See the sections in the 
+`Continuuity Reactor Operations Guide <operations.html>`__ on accessing 
 `logs <operations.html#logging>`__ and `metrics <operations.html#metrics>`__. 
 
 
@@ -116,8 +121,10 @@ Service Discovery
 Services announce the host and port they are running on so that they can be discovered by—and provide
 access to—other programs: Flows, Procedures, MapReduce jobs, and other Custom Services.
 
-To announce a Service, call the ``announce`` method from ``TwillContext`` during the initialize method.
-The announce method takes a name—which the Service can register under—and the port which the Service is running on. The application name, service ID, and hostname required for registering the Service are automatically obtained.
+To announce a Service, call the ``announce`` method from ``TwillContext`` during the 
+initialize method. The announce method takes a name—which the Service can register 
+under—and the port which the Service is running on. The application name, service ID, and 
+hostname required for registering the Service are automatically obtained.
 
 ::
 
@@ -177,6 +184,11 @@ In MapReduce Mapper/Reducer jobs::
 	  }
 	}
 
+Using Services
+-----------------
+Custom Services are not displayed in the Continuuity Reactor Dashboard. To control their
+lifecycle, use the Reactor Client API as described in the 
+`Continuuity Reactor REST API <rest.html#reactor-client-http-api>`__.
 
 
 Flow System
@@ -500,7 +512,9 @@ passing all of them will make the deletion faster.
 
 System Datasets
 ---------------
-The Continuuity Reactor comes with several system-defined Datasets, including key/value Tables, indexed Tables and time series. Each of them is defined with the help of one or more embedded Tables, but defines its own interface. For example:
+The Continuuity Reactor comes with several system-defined Datasets, including key/value Tables, 
+indexed Tables and time series. Each of them is defined with the help of one or more embedded 
+Tables, but defines its own interface. For example:
 
 - The ``KeyValueTable`` implements a key/value store as a Table with a single column.
 
@@ -738,18 +752,26 @@ Datasets & MapReduce
 A MapReduce job can interact with a Dataset by using it as an input or an output.
 The Dataset needs to implement specific interfaces to support this.
 
-When you run a MapReduce job, you can configure it to read its input from a Dataset. The source Dataset must implement the ``BatchReadable`` interface, which requires two methods::
+When you run a MapReduce job, you can configure it to read its input from a Dataset. The 
+source Dataset must implement the ``BatchReadable`` interface, which requires two methods::
 
 	public interface BatchReadable<KEY, VALUE> {
 	  List<Split> getSplits();
 	  SplitReader<KEY, VALUE> createSplitReader(Split split);
 	}
 
-These two methods complement each other: ``getSplits()`` must return all splits of the Dataset that the MapReduce job will read; ``createSplitReader()`` is then called in every Mapper to read one of the splits. Note that the ``KEY`` and ``VALUE`` type parameters of the split reader must match the input key and value type parameters of the Mapper.
+These two methods complement each other: ``getSplits()`` must return all splits of the Dataset 
+that the MapReduce job will read; ``createSplitReader()`` is then called in every Mapper to 
+read one of the splits. Note that the ``KEY`` and ``VALUE`` type parameters of the split reader 
+must match the input key and value type parameters of the Mapper.
 
-Because ``getSplits()`` has no arguments, it will typically create splits that cover the entire Dataset. If you want to use a custom selection of the input data, define another method in your Dataset with additional parameters and explicitly set the input in the ``beforeSubmit()`` method.
+Because ``getSplits()`` has no arguments, it will typically create splits that cover the 
+entire Dataset. If you want to use a custom selection of the input data, define another 
+method in your Dataset with additional parameters and explicitly set the input in the 
+``beforeSubmit()`` method.
 
-For example, the system Dataset ``KeyValueTable`` implements ``BatchReadable<byte[], byte[]>`` with an extra method that allows specification of the number of splits and a range of keys::
+For example, the system Dataset ``KeyValueTable`` implements ``BatchReadable<byte[], byte[]>`` 
+with an extra method that allows specification of the number of splits and a range of keys::
 
 	public class KeyValueTable extends AbstractDataset
 	                           implements BatchReadable<byte[], byte[]> {
@@ -768,14 +790,17 @@ To read a range of keys and give a hint that you want 16 splits, write::
 	  context.setInput(kvTable, kvTable.getSplits(16, startKey, stopKey);
 	}
 
-Similarly to reading input from a Dataset, you have the option to write to a Dataset as the output destination of a MapReduce job—if that Dataset implements the ``BatchWritable`` interface::
+Similarly to reading input from a Dataset, you have the option to write to a Dataset as 
+the output destination of a MapReduce job—if that Dataset implements the ``BatchWritable`` 
+interface::
 
 	public interface BatchWritable<KEY, VALUE> {
 	  void write(KEY key, VALUE value);
 	}
 
 The ``write()`` method is used to redirect all writes performed by a Reducer to the Dataset.
-Again, the ``KEY`` and ``VALUE`` type parameters must match the output key and value type parameters of the Reducer.
+Again, the ``KEY`` and ``VALUE`` type parameters must match the output key and value type 
+parameters of the Reducer.
 
 
 Transaction System
@@ -784,7 +809,10 @@ Transaction System
 The Need for Transactions
 -------------------------
 
-A Flowlet processes the data objects received on its inputs one at a time. While processing a single input object, all operations, including the removal of the data from the input, and emission of data to the outputs, are executed in a **transaction**. This provides us with ACID—atomicity, consistency, isolation, and durability properties:
+A Flowlet processes the data objects received on its inputs one at a time. While processing 
+a single input object, all operations, including the removal of the data from the input, 
+and emission of data to the outputs, are executed in a **transaction**. This provides us 
+with ACID—atomicity, consistency, isolation, and durability properties:
 
 - The process method runs under read isolation to ensure that it does not see dirty writes
   (uncommitted writes from concurrent processing) in any of its reads.
@@ -804,11 +832,23 @@ object can be reattempted. This ensures "exactly-once" processing of each object
 OCC: Optimistic Concurrency Control
 -----------------------------------
 
-The Continuuity Reactor uses *Optimistic Concurrency Control* (OCC) to implement transactions. Unlike most relational databases that use locks to prevent conflicting operations between transactions, under OCC we allow these conflicting writes to happen. When the transaction is committed, we can detect whether it has any conflicts: namely, if during the lifetime of the transaction, another transaction committed a write for one of the same keys that the transaction has written. In that case, the transaction is aborted and all of its writes are rolled back.
+The Continuuity Reactor uses *Optimistic Concurrency Control* (OCC) to implement 
+transactions. Unlike most relational databases that use locks to prevent conflicting 
+operations between transactions, under OCC we allow these conflicting writes to happen. 
+When the transaction is committed, we can detect whether it has any conflicts: namely, if 
+during the lifetime of the transaction, another transaction committed a write for one of 
+the same keys that the transaction has written. In that case, the transaction is aborted 
+and all of its writes are rolled back.
 
-In other words: If two overlapping transactions modify the same row, then the transaction that commits first will succeed, but the transaction that commits last is rolled back due to a write conflict.
+In other words: If two overlapping transactions modify the same row, then the transaction 
+that commits first will succeed, but the transaction that commits last is rolled back due 
+to a write conflict.
 
-Optimistic Concurrency Control is lockless and therefore avoids problems such as idle processes waiting for locks, or even worse, deadlocks. However, it comes at the cost of rollback in case of write conflicts. We can only achieve high throughput with OCC if the number of conflicts is small. It is therefore a good practice to reduce the probability of conflicts wherever possible.
+Optimistic Concurrency Control is lockless and therefore avoids problems such as idle 
+processes waiting for locks, or even worse, deadlocks. However, it comes at the cost of 
+rollback in case of write conflicts. We can only achieve high throughput with OCC if the 
+number of conflicts is small. It is therefore a good practice to reduce the probability of 
+conflicts wherever possible.
 
 Here are some rules to follow for Flows, Flowlets and Procedures:
 
@@ -836,29 +876,39 @@ Here are some rules to follow for Flows, Flowlets and Procedures:
   that perform writes. This helps reduce concurrent writes to the same
   key from different instances of the Flowlet.
 
-Keeping these guidelines in mind will help you write more efficient and faster-performing code.
+Keeping these guidelines in mind will help you write more efficient and faster-performing 
+code.
 
 
 The Need for Disabling Transactions
 -----------------------------------
-Transactions providing ACID (atomicity, consistency, isolation, and durability) guarantees are useful in several applications where data accuracy is critical—examples include billing applications and computing click-through rates.
+Transactions providing ACID (atomicity, consistency, isolation, and durability) guarantees 
+are useful in several applications where data accuracy is critical—examples include billing 
+applications and computing click-through rates.
 
-However, some applications—such as trending—might not need it. Applications that do not strictly require accuracy can trade off accuracy against increased throughput by taking advantage of not having to write/read all the data in a transaction.
+However, some applications—such as trending—might not need it. Applications that do not 
+strictly require accuracy can trade off accuracy against increased throughput by taking 
+advantage of not having to write/read all the data in a transaction.
 
 Disabling Transactions
 ----------------------
-Transaction can be disabled for a Flow by annotating the Flow class with the @DisableTransaction annotation. While this may speed up performance, if—for example—a Flowlet fails, the system would not be able to roll back to its previous state::
+Transaction can be disabled for a Flow by annotating the Flow class with the 
+@DisableTransaction annotation. While this may speed up performance, if—for example—a 
+Flowlet fails, the system would not be able to roll back to its previous state::
 
 	@DisableTransaction
 	class MyExampleFlow implements Flow {
 	  ...
 	}
 
-You will need to judge whether the increase in performance offsets the increased risk of inaccurate data.
+You will need to judge whether the increase in performance offsets the increased risk of 
+inaccurate data.
 
 Transactions in MapReduce
 -------------------------
-When you run a MapReduce job that interacts with Datasets, the system creates a long-running transaction. Similar to the transaction of a Flowlet or a Procedure, here are some rules to follow:
+When you run a MapReduce job that interacts with Datasets, the system creates a 
+long-running transaction. Similar to the transaction of a Flowlet or a Procedure, here are 
+some rules to follow:
 
 - Reads can only see the writes of other transactions that were committed
   at the time the long-running transaction was started.
@@ -868,11 +918,19 @@ When you run a MapReduce job that interacts with Datasets, the system creates a 
 
 - The long-running transaction can read its own writes.
 
-However, there is a key difference: long-running transactions do not participate in conflict detection. If another transaction overlaps with the long-running transaction and writes to the same row, it will not cause a conflict but simply overwrite it.
+However, there is a key difference: long-running transactions do not participate in 
+conflict detection. If another transaction overlaps with the long-running transaction and 
+writes to the same row, it will not cause a conflict but simply overwrite it.
 
-It is not efficient to fail the long-running job based on a single conflict. Because of this, it is not recommended to write to the same Dataset from both real-time and MapReduce programs. It is better to use different Datasets, or at least ensure that the real-time processing writes to a disjoint set of columns.
+It is not efficient to fail the long-running job based on a single conflict. Because of 
+this, it is not recommended to write to the same Dataset from both real-time and MapReduce 
+programs. It is better to use different Datasets, or at least ensure that the real-time 
+processing writes to a disjoint set of columns.
 
-It's important to note that the MapReduce framework will reattempt a task (Mapper or Reducer) if it fails. If the task is writing to a Dataset, the reattempt of the task will most likely repeat the writes that were already performed in the failed attempt. Therefore it is highly advisable that all writes performed by MapReduce programs be idempotent.
+It's important to note that the MapReduce framework will reattempt a task (Mapper or 
+Reducer) if it fails. If the task is writing to a Dataset, the reattempt of the task will 
+most likely repeat the writes that were already performed in the failed attempt. Therefore 
+it is highly advisable that all writes performed by MapReduce programs be idempotent.
 
 Best Practices for Developing Applications
 ==========================================
@@ -885,9 +943,11 @@ There are three ways to initialize instance fields used in Flowlets and Procedur
 #. Using the ``initialize()`` method of the Flowlets and Procedures; and
 #. Using ``@Property`` annotations.
 
-To initialize using an Property annotation, simply annotate the field definition with ``@Property``. 
+To initialize using an Property annotation, simply annotate the field definition with 
+``@Property``. 
 
-The following example demonstrates the convenience of using ``@Property`` in a ``WordFilter`` flowlet
+The following example demonstrates the convenience of using ``@Property`` in a 
+``WordFilter`` flowlet
 that filters out specific words::
 
 	public static class WordFilter extends AbstractFlowlet {
@@ -929,7 +989,8 @@ The Flowlet constructor is called with the parameter when the Flow is configured
   }
 
 
-At run-time, when the Flowlet is started, a value is injected into the ``toFilterOut`` field.
+At run-time, when the Flowlet is started, a value is injected into the ``toFilterOut`` 
+field.
 
 Field types that are supported using the ``@Property`` annotation are primitives,
 boxed types (e.g. ``Integer``), ``String`` and ``enum``.

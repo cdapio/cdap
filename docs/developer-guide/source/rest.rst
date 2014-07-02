@@ -19,14 +19,15 @@ Introduction
 
 The Continuuity Reactor has an HTTP interface for a multitude of purposes:
 
-- **Stream:** sending data events to a Stream, or to inspect the contents of a Stream.
-- **Data:** interacting with Datasets (currently limited to Tables).
-- **Query:** sending ad-hoc queries to Reactor Datasets.
-- **Procedure:** sending calls to a stored Procedure.
-- **Reactor:** deploying and managing Applications.
-- **Logs:** retrieving Application logs.
-- **Metrics:** retrieving metrics for system and user Applications (user-defined metrics).
-- **Monitor:** checking the status of various Reactor services.
+- **Stream:** sending data events to a Stream, or to inspect the contents of a Stream
+- **Datasets:** interacting with Datasets, Dataset Modules, and Dataset Types
+- **Data:** interacting with Datasets (deprecated)
+- **Query:** sending ad-hoc queries to Reactor Datasets
+- **Procedure:** sending calls to a stored Procedure
+- **Reactor Client:** deploying and managing Applications, and managing the life cycle of Flows, Procedures, MapReduce jobs, Workflows, and Custom Services
+- **Logging:** retrieving Application logs
+- **Metrics:** retrieving metrics for system and user Applications (user-defined metrics)
+- **Monitor:** checking the status of various Reactor services, both System and Custom
 
 **Note:** The HTTP interface binds to port ``10000``. This port cannot be changed.
 
@@ -1654,7 +1655,7 @@ Reactor Client HTTP API
 =======================
 
 Use the Reactor Client HTTP API to deploy or delete Applications and manage the life cycle of 
-Flows, Procedures and MapReduce jobs.
+Flows, Procedures, MapReduce jobs, Workflows, and Custom Services.
 
 Deploy an Application
 ---------------------
@@ -1686,7 +1687,7 @@ To delete an Application together with all of its Flows, Procedures and MapReduc
 	DELETE <base-url>/apps/<application-name>
 
 .. list-table::
-   :widths: 20 80
+   :widths: 25 75
    :header-rows: 1
 
    * - Parameter
@@ -1728,32 +1729,20 @@ jobs, Workflows, and Custom Services, and query for their status using HTTP POST
 
 Examples
 ........
-.. list-table::
+
+.. csv-table::
    :widths: 20 80
-   :stub-columns: 1
+   :header-rows: 1
 
-   * - HTTP Method
-     - ``POST <base-url>/apps/HelloWorld/flows/WhoFlow/start``
-   * - Description
-     - Start a Flow *WhoFlow* in the Application *HelloWorld*
+   ,Example / Description
+   **HTTP Method**, ``POST <base-url>/apps/HelloWorld/flows/WhoFlow/start``
+   , Start a Flow *WhoFlow* in the Application *HelloWorld*
+   **HTTP Method**, ``POST <base-url>/apps/Count/procedures/GetCounts/stop``
+   , Stop the Procedure *GetCounts* in the Application *Count*
+   **HTTP Method**, ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/status``
+   , Get the status of the Flow *WhoFlow* in the Application *HelloWorld*
 
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``POST <base-url>/apps/WordCount/procedures/RetrieveCounts/stop``
-   * - Description
-     - Stop the Procedure *RetrieveCounts* in the Application *WordCount*
-
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/status``
-   * - Description
-     - Get the status of the Flow *WhoFlow* in the Application *HelloWorld*
+.. commas above are creating spacers in the table
 
 When starting an element, you can optionally specify runtime arguments as a JSON map in the request body::
 
@@ -1775,7 +1764,8 @@ with the arguments as a JSON string in the body::
 
 .. rst2pdf: PageBreak
 
-To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET request to the element's URL using the same parameter ``runtimeargs``::
+To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET 
+request to the element's URL using the same parameter ``runtimeargs``::
 
 	GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
@@ -1820,8 +1810,8 @@ The response is formatted in JSON; an example of this is shown in:
 
 	`Continuuity Reactor Testing and Debugging Guide <http://continuuity.com/docs/reactor/current/en/debugging.html#debugging-reactor-applications>`__
 
-To find out the address of a Service's container host and the container's debug port, you can query the
-Reactor for the live info of a Service's Twill Runnable via an HTTP GET method::
+To find out the address of a Service's container host and the container's debug port, you 
+can query the Reactor for the live info of a Service's Twill Runnable via an HTTP GET method::
 
   GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/live-info
 
@@ -1908,8 +1898,8 @@ Examples
 
 Scaling Procedures
 ..................
-In a similar way to `Scaling Flowlets`_, you can query or change the number of instances of a Procedure
-by using the ``instances`` parameter with HTTP GET and PUT methods::
+In a similar way to `Scaling Flowlets`_, you can query or change the number of instances 
+of a Procedure by using the ``instances`` parameter with HTTP GET and PUT methods::
 
 	GET <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
 	PUT <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
