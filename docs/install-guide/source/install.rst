@@ -295,7 +295,7 @@ When running Continuuity Reactor on top of Secure Hadoop and HBase (using Kerber
 authentication), the Reactor Master process will need to obtain Kerberos credentials in order to
 authenticate with Hadoop and HBase.  In this case, the setting for ``hdfs.user`` in
 ``continuuity-site.xml`` will be ignored and the Reactor Master process will be identified as the
-Kerberos principal as which it is authenticated.
+Kerberos principal it is authenticated as.
 
 In order to configure Reactor Master for Kerberos authentication:
 
@@ -310,7 +310,7 @@ In order to configure Reactor Master for Kerberos authentication:
    REACTOR_KEYTAB="/etc/security/keytabs/continuuity.keytab"
    REACTOR_PRINCIPAL="<reactor principal>@EXAMPLE.REALM.COM"
 
-- When Reactor Master is started via the init script, it will now start using k5start, which will
+- When Reactor Master is started via the init script, it will now start using ``k5start``, which will
   first login using the configured keytab file and principal.
 
 ULIMIT Configuration
@@ -737,30 +737,27 @@ their default values, descriptions and notes.
    * - ``scheduler.max.thread.pool.size``
      - ``30``
      - Size of the scheduler thread pool
-   * - ``security.enabled``
-     - ``false``
-     - Enables authentication for Reactor.  When set to ``true`` all requests to Reactor must
-       provide a valid access token.
    * - ``security.auth.server.address``
      - ``127.0.0.1``
      - IP address that the Continuuity Authentication Server should listen on.
    * - ``security.auth.server.port``
      - ``10009``
      - Port number that the Continuuity Authentication Server should bind to for HTTP.
-   * - ``security.server.maxthreads`
-     - ``100``
-     - Maximum number of threads that the Continuuity Authentication Server should use for
-       handling HTTP requests.
+   * - ``security.enabled``
+     - ``false``
+     - Enables authentication for Reactor.  When set to ``true`` all requests to Reactor must
+       provide a valid access token.
    * - ``security.realm``
      - ``continuuity``
      - Authentication realm used for scoping security.  This value should be unique for each
        installation of Continuuity Reactor.
+   * - ``security.server.maxthreads``
+     - ``100``
+     - Maximum number of threads that the Continuuity Authentication Server should use for
+       handling HTTP requests.
    * - ``security.server.ssl.enabled``
      - ``false``
      - Set to ``true`` to enable use of SSL on the Continuuity Authentication Server
-   * - ``security.server.ssl.port``
-     - ``10010``
-     - Port to bind to for HTTPS on the Continuuity Authentication Server.
    * - ``security.server.ssl.keystore.path``
      - 
      - Path to the Java keystore file containing the certificate used for HTTPS on the Continuuity
@@ -768,6 +765,9 @@ their default values, descriptions and notes.
    * - ``security.server.ssl.keystore.password``
      -
      - Password to the Java keystore file specified in ``security.server.ssl.keystore.path``
+   * - ``security.server.ssl.port``
+     - ``10010``
+     - Port to bind to for HTTPS on the Continuuity Authentication Server.
    * - ``stream.flume.port``
      - ``10004``
      - 
