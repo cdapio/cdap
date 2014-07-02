@@ -229,7 +229,7 @@
                       <directory>${project.parent.parent.basedir}/examples</directory>
                       <targetPath>examples</targetPath>
                       <includes>
-                        <include>README.rst</include>
+                        <include>README*</include>
                         <include>**/src/**</include>
                         <include>**/bin/*</include>
                         <include>**/resources/*</include>
