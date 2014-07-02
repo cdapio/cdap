@@ -43,9 +43,11 @@ public interface DataSetAccessor {
     SYSTEM("system");
 
     private final String name;
+    private final String prefix;
 
     private Namespace(String name) {
       this.name = name;
+      this.prefix = name + ".";
     }
 
     String getName() {
@@ -53,12 +55,11 @@ public interface DataSetAccessor {
     }
 
     public String namespace(String datasetName) {
-      return name + "." + datasetName;
+      return prefix + datasetName;
     }
 
-    public String fromNamespaced(String datasetName) {
-      // removing name + "."
-      return datasetName.substring(name.length() + 1);
+    public String fromNamespaced(String namespacedDatasetName) {
+      return namespacedDatasetName.substring(prefix.length());
     }
   }
 
