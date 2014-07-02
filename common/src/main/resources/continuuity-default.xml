@@ -21,7 +21,7 @@
     <property>
         <name>reactor.namespace</name>
         <value>continuuity</value>
-        <description>Specifies the namespace for this instance of reactor.</description>
+        <description>Specifies the namespace for this instance of Reactor</description>
     </property>
 
     <property>
@@ -33,7 +33,7 @@
     <property>
         <name>zookeeper.session.timeout.millis</name>
         <value>40000</value>
-        <description>Specifies the zookeeper session time out. Time unit milliseconds.</description>
+        <description>Specifies the zookeeper session time out; time unit milliseconds</description>
     </property>
 
     <property>
@@ -64,7 +64,7 @@
         <name>weave.no.container.timeout</name>
         <value>120000</value>
         <description>
-            Amount of time in milliseconds to wait for at least one container for weave runnable.
+            Amount of time in milliseconds to wait for at least one container for weave runnable
         </description>
     </property>
 
@@ -77,19 +77,19 @@
     <property>
         <name>hdfs.namespace</name>
         <value>/${reactor.namespace}</value>
-        <description>Namespace for files written by reactor.</description>
+        <description>Namespace for files written by Reactor</description>
     </property>
 
     <property>
         <name>hdfs.user</name>
         <value>yarn</value>
-        <description>User name for accessing HDFS.</description>
+        <description>User name for accessing HDFS</description>
     </property>
 
     <property>
         <name>yarn.user</name>
         <value>yarn</value>
-        <description>User name for running applications in YARN.</description>
+        <description>User name for running applications in YARN</description>
     </property>
 
     <property>
@@ -247,68 +247,68 @@
     <property>
         <name>stream.partition.duration</name>
         <value>3600000</value>
-        <description>The default duration of a stream partition in milliseconds</description>
+        <description>The default duration of a Stream partition in milliseconds</description>
     </property>
 
     <property>
         <name>stream.index.interval</name>
         <value>10000</value>
-        <description>Default time interval in milliseconds for emitting new index entry in stream file</description>
+        <description>Default time interval in milliseconds for emitting new index entry in Stream file</description>
     </property>
 
     <property>
         <name>stream.event.ttl</name>
         <!-- Long.MAX_VALUE !-->
         <value>9223372036854775807</value>
-        <description>Default time to live in milliseconds for stream events</description>
+        <description>Default time to live in milliseconds for Stream events</description>
     </property>
 
     <property>
         <name>stream.file.prefix</name>
         <value>file</value>
-        <description>Prefix of file name for stream file</description>
+        <description>Prefix of file name for Stream file</description>
     </property>
 
     <property>
         <name>stream.consumer.table.presplits</name>
         <value>16</value>
-        <description>Number of splits for the stream consumer table</description>
+        <description>Number of splits for the Stream consumer table</description>
     </property>
 
     <property>
       <name>stream.bind.address</name>
       <value>127.0.0.1</value>
-      <description>Default inet address for binding stream http service.</description>
+      <description>Default inet address for binding Stream http service</description>
     </property>
 
     <property>
       <name>stream.worker.threads</name>
       <value>${http.service.worker.threads}</value>
-      <description>Default number of IO worker threads for the stream http service.</description>
+      <description>Default number of IO worker threads for the Stream http service</description>
     </property>
 
     <property>
       <name>stream.container.num.cores</name>
       <value>2</value>
-      <description>Number of virtual core for the YARN container that runs the stream handler</description>
+      <description>Number of virtual core for the YARN container that runs the Stream handler</description>
     </property>
 
     <property>
       <name>stream.container.memory.mb</name>
       <value>512</value>
-      <description>Amount of memory in MB for the YARN container that runs the stream handler</description>
+      <description>Amount of memory in MB for the YARN container that runs the Stream handler</description>
     </property>
 
     <property>
       <name>stream.container.instances</name>
       <value>1</value>
-      <description>Number of YARN container instances for the stream handler</description>
+      <description>Number of YARN container instances for the Stream handler</description>
     </property>
 
     <property>
       <name>stream.file.cleanup.period</name>
       <value>300000</value>
-      <description>How often to run stream file cleanup process in milliseconds</description>
+      <description>How often to run Stream file cleanup process in milliseconds</description>
     </property>
 
     <!--
@@ -370,14 +370,14 @@
     <property>
         <name>data.tx.client.provider</name>
         <value>thread-local</value>
-        <description>The provider strategy for transaction clients.
-            Valid values are "pool" and "thread-local". </description>
+        <description>The provider strategy for transaction clients;
+            valid values are "pool" and "thread-local"</description>
     </property>
 
     <property>
         <name>data.queue.table.name</name>
         <value>queues</value>
-        <description>Specifies the name of the table for queues.</description>
+        <description>Specifies the name of the table for queues</description>
     </property>
 
     <property>
@@ -386,42 +386,42 @@
           com.continuuity.data2.transaction.snapshot.SnapshotCodecV1,
           com.continuuity.data2.transaction.snapshot.SnapshotCodecV2
         </value>
-        <description>Specifies the class names of all supported transaction state codecs.</description>
+        <description>Specifies the class names of all supported transaction state codecs</description>
     </property>
 
     <property>
         <name>data.tx.snapshot.dir</name>
         <value>${hdfs.namespace}/tx.snapshot</value>
         <description>Directory in HDFS used to store snapshots and logs of
-            transaction state.</description>
+            transaction state</description>
     </property>
 
     <property>
         <name>data.tx.snapshot.local.dir</name>
         <value>${local.data.dir}/tx.snapshot</value>
         <description>Directory on the local filesystem used to store snapshots
-        and logs of transaction state for single-node operation.</description>
+        and logs of transaction state for single-node operation</description>
     </property>
 
     <property>
         <name>data.tx.snapshot.interval</name>
         <value>300</value>
         <description>Frequency, in seconds, at which snapshots of transaction
-            state should be written.</description>
+            state should be written</description>
     </property>
 
     <property>
         <name>data.tx.snapshot.retain</name>
         <value>10</value>
         <description>Number of transaction snapshot files to retain as
-            backups.</description>
+            backups</description>
     </property>
 
     <property>
         <name>data.tx.janitor.enable</name>
         <value>true</value>
         <description>Whether or not the TransactionDataJanitor coprocessor
-        should be enabled on tables.  Should normally be true.</description>
+        should be enabled on tables; should normally be true</description>
     </property>
 
     <property>
@@ -451,7 +451,7 @@
         <name>data.queue.config.update.interval</name>
         <value>5</value>
         <description>Frequency, in seconds, of updates to the queue consumer
-        configuration used in evicting queue entries on flush and compaction.
+        configuration used in evicting queue entries on flush and compaction
         </description>
     </property>
 
@@ -477,7 +477,7 @@
         <name>metadata.program.run.history.keepdays</name>
         <value>30</value>
         <description>Specifies the number of days to keep
-            program run run-history in metadata.</description>
+            program run run-history in metadata</description>
     </property>
 
     <!--
@@ -534,19 +534,19 @@
     <property>
         <name>app.bind.address</name>
         <value>127.0.0.1</value>
-        <description>Host address on which the app fabric server is started.</description>
+        <description>Host address on which the app fabric server is started</description>
     </property>
 
     <property>
         <name>app.output.dir</name>
         <value>/programs</value>
-        <description>Directory where all archives are stored.</description>
+        <description>Directory where all archives are stored</description>
     </property>
 
     <property>
         <name>dataset.service.output.dir</name>
         <value>/datasets</value>
-        <description>Directory where all dataset modules archives are stored.</description>
+        <description>Directory where all dataset modules archives are stored</description>
     </property>
 
     <property>
@@ -570,7 +570,7 @@
     <property>
         <name>app.temp.dir</name>
         <value>/tmp</value>
-        <description>Directory temp.</description>
+        <description>Directory temp</description>
     </property>
 
     <property>
@@ -583,7 +583,7 @@
     <property>
         <name>scheduler.max.thread.pool.size</name>
         <value>30</value>
-        <description>Size of the scheduler thread pool.</description>
+        <description>Size of the scheduler thread pool</description>
     </property>
 
 
@@ -608,26 +608,26 @@
     <property>
         <name>appfabric.environment</name>
         <value>devsuite</value>
-        <description>Sets the environment the appfabric is in.</description>
+        <description>Sets the environment the appfabric is in</description>
     </property>
 
     <!-- New Metrics system settings -->
     <property>
         <name>metrics.query.bind.address</name>
         <value>127.0.0.1</value>
-        <description>Host address where the metrics query server is started.</description>
+        <description>Host address where the metrics query server is started</description>
     </property>
 
     <property>
         <name>metrics.query.bind.port</name>
         <value>45005</value>
-        <description>Port for metrics query server to listen on.</description>
+        <description>Port for metrics query server to listen on</description>
     </property>
 
     <property>
         <name>metrics.data.table.retention.resolution.1.seconds</name>
         <value>7200</value>
-        <description>Retention resolution 1 sec table in seconds.</description>
+        <description>Retention resolution 1 sec table in seconds</description>
     </property>
 
     <property>
@@ -710,7 +710,7 @@
     <property>
         <name>metrics.processor.status.bind.address</name>
         <value>127.0.0.1</value>
-        <description>Default inet address for binding metrics processor http service.</description>
+        <description>Default inet address for binding metrics processor http service</description>
     </property>
 
     <!--
@@ -772,7 +772,7 @@
     <property>
         <name>log.saver.status.bind.address</name>
         <value>127.0.0.1</value>
-        <description>Default inet address for binding logsaver http service.</description>
+        <description>Default inet address for binding logsaver http service</description>
     </property>
 
     <!--
@@ -821,8 +821,8 @@
         <name>enable.unrecoverable.reset</name>
         <value>false</value>
         <description>
-            WARNING! - Enabling this option enables the deletion of all applications and data.
-            No recovery is possible!
+            WARNING! - Enabling this option enables the deletion of all applications and data;
+            NO RECOVERY IS POSSIBLE!
         </description>
     </property>
 
@@ -954,7 +954,7 @@
         <name>security.token.digest.key.expiration.ms</name>
         <value>3600000</value>
         <description>Time duration (in milliseconds) after which an active secret key used
-        for signing tokens should be retired.</description>
+        for signing tokens should be retired</description>
     </property>
 
     <property>
@@ -966,7 +966,7 @@
     <property>
         <name>security.token.distributed.parent.znode</name>
         <value>/${reactor.namespace}/security/auth</value>
-        <description>Parent node in ZooKeeper used for secret key distribution in distributed mode.</description>
+        <description>Parent node in ZooKeeper used for secret key distribution in distributed mode</description>
     </property>
 
     <!--
@@ -975,7 +975,7 @@
     <property>
         <name>security.enabled</name>
         <value>false</value>
-        <description>If this is set to true, security layer will be up and active in reactor</description>
+        <description>If this is set to true, security layer will be up and active in Reactor</description>
     </property>
 
     <property>
