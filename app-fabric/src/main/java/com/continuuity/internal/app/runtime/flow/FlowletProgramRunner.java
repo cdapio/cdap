@@ -5,6 +5,7 @@
 package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.annotation.Batch;
+import com.continuuity.api.annotation.DisableTransaction;
 import com.continuuity.api.annotation.HashPartition;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.RoundRobin;
@@ -159,9 +160,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Preconditions.checkNotNull(runIdOption, "Missing runId");
       RunId runId = RunIds.fromString(runIdOption);
 
-      boolean disableTransaction = Boolean.parseBoolean(
-        options.getArguments().getOption(ProgramOptionConstants.DISABLE_TRANSACTION, Boolean.toString(false)));
-
       ApplicationSpecification appSpec = program.getSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
@@ -175,6 +173,12 @@ public final class FlowletProgramRunner implements ProgramRunner {
       FlowSpecification flowSpec = appSpec.getFlows().get(processorName);
       FlowletDefinition flowletDef = flowSpec.getFlowlets().get(flowletName);
       Preconditions.checkNotNull(flowletDef, "Definition missing for flowlet \"%s\"", flowletName);
+
+      boolean disableTransaction = program.getMainClass().isAnnotationPresent(DisableTransaction.class);
+      if (disableTransaction) {
+        LOG.info("Transaction is disable for flowlet {}.{}.{}",
+                 program.getApplicationId(), program.getId().getId(), flowletName);
+      }
 
       Class<?> clz = Class.forName(flowletDef.getFlowletSpec().getClassName(), true,
                                    program.getMainClass().getClassLoader());
