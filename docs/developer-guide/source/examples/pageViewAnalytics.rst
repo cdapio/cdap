@@ -163,6 +163,11 @@ On Windows::
 
 Querying the Results
 ....................
+If the Procedure has not already been started, you start it either through the 
+Continuuity Reactor Dashboard or via an HTTP request using the ``curl`` command::
+
+	curl -v -X POST 'http://localhost:10000/v2/apps/PageViewAnalytics/procedures/PageViewProcedure/start'
+	
 There are two ways to query the *pageViewCDS* custom Dataset:
 
 - Send a query via an HTTP request using the ``curl`` command. For example::

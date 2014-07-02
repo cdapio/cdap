@@ -20,11 +20,12 @@ Introduction
 The Continuuity Reactor has an HTTP interface for a multitude of purposes:
 
 - **Stream:** sending data events to a Stream, or to inspect the contents of a Stream
-- **Datasets:** interacting with Datasets, Dataset Modules, and Dataset Types
+- **Dataset:** interacting with Datasets, Dataset Modules, and Dataset Types
 - **Data:** interacting with Datasets (deprecated)
 - **Query:** sending ad-hoc queries to Reactor Datasets
 - **Procedure:** sending calls to a stored Procedure
-- **Reactor Client:** deploying and managing Applications, and managing the life cycle of Flows, Procedures, MapReduce jobs, Workflows, and Custom Services
+- **Reactor Client:** deploying and managing Applications, and managing the life cycle of Flows,
+  Procedures, MapReduce jobs, Workflows, and Custom Services
 - **Logging:** retrieving Application logs
 - **Metrics:** retrieving metrics for system and user Applications (user-defined metrics)
 - **Monitor:** checking the status of various Reactor services, both System and Custom
@@ -1595,6 +1596,8 @@ Procedure HTTP API
 ==================
 
 This interface supports sending calls to the methods of an Application’s Procedures.
+See the `Reactor Client HTTP API <#reactor-client-http-api>`_ for how to control the life cycle of
+Procedures. 
 
 Executing Procedures
 --------------------

@@ -7,7 +7,7 @@ user=$USER
 epoch=`date +%s`
 
 function usage() {
-  echo "Querying tool for the Purchase application."
+  echo "Querying tool for exploring Datasets with SQL."
   echo "Usage: $script --query \"<sql query>\" [--gateway <hostname>]"
   echo ""
   echo "  Options"
