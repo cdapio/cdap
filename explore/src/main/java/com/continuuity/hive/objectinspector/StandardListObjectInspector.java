@@ -1,6 +1,13 @@
 package com.continuuity.hive.objectinspector;
 
 import com.google.common.collect.Lists;
+import com.google.common.primitives.Booleans;
+import com.google.common.primitives.Bytes;
+import com.google.common.primitives.Doubles;
+import com.google.common.primitives.Floats;
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
+import com.google.common.primitives.Shorts;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.SettableListObjectInspector;
 
@@ -61,15 +68,12 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
           return null;
         }
         return ite.next();
-      } else if (data instanceof Object[]) {
-        Object[] list = (Object[]) data;
-        if (index < 0 || index >= list.length) {
+      } else {
+        List<?> list = getList(data);
+        if (index < 0 || index >= list.size()) {
           return null;
         }
-        return list[index];
-      } else {
-        throw new UnsupportedOperationException("Data object " + data.getClass() +
-                                                " is neither a Collection nor an array.");
+        return list.get(index);
       }
     } else {
       List<?> list = (List<?>) data;
@@ -89,12 +93,9 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
     if (!(data instanceof List)) {
       if (data instanceof Collection) {
         return ((Collection) data).size();
-      } else if (data instanceof Object[]) {
-        Object[] list = (Object[]) data;
-        return list.length;
       } else {
-        throw new UnsupportedOperationException("Data object " + data.getClass() +
-                                                " is neither a Collection nor an array.");
+        List<?> list = getList(data);
+        return list.size();
       }
     } else {
       List<?> list = (List<?>) data;
@@ -113,6 +114,20 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
         data = Lists.newArrayList((Collection<?>) data);
       } else if (data instanceof Object[]) {
         data = java.util.Arrays.asList((Object[]) data);
+      } else if (data instanceof byte[]) {
+        data = Bytes.asList((byte[]) data);
+      } else if (data instanceof int[]) {
+        data = Ints.asList((int[]) data);
+      } else if (data instanceof double[]) {
+        data = Doubles.asList((double[]) data);
+      } else if (data instanceof float[]) {
+        data = Floats.asList((float[]) data);
+      } else if (data instanceof short[]) {
+        data = Shorts.asList((short[]) data);
+      } else if (data instanceof long[]) {
+        data = Longs.asList((long[]) data);
+      } else if (data instanceof boolean[]) {
+        data = Booleans.asList((boolean[]) data);
       } else {
         throw new UnsupportedOperationException("Data object is neither a Collection nor an array.");
       }
