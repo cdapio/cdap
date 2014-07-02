@@ -150,11 +150,8 @@
                       <filtering>true</filtering>
                     </resource>
                     <resource>
-                      <directory>${project.basedir}/src/dist</directory>
-                      <excludes>
-                        <!-- Exclude README as it needs filtering and is done above -->
-                        <exclude>README</exclude>
-                      </excludes>
+                      <directory>${project.parent.parent.basedir}/docs/developer-guide/build-pdf</directory>
+                      <targetPath>docs</targetPath>
                     </resource>
                     <resource>
                       <directory>${project.parent.parent.basedir}/distributions</directory>
@@ -305,6 +302,18 @@
                 <configuration>
                   <target>
                     <copy file="${project.build.directory}/examples/deploy_pom.xml" tofile="${stage.opt.dir}/examples/pom.xml" />
+                  </target>
+                </configuration>
+              </execution>
+              <execution>
+                <id>rename-rest-api-docs</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <rename src="${stage.opt.dir}/docs/rest.pdf" dest="${stage.opt.dir}/docs/REST-API-Reference-v${project.version}.pdf"/>
                   </target>
                 </configuration>
               </execution>
