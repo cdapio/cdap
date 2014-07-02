@@ -3,9 +3,11 @@ package com.continuuity.test.app;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Batch;
+import com.continuuity.api.annotation.DisableTransaction;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.Tick;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -20,25 +22,19 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public final class GenSinkApp2 implements Application {
+public final class GenSinkApp2 extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("GenSinkApp")
-      .setDescription("GenSinkApp desc")
-      .noStream()
-      .noDataSet()
-      .withFlows().add(new GenSinkFlow())
-      .noProcedure()
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("GenSinkApp");
+    setDescription("GenSinkApp desc");
+    addFlow(new GenSinkFlow());
   }
 
   /**
    *
    */
+  @DisableTransaction
   public static final class GenSinkFlow implements Flow {
 
     @Override

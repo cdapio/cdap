@@ -27,17 +27,14 @@ public final class FlowTwillApplication implements TwillApplication {
   private final Program program;
   private final File hConfig;
   private final File cConfig;
-  private final boolean disableTransaction;
   private final EventHandler eventHandler;
 
   public FlowTwillApplication(Program program, FlowSpecification spec,
-                              File hConfig, File cConfig, boolean disableTransaction,
-                              EventHandler eventHandler) {
+                              File hConfig, File cConfig, EventHandler eventHandler) {
     this.spec = spec;
     this.program = program;
     this.hConfig = hConfig;
     this.cConfig = cConfig;
-    this.disableTransaction = disableTransaction;
     this.eventHandler = eventHandler;
   }
 
@@ -64,7 +61,7 @@ public final class FlowTwillApplication implements TwillApplication {
       String flowletName = entry.getKey();
       runnableSetter = moreRunnable
         .add(flowletName,
-             new FlowletTwillRunnable(flowletName, "hConf.xml", "cConf.xml", disableTransaction), resourceSpec)
+             new FlowletTwillRunnable(flowletName, "hConf.xml", "cConf.xml"), resourceSpec)
         .withLocalFiles().add(programName, programLocation.toURI())
                          .add("hConf.xml", hConfig.toURI())
                          .add("cConf.xml", cConfig.toURI()).apply();
