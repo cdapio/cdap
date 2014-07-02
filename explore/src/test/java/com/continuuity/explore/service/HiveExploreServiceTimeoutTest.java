@@ -86,7 +86,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   public void testTimeoutRunning() throws Exception {
     Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
 
-    Handle handle = exploreService.execute("select key, value from continuuity_user_my_table");
+    Handle handle = exploreService.execute("select key, value from my_table");
 
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
@@ -113,7 +113,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   public void testTimeoutFetchAllResults() throws Exception {
     Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
 
-    Handle handle = exploreService.execute("select key, value from continuuity_user_my_table");
+    Handle handle = exploreService.execute("select key, value from my_table");
 
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
@@ -159,7 +159,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   public void testTimeoutCancel() throws Exception {
     Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
 
-    Handle handle = exploreService.execute("select key, value from continuuity_user_my_table");
+    Handle handle = exploreService.execute("select key, value from my_table");
 
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
