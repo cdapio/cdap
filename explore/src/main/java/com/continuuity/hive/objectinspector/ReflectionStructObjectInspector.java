@@ -70,8 +70,15 @@ public class ReflectionStructObjectInspector extends
       } else {
         sb.append(",");
       }
+      ObjectInspector oi = structField.getFieldObjectInspector();
+      String typeName;
+      if (oi == this) {
+        typeName = "this";
+      } else {
+        typeName = oi.getTypeName();
+      }
       sb.append(structField.getFieldName()).append(":")
-        .append(structField.getFieldObjectInspector().getTypeName());
+        .append(typeName);
     }
     sb.append(">");
     return sb.toString();
