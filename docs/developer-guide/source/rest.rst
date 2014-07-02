@@ -2030,7 +2030,8 @@ Example
    * - HTTP Method
      - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/history``
    * - Description
-     - Retrieve the history of the Runnable *WhoRunnable* of the Service *WhoService* of the Application *HelloWorld*
+     - Retrieve the history of the Runnable *WhoRunnable* of the Service *WhoService* of the
+       Application *HelloWorld*
    * - Returns
      - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
        ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
@@ -2111,7 +2112,8 @@ Example
      - ``GET <base-url>/apps/CountTokens/flows/CountTokensFlow/``
        ``logs?start=1382576400&stop=1382576700``
    * - Description
-     - Return the logs for all the events from the Flow *CountTokensFlow* of the *CountTokens* Application,
+     - Return the logs for all the events from the Flow *CountTokensFlow* of the *CountTokens*
+       Application,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 
@@ -2145,7 +2147,8 @@ Example
      - ``GET <base-url>/apps/CountTokens/services/CountTokensService/runnables/CountTokensRunnable/``
        ``logs?start=1382576400&stop=1382576700``
    * - Description
-     - Return the logs for all the events of the Runnable CountTokensRunnable from the Service *CountTokensService*
+     - Return the logs for all the events of the Runnable CountTokensRunnable from the Service
+       *CountTokensService*
        of the *CountTokens* Application,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
