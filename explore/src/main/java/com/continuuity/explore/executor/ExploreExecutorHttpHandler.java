@@ -45,8 +45,22 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public void enableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("instance") final String instance) {
     try {
-      LOG.debug("Enabling explore for dataset instance {}", instance);
-      Dataset dataset = datasetFramework.getDataset(instance, null);
+      Dataset dataset;
+      try {
+        dataset = datasetFramework.getDataset(instance, null);
+      } catch (Exception e) {
+        String className = isClassNotFoundException(e);
+        if (className == null) {
+          throw e;
+        }
+        LOG.info("Cannot load dataset {} because class {} cannot be found. This is probably because class {} is a " +
+                   "type parameter of dataset {} that is not present in the dataset's jar file. See the developer " +
+                   "guide for more information.", instance, className, className, instance);
+        JsonObject json = new JsonObject();
+        json.addProperty("handle", Handle.NO_OP.getHandle());
+        responder.sendJson(HttpResponseStatus.OK, json);
+        return;
+      }
       if (dataset == null) {
         responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + instance);
         return;
@@ -62,6 +76,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
+      LOG.debug("Enabling explore for dataset instance {}", instance);
       RecordScannable<?> scannable = (RecordScannable) dataset;
       String createStatement;
       try {
@@ -85,6 +100,16 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       LOG.error("Got exception:", e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
+  }
+
+  private String isClassNotFoundException(Throwable e) {
+    if (e instanceof ClassNotFoundException) {
+      return e.getMessage();
+    }
+    if (e.getCause() != null) {
+      return isClassNotFoundException(e.getCause());
+    }
+    return null;
   }
 
   /**

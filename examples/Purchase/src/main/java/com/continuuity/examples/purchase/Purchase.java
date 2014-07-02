@@ -24,6 +24,7 @@ public class Purchase {
   private final String customer, product;
   private final int quantity, price;
   private final long purchaseTime;
+  private String catalogId;
 
   public Purchase(String customer, String product, int quantity, int price, long purchaseTime) {
     this.customer = customer;
@@ -31,6 +32,7 @@ public class Purchase {
     this.quantity = quantity;
     this.price = price;
     this.purchaseTime = purchaseTime;
+    this.catalogId = "";
   }
 
   public String getCustomer() {
@@ -52,4 +54,13 @@ public class Purchase {
   public int getPrice() {
     return price;
   }
+
+  public String getCatalogId() {
+    return catalogId;
+  }
+
+  public void setCatalogId(String catalogId) {
+    this.catalogId = catalogId;
+  }
+
 }

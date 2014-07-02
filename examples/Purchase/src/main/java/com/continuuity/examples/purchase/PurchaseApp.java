@@ -37,6 +37,7 @@ public class PurchaseApp extends AbstractApplication {
     addFlow(new PurchaseFlow());
     addProcedure(new PurchaseProcedure());
     addWorkflow(new PurchaseHistoryWorkflow());
+    addService(new CatalogLookupService());
 
     try {
       createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());
