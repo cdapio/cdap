@@ -186,6 +186,12 @@ On Windows::
 
 Query
 .....
+
+If the Procedure has not already been started, you start it either through the 
+Continuuity Reactor Dashboard or via an HTTP request using the ``curl`` command::
+
+	curl -v -X POST 'http://localhost:10000/v2/apps/ResponseCodeAnalytics/procedures/StatusCodeProcedure/start'
+
 There are two ways to query the *statusCodeTable* DataSet:
 
 #. Send a query via an HTTP request using the ``curl`` command. For example::
@@ -223,5 +229,4 @@ Either:
 
 Downloading the Example
 =======================
-`Download the example <http://continuuity.com/docs/reactor/current/en/_downloads/continuuity-ResponseCodeAnalytics-2.3.0.zip>`_
-
+This example (and more!) is included with our `software development kit <http://continuuity.com/download>`__.

@@ -15,7 +15,7 @@ Overview
 This example demonstrates an application of streaming log analysis. 
 It computes the aggregate number of HTTP requests on an hourly basis
 in each hour of the last twenty-four hours, processing in real-time Apache access log data. 
-The application expands on the other `examples <http://continuuity.com/docs/reactor/current/en/examples>`__
+The application expands on the other `examples <index.html>`__
 to show how to use a MapReduce job.
 
 Data from a log will be sent to the Continuuity Reactor by an external script *inject-log*
@@ -32,7 +32,7 @@ Let's look at some of these elements, and then run the application and see the r
 
 The TrafficAnalytics Application
 --------------------------------
-As in the other `examples <http://continuuity.com/docs/reactor/current/en/examples>`__, the components 
+As in the other `examples </index.html>`__, the components 
 of the application are tied together by the class ``TrafficAnalyticsApp``::
 
 	public class TrafficAnalyticsApp extends AbstractApplication {
@@ -59,9 +59,9 @@ of the application are tied together by the class ``TrafficAnalyticsApp``::
 
 Many elements are similar, but there are a few new entries.
 
-``SimpleTimeseriesTable``: Data Storage
+``TimeseriesTable``: Data Storage
 ---------------------------------------
-The processed data is stored in SimpleTimeseriesTable Datasets:
+The processed data is stored in TimeseriesTable Datasets:
 
 - All entries are logically partitioned into time intervals of the same size based on the entry timestamp.
 - Every row in the underlying Table holds entries of the same time interval with the same key.
@@ -85,7 +85,7 @@ implemented: ``configure`` and ``beforeSubmit``::
 	  public static class LogCountMapReduce extends AbstractMapReduce {
 	    // Annotation indicates the Dataset used in this MapReduce.
 	    @UseDataSet("logEventTable")
-	    private SimpleTimeseriesTable logs;
+	    private TimeseriesTable logs;
 	
 	    @Override
 	    public MapReduceSpecification configure() {
@@ -117,16 +117,16 @@ implemented: ``configure`` and ``beforeSubmit``::
 	    }
 	
 These two methods configure and define the MapReduce job.
-The work is done by instances of two additional classes—a *Mapper* and a *Reducer*.
+The work is done by instances of two additional classes: a *Mapper* and a *Reducer*.
 
-The *Mapper*—implemented by the ``LogMapper`` class—transforms the log data into key-value pairs, 
+The *Mapper*, implemented by the ``LogMapper`` class, transforms the log data into key-value pairs, 
 where the key is the time stamp on the hour scale and the value (always the same, 1) is an
 occurrence of a log event. The *Mapper* receives a log as a key-value pair
 from the input Dataset and outputs the data as another key-value pair
 to the *Reducer*.
 
-The *Reducer*—implemented by the ``LogReducer`` class—aggregates the number of requests in each hour
-and stores the results in an output ``SimpleTimeseriesTable``.
+The *Reducer*, implemented by the ``LogReducer`` class, aggregates the number of requests in each hour
+and stores the results in an output ``TimeseriesTable``.
 
 
 ``LogCountProcedure``: Real-time Queries
@@ -228,6 +228,11 @@ Start the MapReduce job by:
 
 Querying the Results
 ....................
+If the Procedure has not already been started, you start it either through the 
+Continuuity Reactor Dashboard or via an HTTP request using the ``curl`` command::
+
+	curl -v -X POST 'http://localhost:10000/v2/apps/TrafficAnalytics/procedures/LogCountProcedure/start'
+	
 There are two ways to query the *countTable* Dataset:
 
 - Send a query via an HTTP request using the ``curl`` command. For example::
@@ -268,4 +273,4 @@ Either:
 
 Downloading the Example
 =======================
-`Download the example <http://continuuity.com/docs/reactor/current/en/_downloads/continuuity-TrafficAnalytics-2.3.0.zip>`_
+This example (and more!) is included with our `software development kit <http://continuuity.com/download>`__.
