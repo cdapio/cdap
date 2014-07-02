@@ -21,6 +21,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
+import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.gateway.auth.AuthModule;
@@ -147,7 +148,20 @@ public class ReactorServiceMain extends DaemonMain {
     locationFactory = baseInjector.getInstance(LocationFactory.class);
     secureStoreUpdater = new HBaseSecureStoreUpdater(hConf, locationFactory);
 
+    checkTransactionRequirements();
     checkExploreRequirements();
+  }
+
+  /**
+   * The transaction coprocessors (0.94 and 0.96 versions of {@code ReactorTransactionDataJanitor}) need access
+   * to CConfiguration values in order to load transaction snapshots for data cleanup.
+   */
+  private void checkTransactionRequirements() {
+    try {
+      new ConfigurationTable(hConf).write(ConfigurationTable.Type.DEFAULT, cConf);
+    } catch (IOException ioe) {
+      throw Throwables.propagate(ioe);
+    }
   }
 
   /**

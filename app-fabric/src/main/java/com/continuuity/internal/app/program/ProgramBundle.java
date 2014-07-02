@@ -25,7 +25,7 @@ import java.util.jar.Manifest;
  *
  */
 public final class ProgramBundle {
-  public static final String APPLICATION_META_ENTRY = "application.json";
+  private static final String APPLICATION_META_ENTRY = "application.json";
   private static final Predicate<JarEntry> META_IGNORE = new Predicate<JarEntry>() {
     @Override
     public boolean apply(JarEntry input) {

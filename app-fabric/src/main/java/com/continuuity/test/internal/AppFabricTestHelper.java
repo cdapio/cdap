@@ -239,7 +239,7 @@ public class AppFabricTestHelper {
     });
   }
 
-  public static void deployApplication(Class<? extends Application> application) throws Exception {
+  public static void deployApplication(Class<?> application) throws Exception {
     deployApplication(application,
                       "app-" + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS) + ".jar");
   }
@@ -247,7 +247,7 @@ public class AppFabricTestHelper {
   /**
    *
    */
-  public static void deployApplication(Class<? extends Application> applicationClz, String fileName) throws Exception {
+  public static void deployApplication(Class<?> applicationClz, String fileName) throws Exception {
     Location deployedJar =
       deployApplication(getInjector().getInstance(AppFabricHttpHandler.class),
                         getInjector().getInstance(LocationFactory.class),

@@ -1,11 +1,11 @@
-.. :Author: Continuuity. Inc.
+.. :Author: Continuuity, Inc.
    :Description: Continuuity Reactor Apache Log Event Logger
 
 =============================
 ResponseCodeAnalytics Example
 =============================
 
-**A Continuuity Reactor Application Demonstrating Streams, Flows, DataSets and Procedures**
+**A Continuuity Reactor Application Demonstrating Streams, Flows, Datasets and Procedures**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
@@ -16,7 +16,7 @@ This example demonstrates a simple application for real-time streaming log analy
 the number of occurrences of each HTTP status code by processing Apache access log data. 
 
 The example introduces the basic constructs of the Continuuity Reactor programming paradigm:
-Applications, Streams, Flows, Procedures and DataSets.
+Applications, Streams, Flows, Procedures and Datasets.
 
 In any real-time application, there are four distinct areas:
 
@@ -31,7 +31,7 @@ Let's look at each one in turn.
 
 The ResponseCodeAnalytics Application
 -------------------------------------
-All of the components (Streams, Flows, DataSets, and Procedures) of the Application are tied together 
+All of the components (Streams, Flows, Datasets, and Procedures) of the Application are tied together 
 as a deployable entity by the class ``ResponseCodeAnalyticsApp``,
 an implementation of ``com.continuuity.api.Application``.
 
@@ -52,13 +52,13 @@ an implementation of ``com.continuuity.api.Application``.
       addProcedure(new StatusCodeProcedure());
     }
 
-Notice that in coding the Application, *Streams* and *DataSets* are defined
+Notice that in coding the Application, *Streams* and *Datasets* are defined
 using Continuuity classes, and are referenced by names, 
 while *Flows*, *Flowlets* and *Procedures* are defined using user-written classes
 that implement Continuuity classes and are referenced by passing an object, 
 in addition to being assigned a unique name.
 
-Names used for *Streams* and *DataSets* need to be unique across the Reactor instance,
+Names used for *Streams* and *Datasets* need to be unique across the Reactor instance,
 while names used for *Flows*, *Flowlets* and *Procedures* need to be unique only to the Application.
 
 Streams for Data Collection
@@ -90,7 +90,8 @@ Flows and Flowlets for Real-time Data Processing
 ------------------------------------------------
 Data ingested through Streams can be processed in real-time using Flows, which are user-implemented realtime-stream processors. 
 
-A Flow is comprised of one or more Flowlets that are wired together as a Directed Acyclic Graph (DAG). Each Flowlet is able to perform custom logic and execute data operations for each individual data object processed. 
+A Flow is comprised of one or more Flowlets that are wired together as a Directed Acyclic Graph (DAG). 
+Each Flowlet is able to perform custom logic and execute data operations for each individual data object processed. 
 
 In the example, two Flowlets are used to process the data:
 
@@ -101,15 +102,15 @@ In the example, two Flowlets are used to process the data:
 
 The *parser* and *counter* Flowlets are wired together by the Flow implementation class ``LogAnalyticsFlow``.
 
-DataSets for Data Storage
+Datasets for Data Storage
 -------------------------
-The processed data is stored in a Table DataSet named *statusCodeTable*. 
+The processed data is stored in a Table Dataset named *statusCodeTable*. 
 The computed analysis—a count of each HTTP status code—is stored on a row named *status*,
 with the HTTP status code as the column key and the count as the column value.
 
 Procedures for Real-time Queries
 --------------------------------
-The data in DataSets can be served using Procedures for real-time querying of the aggregated results.
+The data in Datasets can be served using Procedures for real-time querying of the aggregated results.
 The ``ResponseCodeAnalyticsApp`` has a Procedure to retrieve all status codes and counts.
 
 Building and Running the Application and Example
@@ -222,4 +223,5 @@ Either:
 
 Downloading the Example
 =======================
-`Download the example </developers/examples-files/continuuity-ResponseCodeAnalytics-2.3.0.zip>`_
+`Download the example <http://continuuity.com/docs/reactor/current/en/_downloads/continuuity-ResponseCodeAnalytics-2.3.0.zip>`_
+
