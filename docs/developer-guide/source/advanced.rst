@@ -187,52 +187,83 @@ In MapReduce Mapper/Reducer jobs::
 Using Services
 -----------------
 Custom Services are not displayed in the Continuuity Reactor Dashboard. To control their
-lifecycle, use the `Reactor Client API <rest.html#reactor-client-http-api>`__ as described in the 
-`Continuuity Reactor REST API <rest.html#reactor-client-http-api>`__.
+lifecycle, use the `Reactor Client API <rest.html#reactor-client-http-api>`__ as described
+in the `Continuuity Reactor REST API <rest.html#reactor-client-http-api>`__.
 
 
 Flow System
 ===========
-**Flows** are user-implemented real-time stream processors. They are comprised of one or more **Flowlets** that are wired together into a directed acyclic graph or DAG. Flowlets pass data between one another; each Flowlet is able to perform custom logic and execute data operations for each individual data object it processes.
+**Flows** are user-implemented real-time stream processors. They are comprised of one or
+more **Flowlets** that are wired together into a directed acyclic graph or DAG. Flowlets
+pass data between one another; each Flowlet is able to perform custom logic and execute
+data operations for each individual data object it processes.
 
-A Flowlet processes the data objects from its input one by one. If a Flowlet has multiple inputs, they are consumed in a round-robin fashion. When processing a single input object, all operations, including the removal of the object from the input, and emission of data to the outputs, are executed in a transaction. This provides us with Atomicity, Consistency, Isolation, and Durability (ACID) properties, and helps assure a unique and core property of the Flow system: it guarantees atomic and "exactly-once" processing of each input object by each Flowlet in the DAG.
+A Flowlet processes the data objects from its input one by one. If a Flowlet has multiple
+inputs, they are consumed in a round-robin fashion. When processing a single input object,
+all operations, including the removal of the object from the input, and emission of data
+to the outputs, are executed in a transaction. This provides us with Atomicity,
+Consistency, Isolation, and Durability (ACID) properties, and helps assure a unique and
+core property of the Flow system: it guarantees atomic and "exactly-once" processing of
+each input object by each Flowlet in the DAG.
 
 Batch Execution
 ---------------
-By default, a Flowlet processes a single data object at a time within a single transaction. To increase throughput, you can also process a batch of data objects within the same transaction::
+By default, a Flowlet processes a single data object at a time within a single
+transaction. To increase throughput, you can also process a batch of data objects within
+the same transaction::
 
 	@Batch(100)
 	@ProcessInput
 	public void process(String words) {
 	  ...
 
-For the above batch example, the **process** method will be called up to 100 times per transaction, with different data objects read from the input each time it is called.
+For the above batch example, the **process** method will be called up to 100 times per
+transaction, with different data objects read from the input each time it is called.
 
-If you are interested in knowing when a batch begins and ends, you can use an **Iterator** as the method argument::
+If you are interested in knowing when a batch begins and ends, you can use an **Iterator**
+as the method argument::
 
 	@Batch(100)
 	@ProcessInput
 	public void process(Iterator<String> words) {
 	  ...
 
-In this case, the **process** will be called once per transaction and the **Iterator** will contain up to 100 data objects read from the input.
+In this case, the **process** will be called once per transaction and the **Iterator**
+will contain up to 100 data objects read from the input.
 
 Flowlets and Instances
 ----------------------
-You can have one or more instances of any given Flowlet, each consuming a disjoint partition of each input. You can control the number of instances programmatically via the
-`REST interfaces <rest.html>`__ or via the Continuuity Reactor Dashboard. This enables you to scale your application to meet capacity at runtime.
+You can have one or more instances of any given Flowlet, each consuming a disjoint
+partition of each input. You can control the number of instances programmatically via the
+`REST interfaces <rest.html>`__ or via the Continuuity Reactor Dashboard. This enables you
+to scale your application to meet capacity at runtime.
 
-In the Local Reactor, multiple Flowlet instances are run in threads, so in some cases actual performance may not be improved. However, in the Hosted and Enterprise Reactors each Flowlet instance runs in its own Java Virtual Machine (JVM) with independent compute resources. Scaling the number of Flowlets can improve performance and have a major impact depending on your implementation.
+In the Local Reactor, multiple Flowlet instances are run in threads, so in some cases
+actual performance may not be improved. However, in the Hosted and Enterprise Reactors
+each Flowlet instance runs in its own Java Virtual Machine (JVM) with independent compute
+resources. Scaling the number of Flowlets can improve performance and have a major impact
+depending on your implementation.
 
 Partitioning Strategies
 -----------------------
-As mentioned above, if you have multiple instances of a Flowlet the input queue is partitioned among the Flowlets. The partitioning can occur in different ways, and each Flowlet can specify one of these three partitioning strategies:
+As mentioned above, if you have multiple instances of a Flowlet the input queue is
+partitioned among the Flowlets. The partitioning can occur in different ways, and each
+Flowlet can specify one of these three partitioning strategies:
 
-- **First-in first-out (FIFO):** Default mode. In this mode, every Flowlet instance receives the next available data object in the queue. However, since multiple consumers may compete for the same data object, access to the queue must be synchronized. This may not always be the most efficient strategy.
+- **First-in first-out (FIFO):** Default mode. In this mode, every Flowlet instance
+  receives the next available data object in the queue. However, since multiple consumers
+  may compete for the same data object, access to the queue must be synchronized. This may
+  not always be the most efficient strategy.
 
-- **Round-robin:** With this strategy, the number of items is distributed evenly among the instances. In general, round-robin is the most efficient partitioning. Though more efficient than FIFO, it is not ideal when the application needs to group objects into buckets according to business logic. In those cases, hash-based partitioning is preferable.
+- **Round-robin:** With this strategy, the number of items is distributed evenly among the
+  instances. In general, round-robin is the most efficient partitioning. Though more
+  efficient than FIFO, it is not ideal when the application needs to group objects into
+  buckets according to business logic. In those cases, hash-based partitioning is
+  preferable.
 
-- **Hash-based:** If the emitting Flowlet annotates each data object with a hash key, this partitioning ensures that all objects of a given key are received by the same consumer instance. This can be useful for aggregating by key, and can help reduce write conflicts.
+- **Hash-based:** If the emitting Flowlet annotates each data object with a hash key, this
+  partitioning ensures that all objects of a given key are received by the same consumer
+  instance. This can be useful for aggregating by key, and can help reduce write conflicts.
 
 Suppose we have a Flowlet that counts words::
 
@@ -247,7 +278,8 @@ Suppose we have a Flowlet that counts words::
 	  }
 	}
 
-This Flowlet uses the default strategy of FIFO. To increase the throughput when this Flowlet has many instances, we can specify round-robin partitioning::
+This Flowlet uses the default strategy of FIFO. To increase the throughput when this
+Flowlet has many instances, we can specify round-robin partitioning::
 
 	@RoundRobin
 	@ProcessInput("wordOut")
@@ -255,7 +287,9 @@ This Flowlet uses the default strategy of FIFO. To increase the throughput when 
 	  this.wordCountsTable.increment(Bytes.toBytes(word), 1L);
 	}
 
-Now, if we have three instances of this Flowlet, every instance will receive every third word. For example, for the sequence of words in the sentence, “I scream, you scream, we all scream for ice cream”:
+Now, if we have three instances of this Flowlet, every instance will receive every third
+word. For example, for the sequence of words in the sentence, “I scream, you scream, we
+all scream for ice cream”:
 
 - The first instance receives the words: *I scream scream cream*
 - The second instance receives the words: *scream we for*
@@ -271,7 +305,9 @@ leading to a write conflict. To avoid conflicts, we can use hash-based partition
 	  this.wordCountsTable.increment(Bytes.toBytes(word), 1L);
 	}
 
-Now only one of the Flowlet instances will receive the word *scream*, and there can be no more write conflicts. Note that in order to use hash-based partitioning, the emitting Flowlet must annotate each data object with the partitioning key::
+Now only one of the Flowlet instances will receive the word *scream*, and there can be no
+more write conflicts. Note that in order to use hash-based partitioning, the emitting
+Flowlet must annotate each data object with the partitioning key::
 
 	@Output("wordOut")
 	private OutputEmitter<String> wordOutput;
@@ -282,7 +318,11 @@ Now only one of the Flowlet instances will receive the word *scream*, and there 
 	  wordOutput.emit(word, "wordHash", word.hashCode());
 	}
 
-Note that the emitter must use the same name ("wordHash") for the key that the consuming Flowlet specifies as the partitioning key. If the output is connected to more than one Flowlet, you can also annotate a data object with multiple hash keys—each consuming Flowlet can then use different partitioning. This is useful if you want to aggregate by multiple keys, such as counting purchases by product ID as well as by customer ID.
+Note that the emitter must use the same name ("wordHash") for the key that the consuming
+Flowlet specifies as the partitioning key. If the output is connected to more than one
+Flowlet, you can also annotate a data object with multiple hash keys—each consuming
+Flowlet can then use different partitioning. This is useful if you want to aggregate by
+multiple keys, such as counting purchases by product ID as well as by customer ID.
 
 Partitioning can be combined with batch execution::
 
@@ -893,16 +933,16 @@ advantage of not having to write/read all the data in a transaction.
 Disabling Transactions
 ----------------------
 Transaction can be disabled for a Flow by annotating the Flow class with the 
-@DisableTransaction annotation. While this may speed up performance, if—for example—a 
-Flowlet fails, the system would not be able to roll back to its previous state::
+``@DisableTransaction`` annotation::
 
 	@DisableTransaction
 	class MyExampleFlow implements Flow {
 	  ...
 	}
 
-You will need to judge whether the increase in performance offsets the increased risk of 
-inaccurate data.
+While this may speed up performance, if—for example—a Flowlet fails, the system would not 
+be able to roll back to its previous state. You will need to judge whether the increase in 
+performance offsets the increased risk of inaccurate data.
 
 Transactions in MapReduce
 -------------------------
