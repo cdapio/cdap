@@ -313,6 +313,8 @@ table.docutils {
     border: 0;
     border-collapse: collapse;
     width: 80%;
+    margin-left: 5%;
+    margin-right: 5%;
 }
 
 table.docutils td, table.docutils th {
