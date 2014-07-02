@@ -177,8 +177,9 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   }
 
   private int createInstance(String instanceName, String typeName, DatasetProperties props) throws IOException {
-    return HttpRequests.put(getUrl("/data/datasets/" + instanceName),
-                            new Gson().toJson(new DatasetInstanceHandler.DatasetTypeAndProperties(typeName, props)))
+    DatasetInstanceHandler.DatasetTypeAndProperties typeAndProps =
+      new DatasetInstanceHandler.DatasetTypeAndProperties(typeName, props.getProperties());
+    return HttpRequests.put(getUrl("/data/datasets/" + instanceName), new Gson().toJson(typeAndProps))
       .getResponseCode();
   }
 

@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -110,8 +109,9 @@ class DatasetServiceClient {
   public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
     throws DatasetManagementException {
 
-    HttpResponse response = doPut("datasets/" + datasetInstanceName,
-                                  GSON.toJson(new DatasetInstanceHandler.DatasetTypeAndProperties(datasetType, props)));
+    DatasetInstanceHandler.DatasetTypeAndProperties typeAndProps =
+      new DatasetInstanceHandler.DatasetTypeAndProperties(datasetType, props.getProperties());
+    HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(typeAndProps));
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
                                                         datasetInstanceName, getDetails(response)));
