@@ -327,6 +327,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
           }
 
         } catch (Exception e) {
+          LOG.warn("Received Exception after submitting map/reduce job. ", e);
           throw Throwables.propagate(e);
         } finally {
           // stopping controller when mapreduce job is finished
