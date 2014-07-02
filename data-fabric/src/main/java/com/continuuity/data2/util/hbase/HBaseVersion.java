@@ -32,12 +32,17 @@ public class HBaseVersion {
   private static Version currentVersion;
   private static String versionString;
   static {
-    versionString = VersionInfo.getVersion();
-    if (versionString.startsWith(HBASE_94_VERSION)) {
-      currentVersion = Version.HBASE_94;
-    } else if (versionString.startsWith(HBASE_96_VERSION)) {
-      currentVersion = Version.HBASE_96;
-    } else {
+    try {
+      versionString = VersionInfo.getVersion();
+      if (versionString.startsWith(HBASE_94_VERSION)) {
+        currentVersion = Version.HBASE_94;
+      } else if (versionString.startsWith(HBASE_96_VERSION)) {
+        currentVersion = Version.HBASE_96;
+      } else {
+        currentVersion = Version.UNKNOWN;
+      }
+    } catch (Throwable e) {
+      // must be a class loading exception, HBasde is not there
       currentVersion = Version.UNKNOWN;
     }
   }
