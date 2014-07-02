@@ -312,7 +312,7 @@
     </property>
 
     <!--
-        Data Fabric configuration
+        Data Fabric Configuration
     -->
     <property>
         <name>data.local.storage</name>
@@ -445,7 +445,7 @@
     </property>
 
     <!--
-        Queue related configuration
+        Queue-related Configuration
     -->
     <property>
         <name>data.queue.config.update.interval</name>
@@ -456,7 +456,7 @@
     </property>
 
     <!--
-        Metadata service configuration
+        Metadata Service Configuration
     -->
     <property>
         <name>metadata.bind.address</name>
@@ -481,7 +481,7 @@
     </property>
 
     <!--
-      Log collection service configuration
+        Log collection service configuration
     -->
     <property>
         <name>log.query.bind.address</name>
@@ -516,7 +516,7 @@
     </property>
 
     <!--
-        Account service configuration
+        Account Service Configuration
     -->
     <property>
         <name>account.server.host</name>
@@ -603,7 +603,7 @@
     </property>
 
 
-    <!-- Sets whether Devsuite is in Cloud or no -->
+    <!-- Sets whether Devsuite is in Cloud or not -->
     <!-- AppFabric will become Reactor later -->
     <property>
         <name>appfabric.environment</name>
@@ -681,7 +681,7 @@
     </property>
 
     <!--
-        Metrics processor configuration
+        Metrics Processor Configuration
      -->
 
     <property>
@@ -815,7 +815,7 @@
     </property>
 
     <!--
-        Global Configuration.
+        Global Configuration
     -->
     <property>
         <name>enable.unrecoverable.reset</name>
@@ -827,7 +827,7 @@
     </property>
 
     <!---
-         Web App Settings.
+         Web App Settings
      -->
     <property>
         <name>dashboard.bind.address</name>
@@ -850,7 +850,7 @@
     </property>
 
     <!---
-         Hive Server Settings.
+         Hive Server Settings
      -->
     <property>
         <name>hive.server.bind.address</name>
@@ -890,8 +890,6 @@
         <value>60</value>
         <description>Time in secs to schedule clean up job to timeout operations</description>
     </property>
-
-
 
     <!--
         External Authentication Settings
@@ -933,7 +931,7 @@
     </property>
 
     <!--
-     External Authentication login module settings
+        External Authentication login module Settings
     -->
     <property>
         <name>security.authentication.handlerClassName</name>
@@ -960,7 +958,8 @@
     <property>
         <name>security.server.extended.token.expiration.ms</name>
         <value>604800000</value>
-        <description>AccessToken expiration time in milliseconds (defaults to 1 week)</description>
+        <description>Admin Tools AccessToken expiration time in milliseconds (defaults to 
+        1 week) (internal)</description>
     </property>
 
     <property>
@@ -970,7 +969,7 @@
     </property>
 
     <!--
-        Security enabled flag
+        Security-enabled Flag
     -->
     <property>
         <name>security.enabled</name>
