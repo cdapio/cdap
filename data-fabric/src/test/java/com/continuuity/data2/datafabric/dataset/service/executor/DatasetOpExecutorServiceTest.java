@@ -17,14 +17,10 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
-import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
-import com.continuuity.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
-import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
-import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -47,15 +43,12 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,13 +64,12 @@ import java.util.concurrent.TimeUnit;
 public class DatasetOpExecutorServiceTest {
 
   private static final Gson GSON = new Gson();
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetOpExecutorServiceTest.class);
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private DatasetService managerService;
-  private RemoteDatasetFramework dsFramework;
+  private DatasetFramework dsFramework;
   private TimeLimitEndpointStrategy endpointStrategy;
   private InMemoryTransactionManager txManager;
 
@@ -124,14 +116,7 @@ public class DatasetOpExecutorServiceTest {
     managerService = injector.getInstance(DatasetService.class);
     managerService.startAndWait();
 
-    // initialize client
-    DatasetServiceClient serviceClient = new DatasetServiceClient(
-      injector.getInstance(DiscoveryServiceClient.class));
-
-    dsFramework = new RemoteDatasetFramework(
-      serviceClient, cConf,
-      injector.getInstance(LocationFactory.class),
-      new InMemoryDefinitionRegistryFactory());
+    dsFramework = injector.getInstance(DatasetFramework.class);
 
     // find host
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -150,20 +135,14 @@ public class DatasetOpExecutorServiceTest {
 
   @Test
   public void testRest() throws Exception {
-    ReactorDatasetNamespace dsNameSpace =
-      new ReactorDatasetNamespace(CConfiguration.create(), DataSetAccessor.Namespace.USER);
-
-    // NOTE: we need to use namespace so that we can later get access thru dsFramework that is namespaced
-    String bob = dsNameSpace.namespace("bob");
-
     // check non-existence with 404
-    testAdminOp(bob, "exists", 404, null);
+    testAdminOp("bob", "exists", 404, null);
 
     // add instance, should automatically create an instance
     dsFramework.addInstance("table", "bob", DatasetProperties.EMPTY);
-    testAdminOp(bob, "exists", 200, true);
+    testAdminOp("bob", "exists", 200, true);
 
-    testAdminOp(dsNameSpace.namespace("joe"), "exists", 404, null);
+    testAdminOp("joe", "exists", 404, null);
 
     // check truncate
     final Table table = dsFramework.getDataset("bob", null);
@@ -187,7 +166,7 @@ public class DatasetOpExecutorServiceTest {
       }
     });
 
-    testAdminOp(bob, "truncate", 200, null);
+    testAdminOp("bob", "truncate", 200, null);
 
     // verify that data is no longer there
     txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -198,11 +177,11 @@ public class DatasetOpExecutorServiceTest {
     });
 
     // check upgrade
-    testAdminOp(bob, "upgrade", 200, null);
+    testAdminOp("bob", "upgrade", 200, null);
 
     // drop and check non-existence
     dsFramework.deleteInstance("bob");
-    testAdminOp(bob, "exists", 404, null);
+    testAdminOp("bob", "exists", 404, null);
   }
 
   private void testAdminOp(String instanceName, String opName, int expectedStatus, Object expectedResult)

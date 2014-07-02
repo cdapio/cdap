@@ -98,9 +98,9 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     runCommand("show tables",
                true,
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-               Lists.newArrayList(new Result(Lists.<Object>newArrayList("continuuity_user_my_table"))));
+               Lists.newArrayList(new Result(Lists.<Object>newArrayList("my_table"))));
 
-    runCommand("describe continuuity_user_my_table",
+    runCommand("describe my_table",
                true,
                Lists.newArrayList(
                  new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
@@ -114,7 +114,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                )
     );
 
-    runCommand("select key, value from continuuity_user_my_table",
+    runCommand("select key, value from my_table",
                true,
                Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
                                   new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
@@ -123,7 +123,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                  new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
-    runCommand("select key, value from continuuity_user_my_table where key = '1'",
+    runCommand("select key, value from my_table where key = '1'",
                true,
                Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
                                   new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
@@ -131,20 +131,20 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                  new Result(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")))
     );
 
-    runCommand("select * from continuuity_user_my_table",
+    runCommand("select * from my_table",
                true,
-               Lists.newArrayList(new ColumnDesc("continuuity_user_my_table.key", "STRING", 1, null),
-                                  new ColumnDesc("continuuity_user_my_table.value",
+               Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null),
+                                  new ColumnDesc("my_table.value",
                                                  "struct<name:string,ints:array<int>>", 2, null)),
                Lists.newArrayList(
                  new Result(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
                  new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
-    runCommand("select * from continuuity_user_my_table where key = '2'",
+    runCommand("select * from my_table where key = '2'",
                true,
-               Lists.newArrayList(new ColumnDesc("continuuity_user_my_table.key", "STRING", 1, null),
-                                  new ColumnDesc("continuuity_user_my_table.value",
+               Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null),
+                                  new ColumnDesc("my_table.value",
                                                  "struct<name:string,ints:array<int>>", 2, null)),
                Lists.newArrayList(
                  new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
@@ -170,10 +170,10 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     stmt = connection.prepareStatement("show tables");
     rowSet = stmt.executeQuery();
     Assert.assertTrue(rowSet.next());
-    Assert.assertEquals("continuuity_user_my_table", rowSet.getString(1));
+    Assert.assertEquals("my_table", rowSet.getString(1));
     stmt.close();
 
-    stmt = connection.prepareStatement("select key, value from continuuity_user_my_table");
+    stmt = connection.prepareStatement("select key, value from my_table");
     rowSet = stmt.executeQuery();
     Assert.assertTrue(rowSet.next());
     Assert.assertEquals(1, rowSet.getInt(1));
@@ -214,13 +214,13 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
       table.postTxCommit();
 
 
-      runCommand("select continuuity_user_my_table.key, continuuity_user_my_table.value from " +
-                   "continuuity_user_my_table" +
+      runCommand("select my_table.key, my_table.value from " +
+                   "my_table" +
                    " " +
-                 "join continuuity_user_my_table_1 on (continuuity_user_my_table.key=continuuity_user_my_table_1.key)",
+                 "join my_table_1 on (my_table.key=my_table_1.key)",
           true,
-          Lists.newArrayList(new ColumnDesc("continuuity_user_my_table.key", "STRING", 1, null),
-                             new ColumnDesc("continuuity_user_my_table.value",
+          Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null),
+                             new ColumnDesc("my_table.value",
                                             "struct<name:string,ints:array<int>>", 2, null)),
           Lists.newArrayList(
               new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
@@ -232,7 +232,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testCancel() throws Exception {
-    Handle handle = exploreClient.execute("select key, value from continuuity_user_my_table");
+    Handle handle = exploreClient.execute("select key, value from my_table");
     exploreClient.cancel(handle);
     Assert.assertEquals(
       Status.OpStatus.CANCELED,

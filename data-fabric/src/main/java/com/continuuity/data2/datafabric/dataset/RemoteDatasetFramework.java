@@ -9,22 +9,18 @@ import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.lang.jar.JarFinder;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
-import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DatasetManagementException;
-import com.continuuity.data2.dataset2.DatasetNamespace;
 import com.continuuity.data2.dataset2.SingleTypeModule;
 import com.continuuity.data2.dataset2.module.lib.DatasetModules;
 import com.continuuity.internal.lang.ClassLoaders;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -34,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * {@link com.continuuity.data2.dataset2.DatasetFramework} implementation that talks to DatasetFramework Service
@@ -44,18 +41,15 @@ public class RemoteDatasetFramework implements DatasetFramework {
   private final DatasetServiceClient client;
   private final DatasetDefinitionRegistryFactory registryFactory;
   private final LocationFactory locationFactory;
-  private final DatasetNamespace namespace;
 
   @Inject
-  public RemoteDatasetFramework(DatasetServiceClient client,
-                                CConfiguration conf,
+  public RemoteDatasetFramework(DiscoveryServiceClient discoveryClient,
                                 LocationFactory locationFactory,
                                 DatasetDefinitionRegistryFactory registryFactory) {
 
-    this.client = client;
+    this.client = new DatasetServiceClient(discoveryClient);
     this.locationFactory = locationFactory;
     this.registryFactory = registryFactory;
-    this.namespace = new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.USER);
   }
 
   @Override
@@ -86,25 +80,32 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
-    throws DatasetManagementException {
-
-    client.addInstance(namespace(datasetInstanceName), datasetType, props);
+  public void deleteAllModules() throws DatasetManagementException {
+    client.deleteModules();
   }
 
   @Override
-  public Collection<String> getInstances() throws DatasetManagementException {
-    Collection<DatasetSpecification> allInstances = client.getAllInstances();
-    ImmutableList.Builder<String> builder = ImmutableList.builder();
-    for (DatasetSpecification spec : allInstances) {
-      builder.add(spec.getName());
-    }
-    return builder.build();
+  public void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
+    throws DatasetManagementException {
+
+    client.addInstance(datasetInstanceName, datasetType, props);
+  }
+
+  @Override
+  public Collection<DatasetSpecification> getInstances() throws DatasetManagementException {
+    return client.getAllInstances();
+  }
+
+  @Nullable
+  @Override
+  public DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException {
+    DatasetInstanceMeta meta = client.getInstance(name);
+    return meta == null ? null : meta.getSpec();
   }
 
   @Override
   public boolean hasInstance(String instanceName) throws DatasetManagementException {
-    return client.getInstance(namespace(instanceName)) != null;
+    return client.getInstance(instanceName) != null;
   }
 
   @Override
@@ -114,14 +115,19 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   @Override
   public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
-    client.deleteInstance(namespace(datasetInstanceName));
+    client.deleteInstance(datasetInstanceName);
+  }
+
+  @Override
+  public void deleteAllInstances() throws DatasetManagementException, IOException {
+    client.deleteInstances();
   }
 
   @Override
   public <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, ClassLoader classLoader)
     throws DatasetManagementException, IOException {
 
-    DatasetInstanceMeta instanceInfo = client.getInstance(namespace(datasetInstanceName));
+    DatasetInstanceMeta instanceInfo = client.getInstance(datasetInstanceName);
     if (instanceInfo == null) {
       return null;
     }
@@ -134,7 +140,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   public <T extends Dataset> T getDataset(String datasetInstanceName, ClassLoader classLoader)
     throws DatasetManagementException, IOException {
 
-    DatasetInstanceMeta instanceInfo = client.getInstance(namespace(datasetInstanceName));
+    DatasetInstanceMeta instanceInfo = client.getInstance(datasetInstanceName);
     if (instanceInfo == null) {
       return null;
     }
@@ -153,10 +159,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
     }
 
     client.addModule(moduleName, typeClass.getName(), tempJarPath);
-  }
-
-  private String namespace(String datasetInstanceName) {
-    return namespace.namespace(datasetInstanceName);
   }
 
   // can be used directly if DatasetTypeMeta is known, like in create dataset by dataset ops executor service
