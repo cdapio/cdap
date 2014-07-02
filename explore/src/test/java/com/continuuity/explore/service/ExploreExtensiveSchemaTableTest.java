@@ -6,6 +6,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.test.SlowTests;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -20,9 +22,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.List;
 
 /**
- *
+ * Painfully test a wide combination of types in a schema of a record scannable.
  */
 @Category(SlowTests.class)
 public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest {
@@ -44,11 +47,20 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
     table.startTx(tx1);
 
     ExtensiveSchemaTableDefinition.ExtensiveSchema value1 =
-      new ExtensiveSchemaTableDefinition.ExtensiveSchema("foo", 1, 1.0f, 2.0f, (long) 1, (byte) 1, true, (short) 1,
-                                                         new int[] { 1, 2 }, new float[] { 1.0f, 2.0f },
-                                                         new double[] { 1.0d, 2.0d }, new long [] { 1, 2 },
-                                                         new byte[] { 1, 2}, new boolean[] { true, false },
-                                                         new short[] { 1, 2 });
+      new ExtensiveSchemaTableDefinition.ExtensiveSchema(
+        "foo", 1, 1.23f, 2.45d, (long) 1000, (byte) 100, true, (short) 8, new int[] { 10, 11 },
+        new float[] { 1.67f, 2.89f }, new double[] { 10.56d, 8.78d }, new long [] { 101, 201 },
+        new byte[] { 106, 110 }, new boolean[] { true, false }, new short[] { 50, 51 }, new String[] { "foo", "bar" },
+        ImmutableList.of(10, 20), ImmutableList.of(10.45f, 20.98f), ImmutableList.of(10.99d, 20.90d),
+        ImmutableList.of((long) 654, (long) 2897), ImmutableList.of((byte) 22, (byte) 23), ImmutableList.of(true, true),
+        ImmutableList.of((short) 76, (short) 39), ImmutableList.of("foo2", "bar2"), ImmutableMap.of("foo3", 51),
+        ImmutableMap.of(3.55f, 51.98d), ImmutableMap.of((long) 890, (byte) 45), ImmutableMap.of(true, (short) 27),
+        new ExtensiveSchemaTableDefinition.Value("foo", 2),
+        new ExtensiveSchemaTableDefinition.Value[] {
+          new ExtensiveSchemaTableDefinition.Value("bar", 3), new ExtensiveSchemaTableDefinition.Value("foobar", 4)
+        }, ImmutableList.of(new ExtensiveSchemaTableDefinition.Value("foobar2", 3)),
+        ImmutableMap.of("key", new ExtensiveSchemaTableDefinition.Value("foobar3", 9)));
+    value1.setExt(value1);
     table.put("1", value1);
 
     Assert.assertTrue(table.commitTx());
@@ -69,7 +81,7 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
   }
 
   @Test
-  public void test() throws Exception {
+  public void testExtensiveSchema() throws Exception {
     runCommand("show tables",
                true,
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
@@ -92,13 +104,36 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
                  new Result(Lists.<Object>newArrayList("bo", "boolean", "from deserializer")),
                  new Result(Lists.<Object>newArrayList("sh", "smallint", "from deserializer")),
                  // note: hive removes upper cases
+                 // Arrays
                  new Result(Lists.<Object>newArrayList("iarr", "array<int>", "from deserializer")),
                  new Result(Lists.<Object>newArrayList("farr", "array<float>", "from deserializer")),
                  new Result(Lists.<Object>newArrayList("darr", "array<double>", "from deserializer")),
                  new Result(Lists.<Object>newArrayList("larr", "array<bigint>", "from deserializer")),
                  new Result(Lists.<Object>newArrayList("barr", "binary", "from deserializer")),
                  new Result(Lists.<Object>newArrayList("boarr", "array<boolean>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("sharr", "array<smallint>", "from deserializer"))
+                 new Result(Lists.<Object>newArrayList("sharr", "array<smallint>", "from deserializer")),
+                 new Result(Lists.<Object>newArrayList("sarr", "array<string>", "from deserializer")),
+                 // Lists
+                 new Result(Lists.<Object>newArrayList("ilist", "array<int>", "from deserializer")),
+                 new Result(Lists.<Object>newArrayList("flist", "array<float>", "from deserializer")),
+                 new Result(Lists.<Object>newArrayList("dlist", "array<double>", "from deserializer")),
+                 new Result(Lists.<Object>newArrayList("llist", "array<bigint>", "from deserializer")),
+                 // Note: list<byte> becomes array<tinyint>, whereas byte[] becomes binary...
+                 new Result(Lists.<Object>newArrayList("blist", "array<tinyint>", "from deserializer")),
+                 new Result(Lists.<Object>newArrayList("bolist", "array<boolean>", "from deserializer")),
+                 new Result(Lists.<Object>newArrayList("shlist", "array<smallint>", "from deserializer")),
+                 new Result(Lists.<Object>newArrayList("slist", "array<string>", "from deserializer")),
+                 // Maps
+                 new Result(Lists.<Object>newArrayList("stoimap", "map<string,int>", "from deserializer")),
+                 new Result(Lists.<Object>newArrayList("ftodmap", "map<float,double>", "from deserializer")),
+                 new Result(Lists.<Object>newArrayList("ltobmap", "map<bigint,tinyint>", "from deserializer")),
+                 new Result(Lists.<Object>newArrayList("botoshmap", "map<boolean,smallint>", "from deserializer")),
+                 // Custom type
+                 new Result(Lists.<Object>newArrayList("v", "struct<s:string,i:int>", "from deserializer")),
+                 new Result(Lists.<Object>newArrayList("varr", "array<struct<s:string,i:int>>", "from deserializer")),
+                 new Result(Lists.<Object>newArrayList("vlist", "array<struct<s:string,i:int>>", "from deserializer")),
+                 new Result(Lists.<Object>newArrayList("stovmap", "map<string,struct<s:string,i:int>>",
+                                                       "from deserializer"))
                )
     );
 
@@ -112,51 +147,48 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
                                   new ColumnDesc("continuuity_user_my_table.b", "TINYINT", 6, null),
                                   new ColumnDesc("continuuity_user_my_table.bo", "BOOLEAN", 7, null),
                                   new ColumnDesc("continuuity_user_my_table.sh", "SMALLINT", 8, null),
+                                  // Arrays
                                   new ColumnDesc("continuuity_user_my_table.iarr", "array<int>", 9, null),
                                   new ColumnDesc("continuuity_user_my_table.farr", "array<float>", 10, null),
                                   new ColumnDesc("continuuity_user_my_table.darr", "array<double>", 11, null),
                                   new ColumnDesc("continuuity_user_my_table.larr", "array<bigint>", 12, null),
                                   new ColumnDesc("continuuity_user_my_table.barr", "BINARY", 13, null),
                                   new ColumnDesc("continuuity_user_my_table.boarr", "array<boolean>", 14, null),
-                                  new ColumnDesc("continuuity_user_my_table.sharr", "array<smallint>", 15, null)
+                                  new ColumnDesc("continuuity_user_my_table.sharr", "array<smallint>", 15, null),
+                                  new ColumnDesc("continuuity_user_my_table.sarr", "array<string>", 16, null),
+                                  // Lists
+                                  new ColumnDesc("continuuity_user_my_table.ilist", "array<int>", 17, null),
+                                  new ColumnDesc("continuuity_user_my_table.flist", "array<float>", 18, null),
+                                  new ColumnDesc("continuuity_user_my_table.dlist", "array<double>", 19, null),
+                                  new ColumnDesc("continuuity_user_my_table.llist", "array<bigint>", 20, null),
+                                  new ColumnDesc("continuuity_user_my_table.blist", "array<tinyint>", 21, null),
+                                  new ColumnDesc("continuuity_user_my_table.bolist", "array<boolean>", 22, null),
+                                  new ColumnDesc("continuuity_user_my_table.shlist", "array<smallint>", 23, null),
+                                  new ColumnDesc("continuuity_user_my_table.slist", "array<string>", 24, null),
+                                  // Maps
+                                  new ColumnDesc("continuuity_user_my_table.stoimap", "map<string,int>", 25, null),
+                                  new ColumnDesc("continuuity_user_my_table.ftodmap", "map<float,double>", 26, null),
+                                  new ColumnDesc("continuuity_user_my_table.ltobmap", "map<bigint,tinyint>", 27, null),
+                                  new ColumnDesc("continuuity_user_my_table.botoshmap",
+                                                 "map<boolean,smallint>", 28, null),
+                                  // Custom type
+                                  new ColumnDesc("continuuity_user_my_table.v", "struct<s:string,i:int>", 29, null),
+                                  new ColumnDesc("continuuity_user_my_table.varr", "array<struct<s:string,i:int>>",
+                                                 30, null),
+                                  new ColumnDesc("continuuity_user_my_table.vlist", "array<struct<s:string,i:int>>",
+                                                 31, null),
+                                  new ColumnDesc("continuuity_user_my_table.stovmap",
+                                                 "map<string,struct<s:string,i:int>>", 32, null)
                ),
                Lists.newArrayList(
-                 new Result(Lists.<Object>newArrayList("foo", "1.0")))
+                 new Result(Lists.<Object>newArrayList(
+                   "foo", 1.0, 1.23, 2.45, 1000.0, 100.0, true, 8.0, "[10,11]", "[1.67,2.89]", "[10.56,8.78]",
+                   "[101,201]", Lists.newArrayList(106.0, 110.0), "[true,false]", "[50,51]", "[\"foo\",\"bar\"]",
+                   "[10,20]", "[10.45,20.98]", "[10.99,20.9]", "[654,2897]", "[22,23]", "[true,true]", "[76,39]",
+                   "[\"foo2\",\"bar2\"]", "{\"foo3\":51}", "{3.55:51.98}", "{890:45}", "{true:27}",
+                   "{\"s\":\"foo\",\"i\":2}", "[{\"s\":\"bar\",\"i\":3},{\"s\":\"foobar\",\"i\":4}]",
+                   "[{\"s\":\"foobar2\",\"i\":3}]", "{\"key\":{\"s\":\"foobar3\",\"i\":9}}"
+                 )))
     );
-  }
-
-  @Test
-  public void exploreDriverTest() throws Exception {
-    // Register explore jdbc driver
-    Class.forName("com.continuuity.explore.jdbc.ExploreDriver");
-
-    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-    Discoverable discoverable = new RandomEndpointStrategy(discoveryServiceClient.discover(
-      Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();
-
-    InetSocketAddress addr = discoverable.getSocketAddress();
-    String serviceUrl = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, addr.getHostName(), addr.getPort());
-
-    Connection connection = DriverManager.getConnection(serviceUrl);
-    PreparedStatement stmt;
-    ResultSet rowSet;
-
-    stmt = connection.prepareStatement("show tables");
-    rowSet = stmt.executeQuery();
-    Assert.assertTrue(rowSet.next());
-    Assert.assertEquals("continuuity_user_my_table", rowSet.getString(1));
-    stmt.close();
-
-    stmt = connection.prepareStatement("select key, value from continuuity_user_my_table");
-    rowSet = stmt.executeQuery();
-    Assert.assertTrue(rowSet.next());
-    Assert.assertEquals(1, rowSet.getInt(1));
-    Assert.assertEquals("{\"name\":\"first\",\"ints\":[1,2,3,4,5]}", rowSet.getString(2));
-    Assert.assertTrue(rowSet.next());
-    Assert.assertEquals(2, rowSet.getInt(1));
-    Assert.assertEquals("{\"name\":\"two\",\"ints\":[10,11,12,13,14]}", rowSet.getString(2));
-    stmt.close();
-
-    connection.close();
   }
 }

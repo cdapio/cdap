@@ -14,13 +14,13 @@ import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
-import com.google.common.base.Objects;
 import com.google.gson.Gson;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Dataset definition with a record scannable table, containing an extensive schema. Used for testing.
@@ -56,7 +56,7 @@ public class ExtensiveSchemaTableDefinition
   }
 
   /**
-   *
+   * Extensive schema table.
    */
   public static class ExtensiveSchemaTable extends AbstractDataset implements RecordScannable<ExtensiveSchema> {
 
@@ -94,9 +94,24 @@ public class ExtensiveSchemaTableDefinition
   }
 
   /**
-   *
+   * Custom Type.
+   */
+  public static class Value {
+    private final String s;
+    private final int i;
+
+    public Value(String s, int i) {
+      this.s = s;
+      this.i = i;
+    }
+  }
+
+  /**
+   * Extensive schema.
    */
   public static class ExtensiveSchema {
+
+    // Primitive types (and string)
     private final String s;
     private final int i;
     private final float f;
@@ -106,6 +121,7 @@ public class ExtensiveSchemaTableDefinition
     private final boolean bo;
     private final short sh;
 
+    // Arrays
     private final int[] iArr;
     private final float[] fArr;
     private final double[] dArr;
@@ -113,10 +129,41 @@ public class ExtensiveSchemaTableDefinition
     private final byte[] bArr;
     private final boolean[] boArr;
     private final short[] shArr;
+    private final String[] sArr;
 
-    public ExtensiveSchema(String s, int i, float f, double d, long l, byte b, boolean bo,
-                           short sh, int[] iArr, float[] fArr, double[] dArr, long[] lArr,
-                           byte[] bArr, boolean[] boArr, short[] shArr) {
+    // Lists
+    private final List<Integer> iList;
+    private final List<Float> fList;
+    private final List<Double> dList;
+    private final List<Long> lList;
+    private final List<Byte> bList;
+    private final List<Boolean> boList;
+    private final List<Short> shList;
+    private final List<String> sList;
+
+    // Maps
+    private final Map<String, Integer> stoiMap;
+    private final Map<Float, Double> ftodMap;
+    private final Map<Long, Byte> ltobMap;
+    private final Map<Boolean, Short> botoshMap;
+
+    // Custom type
+    private final Value v;
+    private final Value[] vArr;
+    private final List<Value> vList;
+    private final Map<String, Value> stovMap;
+
+    // Reference to itself
+    // TODO fix infinite loop
+//    private ExtensiveSchema ext;
+
+    public ExtensiveSchema(String s, int i, float f, double d, long l, byte b, boolean bo, short sh, int[] iArr,
+                           float[] fArr, double[] dArr, long[] lArr, byte[] bArr, boolean[] boArr, short[] shArr,
+                           String[] sArr, List<Integer> iList, List<Float> fList, List<Double> dList, List<Long> lList,
+                           List<Byte> bList, List<Boolean> boList, List<Short> shList, List<String> sList,
+                           Map<String, Integer> stoiMap, Map<Float, Double> ftodMap, Map<Long, Byte> ltobMap,
+                           Map<Boolean, Short> botoshMap, Value v, Value[] vArr, List<Value> vList,
+                           Map<String, Value> stovMap) {
       this.s = s;
       this.i = i;
       this.f = f;
@@ -132,6 +179,27 @@ public class ExtensiveSchemaTableDefinition
       this.bArr = bArr;
       this.boArr = boArr;
       this.shArr = shArr;
+      this.sArr = sArr;
+      this.iList = iList;
+      this.fList = fList;
+      this.dList = dList;
+      this.lList = lList;
+      this.bList = bList;
+      this.boList = boList;
+      this.shList = shList;
+      this.sList = sList;
+      this.stoiMap = stoiMap;
+      this.ftodMap = ftodMap;
+      this.ltobMap = ltobMap;
+      this.botoshMap = botoshMap;
+      this.v = v;
+      this.vArr = vArr;
+      this.vList = vList;
+      this.stovMap = stovMap;
+    }
+
+    public void setExt(ExtensiveSchema ext) {
+//      this.ext = ext;
     }
   }
 
