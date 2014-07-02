@@ -61,7 +61,7 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   @Nullable
   @Override
   public DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException {
-    return fromNamespaced(delegate.getDatasetSpec(name));
+    return fromNamespaced(delegate.getDatasetSpec(namespace(name)));
   }
 
   @Override

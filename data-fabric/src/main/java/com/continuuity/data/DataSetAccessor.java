@@ -55,6 +55,11 @@ public interface DataSetAccessor {
     public String namespace(String datasetName) {
       return name + "." + datasetName;
     }
+
+    public String fromNamespaced(String datasetName) {
+      // removing name + "."
+      return datasetName.substring(name.length() + 1);
+    }
   }
 
 }

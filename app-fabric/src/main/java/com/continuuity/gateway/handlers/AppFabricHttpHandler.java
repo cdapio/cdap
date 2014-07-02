@@ -40,10 +40,12 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.DatasetMetaTableUtil;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
@@ -317,7 +319,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
-    this.dsFramework = dsFramework;
+    this.dsFramework =
+      new NamespacedDatasetFramework(dsFramework,
+                                     new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER));
     this.datasetInstantiator = datasetInstantiator;
     this.dataSetAccessor = dataSetAccessor;
   }

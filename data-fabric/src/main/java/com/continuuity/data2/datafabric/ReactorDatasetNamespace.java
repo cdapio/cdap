@@ -25,6 +25,6 @@ public class ReactorDatasetNamespace implements DatasetNamespace {
 
   @Override
   public String fromNamespaced(String name) {
-    return name.substring(namespacePrefix.length());
+    return namespace.fromNamespaced(name.substring(namespacePrefix.length()));
   }
 }

@@ -24,10 +24,8 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataFabric;
-import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.table.RuntimeMemoryTable;
 import com.continuuity.data.table.RuntimeTable;
-import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -70,7 +68,6 @@ public class DataSetInstantiationBase {
   private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
 
   private final InstantiatorFactory instantiatorFactory = new InstantiatorFactory(false);
-  private final ReactorDatasetNamespace namespace;
 
   public DataSetInstantiationBase(CConfiguration configuration) {
     this(configuration, null);
@@ -79,7 +76,6 @@ public class DataSetInstantiationBase {
   public DataSetInstantiationBase(CConfiguration configuration, ClassLoader classLoader) {
     this.configuration = configuration;
     this.classLoader = classLoader;
-    this.namespace = new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER);
   }
 
   /**
@@ -486,8 +482,8 @@ public class DataSetInstantiationBase {
 
       // datasets API V2
       if (txAware.getKey() instanceof MeteredDataset) {
-        // TODO: fix namespacing - see REACTOR-217
-        final String dataSetName = namespace.namespace(txAware.getValue());
+        // TODO: fix namespacing: we want to capture metrics of namespaced dataset name - see REACTOR-217
+        final String dataSetName = txAware.getValue();
         MeteredDataset.MetricsCollector metricsCollector = new MeteredDataset.MetricsCollector() {
           @Override
           public void recordRead(int opsCount, int dataSize) {
