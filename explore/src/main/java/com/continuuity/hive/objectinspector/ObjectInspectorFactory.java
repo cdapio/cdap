@@ -106,6 +106,11 @@ public final class ObjectInspectorFactory {
           PrimitiveObjectInspector.PrimitiveCategory.STRING);
     }
 
+    // Array
+    if (c.isArray()) {
+      return getStandardListObjectInspector(getReflectionObjectInspector(c.getComponentType()));
+    }
+
     // Must be struct because List and Map need to be ParameterizedType
     Preconditions.checkState(!List.class.isAssignableFrom(c));
     Preconditions.checkState(!Map.class.isAssignableFrom(c));

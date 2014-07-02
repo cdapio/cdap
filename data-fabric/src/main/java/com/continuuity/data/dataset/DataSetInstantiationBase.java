@@ -24,10 +24,8 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataFabric;
-import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.table.RuntimeMemoryTable;
 import com.continuuity.data.table.RuntimeTable;
-import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -48,6 +46,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Implements the core logic of instantiating a dataset, including injection of the data fabric runtime and
@@ -69,7 +68,6 @@ public class DataSetInstantiationBase {
   private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
 
   private final InstantiatorFactory instantiatorFactory = new InstantiatorFactory(false);
-  private final ReactorDatasetNamespace namespace;
 
   public DataSetInstantiationBase(CConfiguration configuration) {
     this(configuration, null);
@@ -78,7 +76,6 @@ public class DataSetInstantiationBase {
   public DataSetInstantiationBase(CConfiguration configuration, ClassLoader classLoader) {
     this.configuration = configuration;
     this.classLoader = classLoader;
-    this.namespace = new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER);
   }
 
   /**
@@ -125,7 +122,8 @@ public class DataSetInstantiationBase {
    *  @throws DataSetInstantiationException If failed to create the DataSet.
    */
   @SuppressWarnings("unchecked")
-  public <T extends Closeable> T getDataSet(String dataSetName, DataFabric fabric, DatasetFramework datasetFramework)
+  public <T extends Closeable> T getDataSet(String dataSetName, DataFabric fabric,
+                                            @Nullable DatasetFramework datasetFramework)
     throws DataSetInstantiationException {
 
     // find the data set specification
@@ -134,9 +132,11 @@ public class DataSetInstantiationBase {
       return (T) getDataSet(spec, fabric, dataSetName);
     }
 
-    T dataSet = (T) getDataset(dataSetName, datasetFramework);
-    if (dataSet != null) {
-      return dataSet;
+    if (datasetFramework != null) {
+      T dataSet = (T) getDataset(dataSetName, datasetFramework);
+      if (dataSet != null) {
+        return dataSet;
+      }
     }
 
     throw logAndException(null, "No data set named %s can be instantiated.", dataSetName);
@@ -482,8 +482,8 @@ public class DataSetInstantiationBase {
 
       // datasets API V2
       if (txAware.getKey() instanceof MeteredDataset) {
-        // TODO: fix namespacing - see REACTOR-217
-        final String dataSetName = namespace.namespace(txAware.getValue());
+        // TODO: fix namespacing: we want to capture metrics of namespaced dataset name - see REACTOR-217
+        final String dataSetName = txAware.getValue();
         MeteredDataset.MetricsCollector metricsCollector = new MeteredDataset.MetricsCollector() {
           @Override
           public void recordRead(int opsCount, int dataSize) {

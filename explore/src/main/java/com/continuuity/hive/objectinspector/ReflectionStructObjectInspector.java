@@ -70,8 +70,17 @@ public class ReflectionStructObjectInspector extends
       } else {
         sb.append(",");
       }
+      ObjectInspector oi = structField.getFieldObjectInspector();
+      String typeName;
+      // This prevents infinite loop, and prints "this" in case
+      // the object contains a reference to itself
+      if (oi == this) {
+        typeName = "this";
+      } else {
+        typeName = oi.getTypeName();
+      }
       sb.append(structField.getFieldName()).append(":")
-        .append(structField.getFieldObjectInspector().getTypeName());
+        .append(typeName);
     }
     sb.append(">");
     return sb.toString();

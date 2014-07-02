@@ -470,7 +470,7 @@ public class TestFrameworkTest extends ReactorTestBase {
       // list the tables and make sure the table is there
       ResultSet results = connection.prepareStatement("show tables").executeQuery();
       Assert.assertTrue(results.next());
-      Assert.assertTrue("continuuity_user_myTable".equalsIgnoreCase(results.getString(1)));
+      Assert.assertTrue("continuuity_user_mytable".equalsIgnoreCase(results.getString(1)));
 
       // run a query over the dataset
       results = connection.prepareStatement("select first from continuuity_user_mytable where second = '1'")

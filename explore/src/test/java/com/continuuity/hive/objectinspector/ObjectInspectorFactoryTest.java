@@ -77,6 +77,11 @@ public class ObjectInspectorFactoryTest {
                         getObjectName(new TypeToken<ImmutablePair<ImmutableList<String>, Integer>>() { }.getType()));
     Assert.assertEquals("struct<address:struct<street:string,this$0:struct<>>,this$0:struct<>>",
                         getObjectName(new TypeToken<DummyEmployee<DummyAddress<String>>>() { }.getType()));
+    Assert.assertEquals("struct<myint:int,myinteger:int,mystring:string,dummystruct:this," +
+                        "myliststring:array<string>,mymapstringstring:map<string,string>," +
+                        "employee:struct<address:struct<street:string,this$0:struct<>>,this$0:struct<>>," +
+                        "ints:array<int>,this$0:struct<>>",
+                        getObjectName(DummyStruct.class));
 
     DummyStruct a = new DummyStruct();
     a.myInt = 1;
@@ -87,6 +92,7 @@ public class ObjectInspectorFactoryTest {
     a.myMapStringString = new HashMap<String, String>();
     a.myMapStringString.put("key", "value");
     a.employee = new DummyEmployee<DummyAddress<String>>(new DummyAddress<String>("foo"));
+    a.ints = new int[] { 1, 2 };
 
     assertObjectInspection(DummyStruct.class, a);
 
@@ -122,5 +128,7 @@ public class ObjectInspectorFactoryTest {
     public List<String> myListString;
     public Map<String, String> myMapStringString;
     public DummyEmployee<DummyAddress<String>> employee;
+    // Test arrays
+    public int[] ints;
   }
 }
