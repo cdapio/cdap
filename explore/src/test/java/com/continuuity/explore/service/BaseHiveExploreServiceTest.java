@@ -28,7 +28,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 
 import java.io.File;
-import java.text.DecimalFormat;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 

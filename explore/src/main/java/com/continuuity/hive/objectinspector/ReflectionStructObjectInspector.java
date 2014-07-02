@@ -72,6 +72,8 @@ public class ReflectionStructObjectInspector extends
       }
       ObjectInspector oi = structField.getFieldObjectInspector();
       String typeName;
+      // This prevents infinite loop, and prints "this" in case
+      // the object contains a reference to itself
       if (oi == this) {
         typeName = "this";
       } else {
