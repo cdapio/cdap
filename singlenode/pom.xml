@@ -117,7 +117,7 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <excludeGroupIds>org.apache.hbase,com.google.protobuf,asm,org.apache.zookeeper,org.apache.kafka,org.scala-lang</excludeGroupIds>
+                  <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka,org.scala-lang</excludeGroupIds>
                   <excludeArtifactIds>hadoop-hdfs,zkclient</excludeArtifactIds>
                   <silent>true</silent>
                   <includeScope>compile</includeScope>
@@ -232,6 +232,7 @@
                         <include>README.rst</include>
                         <include>**/src/**</include>
                         <include>**/bin/*</include>
+                        <include>**/resources/*</include>
                         <include>**/pom.xml</include>
                         <include>**/target/*.jar</include>
                       </includes>
@@ -283,6 +284,11 @@
                 <configuration>
                   <target>
                     <chmod file="${stage.opt.dir}/bin/**" perm="755"/>
+                    <chmod perm="755">
+                      <fileset dir="${stage.opt.dir}/examples">
+                        <include name="**/bin/*"/>
+                      </fileset>
+                    </chmod>
                   </target>
                 </configuration>
                 <goals>
