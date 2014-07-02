@@ -1,4 +1,4 @@
-package com.continuuity.data2.datafabric.dataset.client;
+package com.continuuity.data2.datafabric.dataset;
 
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
@@ -43,12 +43,11 @@ import javax.annotation.Nullable;
  * Provides programmatic APIs to access {@link com.continuuity.data2.datafabric.dataset.service.DatasetService}.
  * Just a java wrapper for accessing service's REST API.
  */
-public class DatasetServiceClient {
+class DatasetServiceClient {
   private static final Gson GSON = new Gson();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
 
-  @Inject
   public DatasetServiceClient(final DiscoveryServiceClient discoveryClient) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
@@ -60,6 +59,7 @@ public class DatasetServiceClient {
     });
   }
 
+  @Nullable
   public DatasetInstanceMeta getInstance(String instanceName) throws DatasetManagementException {
     HttpResponse response = doGet("datasets/" + instanceName);
     if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
