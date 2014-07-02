@@ -38,9 +38,12 @@ These are the Continuuity Reactor components:
   Continuuity Reactor applications;
 - **Continuuity Gateway:** Service supporting REST endpoints for Continuuity Reactor; 
 - **Continuuity Reactor-Master:** Service for managing runtime, lifecycle and resources of
-  Reactor applications; and
+  Reactor applications; 
 - **Continuuity Kafka:** Metrics and logging transport service,
-  using an embedded version of *Kafka*.
+  using an embedded version of *Kafka*; and
+- **Continuuity Authentication Server:** Performs client authentication for Reactor when security
+  is enabled.
+
   ``                                 ``
 
 .. literal above is used to force an extra line break after list
@@ -114,25 +117,30 @@ in addition to having CPUs with a minimum speed of 2 GHz:
 ..        Required space depends on the number of Continuuity applications
 ..        deployed and running in the Continuuity Reactor
 ..        and the quantity of logs and metrics that they generate.
+..    * - **Continuuity Authentication Server**
+..      - RAM
+..      - 1 GB minimum, 2 GB recommended
 
-+--------------------------------+--------------------+-----------------------------------------------+
-| Continuuity Component          | Hardware Component | Specifications                                |
-+================================+====================+===============================================+
-| **Continuuity Web-App**        | RAM                | 1 GB minimum, 2 GB recommended                |
-+--------------------------------+--------------------+-----------------------------------------------+
-| **Continuuity Gateway**        | RAM                | 2 GB minimum, 4 GB recommended                |
-+--------------------------------+--------------------+-----------------------------------------------+
-| **Continuuity Reactor-Master** | RAM                | 2 GB minimum, 4 GB recommended                |
-+--------------------------------+--------------------+-----------------------------------------------+
-| **Continuuity Kafka**          | RAM                | 1 GB minimum, 2 GB recommended                |
-+                                +--------------------+-----------------------------------------------+
-|                                | Disk Space         | *Continuuity Kafka* maintains a data cache in |
-|                                |                    | a configurable data directory.                |
-|                                |                    | Required space depends on the number of       |
-|                                |                    | Continuuity applications deployed and running |
-|                                |                    | in the Continuuity Reactor and the quantity   |
-|                                |                    | of logs and metrics that they generate.       |
-+--------------------------------+--------------------+-----------------------------------------------+
++---------------------------------------+--------------------+-----------------------------------------------+
+| Continuuity Component                 | Hardware Component | Specifications                                |
++=======================================+====================+===============================================+
+| **Continuuity Web-App**               | RAM                | 1 GB minimum, 2 GB recommended                |
++---------------------------------------+--------------------+-----------------------------------------------+
+| **Continuuity Gateway**               | RAM                | 2 GB minimum, 4 GB recommended                |
++---------------------------------------+--------------------+-----------------------------------------------+
+| **Continuuity Reactor-Master**        | RAM                | 2 GB minimum, 4 GB recommended                |
++---------------------------------------+--------------------+-----------------------------------------------+
+| **Continuuity Kafka**                 | RAM                | 1 GB minimum, 2 GB recommended                |
++                                       +--------------------+-----------------------------------------------+
+|                                       | Disk Space         | *Continuuity Kafka* maintains a data cache in |
+|                                       |                    | a configurable data directory.                |
+|                                       |                    | Required space depends on the number of       |
+|                                       |                    | Continuuity applications deployed and running |
+|                                       |                    | in the Continuuity Reactor and the quantity   |
+|                                       |                    | of logs and metrics that they generate.       |
++---------------------------------------+--------------------+-----------------------------------------------+
+| **Continuuity Authentication Server** | RAM                | 1 GB minimum, 2 GB recommended                |
++---------------------------------------+--------------------+-----------------------------------------------+
 
 
 Network Requirements
@@ -209,25 +217,25 @@ For a distributed enterprise, you must install these Hadoop components:
 ..      - 
 ..      - Version 3.4.3 or later	
 
-+---------------+-------------------+------------------------+
-| Component     | Distribution      | Required Version       |
-+===============+===================+========================+
-| **HDFS**      | Apache Hadoop DFS | 2.0.2-alpha or later   |
-+               +-------------------+------------------------+
-|               | CDH               | 4.2.x or later         |
-+               +-------------------+------------------------+
-|               | HDP               | 2.0 or later           |
-+---------------+-------------------+------------------------+
-| **YARN**      | Apache Hadoop DFS | 2.0.2-alpha or later   |
-+               +-------------------+------------------------+
-|               | CDH               | 4.2.x or later         |
-+               +-------------------+------------------------+
-|               | HDP               | 2.0 or later           |
-+---------------+-------------------+------------------------+
-| **HBase**     |                   | 0.94.2+ or 0.96.0+     |
-+---------------+-------------------+------------------------+
-| **Zookeeper** |                   | Version 3.4.3 or later |
-+---------------+-------------------+------------------------+
++---------------+-------------------+---------------------------+
+| Component     | Distribution      | Required Version          |
++===============+===================+===========================+
+| **HDFS**      | Apache Hadoop DFS | 2.0.2-alpha or later      |
++               +-------------------+---------------------------+
+|               | CDH               | 4.2.x or later            |
++               +-------------------+---------------------------+
+|               | HDP               | 2.0 or later              |
++---------------+-------------------+---------------------------+
+| **YARN**      | Apache Hadoop DFS | 2.0.2-alpha or later      |
++               +-------------------+---------------------------+
+|               | CDH               | 4.2.x or later            |
++               +-------------------+---------------------------+
+|               | HDP               | 2.0 or later              |
++---------------+-------------------+---------------------------+
+| **HBase**     |                   | 0.94.2+, 0.96.0+, 0.98.0+ |
++---------------+-------------------+---------------------------+
+| **Zookeeper** |                   | Version 3.4.3 or later    |
++---------------+-------------------+---------------------------+
 
 Reactor nodes require Hadoop and HBase client installation and configuration. No Hadoop
 services need to be running.
@@ -280,6 +288,30 @@ If you want to use a different HDFS user than ``yarn``:
 	 ...
 
 - Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
+
+Secure Hadoop
+.............
+When running Continuuity Reactor on top of Secure Hadoop and HBase (using Kerberos
+authentication), the Reactor Master process will need to obtain Kerberos credentials in order to
+authenticate with Hadoop and HBase.  In this case, the setting for ``hdfs.user`` in
+``continuuity-site.xml`` will be ignored and the Reactor Master process will be identified as the
+Kerberos principal as which it is authenticated.
+
+In order to configure Reactor Master for Kerberos authentication:
+
+- Create a Kerberos principal for the user running Reactor Master.
+- Install the ``k5start`` package on the servers where Reactor Master is installed.  This is used
+  to obtain Kerberos credentials for Reactor Master on startup.
+- Generate a keytab file for the Reactor Master Kerberos principal and place the file in
+  ``/etc/security/keytabs/continuuity.keytab`` on all the Reactor Master hosts.  The file should
+  be readable only by the user running the Reactor Master process.
+- Edit ``/etc/default/continuuity-reactor-master``::
+
+   REACTOR_KEYTAB="/etc/security/keytabs/continuuity.keytab"
+   REACTOR_PRINCIPAL="<reactor principal>@EXAMPLE.REALM.COM"
+
+- When Reactor Master is started via the init script, it will now start using k5start, which will
+  first login using the configured keytab file and principal.
 
 ULIMIT Configuration
 ....................
@@ -363,12 +395,12 @@ Install the Continuuity Reactor packages by using either of these methods:
 Using Yum (on one line)::
 
 	sudo yum install continuuity-gateway continuuity-kafka continuuity-reactor-master 
-	                  continuuity-web-app
+	                  continuuity-security continuuity-web-app
 
 Using APT (on one line)::
 
 	sudo apt-get install continuuity-gateway continuuity-kafka continuuity-reactor-master 
-	                      continuuity-web-app
+	                      continuuity-security continuuity-web-app
 
 Do this on each of the boxes that are being used for the Reactor components; our 
 recommended installation is a minimum of two boxes.
@@ -383,6 +415,25 @@ When all the services have completed starting, the Continuuity Web-App should th
 accessible through a browser at port 9999. The URL will be ``http://<app-fabric-ip>:9999`` where
 ``<app-fabric-ip>`` is the IP address of one of the machine where you installed the packages
 and started the services.
+
+Upgrading From a Previous Version
+=================================
+When upgrade an existing Continuuity Reactor installation from a previous version, you will need
+to make sure the Reactor table definitions in HBase are up to date.  First, proceed with the
+normal package installation, as described in `Installation`_.
+
+Then run the upgrade utility:
+- Stop all Continuuity Reactor processes::
+
+	for i in `ls /etc/init.d/ | grep continuuity` ; do service $i stop ; done
+
+- Run the upgrade tool::
+
+  /opt/continuuity/reactor-master/bin/svc-reactor-master run com.continuuity.data.tools.ReactorTool upgrade
+
+- Restart the Continuuity Reactor processes::
+
+	for i in `ls /etc/init.d/ | grep continuuity` ; do service $i start ; done
 
 Verification
 ==========================
@@ -686,6 +737,37 @@ their default values, descriptions and notes.
    * - ``scheduler.max.thread.pool.size``
      - ``30``
      - Size of the scheduler thread pool
+   * - ``security.enabled``
+     - ``false``
+     - Enables authentication for Reactor.  When set to ``true`` all requests to Reactor must
+       provide a valid access token.
+   * - ``security.auth.server.address``
+     - ``127.0.0.1``
+     - IP address that the Continuuity Authentication Server should listen on.
+   * - ``security.auth.server.port``
+     - ``10009``
+     - Port number that the Continuuity Authentication Server should bind to for HTTP.
+   * - ``security.server.maxthreads`
+     - ``100``
+     - Maximum number of threads that the Continuuity Authentication Server should use for
+       handling HTTP requests.
+   * - ``security.realm``
+     - ``continuuity``
+     - Authentication realm used for scoping security.  This value should be unique for each
+       installation of Continuuity Reactor.
+   * - ``security.server.ssl.enabled``
+     - ``false``
+     - Set to ``true`` to enable use of SSL on the Continuuity Authentication Server
+   * - ``security.server.ssl.port``
+     - ``10010``
+     - Port to bind to for HTTPS on the Continuuity Authentication Server.
+   * - ``security.server.ssl.keystore.path``
+     - 
+     - Path to the Java keystore file containing the certificate used for HTTPS on the Continuuity
+       Authentication Server.
+   * - ``security.server.ssl.keystore.password``
+     -
+     - Password to the Java keystore file specified in ``security.server.ssl.keystore.path``
    * - ``stream.flume.port``
      - ``10004``
      - 
