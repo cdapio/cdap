@@ -181,6 +181,13 @@
                         <include>tx-debugger*</include>
                       </includes>
                     </resource>
+                    <resource>
+                      <directory>${project.parent.parent.basedir}/explore/bin</directory>
+                      <targetPath>bin</targetPath>
+                      <includes>
+                        <include>send-query*</include>
+                      </includes>
+                    </resource>
                     <!-- Copy binaries for Windows -->
                     <resource>
                       <directory>${project.basedir}/libexec</directory>
