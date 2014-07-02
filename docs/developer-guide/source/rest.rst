@@ -1596,7 +1596,7 @@ Procedure HTTP API
 ==================
 
 This interface supports sending calls to the methods of an Application’s Procedures.
-See the `Reactor Client HTTP API <#reactor-client-http-api>`_ for how to control the life cycle of
+See the `Reactor Client HTTP API <#reactor-client-http-api>`__ for how to control the life cycle of
 Procedures. 
 
 Executing Procedures
@@ -1652,7 +1652,7 @@ Example
 
        {"word":"a"}
 
-..
+.. rst2pdf: PageBreak
 
 Reactor Client HTTP API
 =======================
