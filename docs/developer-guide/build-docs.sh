@@ -8,8 +8,9 @@
 DATE_STAMP=`date`
 SCRIPT=`basename $0`
 
-SOURCE="SOURCE"
+SOURCE="source"
 BUILD="build"
+BUILD_PDF="build-pdf"
 HTML="html"
 APIDOCS="apidocs"
 JAVADOCS="javadocs"
@@ -25,6 +26,15 @@ SCRIPT_PATH=`pwd`
 SOURCE_PATH="$SCRIPT_PATH/$SOURCE"
 BUILD_PATH="$SCRIPT_PATH/$BUILD"
 HTML_PATH="$BUILD_PATH/$HTML"
+
+DOCS_PY="$SCRIPT_PATH/../tools/scripts/docs.py"
+
+REST_SOURCE="$SOURCE_PATH/rest.rst"
+REST_PDF="$SCRIPT_PATH/$BUILD_PDF/rest.pdf"
+
+INSTALL_GUIDE="$SCRIPT_PATH/../install-guide"
+INSTALL_SOURCE="$INSTALL_GUIDE/source/install.rst"
+
 
 VERSION_TXT="version.txt"
 
@@ -46,17 +56,19 @@ function usage() {
   echo "Usage: $SCRIPT < option > [reactor]"
   echo ""
   echo "  Options (select one)"
-  echo "    build       Clean build of javadocs, docs, copy javadocs and pdfs, zip results"
-  echo "    stage       Stages and logins to server"
+  echo "    build        Clean build of javadocs, docs (HTML and PDF), copy javadocs and pdfs, zip results"
+  echo "    stage        Stages and logins to server"
   echo "  or "
-  echo "    build-docs  Clean build of docs"
-  echo "    javadocs    Clean build of javadocs"
-  echo "    login       Logs you into $STAGING_SERVER"
-  echo "    reactor     Path to Reactor source for javadocs, if not $REACTOR_PATH"
-  echo "    zip         Zips docs into $ZIP_FILE"
+  echo "    build-docs   Clean build of docs"
+  echo "    javadocs     Clean build of javadocs"
+  echo "    pdf-rest     Clean build of REST PDF"
+  echo "    pdf-install  Clean build of Install Guide PDF"
+  echo "    login        Logs you into $STAGING_SERVER"
+  echo "    reactor      Path to Reactor source for javadocs, if not $REACTOR_PATH"
+  echo "    zip          Zips docs into $ZIP_FILE"
   echo "  or "
-  echo "    depends     Build Site listing dependencies"  
-  echo "    sdk         Build SDK"  
+  echo "    depends      Build Site listing dependencies"  
+  echo "    sdk          Build SDK"  
   echo " "
   exit 1
 }
@@ -69,9 +81,25 @@ function build_javadocs() {
   cd $REACTOR_PATH
   mvn clean package site -pl continuuity-api -am -Pjavadocs -DskipTests
 }
+
 function build_docs() {
   clean
   sphinx-build -b html -d build/doctrees source build/html
+}
+
+function build_pdf_rest() {
+  version
+  rm -rf $SCRIPT_PATH/$BUILD_PDF
+  mkdir $SCRIPT_PATH/$BUILD_PDF
+  python $DOCS_PY -g pdf -o $REST_PDF $REST_SOURCE
+}
+
+function build_pdf_install() {
+  version
+  INSTALL_PDF="$INSTALL_GUIDE/$BUILD_PDF/Reactor-Installation-Guide-v$reactor_version.pdf"
+  rm -rf $INSTALL_GUIDE/$BUILD_PDF
+  mkdir $INSTALL_GUIDE/$BUILD_PDF
+  python $DOCS_PY -g pdf -o $INSTALL_PDF $INSTALL_SOURCE
 }
 
 function copy_javadocs() {
@@ -84,20 +112,6 @@ function copy_javadocs() {
 function copy_license_pdfs() {
   cd $BUILD_PATH/$HTML/$LICENSES
   cp $SCRIPT_PATH/$LICENSES_PDF/* .
-}
-
-function copy_example_jars() {
-# This needs to get the real zips from where they are actually built.
-# and put them in html/_downloads
-#   cd $BUILD_PATH/$HTML/$EXAMPLES/$EXAMPLE_PVA
-#   cp $SOURCE_PATH/$EXAMPLES/$EXAMPLE_PVA/*.zip .
-#   
-#   cd $BUILD_PATH/$HTML/$EXAMPLES/$EXAMPLE_RCA
-#   cp $SOURCE_PATH/$EXAMPLES/$EXAMPLE_RCA/*.zip .
-#   
-#   cd $BUILD_PATH/$HTML/$EXAMPLES/$EXAMPLE_TA
-#   cp $SOURCE_PATH/$EXAMPLES/$EXAMPLE_TA/*.zip .
-  cd .
 }
 
 function make_zip() {
@@ -125,13 +139,13 @@ function login_staging_server() {
   ssh "$USER@$STAGING_SERVER"
 }
 
-
 function build() {
    build_docs
    build_javadocs
+   build_pdf_rest
+   build_pdf_install
    copy_javadocs
    copy_license_pdfs
-#   copy_example_jars
    make_zip
 }
 
@@ -146,8 +160,10 @@ function build_dependencies() {
 }
 
 function version() {
-  cd $REACTOR_PATH
-  reactor_version=$(cat $VERSION_TXT)
+#   cd $REACTOR_PATH
+#   reactor_version=$(cat $VERSION_TXT)
+   reactor_version=$(cat $REACTOR_PATH/$VERSION_TXT)
+   echo "Reactor version: $reactor_version"
 }
 
 if [ $# -lt 1 ]; then
@@ -161,10 +177,11 @@ case "$1" in
   build-docs )        build_docs; exit 1;;
   copy_javadocs )     copy_javadocs; exit 1;;
   copy_license_pdfs ) copy_license_pdfs; exit 1;;
-  copy_example_jars ) copy_example_jars; exit 1;;
   javadocs )          build_javadocs; exit 1;;
   depends )           build_dependencies; exit 1;;
   login )             login_staging_server; exit 1;;
+  pdf-install )       build_pdf_install; exit 1;;
+  pdf-rest )          build_pdf_rest; exit 1;;
   sdk )               build_sdk; exit 1;;
   stage )             stage_docs; exit 1;;
   version )           version; exit 1;;
