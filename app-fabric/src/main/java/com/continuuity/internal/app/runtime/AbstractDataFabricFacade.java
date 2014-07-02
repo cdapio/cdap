@@ -11,9 +11,9 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.queue.ConsumerConfig;
-import com.continuuity.data2.queue.Queue2Consumer;
-import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueConsumer;
+import com.continuuity.data2.queue.QueueProducer;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -70,24 +70,24 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
   }
 
   @Override
-  public Queue2Producer createProducer(QueueName queueName) throws IOException {
+  public QueueProducer createProducer(QueueName queueName) throws IOException {
     return createProducer(queueName, QueueMetrics.NOOP_QUEUE_METRICS);
   }
 
   @Override
-  public Queue2Consumer createConsumer(QueueName queueName,
+  public QueueConsumer createConsumer(QueueName queueName,
                                        ConsumerConfig consumerConfig, int numGroups) throws IOException {
-    Queue2Consumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, numGroups);
+    QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, numGroups);
     if (consumer instanceof TransactionAware) {
-      consumer = new CloseableQueue2Consumer(dataSetContext, consumer);
+      consumer = new CloseableQueueConsumer(dataSetContext, consumer);
       dataSetContext.addTransactionAware((TransactionAware) consumer);
     }
     return consumer;
   }
 
   @Override
-  public Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
-    Queue2Producer producer = queueClientFactory.createProducer(queueName, queueMetrics);
+  public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
+    QueueProducer producer = queueClientFactory.createProducer(queueName, queueMetrics);
     if (producer instanceof TransactionAware) {
       dataSetContext.addTransactionAware((TransactionAware) producer);
     }

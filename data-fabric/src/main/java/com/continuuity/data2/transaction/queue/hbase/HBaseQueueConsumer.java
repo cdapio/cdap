@@ -6,7 +6,7 @@ package com.continuuity.data2.transaction.queue.hbase;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.queue.ConsumerConfig;
-import com.continuuity.data2.transaction.queue.AbstractQueue2Consumer;
+import com.continuuity.data2.transaction.queue.AbstractQueueConsumer;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueScanner;
 import com.continuuity.hbase.wd.DistributedScanner;
@@ -36,9 +36,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * Queue consumer for HBase.
  */
-abstract class HBaseQueue2Consumer extends AbstractQueue2Consumer {
+abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HBaseQueue2Consumer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueConsumer.class);
 
   // Persist latest start row every n entries consumed.
   // The smaller this number, the more frequent latest startRow is persisted, which makes more
@@ -61,8 +61,8 @@ abstract class HBaseQueue2Consumer extends AbstractQueue2Consumer {
    * @param consumerState The persisted state of this consumer.
    * @param stateStore The store for persisting state for this consumer.
    */
-  HBaseQueue2Consumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName,
-                      HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore) {
+  HBaseQueueConsumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName,
+                     HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore) {
     // For HBase, eviction is done at table flush time, hence no QueueEvictor is needed.
     super(consumerConfig, queueName);
     this.hTable = hTable;

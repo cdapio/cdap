@@ -7,7 +7,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.queue.AbstractQueue2Producer;
+import com.continuuity.data2.transaction.queue.AbstractQueueProducer;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.google.common.collect.Lists;
@@ -22,13 +22,13 @@ import java.util.List;
 /**
  *
  */
-public final class HBaseQueue2Producer extends AbstractQueue2Producer implements Closeable {
+public final class HBaseQueueProducer extends AbstractQueueProducer implements Closeable {
 
   private final byte[] queueRowPrefix;
   private final HTable hTable;
   private final List<byte[]> rollbackKeys;
 
-  public HBaseQueue2Producer(HTable hTable, QueueName queueName, QueueMetrics queueMetrics) {
+  public HBaseQueueProducer(HTable hTable, QueueName queueName, QueueMetrics queueMetrics) {
     super(queueMetrics, queueName);
     this.queueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
     this.rollbackKeys = Lists.newArrayList();

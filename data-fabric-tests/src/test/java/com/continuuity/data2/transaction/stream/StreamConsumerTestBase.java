@@ -13,9 +13,9 @@ import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
-import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.queue.QueueEntry;
+import com.continuuity.data2.queue.QueueProducer;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
@@ -261,7 +261,7 @@ public abstract class StreamConsumerTestBase {
 
     // Write 10 messages to old stream
     StreamEventCodec streamEventCodec = new StreamEventCodec();
-    Queue2Producer producer = oldStreamFactory.createProducer(streamName);
+    QueueProducer producer = oldStreamFactory.createProducer(streamName);
     TransactionContext txContext = createTxContext((TransactionAware) producer);
     for (int i = 0; i < 10; i++) {
       txContext.start();

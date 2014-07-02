@@ -14,9 +14,9 @@ import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.common.stream.StreamEventCodec;
-import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.queue.QueueEntry;
+import com.continuuity.data2.queue.QueueProducer;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
@@ -142,7 +142,7 @@ public class FlowTest {
 
     QueueName queueName = QueueName.fromStream("text");
     QueueClientFactory queueClientFactory = AppFabricTestHelper.getInjector().getInstance(QueueClientFactory.class);
-    Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    QueueProducer producer = queueClientFactory.createProducer(queueName);
 
     // start tx to write in queue in tx
     Transaction tx = txSystemClient.startShort();

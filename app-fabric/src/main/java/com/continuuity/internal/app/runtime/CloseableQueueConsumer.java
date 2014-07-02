@@ -4,22 +4,22 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data2.queue.ForwardingQueue2Consumer;
-import com.continuuity.data2.queue.Queue2Consumer;
+import com.continuuity.data2.queue.ForwardingQueueConsumer;
+import com.continuuity.data2.queue.QueueConsumer;
 import com.continuuity.data2.transaction.TransactionAware;
 
 import java.io.Closeable;
 import java.io.IOException;
 
 /**
- * A {@link TransactionAware} {@link Queue2Consumer} that removes itself from dataset context when closed.
- * All queue operations are forwarded to another {@link Queue2Consumer}.
+ * A {@link TransactionAware} {@link QueueConsumer} that removes itself from dataset context when closed.
+ * All queue operations are forwarded to another {@link QueueConsumer}.
  */
-final class CloseableQueue2Consumer extends ForwardingQueue2Consumer implements Closeable {
+final class CloseableQueueConsumer extends ForwardingQueueConsumer implements Closeable {
 
   private final DataSetInstantiator context;
 
-  CloseableQueue2Consumer(DataSetInstantiator context, Queue2Consumer consumer) {
+  CloseableQueueConsumer(DataSetInstantiator context, QueueConsumer consumer) {
     super(consumer);
     this.context = context;
   }

@@ -4,8 +4,8 @@
 package com.continuuity.data2.transaction.queue;
 
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueEntry;
+import com.continuuity.data2.queue.QueueProducer;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.base.Preconditions;
@@ -20,9 +20,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * Abstract base class for {@link Queue2Producer} that emits enqueue metrics post commit.
+ * Abstract base class for {@link QueueProducer} that emits enqueue metrics post commit.
  */
-public abstract class AbstractQueue2Producer implements Queue2Producer, TransactionAware {
+public abstract class AbstractQueueProducer implements QueueProducer, TransactionAware {
 
   private final QueueMetrics queueMetrics;
   private final BlockingQueue<QueueEntry> queue;
@@ -31,7 +31,7 @@ public abstract class AbstractQueue2Producer implements Queue2Producer, Transact
   private int lastEnqueueCount;
   private int lastEnqueueBytes;
 
-  protected AbstractQueue2Producer(QueueMetrics queueMetrics, QueueName queueName) {
+  protected AbstractQueueProducer(QueueMetrics queueMetrics, QueueName queueName) {
     this.queueMetrics = queueMetrics;
     this.queue = new LinkedBlockingQueue<QueueEntry>();
     this.queueName = queueName;

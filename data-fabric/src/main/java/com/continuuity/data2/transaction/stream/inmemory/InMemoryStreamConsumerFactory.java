@@ -5,8 +5,8 @@ package com.continuuity.data2.transaction.stream.inmemory;
 
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.ConsumerConfig;
-import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueConsumer;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueService;
 import com.continuuity.data2.transaction.stream.QueueToStreamConsumer;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
@@ -33,7 +33,7 @@ public final class InMemoryStreamConsumerFactory implements StreamConsumerFactor
   public StreamConsumer create(QueueName streamName, String namespace,
                                ConsumerConfig consumerConfig) throws IOException {
 
-    Queue2Consumer consumer = queueClientFactory.createConsumer(streamName, consumerConfig, -1);
+    QueueConsumer consumer = queueClientFactory.createConsumer(streamName, consumerConfig, -1);
     return new QueueToStreamConsumer(streamName, consumerConfig, consumer);
   }
 

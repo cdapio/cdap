@@ -46,9 +46,9 @@ import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data.stream.StreamPropertyListener;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
-import com.continuuity.data2.queue.Queue2Consumer;
-import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueConsumer;
+import com.continuuity.data2.queue.QueueProducer;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -442,7 +442,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
               final String queueMetricsName = "process.events.out";
               final String queueMetricsTag = queueSpec.getQueueName().getSimpleName();
-              Queue2Producer producer = queueClientFactory.createProducer(queueSpec.getQueueName(), new QueueMetrics() {
+              QueueProducer producer = queueClientFactory.createProducer(queueSpec.getQueueName(), new QueueMetrics() {
                 @Override
                 public void emitEnqueue(int count) {
                   flowletContext.getSystemMetrics().gauge(queueMetricsName, count, queueMetricsTag);
@@ -519,7 +519,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                 Function<ByteBuffer, T> decoder =
                   wrapInputDecoder(flowletContext, queueName, createInputDatumDecoder(dataType, schema, schemaCache));
 
-                ConsumerSupplier<Queue2Consumer> consumerSupplier = ConsumerSupplier.create(dataFabricFacade, queueName,
+                ConsumerSupplier<QueueConsumer> consumerSupplier = ConsumerSupplier.create(dataFabricFacade, queueName,
                                                                                             consumerConfig, numGroups);
                 queueConsumerSupplierBuilder.add(consumerSupplier);
                 queueReaders.add(queueReaderFactory.createQueueReader(consumerSupplier, batchSize, decoder));

@@ -23,9 +23,9 @@ import com.continuuity.common.stream.StreamEventCodec;
 import com.continuuity.common.stream.StreamEventDataCodec;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.queue.QueueEntry;
+import com.continuuity.data2.queue.QueueProducer;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
@@ -162,7 +162,7 @@ public class StreamCompatibilityTest {
 
   private static final class StreamWriter {
 
-    private final Queue2Producer producer;
+    private final QueueProducer producer;
     private final TransactionSystemClient txSystemClient;
 
     @Inject

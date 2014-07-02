@@ -3,20 +3,20 @@ package com.continuuity.data2.transaction.queue.inmemory;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.queue.AbstractQueue2Producer;
+import com.continuuity.data2.transaction.queue.AbstractQueueProducer;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
 
 /**
  * Producer for an in-memory queue.
  */
-public class InMemoryQueue2Producer extends AbstractQueue2Producer {
+public class InMemoryQueueProducer extends AbstractQueueProducer {
 
   private final QueueName queueName;
   private final InMemoryQueueService queueService;
   private int lastEnqueueCount;
   private Transaction commitTransaction;
 
-  public InMemoryQueue2Producer(QueueName queueName, InMemoryQueueService queueService, QueueMetrics queueMetrics) {
+  public InMemoryQueueProducer(QueueName queueName, InMemoryQueueService queueService, QueueMetrics queueMetrics) {
     super(queueMetrics, queueName);
     this.queueName = queueName;
     this.queueService = queueService;

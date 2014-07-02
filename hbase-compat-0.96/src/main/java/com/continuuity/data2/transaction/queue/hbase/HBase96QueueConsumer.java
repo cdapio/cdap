@@ -16,13 +16,13 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 
 /**
- * HBase 0.96 implementation of {@link HBaseQueue2Consumer}.
+ * HBase 0.96 implementation of {@link HBaseQueueConsumer}.
  */
-final class HBase96Queue2Consumer extends HBaseQueue2Consumer {
+final class HBase96QueueConsumer extends HBaseQueueConsumer {
   private final Filter processedStateFilter;
 
-  HBase96Queue2Consumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName,
-                        HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore) {
+  HBase96QueueConsumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName,
+                       HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore) {
     super(consumerConfig, hTable, queueName, consumerState, stateStore);
     this.processedStateFilter = createStateFilter();
   }

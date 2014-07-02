@@ -12,7 +12,7 @@ import com.continuuity.common.stream.StreamEventCodec;
 import com.continuuity.common.stream.StreamEventDataCodec;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
-import com.continuuity.data2.queue.Queue2Consumer;
+import com.continuuity.data2.queue.QueueConsumer;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.io.ByteBufferInputStream;
@@ -38,9 +38,9 @@ public final class QueueToStreamConsumer implements StreamConsumer {
 
   private final QueueName streamName;
   private final ConsumerConfig consumerConfig;
-  private final Queue2Consumer consumer;
+  private final QueueConsumer consumer;
 
-  public QueueToStreamConsumer(QueueName streamName, ConsumerConfig consumerConfig, Queue2Consumer consumer) {
+  public QueueToStreamConsumer(QueueName streamName, ConsumerConfig consumerConfig, QueueConsumer consumer) {
     this.streamName = streamName;
     this.consumerConfig = consumerConfig;
     this.consumer = consumer;

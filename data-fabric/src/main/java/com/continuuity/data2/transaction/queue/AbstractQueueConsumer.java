@@ -9,7 +9,7 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
-import com.continuuity.data2.queue.Queue2Consumer;
+import com.continuuity.data2.queue.QueueConsumer;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.base.Function;
@@ -35,7 +35,7 @@ import java.util.SortedMap;
 /**
  * Common queue consumer for persisting engines such as HBase and LevelDB.
  */
-public abstract class AbstractQueue2Consumer implements Queue2Consumer, TransactionAware, Closeable {
+public abstract class AbstractQueueConsumer implements QueueConsumer, TransactionAware, Closeable {
 
   private static final DequeueResult<byte[]> EMPTY_RESULT = DequeueResult.Empty.result();
 
@@ -73,7 +73,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     throws IOException, InterruptedException;
   protected abstract QueueScanner getScanner(byte[] startRow, byte[] stopRow, int numRows) throws IOException;
 
-  protected AbstractQueue2Consumer(ConsumerConfig consumerConfig, QueueName queueName) {
+  protected AbstractQueueConsumer(ConsumerConfig consumerConfig, QueueName queueName) {
     this.consumerConfig = consumerConfig;
     this.queueName = queueName;
     this.entryCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
