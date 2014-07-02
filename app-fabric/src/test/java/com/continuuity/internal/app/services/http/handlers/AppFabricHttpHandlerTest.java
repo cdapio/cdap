@@ -19,10 +19,10 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
-import com.continuuity.data2.queue.Queue2Consumer;
-import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueConsumer;
 import com.continuuity.data2.queue.QueueEntry;
+import com.continuuity.data2.queue.QueueProducer;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionContext;
@@ -1410,7 +1410,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
    boolean dequeueOne(QueueName queueName) throws Exception {
     QueueClientFactory queueClientFactory = AppFabricTestBase.getInjector().getInstance(QueueClientFactory.class);
-    final Queue2Consumer consumer = queueClientFactory.createConsumer(queueName,
+    final QueueConsumer consumer = queueClientFactory.createConsumer(queueName,
                                                                       new ConsumerConfig(1L, 0, 1,
                                                                                          DequeueStrategy.ROUND_ROBIN,
                                                                                          null),
@@ -1451,7 +1451,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
   private  void enqueue(QueueName queueName, final QueueEntry queueEntry) throws Exception {
     QueueClientFactory queueClientFactory = AppFabricTestBase.getInjector().getInstance(QueueClientFactory.class);
-    final Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    final QueueProducer producer = queueClientFactory.createProducer(queueName);
     // doing inside tx
     TransactionExecutorFactory txExecutorFactory =
       AppFabricTestBase.getInjector().getInstance(TransactionExecutorFactory.class);

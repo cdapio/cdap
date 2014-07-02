@@ -5,7 +5,7 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
-import com.continuuity.data2.queue.Queue2Consumer;
+import com.continuuity.data2.queue.QueueConsumer;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.collect.ImmutableList;
@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Consumer for an in-memory queue.
  */
-public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware {
+public class InMemoryQueueConsumer implements QueueConsumer, TransactionAware {
 
   private static final DequeueResult<byte[]> EMPTY_RESULT = DequeueResult.Empty.result();
 
@@ -31,8 +31,8 @@ public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware 
   private final InMemoryQueue.ConsumerState state = new InMemoryQueue.ConsumerState();
   private final InMemoryQueueService queueService;
 
-  public InMemoryQueue2Consumer(QueueName queueName, ConsumerConfig config,
-                                int numGroups, InMemoryQueueService queueService) {
+  public InMemoryQueueConsumer(QueueName queueName, ConsumerConfig config,
+                               int numGroups, InMemoryQueueService queueService) {
     this.queueName = queueName;
     this.queueService = queueService;
     this.config = config;

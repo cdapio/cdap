@@ -6,11 +6,9 @@ package com.continuuity.data2.queue;
 import java.io.IOException;
 
 /**
- * TODO: This class should be renamed as QueueProducer when the old queue is gone.
- *
  * Implementation of this interface enqueues methods should be thread safe.
  */
-public interface Queue2Producer {
+public interface QueueProducer {
 
   /**
    * Enqueues a {@link QueueEntry}.

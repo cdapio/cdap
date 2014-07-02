@@ -8,10 +8,9 @@ import com.continuuity.common.queue.QueueName;
 import java.io.IOException;
 
 /**
- * TODO: This class should be renamed to QueueConsumer when the old queue is gone. It is named this
- * way to avoid name conflicts and make it easier for auto-complete.
+ * Interface for queue consumer.
  */
-public interface Queue2Consumer {
+public interface QueueConsumer {
 
   /**
    * Returns the queue name that this consumer is working on.

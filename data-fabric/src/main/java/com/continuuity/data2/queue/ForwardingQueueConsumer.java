@@ -12,16 +12,16 @@ import java.io.IOException;
 import java.util.Collection;
 
 /**
- * A {@link TransactionAware} {@link Queue2Consumer} that forwards all queue operations to another
- * {@link Queue2Consumer} and optionally forward transaction operations if the target {@link Queue2Consumer}
+ * A {@link TransactionAware} {@link QueueConsumer} that forwards all queue operations to another
+ * {@link QueueConsumer} and optionally forward transaction operations if the target {@link QueueConsumer}
  * is also {@link TransactionAware}.
  */
-public abstract class ForwardingQueue2Consumer implements Queue2Consumer, TransactionAware {
+public abstract class ForwardingQueueConsumer implements QueueConsumer, TransactionAware {
 
-  protected final Queue2Consumer consumer;
+  protected final QueueConsumer consumer;
   protected final TransactionAware txAware;
 
-  public ForwardingQueue2Consumer(Queue2Consumer consumer) {
+  public ForwardingQueueConsumer(QueueConsumer consumer) {
     this.consumer = consumer;
     if (consumer instanceof TransactionAware) {
       txAware = (TransactionAware) consumer;

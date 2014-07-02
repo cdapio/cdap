@@ -11,7 +11,7 @@ import com.continuuity.data2.dataset.lib.table.leveldb.KeyValue;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.queue.AbstractQueue2Consumer;
+import com.continuuity.data2.transaction.queue.AbstractQueueConsumer;
 import com.continuuity.data2.transaction.queue.QueueEvictor;
 import com.continuuity.data2.transaction.queue.QueueScanner;
 import com.google.common.collect.Maps;
@@ -30,9 +30,9 @@ import java.util.concurrent.TimeoutException;
 /**
  * Queue consumer for levelDB.
  */
-public final class LevelDBQueue2Consumer extends AbstractQueue2Consumer {
+public final class LevelDBQueueConsumer extends AbstractQueueConsumer {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LevelDBQueue2Consumer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LevelDBQueueConsumer.class);
 
   // How many commits to trigger eviction.
   private static final int EVICTION_LIMIT = 1000;
@@ -50,8 +50,8 @@ public final class LevelDBQueue2Consumer extends AbstractQueue2Consumer {
   private final NavigableMap<byte[], byte[]>
     colMapForClaim = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
-  LevelDBQueue2Consumer(LevelDBOcTableCore tableCore, Object queueLock, ConsumerConfig consumerConfig,
-                        QueueName queueName, QueueEvictor queueEvictor) {
+  LevelDBQueueConsumer(LevelDBOcTableCore tableCore, Object queueLock, ConsumerConfig consumerConfig,
+                       QueueName queueName, QueueEvictor queueEvictor) {
     super(consumerConfig, queueName);
     this.queueEvictor = queueEvictor;
     core = tableCore;
