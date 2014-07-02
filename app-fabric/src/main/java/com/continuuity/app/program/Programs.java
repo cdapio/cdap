@@ -23,7 +23,7 @@ public final class Programs {
   }
 
   public static Program create(Location location, File destinationUnpackedJarDir) throws IOException {
-    return Programs.create(location, destinationUnpackedJarDir, null);
+    return create(location, destinationUnpackedJarDir, null);
   }
 
   /**
@@ -31,7 +31,7 @@ public final class Programs {
    * would not function from the program this method returns.
    */
   public static Program create(Location location) throws IOException {
-    return Programs.create(location, null);
+    return create(location, null);
   }
 
   /**

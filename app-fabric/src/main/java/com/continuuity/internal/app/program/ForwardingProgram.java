@@ -21,6 +21,11 @@ public abstract class ForwardingProgram implements Program {
   }
 
   @Override
+  public String getMainClassName() {
+    return delegate.getMainClassName();
+  }
+
+  @Override
   public <T> Class<T> getMainClass() throws ClassNotFoundException {
     return delegate.getMainClass();
   }

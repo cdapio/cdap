@@ -1,8 +1,11 @@
 package com.continuuity.api.data.batch;
 
+import com.continuuity.api.annotation.Beta;
+
 /**
  * Utility methods for record scanners.
  */
+@Beta
 public class Scannables {
 
   /**
