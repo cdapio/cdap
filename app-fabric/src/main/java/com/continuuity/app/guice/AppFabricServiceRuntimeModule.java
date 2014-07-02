@@ -76,7 +76,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getInMemoryModules() {
     return Modules.combine(new AppFabricServiceModule(),
-                           new ServiceStoreModules().getInMemoryModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {

@@ -7,6 +7,7 @@ import com.continuuity.api.schedule.Schedule;
 import com.continuuity.app.Id;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
+import com.continuuity.app.guice.ServiceStoreModules;
 import com.continuuity.app.program.Type;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
@@ -53,6 +54,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new AuthModule());
     install(new DiscoveryRuntimeModule().getInMemoryModules());
     install(new AppFabricServiceRuntimeModule().getInMemoryModules());
+    install(new ServiceStoreModules().getInMemoryModule());
     install(new PrivateModule() {
       @Override
       protected void configure() {
