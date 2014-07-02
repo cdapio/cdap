@@ -47,67 +47,8 @@ public class HiveCDH5ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  protected List<Result> fetchNextResults(OperationHandle operationHandle, int size)
-    throws ExploreException, HandleNotFoundException {
-    try {
-      if (operationHandle.hasResultSet()) {
-        // Rowset is an interface in Hive 13, but a class in Hive 13 patched for CDH5, so we use reflection
-        // so that the compiler does not make assumption on the return type of fetchResults
-        Object rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
-        Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
-        Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
-        TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
-
-        ImmutableList.Builder<Result> rowsBuilder = ImmutableList.builder();
-        for (TRow tRow : tRowSet.getRows()) {
-          ImmutableList.Builder<Object> colsBuilder = ImmutableList.builder();
-          for (TColumnValue tColumnValue : tRow.getColVals()) {
-            colsBuilder.add(columnToObject(tColumnValue));
-          }
-          rowsBuilder.add(new Result(colsBuilder.build()));
-        }
-        return rowsBuilder.build();
-      } else {
-        return Collections.emptyList();
-      }
-    } catch (ClassNotFoundException e) {
-      throw Throwables.propagate(e);
-    } catch (NoSuchMethodException e) {
-      throw Throwables.propagate(e);
-    } catch (HiveSQLException e) {
-      throw Throwables.propagate(e);
-    } catch (InvocationTargetException e) {
-      throw Throwables.propagate(e);
-    } catch (IllegalAccessException e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
   protected OperationHandle doExecute(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException {
     return getCliService().executeStatementAsync(sessionHandle, statement, ImmutableMap.<String, String>of());
-  }
-
-  private Object columnToObject(TColumnValue tColumnValue) throws ExploreException {
-    Object obj;
-    if (tColumnValue.isSetBoolVal()) {
-      obj = tColumnValue.getBoolVal().isValue();
-    } else if (tColumnValue.isSetByteVal()) {
-      obj = tColumnValue.getByteVal().getValue();
-    } else if (tColumnValue.isSetDoubleVal()) {
-      obj = tColumnValue.getDoubleVal().getValue();
-    } else if (tColumnValue.isSetI16Val()) {
-      obj = tColumnValue.getI16Val().getValue();
-    } else if (tColumnValue.isSetI32Val()) {
-      obj = tColumnValue.getI32Val().getValue();
-    } else if (tColumnValue.isSetI64Val()) {
-      obj = tColumnValue.getI64Val().getValue();
-    } else if (tColumnValue.isSetStringVal()) {
-      obj = tColumnValue.getStringVal().getValue();
-    } else {
-      throw new ExploreException("Unknown column value encountered: " + tColumnValue);
-    }
-    return obj;
   }
 }

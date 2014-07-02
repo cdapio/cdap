@@ -47,9 +47,9 @@ public class ExploreServiceUtils {
     HIVE_13(null, Hive13ExploreService.class);
 
     private final Pattern hadoopVersionPattern;
-    private final Class hiveExploreServiceClass;
+    private final Class<? extends ExploreService> hiveExploreServiceClass;
 
-    private HiveSupport(Pattern hadoopVersionPattern, Class hiveExploreServiceClass) {
+    private HiveSupport(Pattern hadoopVersionPattern, Class<? extends ExploreService> hiveExploreServiceClass) {
       this.hadoopVersionPattern = hadoopVersionPattern;
       this.hiveExploreServiceClass = hiveExploreServiceClass;
     }
@@ -58,7 +58,7 @@ public class ExploreServiceUtils {
       return hadoopVersionPattern;
     }
 
-    public Class getHiveExploreServiceClass() {
+    public Class<? extends ExploreService> getHiveExploreServiceClass() {
       return hiveExploreServiceClass;
     }
   }
@@ -116,9 +116,9 @@ public class ExploreServiceUtils {
     return exploreClassLoader;
   }
 
-  public static Class getHiveService() {
+  public static Class<? extends ExploreService> getHiveService() {
     HiveSupport hiveVersion = checkHiveSupport(null);
-    Class hiveServiceCl = hiveVersion.getHiveExploreServiceClass();
+    Class<? extends ExploreService> hiveServiceCl = hiveVersion.getHiveExploreServiceClass();
     return hiveServiceCl;
   }
 
@@ -254,18 +254,17 @@ public class ExploreServiceUtils {
                                                  bootstrapClassPaths, usingCL));
 
     // Needed for - at least - CDH 5 integration
-    orderedDependencies.addAll(
-      traceDependencies("org.apache.hadoop.yarn.server.resourcemanager.scheduler.fair.FairScheduler",
-                        bootstrapClassPaths, usingCL));
-
+    orderedDependencies.addAll(traceDependencies("org.apache.hadoop.hive.shims.Hadoop23Shims",
+                                                 bootstrapClassPaths, usingCL));
 
     exploreDependencies = orderedDependencies;
     return orderedDependencies;
   }
 
   /**
-   * Trace the dependencies files of the given className, using the classLoader, and excluding any class contained in
-   * the bootstrapClassPaths.
+   * Trace the dependencies files of the given className, using the classLoader,
+   * and excluding any class contained in the bootstrapClassPaths.
+   * Nothing is returned if the classLoader does not contain the className.
    */
   public static Set<File> traceDependencies(String className, final Set<String> bootstrapClassPaths,
                                             ClassLoader classLoader)

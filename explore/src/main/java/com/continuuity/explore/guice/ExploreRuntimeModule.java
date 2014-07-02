@@ -159,7 +159,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
     protected void configure() {
       try {
         // Figure out which HiveExploreService class to load
-        Class hiveExploreServiceCl = ExploreServiceUtils.getHiveService();
+        Class<? extends ExploreService> hiveExploreServiceCl = ExploreServiceUtils.getHiveService();
         LOG.info("Using Explore service class {}", hiveExploreServiceCl.getName());
         bind(ExploreService.class).to(hiveExploreServiceCl).in(Scopes.SINGLETON);
         expose(ExploreService.class);
