@@ -532,7 +532,7 @@ The response body will contain a JSON-formatted list of the existing Datasets::
 Creating a Dataset
 ------------------
 
-You can create a Dataset by issuing an HTTP POST request to the URL::
+You can create a Dataset by issuing an HTTP PUT request to the URL::
 
 	PUT <base-url>/data/datasets/<dataset-name>
   
