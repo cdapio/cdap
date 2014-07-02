@@ -29,6 +29,11 @@ import java.util.List;
 
 /**
  * Hive 13 patched for CDH5 implementation of {@link com.continuuity.explore.service.ExploreService}.
+ * There is only 1 change compared to Hive 13 implementation -
+ * <ol>
+ *   <li>{@link org.apache.hive.service.cli.CLIService#getOperationStatus(org.apache.hive.service.cli.OperationHandle)}
+ *   return type has changed</li>
+ * </ol>
  */
 public class HiveCDH5ExploreService extends BaseHiveExploreService {
 

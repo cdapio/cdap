@@ -33,7 +33,7 @@ import java.util.List;
 
 /**
  * Hive patched for CDH4 implementation of {@link com.continuuity.explore.service.ExploreService}.
- * There are 2 changes compared to Hive 13 implementation -
+ * There are 3 changes compared to Hive 13 implementation -
  * <ol>
  *   <li>{@link org.apache.hive.service.cli.CLIService#getOperationStatus(org.apache.hive.service.cli.OperationHandle)}
  *   return type has changed</li>
