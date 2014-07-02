@@ -80,6 +80,11 @@ public final class DefaultProgram implements Program {
     this.classLoader = classLoader;
   }
 
+  @Override
+  public String getMainClassName() {
+    return mainClassName;
+  }
+
   @SuppressWarnings("unchecked")
   @Override
   public <T> Class<T> getMainClass() throws ClassNotFoundException {
