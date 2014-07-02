@@ -11,6 +11,7 @@ Additional information about selected examples is available at the Continuuity w
 
 	http://continuuity.com/docs/reactor/current/en/examples/
 
+
 Building
 ========
 
@@ -75,7 +76,7 @@ PageViewAnalytics
 - It takes data from Apache access logs, parses them and save the data in a custom Dataset.
   It then queries the results to find, for a specific URI, pages that are requesting that
   page and the distribution of those requests.
-- For more information, see http://continuuity.com/docs/reactor/current/en/examples/
+- For more information, see http://continuuity.com/docs/reactor/current/en/examples/.
 
 Purchase
 --------
@@ -94,13 +95,13 @@ Purchase
   - Execute the PurchaseQuery procedure to query the history Dataset to discover the 
     purchase history of each user.
   - You can use SQL to formulate ad-hoc queries over the history Dataset. This is done by
-    a series of ``curl`` calls, as described in the REST API section of the Developer Guide.
+    a series of "curl" calls, as described in the REST API section of the Developer Guide.
 
 - Note: Because by default the PurchaseHistoryWorkFlow process doesn't run until 4:00 A.M.,
   you'll have to wait until the next day (or manually or programmatically execute the
   PurcaseHistoryBuilder) after entering the first customers' purchases or the PurchaseQuery
   will return a "not found" error.
-- For more information, see http://continuuity.com/docs/reactor/current/en/examples/
+- For more information, see http://continuuity.com/docs/reactor/current/en/examples/.
 
 ResourceSpammer
 ---------------
@@ -110,7 +111,7 @@ ResponseCodeAnalytics
 ---------------------
 - A simple application for real-time Streaming log analysis—computing the number of 
   occurrences of each HTTP status code by processing Apache access log data. 
-- For more information, see http://continuuity.com/docs/reactor/current/en/examples/
+- For more information, see http://continuuity.com/docs/reactor/current/en/examples/.
 
 SentimentAnalysis
 -----------------
