@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
  */
 
 package com.continuuity.error;
@@ -50,7 +50,7 @@ public final class Err {
     }
 
     public static final Errors ATLEAST_ONE_PROCESSOR = new Errors(
-      "Application %s has no Flow, Procedure, or MapReduce job defined; " +
+      "Application %s has no Flow, Procedure, MapReduce job, or Service defined; " +
         "should have at least one of them defined"
     );
   }

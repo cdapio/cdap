@@ -195,14 +195,43 @@ public class TestFrameworkTest extends ReactorTestBase {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
     ServiceManager serviceManager = applicationManager.startService("NoOpService");
+    serviceStatusCheck(serviceManager, true);
     Assert.assertTrue(serviceManager.isRunning());
     LOG.info("Service Started");
     serviceManager.stop();
+    serviceStatusCheck(serviceManager, false);
     Assert.assertFalse(serviceManager.isRunning());
     LOG.info("Service Stopped");
     // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the REACTOR scope test in
     // TestMetricsCollectionService
 
+  }
+
+  @Test
+  public void testAppwithOnlyService() throws Exception {
+    //App with only service in it.
+    ApplicationManager applicationManager = deployApplication(AppWithOnlyService.class);
+    LOG.info("Deployed.");
+    ServiceManager serviceManager = applicationManager.startService("NoOpService");
+    serviceStatusCheck(serviceManager, true);
+    Assert.assertTrue(serviceManager.isRunning());
+    LOG.info("Service Started");
+    serviceManager.stop();
+    serviceStatusCheck(serviceManager, false);
+    Assert.assertFalse(serviceManager.isRunning());
+    LOG.info("Service Stopped");
+  }
+
+  private void serviceStatusCheck(ServiceManager serviceManger, boolean expected) throws InterruptedException {
+    int trial = 0;
+    boolean state;
+    while (trial++ < 5) {
+      state = serviceManger.isRunning();
+      if (state = expected) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
   }
 
   // todo: passing stream name as a workaround for not cleaning up streams during reset()
