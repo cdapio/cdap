@@ -4,6 +4,7 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
@@ -49,7 +50,8 @@ public class SchedulerTest {
     injector = Guice.createInjector (new LocationRuntimeModule().getInMemoryModules(),
                                      new DiscoveryRuntimeModule().getInMemoryModules(),
                                      new MetricsClientRuntimeModule().getInMemoryModules(),
-                                     new DataFabricModules().getInMemoryModules());
+                                     new DataFabricModules().getInMemoryModules(),
+                                     new DataSetsModules().getInMemoryModule());
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     accessor = injector.getInstance(DataSetAccessor.class);
     factory = injector.getInstance(TransactionExecutorFactory.class);

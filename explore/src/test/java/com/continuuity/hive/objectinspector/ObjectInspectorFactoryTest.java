@@ -9,8 +9,10 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.junit.Assert;
 import org.junit.Test;
+import scala.reflect.internal.Trees;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -31,13 +33,22 @@ public class ObjectInspectorFactoryTest {
   }
 
   private void assertObjectInspection(Type t, Object data) throws Exception {
-    Field[] actualFields;
+    Field[] tmpFields;
+    // Build the expected fields, based on the type t. Exclude the transient fields.
     if (t instanceof ParameterizedType) {
       ParameterizedType pt = (ParameterizedType) t;
-      actualFields =  ObjectInspectorUtils.getDeclaredNonStaticFields((Class<?>) pt.getRawType());
+      // TODO either test getDeclaredNonStaticFields or use another method
+      tmpFields =  ObjectInspectorUtils.getDeclaredNonStaticFields((Class<?>) pt.getRawType());
     } else {
-      actualFields = ObjectInspectorUtils.getDeclaredNonStaticFields((Class<?>) t);
+      tmpFields = ObjectInspectorUtils.getDeclaredNonStaticFields((Class<?>) t);
     }
+    ImmutableList.Builder builder = ImmutableList.builder();
+    for (Field f : tmpFields) {
+      if (!Modifier.isTransient(f.getModifiers())) {
+        builder.add(f);
+      }
+    }
+    List<Field> expectedFields = builder.build();
 
     ObjectInspector oi1 = ObjectInspectorFactory.getReflectionObjectInspector(t);
     ObjectInspector oi2 = ObjectInspectorFactory.getReflectionObjectInspector(t);
@@ -47,7 +58,7 @@ public class ObjectInspectorFactoryTest {
     Assert.assertEquals(ObjectInspector.Category.STRUCT, oi1.getCategory());
     StructObjectInspector soi = (StructObjectInspector) oi1;
     List<? extends StructField> inspectorFields = soi.getAllStructFieldRefs();
-    Assert.assertEquals(actualFields.length, inspectorFields.size());
+    Assert.assertEquals(expectedFields.size(), inspectorFields.size());
 
     // null
     for (int i = 0; i < inspectorFields.size(); i++) {
@@ -57,8 +68,8 @@ public class ObjectInspectorFactoryTest {
 
     // non nulls
     ArrayList<Object> afields = new ArrayList<Object>();
-    for (int i = 0; i < actualFields.length; i++) {
-      Assert.assertEquals(actualFields[i].get(data), soi.getStructFieldData(data, inspectorFields.get(i)));
+    for (int i = 0; i < expectedFields.size(); i++) {
+      Assert.assertEquals(expectedFields.get(i).get(data), soi.getStructFieldData(data, inspectorFields.get(i)));
       afields.add(soi.getStructFieldData(data, inspectorFields.get(i)));
     }
     Assert.assertEquals(afields, soi.getStructFieldsDataAsList(data));
@@ -130,5 +141,7 @@ public class ObjectInspectorFactoryTest {
     public DummyEmployee<DummyAddress<String>> employee;
     // Test arrays
     public int[] ints;
+    // Test transient field
+    public transient int t;
   }
 }

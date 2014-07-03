@@ -23,6 +23,7 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.runtime.LocationStreamFileWriterFactory;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.service.LocalStreamFileJanitorService;
@@ -197,6 +198,7 @@ public class ReactorTestBase {
 
     injector = Guice.createInjector(
       createDataFabricModule(configuration),
+      new DataSetsModules().getInMemoryModule(),
       new DataSetServiceModules().getInMemoryModule(),
       new ConfigModule(configuration),
       new IOModule(),

@@ -7,6 +7,7 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
@@ -50,6 +51,7 @@ public class InMemoryExploreServiceTest {
         new DiscoveryRuntimeModule().getInMemoryModules(),
         new LocationRuntimeModule().getInMemoryModules(),
         new DataFabricModules().getInMemoryModules(),
+        new DataSetsModules().getInMemoryModule(),
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new AuthModule(),
         new ExploreRuntimeModule().getInMemoryModules());

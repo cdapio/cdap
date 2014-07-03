@@ -8,6 +8,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.runtime.DataFabricLocalModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
@@ -68,7 +69,8 @@ public class LocalQueueTest extends QueueTest {
       new LocationRuntimeModule().getSingleNodeModules(),
       new DiscoveryRuntimeModule().getSingleNodeModules(),
       new TransactionMetricsModule(),
-      new DataFabricModules().getSingleNodeModules());
+      new DataFabricModules().getSingleNodeModules(),
+      new DataSetsModules().getLocalModule());
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
     Queue2Producer producer = factory.createProducer(QueueName.fromStream("bigriver"));
     Assert.assertTrue(producer instanceof LevelDBQueue2Producer);
