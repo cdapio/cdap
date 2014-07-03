@@ -1,5 +1,6 @@
 package com.continuuity.test.app;
 
+import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDataset;
@@ -9,7 +10,6 @@ import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Increment;
 import com.continuuity.api.dataset.table.Table;
-import com.continuuity.data2.dataset2.lib.table.TableDefinition;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
@@ -62,7 +62,7 @@ public class UniqueCountTableDefinition
   public static class Module implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      TableDefinition tableDefinition = registry.get("table");
+      DatasetDefinition<Table, DatasetAdmin> tableDefinition = registry.get("table");
       UniqueCountTableDefinition keyValueTable = new UniqueCountTableDefinition("uniqueCountTable", tableDefinition);
       registry.add(keyValueTable);
     }

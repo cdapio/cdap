@@ -5,7 +5,9 @@
 package com.continuuity.app.program;
 
 import com.continuuity.api.Application;
-import com.continuuity.common.lang.jar.ProgramClassLoader;
+import com.continuuity.common.lang.ApiResourceListHolder;
+import com.continuuity.common.lang.ClassLoaders;
+import com.google.common.base.Objects;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,7 +24,9 @@ public final class Archive {
   private final String mainClassName;
 
   public Archive(File unpackedJarFolder, String mainClassName) throws IOException {
-    this.classLoader = new ProgramClassLoader(unpackedJarFolder);
+    this.classLoader = ClassLoaders.newProgramClassLoader(
+      unpackedJarFolder, ApiResourceListHolder.getResourceList(),
+      Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), Archive.class.getClassLoader()));
     this.mainClassName = mainClassName;
   }
 

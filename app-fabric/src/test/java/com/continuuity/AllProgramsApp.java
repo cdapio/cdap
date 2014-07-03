@@ -18,7 +18,6 @@ import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.workflow.AbstractWorkflowAction;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
-import com.continuuity.data2.OperationException;
 
 import java.io.IOException;
 
@@ -83,7 +82,7 @@ public class AllProgramsApp implements Application {
     @Handle("dummy")
     public void handle(ProcedureRequest request,
                        ProcedureResponder responder)
-      throws OperationException, IOException {
+      throws IOException {
       responder.sendJson("OK");
     }
   }

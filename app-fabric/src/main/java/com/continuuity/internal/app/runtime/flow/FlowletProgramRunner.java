@@ -208,6 +208,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Flowlet flowlet = new InstantiatorFactory(false).get(TypeToken.of(flowletClass)).create();
       TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);
 
+      // Set the context classloader to the reactor classloader. It is needed for the DatumWriterFactory be able
+      // to load reactor classes
+      Thread.currentThread().setContextClassLoader(FlowletProgramRunner.class.getClassLoader());
+
       // Inject DataSet, OutputEmitter, Metric fields
       Reflections.visit(flowlet, TypeToken.of(flowlet.getClass()),
                         new PropertyFieldSetter(flowletDef.getFlowletSpec().getProperties()),
@@ -449,7 +453,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                   // no-op
                 }
               });
-              return new DatumOutputEmitter<T>(producer,  schema, datumWriterFactory.create(type, schema));
+              return new DatumOutputEmitter<T>(producer, schema, datumWriterFactory.create(type, schema));
             }
           }
 

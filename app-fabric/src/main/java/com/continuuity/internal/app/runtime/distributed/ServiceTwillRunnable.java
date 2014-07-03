@@ -325,7 +325,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
     public Program create(String path) throws IOException {
       Location location = locationFactory.create(path);
-      return Programs.create(location, Files.createTempDir());
+      return Programs.createWithUnpack(location, Files.createTempDir());
     }
   }
 }
