@@ -12,4 +12,9 @@ public class InMemoryMetricsProcessorServiceManager extends AbstractInMemoryReac
   public String getDescription() {
     return Constants.MetricsProcessor.SERVICE_DESCRIPTION;
   }
+
+  @Override
+  public boolean isLogAvailable() {
+    return false;
+  }
 }

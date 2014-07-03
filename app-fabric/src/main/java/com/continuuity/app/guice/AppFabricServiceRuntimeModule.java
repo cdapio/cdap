@@ -10,7 +10,6 @@ import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
-import com.continuuity.common.twill.AbstractInMemoryReactorServiceManager;
 import com.continuuity.common.twill.ReactorServiceManager;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.stream.StreamServiceManager;
@@ -94,8 +93,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(InMemoryLogSaverServiceManager.class);
                                mapBinder.addBinding(Constants.Service.TRANSACTION)
                                         .to(InMemoryTransactionServiceManager.class);
-                               //Using LogSaverStatusServiceManager since status check and logs are not available
-                               //for metrics.processor as well
                                mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR)
                                         .to(InMemoryMetricsProcessorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.METRICS)
@@ -128,8 +125,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(InMemoryLogSaverServiceManager.class);
                                mapBinder.addBinding(Constants.Service.TRANSACTION)
                                         .to(InMemoryTransactionServiceManager.class);
-                               //Using LogSaverStatusServiceManager since status check and logs are not available
-                               //for metrics.processor as well
                                mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR)
                                         .to(InMemoryMetricsProcessorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.METRICS)
