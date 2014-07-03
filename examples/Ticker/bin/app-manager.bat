@@ -20,6 +20,11 @@ for /r %APP_HOME%\target %%a in (%APP_JAR_PREFIX%*) do SET JAR_PATH=%%~dpnxa
 if %JAR_PATH% == "" (echo "Could not find application jar with name %APP_JAR_PREFIX%" 
                      GOTO :EOF)
 
+REM Process access token
+SET ACCESS_TOKEN=
+SET ACCESS_TOKEN_FILE=%HOMEPATH%\.continuuity.accesstoken
+if exist %ACCESS_TOKEN_FILE% set /p ACCESS_TOKEN=<%ACCESS_TOKEN_FILE%
+
 REM Process Command line
 IF "%1" == "start" GOTO START
 IF "%1" == "stop" GOTO STOP
@@ -34,7 +39,7 @@ GOTO :EOF
 
 :DEPLOY
 echo Deploying application...
-FOR /F %%i IN ('curl -X POST -sL -w %%{http_code} -H "X-Archive-Name: %APP_JAR_NAME%" --data-binary @"%JAR_PATH%" http://localhost:10000/v2/apps') DO SET RESPONSE=%%i
+FOR /F %%i IN ('curl -H "Authorization: Bearer %ACCESS_TOKEN%" -X POST -sL -w %%{http_code} -H "X-Archive-Name: %APP_JAR_NAME%" --data-binary @"%JAR_PATH%" http://localhost:10000/v2/apps') DO SET RESPONSE=%%i
 IF  %RESPONSE% == 200  (echo Deployed application 
                         GOTO :EOF)
 
@@ -70,7 +75,7 @@ SET ACTION=%~4
 
 echo %ACTION% %PROGRAM_NAME% for application %APP%
 
-FOR /F %%i IN ('curl -X POST -sL -w %%{http_code} http://localhost:10000/v2/apps/%APP%/%PROGRAM_TYPE%/%PROGRAM_NAME%/%ACTION%') DO SET RESPONSE=%%i
+FOR /F %%i IN ('curl -H "Authorization: Bearer %ACCESS_TOKEN%" -X POST -sL -w %%{http_code} http://localhost:10000/v2/apps/%APP%/%PROGRAM_TYPE%/%PROGRAM_NAME%/%ACTION%') DO SET RESPONSE=%%i
 IF NOT %RESPONSE% == 200  (
  echo %ACTION% failed 
  GOTO :EOF
@@ -85,6 +90,6 @@ SET PROGRAM_NAME=%~3
 SET ACTION=%~4
 
 echo %ACTION% %PROGRAM_NAME% for application %APP%
-curl -X GET -sL  http://localhost:10000/v2/apps/%APP%/%PROGRAM_TYPE%/%PROGRAM_NAME%/%ACTION%
+curl -H "Authorization: Bearer %ACCESS_TOKEN%" -X GET -sL  http://localhost:10000/v2/apps/%APP%/%PROGRAM_TYPE%/%PROGRAM_NAME%/%ACTION%
 echo.
 GOTO :EOF
