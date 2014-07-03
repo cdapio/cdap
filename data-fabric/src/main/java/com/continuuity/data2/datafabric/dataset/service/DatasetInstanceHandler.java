@@ -270,7 +270,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       String msg = String.format("Cannot disable exploration of dataset instance %s: %s",
                                  name, e.getMessage());
       LOG.error(msg, e);
-      // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
+      // TODO: at this time we want to still drop dataset even if it cannot be disabled for exploration
 //      throw e;
     }
 
