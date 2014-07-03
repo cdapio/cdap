@@ -1162,9 +1162,9 @@
             <button class="btn btn-blank" {{action "removeOneInstance" on="click"}}>-</button>
 
             {{#if C.isLocal}}
-              <button disabled="disabled" class="btn btn-blank" style="width: 200px;text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
+              <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
             {{else}}
-              <button disabled="disabled" class="btn btn-blank" style="width: 200px;text-align:left;">{{actualInstances}} ({{model.instances}} Requested)</button>
+              <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{actualInstances}} ({{model.instances}} Requested)</button>
             {{/if}}
 
           </div>

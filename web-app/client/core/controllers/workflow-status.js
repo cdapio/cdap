@@ -156,8 +156,8 @@ define(['helpers/plumber'], function (Plumber) {
       var model = this.get('model');
       if (model.get('currentState') === 'RUNNING') {
 
-        this.HTTP.rest(model.get('context') + '/current', function (run) {
-
+        // Hax for not showing warning message when call fails.
+        $.get(model.get('context') + '/current').done(function (run) {
           var activeAction = run.currentStep;
           self.get('elements.Action').forEach(function (action, index) {
             if (index === activeAction) {
@@ -166,7 +166,10 @@ define(['helpers/plumber'], function (Plumber) {
               action.set('currentState', 'STOPPED');
             }
           });
-
+        }).fail(function () {
+          self.get('elements.Action').forEach(function (action, index) {
+            action.set('currentState', 'STOPPED');
+          });
         });
 
         this.set('__previousState', 'RUNNING');
