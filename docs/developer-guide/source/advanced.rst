@@ -633,7 +633,11 @@ To create a Dataset of ``UniqueCountTable`` type add the following into the Appl
     }
   }
 
-Application components can access it via ``@UseDataSet``::
+You can also pass ``DatasetProperties`` as a third parameter to the ``createDataset`` method.
+These properties will be used by embedded Datasets during creation and will be availalbe via ``DatasetSpecification``
+passed to Dataset constructor.
+
+Application components can access created Dataset via ``@UseDataSet``::
 
   Class MyFowlet extends AbstractFlowlet {
     @UseDataSet("myCounters")
@@ -643,6 +647,10 @@ Application components can access it via ``@UseDataSet``::
 
 A complete application demonstrating the use of a custom Dataset is included in our
 `PageViewAnalytics </examples/PageViewAnalytics/index.html>`__ example.
+
+You can also create/drop/truncate Datasets using `Continuuity Reactor HTTP REST API <rest.html>`__. Please refer to the
+REST APIs guide for more details on how to do that.
+
 
 Datasets & MapReduce
 --------------------

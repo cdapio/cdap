@@ -1,6 +1,5 @@
 package com.continuuity.api.dataset;
 
-import com.continuuity.api.annotation.Beta;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -27,7 +26,6 @@ import java.util.TreeMap;
  *   indexed table.</li>
  * {@link DatasetSpecification} uses a builder pattern for construction.
  */
-@Beta
 public final class DatasetSpecification {
 
   // the name of the dataset
