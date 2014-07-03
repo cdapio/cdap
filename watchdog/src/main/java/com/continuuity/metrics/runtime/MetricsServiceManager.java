@@ -23,4 +23,9 @@ public class MetricsServiceManager extends AbstractDistributedReactorServiceMana
     return cConf.getInt(Constants.Metrics.MAX_INSTANCES);
   }
 
+  @Override
+  public String getDescription() {
+    return Constants.Metrics.SERVICE_DESCRIPTION;
+  }
+
 }

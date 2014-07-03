@@ -1953,6 +1953,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private DeployStatus dstatus(String accountId) {
     if (!sessions.containsKey(accountId)) {
       SessionInfo info = retrieve(accountId);
+      if (info == null) {
+        return DeployStatus.NOT_FOUND;
+      }
       return info.getStatus();
     } else {
       SessionInfo info = sessions.get(accountId);

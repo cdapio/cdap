@@ -537,9 +537,13 @@ You can create a Dataset by issuing an HTTP PUT request to the URL::
 
 	PUT <base-url>/data/datasets/<dataset-name>
   
-with the name of the type as a header::
+with JSON-formatted name of the dataset type and properties in a body::
 
-	X-Continuuity-Type-Name: <type-name>
+  {
+     "typeName":"<type-name>",
+     "properties":{<properties>}
+  }
+
 
 .. list-table::
    :widths: 20 80
@@ -551,6 +555,8 @@ with the name of the type as a header::
      - Name of the new Dataset
    * - ``<type-name>``
      - Type of the new Dataset
+   * - ``<properties>``
+     - Dataset properties, map of String to String.
 
 HTTP Responses
 ..............
@@ -577,11 +583,10 @@ Example
 
    * - HTTP Request
      - ``PUT <base-url>/data/datasets/mydataset``
-   * - Header
-     - ``X-Continuuity-Type-Name: myDatasetType``
+   * - Body
+     - ``{"typeName":"table", "properties":{"ttl":"3600000"}}``
    * - Description
-     - Creates a Dataset named "mydataset" of the type "myDatasetType"; the ``myDatasetType``
-       should be a Dataset type that's already been deployed in a Dataset module
+     - Creates a Dataset named "mydataset" of the type "table" and time-to-live property set to 1 hour
 
 Deleting a Dataset
 ------------------
@@ -1575,6 +1580,9 @@ Execution of a query can be canceled before it is finished with an HTTP POST::
   POST <base-url>/data/queries/<query-handle>/cancel
 
 After this, the query can only be closed.
+
+**Note:** This operation is not supported with CDH 4.x distributions. It will return a
+``500 Internal Server Error`` status code.
 
 HTTP Responses
 ..............

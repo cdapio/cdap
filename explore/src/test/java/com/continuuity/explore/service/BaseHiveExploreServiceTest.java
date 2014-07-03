@@ -87,6 +87,9 @@ public class BaseHiveExploreServiceTest {
       for (Object obj : result.getColumns()) {
         if (obj instanceof String) {
           newCols.add(((String) obj).trim());
+        } else if (obj instanceof Double) {
+          // NOTE: this means only use 4 decimals for double and float values in test cases
+          newCols.add((double) Math.round(((Double) obj).doubleValue() * 10000) / 10000);
         } else {
           newCols.add(obj);
         }
