@@ -188,7 +188,7 @@ Using Services
 -----------------
 Custom Services are not displayed in the Continuuity Reactor Dashboard. To control their
 lifecycle, use the `Reactor Client API <rest.html#reactor-client-http-api>`__ as described
-in the `Continuuity Reactor REST API <rest.html#reactor-client-http-api>`__.
+in the `Continuuity Reactor HTTP REST API <rest.html#reactor-client-http-api>`__.
 
 
 Flow System

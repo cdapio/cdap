@@ -18,10 +18,7 @@ New Application, Stream, Flowlet, and Dataset Features
   while the Stream is in use
 - Stream truncate support via REST
 - Simplified Flowlet ``@Batch`` support: process methods don't require an ``Iterator`` as a parameter
-- New Datasets API that exposes low level APIs to give more power & flexibility for developing custom
-  Dataset types; flexible dataset types configuration
-- Datasets types management outside of applications: a REST interface to add, remove, and discover
-  Dataset types
+- New Datasets API that gives more power & flexibility for developing custom Datasets
 - Datasets management outside of application: a REST interface to create, truncate, drop and discover
   Datasets
 

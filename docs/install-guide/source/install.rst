@@ -49,7 +49,9 @@ These are the Continuuity Reactor components:
 
 .. literal above is used to force an extra line break after list in PDF
 
-Before installing the Continuuity Reactor components, you must first install a Hadoop cluster with *HDFS*, *YARN*, *HBase*, and *Zookeeper*. All Reactor components can be installed on the same boxes as your Hadoop cluster, or on separate boxes that can connect to the Hadoop services. 
+Before installing the Continuuity Reactor components, you must first install a Hadoop cluster
+with *HDFS*, *YARN*, *HBase*, and *Zookeeper*. All Reactor components can be installed on the
+same boxes as your Hadoop cluster, or on separate boxes that can connect to the Hadoop services. 
 
 Our recommended installation is to use two boxes for the Reactor components; the
 `hardware requirements <#hardware-requirements>`__ are relatively modest, 
@@ -152,7 +154,9 @@ in addition to having CPUs with a minimum speed of 2 GHz:
 Network Requirements
 --------------------
 Continuuity components communicate over your network with *HBase*, *HDFS*, and *YARN*.
-For the best performance, Continuuity components should be located on the same LAN, ideally running at 1 Gbps or faster. A good rule of thumb is to treat Continuuity components as you would *Hadoop DataNodes*.  
+For the best performance, Continuuity components should be located on the same LAN, 
+ideally running at 1 Gbps or faster. A good rule of thumb is to treat Continuuity 
+components as you would *Hadoop DataNodes*.  
 
 .. rst2pdf: PageBreak
 
@@ -173,18 +177,13 @@ Once you have installed the JDK, you'll need to set the JAVA_HOME environment va
 
 Node.js Runtime
 ...............
-You can download the latest version of Node.js from `nodejs.org <http://nodejs.org>`__,
-using any of the methods given. 
+You can download the latest version of Node.js from `nodejs.org <http://nodejs.org>`__:
+ 1. Download the appropriate Linux or Solaris binary ``.tar.gz`` from 
+   `nodejs.org/download/ <http://nodejs.org/download/>`__. #. Extract somewhere such as ``/opt/node-[version]/``
+#. Build node.js; instructions that may assist are available at 
+   `github <https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager>`__ #. Ensure that ``nodejs`` is in the ``$PATH``. One method is to use a symlink from the installation: 
+   ``ln -s /opt/node-[version]/bin/node /usr/bin/node``
 
-Using Yum::
-
-	$ curl -O http://download-i2.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
-	$ sudo rpm -ivh epel-release-6-8.noarch.rpm
-	$ sudo yum install npm
-
-Using APT::
-
-	$ sudo apt-get install npm
  
 Hadoop/HBase Environment
 ........................
@@ -295,6 +294,8 @@ If you want to use a different HDFS user than ``yarn``:
 
 - Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
 
+.. rst2pdf: PageBreak
+
 Secure Hadoop
 .............
 When running Continuuity Reactor on top of Secure Hadoop and HBase (using Kerberos
@@ -321,7 +322,11 @@ In order to configure Reactor Master for Kerberos authentication:
 
 ULIMIT Configuration
 ....................
-When you install the Continuuity Reactor packages, the ``ulimit`` settings for the Continuuity user are specified in the ``/etc/security/limits.d/continuuity.conf`` file. On Ubuntu, they won't take effect unless you make changes to the ``/etc/pam.d/common-session file``. For more information, refer to the ``ulimit`` discussion in the `Apache HBase Reference Guide <https://hbase.apache.org/book.html#os>`__.
+When you install the Continuuity Reactor packages, the ``ulimit`` settings for the 
+Continuuity user are specified in the ``/etc/security/limits.d/continuuity.conf`` file. 
+On Ubuntu, they won't take effect unless you make changes to the ``/etc/pam.d/common-session file``. 
+For more information, refer to the ``ulimit`` discussion in the 
+`Apache HBase Reference Guide <https://hbase.apache.org/book.html#os>`__.
 
 Packaging
 =========
@@ -339,9 +344,12 @@ Available packaging types:
 
 Continuuity packages utilize a central configuration, stored by default in ``/etc/continuuity``.
 
-When you install the Continuuity base package, a default configuration is placed in ``/etc/continuuity/conf.dist``. The ``continuuity-site.xml`` file is a placeholder where you can define your specific configuration for all Continuuity components.
+When you install the Continuuity base package, a default configuration is placed in 
+``/etc/continuuity/conf.dist``. The ``continuuity-site.xml`` file is a placeholder 
+where you can define your specific configuration for all Continuuity components.
 
-Similar to Hadoop, Continuuity utilizes the ``alternatives`` framework to allow you to easily switch between multiple configurations. The ``alternatives`` system is used for ease of
+Similar to Hadoop, Continuuity utilizes the ``alternatives`` framework to allow you to 
+easily switch between multiple configurations. The ``alternatives`` system is used for ease of
 management and allows you to to choose between different directories to fulfill the 
 same purpose.
 
@@ -425,17 +433,20 @@ and started the services.
 Upgrading From a Previous Version
 =================================
 When upgrade an existing Continuuity Reactor installation from a previous version, you will need
-to make sure the Reactor table definitions in HBase are up to date.  First, proceed with the
-normal package installation, as described in `Installation`_.
+to make sure the Reactor table definitions in HBase are up-to-date.  
 
-Then run the upgrade utility:
+First, proceed with the normal package installation, as described in `Installation`_.
+
+Then, run the upgrade utility:
+
 - Stop all Continuuity Reactor processes::
 
 	for i in `ls /etc/init.d/ | grep continuuity` ; do service $i stop ; done
 
-- Run the upgrade tool::
+- Run the upgrade tool (on a single line)::
 
-  /opt/continuuity/reactor-master/bin/svc-reactor-master run com.continuuity.data.tools.ReactorTool upgrade
+	/opt/continuuity/reactor-master/bin/svc-reactor-master run 
+	   com.continuuity.data.tools.ReactorTool upgrade
 
 - Restart the Continuuity Reactor processes::
 
@@ -675,10 +686,10 @@ see the online document `Reactor Security Guide
      - User name for accessing HDFS
    * - ``hive.local.data.dir``
      - ``${local.data.dir}/hive``
-     - 
+     - Location of hive relative to ``local.data.dir``
    * - ``hive.server.bind.address``
      - ``localhost``
-     - 
+     - Router address hive server binds to
    * - ``kafka.bind.address``
      - ``0.0.0.0``
      - Kafka server hostname
@@ -744,7 +755,7 @@ see the online document `Reactor Security Guide
      - Metrics query server port
    * - ``reactor.explore.enabled``
      - ``false``
-     - 
+     - Determines if the Reactor Explore Service is enabled
    * - ``reactor.namespace``
      - ``continuuity``
      - Namespace for this Reactor instance
@@ -779,13 +790,13 @@ see the online document `Reactor Security Guide
      - ``10009``
      - Port number that the Continuuity Authentication Server should bind to for HTTP.
    * - ``security.authentication.basic.realmfile``
-     - `` ``
+     -  
      - Username / password file to use when basic authentication is configured
    * - ``security.authentication.handlerClassName``
-     - `` ``
+     - 
      - Name of the authentication implementation to use to validate user credentials
    * - ``security.authentication.loginmodule.className``
-     - `` ``
+     - 
      - JAAS LoginModule implementation to use when
        ``com.continuuity.security.server.JAASAuthenticationHandler`` is configured for ``security.authentication.handlerClassName``
    * - ``security.data.keyfile.path``
