@@ -18,6 +18,7 @@ Installation and Configuration Guide
 
 .. rst2pdf: config ../../developer-guide/source/_templates/pdf-config
 .. rst2pdf: stylesheets ../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../build-pdf/
 
 Introduction
 ============
@@ -46,7 +47,7 @@ These are the Continuuity Reactor components:
 
   ``                                 ``
 
-.. literal above is used to force an extra line break after list
+.. literal above is used to force an extra line break after list in PDF
 
 Before installing the Continuuity Reactor components, you must first install a Hadoop cluster with *HDFS*, *YARN*, *HBase*, and *Zookeeper*. All Reactor components can be installed on the same boxes as your Hadoop cluster, or on separate boxes that can connect to the Hadoop services. 
 
@@ -66,6 +67,11 @@ We have specific
 `prerequisite software <#software-prerequisites>`_ requirements detailed 
 `below <#system-requirements>`__ 
 that need to be met and completed before installation of the Continuuity Reactor components.
+
+For information on configuring the Reactor for security, see the online document
+`Reactor Security Guide 
+<http://continuuity.com/docs/reactor/current/en/security.html>`__.
+
 
 Conventions
 -----------
@@ -454,12 +460,13 @@ We provide in our SDK pre-built ``.JAR`` files for convenience:
 #. Find the pre-built JAR (`TrafficAnalytics-1.0.jar`) by using the dialog box to navigate to
    ``CONTINUUITY_HOME/examples/TrafficAnalytics/target/TrafficAnalytics-1.0.jar``
 #. Once the application is deployed, instructions on running the example can be found at the 
-   `TrafficAnalytics example </developers/examples/TrafficAnalytics#running-the-example>`__.
+   `TrafficAnalytics example 
+   </http://continuuity.com/docs/reactor/current/en/examples/trafficAnalytics#building-and-running-the-application-and-example>`__.
 #. You should be able to start the application, inject log entries,
    run the ``MapReduce`` job and see results.
 #. When finished, stop and remove the application as described in the
    `TrafficAnalytics example 
-   <http://continuuity.com/developers/examples/TrafficAnalytics#stopping-the-app>`__.
+   <http://continuuity.com/docs/reactor/current/en/examples/trafficAnalytics#stopping-the-application>`__.
 
 .. rst2pdf: PageBreak
 
@@ -510,6 +517,10 @@ Appendix: ``continuuity-site.xml``
 ======================================
 Here are the parameters that can be defined in the ``continuuity-site.xml`` file,
 their default values, descriptions and notes.
+
+For information on configuring the ``continuuity-site.xml`` file and Reactor for security, 
+see the online document `Reactor Security Guide 
+<http://continuuity.com/docs/reactor/current/en/security.html>`__.
 
 ..   :widths: 20 20 30
 
@@ -596,6 +607,21 @@ their default values, descriptions and notes.
      - ``False``
      - **WARNING: Enabling this option makes it possible to delete all
        applications and data; no recovery is possible!**
+   * - ``explore.active.operation.timeout.secs``
+     - ``86400``
+     - Timeout value in seconds for a SQL operation whose result is not fetched completely
+   * - ``explore.cleanup.job.schedule.secs``
+     - ``60``
+     - Time in secs to schedule clean up job to timeout operations
+   * - ``explore.executor.container.instances``
+     - ``1``
+     - Number of explore executor instances
+   * - ``explore.executor.max.instances``
+     - ``1``
+     - Maximum number of explore executor instances
+   * - ``explore.inactive.operation.timeout.secs``
+     - ``3600``
+     - Timeout value in seconds for a SQL operation which has no more results to be fetched
    * - ``gateway.boss.threads``
      - ``1``
      - Number of Netty server boss threads
@@ -647,6 +673,12 @@ their default values, descriptions and notes.
    * - ``hdfs.user``
      - ``yarn``
      - User name for accessing HDFS
+   * - ``hive.local.data.dir``
+     - ``${local.data.dir}/hive``
+     - 
+   * - ``hive.server.bind.address``
+     - ``localhost``
+     - 
    * - ``kafka.bind.address``
      - ``0.0.0.0``
      - Kafka server hostname
@@ -710,6 +742,9 @@ their default values, descriptions and notes.
    * - ``metrics.query.bind.port``
      - ``45005``
      - Metrics query server port
+   * - ``reactor.explore.enabled``
+     - ``false``
+     - 
    * - ``reactor.namespace``
      - ``continuuity``
      - Namespace for this Reactor instance
@@ -743,6 +778,19 @@ their default values, descriptions and notes.
    * - ``security.auth.server.port``
      - ``10009``
      - Port number that the Continuuity Authentication Server should bind to for HTTP.
+   * - ``security.authentication.basic.realmfile``
+     - `` ``
+     - Username / password file to use when basic authentication is configured
+   * - ``security.authentication.handlerClassName``
+     - `` ``
+     - Name of the authentication implementation to use to validate user credentials
+   * - ``security.authentication.loginmodule.className``
+     - `` ``
+     - JAAS LoginModule implementation to use when
+       ``com.continuuity.security.server.JAASAuthenticationHandler`` is configured for ``security.authentication.handlerClassName``
+   * - ``security.data.keyfile.path``
+     - ``${local.data.dir}/security/keyfile``
+     - Path to the secret key file (only used in single-node operation)
    * - ``security.enabled``
      - ``false``
      - Enables authentication for Reactor.  When set to ``true`` all requests to Reactor must
@@ -751,6 +799,9 @@ their default values, descriptions and notes.
      - ``continuuity``
      - Authentication realm used for scoping security.  This value should be unique for each
        installation of Continuuity Reactor.
+   * - ``security.server.extended.token.expiration.ms``
+     - ``604800000``
+     - Admin tool access token expiration time in milliseconds (defaults to 1 week) (internal)
    * - ``security.server.maxthreads``
      - ``100``
      - Maximum number of threads that the Continuuity Authentication Server should use for
@@ -758,16 +809,32 @@ their default values, descriptions and notes.
    * - ``security.server.ssl.enabled``
      - ``false``
      - Set to ``true`` to enable use of SSL on the Continuuity Authentication Server
+   * - ``security.server.ssl.keystore.password``
+     -
+     - Password to the Java keystore file specified in ``security.server.ssl.keystore.path``
    * - ``security.server.ssl.keystore.path``
      - 
      - Path to the Java keystore file containing the certificate used for HTTPS on the Continuuity
        Authentication Server.
-   * - ``security.server.ssl.keystore.password``
-     -
-     - Password to the Java keystore file specified in ``security.server.ssl.keystore.path``
    * - ``security.server.ssl.port``
      - ``10010``
      - Port to bind to for HTTPS on the Continuuity Authentication Server.
+   * - ``security.server.token.expiration.ms``
+     - ``86400000``
+     - Access token expiration time in milliseconds (defaults to 24 hours)
+   * - ``security.token.digest.algorithm``
+     - ``HmacSHA256``
+     -  Algorithm used for generating MAC of access tokens
+   * - ``security.token.digest.key.expiration.ms``
+     - ``3600000``
+     - Time duration (in milliseconds) after which an active secret key 
+       used for signing tokens should be retired
+   * - ``security.token.digest.keylength``
+     - ``128``
+     - Key length used in generating the secret keys for generating MAC of access tokens
+   * - ``security.token.distributed.parent.znode``
+     - ``/${reactor.namespace}/security/auth``
+     - Parent node in ZooKeeper used for secret key distribution in distributed mode.
    * - ``stream.flume.port``
      - ``10004``
      - 
