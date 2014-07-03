@@ -17,26 +17,26 @@ function get_auth_token() {
 
 function usage() {
   echo "Querying tool for exploring Datasets with SQL."
-  echo "Usage: $script --query \"<sql query>\" [--gateway <hostname>]"
+  echo "Usage: $script --query \"<sql query>\" [--host <hostname>]"
   echo ""
   echo "  Options"
   echo "    --query     Specifies the query to be executed."
-  echo "    --gateway   Specifies the hostname the gateway is running on.(Default: localhost)"
+  echo "    --host      Specifies the host that Reactor is running on. (Default: localhost)"
   echo "    --help      This help message"
-  echo "  If the cluster requires an access token, it needs to be in $auth_file"
+  echo "  If reactor requires an access token, it needs to be in $auth_file"
   echo ""
 }
 
 function query_action() {
   local q=$1; shift;
-  local gateway=$1; shift;
+  local host=$1; shift;
 
   # send query and parse response for status and handle
   response=`curl -sL -w "#%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X POST   \
-    http://$gateway:10000/v2/data/queries -d \{\"query\":\""$q"\"\}`
+    http://$host:10000/v2/data/queries -d \{\"query\":\""$q"\"\}`
 
   if [ $? != "0" ]; then
-    echo "Cannot connect to $gateway"
+    echo "Cannot connect to $host"
     exit 1;
   fi
 
@@ -61,7 +61,7 @@ function query_action() {
   status="UNKNOWN"
   while [ "x$status" != "xFINISHED" ]; do
     sleep 1;
-    response=`curl -sL -w "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X GET http://$gateway:10000/v2/data/queries/$handle/status`
+    response=`curl -sL -w "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X GET http://$host:10000/v2/data/queries/$handle/status`
     if [[ ! $response =~ 200$ ]]; then
       echo "Status got response code $response. Error."
       exit 1;
@@ -78,7 +78,7 @@ function query_action() {
   # retrieve results
   noresults=true;
   while true; do
-    response=`curl -sL -w "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X POST http://$gateway:10000/v2/data/queries/$handle/next -d '{"size":1}'`
+    response=`curl -sL -w "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X POST http://$host:10000/v2/data/queries/$handle/next -d '{"size":1}'`
     if [[ ! $response =~ 200$ ]]; then
       echo "Next call got response code $response. Error."
       exit 1;
@@ -97,15 +97,15 @@ function query_action() {
   done
 
   # close the query
-  curl -sL -H "Authorization: Bearer $auth_token" -X DELETE http://$gateway:10000/v2/data/queries/$handle
+  curl -sL -H "Authorization: Bearer $auth_token" -X DELETE http://$host:10000/v2/data/queries/$handle
 }
 
-gateway="localhost"
+host="localhost"
 query=
 while [ $# -gt 0 ]; do
   case "$1" in
     --query) shift; query="$1"; shift;;
-    --gateway) shift; gateway="$1"; shift;;
+    --host) shift; host="$1"; shift;;
     *)  usage; exit 1
   esac
 done
@@ -120,4 +120,4 @@ fi
 # read the access token
 get_auth_token
 
-query_action "$query" $gateway
+query_action "$query" $host
