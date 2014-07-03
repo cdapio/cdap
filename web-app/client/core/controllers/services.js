@@ -21,6 +21,7 @@ define([], function () {
         services.map(function(service) {
           servicesArr.push(C.Service.create({
             modelId: service.name,
+            description: service.description,
             id: service.name,
             name: service.name,
             status: service.status,
@@ -40,6 +41,9 @@ define([], function () {
           }));
         });
         self.set('services', servicesArr);
+        setTimeout(function () {
+          $("[data-toggle='tooltip']").tooltip();
+        }, 1000);
       });
     },
 
