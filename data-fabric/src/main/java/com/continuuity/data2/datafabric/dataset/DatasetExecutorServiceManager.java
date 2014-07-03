@@ -24,4 +24,9 @@ public class DatasetExecutorServiceManager extends AbstractDistributedReactorSer
     return cConf.getInt(Constants.Dataset.Executor.MAX_INSTANCES);
   }
 
+  @Override
+  public String getDescription() {
+    return Constants.Dataset.Executor.SERVICE_DESCRIPTION;
+  }
+
 }

@@ -3,7 +3,7 @@ package com.continuuity.common.twill;
 /**
  * InMemory Reactor Service Management class.
  */
-public class InMemoryReactorServiceManager implements ReactorServiceManager {
+public abstract class AbstractInMemoryReactorServiceManager implements ReactorServiceManager {
 
   @Override
   public int getInstances() {

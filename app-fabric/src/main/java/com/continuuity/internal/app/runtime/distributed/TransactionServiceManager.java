@@ -56,4 +56,9 @@ public class TransactionServiceManager extends AbstractDistributedReactorService
       return false;
     }
   }
+
+  @Override
+  public String getDescription() {
+    return Constants.Transaction.SERVICE_DESCRIPTION;
+  }
 }
