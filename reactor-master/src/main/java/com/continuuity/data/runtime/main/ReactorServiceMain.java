@@ -19,6 +19,7 @@ import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
@@ -133,6 +134,7 @@ public class ReactorServiceMain extends DaemonMain {
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModule(),
       new DataFabricModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new ServiceStoreModules().getDistributedModule()
     );
@@ -409,11 +411,11 @@ public class ReactorServiceMain extends DaemonMain {
       throw new RuntimeException("Unable to trace Explore dependencies", e);
     }
 
-    // HIVE_CONF_FILES will be defined in startup scripts if Hive is installed.
-    String hiveConfFiles = System.getProperty(Constants.Explore.HIVE_CONF_FILES);
+    // EXPLORE_CONF_FILES will be defined in startup scripts if Hive is installed.
+    String hiveConfFiles = System.getProperty(Constants.Explore.EXPLORE_CONF_FILES);
     LOG.debug("Hive conf files = {}", hiveConfFiles);
     if (hiveConfFiles == null) {
-      throw new RuntimeException("System property " + Constants.Explore.HIVE_CONF_FILES + " is not set.");
+      throw new RuntimeException("System property " + Constants.Explore.EXPLORE_CONF_FILES + " is not set.");
     }
 
     // Add all the conf files needed by hive as resources available to containers

@@ -90,9 +90,9 @@ public class RoutingToDataSetsTest {
   @Test
   public void testInstanceHandlerRequests() throws Exception {
     Assert.assertEquals("list", doRequest("/data/datasets", "GET"));
-    Assert.assertEquals("post:myInstance", doRequest("/data/datasets/myInstance", "POST"));
-    Assert.assertEquals("delete:myInstance", doRequest("/data/datasets/myInstance", "DELETE"));
-    Assert.assertEquals("get:myInstance", doRequest("/data/datasets/myInstance", "GET"));
+    Assert.assertEquals("post:continuuity.user.myInstance", doRequest("/data/datasets/myInstance", "POST"));
+    Assert.assertEquals("delete:continuuity.user.myInstance", doRequest("/data/datasets/myInstance", "DELETE"));
+    Assert.assertEquals("get:continuuity.user.myInstance", doRequest("/data/datasets/myInstance", "GET"));
   }
 
   @Path(Constants.Gateway.GATEWAY_VERSION)

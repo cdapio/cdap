@@ -3,6 +3,7 @@ package com.continuuity.data2.dataset2;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.module.DatasetModule;
+import com.continuuity.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
 import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
@@ -24,7 +25,7 @@ public class AbstractDatasetTest {
 
   @Before
   public void setUp() throws Exception {
-    framework = new InMemoryDatasetFramework();
+    framework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
     framework.addModule("inMemory", new InMemoryOrderedTableModule());
     framework.addModule("core", new CoreDatasetsModule());
   }

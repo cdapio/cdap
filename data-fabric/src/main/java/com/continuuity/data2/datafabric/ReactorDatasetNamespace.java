@@ -19,12 +19,11 @@ public class ReactorDatasetNamespace implements DatasetNamespace {
 
   @Override
   public String namespace(String name) {
-    // todo: avoid double namespacing, seems like namespacing design issue: REACTOR-217
-    return name.startsWith(namespacePrefix) ? name : namespacePrefix +  namespace.namespace(name);
+    return namespacePrefix +  namespace.namespace(name);
   }
 
   @Override
   public String fromNamespaced(String name) {
-    return name.substring(namespacePrefix.length());
+    return namespace.fromNamespaced(name.substring(namespacePrefix.length()));
   }
 }

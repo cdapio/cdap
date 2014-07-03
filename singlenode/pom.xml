@@ -117,7 +117,7 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <excludeGroupIds>org.apache.hbase,com.google.protobuf,asm,org.apache.zookeeper,org.apache.kafka,org.scala-lang</excludeGroupIds>
+                  <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka,org.scala-lang</excludeGroupIds>
                   <excludeArtifactIds>hadoop-hdfs,zkclient</excludeArtifactIds>
                   <silent>true</silent>
                   <includeScope>compile</includeScope>
@@ -150,11 +150,8 @@
                       <filtering>true</filtering>
                     </resource>
                     <resource>
-                      <directory>${project.basedir}/src/dist</directory>
-                      <excludes>
-                        <!-- Exclude README as it needs filtering and is done above -->
-                        <exclude>README</exclude>
-                      </excludes>
+                      <directory>${project.parent.parent.basedir}/docs/developer-guide/build-pdf</directory>
+                      <targetPath>docs</targetPath>
                     </resource>
                     <resource>
                       <directory>${project.parent.parent.basedir}/distributions</directory>
@@ -229,9 +226,10 @@
                       <directory>${project.parent.parent.basedir}/examples</directory>
                       <targetPath>examples</targetPath>
                       <includes>
-                        <include>README.rst</include>
+                        <include>README*</include>
                         <include>**/src/**</include>
                         <include>**/bin/*</include>
+                        <include>**/resources/*</include>
                         <include>**/pom.xml</include>
                         <include>**/target/*.jar</include>
                       </includes>
@@ -283,6 +281,11 @@
                 <configuration>
                   <target>
                     <chmod file="${stage.opt.dir}/bin/**" perm="755"/>
+                    <chmod perm="755">
+                      <fileset dir="${stage.opt.dir}/examples">
+                        <include name="**/bin/*"/>
+                      </fileset>
+                    </chmod>
                   </target>
                 </configuration>
                 <goals>
@@ -299,6 +302,18 @@
                 <configuration>
                   <target>
                     <copy file="${project.build.directory}/examples/deploy_pom.xml" tofile="${stage.opt.dir}/examples/pom.xml" />
+                  </target>
+                </configuration>
+              </execution>
+              <execution>
+                <id>rename-rest-api-docs</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <rename src="${stage.opt.dir}/docs/rest.pdf" dest="${stage.opt.dir}/docs/REST-API-Reference-v${project.version}.pdf"/>
                   </target>
                 </configuration>
               </execution>

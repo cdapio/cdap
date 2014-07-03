@@ -16,6 +16,7 @@ import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data.stream.service.StreamServiceRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
@@ -66,6 +67,7 @@ public class StreamHandlerRunnable extends AbstractReactorTwillRunnable {
         new LocationRuntimeModule().getDistributedModules(),
         new MetricsClientRuntimeModule().getDistributedModules(),
         new DataFabricModules().getDistributedModules(),
+        new DataSetsModules().getDistributedModule(),
         new LoggingModules().getDistributedModules(),
         new AuthModule(),
         new StreamServiceRuntimeModule().getDistributedModules()

@@ -42,10 +42,10 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.DatasetMetaTableUtil;
-import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
-import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
@@ -206,7 +206,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Access Dataset Service
    */
-  private final DatasetServiceClient dsClient;
+  private final DatasetFramework dsFramework;
 
   /**
    * App fabric output directory.
@@ -238,8 +238,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private final StreamAdmin streamAdmin;
 
   private final StreamConsumerFactory streamConsumerFactory;
-
-  private final ReactorDatasetNamespace namespace;
 
   /**
    * Number of seconds for timing out a service endpoint discovery.
@@ -303,7 +301,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
                               DataSetInstantiatorFromMetaData datasetInstantiator,
-                              DatasetServiceClient dsClient) {
+                              DatasetFramework dsFramework) {
 
     super(authenticator);
     this.locationFactory = locationFactory;
@@ -321,10 +319,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
-    this.dsClient = dsClient;
+    this.dsFramework =
+      new NamespacedDatasetFramework(dsFramework,
+                                     new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER));
     this.datasetInstantiator = datasetInstantiator;
     this.dataSetAccessor = dataSetAccessor;
-    this.namespace = new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER);
   }
 
   /**
@@ -1954,6 +1953,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private DeployStatus dstatus(String accountId) {
     if (!sessions.containsKey(accountId)) {
       SessionInfo info = retrieve(accountId);
+      if (info == null) {
+        return DeployStatus.NOT_FOUND;
+      }
       return info.getStatus();
     } else {
       SessionInfo info = sessions.get(accountId);
@@ -2902,9 +2904,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           typeName = spec.getType();
         } else {
           // trying to see if that is Dataset V2
-          DatasetInstanceMeta meta = getDatasetInstanceMeta(name);
-          if (meta != null) {
-            typeName = meta.getType().getName();
+          DatasetSpecification dsSpec = getDatasetSpec(name);
+          if (dsSpec != null) {
+            typeName = dsSpec.getType();
           }
         }
         return GSON.toJson(makeDataSetRecord(name, typeName, spec));
@@ -2928,7 +2930,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           result.add(makeDataSetRecord(spec.getName(), spec.getType(), null));
         }
         // also add datasets2 instances
-        Collection<DatasetSpecification> instances = dsClient.getAllInstances();
+        Collection<DatasetSpecification> instances = dsFramework.getInstances();
         for (DatasetSpecification instance : instances) {
           result.add(makeDataSetRecord(instance.getName(), instance.getType(), null));
         }
@@ -2968,12 +2970,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             typeName = spec.getType();
           } else {
             // trying to see if that is Dataset V2
-            // TODO: fix namespacing - see REACTOR-217
-            String namespacedDsName = namespace.namespace(dsName);
-            DatasetInstanceMeta meta = getDatasetInstanceMeta(namespacedDsName);
-            if (meta != null) {
-              typeName = meta.getType().getName();
-              dsName = namespacedDsName;
+            DatasetSpecification dsSpec = getDatasetSpec(dsName);
+            if (dsSpec != null) {
+              typeName = dsSpec.getType();
             }
           }
           result.add(makeDataSetRecord(dsName, typeName, null));
@@ -2995,14 +2994,14 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private DatasetInstanceMeta getDatasetInstanceMeta(String dsName) {
-    DatasetInstanceMeta meta = null;
+  @Nullable
+  private DatasetSpecification getDatasetSpec(String dsName) {
     try {
-      meta = dsClient.getInstance(dsName);
+      return dsFramework.getDatasetSpec(dsName);
     } catch (Exception e) {
-      LOG.warn("Couldn't get info for dataset: " + dsName);
+      LOG.warn("Couldn't get spec for dataset: " + dsName);
+      return null;
     }
-    return meta;
   }
 
   private Set<String> dataSetsUsedBy(FlowSpecification flowSpec) {
@@ -3251,8 +3250,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       // NOTE: there could be services running at the moment that rely on the system datasets to be available.
       dataSetAccessor.truncateAllExceptBlacklist(DataSetAccessor.Namespace.SYSTEM, datasetsToKeep);
 
-      dsClient.deleteInstances();
-      dsClient.deleteModules();
+      dsFramework.deleteAllInstances();
+      dsFramework.deleteAllModules();
 
       LOG.info("All data for account '" + account + "' deleted.");
       responder.sendStatus(HttpResponseStatus.OK);

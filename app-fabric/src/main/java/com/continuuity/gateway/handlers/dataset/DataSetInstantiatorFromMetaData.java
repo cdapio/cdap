@@ -73,9 +73,9 @@ public final class DataSetInstantiatorFromMetaData {
       // This call needs to be inside the synchronized call, otherwise it's possible that we are adding a DataSet
       // to the instantiator while retrieving an existing one (try to access while updating the underlying map).
       return this.instantiator.getDataSet(name, new DataFabric2Impl(locationFactory, dataSetAccessor),
-                                          // NOTE: it is fine using "empty" ds manager here, we access datasets V2
+                                          // NOTE: it is fine give null as ds framework here, we access datasets V2
                                           //       differently (thru dataset manager that talks to ds service)
-                                          new InMemoryDatasetFramework());
+                                          null);
     }
   }
 

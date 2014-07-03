@@ -184,7 +184,11 @@
           <tbody>
           {{#each services}}
             <tr>
-              <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">{{this.name}}</a>
+              <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
+                {{this.name}}
+              </a>
+                <br />
+                <span class="app-list-status">{{this.description}}</span>                
               </td>
               <td style="max-width: 100px;" class="status-col center-align">
                 {{#if this.statusOk}}
@@ -201,7 +205,7 @@
                 {{#if this.logsStatusOk}}
                 {{#linkTo 'Service.Log' this}}<img src="assets/img/log-icon.png" />{{/linkTo}}
                 {{ else }}
-                  NA
+                  <span data-toggle="tooltip" data-placement="right" title="Please contact your system admistrator for logs.">NA</span>
                 {{/if}}
               </td>
               <td style="max-width: 200px;" class="instance-col">
@@ -1162,9 +1166,9 @@
             <button class="btn btn-blank" {{action "removeOneInstance" on="click"}}>-</button>
 
             {{#if C.isLocal}}
-              <button disabled="disabled" class="btn btn-blank" style="width: 200px;text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
+              <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
             {{else}}
-              <button disabled="disabled" class="btn btn-blank" style="width: 200px;text-align:left;">{{actualInstances}} ({{model.instances}} Requested)</button>
+              <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{actualInstances}} ({{model.instances}} Requested)</button>
             {{/if}}
 
           </div>

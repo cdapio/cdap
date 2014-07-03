@@ -7,6 +7,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
 import com.continuuity.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
+import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
@@ -53,11 +54,11 @@ public class DatasetMetaTableUtil {
   /**
    * Sets up a {@link DatasetFramework} instance for standalone usage.  NOTE: should NOT be used by applications!!!
    */
-  public static DatasetFramework createRegisteredDatasetFramework(DatasetDefinitionRegistry registry,
+  public static DatasetFramework createRegisteredDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
                                                                   CConfiguration cConf)
     throws DatasetManagementException, IOException {
     DatasetFramework mdsDatasetFramework =
-      new NamespacedDatasetFramework(new InMemoryDatasetFramework(registry),
+      new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory),
                                      new ReactorDatasetNamespace(cConf, DataSetAccessor.Namespace.SYSTEM));
     mdsDatasetFramework.addModule("orderedTable", new HBaseOrderedTableModule());
     addTypes(mdsDatasetFramework);

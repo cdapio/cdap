@@ -66,7 +66,6 @@ public class DataFabricDistributedModule extends AbstractModule {
     // bind transactions
     install(new TransactionModules().getDistributedModules());
 
-    install(new DataSetsModules().getDistributedModule());
   }
 
   /**

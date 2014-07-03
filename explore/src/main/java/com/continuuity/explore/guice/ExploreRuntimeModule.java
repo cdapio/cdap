@@ -3,7 +3,7 @@ package com.continuuity.explore.guice;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
-import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
+import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.explore.executor.ExploreExecutorHttpHandler;
 import com.continuuity.explore.executor.ExploreExecutorService;
@@ -159,7 +159,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
     protected void configure() {
       try {
         // Figure out which HiveExploreService class to load
-        Class hiveExploreServiceCl = ExploreServiceUtils.getHiveService();
+        Class<? extends ExploreService> hiveExploreServiceCl = ExploreServiceUtils.getHiveService();
         LOG.info("Using Explore service class {}", hiveExploreServiceCl.getName());
         bind(ExploreService.class).to(hiveExploreServiceCl).in(Scopes.SINGLETON);
         expose(ExploreService.class);
@@ -193,7 +193,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
     // LinkedHashSet maintains insertion order while removing duplicate entries.
     Set<File> orderedDependencies = new LinkedHashSet<File>();
     orderedDependencies.addAll(hBaseTableDeps);
-    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(DatasetServiceClient.class.getCanonicalName(),
+    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(RemoteDatasetFramework.class.getCanonicalName(),
                                                                      bootstrapClassPaths, null));
     orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(DatasetStorageHandler.class.getCanonicalName(),
                                                                      bootstrapClassPaths, null));

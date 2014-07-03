@@ -29,4 +29,9 @@ public class ExploreServiceManager extends AbstractDistributedReactorServiceMana
     return cConf.getInt(Constants.Explore.MAX_INSTANCES, 1);
   }
 
+  @Override
+  public String getDescription() {
+    return Constants.Explore.SERVICE_DESCRIPTION;
+  }
+
 }

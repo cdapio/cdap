@@ -1,4 +1,4 @@
-package com.continuuity.data2.datafabric.dataset.client;
+package com.continuuity.data2.datafabric.dataset;
 
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -43,12 +42,11 @@ import javax.annotation.Nullable;
  * Provides programmatic APIs to access {@link com.continuuity.data2.datafabric.dataset.service.DatasetService}.
  * Just a java wrapper for accessing service's REST API.
  */
-public class DatasetServiceClient {
+class DatasetServiceClient {
   private static final Gson GSON = new Gson();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
 
-  @Inject
   public DatasetServiceClient(final DiscoveryServiceClient discoveryClient) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
@@ -60,6 +58,7 @@ public class DatasetServiceClient {
     });
   }
 
+  @Nullable
   public DatasetInstanceMeta getInstance(String instanceName) throws DatasetManagementException {
     HttpResponse response = doGet("datasets/" + instanceName);
     if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
@@ -110,8 +109,9 @@ public class DatasetServiceClient {
   public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
     throws DatasetManagementException {
 
-    HttpResponse response = doPut("datasets/" + datasetInstanceName,
-                                  GSON.toJson(new DatasetInstanceHandler.DatasetTypeAndProperties(datasetType, props)));
+    DatasetInstanceHandler.DatasetTypeAndProperties typeAndProps =
+      new DatasetInstanceHandler.DatasetTypeAndProperties(datasetType, props.getProperties());
+    HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(typeAndProps));
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
                                                         datasetInstanceName, getDetails(response)));
