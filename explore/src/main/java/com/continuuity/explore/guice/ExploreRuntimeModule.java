@@ -172,8 +172,9 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
 
         // We don't support security in Hive Server.
-        System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NONE");
-        System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.toString(), "false");
+        System.setProperty("hive.server2.authentication", "NONE");
+        System.setProperty("hive.server2.enable.doAs", "false");
+        System.setProperty("hive.server2.enable.impersonation", "false");
 
       } catch (Throwable e) {
         throw Throwables.propagate(e);
