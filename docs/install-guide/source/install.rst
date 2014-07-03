@@ -51,7 +51,7 @@ These are the Continuuity Reactor components:
 
 Before installing the Continuuity Reactor components, you must first install a Hadoop cluster
 with *HDFS*, *YARN*, *HBase*, and *Zookeeper*. In order to use the ad-hoc querying capabilities
-of Reactor, you also need to install *Hive*. All Reactor components can be installed on the
+of Reactor, you will also need *Hive*. All Reactor components can be installed on the
 same boxes as your Hadoop cluster, or on separate boxes that can connect to the Hadoop services. 
 
 Our recommended installation is to use two boxes for the Reactor components; the
@@ -167,7 +167,7 @@ You'll need this software installed:
 
 - Java runtime (on Reactor and Hadoop nodes)
 - Node.js runtime (on Reactor nodes)
-- Hadoop/HBase/Hive environment to run against
+- Hadoop, HBase (and possibly Hive) environment to run against
 
 Java Runtime
 ............
@@ -268,52 +268,46 @@ In the Continuuity Reactor packages, the default HDFS namespace is ``/continuuit
 and the default HDFS user is ``yarn``. If you set up your cluster as above, no further changes are 
 required.
 
-If you want to use an HDFS directory with a name other than ``/continuuity``:
+To make alterations to your setup, create an `.xml` file ``conf/continuuity-site.xml`` 
+(see the `Appendix <#appendix>`__) and set appropriate properties. 
 
-- Create the HDFS directory you want to use, such as ``/myhadoop/myspace``.
-- Create an xml file ``conf/continuuity-site.xml`` (see appendix) and include in it an
-  ``hdfs.namespace`` property for the HDFS directory::
+- If you want to use an HDFS directory with a name other than ``/continuuity``:
+  
+  1. Create the HDFS directory you want to use, such as ``/myhadoop/myspace``.
+  #. Create an ``hdfs.namespace`` property for the HDFS directory in ``conf/continuuity-site.xml``::
+  
+	<property>
+	  <name>hdfs.namespace</name>
+	  <value>/myhadoop/myspace</value>
+	  <description>Default HDFS namespace</description>
+	</property>
+  
+  #. Ensure that the default HDFS user ``yarn`` owns that HDFS directory.
 
-  <configuration>
-    ...
-    <property>
-      <name>hdfs.namespace</name>
-      <value>/myhadoop/myspace</value>
-      <description>Default HDFS namespace</description>
-    </property>
-	  ...
+- If you want to use a different HDFS user than ``yarn``:
+  
+  1. Check that there is—and create if necessary—a corresponding user on all machines 
+     in the cluster on which YARN is running (typically, all of the machines).
+  #. Create an ``hdfs.user`` property for that user in ``conf/continuuity-site.xml``::
+  
+	<property>
+	  <name>hdfs.user</name>
+	  <value>my_username</value>
+	  <description>User for accessing HDFS</description>
+	</property>
+  
+  #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
 
-- Ensure that the default HDFS user ``yarn`` owns that HDFS directory.
-
-If you want to use a different HDFS user than ``yarn``:
-
-- Check that there is—and create if necessary—a corresponding user on all machines 
-  in the cluster on which YARN is running (typically, all of the machines).
-- Create an ``hdfs.user`` property for that user in ``conf/continuuity-site.xml``::
-
-  <configuration>
-	  ...
-    <property>
-      <name>hdfs.user</name>
-      <value>my_username</value>
-      <description>User for accessing HDFS</description>
-    </property>
-    ...
-
-- Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
-
-Depending on whether you want to use the ad-hoc querying capabilities of Reactor,
-enable or disable the Reactor Explore Service in ``conf/continuuity-site.xml`` - by default it is ``false``::
-
-	  ...
-    <property>
-      <name>reactor.explore.enabled</name>
-      <value>true</value>
-      <description>Enable Explore functionality</description>
-    </property>
-    ...
-
-Note that this feature is currently not supported on secure Hadoop clusters.
+- To use the ad-hoc querying capabilities of Reactor, enable the Reactor Explore Service in
+  ``conf/continuuity-site.xml`` (by default, it is disabled)::
+  
+	<property>
+	  <name>reactor.explore.enabled</name>
+	  <value>true</value>
+	  <description>Enable Explore functionality</description>
+	</property>
+  
+  Note that this feature is currently not supported on secure Hadoop clusters.
 
 .. rst2pdf: PageBreak
 
@@ -544,6 +538,8 @@ Now that you've installed Continuuity Reactor, take a look at:
   an introduction to Big Data and the Continuuity Reactor.
 
 .. rst2pdf: CutStop
+
+.. _appendix:
 
 Appendix: ``continuuity-site.xml``
 ======================================
