@@ -4,6 +4,8 @@
 
 package com.continuuity.api.dataset.module;
 
+import com.continuuity.api.annotation.Beta;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -37,6 +39,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
+@Beta
 public @interface DatasetType {
   /**
    * Returns name of the dataset type.

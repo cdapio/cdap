@@ -1,5 +1,6 @@
 package com.continuuity.api.dataset.lib;
 
+import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
@@ -17,6 +18,7 @@ import java.util.Map;
  *
  * @param <D> defines data operations that can be performed on this dataset instance
  */
+@Beta
 public abstract class CompositeDatasetDefinition<D extends Dataset>
   extends AbstractDatasetDefinition<D, DatasetAdmin> {
 

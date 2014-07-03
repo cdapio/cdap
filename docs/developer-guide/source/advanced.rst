@@ -575,80 +575,32 @@ Suppose you want to define a counter table that, in addition to counting words,
 counts how many unique words it has seen. The Dataset can be built on top two underlying Datasets,
 a first Table (``entryCountTable``) to count all the words and a second Table (``uniqueCountTable``) for the unique count.
 
-To define a Dataset you need to implement the ``DatasetDefinition`` interface::
+When your custom Dataset is built on top of one or more existing Datasets, the simplest way to implement
+it is to just define the data operations (by implementing the Dataset interface) and delegating all other
+work (such as  administrative operations) to the embedded Dataset.
 
-  public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
-    String getName();
-    DatasetSpecification configure(String instanceName, DatasetProperties props);
-    A getAdmin(DatasetSpecification spec, ClassLoader cl) throws IOException;
-    D getDataset(DatasetSpecification spec, ClassLoader cl) throws IOException;
-  }
+To do this, you need to implement the Dataset class and define the embedded Datasets by annotating
+its constructor parameters.
 
-There are four methods in the interface:
-
-#. The implementation must provide a unique name for the Dataset instance.
-#. The implementation must provide a method to configure the Dataset instance based on properties
-   provided by a user at run-time.
-#. The implementation must provide a method to administer the Dataset using an implementation of the
-   ``DatasetAdmin`` interface. It performs such operations as create, truncate, and drop a Dataset.
-#. Finally, the Dataset implementation must provide a method for the manipulation of the Dataset's data
-   using an implementation of the ``Dataset`` interface. It does not require a developer to implement
-   any specific methods, and instead leaves it to the developer to define all of the data operations.
-
-In this case, our  ``UniqueCountTableDefinition`` will have two underlying Datasets: 
+In this case, our  ``UniqueCountTableDefinition`` will have two underlying Datasets:
 an ``entryCountTable`` and an ``uniqueCountTable``, both of type ``Table``::
 
-	public class UniqueCountTableDefinition
-	  extends AbstractDatasetDefinition<UniqueCountTable, DatasetAdmin> {
-	
-	  private final DatasetDefinition<? extends Table, ?> tableDef;
-	
-	  public UniqueCountTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
-	    super(name);
-	    Preconditions.checkArgument(tableDef != null, "Table definition is required");
-	    this.tableDef = tableDef;
-	  }
-	
-	  @Override
-	  public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-	    return DatasetSpecification.builder(instanceName, getName())
-	      .properties(properties.getProperties())
-	      .datasets(tableDef.configure("entryCountTable", properties))
-	      .datasets(tableDef.configure("uniqueCountTable", properties))
-	      .build();
-	  }
-	
-	  @Override
-	  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader cl) throws IOException {
-	    return new CompositeDatasetAdmin(tableDef.getAdmin(spec.getSpecification("entryCountTable"), cl),
-	                                     tableDef.getAdmin(spec.getSpecification("uniqueCountTable"), cl));
-	  }
-	
-	  @Override
-	  public UniqueCountTable getDataset(DatasetSpecification spec, ClassLoader cl) throws IOException {
-	    return new UniqueCountTable(spec.getName(),
-	                                tableDef.getDataset(spec.getSpecification("entryCountTable"), cl),
-	                                tableDef.getDataset(spec.getSpecification("uniqueCountTable"), cl));
-	  }
-	}
-
-Note that you need to implement the ``UniqueCountTable`` that defines the data operations of the Dataset.
-All administrative operations will be delegated to the underlying Dataset implementations.
-
-``UniqueCountTable`` uses two underlying tables that were passed into the constructor by ``UniqueCountTableDefinition``::
-
-  public static class UniqueCountTable extends AbstractDataset {
+  public class UniqueCountTable extends AbstractDataset {
 
     private final Table entryCountTable;
     private final Table uniqueCountTable;
 
-    public UniqueCountTable(String instanceName,
-                            Table entryCountTable,
-                            Table uniqueCountTable) {
-      super(instanceName, entryCountTable, uniqueCountTable);
+    public UniqueCountTable(DatasetSpecification spec,
+                            @EmbeddedDataset("entryCountTable") Table entryCountTable,
+                            @EmbeddedDataset("uniqueCountTable") Table uniqueCountTable) {
+      super(spec.getName(), entryCountTable, uniqueCountTable);
       this.entryCountTable = entryCountTable;
       this.uniqueCountTable = uniqueCountTable;
     }
+
+In this case, the class must have one constructor that takes a ``DatasetSpecification`` as a first
+parameter and any number of ``Dataset``\s annotated with the ``@EmbeddedDataset`` annotation as the
+remaining parameters. ``@EmbeddedDataset`` takes the embedded Dataset's name as a parameter.
 
 The ``UniqueCountTable`` stores a counter for each word in its own row of the entry count table.
 For each word the counter is incremented. If the result of the increment is 1, then this is the first time
@@ -667,102 +619,12 @@ Finally, we write a method to retrieve the number of unique words seen::
       return uniqueCountTable.get(new Get("unique_count", "count")).getLong("count");
     }
 
-You can make available your custom Dataset for applications in Continuuity Reactor by deploying it
-packaged into a jar. Along with the classes implementing the interface, include a Dataset module class
-that configures the dependencies between Dataset implementations::
-
-  public static class MyDatasetLibrary implements DatasetModule {
-    @Override
-    public void register(DatasetDefinitionRegistry registry) {
-      TableDefinition tableDefinition = registry.get("table");
-      UniqueCountTableDefinition keyValueTable = 
-	   new UniqueCountTableDefinition("UniqueCountTable", tableDefinition);
-      registry.add(keyValueTable);
-    }
-  }
-
-You can deploy the Dataset module jar using either the `Continuuity Reactor HTTP REST API <rest.html>`__
-or command line tools. You can also configure an application to deploy the module if it doesn't exist::
-
-  Class MyApp extends AbstractApplication {
-    public void configure() {
-      addDatasetModule("UniqueCountTableModule", UniqueCountTableDefinition.Module.class);
-      ...
-    }
-  }
-
-After the new Dataset implementation is deployed, applications use it to create new Datasets::
-
-  Class MyApp extends AbstractApplication {
-    public void configure() {
-      createDataset("myCounters", "UniqueCountTable")
-      ...
-    }
-  }
-
-Application components can access it via ``@UseDataSet``::
-
-  Class MyFowlet extends AbstractFlowlet {
-    @UseDataSet("myCounters")
-    private UniqueCountTable counters;
-    ...
-  }
-
-
-You can also pass ``DatasetProperties`` as a third parameter to the ``createDataset`` method.
-These properties will be used by ``DatasetDefinition`` when configuring a Dataset with the 
-``configure`` method.
-
-Custom Datasets: Simplified APIs
---------------------------------
-
-When your custom Dataset is built on top of one or more existing Datasets, the simplest way to implement
-it is to just define the data operations (by implementing the Dataset interface) and delegating all other
-work (such as  administrative operations) to the embedded Dataset. 
-
-To do this, you need only to implement the Dataset class and define the embedded Datasets by annotating 
-its constructor parameters.
-
-Here's a simpler look at our ``UniqueCountTable``::
-
-  public class UniqueCountTable extends AbstractDataset {
-
-    private final Table entryCountTable;
-    private final Table uniqueCountTable;
-
-    public UniqueCountTable(DatasetSpecification spec,
-                            @EmbeddedDataset("entryCountTable") Table entryCountTable,
-                            @EmbeddedDataset("uniqueCountTable") Table uniqueCountTable) {
-      super(spec.getName(), entryCountTable, uniqueCountTable);
-      this.entryCountTable = entryCountTable;
-      this.uniqueCountTable = uniqueCountTable;
-    }
-
-    public void updateUniqueCount(String entry) {
-      // ...
-    }
-
-
-    public Long readUniqueCount() {
-      // ...
-    }
-  }
-
-In this case, the class must have one constructor that takes a ``DatasetSpecification`` as a first
-parameter and any number of ``Dataset``\s annotated with the ``@EmbeddedDataset`` annotation as the
-remaining parameters. ``@EmbeddedDataset`` takes the embedded Dataset's name as a parameter.
 
 All administrative operations (such as create, drop, truncate) will be delegated to the embedded Datasets
 in the order they are defined in the constructor. ``DatasetProperties`` that are passed during creation of
 the Dataset will be passed as-is to the embedded Datasets.
 
-Having the ``UniqueCountTable`` class above is equivalent to having the ``UniqueCountTableDefinition``,
-``UniqueCountTable``, and ``MyDatasetLibrary`` classes from the example in the previous section. The
-approach described here simplifies implementation of custom Datasets in cases where higher flexibility is
-not needed.
-
-To deploy an implementation of this ``UniqueCountTable`` custom Dataset and make it available for
-applications to use, add into the Application implementation::
+To create a Dataset of ``UniqueCountTable`` type add the following into the Application implementation::
 
   Class MyApp extends AbstractApplication {
     public void configure() {
@@ -771,11 +633,11 @@ applications to use, add into the Application implementation::
     }
   }
 
-As with the previous example, deploy the custom Dataset packaged into a jar. No separate action of
-deploying the Dataset type is needed in this case: Continuuity Reactor will do it
-"under the covers" using the class of ``UniqueCountTable`` passed in the ``createDataset`` method.
+You can also pass ``DatasetProperties`` as a third parameter to the ``createDataset`` method.
+These properties will be used by embedded Datasets during creation and will be availalbe via ``DatasetSpecification``
+passed to Dataset constructor.
 
-Application components can access it via ``@UseDataSet``::
+Application components can access created Dataset via ``@UseDataSet``::
 
   Class MyFowlet extends AbstractFlowlet {
     @UseDataSet("myCounters")
@@ -783,8 +645,12 @@ Application components can access it via ``@UseDataSet``::
     ...
   }
 
-A complete application demonstrating the use of a custom Dataset is included in our 
+A complete application demonstrating the use of a custom Dataset is included in our
 `PageViewAnalytics </examples/PageViewAnalytics/index.html>`__ example.
+
+You can also create/drop/truncate Datasets using `Continuuity Reactor HTTP REST API <rest.html>`__. Please refer to the
+REST APIs guide for more details on how to do that.
+
 
 Datasets & MapReduce
 --------------------

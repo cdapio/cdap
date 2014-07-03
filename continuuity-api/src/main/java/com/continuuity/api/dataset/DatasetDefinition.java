@@ -1,5 +1,7 @@
 package com.continuuity.api.dataset;
 
+import com.continuuity.api.annotation.Beta;
+
 import java.io.IOException;
 
 /**
@@ -23,6 +25,7 @@ import java.io.IOException;
  * @param <D> defines data operations that can be performed on this dataset instance
  * @param <A> defines administrative operations that can be performed on this dataset instance
  */
+@Beta
 public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
 
   /**
