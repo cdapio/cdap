@@ -4,24 +4,36 @@ bin=`dirname "${BASH_SOURCE-$0}"`
 bin=`cd "$bin"; pwd`
 script=`basename $0`
 
+auth_token=
+auth_file="$HOME/.continuuity.accesstoken"
+
+function get_auth_token() {
+  if [ -f $auth_file ]; then
+    auth_token=`cat $auth_file`
+  fi
+}
+
 function usage() {
   echo "Tool for sending data to the TrafficAnalytics app"
   echo "Usage: $script [--gateway <hostname>]"
   echo ""
   echo "  Options"
-  echo "    --gateway   Specifies the hostname the gateway is running on.(Default: localhost:10000)"
+  echo "    --gateway   Specifies the hostname the gateway is running on.(Default: localhost)"
   echo "    --help      This help message"
   echo ""
 }
 
 gateway="localhost"
-  while [ $# -gt 0 ]
-  do
-    case "$1" in
-      --gateway) shift; gateway="$1"; shift;;
-      *)  usage; exit 1
-     esac
-  done
+while [ $# -gt 0 ]
+do
+  case "$1" in
+    --gateway) shift; gateway="$1"; shift;;
+    *)  usage; exit 1
+   esac
+done
+
+#  get the access token
+get_auth_token
 
 getDateInADay() {
   ((r=$RANDOM % 86400 + 1 ))
@@ -45,6 +57,6 @@ do
   date=$(getDateInADay $now)
   newLine=`echo $line | sed -E "s,([0-9]{2})/([A-Za-z]{3})/([0-9]{4}):([0-9]{2}):([0-9]{2}):([0-9]{2}),$date,g" ` 
   echo $newLine
-  curl -X POST -d "$newLine" http://$gateway:10000/v2/streams/$stream;
+  status=`curl -qSfsw "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X POST -d "$newLine" http://$gateway:10000/v2/streams/$stream`
 done
 IFS=$OLD_IFS

@@ -6,8 +6,19 @@ script=`basename $0`
 user=$USER
 epoch=`date +%s`
 
+app="SimpleWriteAndRead"
+
+auth_token=
+auth_file="$HOME/.continuuity.accesstoken"
+
+function get_auth_token() {
+  if [ -f $auth_file ]; then
+    auth_token=`cat $auth_file`
+  fi
+}
+
 function usage() {
-  echo "Application lifecycle management tool for the SimpleWriteAndRead application."
+  echo "Application lifecycle management tool for the $app application."
   echo "Usage: $script --action <deploy|start|stop|status> [--host <hostname>]"
   echo ""
   echo "  Options"
@@ -23,9 +34,16 @@ function deploy_action() {
   local host=$1; shift;
 
   echo "Deploying application $app..."
-  status=`curl -o /dev/null -sL -w "%{http_code}\\n" -H "X-Archive-Name: $app" -X POST http://$host:10000/v2/apps --data-binary @"$jar"`
+  status=`curl -o /dev/null -sL -w "%{http_code}\\n" -H "X-Archive-Name: $app" -H "Authorization: Bearer $auth_token" -X POST http://$host:10000/v2/apps --data-binary @"$jar"`
   if [ $status -ne 200 ]; then
     echo "Failed to deploy app"
+    if [ $status == 401 ]; then
+      if [ "x$auth_token" == "x" ]; then
+        echo "No access token provided"
+      else
+        echo "Invalid access token"
+      fi
+    fi
     exit 1;
   fi
 
@@ -56,7 +74,20 @@ function program_action() {
     echo " - ${maction/Stop/Stopp}ing $type $program... "
   fi
 
-  status=$(curl -s $http http://$host:10000/v2/apps/$app/$types/$program/$action 2>/dev/null)
+  status=$(curl -w "APP_MANAGER_HTTP_CODE%{http_code}" -s $http -H "Authorization: Bearer $auth_token" http://$host:10000/v2/apps/$app/$types/$program/$action 2>/dev/null)
+
+# extract status and code
+  code=`echo $status | grep -o '[^APP_MANAGER_HTTP_CODE]*$'`
+  status=`echo $status | sed "s/APP_MANAGER_HTTP_CODE[^APP_MANAGER_HTTP_CODE]*$//"`
+
+  if [ $code == 401 ]; then
+    if [ "x$auth_token" == "x" ]; then
+      echo "No access token provided"
+    else
+      echo "Invalid access token"
+    fi
+    exit 1;
+  fi
 
   if [ $? -ne 0 ]; then
    echo "Action '$action' failed."
@@ -90,7 +121,8 @@ if [ "x$action" == "x" ]; then
   echo "Action not specified."
 fi
 
-app="SimpleWriteAndRead"
+# read the access token
+get_auth_token
 
 if [ "x$action" == "xdeploy" ]; then
   jar_path=`ls $dir/../target/SimpleWriteAndRead-*.jar`
