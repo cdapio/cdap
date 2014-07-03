@@ -1,10 +1,11 @@
 @echo OFF
 REM Application Manager for managing application lifecycle for TrafficAnalytics 
-SET APP_JAR_NAME=TrafficAnalytics-1.0.jar
+SET APP_JAR_PREFIX=TrafficAnalytics
 
 SET APP_NAME=TrafficAnalytics
 SET FLOW_NAME=RequestCountFlow
 SET PROCEDURE_NAME=LogCountProcedure
+SET MAP_REDUCE_NAME=RequestCountMapReduce
 
 REM Set the base directory
 for %%i in ("%~dp0..\") do (SET APP_HOME=%%~dpi)
@@ -12,8 +13,15 @@ for %%i in ("%~dp0..\") do (SET APP_HOME=%%~dpi)
 REM Set path for curl.exe
 SET PATH=%APP_HOME%\..\..\libexec\bin
 
+for /r %APP_HOME%\target %%a in (%APP_JAR_PREFIX%*) do SET JAR_PATH=%%~dpnxa
+
+if %JAR_PATH% == "" (echo "Could not find application jar with name %APP_JAR_PREFIX%"
+                     GOTO :EOF)
+
+
 REM Process Command line
 IF "%1" == "start" GOTO START
+IF "%1" == "run" GOTO RUN 
 IF "%1" == "stop" GOTO STOP
 IF "%1" == "status" GOTO STATUS
 IF "%1" == "deploy" GOTO DEPLOY
@@ -21,16 +29,21 @@ GOTO USAGE
 
 :USAGE
 echo Application lifecycle management tool
-echo Usage: %0 {deploy^|start^|stop^|status}
+echo Usage: %0 {deploy^|start^|run^||stop^|status}
+echo Use run option to run mapreduce job
 GOTO :EOF
 
 :DEPLOY
 echo Deploying application...
-FOR /F %%i IN ('curl -X POST -o /dev/null -sL -w %%{http_code} -H "X-Archive-Name: %APP_NAME%" --data-binary @"target\%APP_JAR_NAME%" http://localhost:10000/v2/apps') DO SET RESPONSE=%%i
+FOR /F %%i IN ('curl -X POST -o /dev/null -sL -w %%{http_code} -H "X-Archive-Name: %APP_NAME%" --data-binary @"%AJAR_PATH%" http://localhost:10000/v2/apps') DO SET RESPONSE=%%i
 IF  %RESPONSE% == 200  (echo Deployed application 
                         GOTO :EOF)
 
 echo Fail to deploy application
+GOTO :EOF
+
+:RUN
+CALL :POST %APP_NAME% mapreduce %MAP_REDUCE_NAME% start
 GOTO :EOF
 
 :START
@@ -46,6 +59,7 @@ GOTO :EOF
 :STATUS
 CALL :GET %APP_NAME% flows %FLOW_NAME% status
 CALL :GET %APP_NAME% procedures %PROCEDURE_NAME% status
+CALL :GET %APP_NAME% mapreduce %MAP_REDUCE_NAME% status
 GOTO :EOF
 
 :POST

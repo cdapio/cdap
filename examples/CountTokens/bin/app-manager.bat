@@ -47,7 +47,7 @@ CALL :POST %APP_NAME% flows %FLOW_NAME% stop
 GOTO :EOF
 
 :STATUS
-CALL :STATUS %APP_NAME% flows %FLOW_NAME% status
+CALL :GET %APP_NAME% flows %FLOW_NAME% status
 GOTO :EOF
 
 :POST

@@ -1,7 +1,6 @@
 @echo OFF
 REM Application Manager for managing application lifecycle for TrafficAnalytics 
-SET APP_JAR_NAME=PageViewAnalytics-1.0.jar
-
+SET APP_JAR_PREFIX=PageViewAnalytics
 SET APP_NAME=PageViewAnalytics
 SET FLOW_NAME=PageViewFlow
 SET PROCEDURE_NAME=PageViewProcedure
@@ -11,6 +10,11 @@ for %%i in ("%~dp0..\") do (SET APP_HOME=%%~dpi)
 
 REM Set path for curl.exe
 SET PATH=%APP_HOME%\..\..\libexec\bin
+
+for /r %APP_HOME%\target %%a in (%APP_JAR_PREFIX%*) do SET JAR_PATH=%%~dpnxa
+
+if %JAR_PATH% == "" (echo "Could not find application jar with name %APP_JAR_PREFIX%"
+                     GOTO :EOF)
 
 
 REM Process Command line
@@ -27,7 +31,7 @@ GOTO :EOF
 
 :DEPLOY
 echo Deploying application...
-FOR /F %%i IN ('curl -X POST -o /dev/null -sL -w %%{http_code} -H "X-Archive-Name: %APP_NAME%" --data-binary @"target\%APP_JAR_NAME%" http://localhost:10000/v2/apps') DO SET RESPONSE=%%i
+FOR /F %%i IN ('curl -X POST -o /dev/null -sL -w %%{http_code} -H "X-Archive-Name: %APP_NAME%" --data-binary @"%JAR_PATH%" http://localhost:10000/v2/apps') DO SET RESPONSE=%%i
 IF  %RESPONSE% == 200  (echo Deployed application 
                         GOTO :EOF)
 
