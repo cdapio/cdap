@@ -153,6 +153,10 @@ public class ExtensiveSchemaTableDefinition
     private final List<Value> vList;
     private final Map<String, Value> stovMap;
 
+    // Transient and static fields - they shouldn't be included in the schema
+    private transient int t = 0;
+    private static int st = 80;
+
     // Reference to itself
     // TODO fix infinite loop
 //    private ExtensiveSchema ext;
