@@ -129,6 +129,8 @@ function stage_docs() {
   echo "cd /var/www/reactor; ls"
   echo "sudo rm -rf $reactor_version; ls"
   echo "sudo unzip ~/$ZIP_FILE; sudo mv $HTML $reactor_version"
+  echo "or"
+  echo "cd /var/www/reactor; ls; sudo rm -rf $reactor_version; sudo unzip ~/$ZIP_FILE; sudo mv $HTML $reactor_version"
   echo ""
   login_staging_server
 }
