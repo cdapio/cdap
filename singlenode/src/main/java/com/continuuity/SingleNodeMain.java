@@ -164,22 +164,36 @@ public class SingleNodeMain {
   public void shutDown() {
     LOG.info("Shutting down reactor...");
 
-    streamHttpService.stopAndWait();
-    webCloudAppService.stopAndWait();
-    flumeCollector.stopAndWait();
-    router.stopAndWait();
-    gatewayV2.stopAndWait();
-    metricsQueryService.stopAndWait();
-    appFabricServer.stopAndWait();
-    txService.stopAndWait();
-    datasetService.stopAndWait();
-    if (externalAuthenticationServer != null) {
-      externalAuthenticationServer.stopAndWait();
+    try {
+      // order matters: first shut down web app 'cause it will stop working after router is down
+      webCloudAppService.stopAndWait();
+      //  shut down router, gateway and flume, to stop all incoming traffic
+      router.stopAndWait();
+      gatewayV2.stopAndWait();
+      flumeCollector.stopAndWait();
+      // now the stream writer and the explore service (they need tx)
+      streamHttpService.stopAndWait();
+      if (exploreExecutorService != null) {
+        exploreExecutorService.stopAndWait();
+      }
+      // app fabric will also stop all programs
+      appFabricServer.stopAndWait();
+      // all programs are stopped: dataset service, metrics, transactions can stop now
+      datasetService.stopAndWait();
+      metricsQueryService.stopAndWait();
+      txService.stopAndWait();
+      // auth service is on the side anyway
+      if (externalAuthenticationServer != null) {
+        externalAuthenticationServer.stopAndWait();
+      }
+      logAppenderInitializer.close();
+
+    } catch (Throwable e) {
+      LOG.error("Exception during shutdown", e);
+      // we can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
+      // therefore System.exit() won't do it, we need to farce a halt.
+      Runtime.getRuntime().halt(1);
     }
-    if (exploreExecutorService != null) {
-      exploreExecutorService.stopAndWait();
-    }
-    logAppenderInitializer.close();
   }
 
   /**
