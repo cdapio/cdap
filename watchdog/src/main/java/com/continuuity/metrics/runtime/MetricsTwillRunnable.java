@@ -13,6 +13,7 @@ import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -92,6 +93,7 @@ public class MetricsTwillRunnable extends AbstractReactorTwillRunnable {
       new ZKClientModule(),
       new KafkaClientModule(),
       new DataFabricModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),

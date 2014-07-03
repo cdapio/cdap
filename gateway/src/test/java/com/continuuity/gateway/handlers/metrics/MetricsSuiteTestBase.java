@@ -18,6 +18,7 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.MockMetricsCollectionService;
@@ -150,7 +151,8 @@ public abstract class MetricsSuiteTestBase {
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
-      new DataFabricModules().getInMemoryModules()
+      new DataFabricModules().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModule()
     ).with(new AbstractModule() {
       @Override
       protected void configure() {

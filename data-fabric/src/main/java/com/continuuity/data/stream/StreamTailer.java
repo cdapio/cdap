@@ -8,6 +8,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Charsets;
@@ -40,6 +41,7 @@ public class StreamTailer {
 
     Injector injector = Guice.createInjector(new ConfigModule(cConf, hConf),
                                              new DataFabricModules().getDistributedModules(),
+                                             new DataSetsModules().getDistributedModule(),
                                              new LocationRuntimeModule().getDistributedModules());
 
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
