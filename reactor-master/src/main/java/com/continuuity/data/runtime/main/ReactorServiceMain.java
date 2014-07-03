@@ -409,11 +409,11 @@ public class ReactorServiceMain extends DaemonMain {
       throw new RuntimeException("Unable to trace Explore dependencies", e);
     }
 
-    // HIVE_CONF_FILES will be defined in startup scripts if Hive is installed.
-    String hiveConfFiles = System.getProperty(Constants.Explore.HIVE_CONF_FILES);
+    // EXPLORE_CONF_FILES will be defined in startup scripts if Hive is installed.
+    String hiveConfFiles = System.getProperty(Constants.Explore.EXPLORE_CONF_FILES);
     LOG.debug("Hive conf files = {}", hiveConfFiles);
     if (hiveConfFiles == null) {
-      throw new RuntimeException("System property " + Constants.Explore.HIVE_CONF_FILES + " is not set.");
+      throw new RuntimeException("System property " + Constants.Explore.EXPLORE_CONF_FILES + " is not set.");
     }
 
     // Add all the conf files needed by hive as resources available to containers

@@ -17,6 +17,7 @@ import com.continuuity.hive.context.ConfigurationUtil;
 import com.continuuity.hive.context.ContextManager;
 import com.continuuity.hive.context.HConfCodec;
 import com.continuuity.hive.context.TxnCodec;
+import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
@@ -27,16 +28,23 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
+import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.TableSchema;
+import org.apache.hive.service.cli.thrift.TColumnValue;
+import org.apache.hive.service.cli.thrift.TRow;
+import org.apache.hive.service.cli.thrift.TRowSet;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -66,8 +74,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   protected abstract Status fetchStatus(OperationHandle handle) throws HiveSQLException, ExploreException,
     HandleNotFoundException;
-  protected abstract List<Result> fetchNextResults(OperationHandle handle, int size)
-    throws HiveSQLException, ExploreException, HandleNotFoundException;
+  protected abstract OperationHandle doExecute(SessionHandle sessionHandle, String statement)
+    throws HiveSQLException, ExploreException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
@@ -155,8 +163,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       Map<String, String> sessionConf = startSession();
       // TODO: allow changing of hive user and password - REACTOR-271
       SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
-      OperationHandle operationHandle = cliService.executeStatementAsync(sessionHandle, statement,
-                                                                         ImmutableMap.<String, String>of());
+      OperationHandle operationHandle = doExecute(sessionHandle, statement);
       Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
       LOG.trace("Executing statement: {} with handle {}", statement, handle);
       return handle;
@@ -215,6 +222,40 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return results;
     } catch (HiveSQLException e) {
       throw getSqlException(e);
+    }
+  }
+
+  protected List<Result> fetchNextResults(OperationHandle operationHandle, int size)
+    throws HiveSQLException, ExploreException, HandleNotFoundException {
+    try {
+      if (operationHandle.hasResultSet()) {
+        // Rowset is an interface in Hive 13, but a class in Hive 12, so we use reflection
+        // so that the compiler does not make assumption on the return type of fetchResults
+        Object rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
+        Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
+        Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
+        TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
+
+        ImmutableList.Builder<Result> rowsBuilder = ImmutableList.builder();
+        for (TRow tRow : tRowSet.getRows()) {
+          ImmutableList.Builder<Object> colsBuilder = ImmutableList.builder();
+          for (TColumnValue tColumnValue : tRow.getColVals()) {
+            colsBuilder.add(tColumnToObject(tColumnValue));
+          }
+          rowsBuilder.add(new Result(colsBuilder.build()));
+        }
+        return rowsBuilder.build();
+      } else {
+        return Collections.emptyList();
+      }
+    } catch (ClassNotFoundException e) {
+      throw Throwables.propagate(e);
+    } catch (NoSuchMethodException e) {
+      throw Throwables.propagate(e);
+    } catch (InvocationTargetException e) {
+      throw Throwables.propagate(e);
+    } catch (IllegalAccessException e) {
+      throw Throwables.propagate(e);
     }
   }
 
@@ -414,6 +455,25 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       throw e;
     }
     throw new ExploreException(e);
+  }
+
+  protected Object tColumnToObject(TColumnValue tColumnValue) throws ExploreException {
+    if (tColumnValue.isSetBoolVal()) {
+      return tColumnValue.getBoolVal().isValue();
+    } else if (tColumnValue.isSetByteVal()) {
+      return tColumnValue.getByteVal().getValue();
+    } else if (tColumnValue.isSetDoubleVal()) {
+      return tColumnValue.getDoubleVal().getValue();
+    } else if (tColumnValue.isSetI16Val()) {
+      return tColumnValue.getI16Val().getValue();
+    } else if (tColumnValue.isSetI32Val()) {
+      return tColumnValue.getI32Val().getValue();
+    } else if (tColumnValue.isSetI64Val()) {
+      return tColumnValue.getI64Val().getValue();
+    } else if (tColumnValue.isSetStringVal()) {
+      return tColumnValue.getStringVal().getValue();
+    }
+    throw new ExploreException("Unknown column value encountered: " + tColumnValue);
   }
 
   /**
