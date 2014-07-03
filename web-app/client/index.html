@@ -56,22 +56,34 @@
         <a href="#" id="product-name"></a>
       </div>
       <div id="global">
+      {{#if C.Env.security_enabled}}
+          {{#if C.Env.auth_token}}
             <a class="general-link logout-link" href="/logout" id="header-logout">Logout</a>
+          {{else}}
             <a class="general-link login-link" href="/#/login" id="header-login">Login</a>
+          {{/if}}
+          {{#if C.Env.authenticated}}
             <a class="general-link logout-link" href="https://accounts.continuuity.com/logout">Logout</a>
             <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" class="support-link">Support</a>
             <a href="https://accounts.continuuity.com/profile" class="user-link" target="_blank">{{C.Env.user.name}}</a>
             <a href="#" class="cloud-link">{{C.Env.cluster.vpc_label}}</a>
+          {{else}}
+            {{#unless C.isEnterprise}}
             <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" class="support-link">Support</a>
+            {{/unless}}
             <div class="pull-right user-link small-pad" style="position: relative; width: 140px;text-align: center;">
               <div class="dropdown" data-toggle="dropdown">
                 <div class="text-span">  <img id="loading-time-select-img" src="/assets/img/start-all-load.gif" />My account</div>
               </div>
                 <ul class="dropdown-menu top-dropdown-listholder" style="text-align: left; margin-top: -5px;">
+                {{#unless C.isEnterprise}}
                   <li><a href="https://accounts.continuuity.com/profile" target="_blank">Go to Sandbox</a></li>
+                {{/unless}}
                   <li><a href="/#/accesstoken">Access token</a></li>
                 </ul>
             </div>
+          {{/if}}
+      {{/if}}
       <a href="#/services" class="general-link services-link topmenu-top-padding">Services</a>
       <a href="#/analyze" class="metrics-link" id="header-metrics">Metrics</a>
       </div>
