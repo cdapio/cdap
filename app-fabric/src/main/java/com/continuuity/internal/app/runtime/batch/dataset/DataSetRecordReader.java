@@ -42,7 +42,7 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
     if (hasNext) {
       // splitreader doesn't increment these metrics, need to do it ourselves.
       context.getSystemMapperMetrics().gauge("store.reads", 1, dataSetName);
-      context.getSystemMapperMetrics().gauge("store.ops", 1);
+      context.getSystemMapperMetrics().gauge("store.ops", 1, dataSetName);
     }
     return hasNext;
   }
