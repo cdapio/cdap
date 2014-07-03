@@ -7,6 +7,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -27,6 +28,7 @@ public class InMemoryStreamCoordinatorTest extends StreamCoordinatorTestBase {
       new ConfigModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
       new AbstractModule() {

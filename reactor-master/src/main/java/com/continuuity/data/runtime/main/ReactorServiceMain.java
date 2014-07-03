@@ -19,6 +19,7 @@ import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
@@ -133,6 +134,7 @@ public class ReactorServiceMain extends DaemonMain {
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModule(),
       new DataFabricModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new ServiceStoreModules().getDistributedModule()
     );

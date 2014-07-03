@@ -8,6 +8,7 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -112,6 +113,7 @@ public class BaseHiveExploreServiceTest {
       new LocationRuntimeModule().getInMemoryModules(),
       new DataSetServiceModules().getInMemoryModule(),
       new DataFabricModules().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new AuthModule(),
       new ExploreRuntimeModule().getInMemoryModules()

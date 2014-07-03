@@ -7,6 +7,7 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -46,7 +47,8 @@ public class ContextManager {
       new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new DataFabricModules().getDistributedModules()
+      new DataFabricModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModule()
     );
 
     ZKClientService zkClientService = injector.getInstance(ZKClientService.class);

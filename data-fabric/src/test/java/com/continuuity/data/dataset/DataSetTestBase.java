@@ -8,6 +8,7 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionContext;
@@ -54,6 +55,7 @@ public class DataSetTestBase {
     // use Guice to inject an in-memory tx
     final Injector injector =
       Guice.createInjector(new DataFabricModules().getInMemoryModules(),
+                           new DataSetsModules().getInMemoryModule(),
                            new DiscoveryRuntimeModule().getInMemoryModules(),
                            new TransactionMetricsModule(),
                            new AbstractModule() {

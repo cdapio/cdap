@@ -9,6 +9,7 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
 import com.continuuity.logging.guice.LoggingModules;
@@ -61,6 +62,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModule(),
       new MetricsClientRuntimeModule().getNoopModules(),
       new LoggingModules().getInMemoryModules()
     );
@@ -78,6 +80,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new DiscoveryRuntimeModule().getSingleNodeModules(),
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new DataFabricModules().getSingleNodeModules(),
+      new DataSetsModules().getLocalModule(),
       new MetricsClientRuntimeModule().getMapReduceModules(taskContext),
       new LoggingModules().getSingleNodeModules()
     );
