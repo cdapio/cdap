@@ -50,7 +50,8 @@ These are the Continuuity Reactor components:
 .. literal above is used to force an extra line break after list in PDF
 
 Before installing the Continuuity Reactor components, you must first install a Hadoop cluster
-with *HDFS*, *YARN*, *HBase*, and *Zookeeper*. All Reactor components can be installed on the
+with *HDFS*, *YARN*, *HBase*, and *Zookeeper*. In order to use the ad-hoc querying capabilities
+of Reactor, you also need to install *Hive*. All Reactor components can be installed on the
 same boxes as your Hadoop cluster, or on separate boxes that can connect to the Hadoop services. 
 
 Our recommended installation is to use two boxes for the Reactor components; the
@@ -166,7 +167,7 @@ You'll need this software installed:
 
 - Java runtime (on Reactor and Hadoop nodes)
 - Node.js runtime (on Reactor nodes)
-- Hadoop/HBase environment to run against
+- Hadoop/HBase/Hive environment to run against
 
 Java Runtime
 ............
@@ -241,11 +242,18 @@ For a distributed enterprise, you must install these Hadoop components:
 +---------------+-------------------+---------------------------+
 | **Zookeeper** |                   | Version 3.4.3 or later    |
 +---------------+-------------------+---------------------------+
+| **Hive**      |                   | Version 12.0 or later     |
++               +-------------------+---------------------------+
+|               | CDH               | 4.3.x or later            |
++               +-------------------+---------------------------+
+|               | HDP               | 2.0 or later              |
++---------------+-------------------+---------------------------+
 
 Reactor nodes require Hadoop and HBase client installation and configuration. No Hadoop
 services need to be running.
 
-Certain Continuuity components need to reference your *Hadoop*, *HBase*, and *YARN* cluster configurations by adding your configuration to their classpaths.
+Certain Continuuity components need to reference your *Hadoop*, *HBase*, and *YARN* cluster configurations by adding
+your configuration to their classpaths.
 
 .. rst2pdf: PageBreak
 
@@ -266,14 +274,14 @@ If you want to use an HDFS directory with a name other than ``/continuuity``:
 - Create an xml file ``conf/continuuity-site.xml`` (see appendix) and include in it an
   ``hdfs.namespace`` property for the HDFS directory::
 
-	<configuration>
-	 ...
-	 <property>
-	 <name>hdfs.namespace</name>
-	 <value>/myhadoop/myspace</value>
-	 <description>Default HDFS namespace</description>
-	 </property>
-	 ...
+  <configuration>
+    ...
+    <property>
+      <name>hdfs.namespace</name>
+      <value>/myhadoop/myspace</value>
+      <description>Default HDFS namespace</description>
+    </property>
+	  ...
 
 - Ensure that the default HDFS user ``yarn`` owns that HDFS directory.
 
@@ -283,16 +291,29 @@ If you want to use a different HDFS user than ``yarn``:
   in the cluster on which YARN is running (typically, all of the machines).
 - Create an ``hdfs.user`` property for that user in ``conf/continuuity-site.xml``::
 
-	<configuration>
-	 ...
-	 <property>
-	 <name>hdfs.user</name>
-	 <value>my_username</value>
-	 <description>User for accessing HDFS</description>
-	 </property>
-	 ...
+  <configuration>
+	  ...
+    <property>
+      <name>hdfs.user</name>
+      <value>my_username</value>
+      <description>User for accessing HDFS</description>
+    </property>
+    ...
 
 - Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
+
+If you want to use the ad-hoc querying capabilities of Reactor, enable the Reactor Explore Service in
+``conf/continuuity-site.xml``::
+
+	  ...
+    <property>
+      <name>reactor.explore.enabled</name>
+      <value>true</value>
+      <description>Enable Explore functionality</description>
+    </property>
+    ...
+
+Note that this feature is currently not supported on secure Hadoop clusters.
 
 .. rst2pdf: PageBreak
 
