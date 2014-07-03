@@ -120,9 +120,11 @@ public class MapReduceMetricsWriter {
 
         String programPart = parts[1];
         if (programPart.equals("mapper")) {
-          reportContinuuityStats(counters.getGroup(group), context.getSystemMapperMetrics(scope), scope, previousMapStats);
+          reportContinuuityStats(counters.getGroup(group), context.getSystemMapperMetrics(scope), scope,
+                                 previousMapStats);
         } else if (programPart.equals("reducer")) {
-          reportContinuuityStats(counters.getGroup(group), context.getSystemReducerMetrics(scope), scope, previousReduceStats);
+          reportContinuuityStats(counters.getGroup(group), context.getSystemReducerMetrics(scope), scope,
+                                 previousReduceStats);
         } else {
           reportContinuuityStats(counters.getGroup(group), context.getSystemMetrics(scope), scope, previousSystemStats);
         }
