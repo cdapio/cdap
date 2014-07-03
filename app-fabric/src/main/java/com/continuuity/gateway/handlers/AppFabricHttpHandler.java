@@ -3223,6 +3223,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       if (appRunning) {
         throw new Exception("App Still Running");
       }
+
+      // NOTE: deleting new datasets stuff first because old datasets system deletes all blindly by prefix
+      //       which may damage metadata
+      dsFramework.deleteAllInstances();
+      dsFramework.deleteAllModules();
+
       deleteMetrics(account, null);
       // delete all meta data
       store.removeAll(accountId);
@@ -3249,9 +3255,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       // NOTE: there could be services running at the moment that rely on the system datasets to be available.
       dataSetAccessor.truncateAllExceptBlacklist(DataSetAccessor.Namespace.SYSTEM, datasetsToKeep);
-
-      dsFramework.deleteAllInstances();
-      dsFramework.deleteAllModules();
 
       LOG.info("All data for account '" + account + "' deleted.");
       responder.sendStatus(HttpResponseStatus.OK);
