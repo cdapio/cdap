@@ -586,7 +586,7 @@ Example
    * - Body
      - ``{"typeName":"table", "properties":{"ttl":"3600000"}}``
    * - Description
-     - Creates a Dataset named "mydataset" of the type "table" and time-to-live property set to 1 hour;
+     - Creates a Dataset named "mydataset" of the type "table" and time-to-live property set to 1 hour
 
 Deleting a Dataset
 ------------------
