@@ -263,10 +263,6 @@ function(Components, Embeddables, HTTP, Util) {
 					UserVoice.scan();
 				}
 
-				$(function () {
-	        $("[data-toggle='tooltip']").tooltip();
-		    });
-
 			});
 
 		},

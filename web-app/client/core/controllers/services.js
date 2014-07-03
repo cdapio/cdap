@@ -41,6 +41,8 @@ define([], function () {
           }));
         });
         self.set('services', servicesArr);
+
+        // Bind all the tooltips after UI has rendered after call has returned.
         setTimeout(function () {
           $("[data-toggle='tooltip']").tooltip();
         }, 1000);
