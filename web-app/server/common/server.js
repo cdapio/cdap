@@ -85,9 +85,9 @@ var SECURITY_ENABLED, AUTH_SERVER_ADDRESSES;
  */
 WebAppServer.prototype.setSecurityStatus = function (callback) {
   var self = this;
-  
+
   var path = '/' + this.API_VERSION + '/apps';
-  var url = ('http://' + this.config['gateway.server.address'] + ':' 
+  var url = ('http://' + this.config['gateway.server.address'] + ':'
     + this.config['gateway.server.port'] + path);
   var interval = setInterval(function () {
     self.logger.info('Calling security endpoint: ', url);
@@ -107,7 +107,14 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
         if (typeof callback === 'function') {
           callback();
         }
-      }
+      } else if (!err && response) {
+          clearInterval(interval);
+          SECURITY_ENABLED = false;
+          self.logger.info('Security configuration found. Security is enabled: ', SECURITY_ENABLED);
+          if (typeof callback === 'function') {
+            callback();
+          }
+        }
     });
   }, self.SECURITY_TIMER);
 };
@@ -137,14 +144,14 @@ WebAppServer.prototype.setEnvironment = function(id, product, version, callback)
   this.logger.info('PRODUCT_NAME', PRODUCT_NAME);
   this.logger.info('PRODUCT_VERSION', PRODUCT_VERSION);
 
-  this.setSecurityStatus(function() {
-    Env.getAddress(function (address) {
-      IP_ADDRESS = address;
-      if (typeof callback === 'function') {
+  if (typeof callback === 'function') {
+    this.setSecurityStatus(function() {
+      Env.getAddress(function (address) {
+        IP_ADDRESS = address;
         callback(PRODUCT_VERSION, address);
-      }
+      }.bind(this));
     }.bind(this));
-  }.bind(this));
+  }
 };
 
 /**
