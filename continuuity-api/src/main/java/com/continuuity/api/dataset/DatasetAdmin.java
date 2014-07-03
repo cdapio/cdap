@@ -1,5 +1,7 @@
 package com.continuuity.api.dataset;
 
+import com.continuuity.api.annotation.Beta;
+
 import java.io.Closeable;
 import java.io.IOException;
 
@@ -12,6 +14,7 @@ import java.io.IOException;
  * NOTE: even though seems to be not required, the list of common operations helps to bring better structure to dataset
  *       administration design and better guide the design of new datasets.
  */
+@Beta
 public interface DatasetAdmin extends Closeable {
   /**
    * @return true if dataset exists

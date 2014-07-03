@@ -13,8 +13,6 @@ import java.lang.annotation.Target;
  * Annotation to declare a parameter to be used in {@link com.continuuity.api.dataset.Dataset} constructor
  * which will be injected with {@link com.continuuity.api.dataset.Dataset} instance.
  *
- * This is used when creating {@link com.continuuity.api.dataset.DatasetDefinition} from only
- * {@link com.continuuity.api.dataset.Dataset} implementation.
  * See
  * {@link com.continuuity.api.app.ApplicationConfigurer#addDatasetType
  * com.continuuity.api.app.ApplicationConfigurer#addDatasetType(Class &lt;&#63; extends Dataset&gt; datasetClass)

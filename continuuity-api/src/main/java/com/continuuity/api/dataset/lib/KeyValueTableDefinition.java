@@ -1,5 +1,6 @@
 package com.continuuity.api.dataset.lib;
 
+import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
@@ -12,6 +13,7 @@ import java.io.IOException;
 /**
  * {@link DatasetDefinition} for {@link KeyValueTable}.
  */
+@Beta
 public class KeyValueTableDefinition
   extends AbstractDatasetDefinition<KeyValueTable, DatasetAdmin> {
 
