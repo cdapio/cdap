@@ -97,7 +97,7 @@ public final class Constants {
      */
     public static final int DEFAULT_HISTORY_RESULTS_LIMIT = 100;
 
-    public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle";
+    public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
   }
 
   /**
@@ -123,7 +123,7 @@ public final class Constants {
       public static final String MAX_INSTANCES = "data.tx.max.instances";
     }
 
-    public static final String SERVICE_DESCRIPTION = "Service that enables data consistency.";
+    public static final String SERVICE_DESCRIPTION = "Service that maintains transaction states.";
 
   }
 
@@ -184,7 +184,7 @@ public final class Constants {
       //max-instances of dataset executor service
       public static final String MAX_INSTANCES = "dataset.executor.max.instances";
 
-      public static final String SERVICE_DESCRIPTION = "Service to execute Dataset operations.";
+      public static final String SERVICE_DESCRIPTION = "Service to perform Dataset operations.";
     }
   }
 
@@ -238,7 +238,7 @@ public final class Constants {
     //max instances of stream handler service
     public static final String MAX_INSTANCES = "stream.container.instances";
 
-    public static final String SERVICE_DESCRIPTION = "HTTP service that handles stream data ingestion.";
+    public static final String SERVICE_DESCRIPTION = "Service that handles stream data ingestion.";
     /* End constants used by stream */
   }
 
@@ -335,7 +335,7 @@ public final class Constants {
     public static final String NUM_CORES = "metrics.num.cores";
     public static final String MEMORY_MB = "metrics.memory.mb";
     public static final String MAX_INSTANCES = "metrics.max.instances";
-    public static final String SERVICE_DESCRIPTION = "HTTP service to service metrics requests.";
+    public static final String SERVICE_DESCRIPTION = "Service to handle metrics requests.";
   }
 
   /**
@@ -364,7 +364,7 @@ public final class Constants {
     public static final String LOG_SAVER_STATUS_HANDLER = "log.saver.status.handler";
     public static final String ADDRESS = "log.saver.status.bind.address";
 
-    public static final String SERVICE_DESCRIPTION = "Service to collect store logs application logs.";
+    public static final String SERVICE_DESCRIPTION = "Service to collect and store logs.";
   }
 
   /**
@@ -463,7 +463,7 @@ public final class Constants {
     public static final String INACTIVE_OPERATION_TIMEOUT_SECS = "explore.inactive.operation.timeout.secs";
     public static final String CLEANUP_JOB_SCHEDULE_SECS = "explore.cleanup.job.schedule.secs";
 
-    public static final String SERVICE_DESCRIPTION = "Service to enable Ad-hoc querying capabilities.";
+    public static final String SERVICE_DESCRIPTION = "Service to run Ad-hoc queries.";
 
     /**
      * Explore JDBC constants.
