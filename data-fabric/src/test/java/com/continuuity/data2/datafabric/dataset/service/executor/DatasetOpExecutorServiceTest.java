@@ -21,7 +21,6 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
-import com.continuuity.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFactory;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
