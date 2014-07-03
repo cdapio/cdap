@@ -3356,6 +3356,7 @@ div.tooltip {
 	display: none;
 	height: 15px;
 	margin-right: 5px;
+	width: 24px;
 }
 
 .dropdown-menu>li>a:hover, .dropdown-menu>li>a:focus, .dropdown-submenu:hover>a, .dropdown-submenu:focus>a {
