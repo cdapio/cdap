@@ -95,11 +95,17 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
       method: 'GET',
       url: url
     }, function (err, response, body) {
-      if (!err && response && body) {
+      // If the response is a 401 and contains "auth_uri" as part of the body, Reactor security is enabled.
+      // On other response codes, and when "auth_uri" is not part of the body, Reactor security is disabled.
+      if (!err && response) {
         clearInterval(interval);
-        if (response.statusCode === 401) {
-          SECURITY_ENABLED = true;
-          AUTH_SERVER_ADDRESSES = JSON.parse(body).auth_uri;
+        if (body) {
+          if (response.statusCode === 401 && JSON.parse(body).auth_uri) {
+            SECURITY_ENABLED = true;
+            AUTH_SERVER_ADDRESSES = JSON.parse(body).auth_uri;
+          } else {
+            SECURITY_ENABLED = false;
+          }
         } else {
           SECURITY_ENABLED = false;
         }
@@ -107,14 +113,7 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
         if (typeof callback === 'function') {
           callback();
         }
-      } else if (!err && response) {
-          clearInterval(interval);
-          SECURITY_ENABLED = false;
-          self.logger.info('Security configuration found. Security is enabled: ', SECURITY_ENABLED);
-          if (typeof callback === 'function') {
-            callback();
-          }
-        }
+      }
     });
   }, self.SECURITY_TIMER);
 };
@@ -144,6 +143,9 @@ WebAppServer.prototype.setEnvironment = function(id, product, version, callback)
   this.logger.info('PRODUCT_NAME', PRODUCT_NAME);
   this.logger.info('PRODUCT_VERSION', PRODUCT_VERSION);
 
+  // Check security status only when a callback is passed.
+  // This is a minor hack since sandboxes call this function twice, but we need it to check
+  // Security status only on the call with callbacks.
   if (typeof callback === 'function') {
     this.setSecurityStatus(function() {
       Env.getAddress(function (address) {
