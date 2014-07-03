@@ -86,16 +86,20 @@ public class ReactorTool {
         new ConfigModule(cConf, hConf),
         new LocationRuntimeModule().getDistributedModules(),
         new DataFabricModules().getDistributedModules(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            install(new FactoryModuleBuilder()
+                      .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                      .build(DatasetDefinitionRegistryFactory.class));
+          }
+        },
         new KafkaClientModule(),
         new MetricsClientRuntimeModule().getDistributedModules(),
         new AbstractModule() {
           @Override
           protected void configure() {
             bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
-            install(new FactoryModuleBuilder()
-                      .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                      .build(DatasetDefinitionRegistryFactory.class));
-
           }
         },
         new ZKClientModule(),

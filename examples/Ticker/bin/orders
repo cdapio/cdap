@@ -9,6 +9,15 @@ script=`basename $0`
 
 # orderIndex, {"start":start, "end":end, keyvalue pairs}
 
+auth_token=
+auth_file="$HOME/.continuuity.accesstoken"
+
+function get_auth_token() {
+  if [ -f $auth_file ]; then
+    auth_token=`cat $auth_file`
+  fi
+}
+
 function usage() {
 echo "Ticker Order Data Extraction tool."
 echo "Usage: $script --start <start> --end <end> [--gateway <hostname:port>]"
@@ -78,7 +87,10 @@ if [ "x$q" == "x" ]; then
   exit 1
 fi
 
+#get the access token
+get_auth_token
+
 echo "Querying order management data service"
 echo 
-curl -s -d "{'start':'$start', 'end':'$end', $q}" http://$gateway/v2/apps/Ticker/procedures/Orders/methods/orders | python -mjson.tool | grep -v '"id":'
+curl -H "Authorization: Bearer $auth_token" -s -d "{'start':'$start', 'end':'$end', $q}" http://$gateway/v2/apps/Ticker/procedures/Orders/methods/orders | python -mjson.tool | grep -v '"id":'
 echo 

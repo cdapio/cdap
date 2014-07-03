@@ -10,6 +10,7 @@
     <logger name="org.apache.zookeeper" level="ERROR"/>
     <logger name="com.ning" level="WARN"/>
     <logger name="org.apache.hadoop" level="WARN"/>
+    <logger name="org.apache.hive" level="WARN"/>
     <logger name="org.quartz.core" level="WARN"/>
     <logger name="com.continuuity" level="INFO"/>
 

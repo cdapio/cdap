@@ -20,9 +20,6 @@ import org.apache.twill.api.TwillApplication;
  * A support class for {@link Application}s which reduces repetition and results in
  * a more readable configuration. Simply implement {@link #configure()} to define your application.
  */
- 
- 
-@Beta
 public abstract class AbstractApplication implements Application {
   private ApplicationContext context;
   private ApplicationConfigurer configurer;
@@ -83,6 +80,7 @@ public abstract class AbstractApplication implements Application {
   /**
    * @see ApplicationConfigurer#addDatasetModule(String, Class)
    */
+  @Beta
   protected void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
     configurer.addDatasetModule(moduleName, moduleClass);
   }
@@ -90,6 +88,7 @@ public abstract class AbstractApplication implements Application {
   /**
    * @see ApplicationConfigurer#addDatasetType(Class)
    */
+  @Beta
   protected void addDatasetType(Class<? extends Dataset> datasetClass) {
     configurer.addDatasetType(datasetClass);
   }
@@ -97,6 +96,7 @@ public abstract class AbstractApplication implements Application {
   /**
    * Calls {@link #createDataset(String, String, DatasetProperties)} and passes empty properties.
    */
+  @Beta
   protected void createDataset(String datasetName, String typeName) {
     configurer.createDataset(datasetName, typeName, DatasetProperties.EMPTY);
   }
@@ -104,6 +104,7 @@ public abstract class AbstractApplication implements Application {
   /**
    * @see ApplicationConfigurer#createDataset(String, String, com.continuuity.api.dataset.DatasetProperties)
    */
+  @Beta
   protected void createDataset(String datasetName, String typeName, DatasetProperties properties) {
     configurer.createDataset(datasetName, typeName, properties);
   }

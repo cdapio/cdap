@@ -157,19 +157,16 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       if (serviceManager.isServiceEnabled()) {
         String logs = serviceManager.isLogAvailable() ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
         String canCheck = serviceManager.canCheckStatus() ? (
-          serviceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK) : NOTAPPLICABLE;
-        String minInstance = String.valueOf(serviceManager.getMinInstances());
-        String maxInstance = String.valueOf(serviceManager.getMaxInstances());
-        String provInstance = String.valueOf(serviceManager.getInstances());
-        String reqInstance = String.valueOf(getSystemServiceInstanceCount(service));
+                          serviceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK) : NOTAPPLICABLE;
         JsonObject reply = new JsonObject();
         reply.addProperty("name", service);
         reply.addProperty("logs", logs);
         reply.addProperty("status", canCheck);
-        reply.addProperty("min", minInstance);
-        reply.addProperty("max", maxInstance);
-        reply.addProperty("requested", reqInstance);
-        reply.addProperty("provisioned", provInstance);
+        reply.addProperty("min", String.valueOf(serviceManager.getMinInstances()));
+        reply.addProperty("max", String.valueOf(serviceManager.getMaxInstances()));
+        reply.addProperty("requested", String.valueOf(getSystemServiceInstanceCount(service)));
+        reply.addProperty("provisioned", String.valueOf(serviceManager.getInstances()));
+        reply.addProperty("description", serviceManager.getDescription());
         //TODO: Add metric name for Event Rate monitoring
         serviceSpec.add(reply);
       }

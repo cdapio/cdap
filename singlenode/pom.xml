@@ -76,8 +76,19 @@
       <groupId>org.apache.twill</groupId>
       <artifactId>twill-discovery-core</artifactId>
     </dependency>
-
   </dependencies>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>${project.build.outputDirectory}</directory>
+        <excludes>
+          <!-- Don't package it in the jar. When building SDK/Sandbox, those will get copied explicitly. -->
+          <exclude>**/*.xml</exclude>
+        </excludes>
+      </resource>
+    </resources>
+  </build>
 
   <profiles>
     <profile>
@@ -86,6 +97,8 @@
         <sdk.dir>${project.build.directory}/sdk</sdk.dir>
         <stage.opt.dir>${sdk.dir}/continuuity-sdk-${project.version}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
+        <sandbox.dir>${project.build.directory}/sandbox</sandbox.dir>
+        <sandbox.opt.dir>${sandbox.dir}/continuuity-developer-sandbox-${project.version}</sandbox.opt.dir>
       </properties>
       <dependencies>
         <dependency>
@@ -129,10 +142,24 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
             <version>2.6</version>
-            <configuration>
-              <outputDirectory>${stage.opt.dir}/conf</outputDirectory>
-            </configuration>
             <executions>
+              <execution>
+                <id>copy-sandbox-web-app</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.build.directory}</outputDirectory>
+                  <resources>
+                    <!-- Copy Sandbox web-app -->
+                    <resource>
+                      <directory>${project.parent.parent.basedir}/web-app/target/sandbox</directory>
+                      <targetPath>web-app/cloud</targetPath>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
               <execution>
                 <id>copy-opt</id>
                 <phase>prepare-package</phase>
@@ -143,11 +170,19 @@
                   <outputDirectory>${stage.opt.dir}</outputDirectory>
                   <resources>
                     <resource>
+                      <directory>${project.basedir}/src/main/resources</directory>
+                      <targetPath>conf</targetPath>
+                    </resource>
+                    <resource>
                       <directory>${project.basedir}/src/dist</directory>
                       <includes>
                         <include>README</include>
                       </includes>
                       <filtering>true</filtering>
+                    </resource>
+                    <resource>
+                      <directory>${project.basedir}/src/dist/LICENSES</directory>
+                      <targetPath>LICENSES</targetPath>
                     </resource>
                     <resource>
                       <directory>${project.parent.parent.basedir}/docs/developer-guide/build-pdf</directory>
@@ -273,6 +308,31 @@
             <artifactId>maven-antrun-plugin</artifactId>
             <version>1.7</version>
             <executions>
+              <!-- For preparing sandbox directory -->
+              <execution>
+                <id>prepare-sandbox</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <copy todir="${sandbox.opt.dir}">
+                      <fileset dir="${stage.opt.dir}" />
+                    </copy>
+                    <touch file="${sandbox.opt.dir}/.nux_dashboard" />
+                    <delete dir="${sandbox.opt.dir}/examples" />
+                    <delete dir="${sandbox.opt.dir}/libexec" />
+                    <!-- Remove the sdk local web-app and copy it from the sandbox edition -->
+                    <delete dir="${sandbox.opt.dir}/web-app" />
+                    <copy todir="${sandbox.opt.dir}/web-app/cloud">
+                      <fileset dir="${project.build.directory}/web-app/cloud" />
+                    </copy>
+                    <chmod file="${sandbox.opt.dir}/bin/**" perm="755"/>
+                  </target>
+                </configuration>
+              </execution>
+
               <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
               <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
               <execution>
@@ -313,7 +373,7 @@
                 </goals>
                 <configuration>
                   <target>
-                    <rename src="${stage.opt.dir}/docs/rest.pdf" dest="${stage.opt.dir}/docs/REST-API-Reference-v${project.version}.pdf"/>
+                    <move file="${stage.opt.dir}/docs/rest.pdf" tofile="${stage.opt.dir}/docs/REST-API-Reference-v${project.version}.pdf"/>
                   </target>
                 </configuration>
               </execution>
@@ -355,7 +415,7 @@
                 </goals>
               </execution>
               <execution>
-                <id>zip-package</id>
+                <id>sdk-package</id>
                 <phase>package</phase>
                 <goals>
                   <goal>single</goal>
@@ -369,10 +429,25 @@
                   <finalName>continuuity-sdk-${project.version}</finalName>
                 </configuration>
               </execution>
+              <execution>
+                <id>sandbox-package</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <descriptors>
+                    <descriptor>${project.basedir}/src/main/assembly/sandbox.xml</descriptor>
+                  </descriptors>
+                  <appendAssemblyId>false</appendAssemblyId>
+                  <attach>false</attach>
+                  <finalName>continuuity-developer-sandbox-${project.version}</finalName>
+                </configuration>
+              </execution>
             </executions>
           </plugin>
 
-          <!-- Extra deployment for reactor sdk -->
+          <!-- Extra deployment for reactor sdk and sandbox -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-deploy-plugin</artifactId>
@@ -391,6 +466,23 @@
                   <packaging>zip</packaging>
                   <generatePom>false</generatePom>
                   <file>${project.build.directory}/continuuity-sdk-${project.version}.zip</file>
+                  <repositoryId>continuuity</repositoryId>
+                  <url>${deploy.url}</url>
+                </configuration>
+              </execution>
+              <execution>
+                <id>deploy-sandbox</id>
+                <phase>deploy</phase>
+                <goals>
+                  <goal>deploy-file</goal>
+                </goals>
+                <configuration>
+                  <version>${project.version}</version>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>continuuity-developer-sandbox</artifactId>
+                  <packaging>zip</packaging>
+                  <generatePom>false</generatePom>
+                  <file>${project.build.directory}/continuuity-developer-sandbox-${project.version}.zip</file>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
                 </configuration>

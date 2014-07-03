@@ -19,6 +19,7 @@ import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
@@ -58,6 +59,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.InetAddress;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -133,6 +136,7 @@ public class ReactorServiceMain extends DaemonMain {
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModule(),
       new DataFabricModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new ServiceStoreModules().getDistributedModule()
     );
@@ -174,7 +178,7 @@ public class ReactorServiceMain extends DaemonMain {
     }
 
     // This checking will throw an exception if Hive is not present or if its distribution is unsupported
-    ExploreServiceUtils.checkHiveSupport();
+    ExploreServiceUtils.checkHiveSupportWithSecurity(hConf);
   }
 
   @Override
@@ -409,11 +413,11 @@ public class ReactorServiceMain extends DaemonMain {
       throw new RuntimeException("Unable to trace Explore dependencies", e);
     }
 
-    // HIVE_CONF_FILES will be defined in startup scripts if Hive is installed.
-    String hiveConfFiles = System.getProperty(Constants.Explore.HIVE_CONF_FILES);
+    // EXPLORE_CONF_FILES will be defined in startup scripts if Hive is installed.
+    String hiveConfFiles = System.getProperty(Constants.Explore.EXPLORE_CONF_FILES);
     LOG.debug("Hive conf files = {}", hiveConfFiles);
     if (hiveConfFiles == null) {
-      throw new RuntimeException("System property " + Constants.Explore.HIVE_CONF_FILES + " is not set.");
+      throw new RuntimeException("System property " + Constants.Explore.EXPLORE_CONF_FILES + " is not set.");
     }
 
     // Add all the conf files needed by hive as resources available to containers
@@ -430,6 +434,18 @@ public class ReactorServiceMain extends DaemonMain {
   private TwillPreparer getPreparer() {
     TwillPreparer preparer = twillRunnerService.prepare(twillApplication)
       .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+
+    // Add system logback file to the preparer
+    URL logbackUrl = getClass().getResource("/logback.xml");
+    if (logbackUrl == null) {
+      LOG.warn("Cannot find logback.xml to pass onto Twill Runnables!");
+    } else {
+      try {
+        preparer.withResources(logbackUrl.toURI());
+      } catch (URISyntaxException e) {
+        LOG.error("Got exception while getting URI for logback.xml - {}", logbackUrl);
+      }
+    }
     preparer = prepareExploreContainer(preparer);
     return prepare(preparer);
   }
