@@ -147,7 +147,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
         // Disable security
         // TODO: verify if auth=NOSASL is really needed - REACTOR-267
-        System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NOSASL");
+        System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NONE");
         System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.toString(), "false");
         System.setProperty(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.toString(), "false");
 
@@ -169,6 +169,12 @@ public class ExploreRuntimeModule extends RuntimeModule {
                            new File(HiveConf.ConfVars.LOCALSCRATCHDIR.defaultVal).getAbsolutePath());
         LOG.info("Setting {} to {}", HiveConf.ConfVars.LOCALSCRATCHDIR.toString(),
                  System.getProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString()));
+
+
+        // We don't support security in Hive Server.
+        System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NONE");
+        System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.toString(), "false");
+
       } catch (Throwable e) {
         throw Throwables.propagate(e);
       }
@@ -215,8 +221,8 @@ public class ExploreRuntimeModule extends RuntimeModule {
     List<String> orderedDependenciesStr = builder.build();
 
     System.setProperty(HiveConf.ConfVars.HIVEAUXJARS.toString(), Joiner.on(',').join(orderedDependenciesStr));
-    LOG.info("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
-             System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
+    LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
+              System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
 
     // Setup HADOOP_CLASSPATH hack, more info on why this is needed - REACTOR-325
     LocalMapreduceClasspathSetter classpathSetter =

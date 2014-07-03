@@ -59,6 +59,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.InetAddress;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -432,6 +434,18 @@ public class ReactorServiceMain extends DaemonMain {
   private TwillPreparer getPreparer() {
     TwillPreparer preparer = twillRunnerService.prepare(twillApplication)
       .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+
+    // Add system logback file to the preparer
+    URL logbackUrl = getClass().getResource("/logback.xml");
+    if (logbackUrl == null) {
+      LOG.warn("Cannot find logback.xml to pass onto Twill Runnables!");
+    } else {
+      try {
+        preparer.withResources(logbackUrl.toURI());
+      } catch (URISyntaxException e) {
+        LOG.error("Got exception while getting URI for logback.xml - {}", logbackUrl);
+      }
+    }
     preparer = prepareExploreContainer(preparer);
     return prepare(preparer);
   }
