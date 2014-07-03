@@ -302,8 +302,8 @@ If you want to use a different HDFS user than ``yarn``:
 
 - Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
 
-If you want to use the ad-hoc querying capabilities of Reactor, enable the Reactor Explore Service in
-``conf/continuuity-site.xml``::
+Depending on whether you want to use the ad-hoc querying capabilities of Reactor,
+enable or disable the Reactor Explore Service in ``conf/continuuity-site.xml`` - by default it is ``false``::
 
 	  ...
     <property>
