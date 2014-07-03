@@ -176,7 +176,7 @@ public class ReactorServiceMain extends DaemonMain {
     }
 
     // This checking will throw an exception if Hive is not present or if its distribution is unsupported
-    ExploreServiceUtils.checkHiveSupport();
+    ExploreServiceUtils.checkHiveSupport(hConf);
   }
 
   @Override

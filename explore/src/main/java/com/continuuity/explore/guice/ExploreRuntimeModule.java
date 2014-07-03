@@ -18,16 +18,20 @@ import com.continuuity.http.HttpHandler;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Exposed;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.slf4j.Logger;
@@ -158,12 +162,6 @@ public class ExploreRuntimeModule extends RuntimeModule {
     @Override
     protected void configure() {
       try {
-        // Figure out which HiveExploreService class to load
-        Class<? extends ExploreService> hiveExploreServiceCl = ExploreServiceUtils.getHiveService();
-        LOG.info("Using Explore service class {}", hiveExploreServiceCl.getName());
-        bind(ExploreService.class).to(hiveExploreServiceCl).in(Scopes.SINGLETON);
-        expose(ExploreService.class);
-
         setupClasspath();
 
         // Set local tmp dir to an absolute location in the twill runnable otherwise Hive complains
@@ -174,6 +172,16 @@ public class ExploreRuntimeModule extends RuntimeModule {
       } catch (Throwable e) {
         throw Throwables.propagate(e);
       }
+    }
+
+    @Provides
+    @Singleton
+    @Exposed
+    public final ExploreService providesExploreService(Injector injector, Configuration hConf) {
+      // Figure out which HiveExploreService class to load
+      Class<? extends ExploreService> hiveExploreServiceCl = ExploreServiceUtils.getHiveService(hConf);
+      LOG.info("Using Explore service class {}", hiveExploreServiceCl.getName());
+      return injector.getInstance(hiveExploreServiceCl);
     }
   }
 
