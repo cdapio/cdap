@@ -1576,8 +1576,8 @@ Execution of a query can be canceled before it is finished with an HTTP POST::
 
 After this, the query can only be closed.
 
-**Note:** This operation is not supported with CDH 4.x distributions. It will return a ``500 Internal Error``
-status code.
+**Note:** This operation is not supported with CDH 4.x distributions. It will return a
+``500 Internal Server Error`` status code.
 
 HTTP Responses
 ..............
