@@ -489,7 +489,7 @@ public class DataSetInstantiationBase {
           public void recordRead(int opsCount, int dataSize) {
             if (programContextMetrics != null) {
               programContextMetrics.gauge("store.reads", 1, dataSetName);
-              programContextMetrics.gauge("store.ops", 1);
+              programContextMetrics.gauge("store.ops", 1, dataSetName);
             }
             // these metrics are outside the context of any application and will stay unless explicitly
             // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.
@@ -504,7 +504,7 @@ public class DataSetInstantiationBase {
             if (programContextMetrics != null) {
               programContextMetrics.gauge("store.writes", 1, dataSetName);
               programContextMetrics.gauge("store.bytes", dataSize, dataSetName);
-              programContextMetrics.gauge("store.ops", 1);
+              programContextMetrics.gauge("store.ops", 1, dataSetName);
             }
             // these metrics are outside the context of any application and will stay unless explicitly
             // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.
