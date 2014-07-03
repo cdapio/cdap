@@ -3285,12 +3285,6 @@ only screen and (min-device-pixel-ratio: 1.5) {
 div.tooltip {
 	position: absolute;
 	text-align: center;
-	padding: 5px;
-	font: 16px sans-serif;
-	color: black;
-	border: 2px solid #ccc;
-	box-shadow: 0 0 5px #ccc;
-	background: white;
 	pointer-events: none;
 }
 

@@ -11,7 +11,6 @@ define(['core/models/element'], function (Element) {
     init: function() {
       this._super();
       this.set('id', this.get('modelId'));
-      this.set('description', this.get('meta') || 'Service');
     },
     
     context: function () {
