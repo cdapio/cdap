@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -136,7 +137,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     DatasetSpecification spec;
     try {
-      spec = opExecutorClient.create(name, typeMeta, typeAndProps.getProperties());
+      spec = opExecutorClient.create(name, typeMeta,
+                                     DatasetProperties.builder().addAll(typeAndProps.getProperties()).build());
     } catch (Exception e) {
       String msg = String.format("Cannot create dataset %s of type %s: executing create() failed, reason: %s",
                                  name, typeAndProps.getTypeName(), e.getMessage());
@@ -235,19 +237,19 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
    */
   public static final class DatasetTypeAndProperties {
     private final String typeName;
-    private final DatasetProperties props;
+    private final Map<String, String> properties;
 
-    public DatasetTypeAndProperties(String typeName, DatasetProperties props) {
+    public DatasetTypeAndProperties(String typeName, Map<String, String> properties) {
       this.typeName = typeName;
-      this.props = props;
+      this.properties = properties;
     }
 
     public String getTypeName() {
       return typeName;
     }
 
-    public DatasetProperties getProperties() {
-      return props;
+    public Map<String, String> getProperties() {
+      return properties;
     }
   }
 
