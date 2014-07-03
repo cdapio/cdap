@@ -15,7 +15,7 @@ A Continuuity Reactor Application demonstrating all Reactor elements
 Overview
 ========
 This example demonstrates use of each of the Reactor elements: Streams, Flows, Flowlets,
-Datasets, Queries, Procedures, MapReduce jobs, Workflows, and Custom services in a single Application.
+Datasets, Queries, Procedures, MapReduce jobs, Workflows, and Custom Services in a single Application.
 
 The application uses a scheduled MapReduce job and Workflow to read from one ObjectStore Dataset
 and write to another.
@@ -26,8 +26,8 @@ and write to another.
   - The ``PurchaseFlow`` reads the ``purchaseStream`` and converts every input String into a
     Purchase object and stores the object in the *purchases* Dataset.
   - The ``CatalogLookupService`` fetches the catalog id for a given product. The CatalogLookupService
-    is called from the PurchaseStore flowlet. The host and port of the CatalogLookupService is discovered
-    using service discovery framework.
+    is called from the PurchaseStore Flowlet. The host and port of the CatalogLookupService is discovered
+    using the Service discovery framework.
   - When scheduled by the ``PurchaseHistoryWorkFlow``, the ``PurchaseHistoryBuilder`` MapReduce
     job reads the *purchases* Dataset, creates a purchase history, and stores the purchase
     history in the *history* Dataset every morning at 4:00 A.M.
