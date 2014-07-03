@@ -23,4 +23,9 @@ public class MetricsProcessorStatusServiceManager extends AbstractDistributedRea
     return cConf.getInt(Constants.MetricsProcessor.MAX_INSTANCES);
   }
 
+  @Override
+  public String getDescription() {
+    return Constants.MetricsProcessor.SERVICE_DESCRIPTION;
+  }
+
 }

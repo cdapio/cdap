@@ -23,6 +23,7 @@ define([], function () {
             modelId: service.name,
             id: service.name,
             name: service.name,
+            description: service.description,
             status: service.status,
             min: service.min,
             max: service.max,

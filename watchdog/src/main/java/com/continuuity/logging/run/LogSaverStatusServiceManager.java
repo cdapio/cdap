@@ -27,4 +27,9 @@ public class LogSaverStatusServiceManager extends AbstractDistributedReactorServ
   public boolean isLogAvailable() {
     return false;
   }
+
+  @Override
+  public String getDescription() {
+    return Constants.LogSaver.SERVICE_DESCRIPTION;
+  }
 }

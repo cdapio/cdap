@@ -24,4 +24,9 @@ public class StreamServiceManager extends AbstractDistributedReactorServiceManag
     return cConf.getInt(Constants.Stream.MAX_INSTANCES);
   }
 
+  @Override
+  public String getDescription() {
+    return Constants.Stream.SERVICE_DESCRIPTION;
+  }
+
 }
