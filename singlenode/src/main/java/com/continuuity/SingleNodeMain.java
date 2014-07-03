@@ -165,20 +165,26 @@ public class SingleNodeMain {
   public void shutDown() {
     LOG.info("Shutting down reactor...");
 
-    streamHttpService.stopAndWait();
+    // order matters: first shut down web app 'cause it will stop working after router is down
     webCloudAppService.stopAndWait();
-    flumeCollector.stopAndWait();
+    //  shut down router, gateway and flume, to stop all incoming traffic
     router.stopAndWait();
     gatewayV2.stopAndWait();
-    metricsQueryService.stopAndWait();
-    appFabricServer.stopAndWait();
-    txService.stopAndWait();
-    datasetService.stopAndWait();
-    if (externalAuthenticationServer != null) {
-      externalAuthenticationServer.stopAndWait();
-    }
+    flumeCollector.stopAndWait();
+    // now the stream writer and the explore service (they need tx)
+    streamHttpService.stopAndWait();
     if (exploreExecutorService != null) {
       exploreExecutorService.stopAndWait();
+    }
+    // app fabric will also stop all programs
+    appFabricServer.stopAndWait();
+    // all programs are stopped: dataset service, metrics, transactions can stop now
+    datasetService.stopAndWait();
+    metricsQueryService.stopAndWait();
+    txService.stopAndWait();
+    // auth service is on the side anyway
+    if (externalAuthenticationServer != null) {
+      externalAuthenticationServer.stopAndWait();
     }
     logAppenderInitializer.close();
   }
