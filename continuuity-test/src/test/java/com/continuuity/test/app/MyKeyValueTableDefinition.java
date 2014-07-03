@@ -5,6 +5,7 @@ import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.batch.SplitReaderAdapter;
+import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDataset;
@@ -15,7 +16,6 @@ import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Put;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
-import com.continuuity.data2.dataset2.lib.table.TableDefinition;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -99,7 +99,7 @@ public class MyKeyValueTableDefinition
   public static class Module implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      TableDefinition tableDefinition = registry.get("table");
+      DatasetDefinition<Table, DatasetAdmin> tableDefinition = registry.get("table");
       MyKeyValueTableDefinition keyValueTable = new MyKeyValueTableDefinition("myKeyValueTable", tableDefinition);
       registry.add(keyValueTable);
     }

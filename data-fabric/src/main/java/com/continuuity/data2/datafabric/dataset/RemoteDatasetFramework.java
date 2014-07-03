@@ -7,17 +7,19 @@ import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.lang.ClassLoaders;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
+import com.continuuity.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.SingleTypeModule;
 import com.continuuity.data2.dataset2.module.lib.DatasetModules;
-import com.continuuity.internal.lang.ClassLoaders;
+import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -41,15 +43,18 @@ public class RemoteDatasetFramework implements DatasetFramework {
   private final DatasetServiceClient client;
   private final DatasetDefinitionRegistryFactory registryFactory;
   private final LocationFactory locationFactory;
+  private final DatasetTypeClassLoaderFactory typeLoader;
 
   @Inject
   public RemoteDatasetFramework(DiscoveryServiceClient discoveryClient,
                                 LocationFactory locationFactory,
-                                DatasetDefinitionRegistryFactory registryFactory) {
+                                DatasetDefinitionRegistryFactory registryFactory,
+                                DatasetTypeClassLoaderFactory typeLoader) {
 
     this.client = new DatasetServiceClient(discoveryClient);
     this.locationFactory = locationFactory;
     this.registryFactory = registryFactory;
+    this.typeLoader = typeLoader;
   }
 
   @Override
@@ -166,31 +171,46 @@ public class RemoteDatasetFramework implements DatasetFramework {
                                                   ClassLoader classLoader)
     throws DatasetManagementException {
 
+
+    if (classLoader == null) {
+      classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader());
+    }
+
     DatasetDefinitionRegistry registry = registryFactory.create();
     List<DatasetModuleMeta> modulesToLoad = implementationInfo.getModules();
     for (DatasetModuleMeta moduleMeta : modulesToLoad) {
-      if (moduleMeta.getJarLocation() != null) {
-        // adding dataset module jar to classloader
+      // adding dataset module jar to classloader
+      try {
+        classLoader = typeLoader.create(moduleMeta, classLoader);
+      } catch (IOException e) {
+        LOG.error("Was not able to init classloader for module {} while trying to load type {}",
+                  moduleMeta, implementationInfo, e);
+        throw Throwables.propagate(e);
+      }
+
+      Class<?> moduleClass;
+
+      // try program class loader then reactor class loader
+      try {
+        moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
+      } catch (ClassNotFoundException e) {
         try {
-          classLoader = classLoader == null ?
-            new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation())) :
-            new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation()), classLoader);
-        } catch (IOException e) {
-          LOG.error("Was not able to init classloader for module {} while trying to load type {}",
-                    moduleMeta, implementationInfo, e);
+          moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), null, this);
+        } catch (ClassNotFoundException e2) {
+          LOG.error("Was not able to load dataset module class {} while trying to load type {}",
+                    moduleMeta.getClassName(), implementationInfo, e);
           throw Throwables.propagate(e);
         }
       }
-      DatasetModule module;
+
       try {
-        Class<?> moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
-        module = DatasetModules.getDatasetModule(moduleClass);
+        DatasetModule module = DatasetModules.getDatasetModule(moduleClass);
+        module.register(registry);
       } catch (Exception e) {
         LOG.error("Was not able to load dataset module class {} while trying to load type {}",
                   moduleMeta.getClassName(), implementationInfo, e);
         throw Throwables.propagate(e);
       }
-      module.register(registry);
     }
 
     return (T) new DatasetType(registry.get(implementationInfo.getName()), classLoader);

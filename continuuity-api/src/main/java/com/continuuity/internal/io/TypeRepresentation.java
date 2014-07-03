@@ -1,6 +1,6 @@
 package com.continuuity.internal.io;
 
-import com.continuuity.internal.lang.ClassLoaders;
+import com.google.common.base.Objects;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -101,7 +101,10 @@ public final class TypeRepresentation implements ParameterizedType {
   @Override
   public Type getRawType() {
     try {
-      return ClassLoaders.loadClass(this.rawType, classLoader, this);
+      ClassLoader cl = Objects.firstNonNull(classLoader,
+                                            Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                                 getClass().getClassLoader()));
+      return cl.loadClass(this.rawType);
     } catch (ClassNotFoundException e) {
       throw new RuntimeException("cannot convert " + this.rawType + " to a type. ", e);
     }

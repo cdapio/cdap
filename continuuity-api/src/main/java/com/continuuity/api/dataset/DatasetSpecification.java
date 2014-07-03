@@ -1,5 +1,6 @@
 package com.continuuity.api.dataset;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -161,6 +162,16 @@ public final class DatasetSpecification {
   @Override
   public int hashCode() {
     return Objects.hashCode(this.name, this.type, this.properties, this.datasetSpecs);
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("name", name)
+      .add("type", type)
+      .add("properties", Joiner.on(",").withKeyValueSeparator("=").join(properties))
+      .add("datasetSpecs", Joiner.on(",").withKeyValueSeparator("=").join(datasetSpecs))
+      .toString();
   }
 
   /**

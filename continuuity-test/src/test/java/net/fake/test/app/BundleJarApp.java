@@ -23,7 +23,6 @@ import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -117,7 +116,10 @@ public class BundleJarApp implements Application {
       LOG.info("Hello " + loadTestClasses());
 
       String key = request.getArgument("key");
-      String value = StringUtils.defaultString(Bytes.toString(output.read(Bytes.toBytes(key))), "null");
+      String value = Bytes.toString(output.read(Bytes.toBytes(key)));
+      if (value == null) {
+        value = "null";
+      }
 
       responder.sendJson(ImmutableMap.of(key, value));
     }
@@ -139,7 +141,10 @@ public class BundleJarApp implements Application {
       LOG.info("Hello " + loadTestClasses());
 
       String key = request.getArgument("key");
-      String value = StringUtils.defaultString(Bytes.toString(input.read(Bytes.toBytes(key))), "null");
+      String value = Bytes.toString(input.read(Bytes.toBytes(key)));
+      if (value == null) {
+        value = "null";
+      }
 
       responder.sendJson(ImmutableMap.of(key, value));
     }
