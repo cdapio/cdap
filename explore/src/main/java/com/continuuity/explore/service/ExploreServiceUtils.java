@@ -15,6 +15,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.util.VersionInfo;
 import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
@@ -116,8 +118,8 @@ public class ExploreServiceUtils {
     return exploreClassLoader;
   }
 
-  public static Class<? extends ExploreService> getHiveService() {
-    HiveSupport hiveVersion = checkHiveSupport(null);
+  public static Class<? extends ExploreService> getHiveService(Configuration hConf) {
+    HiveSupport hiveVersion = checkHiveSupport(hConf, null);
     Class<? extends ExploreService> hiveServiceCl = hiveVersion.getHiveExploreServiceClass();
     return hiveServiceCl;
   }
@@ -125,20 +127,28 @@ public class ExploreServiceUtils {
   /**
    * Check that Hive is in the class path - with a right version. Use a separate class loader to load Hive classes,
    * built using the explore classpath passed as a system property to reactor-master.
+   *
+   * @param hConf HBase configuration used to check if Hadoop cluster is secure.
    */
-  public static HiveSupport checkHiveSupport() {
+  public static HiveSupport checkHiveSupport(Configuration hConf) {
     ClassLoader classLoader = getExploreClassLoader();
-    return checkHiveSupport(classLoader);
+    return checkHiveSupport(hConf, classLoader);
   }
 
   /**
    * Check that Hive is in the class path - with a right version.
    *
+   * @param hConf HBase configuration used to check if Hadoop cluster is secure.
    * @param hiveClassLoader class loader to use to load hive classes.
    *                        If null, the class loader of this class is used.
    */
-  public static HiveSupport checkHiveSupport(ClassLoader hiveClassLoader) {
+  public static HiveSupport checkHiveSupport(Configuration hConf, ClassLoader hiveClassLoader) {
     try {
+      if (User.isHBaseSecurityEnabled(hConf)) {
+        throw new RuntimeException("Explore is not supported on secure Hadoop cluster. Set the configuration " +
+                                   "reactor.explore.enabled to false to start up Reactor without Explore.");
+      }
+
       ClassLoader usingCL = hiveClassLoader;
       if (usingCL == null) {
         usingCL = ExploreServiceUtils.class.getClassLoader();
