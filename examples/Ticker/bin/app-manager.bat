@@ -58,8 +58,11 @@ CALL :POST %APP_NAME% procedures %PROCEDURE_NAME3% stop
 GOTO :EOF
 
 :STATUS
-CALL :GET %APP_NAME% flows %FLOW_NAME% status
-CALL :GET %APP_NAME% procedures %PROCEDURE_NAME% status
+CALL :GET %APP_NAME% flows %FLOW_NAME1% status
+CALL :GET %APP_NAME% flows %FLOW_NAME2% status
+CALL :GET %APP_NAME% procedures %PROCEDURE_NAME1% status
+CALL :GET %APP_NAME% procedures %PROCEDURE_NAME2% status
+CALL :GET %APP_NAME% procedures %PROCEDURE_NAME3% status
 GOTO :EOF
 
 :POST

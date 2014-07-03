@@ -48,7 +48,6 @@ GOTO :EOF
 
 :STATUS
 CALL :GET %APP_NAME% flows %FLOW_NAME% status
-CALL :GET %APP_NAME% procedures %PROCEDURE_NAME% status
 GOTO :EOF
 
 :POST
