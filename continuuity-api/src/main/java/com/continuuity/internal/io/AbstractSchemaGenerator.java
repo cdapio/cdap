@@ -5,8 +5,11 @@
 package com.continuuity.internal.io;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -24,6 +27,7 @@ import java.util.UUID;
  * it delegates to child class.
  */
 public abstract class AbstractSchemaGenerator implements SchemaGenerator {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractSchemaGenerator.class);
 
   /**
    * Mapping Java types into Schemas for simple data types.
@@ -65,7 +69,7 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
 
   @Override
   public final Schema generate(Type type, boolean acceptRecursiveTypes) throws UnsupportedTypeException {
-    Set<String> knownRecords = Sets.newHashSet();
+    Set<String> knownRecords = ImmutableSet.of();
     return doGenerate(TypeToken.of(type), knownRecords, acceptRecursiveTypes);
   }
 

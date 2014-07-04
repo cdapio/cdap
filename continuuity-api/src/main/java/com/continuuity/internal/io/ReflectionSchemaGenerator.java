@@ -5,12 +5,16 @@
 package com.continuuity.internal.io;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
@@ -36,7 +40,6 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
   protected Schema generateRecord(TypeToken<?> typeToken, Set<String> knowRecords, boolean acceptRecursion)
     throws UnsupportedTypeException {
     String recordName = typeToken.getRawType().getName();
-    knowRecords.add(recordName);
     Map<String, TypeToken<?>> recordFieldTypes =
       typeToken.getRawType().isInterface() ?
         collectByMethods(typeToken, Maps.<String, TypeToken<?>>newTreeMap()) :
@@ -45,7 +48,9 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
     // Recursively generate field type schema.
     ImmutableList.Builder<Schema.Field> builder = ImmutableList.builder();
     for (Map.Entry<String, TypeToken<?>> fieldType : recordFieldTypes.entrySet()) {
-      Schema fieldSchema = doGenerate(fieldType.getValue(), knowRecords, acceptRecursion);
+      Schema fieldSchema = doGenerate(fieldType.getValue(),
+                                      ImmutableSet.<String>builder().addAll(knowRecords).add(recordName).build(),
+                                      acceptRecursion);
 
       if (!fieldType.getValue().getRawType().isPrimitive()) {
         // For non-primitive, allows "null" value, unless the class is annotated with Nonnull
