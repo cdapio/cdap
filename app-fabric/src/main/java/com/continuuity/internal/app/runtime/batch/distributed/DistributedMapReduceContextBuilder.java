@@ -10,6 +10,8 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
+import com.continuuity.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
+import com.continuuity.data2.datafabric.dataset.type.DistributedDatasetTypeClassLoaderFactory;
 import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
@@ -71,6 +73,7 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
           install(new FactoryModuleBuilder()
                     .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
+          bind(DatasetTypeClassLoaderFactory.class).to(DistributedDatasetTypeClassLoaderFactory.class);
           bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
 
           // For log publishing

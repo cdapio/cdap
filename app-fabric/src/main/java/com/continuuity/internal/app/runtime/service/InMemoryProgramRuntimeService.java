@@ -52,7 +52,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
       Preconditions.checkState(!destinationUnpackedJarDir.exists());
       destinationUnpackedJarDir.mkdirs();
 
-      Program bundleJarProgram = Programs.create(program.getJarLocation(), destinationUnpackedJarDir);
+      Program bundleJarProgram = Programs.createWithUnpack(program.getJarLocation(), destinationUnpackedJarDir);
       return super.run(bundleJarProgram, options);
     } catch (IOException e) {
       throw new RuntimeException("Error unpackaging program " + program.getName());

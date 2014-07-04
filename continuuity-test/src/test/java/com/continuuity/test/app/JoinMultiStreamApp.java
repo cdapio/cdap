@@ -17,7 +17,6 @@ import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
-import com.continuuity.data2.OperationException;
 import com.google.common.base.Charsets;
 
 import java.io.IOException;
@@ -108,7 +107,7 @@ public class JoinMultiStreamApp implements Application {
     private KeyValueTable table;
 
     @ProcessInput
-    public void process(Entry entry) throws OperationException {
+    public void process(Entry entry) {
       table.write(entry.name, entry.value);
     }
 
@@ -126,7 +125,7 @@ public class JoinMultiStreamApp implements Application {
     private KeyValueTable table;
 
     @Handle("get")
-    public void handle(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
+    public void handle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
       String key = request.getArgument("key");
       byte[] result = table.read(key.getBytes(Charsets.UTF_8));
       if (result == null) {

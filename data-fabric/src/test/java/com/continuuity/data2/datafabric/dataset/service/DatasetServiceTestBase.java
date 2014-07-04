@@ -15,6 +15,7 @@ import com.continuuity.data2.datafabric.dataset.service.executor.InMemoryDataset
 import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
+import com.continuuity.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFactory;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -72,8 +73,8 @@ public abstract class DatasetServiceTestBase {
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
     LocalLocationFactory locationFactory = new LocalLocationFactory();
-    dsFramework = new RemoteDatasetFramework(discoveryService, locationFactory,
-                                             new InMemoryDefinitionRegistryFactory());
+    dsFramework = new RemoteDatasetFramework(discoveryService, locationFactory, new InMemoryDefinitionRegistryFactory(),
+                                             new LocalDatasetTypeClassLoaderFactory());
 
     ImmutableMap<String, ? extends DatasetModule> defaultModules =
       ImmutableMap.of("memoryTable", new InMemoryOrderedTableModule());

@@ -17,6 +17,7 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.lang.CombineClassLoader;
 import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.common.LogWriter;
@@ -46,8 +47,10 @@ import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.continuuity.internal.lang.Reflections;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
@@ -244,7 +247,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
       jobConf.getCredentials().addAll(credentials);
     }
 
-    jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
+    // Create a classloader that have the context/system classloader as parent and the program classloader as child
+    ClassLoader classLoader = new CombineClassLoader(
+      Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), ClassLoader.getSystemClassLoader()),
+      ImmutableList.of(context.getProgram().getClassLoader())
+    );
+
+    jobConf.getConfiguration().setClassLoader(classLoader);
     context.setJob(jobConf);
 
     // additional mapreduce job initialization at run-time
@@ -290,7 +299,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
             LOG.info("Submitting mapreduce job {}", context.toString());
 
             ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(job.getClass().getClassLoader());
+            Thread.currentThread().setContextClassLoader(jobConf.getConfiguration().getClassLoader());
             try {
               // submits job and returns immediately
               jobConf.submit();

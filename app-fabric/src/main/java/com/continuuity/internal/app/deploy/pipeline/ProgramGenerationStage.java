@@ -102,7 +102,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
       }
 
       for (Location jarLocation : Futures.allAsList(futures).get()) {
-        programs.add(Programs.create(jarLocation));
+        programs.add(Programs.create(jarLocation, null));
       }
     } finally {
       executorService.shutdown();
