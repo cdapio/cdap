@@ -1,17 +1,13 @@
 package com.continuuity.internal.io;
 
-import com.continuuity.common.lang.Fields;
-import com.continuuity.internal.asm.ByteCodeClassLoader;
 import com.continuuity.internal.asm.ClassDefinition;
-import com.google.common.base.Throwables;
+import com.continuuity.internal.lang.Fields;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Method;
-import java.util.Map;
 
 /**
  * A {@link FieldAccessorFactory} that uses ASM to generate a specific {@link FieldAccessor} class
@@ -35,10 +31,21 @@ public final class ASMFieldAccessorFactory implements FieldAccessorFactory {
    */
   private static final class FieldAccessorLoader extends CacheLoader<FieldEntry, FieldAccessor> {
 
-    /**
-     * Map from ClassLoader of the origin field class to the ClassLoader for loading the generating FieldAccessor class.
-     */
-    private final Map<ClassLoader, FieldAccessorClassLoader> classLoaders = Maps.newHashMap();
+    // See if are able to use the "defineClass" method in the ClassLoader of the field class.
+    private final Method defineClass;
+
+    FieldAccessorLoader() {
+      Method defineClass = null;
+      try {
+        defineClass = ClassLoader.class.getDeclaredMethod("defineClass", String.class,
+                                                          byte[].class, int.class, int.class);
+        defineClass.setAccessible(true);
+      } catch (Exception e) {
+        // ok to ignore this exception, it will resort to the slow reflection way.
+      }
+      this.defineClass = defineClass;
+    }
+
 
     @Override
     public FieldAccessor load(FieldEntry key) throws Exception {
@@ -57,55 +64,23 @@ public final class ASMFieldAccessorFactory implements FieldAccessorFactory {
                                       .generate(key.getType(),
                                                 Fields.findField(key.getType(), key.getFieldName()),
                                                 defineClass == null);
-
-      ClassLoader classLoader = key.getType().getRawType().getClassLoader();
-      FieldAccessorClassLoader fieldAccessorClassLoader = classLoaders.get(classLoader);
-      if (fieldAccessorClassLoader == null) {
-        fieldAccessorClassLoader = new FieldAccessorClassLoader(classLoader, defineClass);
-        classLoaders.put(classLoader, fieldAccessorClassLoader);
-      }
-      return (FieldAccessor) fieldAccessorClassLoader.addClass(classDef).loadClass(classDef.getClassName())
-                                                .getConstructor(TypeToken.class).newInstance(key.getType());
-    }
-  }
-
-  /**
-   * The ClassLoader for loading the FieldAccessor class. It will try to define the class from the parent
-   * ClassLoader.
-   */
-  private static final class FieldAccessorClassLoader extends ByteCodeClassLoader {
-
-    private final Method defineClassMethod;
-
-    private FieldAccessorClassLoader(ClassLoader parent, Method defineClassMethod) {
-      super(parent);
-      this.defineClassMethod = defineClassMethod;
+      return createAccessor(key.getType(), classDef);
     }
 
-    @Override
-    public synchronized Class<?> loadClass(String className, boolean resolveIt) throws ClassNotFoundException {
-      Class<?> result = findLoadedClass(className);
-      if (result != null) {
-        return result;
-      }
+    private FieldAccessor createAccessor(TypeToken<?> type, ClassDefinition classDef) throws Exception {
+      // Must use the same classloader as the type.
+      ClassLoader classLoader = type.getRawType().getClassLoader();
+      String className = classDef.getClassName();
 
-      byte[] bytecode = bytecodes.get(className);
-      if (bytecode == null || defineClassMethod == null) {
-        return super.loadClass(className, resolveIt);
+      Method findLoadedClass = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
+      findLoadedClass.setAccessible(true);
+      Class<?> result = (Class<?>) findLoadedClass.invoke(classLoader, className);
+      if (result == null) {
+        // Try to define the class from the same classloader of the given type.
+        byte[] bytecode = classDef.getBytecode();
+        result = (Class<?>) defineClass.invoke(classLoader, className, bytecode, 0, bytecode.length);
       }
-      try {
-        Method findLoadedClass = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
-        findLoadedClass.setAccessible(true);
-        result = (Class<?>) findLoadedClass.invoke(getParent(), className);
-        if (result != null) {
-          return result;
-        }
-
-        // Try to load the class from the same classloader of the given type.
-        return (Class<?>) defineClassMethod.invoke(getParent(), className, bytecode, 0, bytecode.length);
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
+      return (FieldAccessor) result.getConstructor(TypeToken.class).newInstance(type);
     }
   }
 }

@@ -19,7 +19,6 @@ import org.apache.twill.api.TwillApplication;
 /**
  * Configures Reactor application.
  */
-@Beta
 public interface ApplicationConfigurer {
   /**
    * Sets the Application's name.
@@ -54,6 +53,7 @@ public interface ApplicationConfigurer {
    * @param moduleName name of the module to deploy
    * @param moduleClass class of the module
    */
+  @Beta
   void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass);
 
   /**
@@ -61,6 +61,7 @@ public interface ApplicationConfigurer {
    * The module will have single dataset type of name equals to name of the class in datasetClass param.
    * @param datasetClass class of the dataset. Name of the module is same as name of the class in datasetClass param.
    */
+  @Beta
   void addDatasetType(Class<? extends Dataset> datasetClass);
 
   /**
@@ -70,6 +71,7 @@ public interface ApplicationConfigurer {
    * @param typeName name of the dataset type
    * @param properties dataset instance properties
    */
+  @Beta
   void createDataset(String datasetName, String typeName, DatasetProperties properties);
 
   /**

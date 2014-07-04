@@ -184,11 +184,16 @@ div.body h6 {
 }
 
 div.body h1 { border-top: 20px solid white; margin-top: 0; font-size: 180%; font-weight:bold;}
-div.body h2 { font-size: 150%; background-color: #EEE; }
+div.body h2 { font-size: 150%; background-color: #EEE; font-weight:bold;}
 div.body h3 { font-size: 120%; background-color: #EEE; }
 div.body h4 { font-size: 110%; background-color: #EEE; }
 div.body h5 { font-size: 100%; background-color: #EEE; }
 div.body h6 { font-size: 100%; background-color: #EEE; }
+
+div.body h1 { background-color: #E0E0E0; }
+div.body h2 { background-color: #E0E0E0; }
+div.body h3 { background-color: #E0E0E0; }
+div.body h4 { background-color: #E0E0E0; }
 
 a.headerlink {
     color: #c60f0f;
@@ -213,6 +218,9 @@ div.admonition p.admonition-title + p {
 
 div.highlight{
     background-color: white;
+    background-color: #ecf0f3;
+    margin-left: 5%;
+    margin-right: 5%;
 }
 
 div.note {
@@ -243,12 +251,14 @@ p.admonition-title:after {
 }
 
 em {
-    font-style: normal;
+    font-style: italic;
 }
 
 pre {
     padding: 10px;
     background-color: White;
+    background-color: #ecf0f3;
+    background-color: #F9FAFB;
     color: #222;
     line-height: 1.2em;
     border: 1px solid #C6C9CB;
@@ -259,7 +269,7 @@ pre {
 }
 
 tt {
-    background-color: #ecf0f3;
+    /* background-color: #ecf0f3; */
     color: #222;
     /* padding: 1px 2px; */
     font-size: 1.1em;

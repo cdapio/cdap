@@ -77,8 +77,8 @@ public class TransactionStateCache extends AbstractIdleService implements Config
       } else {
         LOG.info("Could not load Continuuity configuration");
       }
-    } catch (IOException ioe) {
-      LOG.info("Failed to initialize TransactionStateCache due to: " + ioe.getMessage());
+    } catch (Exception e) {
+      LOG.info("Failed to initialize TransactionStateCache due to: " + e.getMessage());
     }
   }
 

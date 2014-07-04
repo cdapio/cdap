@@ -85,9 +85,9 @@ var SECURITY_ENABLED, AUTH_SERVER_ADDRESSES;
  */
 WebAppServer.prototype.setSecurityStatus = function (callback) {
   var self = this;
-  
+
   var path = '/' + this.API_VERSION + '/apps';
-  var url = ('http://' + this.config['gateway.server.address'] + ':' 
+  var url = ('http://' + this.config['gateway.server.address'] + ':'
     + this.config['gateway.server.port'] + path);
   var interval = setInterval(function () {
     self.logger.info('Calling security endpoint: ', url);
@@ -95,11 +95,17 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
       method: 'GET',
       url: url
     }, function (err, response, body) {
-      if (!err && response && body) {
+      // If the response is a 401 and contains "auth_uri" as part of the body, Reactor security is enabled.
+      // On other response codes, and when "auth_uri" is not part of the body, Reactor security is disabled.
+      if (!err && response) {
         clearInterval(interval);
-        if (response.statusCode === 401) {
-          SECURITY_ENABLED = true;
-          AUTH_SERVER_ADDRESSES = JSON.parse(body).auth_uri;
+        if (body) {
+          if (response.statusCode === 401 && JSON.parse(body).auth_uri) {
+            SECURITY_ENABLED = true;
+            AUTH_SERVER_ADDRESSES = JSON.parse(body).auth_uri;
+          } else {
+            SECURITY_ENABLED = false;
+          }
         } else {
           SECURITY_ENABLED = false;
         }
@@ -137,14 +143,17 @@ WebAppServer.prototype.setEnvironment = function(id, product, version, callback)
   this.logger.info('PRODUCT_NAME', PRODUCT_NAME);
   this.logger.info('PRODUCT_VERSION', PRODUCT_VERSION);
 
-  this.setSecurityStatus(function() {
-    Env.getAddress(function (address) {
-      IP_ADDRESS = address;
-      if (typeof callback === 'function') {
+  // Check security status only when a callback is passed.
+  // This is a minor hack since sandboxes call this function twice, but we need it to check
+  // Security status only on the call with callbacks.
+  if (typeof callback === 'function') {
+    this.setSecurityStatus(function() {
+      Env.getAddress(function (address) {
+        IP_ADDRESS = address;
         callback(PRODUCT_VERSION, address);
-      }
+      }.bind(this));
     }.bind(this));
-  }.bind(this));
+  }
 };
 
 /**

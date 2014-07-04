@@ -8,6 +8,7 @@ import com.continuuity.security.auth.AccessTokenTransformer;
 import com.continuuity.security.auth.TokenValidator;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -183,8 +184,10 @@ public class NettyRouter extends AbstractIdleService {
                                                                                     accessTokenTransformer,
                                                                                     discoveryServiceClient));
           }
+          // for now there's only one hardcoded rule, but if there will be more, we may want it generic and configurable
           pipeline.addLast("http-request-handler",
-                           new HttpRequestHandler(clientBootstrap, serviceLookup));
+                           new HttpRequestHandler(clientBootstrap, serviceLookup,
+                                                  ImmutableList.<ProxyRule>of(new DatasetsProxyRule(configuration))));
           return pipeline;
         }
       }

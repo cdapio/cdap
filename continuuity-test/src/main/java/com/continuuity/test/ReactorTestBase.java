@@ -13,8 +13,6 @@ import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.guice.ServiceStoreModules;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.EndpointStrategy;
-import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.StickyEndpointStrategy;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
@@ -22,16 +20,20 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.runtime.LocationStreamFileWriterFactory;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.service.LocalStreamFileJanitorService;
 import com.continuuity.data.stream.service.StreamFileJanitorService;
 import com.continuuity.data.stream.service.StreamHandler;
 import com.continuuity.data.stream.service.StreamServiceModule;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
@@ -59,10 +61,8 @@ import com.continuuity.test.internal.DefaultStreamWriter;
 import com.continuuity.test.internal.ProcedureClientFactory;
 import com.continuuity.test.internal.StreamWriterFactory;
 import com.continuuity.test.internal.TestMetricsCollectionService;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -74,7 +74,6 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
@@ -199,6 +198,7 @@ public class ReactorTestBase {
 
     injector = Guice.createInjector(
       createDataFabricModule(configuration),
+      new DataSetsModules().getInMemoryModule(),
       new DataSetServiceModules().getInMemoryModule(),
       new ConfigModule(configuration),
       new IOModule(),
@@ -247,7 +247,10 @@ public class ReactorTestBase {
     httpHandler = injector.getInstance(AppFabricHttpHandler.class);
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    datasetFramework = injector.getInstance(DatasetFramework.class);
+    DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
+    datasetFramework =
+      new NamespacedDatasetFramework(dsFramework,
+                                     new ReactorDatasetNamespace(configuration,  DataSetAccessor.Namespace.USER));
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
     discoveryClient = injector.getInstance(DiscoveryServiceClient.class);

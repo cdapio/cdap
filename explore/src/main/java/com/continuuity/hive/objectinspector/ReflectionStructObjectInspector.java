@@ -7,6 +7,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -70,8 +71,17 @@ public class ReflectionStructObjectInspector extends
       } else {
         sb.append(",");
       }
+      ObjectInspector oi = structField.getFieldObjectInspector();
+      String typeName;
+      // This prevents infinite loop, and prints "this" in case
+      // the object contains a reference to itself
+      if (oi == this) {
+        typeName = "this";
+      } else {
+        typeName = oi.getTypeName();
+      }
       sb.append(structField.getFieldName()).append(":")
-        .append(structField.getFieldObjectInspector().getTypeName());
+        .append(typeName);
     }
     sb.append(">");
     return sb.toString();
@@ -101,6 +111,10 @@ public class ReflectionStructObjectInspector extends
     fields = new ArrayList<MyField>(structFieldObjectInspectors.size());
     int used = 0;
     for (int i = 0; i < reflectionFields.length; i++) {
+      // Exclude transient fields
+      if (Modifier.isTransient(reflectionFields[i].getModifiers())) {
+        continue;
+      }
       if (!shouldIgnoreField(reflectionFields[i].getName())) {
         reflectionFields[i].setAccessible(true);
         fields.add(new MyField(reflectionFields[i], structFieldObjectInspectors.get(used++)));

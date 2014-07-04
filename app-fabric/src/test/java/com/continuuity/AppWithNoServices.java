@@ -5,7 +5,6 @@ import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
-import com.continuuity.data2.OperationException;
 
 import java.io.IOException;
 
@@ -27,7 +26,7 @@ public class AppWithNoServices extends AbstractApplication {
     @Handle("noop")
     public void handle(ProcedureRequest request,
                        ProcedureResponder responder)
-      throws OperationException, IOException {
+      throws IOException {
       responder.sendJson("OK");
     }
   }

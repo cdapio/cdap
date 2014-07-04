@@ -48,7 +48,6 @@
     <dependency>
         <groupId>com.continuuity</groupId>
         <artifactId>http</artifactId>
-        <scope>provided</scope>
     </dependency>
   </dependencies>
 </project>

@@ -22,6 +22,10 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
         case HBASE_96:
           instance = createInstance(getHBase96Classname());
           break;
+        case HBASE_98:
+          // for our needs HBase 0.98 is API compatible with 0.96
+          instance = createInstance(getHBase96Classname());
+          break;
         case UNKNOWN:
           throw new ProvisionException("Unknown HBase version: " + HBaseVersion.getVersionString());
       }

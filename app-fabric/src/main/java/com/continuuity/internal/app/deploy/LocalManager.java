@@ -9,7 +9,10 @@ import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationRegistrationStage;
@@ -65,7 +68,9 @@ public class LocalManager<I, O> implements Manager<I, O> {
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
     this.programTerminator = programTerminator;
-    this.datasetFramework = datasetFramework;
+    this.datasetFramework =
+      new NamespacedDatasetFramework(datasetFramework,
+                                     new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER));
   }
 
   @Override

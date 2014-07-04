@@ -3,7 +3,7 @@ package com.continuuity.explore.guice;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
-import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
+import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.explore.executor.ExploreExecutorHttpHandler;
 import com.continuuity.explore.executor.ExploreExecutorService;
@@ -18,16 +18,20 @@ import com.continuuity.http.HttpHandler;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Exposed;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.slf4j.Logger;
@@ -143,7 +147,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
         // Disable security
         // TODO: verify if auth=NOSASL is really needed - REACTOR-267
-        System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NOSASL");
+        System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NONE");
         System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.toString(), "false");
         System.setProperty(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.toString(), "false");
 
@@ -158,12 +162,6 @@ public class ExploreRuntimeModule extends RuntimeModule {
     @Override
     protected void configure() {
       try {
-        // Figure out which HiveExploreService class to load
-        Class hiveExploreServiceCl = ExploreServiceUtils.getHiveService();
-        LOG.info("Using Explore service class {}", hiveExploreServiceCl.getName());
-        bind(ExploreService.class).to(hiveExploreServiceCl).in(Scopes.SINGLETON);
-        expose(ExploreService.class);
-
         setupClasspath();
 
         // Set local tmp dir to an absolute location in the twill runnable otherwise Hive complains
@@ -171,9 +169,26 @@ public class ExploreRuntimeModule extends RuntimeModule {
                            new File(HiveConf.ConfVars.LOCALSCRATCHDIR.defaultVal).getAbsolutePath());
         LOG.info("Setting {} to {}", HiveConf.ConfVars.LOCALSCRATCHDIR.toString(),
                  System.getProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString()));
+
+
+        // We don't support security in Hive Server.
+        System.setProperty("hive.server2.authentication", "NONE");
+        System.setProperty("hive.server2.enable.doAs", "false");
+        System.setProperty("hive.server2.enable.impersonation", "false");
+
       } catch (Throwable e) {
         throw Throwables.propagate(e);
       }
+    }
+
+    @Provides
+    @Singleton
+    @Exposed
+    public final ExploreService providesExploreService(Injector injector, Configuration hConf) {
+      // Figure out which HiveExploreService class to load
+      Class<? extends ExploreService> hiveExploreServiceCl = ExploreServiceUtils.getHiveService(hConf);
+      LOG.info("Using Explore service class {}", hiveExploreServiceCl.getName());
+      return injector.getInstance(hiveExploreServiceCl);
     }
   }
 
@@ -193,7 +208,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
     // LinkedHashSet maintains insertion order while removing duplicate entries.
     Set<File> orderedDependencies = new LinkedHashSet<File>();
     orderedDependencies.addAll(hBaseTableDeps);
-    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(DatasetServiceClient.class.getCanonicalName(),
+    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(RemoteDatasetFramework.class.getCanonicalName(),
                                                                      bootstrapClassPaths, null));
     orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(DatasetStorageHandler.class.getCanonicalName(),
                                                                      bootstrapClassPaths, null));
@@ -207,8 +222,8 @@ public class ExploreRuntimeModule extends RuntimeModule {
     List<String> orderedDependenciesStr = builder.build();
 
     System.setProperty(HiveConf.ConfVars.HIVEAUXJARS.toString(), Joiner.on(',').join(orderedDependenciesStr));
-    LOG.info("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
-             System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
+    LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
+              System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
 
     // Setup HADOOP_CLASSPATH hack, more info on why this is needed - REACTOR-325
     LocalMapreduceClasspathSetter classpathSetter =
