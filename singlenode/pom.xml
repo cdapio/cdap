@@ -266,8 +266,8 @@
                       <includes>
                         <include>README*</include>
                         <include>**/src/**</include>
-                        <include>**/bin/*</include>
-                        <include>**/resources/*</include>
+                        <include>**/bin/**</include>
+                        <include>**/resources/**</include>
                         <include>**/pom.xml</include>
                         <include>**/target/*.jar</include>
                       </includes>
@@ -346,7 +346,7 @@
                     <chmod file="${stage.opt.dir}/bin/**" perm="755"/>
                     <chmod perm="755">
                       <fileset dir="${stage.opt.dir}/examples">
-                        <include name="**/bin/*"/>
+                        <include name="**/bin/**"/>
                       </fileset>
                     </chmod>
                   </target>
