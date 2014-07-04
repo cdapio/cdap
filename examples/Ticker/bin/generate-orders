@@ -25,6 +25,6 @@ done
 host=`echo $gateway | cut -d ':' -f 1`
 port=`echo $gateway | cut -d ':' -f 2`
 
-pushd $bin/../tickdata/ 2>/dev/null >/dev/null
+pushd $bin 2>/dev/null >/dev/null
 ./generateRandomOrderData.sh -h $host -p $port
 popd 2>/dev/null >/dev/null

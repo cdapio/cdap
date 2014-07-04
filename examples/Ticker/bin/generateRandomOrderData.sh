@@ -78,7 +78,7 @@ fi
 
 #echo $a | awk '{print tolower($0)}'
 
-SYMBOLS=(`find . -name '*.txt' | sed 's/^.*\/\(.*\)\.us.txt$/\1/' | tr '[a-z]' '[A-Z]'`)
+SYMBOLS=(`find ../resources -name '*.txt' | sed 's/^.*\/\(.*\)\.us.txt$/\1/' | tr '[a-z]' '[A-Z]'`)
 EXCHANGES=('NYSE' 'NASDAQ')
 BROKERS=('JPMC' 'JPMC' 'BAC')
 CURRENCYS=('USD' 'USD' 'USD' 'USD' 'JPY' 'EUR' 'GBP')
