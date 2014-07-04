@@ -101,35 +101,6 @@ Hardware Requirements
 Systems hosting the Continuuity Reactor components must meet these hardware specifications,
 in addition to having CPUs with a minimum speed of 2 GHz:
 
-.. .. list-table::
-..    :widths: 20 20 60
-..    :header-rows: 1
-.. 
-..    * - Continuuity Component
-..      - Hardware Component
-..      - Specifications
-..    * - **Continuuity Web-App**
-..      - RAM
-..      - 1 GB minimum, 2 GB recommended	
-..    * - **Continuuity Gateway**
-..      - RAM
-..      - 2 GB minimum, 4 GB recommended	
-..    * - **Continuuity Reactor-Master**
-..      - RAM
-..      - 2 GB minimum, 4 GB recommended	
-..    * - **Continuuity Kafka**
-..      - RAM
-..      - 1 GB minimum, 2 GB recommended	
-..    * - 
-..      - Disk Space
-..      - *Continuuity Kafka* maintains a data cache in a configurable data directory.
-..        Required space depends on the number of Continuuity applications
-..        deployed and running in the Continuuity Reactor
-..        and the quantity of logs and metrics that they generate.
-..    * - **Continuuity Authentication Server**
-..      - RAM
-..      - 1 GB minimum, 2 GB recommended
-
 +---------------------------------------+--------------------+-----------------------------------------------+
 | Continuuity Component                 | Hardware Component | Specifications                                |
 +=======================================+====================+===============================================+
@@ -191,38 +162,6 @@ Hadoop/HBase Environment
 
 For a distributed enterprise, you must install these Hadoop components:
 
-.. .. list-table::
-..    :widths: 20 40 40
-..    :header-rows: 1
-.. 
-..    * - Component
-..      - Distribution
-..      - Required Version
-..    * - HDFS
-..      - Apache Hadoop DFS,  
-..      - 2.0.2-alpha or later
-..    * -
-..      - CDH
-..      - 4.2.x or later
-..    * -
-..      - HDP
-..      - 2.0 or later
-..    * - YARN
-..      - Apache Hadoop YARN
-..      - 2.0.2-alpha or later
-..    * -
-..      - CDH
-..      - 4.2.x or later
-..    * -
-..      - HDP
-..      - 2.0 or later
-..    * - HBase
-..      - 
-..      - 0.94.2 or later
-..    * - Zookeeper
-..      - 
-..      - Version 3.4.3 or later	
-
 +---------------+-------------------+---------------------------+
 | Component     | Distribution      | Required Version          |
 +===============+===================+===========================+
@@ -252,8 +191,8 @@ For a distributed enterprise, you must install these Hadoop components:
 Reactor nodes require Hadoop and HBase client installation and configuration. No Hadoop
 services need to be running.
 
-Certain Continuuity components need to reference your *Hadoop*, *HBase*, and *YARN* cluster configurations by adding
-your configuration to their classpaths.
+Certain Continuuity components need to reference your *Hadoop*, *HBase*, *YARN* (and possibly *Hive*)
+cluster configurations by adding your configuration to their classpaths.
 
 .. rst2pdf: PageBreak
 
