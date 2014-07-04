@@ -79,15 +79,18 @@
   </dependencies>
 
   <build>
-    <resources>
-      <resource>
-        <directory>${project.build.outputDirectory}</directory>
-        <excludes>
-          <!-- Don't package it in the jar. When building SDK/Sandbox, those will get copied explicitly. -->
-          <exclude>**/*.xml</exclude>
-        </excludes>
-      </resource>
-    </resources>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.4</version>
+        <configuration>
+          <excludes>
+            <exclude>*.xml</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
 
   <profiles>
