@@ -122,6 +122,26 @@ public class DatasetExploreFacadeTest {
     }
   }
 
+  public class Recursive {
+    private final int a;
+    private final Recursive b;
+
+    public Recursive(int a, Recursive b) {
+      this.a = a;
+      this.b = b;
+    }
+  }
+
+  public class TransitiveRecursive {
+    private final boolean empty;
+    private final List<TransitiveRecursive> children;
+
+    public TransitiveRecursive(boolean empty, List<TransitiveRecursive> children) {
+      this.empty = empty;
+      this.children = children;
+    }
+  }
+
   @Test
   public void testHiveSchemaFor() throws Exception {
 
@@ -156,6 +176,8 @@ public class DatasetExploreFacadeTest {
     verifyUnsupportedSchema(String.class);
     verifyUnsupportedSchema(new TypeToken<List<Integer>>() { }.getType());
     verifyUnsupportedSchema(new TypeToken<Map<String, Integer>>() { }.getType());
+    verifyUnsupportedSchema(Recursive.class);
+    verifyUnsupportedSchema(TransitiveRecursive.class);
   }
 
 }
