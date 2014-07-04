@@ -46,6 +46,7 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
       // Context is expected to look like appId.b.programId.[m|r].[taskId]
       String counterGroup;
       String contextParts[] = splitPattern.split(context);
+      //TODO: Refactor to support any context
       if (context.equals(Constants.Metrics.DATASET_CONTEXT)) {
         counterGroup = "continuuity.dataset";
       } else if ("m".equals(contextParts[3])) {
