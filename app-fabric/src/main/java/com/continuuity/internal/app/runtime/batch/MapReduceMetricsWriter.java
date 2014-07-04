@@ -119,6 +119,7 @@ public class MapReduceMetricsWriter {
           continue;
         }
 
+        //TODO: Refactor to support any context
         String programPart = parts[1];
         if (programPart.equals("mapper")) {
           reportContinuuityStats(counters.getGroup(group), context.getSystemMapperMetrics(scope), scope,
