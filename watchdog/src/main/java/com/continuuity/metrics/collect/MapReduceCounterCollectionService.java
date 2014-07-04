@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.collect;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
@@ -45,9 +46,8 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
       // Context is expected to look like appId.b.programId.[m|r].[taskId]
       String counterGroup;
       String contextParts[] = splitPattern.split(context);
-      if (contextParts.length < 4) {
-        // using context name as counter group for "unknown"
-        counterGroup = "continuuity." + context;
+      if (context.equals(Constants.Metrics.DATASET_CONTEXT)) {
+        counterGroup = "continuuity.dataset";
       } else if ("m".equals(contextParts[3])) {
         counterGroup = "continuuity.mapper";
       } else if ("r".equals(contextParts[3])) {

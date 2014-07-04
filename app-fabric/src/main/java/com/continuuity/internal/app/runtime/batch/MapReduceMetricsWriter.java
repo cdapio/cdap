@@ -1,5 +1,6 @@
 package com.continuuity.internal.app.runtime.batch;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.google.common.collect.HashBasedTable;
@@ -33,14 +34,14 @@ public class MapReduceMetricsWriter {
   private final BasicMapReduceContext context;
   private final Table<MetricsScope, String, Integer> previousMapStats;
   private final Table<MetricsScope, String, Integer> previousReduceStats;
-  private final Table<MetricsScope, String, Integer> previousSystemStats;
+  private final Table<MetricsScope, String, Integer> previousDatasetStats;
 
   public MapReduceMetricsWriter(Job jobConf, BasicMapReduceContext context) {
     this.jobConf = jobConf;
     this.context = context;
     this.previousMapStats = HashBasedTable.create();
     this.previousReduceStats = HashBasedTable.create();
-    this.previousSystemStats = HashBasedTable.create();
+    this.previousDatasetStats = HashBasedTable.create();
   }
 
   public void reportStats() throws IOException, InterruptedException {
@@ -125,8 +126,9 @@ public class MapReduceMetricsWriter {
         } else if (programPart.equals("reducer")) {
           reportContinuuityStats(counters.getGroup(group), context.getSystemReducerMetrics(scope), scope,
                                  previousReduceStats);
-        } else {
-          reportContinuuityStats(counters.getGroup(group), context.getSystemMetrics(scope), scope, previousSystemStats);
+        } else if (programPart.equals("dataset")) {
+          reportContinuuityStats(counters.getGroup(group), context.getMetricsCollectionService().getCollector(
+            scope, Constants.Metrics.DATASET_CONTEXT, "0"), scope, previousDatasetStats);
         }
       }
     }
