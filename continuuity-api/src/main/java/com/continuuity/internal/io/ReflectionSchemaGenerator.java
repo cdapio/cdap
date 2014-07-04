@@ -33,7 +33,8 @@ import javax.annotation.Nonnull;
 public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
 
   @Override
-  protected Schema generateRecord(TypeToken<?> typeToken, Set<String> knowRecords) throws UnsupportedTypeException {
+  protected Schema generateRecord(TypeToken<?> typeToken, Set<String> knowRecords, boolean acceptRecursion)
+    throws UnsupportedTypeException {
     String recordName = typeToken.getRawType().getName();
     knowRecords.add(recordName);
     Map<String, TypeToken<?>> recordFieldTypes =
@@ -44,7 +45,7 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
     // Recursively generate field type schema.
     ImmutableList.Builder<Schema.Field> builder = ImmutableList.builder();
     for (Map.Entry<String, TypeToken<?>> fieldType : recordFieldTypes.entrySet()) {
-      Schema fieldSchema = doGenerate(fieldType.getValue(), knowRecords);
+      Schema fieldSchema = doGenerate(fieldType.getValue(), knowRecords, acceptRecursion);
 
       if (!fieldType.getValue().getRawType().isPrimitive()) {
         // For non-primitive, allows "null" value, unless the class is annotated with Nonnull
