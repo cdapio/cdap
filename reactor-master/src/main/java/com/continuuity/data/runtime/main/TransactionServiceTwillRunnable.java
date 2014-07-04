@@ -13,6 +13,7 @@ import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.runtime.HDFSTransactionStateStorageProvider;
 import com.continuuity.data.runtime.InMemoryTransactionManagerProvider;
 import com.continuuity.data2.transaction.distributed.TransactionService;
@@ -105,6 +106,7 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
       new KafkaClientModule(),
       new AuthModule(),
       createDataFabricModule(),
+      new DataSetsModules().getDistributedModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),

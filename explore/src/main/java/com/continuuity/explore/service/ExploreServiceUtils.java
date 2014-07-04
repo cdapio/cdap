@@ -6,6 +6,8 @@ import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.explore.service.hive.Hive12ExploreService;
 import com.continuuity.explore.service.hive.Hive13ExploreService;
+import com.continuuity.explore.service.hive.HiveCDH4ExploreService;
+import com.continuuity.explore.service.hive.HiveCDH5ExploreService;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -13,6 +15,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.util.VersionInfo;
 import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +30,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Utility class for the explore service.
@@ -36,16 +42,25 @@ public class ExploreServiceUtils {
    */
   public enum HiveSupport {
     // todo populate this with whatever hive version CDH4.3 runs with - REACTOR-229
-    HIVE_12(Hive12ExploreService.class),
-    HIVE_13(Hive13ExploreService.class);
+    HIVE_CDH4(Pattern.compile("^.*cdh4\\..*$"), HiveCDH4ExploreService.class),
+    HIVE_CDH5(Pattern.compile("^.*cdh5\\..*$"), HiveCDH5ExploreService.class),
 
-    private Class hiveExploreServiceClass;
+    HIVE_12(null, Hive12ExploreService.class),
+    HIVE_13(null, Hive13ExploreService.class);
 
-    private HiveSupport(Class hiveExploreServiceClass) {
+    private final Pattern hadoopVersionPattern;
+    private final Class<? extends ExploreService> hiveExploreServiceClass;
+
+    private HiveSupport(Pattern hadoopVersionPattern, Class<? extends ExploreService> hiveExploreServiceClass) {
+      this.hadoopVersionPattern = hadoopVersionPattern;
       this.hiveExploreServiceClass = hiveExploreServiceClass;
     }
 
-    public Class getHiveExploreServiceClass() {
+    public Pattern getHadoopVersionPattern() {
+      return hadoopVersionPattern;
+    }
+
+    public Class<? extends ExploreService> getHiveExploreServiceClass() {
       return hiveExploreServiceClass;
     }
   }
@@ -81,11 +96,11 @@ public class ExploreServiceUtils {
       return exploreClassLoader;
     }
 
-    // HIVE_CLASSPATH will be defined in startup scripts if Hive is installed.
-    String exploreClassPathStr = System.getProperty(Constants.Explore.HIVE_CLASSPATH);
+    // EXPLORE_CLASSPATH will be defined in startup scripts if Hive is installed.
+    String exploreClassPathStr = System.getProperty(Constants.Explore.EXPLORE_CLASSPATH);
     LOG.debug("Explore classpath = {}", exploreClassPathStr);
     if (exploreClassPathStr == null) {
-      throw new RuntimeException("System property " + Constants.Explore.HIVE_CLASSPATH + " is not set.");
+      throw new RuntimeException("System property " + Constants.Explore.EXPLORE_CLASSPATH + " is not set.");
     }
 
     Iterable<File> hiveClassPath = getClassPathJarsFiles(exploreClassPathStr);
@@ -103,9 +118,9 @@ public class ExploreServiceUtils {
     return exploreClassLoader;
   }
 
-  public static Class getHiveService() {
-    HiveSupport hiveVersion = checkHiveSupport(null);
-    Class hiveServiceCl = hiveVersion.getHiveExploreServiceClass();
+  public static Class<? extends ExploreService> getHiveService(Configuration hConf) {
+    HiveSupport hiveVersion = checkHiveSupportWithSecurity(hConf, null);
+    Class<? extends ExploreService> hiveServiceCl = hiveVersion.getHiveExploreServiceClass();
     return hiveServiceCl;
   }
 
@@ -113,9 +128,9 @@ public class ExploreServiceUtils {
    * Check that Hive is in the class path - with a right version. Use a separate class loader to load Hive classes,
    * built using the explore classpath passed as a system property to reactor-master.
    */
-  public static HiveSupport checkHiveSupport() {
+  public static HiveSupport checkHiveSupportWithoutSecurity() {
     ClassLoader classLoader = getExploreClassLoader();
-    return checkHiveSupport(classLoader);
+    return checkHiveSupportWithoutSecurity(classLoader);
   }
 
   /**
@@ -124,11 +139,21 @@ public class ExploreServiceUtils {
    * @param hiveClassLoader class loader to use to load hive classes.
    *                        If null, the class loader of this class is used.
    */
-  public static HiveSupport checkHiveSupport(ClassLoader hiveClassLoader) {
+  public static HiveSupport checkHiveSupportWithoutSecurity(ClassLoader hiveClassLoader) {
     try {
       ClassLoader usingCL = hiveClassLoader;
       if (usingCL == null) {
         usingCL = ExploreServiceUtils.class.getClassLoader();
+      }
+
+      // First try to figure which hive support is relevant based on Hadoop distribution name
+      String hadoopVersion = VersionInfo.getVersion();
+      LOG.info("Hadoop version is: {}", hadoopVersion);
+      for (HiveSupport hiveSupport : HiveSupport.values()) {
+        if (hiveSupport.getHadoopVersionPattern() != null &&
+          hiveSupport.getHadoopVersionPattern().matcher(hadoopVersion).matches()) {
+          return hiveSupport;
+        }
       }
 
       // In Hive 12, CLIService.getOperationStatus returns OperationState.
@@ -148,13 +173,41 @@ public class ExploreServiceUtils {
         return HiveSupport.HIVE_12;
       }
       throw new RuntimeException("Hive distribution not supported. Set the configuration reactor.explore.enabled " +
-                                 "to false to start up Reactor without Explore.");
+                                   "to false to start up Reactor without Explore.");
     } catch (RuntimeException e) {
       throw e;
     } catch (Throwable e) {
       throw new RuntimeException("Hive jars not present in classpath. Set the configuration reactor.explore.enabled " +
-                                 "to false to start up Reactor without Explore.", e);
+                                   "to false to start up Reactor without Explore.", e);
     }
+  }
+
+  /**
+   * Check that Hive is in the class path - with a right version. Use a separate class loader to load Hive classes,
+   * built using the explore classpath passed as a system property to reactor-master. Also check that Hadoop cluster is
+   * not secure, as it is not supported by Explore yet.
+   *
+   * @param hConf HBase configuration used to check if Hadoop cluster is secure.
+   */
+  public static HiveSupport checkHiveSupportWithSecurity(Configuration hConf) {
+    ClassLoader classLoader = getExploreClassLoader();
+    return checkHiveSupportWithSecurity(hConf, classLoader);
+  }
+
+  /**
+   * Check that Hive is in the class path - with a right version. Also check that Hadoop
+   * cluster is not secure, as it is not supported by Explore yet.
+   *
+   * @param hConf HBase configuration used to check if Hadoop cluster is secure.
+   * @param hiveClassLoader class loader to use to load hive classes.
+   *                        If null, the class loader of this class is used.
+   */
+  public static HiveSupport checkHiveSupportWithSecurity(Configuration hConf, ClassLoader hiveClassLoader) {
+    if (User.isHBaseSecurityEnabled(hConf)) {
+      throw new RuntimeException("Explore is not supported on secure Hadoop clusters. Set the configuration " +
+                                   "reactor.explore.enabled to false to start up Reactor without Explore.");
+    }
+    return checkHiveSupportWithoutSecurity(hiveClassLoader);
   }
 
   /**
@@ -225,13 +278,23 @@ public class ExploreServiceUtils {
                                                  bootstrapClassPaths, usingCL));
     orderedDependencies.addAll(traceDependencies("org.apache.hadoop.mapred.YarnClientProtocolProvider",
                                                  bootstrapClassPaths, usingCL));
+
+    // Needed for - at least - CDH 4.4 integration
+    orderedDependencies.addAll(traceDependencies("org.apache.hive.builtins.BuiltinUtils",
+                                                 bootstrapClassPaths, usingCL));
+
+    // Needed for - at least - CDH 5 integration
+    orderedDependencies.addAll(traceDependencies("org.apache.hadoop.hive.shims.Hadoop23Shims",
+                                                 bootstrapClassPaths, usingCL));
+
     exploreDependencies = orderedDependencies;
     return orderedDependencies;
   }
 
   /**
-   * Trace the dependencies files of the given className, using the classLoader, and excluding any class contained in
-   * the bootstrapClassPaths.
+   * Trace the dependencies files of the given className, using the classLoader,
+   * and excluding any class contained in the bootstrapClassPaths.
+   * Nothing is returned if the classLoader does not contain the className.
    */
   public static Set<File> traceDependencies(String className, final Set<String> bootstrapClassPaths,
                                             ClassLoader classLoader)

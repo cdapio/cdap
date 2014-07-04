@@ -20,6 +20,7 @@ import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
@@ -285,6 +286,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
       new LoggingModules().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -323,7 +325,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
     public Program create(String path) throws IOException {
       Location location = locationFactory.create(path);
-      return Programs.create(location, Files.createTempDir());
+      return Programs.createWithUnpack(location, Files.createTempDir());
     }
   }
 }

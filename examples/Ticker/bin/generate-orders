@@ -4,11 +4,21 @@ bin=`dirname "${BASH_SOURCE-$0}"`
 bin=`cd "$bin"; pwd`
 script=`basename $0`
 
+function usage() {
+  echo "Usage: $script [--gateway <hostname:port>]"
+  echo ""
+  echo "  Options"
+  echo "    --gateway   Specifies the hostname and port gateway is running on.(Default: localhost:10000)"
+  echo "    --help      This help message"
+  echo ""
+}
+
 gateway="localhost:10000"
 while [ $# -gt 0 ]
 do
   case "$1" in 
     --gateway) shift; gateway="$1"; shift;;
+    *)  usage; exit 1
   esac
 done
 

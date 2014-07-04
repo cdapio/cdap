@@ -16,6 +16,7 @@ import javax.annotation.Nullable;
 public class DatasetModuleMeta {
   private final String name;
   private final String className;
+  // TODO: change type to Location
   private final URI jarLocation;
 
   private final List<String> types;
