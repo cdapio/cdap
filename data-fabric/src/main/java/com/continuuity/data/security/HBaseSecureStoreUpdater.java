@@ -5,6 +5,7 @@ package com.continuuity.data.security;
 
 import com.continuuity.common.conf.Constants;
 import com.google.common.base.Throwables;
+import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.Credentials;
 import org.apache.twill.api.RunId;
@@ -27,6 +28,7 @@ public final class HBaseSecureStoreUpdater implements SecureStoreUpdater {
   private long nextUpdateTime = -1;
   private Credentials credentials;
 
+  @Inject
   public HBaseSecureStoreUpdater(Configuration hConf, LocationFactory locationFactory) {
     this.hConf = hConf;
     this.locationFactory = locationFactory;
