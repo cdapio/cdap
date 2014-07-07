@@ -69,8 +69,8 @@ public class TrafficAnalyticsApp extends AbstractApplication {
     setName("TrafficAnalytics");
     setDescription("HTTP request counts on an hourly basis");
     addStream(new Stream("logEventStream"));
-    createDataSet("logEventTable", TimeseriesTable.class, DatasetProperties.EMPTY);
-    createDataSet("countTable", TimeseriesTable.class, DatasetProperties.EMPTY);
+    createDataset("logEventTable", TimeseriesTable.class, DatasetProperties.EMPTY);
+    createDataset("countTable", TimeseriesTable.class, DatasetProperties.EMPTY);
     addFlow(new LogAnalyticsFlow());
     addProcedure(new LogCountProcedure());
     addMapReduce(new LogCountMapReduce());
@@ -159,6 +159,7 @@ public class TrafficAnalyticsApp extends AbstractApplication {
 
     /**
      * Define a MapReduce job.
+     *
      * @param context the context of a MapReduce job
      * @throws Exception
      */
@@ -201,6 +202,7 @@ public class TrafficAnalyticsApp extends AbstractApplication {
       /**
        * Generate key value pairs with key as timestamps by hour
        * and value as occurrence of the log events.
+       *
        * @param key the key of the input data. It doesn't contain valuable information for the Mapper.
        * @param entry the value of the input data. An entry of the SimpleTimeSeriesTable contains
        *              key, value, timestamp and tags.
@@ -227,6 +229,7 @@ public class TrafficAnalyticsApp extends AbstractApplication {
     public static class LogReducer extends Reducer<LongWritable, IntWritable, byte[], TimeseriesTable.Entry> {
       /**
        * Aggregate the number of requests by hour and store the results in the output DataSet.
+       *
        * @param key the timestamp in hour
        * @param values the occurrence of logs sent in one hour
        * @param context the context of a MapReduce job

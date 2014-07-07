@@ -1,5 +1,6 @@
 package com.continuuity.internal.app.runtime.distributed;
 
+import com.continuuity.api.common.RuntimeArguments;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.metrics.ServiceRunnableMetrics;
@@ -19,6 +20,7 @@ import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
@@ -173,7 +175,17 @@ public class ServiceTwillRunnable implements TwillRunnable {
                         new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
                                                                           program.getApplicationId(),
                                                                           program.getName(), runnableName)));
-      delegate.initialize(context);
+
+      final String[] argArray = RuntimeArguments.toPosixArray(programOpts.getUserArguments());
+      LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(
+        program.getAccountId(), program.getApplicationId(), program.getName(), runnableName));
+      delegate.initialize(new ForwardingTwillContext(context) {
+        @Override
+        public String[] getApplicationArguments() {
+          return argArray;
+        }
+      });
+
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
@@ -206,8 +218,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void run() {
-    LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(
-      program.getAccountId(), program.getApplicationId(), program.getName(), runnableName));
     Futures.getUnchecked(
       Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
 
@@ -276,6 +286,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
       new LoggingModules().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -314,7 +325,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
     public Program create(String path) throws IOException {
       Location location = locationFactory.create(path);
-      return Programs.create(location, Files.createTempDir());
+      return Programs.createWithUnpack(location, Files.createTempDir());
     }
   }
 }

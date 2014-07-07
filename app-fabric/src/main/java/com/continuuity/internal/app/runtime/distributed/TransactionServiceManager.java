@@ -27,7 +27,7 @@ public class TransactionServiceManager extends AbstractDistributedReactorService
   @Inject
   public TransactionServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
                                    TransactionSystemClient txClient, DiscoveryServiceClient discoveryServiceClient) {
-    super(cConf, Constants.Service.TRANSACTION, twillRunnerService);
+    super(cConf, Constants.Service.TRANSACTION, twillRunnerService, discoveryServiceClient);
     this.txClient = txClient;
     this.discoveryServiceClient = discoveryServiceClient;
   }
@@ -55,5 +55,10 @@ public class TransactionServiceManager extends AbstractDistributedReactorService
       LOG.warn("Unable to ping {} : Reason {} ", serviceName, e.getMessage());
       return false;
     }
+  }
+
+  @Override
+  public String getDescription() {
+    return Constants.Transaction.SERVICE_DESCRIPTION;
   }
 }

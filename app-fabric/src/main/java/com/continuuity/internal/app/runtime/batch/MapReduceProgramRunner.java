@@ -2,7 +2,6 @@ package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
@@ -18,6 +17,7 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.lang.CombineClassLoader;
 import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.common.LogWriter;
@@ -27,6 +27,7 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
+import com.continuuity.data.dataset.DatasetCreationSpec;
 import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data.stream.TextStreamInputFormat;
 import com.continuuity.data2.dataset2.DatasetFramework;
@@ -42,11 +43,14 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.DataSetFieldSetter;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.continuuity.internal.lang.Reflections;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
@@ -98,6 +102,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   private final TransactionSystemClient txSystemClient;
   private final TransactionExecutorFactory txExecutorFactory;
+  private final ProgramServiceDiscovery serviceDiscovery;
 
   private Job jobConf;
   private MapReduceProgramController controller;
@@ -110,7 +115,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
-                                TransactionExecutorFactory txExecutorFactory) {
+                                TransactionExecutorFactory txExecutorFactory,
+                                ProgramServiceDiscovery serviceDiscovery) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -120,6 +126,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.txExecutorFactory = txExecutorFactory;
+    this.serviceDiscovery = serviceDiscovery;
   }
 
   @Inject (optional = true)
@@ -157,9 +164,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
     DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework,
-                                                                      program.getClassLoader());
+                                                                      cConf, program.getClassLoader());
     Map<String, DataSetSpecification> dataSetSpecs = program.getSpecification().getDataSets();
-    Map<String, DatasetInstanceCreationSpec> datasetSpecs = program.getSpecification().getDatasets();
+    Map<String, DatasetCreationSpec> datasetSpecs = program.getSpecification().getDatasets();
     dataSetInstantiator.setDataSets(dataSetSpecs.values(), datasetSpecs.values());
 
     Map<String, Closeable> dataSets = DataSets.createDataSets(dataSetInstantiator,
@@ -170,8 +177,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 dataSets, spec,
                                 dataSetInstantiator.getTransactionAware(),
                                 logicalStartTime,
-                                workflowBatch,
-                                metricsCollectionService);
+                                workflowBatch, serviceDiscovery, metricsCollectionService);
 
     try {
       MapReduce job = program.<MapReduce>getMainClass().newInstance();
@@ -241,7 +247,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
       jobConf.getCredentials().addAll(credentials);
     }
 
-    jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
+    // Create a classloader that have the context/system classloader as parent and the program classloader as child
+    ClassLoader classLoader = new CombineClassLoader(
+      Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), ClassLoader.getSystemClassLoader()),
+      ImmutableList.of(context.getProgram().getClassLoader())
+    );
+
+    jobConf.getConfiguration().setClassLoader(classLoader);
     context.setJob(jobConf);
 
     // additional mapreduce job initialization at run-time
@@ -287,7 +299,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
             LOG.info("Submitting mapreduce job {}", context.toString());
 
             ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(job.getClass().getClassLoader());
+            Thread.currentThread().setContextClassLoader(jobConf.getConfiguration().getClassLoader());
             try {
               // submits job and returns immediately
               jobConf.submit();
@@ -324,6 +336,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
           }
 
         } catch (Exception e) {
+          LOG.warn("Received Exception after submitting MapReduce job.", e);
           throw Throwables.propagate(e);
         } finally {
           // stopping controller when mapreduce job is finished
@@ -348,7 +361,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private void beforeSubmit(final MapReduce job,
                             final BasicMapReduceContext context,
                             final DataSetInstantiator dataSetInstantiator)
-    throws TransactionFailureException {
+    throws TransactionFailureException, InterruptedException {
     TransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     // TODO: retry on txFailure or txConflict? Implement retrying TransactionExecutor
     txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -369,7 +382,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                         final BasicMapReduceContext context,
                         final DataSetInstantiator dataSetInstantiator,
                         final boolean succeeded)
-    throws TransactionFailureException {
+    throws TransactionFailureException, InterruptedException {
     TransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     // TODO: retry on txFailure or txConflict? Implement retrying TransactionExecutor
     txExecutor.execute(new TransactionExecutor.Subroutine() {

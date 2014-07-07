@@ -10,6 +10,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.explore.service.ExploreService;
@@ -61,6 +62,7 @@ public class ExploreServiceTwillRunnable extends AbstractReactorTwillRunnable {
         new DiscoveryRuntimeModule().getDistributedModules(),
         new LocationRuntimeModule().getDistributedModules(),
         new DataFabricModules().getDistributedModules(),
+        new DataSetsModules().getDistributedModule(),
         new ExploreRuntimeModule().getDistributedModules(),
         new AuthModule());
   }

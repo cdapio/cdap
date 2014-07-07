@@ -7,9 +7,9 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.queue.ConsumerConfig;
-import com.continuuity.data2.queue.Queue2Consumer;
-import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueConsumer;
+import com.continuuity.data2.queue.QueueProducer;
 import com.continuuity.data2.transaction.queue.QueueEvictor;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.google.common.collect.Maps;
@@ -48,25 +48,25 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   }
 
   @Override
-  public Queue2Producer createProducer(QueueName queueName) throws IOException {
+  public QueueProducer createProducer(QueueName queueName) throws IOException {
     return createProducer(queueName, QueueMetrics.NOOP_QUEUE_METRICS);
   }
 
   @Override
-  public Queue2Consumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig, int numGroups)
+  public QueueConsumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig, int numGroups)
     throws IOException {
     LevelDBQueueAdmin admin = ensureTableExists(queueName);
     LevelDBOcTableCore core = new LevelDBOcTableCore(admin.getActualTableName(queueName), service);
     // only the first consumer of each group runs eviction; and only if the number of consumers is known (> 0).
     QueueEvictor evictor = (numGroups <= 0 || consumerConfig.getInstanceId() != 0) ? QueueEvictor.NOOP :
       new LevelDBQueueEvictor(core, queueName, numGroups, evictionExecutor);
-    return new LevelDBQueue2Consumer(core, getQueueLock(queueName.toString()), consumerConfig, queueName, evictor);
+    return new LevelDBQueueConsumer(core, getQueueLock(queueName.toString()), consumerConfig, queueName, evictor);
   }
 
   @Override
-  public Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
+  public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
     LevelDBQueueAdmin admin = ensureTableExists(queueName);
-    return new LevelDBQueue2Producer(
+    return new LevelDBQueueProducer(
       new LevelDBOcTableCore(admin.getActualTableName(queueName), service), queueName, queueMetrics);
   }
 

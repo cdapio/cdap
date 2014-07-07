@@ -1,5 +1,6 @@
 package com.continuuity.api.dataset;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -41,6 +42,11 @@ public final class DatasetSpecification {
 
   public static Builder builder(String name, String typeName) {
     return new Builder(name, typeName);
+  }
+
+  public static DatasetSpecification changeName(DatasetSpecification spec, String newName) {
+    return new DatasetSpecification(newName, spec.type,
+                                    spec.properties, spec.datasetSpecs);
   }
 
   /**
@@ -145,6 +151,7 @@ public final class DatasetSpecification {
     }
     DatasetSpecification ds = (DatasetSpecification) other;
     return this.getName().equals(ds.getName())
+        && this.type.equals(ds.type)
         && this.properties.equals(ds.properties)
         && this.datasetSpecs.equals(ds.datasetSpecs);
   }
@@ -154,7 +161,17 @@ public final class DatasetSpecification {
    */
   @Override
   public int hashCode() {
-    return Objects.hashCode(this.name, this.properties, this.datasetSpecs);
+    return Objects.hashCode(this.name, this.type, this.properties, this.datasetSpecs);
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("name", name)
+      .add("type", type)
+      .add("properties", Joiner.on(",").withKeyValueSeparator("=").join(properties))
+      .add("datasetSpecs", Joiner.on(",").withKeyValueSeparator("=").join(datasetSpecs))
+      .toString();
   }
 
   /**

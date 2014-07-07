@@ -17,6 +17,8 @@
  */
 package com.continuuity.hive.objectinspector;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.hive.serde2.SerDeUtils;
@@ -178,6 +180,89 @@ public class StandardObjectInspectorsTest {
       e.printStackTrace();
       throw e;
     }
+  }
+
+  @Test
+  public void testPrimitiveTypesListObjectInspector() throws Throwable {
+    ObjectInspector oi;
+    StandardListObjectInspector loi;
+
+    // Byte array
+    oi = ObjectInspectorFactory.getReflectionObjectInspector(new TypeToken<List<Byte>>() { }.getType());
+    Assert.assertTrue(oi instanceof StandardListObjectInspector);
+    loi = (StandardListObjectInspector) oi;
+
+    byte[] bytes = new byte[] { 0, 1, 2 };
+    Assert.assertEquals(3, loi.getListLength(bytes));
+    Assert.assertEquals((byte) 0, loi.getListElement(bytes, 0));
+    Assert.assertEquals((byte) 1, loi.getListElement(bytes, 1));
+    Assert.assertEquals((byte) 2, loi.getListElement(bytes, 2));
+
+    // Int array
+    oi = ObjectInspectorFactory.getReflectionObjectInspector(new TypeToken<List<Integer>>() { }.getType());
+    Assert.assertTrue(oi instanceof StandardListObjectInspector);
+    loi = (StandardListObjectInspector) oi;
+
+    int[] ints = new int[] { 0, 1, 2 };
+    Assert.assertEquals(3, loi.getListLength(ints));
+    Assert.assertEquals(0, loi.getListElement(ints, 0));
+    Assert.assertEquals(1, loi.getListElement(ints, 1));
+    Assert.assertEquals(2, loi.getListElement(ints, 2));
+
+    // long array
+    oi = ObjectInspectorFactory.getReflectionObjectInspector(new TypeToken<List<Long>>() { }.getType());
+    Assert.assertTrue(oi instanceof StandardListObjectInspector);
+    loi = (StandardListObjectInspector) oi;
+
+    long[] longs = new long[] { 0, 1, 2 };
+    Assert.assertEquals((long) 3, loi.getListLength(longs));
+    Assert.assertEquals((long) 0, loi.getListElement(longs, 0));
+    Assert.assertEquals((long) 1, loi.getListElement(longs, 1));
+    Assert.assertEquals((long) 2, loi.getListElement(longs, 2));
+
+    // double array
+    oi = ObjectInspectorFactory.getReflectionObjectInspector(new TypeToken<List<Double>>() { }.getType());
+    Assert.assertTrue(oi instanceof StandardListObjectInspector);
+    loi = (StandardListObjectInspector) oi;
+
+    double[] doubles = new double[] { 0.1d, 1.0d, 2.0d };
+    Assert.assertEquals(3, loi.getListLength(doubles));
+    Assert.assertEquals(0.1d, loi.getListElement(doubles, 0));
+    Assert.assertEquals(1.0d, loi.getListElement(doubles, 1));
+    Assert.assertEquals(2.0d, loi.getListElement(doubles, 2));
+
+    // float array
+    oi = ObjectInspectorFactory.getReflectionObjectInspector(new TypeToken<List<Float>>() { }.getType());
+    Assert.assertTrue(oi instanceof StandardListObjectInspector);
+    loi = (StandardListObjectInspector) oi;
+
+    float[] floats = new float[] { 0.1f, 1.0f, 2.0f };
+    Assert.assertEquals(3, loi.getListLength(floats));
+    Assert.assertEquals(0.1f, loi.getListElement(floats, 0));
+    Assert.assertEquals(1.0f, loi.getListElement(floats, 1));
+    Assert.assertEquals(2.0f, loi.getListElement(floats, 2));
+
+    // short array
+    oi = ObjectInspectorFactory.getReflectionObjectInspector(new TypeToken<List<Short>>() { }.getType());
+    Assert.assertTrue(oi instanceof StandardListObjectInspector);
+    loi = (StandardListObjectInspector) oi;
+
+    short[] shorts = new short[] { 0, 1, 2 };
+    Assert.assertEquals(3, loi.getListLength(shorts));
+    Assert.assertEquals((short) 0, loi.getListElement(shorts, 0));
+    Assert.assertEquals((short) 1, loi.getListElement(shorts, 1));
+    Assert.assertEquals((short) 2, loi.getListElement(shorts, 2));
+
+    // short array
+    oi = ObjectInspectorFactory.getReflectionObjectInspector(new TypeToken<List<Boolean>>() { }.getType());
+    Assert.assertTrue(oi instanceof StandardListObjectInspector);
+    loi = (StandardListObjectInspector) oi;
+
+    boolean[] booleans = new boolean[] { true, false, false };
+    Assert.assertEquals(3, loi.getListLength(booleans));
+    Assert.assertEquals(true, loi.getListElement(booleans, 0));
+    Assert.assertEquals(false, loi.getListElement(booleans, 1));
+    Assert.assertEquals(false, loi.getListElement(booleans, 2));
   }
 
   @Test

@@ -12,11 +12,8 @@ import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Put;
 import com.continuuity.api.dataset.table.Table;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.ObjectResponse;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
@@ -107,19 +104,12 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   @Test
   public void testCreateDelete() throws Exception {
-    ReactorDatasetNamespace dsNameSpace =
-      new ReactorDatasetNamespace(CConfiguration.create(), DataSetAccessor.Namespace.USER);
-
-    // NOTE: we need to use namespace so that we can later get access thru dsFramework that is namespaced
-    String table1Name = dsNameSpace.namespace("myTable1");
-    String table2Name = dsNameSpace.namespace("myTable2");
-
     deployModule("default-orderedTable", InMemoryOrderedTableModule.class);
     deployModule("default-core", CoreDatasetsModule.class);
 
     // cannot create instance with same name again
-    Assert.assertEquals(HttpStatus.SC_OK, createInstance(table1Name, "table", DatasetProperties.EMPTY));
-    Assert.assertEquals(HttpStatus.SC_OK, createInstance(table2Name, "table", DatasetProperties.EMPTY));
+    Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable1", "table", DatasetProperties.EMPTY));
+    Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable2", "table", DatasetProperties.EMPTY));
     Assert.assertEquals(2, getInstances().getResponseObject().size());
 
     // we want to verify that data is also gone, so we write smth to tables first
@@ -147,11 +137,11 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     });
 
     // delete table, check that it is deleted, create again and verify that it is empty
-    Assert.assertEquals(HttpStatus.SC_OK, deleteInstance(table1Name));
+    Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("myTable1"));
     ObjectResponse<List<DatasetSpecification>> instances = getInstances();
     Assert.assertEquals(1, instances.getResponseObject().size());
-    Assert.assertEquals(table2Name, instances.getResponseObject().get(0).getName());
-    Assert.assertEquals(HttpStatus.SC_OK, createInstance(table1Name, "table", DatasetProperties.EMPTY));
+    Assert.assertEquals("myTable2", instances.getResponseObject().get(0).getName());
+    Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable1", "table", DatasetProperties.EMPTY));
     Assert.assertEquals(2, getInstances().getResponseObject().size());
 
     // verify that table1 is empty. Note: it is ok for test purpose to re-use the table clients
@@ -168,8 +158,8 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     // delete all tables, check that they deleted, create again and verify that they are empty
     Assert.assertEquals(HttpStatus.SC_OK, deleteInstances());
     Assert.assertEquals(0, getInstances().getResponseObject().size());
-    Assert.assertEquals(HttpStatus.SC_OK, createInstance(table1Name, "table", DatasetProperties.EMPTY));
-    Assert.assertEquals(HttpStatus.SC_OK, createInstance(table2Name, "table", DatasetProperties.EMPTY));
+    Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable1", "table", DatasetProperties.EMPTY));
+    Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable2", "table", DatasetProperties.EMPTY));
     Assert.assertEquals(2, getInstances().getResponseObject().size());
 
     // verify that tables are empty. Note: it is ok for test purpose to re-use the table clients
@@ -187,9 +177,10 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   }
 
   private int createInstance(String instanceName, String typeName, DatasetProperties props) throws IOException {
-    return HttpRequests.put(getUrl("/data/datasets/" + instanceName),
-                             new Gson().toJson(props),
-                             "X-Continuuity-Type-Name", typeName).getResponseCode();
+    DatasetInstanceHandler.DatasetTypeAndProperties typeAndProps =
+      new DatasetInstanceHandler.DatasetTypeAndProperties(typeName, props.getProperties());
+    return HttpRequests.put(getUrl("/data/datasets/" + instanceName), new Gson().toJson(typeAndProps))
+      .getResponseCode();
   }
 
   private ObjectResponse<List<DatasetSpecification>> getInstances() throws IOException {
@@ -237,12 +228,12 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       }
 
       @Override
-      public DatasetAdmin getAdmin(DatasetSpecification spec) {
+      public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) {
         return new CompositeDatasetAdmin(Collections.<DatasetAdmin>emptyList());
       }
 
       @Override
-      public Dataset getDataset(DatasetSpecification spec) {
+      public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) {
         return null;
       }
     };

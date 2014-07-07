@@ -1,11 +1,11 @@
 #!/bin/bash
 #
 # chkconfig: 2345 96 15
-# description: Starts and stops the @servicename@ service
+# description: Starts and stops the @service.name@ service
 # 
 ### BEGIN INIT INFO
-# Provides:          continuuity-@servicename@
-# Short-Description: Continuuity @servicename@
+# Provides:          continuuity-@service.name@
+# Short-Description: Continuuity @service.name@
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Required-Start:    $syslog $remote_fs
@@ -14,12 +14,46 @@
 # Should-Stop:
 ### END INIT INFO
 
+# source configuration, if it exists
+if [[ -r /etc/default/continuuity-@service.name@ ]]; then
+  . /etc/default/continuuity-@service.name@
+fi
+
+SVC_COMMAND="/opt/continuuity/@package.name@/bin/svc-@service.name@ $*"
+K5PID="/var/continuuity/run/k5start.pid"
+KRB_COMMAND="k5start -b -L -K 10 -p $K5PID -f $REACTOR_KEYTAB -u $REACTOR_PRINCIPAL"
+
+# check for kerberos
+if [[ -n $REACTOR_KEYTAB ]] && [[ -n $REACTOR_PRINCIPAL ]]; then
+  # Check for k5start and exit if it doesn't exist
+  if [[ $(which k5start) ]]; then
+    :
+  else
+    echo 'Fatal: Missing k5start command! Please install k5start!'
+    exit 1
+  fi
+  if [[ $1 =~ "start" ]]; then
+    if [[ $UID -eq 0 ]]; then
+      su continuuity -c "$KRB_COMMAND"
+    else
+      $KRB_COMMAND
+    fi
+  elif [[ $1 == "stop" ]]; then
+    if [[ -e $K5PID ]]; then
+      k5pid=$(<$K5PID)
+      if [[ $(ps auxwww | grep k5start | awk '{print $2}' | grep $k5pid) ]]; then
+        kill $k5pid
+      fi
+      rm -f $K5PID
+    fi
+  fi
+fi
 
 # drop permissions to continuuity user and run service script
 
 if [[ $UID -eq 0 ]]; then
-    su continuuity -c "cd /opt/continuuity/@packagename@/bin; exec ./svc-@servicename@ $*"
+    su continuuity -c "$SVC_COMMAND"
 else
-    cd /opt/continuuity/@packagename@/bin; exec ./svc-@servicename@ $*
+    $SVC_COMMAND
 fi
 

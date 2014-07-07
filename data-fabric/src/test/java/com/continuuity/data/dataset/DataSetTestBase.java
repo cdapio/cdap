@@ -2,12 +2,13 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionContext;
@@ -41,6 +42,7 @@ public class DataSetTestBase {
   protected static DataFabric fabric;
   protected static DatasetFramework datasetFramework;
   protected static TransactionSystemClient txSystemClient;
+  protected static CConfiguration configuration;
 
   protected static List<DataSetSpecification> specs;
   protected static DataSetInstantiator instantiator;
@@ -53,6 +55,7 @@ public class DataSetTestBase {
     // use Guice to inject an in-memory tx
     final Injector injector =
       Guice.createInjector(new DataFabricModules().getInMemoryModules(),
+                           new DataSetsModules().getInMemoryModule(),
                            new DiscoveryRuntimeModule().getInMemoryModules(),
                            new TransactionMetricsModule(),
                            new AbstractModule() {
@@ -61,6 +64,7 @@ public class DataSetTestBase {
                                bind(LocationFactory.class).to(LocalLocationFactory.class);
                              }
                            });
+    configuration = injector.getInstance(CConfiguration.class);
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
@@ -89,8 +93,8 @@ public class DataSetTestBase {
       specs.add(dataset.configure());
     }
     // create an instantiator the resulting list of data set specs
-    instantiator = new DataSetInstantiator(fabric, datasetFramework, null);
-    instantiator.setDataSets(specs, Collections.<DatasetInstanceCreationSpec>emptyList());
+    instantiator = new DataSetInstantiator(fabric, datasetFramework, configuration, null);
+    instantiator.setDataSets(specs, Collections.<DatasetCreationSpec>emptyList());
   }
 
   /**

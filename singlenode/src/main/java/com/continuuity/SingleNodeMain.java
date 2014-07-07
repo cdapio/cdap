@@ -5,6 +5,7 @@ package com.continuuity;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
+import com.continuuity.app.guice.ServiceStoreModules;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -14,6 +15,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data.stream.service.StreamServiceRuntimeModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
@@ -44,11 +46,10 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.internal.zookeeper.InMemoryZKServer;
+import org.apache.hadoop.mapreduce.counters.Limits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.util.List;
@@ -61,7 +62,6 @@ public class SingleNodeMain {
   private static final Logger LOG = LoggerFactory.getLogger(SingleNodeMain.class);
 
   private final WebCloudAppService webCloudAppService;
-  private final CConfiguration configuration;
   private final NettyRouter router;
   private final Gateway gatewayV2;
   private final MetricsQueryService metricsQueryService;
@@ -79,10 +79,7 @@ public class SingleNodeMain {
 
   private ExploreExecutorService exploreExecutorService;
 
-  private InMemoryZKServer zookeeper;
-
   public SingleNodeMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
-    this.configuration = configuration;
     this.webCloudAppService = new WebCloudAppService(webAppPath);
 
     Injector injector = Guice.createInjector(modules);
@@ -105,8 +102,8 @@ public class SingleNodeMain {
     }
 
     boolean exploreEnabled = configuration.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
-    ExploreServiceUtils.checkHiveVersion(this.getClass().getClassLoader());
     if (exploreEnabled) {
+      ExploreServiceUtils.checkHiveSupportWithoutSecurity(this.getClass().getClassLoader());
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     }
 
@@ -130,14 +127,6 @@ public class SingleNodeMain {
    */
   protected void startUp(String[] args) throws Exception {
     logAppenderInitializer.initialize();
-
-    File zkDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR) + "/zookeeper");
-    //noinspection ResultOfMethodCallIgnored
-    zkDir.mkdir();
-    zookeeper = InMemoryZKServer.builder().setDataDir(zkDir).build();
-    zookeeper.startAndWait();
-
-    configuration.set(Constants.Zookeeper.QUORUM, zookeeper.getConnectionStr());
 
     // Start all the services.
     txService.startAndWait();
@@ -175,23 +164,36 @@ public class SingleNodeMain {
   public void shutDown() {
     LOG.info("Shutting down reactor...");
 
-    streamHttpService.stopAndWait();
-    webCloudAppService.stopAndWait();
-    flumeCollector.stopAndWait();
-    router.stopAndWait();
-    gatewayV2.stopAndWait();
-    metricsQueryService.stopAndWait();
-    appFabricServer.stopAndWait();
-    txService.stopAndWait();
-    datasetService.stopAndWait();
-    if (externalAuthenticationServer != null) {
-      externalAuthenticationServer.stopAndWait();
+    try {
+      // order matters: first shut down web app 'cause it will stop working after router is down
+      webCloudAppService.stopAndWait();
+      //  shut down router, gateway and flume, to stop all incoming traffic
+      router.stopAndWait();
+      gatewayV2.stopAndWait();
+      flumeCollector.stopAndWait();
+      // now the stream writer and the explore service (they need tx)
+      streamHttpService.stopAndWait();
+      if (exploreExecutorService != null) {
+        exploreExecutorService.stopAndWait();
+      }
+      // app fabric will also stop all programs
+      appFabricServer.stopAndWait();
+      // all programs are stopped: dataset service, metrics, transactions can stop now
+      datasetService.stopAndWait();
+      metricsQueryService.stopAndWait();
+      txService.stopAndWait();
+      // auth service is on the side anyway
+      if (externalAuthenticationServer != null) {
+        externalAuthenticationServer.stopAndWait();
+      }
+      logAppenderInitializer.close();
+
+    } catch (Throwable e) {
+      LOG.error("Exception during shutdown", e);
+      // we can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
+      // therefore System.exit() won't do it, we need to farce a halt.
+      Runtime.getRuntime().halt(1);
     }
-    if (exploreExecutorService != null) {
-      exploreExecutorService.stopAndWait();
-    }
-    zookeeper.stopAndWait();
-    logAppenderInitializer.close();
   }
 
   /**
@@ -260,6 +262,11 @@ public class SingleNodeMain {
     Configuration hConf = new Configuration();
     hConf.addResource("mapred-site-local.xml");
     hConf.reloadConfiguration();
+    // Due to incredibly stupid design of Limits class, once it is initialized, it keeps its settings. We
+    // want to make sure it uses our settings in this hConf, so we have to force it initialize here before
+    // someone else initializes it.
+    Limits.init(hConf);
+
     String localDataDir = configuration.get(Constants.CFG_LOCAL_DATA_DIR);
     hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir);
     hConf.set(Constants.AppFabric.OUTPUT_DIR, configuration.get(Constants.AppFabric.OUTPUT_DIR));
@@ -307,13 +314,15 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new GatewayModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModule(),
       new DataSetServiceModules().getInMemoryModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
       new SecurityModules().getInMemoryModules(),
       new StreamServiceRuntimeModule().getInMemoryModules(),
-      new ExploreRuntimeModule().getInMemoryModules()
+      new ExploreRuntimeModule().getInMemoryModules(),
+      new ServiceStoreModules().getInMemoryModule()
     );
   }
 
@@ -354,13 +363,15 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new GatewayModule().getSingleNodeModules(),
       new DataFabricModules().getSingleNodeModules(),
+      new DataSetsModules().getLocalModule(),
       new DataSetServiceModules().getLocalModule(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
       new StreamServiceRuntimeModule().getSingleNodeModules(),
-      new ExploreRuntimeModule().getSingleNodeModules()
+      new ExploreRuntimeModule().getSingleNodeModules(),
+      new ServiceStoreModules().getSingleNodeModule()
     );
   }
 }

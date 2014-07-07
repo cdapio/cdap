@@ -3,7 +3,6 @@
  */
 package com.continuuity.internal.app.runtime.distributed;
 
-import com.continuuity.api.annotation.DisableTransaction;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.program.Program;
@@ -60,12 +59,6 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
     Preconditions.checkArgument(processorType == Type.FLOW, "Only FLOW process type is supported.");
 
     try {
-      boolean disableTransaction = program.getMainClass().isAnnotationPresent(DisableTransaction.class);
-
-      if (disableTransaction) {
-        LOG.info("Transaction is disable for flow {}.{}", program.getApplicationId(), program.getId().getId());
-      }
-
       FlowSpecification flowSpec = appSpec.getFlows().get(program.getName());
       Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getName());
 
@@ -76,8 +69,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
       LOG.info("Launching distributed flow: " + program.getName() + ":" + flowSpec.getName());
 
       TwillController controller = launcher.launch(new FlowTwillApplication(program, flowSpec,
-                                                                            hConfFile, cConfFile,
-                                                                            disableTransaction, eventHandler));
+                                                                            hConfFile, cConfFile, eventHandler));
       DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(program, controller,
                                                                                                 queueAdmin, streamAdmin,
                                                                                                 flowletQueues);

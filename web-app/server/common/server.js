@@ -85,9 +85,9 @@ var SECURITY_ENABLED, AUTH_SERVER_ADDRESSES;
  */
 WebAppServer.prototype.setSecurityStatus = function (callback) {
   var self = this;
-  
+
   var path = '/' + this.API_VERSION + '/apps';
-  var url = ('http://' + this.config['gateway.server.address'] + ':' 
+  var url = ('http://' + this.config['gateway.server.address'] + ':'
     + this.config['gateway.server.port'] + path);
   var interval = setInterval(function () {
     self.logger.info('Calling security endpoint: ', url);
@@ -95,11 +95,17 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
       method: 'GET',
       url: url
     }, function (err, response, body) {
-      if (!err && response && body) {
+      // If the response is a 401 and contains "auth_uri" as part of the body, Reactor security is enabled.
+      // On other response codes, and when "auth_uri" is not part of the body, Reactor security is disabled.
+      if (!err && response) {
         clearInterval(interval);
-        if (response.statusCode === 401) {
-          SECURITY_ENABLED = true;
-          AUTH_SERVER_ADDRESSES = JSON.parse(body).auth_uri;
+        if (body) {
+          if (response.statusCode === 401 && JSON.parse(body).auth_uri) {
+            SECURITY_ENABLED = true;
+            AUTH_SERVER_ADDRESSES = JSON.parse(body).auth_uri;
+          } else {
+            SECURITY_ENABLED = false;
+          }
         } else {
           SECURITY_ENABLED = false;
         }
@@ -137,14 +143,17 @@ WebAppServer.prototype.setEnvironment = function(id, product, version, callback)
   this.logger.info('PRODUCT_NAME', PRODUCT_NAME);
   this.logger.info('PRODUCT_VERSION', PRODUCT_VERSION);
 
-  this.setSecurityStatus(function() {
-    Env.getAddress(function (address) {
-      IP_ADDRESS = address;
-      if (typeof callback === 'function') {
+  // Check security status only when a callback is passed.
+  // This is a minor hack since sandboxes call this function twice, but we need it to check
+  // Security status only on the call with callbacks.
+  if (typeof callback === 'function') {
+    this.setSecurityStatus(function() {
+      Env.getAddress(function (address) {
+        IP_ADDRESS = address;
         callback(PRODUCT_VERSION, address);
-      }
+      }.bind(this));
     }.bind(this));
-  }.bind(this));
+  }
 };
 
 /**
@@ -204,7 +213,7 @@ WebAppServer.prototype.getServerInstance = function(app) {
 
 WebAppServer.prototype.checkAuth = function(req, res, next) {
   if (!('token' in req.cookies)) {
-    req.cookies.token = 'DUMMY';
+    req.cookies.token = '';
   }
   next();
 };
@@ -344,9 +353,10 @@ WebAppServer.prototype.bindRoutes = function() {
       } else {
         self.logger.error('Could not DELETE', path, body, error,  response.statusCode);
         if (error && error.code === 'ECONNREFUSED') {
-          res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
+          res.send(response.statusCode,
+            'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
-          res.send(500, body || error || response.statusCode);
+          res.send(response.statusCode, body || error || response.statusCode);
         }
       }
     });
@@ -702,8 +712,10 @@ WebAppServer.prototype.bindRoutes = function() {
 
   // Security endpoints.
   this.app.get('/getsession', function (req, res) {
+    var headerOpts = {};
     var token = '';
-    if ('token' in req.cookies && req.cookies.token !== 'DUMMY') {
+    if ('token' in req.cookies && req.cookies.token !== '') {
+      headerOpts['Authorization'] = "Bearer " + req.cookies.token;
       token = req.cookies.token;
     }
 
@@ -712,10 +724,7 @@ WebAppServer.prototype.bindRoutes = function() {
       port: self.config['gateway.server.port'],
       path: '/' + self.API_VERSION + '/deploy/status',
       method: 'GET',
-      headers: {
-        'X-Continuuity-ApiKey': '',
-        'Authorization': 'Bearer ' + token
-      }
+      headers: headerOpts
     };
 
     var request = self.lib.request(options, function (response) {
@@ -783,7 +792,7 @@ WebAppServer.prototype.bindRoutes = function() {
 
           request(options, function (nerr, nres, nbody) {
             if (nerr || nres.statusCode !== 200) {
-              res.locals.errorMessage = "Please specify a valid username and password";
+              res.locals.errorMessage = "Please specify a valid username and password.";
               res.redirect('/#/login');
             } else {
               var nbody = JSON.parse(nbody);
@@ -801,6 +810,44 @@ WebAppServer.prototype.bindRoutes = function() {
         res.redirect('/#/login');
       })
    });
+
+  this.app.post('/accesstoken', function (req, res) {
+     req.session.regenerate(function () {
+       var auth_uri = self.getAuthServerAddress();
+       auth_uri = auth_uri.slice(0, -5);
+       auth_uri += "extendedtoken";
+       if (auth_uri === null) {
+         res.send(500, "No Authentication service to connect to was found.");
+       } else {
+         var post = req.body;
+         var options = {
+           url: auth_uri,
+           auth: {
+             user: post.username,
+             password: post.password
+           },
+           rejectUnauthorized: false,
+           requestCert: true,
+           agent: false
+         }
+
+         request(options, function (nerr, nres, nbody) {
+           if (nerr || nres.statusCode !== 200) {
+             res.send(400, "Please specify a valid username and password.");
+           } else {
+             var nbody = JSON.parse(nbody);
+             res.send(nbody);
+           }
+         });
+       }
+     });
+  });
+
+  this.app.get('/download-access-token/*', function (req, res) {
+    var accessToken = req.params[0];
+    res.attachment('.continuuity.accesstoken');
+    res.end(accessToken, 'utf-8');
+  });
 
   /**
    * Check for new version.

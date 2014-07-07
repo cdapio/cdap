@@ -9,6 +9,7 @@ import org.apache.hadoop.hbase.util.VersionInfo;
 public class HBaseVersion {
   private static final String HBASE_94_VERSION = "0.94";
   private static final String HBASE_96_VERSION = "0.96";
+  private static final String HBASE_98_VERSION = "0.98";
 
   /**
    * Represents the major version of the HBase library that is currently loaded.
@@ -16,6 +17,7 @@ public class HBaseVersion {
   public enum Version {
     HBASE_94("0.94"),
     HBASE_96("0.96"),
+    HBASE_98("0.98"),
     UNKNOWN("unknown");
 
     final String majorVersion;
@@ -32,12 +34,19 @@ public class HBaseVersion {
   private static Version currentVersion;
   private static String versionString;
   static {
-    versionString = VersionInfo.getVersion();
-    if (versionString.startsWith(HBASE_94_VERSION)) {
-      currentVersion = Version.HBASE_94;
-    } else if (versionString.startsWith(HBASE_96_VERSION)) {
-      currentVersion = Version.HBASE_96;
-    } else {
+    try {
+      versionString = VersionInfo.getVersion();
+      if (versionString.startsWith(HBASE_94_VERSION)) {
+        currentVersion = Version.HBASE_94;
+      } else if (versionString.startsWith(HBASE_96_VERSION)) {
+        currentVersion = Version.HBASE_96;
+      } else if (versionString.startsWith(HBASE_98_VERSION)) {
+        currentVersion = Version.HBASE_98;
+      } else {
+        currentVersion = Version.UNKNOWN;
+      }
+    } catch (Throwable e) {
+      // must be a class loading exception, HBasde is not there
       currentVersion = Version.UNKNOWN;
     }
   }

@@ -11,9 +11,11 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.app.runtime.AbstractContext;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.logging.context.FlowletLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.io.Closeable;
 import java.util.Map;
@@ -23,6 +25,7 @@ import java.util.Map;
  */
 final class BasicFlowletContext extends AbstractContext implements FlowletContext {
 
+  private final String accountId;
   private final String flowId;
   private final String flowletId;
   private final long groupId;
@@ -32,13 +35,16 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   private volatile int instanceCount;
   private final FlowletMetrics flowletMetrics;
   private final Arguments runtimeArguments;
+  private final ProgramServiceDiscovery serviceDiscovery;
 
   private final MetricsCollector systemMetricsCollector;
 
   BasicFlowletContext(Program program, String flowletId, int instanceId, RunId runId, int instanceCount,
                       Map<String, Closeable> datasets, Arguments runtimeArguments,
-                      FlowletSpecification flowletSpec, MetricsCollectionService metricsCollectionService) {
+                      FlowletSpecification flowletSpec, MetricsCollectionService metricsCollectionService,
+                      ProgramServiceDiscovery serviceDiscovery) {
     super(program, runId, datasets);
+    this.accountId = program.getAccountId();
     this.flowId = program.getName();
     this.flowletId = flowletId;
     this.groupId = FlowUtils.generateConsumerGroupId(program, flowletId);
@@ -49,6 +55,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.flowletMetrics = new FlowletMetrics(metricsCollectionService, getApplicationId(), flowId, flowletId);
     this.systemMetricsCollector = getMetricsCollector(MetricsScope.REACTOR,
                                                       metricsCollectionService, getMetricContext());
+    this.serviceDiscovery = serviceDiscovery;
   }
 
   @Override
@@ -82,6 +89,11 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
       builder.put(entry);
     }
     return builder.build();
+  }
+
+  @Override
+  public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
+    return serviceDiscovery.discover(accountId, appId, serviceId, serviceName);
   }
 
   public MetricsCollector getSystemMetrics() {

@@ -1,5 +1,6 @@
 package com.continuuity.api.dataset.lib;
 
+import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
@@ -13,6 +14,7 @@ import java.io.IOException;
 /**
  * DatasetDefinition for {@link IndexedTable}.
  */
+@Beta
 public class IndexedTableDefinition
   extends AbstractDatasetDefinition<IndexedTable, DatasetAdmin> {
   
@@ -34,20 +36,20 @@ public class IndexedTableDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
+  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     return new CompositeDatasetAdmin(Lists.newArrayList(
-      tableDef.getAdmin(spec.getSpecification("d")),
-      tableDef.getAdmin(spec.getSpecification("i"))
+      tableDef.getAdmin(spec.getSpecification("d"), classLoader),
+      tableDef.getAdmin(spec.getSpecification("i"), classLoader)
     ));
   }
 
   @Override
-  public IndexedTable getDataset(DatasetSpecification spec) throws IOException {
+  public IndexedTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     DatasetSpecification tableInstance = spec.getSpecification("d");
-    Table table = tableDef.getDataset(tableInstance);
+    Table table = tableDef.getDataset(tableInstance, classLoader);
 
     DatasetSpecification indexTableInstance = spec.getSpecification("i");
-    Table index = tableDef.getDataset(indexTableInstance);
+    Table index = tableDef.getDataset(indexTableInstance, classLoader);
 
     String columnToIndex = spec.getProperty("columnToIndex");
     Preconditions.checkNotNull(columnToIndex, "columnToIndex must be specified");

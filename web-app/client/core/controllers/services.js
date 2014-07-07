@@ -21,13 +21,18 @@ define([], function () {
         services.map(function(service) {
           servicesArr.push(C.Service.create({
             modelId: service.name,
+            description: service.description,
             id: service.name,
             name: service.name,
+            description: service.description,
             status: service.status,
             min: service.min,
             max: service.max,
-            cur: service.cur,
+            isIncreaseEnabled: service.requested < service.max,
+            isDecreaseEnabled: service.requested > service.min,
             logs: service.logs,
+            requested: service.requested,
+            provisioned: service.provisioned,
             statusOk: !!(service.status === 'OK'),
             statusNotOk: !!(service.status === 'NOT OK'),
             logsStatusOk: !!(service.logs === 'OK'),
@@ -37,6 +42,11 @@ define([], function () {
           }));
         });
         self.set('services', servicesArr);
+
+        // Bind all the tooltips after UI has rendered after call has returned.
+        setTimeout(function () {
+          $("[data-toggle='tooltip']").tooltip();
+        }, 1000);
       });
     },
 

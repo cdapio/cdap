@@ -4,7 +4,6 @@
 
 package com.continuuity.internal.app.runtime.flow;
 
-import com.continuuity.api.annotation.DisableTransaction;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.app.ApplicationSpecification;
@@ -79,19 +78,12 @@ public final class FlowProgramRunner implements ProgramRunner {
     Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getName());
 
     try {
-      boolean disableTransaction = program.getMainClass().isAnnotationPresent(DisableTransaction.class);
-
-      if (disableTransaction) {
-        LOG.info("Transaction is disable for flow {}.{}", program.getApplicationId(), program.getId().getId());
-      }
-
       // Launch flowlet program runners
       RunId runId = RunIds.generate();
       programOptions.put(runId, options);
       Multimap<String, QueueName> consumerQueues = FlowUtils.configureQueue(program, flowSpec, streamAdmin, queueAdmin);
-      final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, runId,
-                                                                                flowSpec, disableTransaction);
-      return new FlowProgramController(flowlets, runId, program, flowSpec, disableTransaction, consumerQueues);
+      final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, runId, flowSpec);
+      return new FlowProgramController(flowlets, runId, program, flowSpec, consumerQueues);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -105,8 +97,7 @@ public final class FlowProgramRunner implements ProgramRunner {
    *         for the flowlet.
    */
   private Table<String, Integer, ProgramController> createFlowlets(Program program, RunId runId,
-                                                                   FlowSpecification flowSpec,
-                                                                   boolean disableTransaction) {
+                                                                   FlowSpecification flowSpec) {
     Table<String, Integer, ProgramController> flowlets = HashBasedTable.create();
 
     try {
@@ -114,8 +105,7 @@ public final class FlowProgramRunner implements ProgramRunner {
         int instanceCount = entry.getValue().getInstances();
         for (int instanceId = 0; instanceId < instanceCount; instanceId++) {
           flowlets.put(entry.getKey(), instanceId,
-                       startFlowlet(program, createFlowletOptions(entry.getKey(), instanceId,
-                                                                  instanceCount, runId, disableTransaction)));
+                       startFlowlet(program, createFlowletOptions(entry.getKey(), instanceId, instanceCount, runId)));
         }
       }
     } catch (Throwable t) {
@@ -141,8 +131,7 @@ public final class FlowProgramRunner implements ProgramRunner {
                                .run(program, options);
   }
 
-  private ProgramOptions createFlowletOptions(String name, int instanceId, int instances,
-                                              RunId runId, boolean disableTransaction) {
+  private ProgramOptions createFlowletOptions(String name, int instanceId, int instances, RunId runId) {
 
     // Get the right user arguments.
     Arguments userArguments = new BasicArguments();
@@ -154,9 +143,8 @@ public final class FlowProgramRunner implements ProgramRunner {
       ImmutableMap.of(
         ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId),
         ProgramOptionConstants.INSTANCES, Integer.toString(instances),
-        ProgramOptionConstants.RUN_ID, runId.getId(),
-        ProgramOptionConstants.DISABLE_TRANSACTION, Boolean.toString(disableTransaction))
-      ), userArguments
+        ProgramOptionConstants.RUN_ID, runId.getId()
+      )), userArguments
     );
   }
 
@@ -166,17 +154,14 @@ public final class FlowProgramRunner implements ProgramRunner {
     private final Program program;
     private final FlowSpecification flowSpec;
     private final Lock lock = new ReentrantLock();
-    private final boolean disableTransaction;
     private final Multimap<String, QueueName> consumerQueues;
 
     FlowProgramController(Table<String, Integer, ProgramController> flowlets, RunId runId,
-                          Program program, FlowSpecification flowSpec, boolean disableTransaction,
-                          Multimap<String, QueueName> consumerQueues) {
+                          Program program, FlowSpecification flowSpec, Multimap<String, QueueName> consumerQueues) {
       super(program.getName(), runId);
       this.flowlets = flowlets;
       this.program = program;
       this.flowSpec = flowSpec;
-      this.disableTransaction = disableTransaction;
       this.consumerQueues = consumerQueues;
       started();
     }
@@ -318,8 +303,8 @@ public final class FlowProgramRunner implements ProgramRunner {
       // Last create more instances
       for (int instanceId = liveCount; instanceId < newInstanceCount; instanceId++) {
         flowlets.put(flowletName, instanceId,
-                     startFlowlet(program, createFlowletOptions(flowletName, instanceId,
-                                                                newInstanceCount, getRunId(), disableTransaction)));
+                     startFlowlet(program,
+                                  createFlowletOptions(flowletName, instanceId, newInstanceCount, getRunId())));
       }
     }
 

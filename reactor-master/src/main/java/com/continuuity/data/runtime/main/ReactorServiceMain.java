@@ -2,6 +2,8 @@ package com.continuuity.data.runtime.main;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
+import com.continuuity.app.guice.ServiceStoreModules;
+import com.continuuity.app.store.ServiceStore;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -17,18 +19,20 @@ import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
-import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
+import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
@@ -37,7 +41,6 @@ import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.security.User;
-import org.apache.hadoop.security.Credentials;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
@@ -47,7 +50,6 @@ import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.yarn.YarnSecureStore;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,8 +59,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.InetAddress;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -93,12 +100,14 @@ public class ReactorServiceMain extends DaemonMain {
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
   private DatasetService dsService;
+  private ServiceStore serviceStore;
+  private HBaseSecureStoreUpdater secureStoreUpdater;
 
   private String serviceName;
   private TwillApplication twillApplication;
   private long lastRunTimeMs = System.currentTimeMillis();
   private int currentRun = 0;
-  private boolean isHiveEnabled;
+  private boolean isExploreEnabled;
 
   public static void main(final String[] args) throws Exception {
     LOG.info("Starting Reactor Service Main...");
@@ -107,14 +116,8 @@ public class ReactorServiceMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
-    isHiveEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
-    twillApplication = createTwillApplication();
-    if (twillApplication == null) {
-      throw new IllegalArgumentException("TwillApplication cannot be null");
-    }
-
-    serviceName = twillApplication.configure().getName();
-
+    isExploreEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
+    serviceName = Constants.Service.REACTOR_SERVICES;
     cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
 
     baseInjector = Guice.createInjector(
@@ -131,13 +134,47 @@ public class ReactorServiceMain extends DaemonMain {
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModule(),
       new DataFabricModules().getDistributedModules(),
-      new MetricsClientRuntimeModule().getDistributedModules()
+      new DataSetsModules().getDistributedModule(),
+      new MetricsClientRuntimeModule().getDistributedModules(),
+      new ServiceStoreModules().getDistributedModule()
     );
+
     // Initialize ZK client
     zkClientService = baseInjector.getInstance(ZKClientService.class);
     kafkaClientService = baseInjector.getInstance(KafkaClientService.class);
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
     dsService = baseInjector.getInstance(DatasetService.class);
+    serviceStore = baseInjector.getInstance(ServiceStore.class);
+
+    secureStoreUpdater = baseInjector.getInstance(HBaseSecureStoreUpdater.class);
+
+    checkTransactionRequirements();
+    checkExploreRequirements();
+  }
+
+  /**
+   * The transaction coprocessors (0.94 and 0.96 versions of {@code ReactorTransactionDataJanitor}) need access
+   * to CConfiguration values in order to load transaction snapshots for data cleanup.
+   */
+  private void checkTransactionRequirements() {
+    try {
+      new ConfigurationTable(hConf).write(ConfigurationTable.Type.DEFAULT, cConf);
+    } catch (IOException ioe) {
+      throw Throwables.propagate(ioe);
+    }
+  }
+
+  /**
+   * Check that if Explore is enabled, the correct jars are present on reactor-master node,
+   * and that the distribution of Hive is supported.
+   */
+  private void checkExploreRequirements() {
+    if (!isExploreEnabled) {
+      return;
+    }
+
+    // This checking will throw an exception if Hive is not present or if its distribution is unsupported
+    ExploreServiceUtils.checkHiveSupportWithSecurity(hConf);
   }
 
   @Override
@@ -147,6 +184,12 @@ public class ReactorServiceMain extends DaemonMain {
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
       public void leader() {
+        Map<String, Integer> instanceCount = getSystemServiceInstances();
+        twillApplication = createTwillApplication(instanceCount);
+        if (twillApplication == null) {
+          throw new IllegalArgumentException("TwillApplication cannot be null");
+        }
+
         LOG.info("Became leader.");
         Injector injector = baseInjector.createChildInjector();
 
@@ -158,7 +201,6 @@ public class ReactorServiceMain extends DaemonMain {
         appFabricServer.startAndWait();
         scheduleSecureStoreUpdate(twillRunnerService);
         runTwillApps();
-
         isLeader.set(true);
       }
 
@@ -189,7 +231,9 @@ public class ReactorServiceMain extends DaemonMain {
       twillController.stopAndWait();
     }
 
-    leaderElection.stopAndWait();
+    if (leaderElection != null) {
+      leaderElection.stopAndWait();
+    }
     Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService);
   }
 
@@ -206,9 +250,64 @@ public class ReactorServiceMain extends DaemonMain {
     }
   }
 
-  private TwillApplication createTwillApplication() {
+  /**
+   * Returns a map from system service name to a map from property to configuration key.
+   */
+  private Map<String, Map<String, String>> getConfigKeys() {
+    Map<String, Map<String, String>> configKeys = Maps.newHashMap();
+
+    configKeys.put(Constants.Service.LOGSAVER,
+                   ImmutableMap.of("default", Constants.LogSaver.NUM_INSTANCES,
+                                   "max", Constants.LogSaver.MAX_INSTANCES));
+    configKeys.put(Constants.Service.TRANSACTION,
+                   ImmutableMap.of("default", Constants.Transaction.Container.NUM_INSTANCES,
+                                   "max", Constants.Transaction.Container.MAX_INSTANCES));
+    configKeys.put(Constants.Service.METRICS_PROCESSOR,
+                   ImmutableMap.of("default", Constants.MetricsProcessor.NUM_INSTANCES,
+                                   "max", Constants.MetricsProcessor.MAX_INSTANCES));
+    configKeys.put(Constants.Service.METRICS,
+                   ImmutableMap.of("default", Constants.Metrics.NUM_INSTANCES,
+                                   "max", Constants.Metrics.MAX_INSTANCES));
+    configKeys.put(Constants.Service.STREAMS,
+                   ImmutableMap.of("default", Constants.Stream.CONTAINER_INSTANCES,
+                                   "max", Constants.Stream.MAX_INSTANCES));
+    configKeys.put(Constants.Service.DATASET_EXECUTOR,
+                   ImmutableMap.of("default", Constants.Dataset.Executor.CONTAINER_INSTANCES,
+                                   "max", Constants.Dataset.Executor.MAX_INSTANCES));
+    return configKeys;
+  }
+
+  private Map<String, Integer> getSystemServiceInstances() {
+    Map<String, Integer> instanceCountMap = new HashMap<String, Integer>();
+    for (Map.Entry<String, Map<String, String>> entry : getConfigKeys().entrySet()) {
+      String service = entry.getKey();
+      Map<String, String> configKeys = entry.getValue();
+      try {
+        int maxCount = cConf.getInt(configKeys.get("max"));
+
+        Integer savedCount = serviceStore.getServiceInstance(service);
+        if (savedCount == null) {
+          savedCount = Math.min(maxCount, cConf.getInt(configKeys.get("default")));
+        } else {
+          // If the max value is smaller than the saved instance count, update the store to the max value.
+          if (savedCount > maxCount) {
+            savedCount = maxCount;
+            serviceStore.setServiceInstance(service, savedCount);
+          }
+        }
+
+        instanceCountMap.put(service, savedCount);
+        LOG.info("Setting instance count of {} Service to {}", service, savedCount);
+      } catch (Exception e) {
+        LOG.error("Couldn't retrieve instance count {} : {}", service, e.getMessage(), e);
+      }
+    }
+    return instanceCountMap;
+  }
+
+  private TwillApplication createTwillApplication(final Map<String, Integer> instanceCountMap) {
     try {
-      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf(), isHiveEnabled);
+      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf(), isExploreEnabled, instanceCountMap);
     } catch (Exception e) {
       throw  Throwables.propagate(e);
     }
@@ -216,15 +315,15 @@ public class ReactorServiceMain extends DaemonMain {
 
   private void scheduleSecureStoreUpdate(TwillRunner twillRunner) {
     if (User.isHBaseSecurityEnabled(hConf)) {
-      HBaseSecureStoreUpdater updater = new HBaseSecureStoreUpdater(hConf);
-      twillRunner.scheduleSecureStoreUpdate(updater, 30000L, updater.getUpdateInterval(), TimeUnit.MILLISECONDS);
+      twillRunner.scheduleSecureStoreUpdate(secureStoreUpdater, 30000L, secureStoreUpdater.getUpdateInterval(),
+                                            TimeUnit.MILLISECONDS);
     }
   }
 
 
   private TwillPreparer prepare(TwillPreparer preparer) {
     return preparer.withDependencies(new HBaseTableUtilFactory().get().getClass())
-      .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())));
+      .addSecureStore(secureStoreUpdater.update(null, null)); // HBaseSecureStoreUpdater.update() ignores parameters
   }
 
   private void runTwillApps() {
@@ -311,36 +410,63 @@ public class ReactorServiceMain extends DaemonMain {
     return iterable;
   }
 
-  private TwillPreparer addHiveDependenciesToPreparer(TwillPreparer preparer) {
-    if (!isHiveEnabled) {
+  /**
+   * Prepare the specs of the twill application for the Explore twill runnable.
+   * Add jars needed by the Explore module in the classpath of the containers, and
+   * add conf files (hive_site.xml, etc) as resources available for the Explore twill
+   * runnable.
+   */
+  private TwillPreparer prepareExploreContainer(TwillPreparer preparer) {
+    if (!isExploreEnabled) {
       return preparer;
     }
 
-    // TODO ship hive jars instead of just passing hive class path: hive jars
-    // may not be at the same location on every machine of the cluster.
-
-    // HIVE_CLASSPATH will be defined in startup scripts if Hive is installed.
-    String hiveClassPathStr = System.getProperty(Constants.Explore.HIVE_CLASSPATH);
-    LOG.debug("Hive classpath = {}", hiveClassPathStr);
-    if (hiveClassPathStr == null) {
-      throw new RuntimeException("System property " + Constants.Explore.HIVE_CLASSPATH + " is not set.");
+    try {
+      // Put jars needed by Hive in the containers classpath. Those jars are localized in the Explore
+      // container by ReactorTwillApplication, so they are available for ExploreServiceTwillRunnable
+      Set<File> jars = ExploreServiceUtils.traceExploreDependencies();
+      for (File jarFile : jars) {
+        LOG.trace("Adding jar file to classpath: {}", jarFile.getName());
+        preparer = preparer.withClassPaths(jarFile.getName());
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to trace Explore dependencies", e);
     }
 
-    // Here we need to get a different class loader that contains all the hive jars, to have access to them.
-    // We use a separate class loader because Hive ships a lot of dependencies that conflicts with ours.
-    ClassLoader hiveCL = ExploreServiceUtils.buildHiveClassLoader(hiveClassPathStr);
+    // EXPLORE_CONF_FILES will be defined in startup scripts if Hive is installed.
+    String hiveConfFiles = System.getProperty(Constants.Explore.EXPLORE_CONF_FILES);
+    LOG.debug("Hive conf files = {}", hiveConfFiles);
+    if (hiveConfFiles == null) {
+      throw new RuntimeException("System property " + Constants.Explore.EXPLORE_CONF_FILES + " is not set.");
+    }
 
-    // This checking will throw an exception if Hive is not present or if its version is unsupported
-    ExploreServiceUtils.checkHiveVersion(hiveCL);
+    // Add all the conf files needed by hive as resources available to containers
+    Iterable<File> hiveConfFilesFiles = ExploreServiceUtils.getClassPathJarsFiles(hiveConfFiles);
+    for (File file : hiveConfFilesFiles) {
+      if (file.getName().matches(".*\\.xml")) {
+        preparer = preparer.withResources(file.toURI());
+      }
+    }
 
-    return preparer.withClassPaths(hiveClassPathStr);
+    return preparer;
   }
 
   private TwillPreparer getPreparer() {
     TwillPreparer preparer = twillRunnerService.prepare(twillApplication)
-        .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
-    preparer = addHiveDependenciesToPreparer(preparer);
+      .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
 
+    // Add system logback file to the preparer
+    URL logbackUrl = getClass().getResource("/logback.xml");
+    if (logbackUrl == null) {
+      LOG.warn("Cannot find logback.xml to pass onto Twill Runnables!");
+    } else {
+      try {
+        preparer.withResources(logbackUrl.toURI());
+      } catch (URISyntaxException e) {
+        LOG.error("Got exception while getting URI for logback.xml - {}", logbackUrl);
+      }
+    }
+    preparer = prepareExploreContainer(preparer);
     return prepare(preparer);
   }
 

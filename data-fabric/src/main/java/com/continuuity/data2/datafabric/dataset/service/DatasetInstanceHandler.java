@@ -2,6 +2,7 @@ package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.exception.HandlerException;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -44,13 +46,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private final DatasetOpExecutor opExecutorClient;
   private final DatasetExploreFacade datasetExploreFacade;
 
+  private final CConfiguration conf;
+
   @Inject
   public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
-                                DatasetOpExecutor opExecutorClient, DatasetExploreFacade datasetExploreFacade) {
+                                DatasetOpExecutor opExecutorClient, DatasetExploreFacade datasetExploreFacade,
+                                CConfiguration conf) {
     this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;
     this.datasetExploreFacade = datasetExploreFacade;
+    this.conf = conf;
   }
 
   @GET
@@ -60,8 +66,14 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("/data/datasets/")
+  @Path("/data/unrecoverable/datasets/")
   public void deleteAll(HttpRequest request, final HttpResponder responder) throws Exception {
+    if (!conf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
+                                  Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      return;
+    }
+
     boolean succeeded = true;
     for (DatasetSpecification spec : instanceManager.getAll()) {
       try {
@@ -98,10 +110,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void add(HttpRequest request, final HttpResponder responder,
                   @PathParam("name") String name) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
-    DatasetProperties props = GSON.fromJson(reader, DatasetProperties.class);
-    String typeName = request.getHeader("X-Continuuity-Type-Name");
 
-    LOG.info("Creating dataset {}, type name: {}, props: {}", name, typeName, props);
+    DatasetTypeAndProperties typeAndProps = GSON.fromJson(reader, DatasetTypeAndProperties.class);
+
+    LOG.info("Creating dataset {}, type name: {}, typeAndProps: {}",
+             name, typeAndProps.getTypeName(), typeAndProps.getProperties());
 
     DatasetSpecification existing = instanceManager.get(name);
     if (existing != null) {
@@ -112,10 +125,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
 
-    DatasetTypeMeta typeMeta = implManager.getTypeInfo(typeName);
+    DatasetTypeMeta typeMeta = implManager.getTypeInfo(typeAndProps.getTypeName());
     if (typeMeta == null) {
       String message = String.format("Cannot create dataset %s: unknown type %s",
-                                     name, typeName);
+                                     name, typeAndProps.getTypeName());
       LOG.warn(message);
       responder.sendError(HttpResponseStatus.NOT_FOUND, message);
       return;
@@ -124,10 +137,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     DatasetSpecification spec;
     try {
-      spec = opExecutorClient.create(name, typeMeta, props);
+      spec = opExecutorClient.create(name, typeMeta,
+                                     DatasetProperties.builder().addAll(typeAndProps.getProperties()).build());
     } catch (Exception e) {
       String msg = String.format("Cannot create dataset %s of type %s: executing create() failed, reason: %s",
-                                 name, typeName, e.getMessage());
+                                 name, typeAndProps.getTypeName(), e.getMessage());
       LOG.error(msg, e);
       throw new RuntimeException(msg, e);
     }
@@ -137,9 +151,9 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Note: today explore enable is not transactional with dataset create - REACTOR-314
     try {
       datasetExploreFacade.enableExplore(name);
-    } catch (ExploreException e) {
+    } catch (Exception e) {
       String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
-                                 name, typeName, e.getMessage());
+                                 name, typeAndProps.getProperties(), e.getMessage());
       LOG.error(msg, e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
 //      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
@@ -219,6 +233,27 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   /**
+   * POJO that carries dataset type and properties information for create dataset request
+   */
+  public static final class DatasetTypeAndProperties {
+    private final String typeName;
+    private final Map<String, String> properties;
+
+    public DatasetTypeAndProperties(String typeName, Map<String, String> properties) {
+      this.typeName = typeName;
+      this.properties = properties;
+    }
+
+    public String getTypeName() {
+      return typeName;
+    }
+
+    public Map<String, String> getProperties() {
+      return properties;
+    }
+  }
+
+  /**
    * Drops a dataset.
    * @param spec specification of dataset to be dropped.
    * @return true if dropped successfully, false if dataset is not found.
@@ -235,7 +270,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       String msg = String.format("Cannot disable exploration of dataset instance %s: %s",
                                  name, e.getMessage());
       LOG.error(msg, e);
-      throw e;
+      // TODO: at this time we want to still drop dataset even if it cannot be disabled for exploration
+//      throw e;
     }
 
     if (!instanceManager.delete(name)) {

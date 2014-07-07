@@ -12,20 +12,27 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.DetachedTxSystemClient;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
+import com.continuuity.test.SlowTests;
+import com.google.gson.Gson;
+import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
+@Category(SlowTests.class)
 public class HBaseOrderedTableTest extends BufferingOrederedTableTest<HBaseOrderedTable> {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -102,6 +109,25 @@ public class HBaseOrderedTableTest extends BufferingOrederedTableTest<HBaseOrder
     table.startTx(tx);
     Assert.assertArrayEquals(b("val1"), table.get(b("row1"), b("col1")));
     Assert.assertArrayEquals(b("val2"), table.get(b("row2"), b("col2")));
+  }
+
+  @Test
+  public void testPreSplit() throws Exception {
+    byte[][] splits = new byte[][] {Bytes.toBytes("a"), Bytes.toBytes("b"), Bytes.toBytes("c")};
+    DatasetProperties props = DatasetProperties.builder().add("hbase.splits", new Gson().toJson(splits)).build();
+    getAdmin("presplitted", props).create();
+
+    HBaseAdmin hBaseAdmin = testHBase.getHBaseAdmin();
+    try {
+      List<HRegionInfo> regions = hBaseAdmin.getTableRegions(Bytes.toBytes("presplitted"));
+      // note: first region starts at very first row key, so we have one extra to the splits count
+      Assert.assertEquals(4, regions.size());
+      Assert.assertArrayEquals(Bytes.toBytes("a"), regions.get(1).getStartKey());
+      Assert.assertArrayEquals(Bytes.toBytes("b"), regions.get(2).getStartKey());
+      Assert.assertArrayEquals(Bytes.toBytes("c"), regions.get(3).getStartKey());
+    } finally {
+      hBaseAdmin.close();
+    }
   }
 
   private static byte[] b(String s) {

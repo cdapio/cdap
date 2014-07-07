@@ -3,6 +3,7 @@ package com.continuuity.data.runtime.main;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.AbortOnTimeoutEventHandler;
+import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.logging.run.LogSaverTwillRunnable;
 import com.continuuity.metrics.runtime.MetricsProcessorTwillRunnable;
 import com.continuuity.metrics.runtime.MetricsTwillRunnable;
@@ -14,6 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * TwillApplication wrapper for Reactor YARN Services.
@@ -27,12 +31,15 @@ public class ReactorTwillApplication implements TwillApplication {
   private final File hConfFile;
 
   private final boolean runHiveService;
+  private final Map<String, Integer> instanceCountMap;
 
-  public ReactorTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile, boolean runHiveService) {
+  public ReactorTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile, boolean runHiveService,
+                                 Map<String, Integer> instanceCountMap) {
     this.cConf = cConf;
     this.cConfFile = cConfFile;
     this.hConfFile = hConfFile;
     this.runHiveService = runHiveService;
+    this.instanceCountMap = instanceCountMap;
   }
 
   @Override
@@ -64,7 +71,7 @@ public class ReactorTwillApplication implements TwillApplication {
   private TwillSpecification.Builder.RunnableSetter addLogSaverService(TwillSpecification.Builder.MoreRunnable
                                                                          builder) {
 
-    int numInstances = cConf.getInt(Constants.LogSaver.NUM_INSTANCES, 1);
+    int numInstances = instanceCountMap.get(Constants.Service.LOGSAVER);
     Preconditions.checkArgument(numInstances > 0, "log saver num instances should be at least 1, got %s",
                                 numInstances);
 
@@ -90,7 +97,7 @@ public class ReactorTwillApplication implements TwillApplication {
 
     int numCores = cConf.getInt(Constants.MetricsProcessor.NUM_CORES, 1);
     int memoryMB = cConf.getInt(Constants.MetricsProcessor.MEMORY_MB, 512);
-    int instances = cConf.getInt(Constants.MetricsProcessor.NUM_INSTANCES, 2);
+    int instances = instanceCountMap.get(Constants.Service.METRICS_PROCESSOR);
 
     ResourceSpecification metricsProcessorSpec = ResourceSpecification.Builder
       .with()
@@ -111,7 +118,7 @@ public class ReactorTwillApplication implements TwillApplication {
                                                                         builder) {
     int metricsNumCores = cConf.getInt(Constants.Metrics.NUM_CORES, 2);
     int metricsMemoryMb = cConf.getInt(Constants.Metrics.MEMORY_MB, 2048);
-    int metricsInstances = cConf.getInt(Constants.Metrics.NUM_INSTANCES, 1);
+    int metricsInstances = instanceCountMap.get(Constants.Service.METRICS);
 
     ResourceSpecification metricsSpec = ResourceSpecification.Builder
       .with()
@@ -132,7 +139,7 @@ public class ReactorTwillApplication implements TwillApplication {
                                                                             builder) {
     int txNumCores = cConf.getInt(Constants.Transaction.Container.NUM_CORES, 2);
     int txMemoryMb = cConf.getInt(Constants.Transaction.Container.MEMORY_MB, 2048);
-    int txInstances = cConf.getInt(Constants.Transaction.Container.NUM_INSTANCES, 1);
+    int txInstances = instanceCountMap.get(Constants.Service.TRANSACTION);
 
     ResourceSpecification transactionSpec = ResourceSpecification.Builder
       .with()
@@ -150,10 +157,12 @@ public class ReactorTwillApplication implements TwillApplication {
   }
 
   private TwillSpecification.Builder.RunnableSetter addStreamService(TwillSpecification.Builder.MoreRunnable builder) {
+    int instances = instanceCountMap.get(Constants.Service.STREAMS);
+
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
       .setVirtualCores(cConf.getInt(Constants.Stream.CONTAINER_VIRTUAL_CORES, 1))
       .setMemory(cConf.getInt(Constants.Stream.CONTAINER_MEMORY_MB, 512), ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 2))
+      .setInstances(instances)
       .build();
 
     return builder.add(new StreamHandlerRunnable(Constants.Service.STREAMS, "cConf.xml", "hConf.xml"), resourceSpec)
@@ -165,11 +174,12 @@ public class ReactorTwillApplication implements TwillApplication {
 
   private TwillSpecification.Builder.RunnableSetter addDatasetOpExecutor(
     TwillSpecification.Builder.MoreRunnable builder) {
+    int instances = instanceCountMap.get(Constants.Service.DATASET_EXECUTOR);
 
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
       .setVirtualCores(cConf.getInt(Constants.Dataset.Executor.CONTAINER_VIRTUAL_CORES, 1))
       .setMemory(cConf.getInt(Constants.Dataset.Executor.CONTAINER_MEMORY_MB, 512), ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(cConf.getInt(Constants.Dataset.Executor.CONTAINER_INSTANCES, 1))
+      .setInstances(instances)
       .build();
 
     return builder.add(
@@ -188,10 +198,22 @@ public class ReactorTwillApplication implements TwillApplication {
       .setInstances(cConf.getInt(Constants.Explore.CONTAINER_INSTANCES, 1))
       .build();
 
-    return builder.add(new ExploreServiceTwillRunnable("explore.executor", "cConf.xml", "hConf.xml"), resourceSpec)
-      .withLocalFiles()
-      .add("cConf.xml", cConfFile.toURI())
-      .add("hConf.xml", hConfFile.toURI())
-      .apply();
+    TwillSpecification.Builder.MoreFile twillSpecs =
+      builder.add(new ExploreServiceTwillRunnable("explore.executor", "cConf.xml", "hConf.xml"), resourceSpec)
+        .withLocalFiles()
+        .add("cConf.xml", cConfFile.toURI())
+        .add("hConf.xml", hConfFile.toURI());
+
+    try {
+      // Ship jars needed by Hive to the container
+      Set<File> jars = ExploreServiceUtils.traceExploreDependencies();
+      for (File jarFile : jars) {
+        twillSpecs = twillSpecs.add(jarFile.getName(), jarFile);
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to trace Explore dependencies", e);
+    }
+
+    return twillSpecs.apply();
   }
 }

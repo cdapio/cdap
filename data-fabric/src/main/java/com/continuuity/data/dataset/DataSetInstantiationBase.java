@@ -1,10 +1,13 @@
+/*
+ * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.dataset.FileDataSet;
 import com.continuuity.api.data.dataset.MultiObjectStore;
 import com.continuuity.api.data.dataset.ObjectStore;
@@ -12,8 +15,9 @@ import com.continuuity.api.data.dataset.table.MemoryTable;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.metrics.MeteredDataset;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.lang.Fields;
+import com.continuuity.common.lang.ClassLoaders;
 import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.metrics.MetricsCollectionService;
@@ -25,7 +29,7 @@ import com.continuuity.data.table.RuntimeTable;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.internal.lang.ClassLoaders;
+import com.continuuity.internal.lang.Fields;
 import com.continuuity.internal.lang.Reflections;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
@@ -42,20 +46,22 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
- * This class implements the core logic of instantiating data set, including injection of the data fabric runtime and
- * built-in data sets.
+ * Implements the core logic of instantiating a dataset, including injection of the data fabric runtime and
+ * built-in datasets.
  */
 public class DataSetInstantiationBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataSetInstantiationBase.class);
 
+  private final CConfiguration configuration;
   // the class loader to use for data set classes
   private final ClassLoader classLoader;
   // the known data set specifications
   private final Map<String, DataSetSpecification> datasets = Maps.newHashMap();
-  private final Map<String, DatasetInstanceCreationSpec> datasetsV2 = Maps.newHashMap();
+  private final Map<String, DatasetCreationSpec> datasetsV2 = Maps.newHashMap();
 
   private final Set<TransactionAware> txAware = Sets.newIdentityHashSet();
   // in this collection we have only datasets initialized with getDataSet() which is OK for now...
@@ -63,11 +69,12 @@ public class DataSetInstantiationBase {
 
   private final InstantiatorFactory instantiatorFactory = new InstantiatorFactory(false);
 
-  public DataSetInstantiationBase() {
-    this(null);
+  public DataSetInstantiationBase(CConfiguration configuration) {
+    this(configuration, null);
   }
 
-  public DataSetInstantiationBase(ClassLoader classLoader) {
+  public DataSetInstantiationBase(CConfiguration configuration, ClassLoader classLoader) {
+    this.configuration = configuration;
     this.classLoader = classLoader;
   }
 
@@ -78,11 +85,11 @@ public class DataSetInstantiationBase {
    * @param specs The list of DataSetSpecification's
    */
   public void setDataSets(Iterable<DataSetSpecification> specs,
-                          Iterable<DatasetInstanceCreationSpec> creationSpec) {
+                          Iterable<DatasetCreationSpec> creationSpec) {
     for (DataSetSpecification spec : specs) {
       this.datasets.put(spec.getName(), spec);
     }
-    for (DatasetInstanceCreationSpec spec : creationSpec) {
+    for (DatasetCreationSpec spec : creationSpec) {
       if (spec != null) {
         this.datasetsV2.put(spec.getInstanceName(), spec);
       }
@@ -115,7 +122,8 @@ public class DataSetInstantiationBase {
    *  @throws DataSetInstantiationException If failed to create the DataSet.
    */
   @SuppressWarnings("unchecked")
-  public <T extends Closeable> T getDataSet(String dataSetName, DataFabric fabric, DatasetFramework datasetFramework)
+  public <T extends Closeable> T getDataSet(String dataSetName, DataFabric fabric,
+                                            @Nullable DatasetFramework datasetFramework)
     throws DataSetInstantiationException {
 
     // find the data set specification
@@ -124,9 +132,11 @@ public class DataSetInstantiationBase {
       return (T) getDataSet(spec, fabric, dataSetName);
     }
 
-    T dataSet = (T) getDataset(dataSetName, datasetFramework);
-    if (dataSet != null) {
-      return dataSet;
+    if (datasetFramework != null) {
+      T dataSet = (T) getDataset(dataSetName, datasetFramework);
+      if (dataSet != null) {
+        return dataSet;
+      }
     }
 
     throw logAndException(null, "No data set named %s can be instantiated.", dataSetName);
@@ -149,7 +159,7 @@ public class DataSetInstantiationBase {
     throws DataSetInstantiationException {
     try {
       if (!datasetFramework.hasInstance(datasetName)) {
-        DatasetInstanceCreationSpec creationSpec = datasetsV2.get(datasetName);
+        DatasetCreationSpec creationSpec = datasetsV2.get(datasetName);
         if (creationSpec == null) {
           return null;
         }
@@ -423,6 +433,7 @@ public class DataSetInstantiationBase {
 
   public void setMetricsCollector(final MetricsCollectionService metricsCollectionService,
                                   final MetricsCollector programContextMetrics) {
+
     final MetricsCollector dataSetMetrics =
       metricsCollectionService.getCollector(MetricsScope.REACTOR, Constants.Metrics.DATASET_CONTEXT, "0");
 
@@ -471,13 +482,14 @@ public class DataSetInstantiationBase {
 
       // datasets API V2
       if (txAware.getKey() instanceof MeteredDataset) {
+        // TODO: fix namespacing: we want to capture metrics of namespaced dataset name - see REACTOR-217
         final String dataSetName = txAware.getValue();
         MeteredDataset.MetricsCollector metricsCollector = new MeteredDataset.MetricsCollector() {
           @Override
           public void recordRead(int opsCount, int dataSize) {
             if (programContextMetrics != null) {
               programContextMetrics.gauge("store.reads", 1, dataSetName);
-              programContextMetrics.gauge("store.ops", 1);
+              programContextMetrics.gauge("store.ops", 1, dataSetName);
             }
             // these metrics are outside the context of any application and will stay unless explicitly
             // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.
@@ -492,7 +504,7 @@ public class DataSetInstantiationBase {
             if (programContextMetrics != null) {
               programContextMetrics.gauge("store.writes", 1, dataSetName);
               programContextMetrics.gauge("store.bytes", dataSize, dataSetName);
-              programContextMetrics.gauge("store.ops", 1);
+              programContextMetrics.gauge("store.ops", 1, dataSetName);
             }
             // these metrics are outside the context of any application and will stay unless explicitly
             // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.

@@ -1,5 +1,6 @@
 package com.continuuity.api.dataset.lib;
 
+import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
@@ -13,6 +14,7 @@ import java.io.IOException;
 /**
  * DatasetDefinition for {@link IndexedObjectStore}.
  */
+@Beta
 public class IndexedObjectStoreDefinition
   extends AbstractDatasetDefinition<IndexedObjectStore, DatasetAdmin> {
 
@@ -39,20 +41,20 @@ public class IndexedObjectStoreDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
+  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     return new CompositeDatasetAdmin(Lists.newArrayList(
-      tableDef.getAdmin(spec.getSpecification("index")),
-      objectStoreDef.getAdmin(spec.getSpecification("data"))
+      tableDef.getAdmin(spec.getSpecification("index"), classLoader),
+      objectStoreDef.getAdmin(spec.getSpecification("data"), classLoader)
     ));
   }
 
   @Override
-  public IndexedObjectStore<?> getDataset(DatasetSpecification spec) throws IOException {
+  public IndexedObjectStore<?> getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     DatasetSpecification tableSpec = spec.getSpecification("index");
     DatasetSpecification objectStoreSpec = spec.getSpecification("data");
 
-    Table index = tableDef.getDataset(tableSpec);
-    ObjectStore<?> objectStore = objectStoreDef.getDataset(objectStoreSpec);
+    Table index = tableDef.getDataset(tableSpec, classLoader);
+    ObjectStore<?> objectStore = objectStoreDef.getDataset(objectStoreSpec, classLoader);
 
     return new IndexedObjectStore(spec.getName(), objectStore, index);
   }

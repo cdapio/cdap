@@ -10,15 +10,16 @@ import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.common.stream.StreamEventCodec;
-import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.queue.QueueEntry;
+import com.continuuity.data2.queue.QueueProducer;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.test.XSlowTests;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Charsets;
@@ -37,6 +38,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -49,6 +51,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * tests that flowlets, procedures and batch jobs close their data sets.
  */
+@Category(XSlowTests.class)
 public class OpenCloseDataSetTest {
 
   @ClassRule
@@ -89,7 +92,7 @@ public class OpenCloseDataSetTest {
 
     QueueName queueName = QueueName.fromStream("xx");
     QueueClientFactory queueClientFactory = AppFabricTestHelper.getInjector().getInstance(QueueClientFactory.class);
-    Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    QueueProducer producer = queueClientFactory.createProducer(queueName);
 
     // start tx to write in queue in tx
     Transaction tx = txSystemClient.startShort();

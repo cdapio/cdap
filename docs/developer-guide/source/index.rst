@@ -10,10 +10,13 @@ Continuuity Reactor Documentation
    Examples </examples/index>
    Programming Guide </programming>
    Advanced Features </advanced>
+   Querying Datasets with SQL </query>
    Testing and Debugging </debugging>
+   Security </security>
    Operations Guide </operations>
    HTTP REST API </rest>
    /javadocs/index
+   Dependencies </licenses/index>
    Release Notes </releasenotes>
    FAQ </faq>
 
@@ -22,15 +25,21 @@ Examples
 
 :doc:`Overview <examples/index>`
 
-:doc:`PageViewAnalytics Example <examples/PageViewAnalytics/index>`
+:doc:`PageViewAnalytics Example <examples/pageViewAnalytics>`
 
-:doc:`ResponseCodeAnalytics Example <examples/ResponseCodeAnalytics/index>`
+:doc:`ResponseCodeAnalytics Example <examples/responseCodeAnalytics>`
 
-:doc:`TrafficAnalytics Example <examples/TrafficAnalytics/index>`
+:doc:`TrafficAnalytics Example <examples/trafficAnalytics>`
+
+:doc:`Purchase Example <examples/purchase>`
 
 .. toctree::
    :hidden:
 
-   /examples/PageViewAnalytics/index
-   /examples/ResponseCodeAnalytics/index
-   /examples/TrafficAnalytics/index
+   /examples/pageViewAnalytics
+   /examples/responseCodeAnalytics
+   /examples/trafficAnalytics
+   /examples/purchase
+   /licenses/reactor-enterprise-dependencies
+   /licenses/reactor-level-1-dependencies
+   /licenses/reactor-singlenode-dependencies	

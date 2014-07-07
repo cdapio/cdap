@@ -8,7 +8,7 @@
   <parent>
     <groupId>com.continuuity</groupId>
     <artifactId>reactor</artifactId>
-    <version>2.3.0-SNAPSHOT</version>
+    <version>2.4.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>parent</artifactId>
@@ -43,6 +43,7 @@
     <flume.version>1.2.0</flume.version>
     <geronimo.version>2.0.0</geronimo.version>
     <guice.version>3.0</guice.version>
+    <resteasy.version>3.0.8.Final</resteasy.version>
     <hadoop.version>2.3.0</hadoop.version>
     <hbase94.version>0.94.6.1.continuuity</hbase94.version>
     <hbase96.version>0.96.0-hadoop2</hbase96.version>
@@ -98,6 +99,21 @@
         <groupId>com.google.inject.extensions</groupId>
         <artifactId>guice-multibindings</artifactId>
         <version>${guice.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.inject.extensions</groupId>
+        <artifactId>guice-servlet</artifactId>
+        <version>${guice.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.resteasy</groupId>
+        <artifactId>resteasy-servlet-initializer</artifactId>
+        <version>${resteasy.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.resteasy</groupId>
+        <artifactId>resteasy-guice</artifactId>
+        <version>${resteasy.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
@@ -319,6 +335,38 @@
           <exclusion>
             <groupId>asm</groupId>
             <artifactId>asm</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-server</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-json</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey.contribs</groupId>
+            <artifactId>jersey-guice</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.google.inject.extensions</groupId>
+            <artifactId>guice-servlet</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jetty</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jetty-util</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -792,6 +840,10 @@
             <groupId>asm</groupId>
             <artifactId>asm-tree</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -806,6 +858,14 @@
           <exclusion>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro-mapred</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -957,6 +1017,13 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
     </dependency>
+    <!-- To support different test groups -->
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>common-unit-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -985,14 +1052,21 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.14.1</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>surefire-junit47</artifactId>
+            <version>2.14</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <groups>${testcase.groups}</groups>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
         <version>2.8</version>
-        <configuration>
-          <deployAtEnd>true</deployAtEnd>
-        </configuration>
       </plugin>
     </plugins>
   </build>
@@ -1022,6 +1096,10 @@
         <stage.dir>${project.build.directory}/stage-packaging</stage.dir>
         <stage.opt.dir>${stage.dir}/opt/continuuity/${project.artifactId}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
+        <service.name>${project.artifactId}</service.name>
+        <package.name>${project.artifactId}</package.name>
+        <package.depends>--depends continuuity</package.depends>
+        <package.dirs>opt etc</package.dirs>
       </properties>
       <build>
         <pluginManagement>
@@ -1033,6 +1111,7 @@
               <executions>
                 <execution>
                   <id>jar</id>
+                  <phase>prepare-package</phase>
                   <configuration>
                     <outputDirectory>${stage.lib.dir}</outputDirectory>
                     <addMavenDescriptor>${maven.descriptor}</addMavenDescriptor>
@@ -1074,7 +1153,7 @@
               <executions>
                 <execution>
                   <id>copy-opt</id>
-                  <phase>prepare-package</phase>
+                  <phase>process-resources</phase>
                   <goals>
                     <goal>copy-resources</goal>
                   </goals>
@@ -1114,9 +1193,30 @@
                 </execution>
               </executions>
             </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-antrun-plugin</artifactId>
+              <version>1.7</version>
+              <executions>
+                <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
+                <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
+                <execution>
+                  <id>bin-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <failOnError>false</failOnError>
+                    <target>
+                      <chmod file="${stage.opt.dir}/bin/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
           </plugins>
         </pluginManagement>
-
 
         <!-- Generate the package version. If it has -SNAPSHOT, replace it with build time. -->
         <plugins>
@@ -1159,48 +1259,46 @@
               </execution>
             </executions>
           </plugin>
+          <!-- Determine the deploy.url for non-standard (e.g. zip, rpm, deb) deployment -->
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <version>1.5</version>
+            <dependencies>
+              <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy-all</artifactId>
+                <version>1.5.8</version>
+              </dependency>
+            </dependencies>
+            <executions>
+              <execution>
+                <id>choose-deploy-url</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <source>
+                    if (project.version.endsWith("-SNAPSHOT")){
+                      project.properties['deploy.url'] = project.distributionManagement.snapshotRepository.url;
+                      project.properties['dist.deploy.groupId'] = "com.continuuity.distributions.snapshots";
+                    } else {
+                      project.properties['deploy.url'] = project.distributionManagement.repository.url;
+                      project.properties['dist.deploy.groupId'] = "com.continuuity.distributions.release";
+                    }
+                  </source>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
     </profile>
 
+    <!-- Profile for prepare rpm package. The "dist" profile must be activated as well. -->
     <profile>
       <id>rpm-prepare</id>
-      <activation>
-        <property>
-          <name>pkg.type</name>
-          <value>rpm</value>
-        </property>
-      </activation>
-      <properties>
-        <pkg.type>rpm</pkg.type>
-        <stage.init.dir>${stage.dir}/etc/rc.d/init.d</stage.init.dir>
-        <scripts.base.dir>${project.parent.parent.basedir}/distributions/src/rpm</scripts.base.dir>
-      </properties>
-    </profile>
-
-    <profile>
-      <id>deb-prepare</id>
-      <activation>
-        <property>
-          <name>pkg.type</name>
-          <value>deb</value>
-        </property>
-      </activation>
-      <properties>
-        <pkg.type>deb</pkg.type>
-        <stage.init.dir>${stage.dir}/etc/init.d</stage.init.dir>
-        <scripts.base.dir>${project.parent.parent.basedir}/distributions/src/debian</scripts.base.dir>
-      </properties>
-    </profile>
-
-    <!-- Profile for preparing fpm package. The "dist" profile must be activated as well. -->
-    <!-- Needs the -Dpkg.type property set -->
-    <profile>
-      <id>fpm-prepare</id>
-      <properties>
-        <service.name>${project.artifactId}</service.name>
-        <package.name>${project.artifactId}</package.name>
-      </properties>
       <build>
         <pluginManagement>
           <plugins>
@@ -1210,19 +1308,21 @@
               <version>2.6</version>
               <executions>
                 <execution>
-                  <id>copy-scripts</id>
-                  <phase>prepare-package</phase>
+                  <id>copy-rpm-scripts</id>
+                  <phase>process-resources</phase>
                   <goals>
                     <goal>copy-resources</goal>
                   </goals>
                   <configuration>
-                    <outputDirectory>${project.build.directory}/dist</outputDirectory>
+                    <outputDirectory>${project.build.directory}/dist/rpm</outputDirectory>
+                    <!-- Copy it twice, one with filter, one without -->
                     <resources>
                       <resource>
-                        <directory>${scripts.base.dir}/init.d</directory>
-                        <includes>
-                          <include>continuuity-service</include>
-                        </includes>
+                        <directory>${project.parent.parent.basedir}/distributions/src/rpm/init.d</directory>
+                        <targetPath>unfilter</targetPath>
+                      </resource>
+                      <resource>
+                        <directory>${project.parent.parent.basedir}/distributions/src/rpm/init.d</directory>
                         <filtering>true</filtering>
                       </resource>
                     </resources>
@@ -1236,16 +1336,158 @@
               <version>1.7</version>
               <executions>
                 <execution>
-                  <id>rename-service</id>
-                  <phase>prepare-package</phase>
+                  <id>rename-rpm-service</id>
+                  <phase>process-resources</phase>
                   <goals>
                     <goal>run</goal>
                   </goals>
                   <configuration>
                     <target>
-                      <copy file="${project.build.directory}/dist/continuuity-service" tofile="${stage.init.dir}/continuuity-${service.name}" />
+                      <copy file="${project.build.directory}/dist/rpm/continuuity-service" tofile="${stage.dir}/etc/rc.d/init.d/continuuity-${service.name}" />
                     </target>
                   </configuration>
+                </execution>
+                <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
+                <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
+                <execution>
+                  <id>rpm-init-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <target>
+                      <chmod file="${stage.dir}/etc/rc.d/init.d/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+                <execution>
+                  <id>rpm-bin-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <target>
+                      <chmod file="${stage.opt.dir}/bin/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+    <profile>
+      <id>test-fast</id>
+      <!-- Runs only fast tests -->
+      <properties>
+        <testcase.groups>!com.continuuity.test.SlowTests</testcase.groups>
+      </properties>
+    </profile>
+    <profile>
+      <!-- Runs fast and slow tests, but not xslow -->
+      <id>test-slow</id>
+      <properties>
+        <testcase.groups>!com.continuuity.test.XSlowTests</testcase.groups>
+      </properties>
+    </profile>
+
+    <!-- Profile for prepare debian package. The "dist" profile must be activated as well. -->
+    <profile>
+      <id>deb-prepare</id>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-resources-plugin</artifactId>
+              <version>2.6</version>
+              <executions>
+                <execution>
+                  <id>copy-deb-staging</id>
+                  <phase>prepare-package</phase>
+                  <goals>
+                    <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                    <outputDirectory>${stage.dir}-deb</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>${stage.dir}</directory>
+                        <includes>
+                          <include>opt/**</include>
+                        </includes>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+                <execution>
+                  <id>copy-deb-scripts</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                    <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                    <outputDirectory>${project.build.directory}/dist/deb</outputDirectory>
+                    <resources>
+                      <!-- Copy it twice, one with filter, one without -->
+                      <resource>
+                        <directory>${project.parent.parent.basedir}/distributions/src/debian/init.d</directory>
+                        <targetPath>unfilter</targetPath>
+                      </resource>
+                      <resource>
+                        <directory>${project.parent.parent.basedir}/distributions/src/debian/init.d</directory>
+                        <filtering>true</filtering>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-antrun-plugin</artifactId>
+              <version>1.7</version>
+              <executions>
+                <execution>
+                  <id>rename-deb-service</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                  <configuration>
+                    <target>
+                      <copy file="${project.build.directory}/dist/deb/continuuity-service" tofile="${stage.dir}-deb/etc/init.d/continuuity-${service.name}" />
+                    </target>
+                  </configuration>
+                </execution>
+                <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
+                <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
+                <execution>
+                  <id>deb-init-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <target>
+                      <chmod file="${stage.dir}-deb/etc/init.d/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+                <execution>
+                  <id>deb-bin-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <target>
+                      <chmod file="${stage.dir}-deb/opt/continuuity/${project.artifactId}/bin/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
                 </execution>
               </executions>
             </plugin>
@@ -1254,10 +1496,9 @@
       </build>
     </profile>
 
-    <!-- Profile for using FPM to build package. The "dist" and "fpm-prepare" profiles must be activated as well. -->
-    <!-- Also need to set the -Dpkg.type property. -->
+    <!-- Profile for creating RPM package. Both "dist" and "rpm-prepare" must be activated. -->
     <profile>
-      <id>fpm</id>
+      <id>rpm</id>
       <build>
         <pluginManagement>
           <plugins>
@@ -1267,7 +1508,7 @@
               <version>1.3.1</version>
               <executions>
                 <execution>
-                  <id>fpm</id>
+                  <id>rpm-package</id>
                   <phase>package</phase>
                   <goals>
                     <goal>exec</goal>
@@ -1275,68 +1516,112 @@
                   <configuration>
                     <workingDirectory>${project.build.directory}</workingDirectory>
                     <executable>fpm</executable>
-                    <arguments>
-                      <argument>--name</argument>
-                      <argument>continuuity-${project.artifactId}</argument>
+                    <commandlineArgs>
+                        --name "continuuity-${project.artifactId}"
+                        --vendor "Continuuity Inc."
+                        --maintainer "support@continuuity.com"
+                        --license "Copyright 2012-2014 Continuuity,Inc. All Rights Reserved."
+                        --description "Component of Continuuity Enterprise Reactor"
+                        --category misc
+                        -s dir
+                        -t rpm
+                        -C "${stage.dir}"
+                        --directories "/opt/continuuity/${project.artifactId}"
+                        --version "${package.version}"
+                        --architecture all
+                        --url "http://www.continuuity.com/products"
+                        --template-value "project=${project.artifactId}"
+                        --after-install "${project.parent.parent.basedir}/distributions/src/rpm/scripts/postinst"
+                        --before-remove "${project.parent.parent.basedir}/distributions/src/rpm/scripts/prerm"
+                        --after-remove "${project.parent.parent.basedir}/distributions/src/rpm/scripts/postrm"
+                        --iteration 1
+                        ${package.depends}
+                        ${package.dirs}
+                    </commandlineArgs>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
 
-                      <argument>--vendor</argument>
-                      <argument>Continuuity Inc.</argument>
+    <!-- Profile for creating Debian package. Both "dist" and "deb-prepare" must be activated. -->
+    <profile>
+      <id>deb</id>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>exec-maven-plugin</artifactId>
+              <version>1.3.1</version>
+              <executions>
+                <execution>
+                  <id>deb-package</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>exec</goal>
+                  </goals>
+                  <configuration>
+                    <workingDirectory>${project.build.directory}</workingDirectory>
+                    <executable>fpm</executable>
+                    <commandlineArgs>
+                      --name "continuuity-${project.artifactId}"
+                      --vendor "Continuuity Inc."
+                      --maintainer "support@continuuity.com"
+                      --license "Copyright 2012-2014 Continuuity,Inc. All Rights Reserved."
+                      --description "Component of Continuuity Enterprise Reactor"
+                      --category misc
+                      -s dir
+                      -t deb
+                      -C "${stage.dir}-deb"
+                      --directories "/opt/continuuity/${project.artifactId}"
+                      --version "${package.version}"
+                      --architecture all
+                      --url "http://www.continuuity.com/products"
+                      --template-value "project=${project.artifactId}"
+                      --after-install "${project.parent.parent.basedir}/distributions/src/debian/scripts/postinst"
+                      --before-remove "${project.parent.parent.basedir}/distributions/src/debian/scripts/prerm"
+                      --after-remove "${project.parent.parent.basedir}/distributions/src/debian/scripts/postrm"
+                      --iteration 1
+                      ${package.depends}
+                      ${package.dirs}
+                    </commandlineArgs>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
 
-                      <argument>--maintainer</argument>
-                      <argument>support@continuuity.com</argument>
-
-                      <argument>--license</argument>
-                      <argument>Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.</argument>
-
-                      <argument>--description</argument>
-                      <argument>Component of Continuuity Enterprise Reactor</argument>
-
-                      <argument>--category</argument>
-                      <argument>misc</argument>
-
-                      <argument>-s</argument>
-                      <argument>dir</argument>
-
-                      <argument>-t</argument>
-                      <argument>${pkg.type}</argument>
-
-                      <argument>-C</argument>
-                      <argument>${stage.dir}</argument>
-
-                      <argument>--directories</argument>
-                      <argument>/opt/continuuity/${project.artifactId}</argument>
-
-                      <argument>--version</argument>
-                      <argument>${package.version}</argument>
-
-                      <argument>--architecture</argument>
-                      <argument>all</argument>
-
-                      <argument>--url</argument>
-                      <argument>http://www.continuuity.com/products</argument>
-
-                      <argument>--template-value</argument>
-                      <argument>project=${project.artifactId}</argument>
-
-                      <argument>--depends</argument>
-                      <argument>continuuity</argument>
-
-                      <argument>--after-install</argument>
-                      <argument>${scripts.base.dir}/scripts/postinst</argument>
-
-                      <argument>--before-remove</argument>
-                      <argument>${scripts.base.dir}/scripts/prerm</argument>
-
-                      <argument>--after-remove</argument>
-                      <argument>${scripts.base.dir}/scripts/postrm</argument>
-
-                      <!-- Hardcode to 1 -->
-                      <argument>--iteration</argument>
-                      <argument>1</argument>
-
-                      <argument>opt</argument>
-                      <argument>etc</argument>
-                    </arguments>
+    <!-- For generating tar.gz. Requires "dist" profile being activated. -->
+    <profile>
+      <id>tgz</id>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-assembly-plugin</artifactId>
+              <version>2.4</version>
+              <executions>
+                <execution>
+                  <id>tgz-package</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>single</goal>
+                  </goals>
+                  <configuration>
+                    <descriptors>
+                      <descriptor>${project.parent.basedir}/src/main/assembly/tgz.xml</descriptor>
+                    </descriptors>
+                    <appendAssemblyId>false</appendAssemblyId>
+                    <attach>false</attach>
+                    <finalName>continuuity-${project.artifactId}-${package.version}</finalName>
                   </configuration>
                 </execution>
               </executions>

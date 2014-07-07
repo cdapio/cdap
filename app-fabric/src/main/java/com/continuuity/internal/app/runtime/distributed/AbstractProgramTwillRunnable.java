@@ -21,11 +21,13 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -299,6 +301,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new LoggingModules().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -320,6 +323,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
               return context.announce(serviceName, port);
             }
           });
+
+          //install discovery service modules
+          bind(ProgramServiceDiscovery.class).to(DistributedProgramServiceDiscovery.class).in(Scopes.SINGLETON);
         }
       }
     );
@@ -353,7 +359,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     public Program create(String path) throws IOException {
       Location location = locationFactory.create(path);
-      return Programs.create(location, Files.createTempDir());
+      return Programs.createWithUnpack(location, Files.createTempDir());
     }
   }
 }

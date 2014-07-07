@@ -10,24 +10,30 @@ import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.DefaultAppConfigurer;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
+import com.continuuity.app.guice.ServiceStoreModules;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.StickyEndpointStrategy;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.runtime.LocationStreamFileWriterFactory;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.service.LocalStreamFileJanitorService;
 import com.continuuity.data.stream.service.StreamFileJanitorService;
 import com.continuuity.data.stream.service.StreamHandler;
 import com.continuuity.data.stream.service.StreamServiceModule;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
@@ -55,7 +61,6 @@ import com.continuuity.test.internal.DefaultStreamWriter;
 import com.continuuity.test.internal.ProcedureClientFactory;
 import com.continuuity.test.internal.StreamWriterFactory;
 import com.continuuity.test.internal.TestMetricsCollectionService;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
@@ -69,7 +74,6 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
@@ -178,7 +182,7 @@ public class ReactorTestBase {
     configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     configuration.setBoolean(Constants.Explore.CFG_EXPLORE_ENABLED, true);
     configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
-                      new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
+                      tmpFolder.newFolder("hive").getAbsolutePath());
 
     // Windows specific requirements
     if (System.getProperty("os.name").startsWith("Windows")) {
@@ -194,6 +198,7 @@ public class ReactorTestBase {
 
     injector = Guice.createInjector(
       createDataFabricModule(configuration),
+      new DataSetsModules().getInMemoryModule(),
       new DataSetServiceModules().getInMemoryModule(),
       new ConfigModule(configuration),
       new IOModule(),
@@ -201,6 +206,7 @@ public class ReactorTestBase {
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
+      new ServiceStoreModules().getInMemoryModule(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new StreamServiceModule() {
         @Override
@@ -241,7 +247,10 @@ public class ReactorTestBase {
     httpHandler = injector.getInstance(AppFabricHttpHandler.class);
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    datasetFramework = injector.getInstance(DatasetFramework.class);
+    DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
+    datasetFramework =
+      new NamespacedDatasetFramework(dsFramework,
+                                     new ReactorDatasetNamespace(configuration,  DataSetAccessor.Namespace.USER));
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
     discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -360,20 +369,18 @@ public class ReactorTestBase {
     // this makes sure the Explore JDBC driver is loaded
     Class.forName("com.continuuity.explore.jdbc.ExploreDriver");
 
-    InetSocketAddress address = null;
-    ServiceDiscovered discovered = discoveryClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
-    for (Discoverable discoverable : discovered) {
-      address = discoverable.getSocketAddress();
-    }
+    Discoverable discoverable = new StickyEndpointStrategy(
+      discoveryClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();
 
-    if (null == address) {
+    if (null == discoverable) {
       throw new IOException("Explore service could not be discovered.");
     }
 
-    String host = "localhost";
+    InetSocketAddress address = discoverable.getSocketAddress();
+    String host = address.getHostName();
     int port = address.getPort();
 
-    String connectString = String.format("jdbc:explore://%s:%d", host, port);
+    String connectString = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, host, port);
 
     return DriverManager.getConnection(connectString);
   }

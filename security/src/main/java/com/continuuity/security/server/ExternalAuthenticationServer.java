@@ -10,14 +10,13 @@ import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
+import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,10 +33,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ExternalAuthenticationServer extends AbstractExecutionThreadService {
   private final int port;
   private final int maxThreads;
-  private final HashMap<String, Handler> handlers;
+  private final HashMap<String, Object> handlers;
   private final DiscoveryService discoveryService;
   private final CConfiguration configuration;
   private Cancellable serviceCancellable;
+  private final GrantAccessToken grantAccessToken;
+  private final AbstractAuthenticationHandler authenticationHandler;
   private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
   private Server server;
   private InetAddress address;
@@ -45,11 +46,11 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   /**
    * Constants for a valid JSON response.
    */
-  protected static final class ResponseFields {
-    protected static final String TOKEN_TYPE = "token_type";
-    protected static final String TOKEN_TYPE_BODY = "Bearer";
-    protected static final String ACCESS_TOKEN = "access_token";
-    protected static final String EXPIRES_IN = "expires_in";
+  public static final class ResponseFields {
+    public static final String TOKEN_TYPE = "token_type";
+    public static final String TOKEN_TYPE_BODY = "Bearer";
+    public static final String ACCESS_TOKEN = "access_token";
+    public static final String EXPIRES_IN = "expires_in";
   }
 
   /**
@@ -68,6 +69,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
     this.handlers = handlers;
     this.discoveryService = discoveryService;
     this.configuration = configuration;
+    this.grantAccessToken = (GrantAccessToken) handlers.get(HandlerType.GRANT_TOKEN_HANDLER);
+    this.authenticationHandler = (AbstractAuthenticationHandler) handlers.get(HandlerType.AUTHENTICATION_HANDLER);
   }
 
   /**
@@ -110,10 +113,13 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       threadPool.setMaxThreads(maxThreads);
       server.setThreadPool(threadPool);
 
-      ContextHandler context = new ContextHandler();
-      context.setContextPath("*");
+      initHandlers();
 
-      context.setHandler(initHandlers(handlers));
+      ServletContextHandler context = new ServletContextHandler();
+      context.setServer(server);
+      context.addServlet(HttpServletDispatcher.class, "/");
+      context.addEventListener(new AuthenticationGuiceServletContextListener(handlers, configuration));
+      context.setSecurityHandler(authenticationHandler);
 
       SelectChannelConnector connector = new SelectChannelConnector();
       connector.setHost(address.getCanonicalHostName());
@@ -150,18 +156,12 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   }
 
   /**
-   * Initializes the Authentication handler and returns a HandlerList.
-   * @param handlers
-   * @return {@link org.eclipse.jetty.server.handler.HandlerList}
+   * Initializes the handlers.
+   * @return
    */
-  protected HandlerList initHandlers(HashMap<String, Handler> handlers) {
-    Handler authHandler = handlers.get(HandlerType.AUTHENTICATION_HANDLER);
-    ((AbstractAuthenticationHandler) authHandler).init();
-
-    HandlerList handlerList = new HandlerList();
-    handlerList.addHandler(handlers.get(HandlerType.AUTHENTICATION_HANDLER));
-    handlerList.addHandler(handlers.get(HandlerType.GRANT_TOKEN_HANDLER));
-    return handlerList;
+  protected void initHandlers() throws Exception {
+    authenticationHandler.init();
+    grantAccessToken.init();
   }
 
   @Override
@@ -180,6 +180,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
     try {
       serviceCancellable.cancel();
       server.stop();
+      grantAccessToken.destroy();
     } catch (Exception e) {
       LOG.error("Error stopping ExternalAuthenticationServer.");
       LOG.error(e.getMessage());

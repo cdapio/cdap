@@ -1,6 +1,5 @@
 package com.continuuity.test.internal;
 
-import com.continuuity.api.Application;
 import com.continuuity.app.Id;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
@@ -29,6 +28,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -40,6 +40,7 @@ import com.google.inject.TypeLiteral;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ApplicationBundler;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
@@ -49,17 +50,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
@@ -239,7 +235,7 @@ public class AppFabricTestHelper {
     });
   }
 
-  public static void deployApplication(Class<? extends Application> application) throws Exception {
+  public static void deployApplication(Class<?> application) throws Exception {
     deployApplication(application,
                       "app-" + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS) + ".jar");
   }
@@ -247,7 +243,7 @@ public class AppFabricTestHelper {
   /**
    *
    */
-  public static void deployApplication(Class<? extends Application> applicationClz, String fileName) throws Exception {
+  public static void deployApplication(Class<?> applicationClz, String fileName) throws Exception {
     Location deployedJar =
       deployApplication(getInjector().getInstance(AppFabricHttpHandler.class),
                         getInjector().getInstance(LocationFactory.class),
@@ -269,7 +265,7 @@ public class AppFabricTestHelper {
             @Override
             public Program apply(Program program) {
               try {
-                return Programs.create(program.getJarLocation(), folderSupplier.get());
+                return Programs.createWithUnpack(program.getJarLocation(), folderSupplier.get());
               } catch (IOException e) {
                 throw Throwables.propagate(e);
               }
@@ -324,98 +320,62 @@ public class AppFabricTestHelper {
     return deployedJar;
   }
 
-  private static File createDeploymentJar(Class<?> clz, File...bundleEmbeddedJars) {
-    File testAppDir;
-    File tmpDir;
-    testAppDir = Files.createTempDir();
+  private static File createDeploymentJar(Class<?> clz, File...bundleEmbeddedJars) throws IOException {
+    ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("com.continuuity.api",
+                                                                         "org.apache.hadoop",
+                                                                         "org.apache.hbase",
+                                                                         "org.apache.hive"));
+    LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
+    Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");
+    bundler.createBundle(jarLocation, clz);
 
-    File outputDir = new File(testAppDir, "app");
-    tmpDir = new File(testAppDir, "tmp");
-
-    outputDir.mkdirs();
-    tmpDir.mkdirs();
+    Location deployJar = locationFactory.create(clz.getName()).getTempFile(".jar");
 
     // Creates Manifest
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, clz.getName());
 
-    ClassLoader loader = clz.getClassLoader();
-    Preconditions.checkArgument(loader != null, "Cannot get ClassLoader for class " + clz);
-    String classFile = clz.getName().replace('.', '/') + ".class";
-
-    // for easier testing within IDE we pick jar file first, before making this publicly available
-    // we need to add code here to throw an exception if the class is in classpath twice (file and jar)
-    // see ENG-2961
+    // Create the program jar for deployment. It removes the "classes/" prefix as that's the convention taken
+    // by the ApplicationBundler inside Twill.
+    JarOutputStream jarOutput = new JarOutputStream(deployJar.getOutputStream(), manifest);
     try {
-      // first look for jar file (in classpath) that contains class and return it
-      URI fileUri = null;
-      for (Enumeration<URL> itr = loader.getResources(classFile); itr.hasMoreElements(); ) {
-        URI uri = itr.nextElement().toURI();
-        if (uri.getScheme().equals("jar")) {
-          String rawSchemeSpecificPart = uri.getRawSchemeSpecificPart();
-          if (rawSchemeSpecificPart.startsWith("file:") && rawSchemeSpecificPart.contains("!")) {
-            String[] parts = rawSchemeSpecificPart.substring("file:".length()).split("!");
-            return new File(parts[0]);
-          } else {
-            return new File(uri.getPath());
+      JarInputStream jarInput = new JarInputStream(jarLocation.getInputStream());
+      try {
+        JarEntry jarEntry = jarInput.getNextJarEntry();
+        while (jarEntry != null) {
+          boolean isDir = jarEntry.isDirectory();
+          String entryName = jarEntry.getName();
+          if (!entryName.equals("classes/")) {
+            if (entryName.startsWith("classes/")) {
+              jarEntry = new JarEntry(entryName.substring("classes/".length()));
+            } else {
+              jarEntry = new JarEntry(entryName);
+            }
+            jarOutput.putNextEntry(jarEntry);
+
+            if (!isDir) {
+              ByteStreams.copy(jarInput, jarOutput);
+            }
           }
-        } else if (uri.getScheme().equals("file")) {
-          // memorize file URI in case there is no jar that contains the class
-          fileUri = uri;
+
+          jarEntry = jarInput.getNextJarEntry();
         }
+      } finally {
+        jarInput.close();
       }
-      if (fileUri != null) {
-        // build jar file based on class file and return it
-        File baseDir = new File(fileUri).getParentFile();
 
-        Package appPackage = clz.getPackage();
-        String packagePath = appPackage == null ? "" : appPackage.getName().replace('.', '/');
-        String basePath = baseDir.getAbsolutePath();
-        File relativeBase = new File(basePath.substring(0, basePath.length() - packagePath.length()));
-        File jarFile = File.createTempFile(String.format("%s-%d", clz.getSimpleName(), System.currentTimeMillis()),
-                                           ".jar", tmpDir);
-        return jarDir(baseDir, relativeBase, manifest, jarFile, bundleEmbeddedJars);
-      } else {
-        // return null if neither existing jar was found nor jar was built based on class file
-        return null;
+      for (File embeddedJar : bundleEmbeddedJars) {
+        JarEntry jarEntry = new JarEntry("lib/" + embeddedJar.getName());
+        jarOutput.putNextEntry(jarEntry);
+        Files.copy(embeddedJar, jarOutput);
       }
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
 
-  private static File jarDir(File dir, File relativeBase, Manifest manifest, File outputFile, File...bundleEmbeddedJars)
-    throws IOException, ClassNotFoundException {
-
-    JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(outputFile), manifest);
-    Queue<File> queue = Lists.newLinkedList();
-    Collections.addAll(queue, dir.listFiles());
-
-    URI basePath = relativeBase.toURI();
-    while (!queue.isEmpty()) {
-      File file = queue.remove();
-      String entryName = basePath.relativize(file.toURI()).toString();
-      jarOut.putNextEntry(new JarEntry(entryName));
-
-      if (file.isFile()) {
-        Files.copy(file, jarOut);
-      } else {
-        Collections.addAll(queue, file.listFiles());
-      }
-      jarOut.closeEntry();
+    } finally {
+      jarOutput.close();
     }
 
-    for (File bundledEmbeddedJar : bundleEmbeddedJars) {
-      String entryName = bundledEmbeddedJar.getName();
-      jarOut.putNextEntry(new JarEntry(entryName));
-      Files.copy(bundledEmbeddedJar, jarOut);
-      jarOut.closeEntry();
-    }
-
-    jarOut.close();
-
-    return outputFile;
+    return new File(deployJar.toURI());
   }
 }
 

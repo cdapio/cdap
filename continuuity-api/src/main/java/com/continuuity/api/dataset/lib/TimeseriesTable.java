@@ -40,7 +40,8 @@ import java.util.Map;
  *     Each entry's data is stored in one column.
  *   </li>
  * </ul>
- * Time interval length for partitioning can be defined by user and should be chosen depending the use-case. <br/>
+ * Time interval length for partitioning can be defined by the user and should be chosen 
+ * depending on the use-case.<br/>
  * Bigger time interval to store per row means:
  * <ul>
  *   <li>

@@ -79,6 +79,9 @@ set_hbase()
       0.96*)
         hbasecompat="$CONTINUUITY_HOME/hbase-compat-0.96/lib/*"
         ;;
+      0.98*)
+        hbasecompat="$CONTINUUITY_HOME/hbase-compat-0.96/lib/*"
+        ;;
       *)
         echo "ERROR: Unknown/unsupported version of HBase found: $HBASE_VERSION"
         exit 1
@@ -105,6 +108,8 @@ set_classpath()
     HBASE_CP=`hbase classpath`
   fi
 
+  export HBASE_CP
+
   if [ -n "$HBASE_CP" ]; then
     CP=$COMP_HOME/lib/*:$HBASE_CP:$CCONF/:$COMP_HOME/conf/:$EXTRA_CLASSPATH
   else
@@ -123,7 +128,7 @@ set_classpath()
   export CLASSPATH
 }
 
-# Determine Hive classpath, and set HIVE_CLASSPATH.
+# Determine Hive classpath, and set EXPLORE_CLASSPATH.
 # Hive classpath is not added as part of system classpath as hive jars bundle unrelated jars like guava,
 # and hence need to be isolated.
 set_hive_classpath() {
@@ -138,17 +143,37 @@ set_hive_classpath() {
       if [ "x$HIVE_CONF_DIR" = "x" ]; then
         HIVE_CONF_DIR=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep 'HIVE_CONF_DIR' | cut -f 2 -d '='`
       fi
+
+      if [ "x$HADOOP_CONF_DIR" = "x" ]; then
+        HADOOP_CONF_DIR=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep 'HADOOP_CONF_DIR=' | cut -f 2 -d '='`
+      fi
     fi
   fi
 
-  # If Hive classpath is successfully determined, add it to classpath
-  if [ "x$HIVE_HOME" != "x" -a "x$HIVE_CONF_DIR" != "x" ]; then
+  # If Hive classpath is successfully determined, derive explore
+  # classpath from it and export it to use it in the launch command
+  if [ "x$HIVE_HOME" != "x" -a "x$HIVE_CONF_DIR" != "x" -a "x$HADOOP_CONF_DIR" != "x" ]; then
+    # Reference the conf files needed by Explore
+    EXPLORE_CONF_FILES=''
+    for a in `ls $HIVE_CONF_DIR`; do
+      EXPLORE_CONF_FILES=$EXPLORE_CONF_FILES:$HIVE_CONF_DIR/$a;
+    done
+    for a in `ls $HADOOP_CONF_DIR`; do
+      EXPLORE_CONF_FILES=$EXPLORE_CONF_FILES:$HADOOP_CONF_DIR/$a;
+    done
+    # Remove leading ':'
+    EXPLORE_CONF_FILES=${EXPLORE_CONF_FILES:1:${#EXPLORE_CONF_FILES}-1}
+    export EXPLORE_CONF_FILES
+
     # Hive exec has a HiveConf class that needs to be loaded before the HiveConf class from
     # hive-common for joins operations to work
     HIVE_EXEC=`ls $HIVE_HOME/lib/hive-exec-*`
     OTHER_HIVE_JARS=`ls $HIVE_HOME/lib/*.jar | tr '\n' ':'`
-    HIVE_CLASSPATH=$HIVE_CONF_DIR:$HIVE_EXEC:$OTHER_HIVE_JARS
-    export HIVE_CLASSPATH
+
+    # We put in the explore classpath all the jars that are not in the regular reactor classpath.
+    EXPLORE_CLASSPATH=$HIVE_EXEC:$OTHER_HIVE_JARS
+
+    export EXPLORE_CLASSPATH
   fi
 }
 

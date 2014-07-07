@@ -6,6 +6,7 @@ package com.continuuity.data2.transaction.queue.inmemory;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
@@ -31,6 +32,7 @@ public class InMemoryQueueTest extends QueueTest {
     injector = Guice.createInjector(new LocationRuntimeModule().getInMemoryModules(),
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new DataFabricModules().getInMemoryModules(),
+                                    new DataSetsModules().getInMemoryModule(),
                                     new TransactionMetricsModule());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);

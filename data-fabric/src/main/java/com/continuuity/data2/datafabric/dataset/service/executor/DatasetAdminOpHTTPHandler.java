@@ -1,11 +1,11 @@
 package com.continuuity.data2.datafabric.dataset.service.executor;
 
 import com.continuuity.api.dataset.DatasetAdmin;
-import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.exception.HandlerException;
+import com.continuuity.data2.datafabric.dataset.DatasetType;
 import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.dataset2.DatasetManagementException;
@@ -74,17 +74,17 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     DatasetProperties props = GSON.fromJson(propsHeader, DatasetProperties.class);
     DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
 
-    DatasetDefinition def = dsFramework.getDatasetDefinition(typeMeta, null);
+    DatasetType type = dsFramework.getDatasetType(typeMeta, null);
 
-    if (def == null) {
+    if (type == null) {
       String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
       LOG.error(msg);
       responder.sendError(HttpResponseStatus.BAD_REQUEST, msg);
       return;
     }
 
-    DatasetSpecification spec = def.configure(name, props);
-    DatasetAdmin admin = def.getAdmin(spec);
+    DatasetSpecification spec = type.configure(name, props);
+    DatasetAdmin admin = type.getAdmin(spec);
     admin.create();
     responder.sendJson(HttpResponseStatus.OK, spec);
   }
@@ -104,16 +104,16 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     DatasetSpecification spec = GSON.fromJson(specHeader, DatasetSpecification.class);
     DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
 
-    DatasetDefinition def = dsFramework.getDatasetDefinition(typeMeta, null);
+    DatasetType type = dsFramework.getDatasetType(typeMeta, null);
 
-    if (def == null) {
+    if (type == null) {
       String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
       LOG.error(msg);
       responder.sendError(HttpResponseStatus.BAD_REQUEST, msg);
       return;
     }
 
-    DatasetAdmin admin = def.getAdmin(spec);
+    DatasetAdmin admin = type.getAdmin(spec);
     admin.drop();
     responder.sendJson(HttpResponseStatus.OK, spec);
   }

@@ -8,9 +8,9 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.stream.StreamEventCodec;
 import com.continuuity.data.file.FileWriter;
 import com.continuuity.data.stream.StreamFileWriterFactory;
-import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.queue.QueueEntry;
+import com.continuuity.data2.queue.QueueProducer;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.List;
 
 /**
@@ -41,7 +42,7 @@ final class InMemoryStreamFileWriterFactory implements StreamFileWriterFactory {
 
   @Override
   public FileWriter<StreamEvent> create(StreamConfig config, int generation) throws IOException {
-    final Queue2Producer producer = queueClientFactory.createProducer(QueueName.fromStream(config.getName()));
+    final QueueProducer producer = queueClientFactory.createProducer(QueueName.fromStream(config.getName()));
     final List<TransactionAware> txAwares = Lists.newArrayList();
     if (producer instanceof TransactionAware) {
       txAwares.add((TransactionAware) producer);
@@ -79,6 +80,9 @@ final class InMemoryStreamFileWriterFactory implements StreamFileWriterFactory {
           });
         } catch (TransactionFailureException e) {
           throw new IOException(e);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new InterruptedIOException();
         }
       }
     };

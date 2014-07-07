@@ -2,8 +2,12 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetInstantiationException;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataFabric;
+import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 
 import java.io.Closeable;
 
@@ -31,10 +35,12 @@ public class DataSetInstantiator extends DataSetInstantiationBase implements Dat
    *                    If null, then the default class loader is used
    */
   public DataSetInstantiator(DataFabric fabric, DatasetFramework datasetFramework,
-                             ClassLoader classLoader) {
-    super(classLoader);
+                             CConfiguration configuration, ClassLoader classLoader) {
+    super(configuration, classLoader);
     this.fabric = fabric;
-    this.datasetFramework = datasetFramework;
+    this.datasetFramework =
+      new NamespacedDatasetFramework(datasetFramework,
+                                     new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER));
   }
 
   /**

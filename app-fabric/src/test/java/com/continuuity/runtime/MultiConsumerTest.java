@@ -14,6 +14,7 @@ import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
@@ -171,7 +172,7 @@ public class MultiConsumerTest {
 
     DataSetInstantiator dataSetInstantiator =
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
-                              datasetFramework,
+                              datasetFramework, CConfiguration.create(),
                               getClass().getClassLoader());
     ApplicationSpecification spec = Specifications.from(new MultiApp().configure());
     dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());

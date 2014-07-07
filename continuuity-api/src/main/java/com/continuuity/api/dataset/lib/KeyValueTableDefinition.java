@@ -1,5 +1,6 @@
 package com.continuuity.api.dataset.lib;
 
+import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
@@ -12,6 +13,7 @@ import java.io.IOException;
 /**
  * {@link DatasetDefinition} for {@link KeyValueTable}.
  */
+@Beta
 public class KeyValueTableDefinition
   extends AbstractDatasetDefinition<KeyValueTable, DatasetAdmin> {
 
@@ -32,13 +34,13 @@ public class KeyValueTableDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("kv"));
+  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(spec.getSpecification("kv"), classLoader);
   }
 
   @Override
-  public KeyValueTable getDataset(DatasetSpecification spec) throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("kv"));
+  public KeyValueTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    Table table = tableDef.getDataset(spec.getSpecification("kv"), classLoader);
     return new KeyValueTable(spec.getName(), table);
   }
 }

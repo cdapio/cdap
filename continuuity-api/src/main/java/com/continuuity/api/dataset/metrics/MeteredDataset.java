@@ -1,9 +1,12 @@
 package com.continuuity.api.dataset.metrics;
 
+import com.continuuity.api.annotation.Beta;
+
 /**
  * Defines interface to be implemented by {@link com.continuuity.api.dataset.Dataset} implementations to
  * expose data ops metrics.
  */
+@Beta
 public interface MeteredDataset {
   /**
    * Sets data ops metrics collector

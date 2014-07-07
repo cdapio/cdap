@@ -234,8 +234,9 @@ nux_enabled() {
 }
 
 nux() {
+  version=`cat ${APP_HOME}/VERSION`
   # Deploy apps
-  curl -sL -o /dev/null -H "X-Archive-Name: LogAnalytics.jar" --data-binary "@$APP_HOME/examples/ResponseCodeAnalytics/target/ResponseCodeAnalytics-1.0.jar" -X POST http://127.0.0.1:10000/v2/apps
+  curl -sL -o /dev/null -H "X-Archive-Name: LogAnalytics.jar" --data-binary "@$APP_HOME/examples/ResponseCodeAnalytics/target/ResponseCodeAnalytics-${version}.jar" -X POST http://127.0.0.1:10000/v2/apps
   # Start flow and procedure
   curl -sL -o /dev/null -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/flows/LogAnalyticsFlow/start
   curl -sL -o /dev/null -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/procedures/StatusCodeProcedure/start
@@ -268,6 +269,10 @@ start() {
           echo
         fi
         grep -A 1 'Reactor started successfully' $APP_HOME/logs/reactor.log
+        break
+      elif grep 'Failed to start server' $APP_HOME/logs/reactor.log > /dev/null 2>&1; then
+        echo; echo "Failed to start server"
+        stop
         break
       else
         echo -n "."

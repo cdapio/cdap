@@ -3,10 +3,10 @@
  */
 package com.continuuity.metrics.collect;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -46,9 +46,9 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
       // Context is expected to look like appId.b.programId.[m|r].[taskId]
       String counterGroup;
       String contextParts[] = splitPattern.split(context);
-      if (contextParts.length < 4) {
-        // using context name as counter group for "unknown"
-        counterGroup = "continuuity." + context;
+      //TODO: Refactor to support any context
+      if (context.equals(Constants.Metrics.DATASET_CONTEXT)) {
+        counterGroup = "continuuity.dataset";
       } else if ("m".equals(contextParts[3])) {
         counterGroup = "continuuity.mapper";
       } else if ("r".equals(contextParts[3])) {
@@ -64,7 +64,9 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
       taskContext.getCounter(counterGroup, counterName).increment(record.getValue());
       for (TagMetric tag : record.getTags()) {
         counterName = getCounterName(record.getName(), tag.getTag());
-        taskContext.getCounter(counterGroup, counterName).increment(tag.getValue());
+        if (counterName != null) {
+          taskContext.getCounter(counterGroup, counterName).increment(tag.getValue());
+        }
       }
     }
   }
@@ -74,11 +76,10 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
   }
 
   private String getCounterName(String metric, String tag) {
-    JsonObject name = new JsonObject();
-    name.addProperty("metric", metric);
-    if (tag != null) {
-      name.addProperty("tag", tag);
+    if (tag == null) {
+      return metric;
+    } else {
+      return metric + "," + tag;
     }
-    return name.toString();
   }
 }

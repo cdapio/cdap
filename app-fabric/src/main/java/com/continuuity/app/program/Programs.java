@@ -4,6 +4,7 @@
 package com.continuuity.app.program;
 
 import com.continuuity.app.Id;
+import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -17,21 +18,25 @@ import java.util.Locale;
  */
 public final class Programs {
 
-  public static Program create(Location location, File destinationUnpackedJarDir,
-                               ClassLoader parentClassLoader) throws IOException {
+  public static Program createWithUnpack(Location location, File destinationUnpackedJarDir,
+                                         ClassLoader parentClassLoader) throws IOException {
     return new DefaultProgram(location, destinationUnpackedJarDir, parentClassLoader);
   }
 
-  public static Program create(Location location, File destinationUnpackedJarDir) throws IOException {
-    return Programs.create(location, destinationUnpackedJarDir, null);
+  public static Program createWithUnpack(Location location, File destinationUnpackedJarDir) throws IOException {
+    return Programs.createWithUnpack(location, destinationUnpackedJarDir, getClassLoader());
   }
 
   /**
    * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
    * would not function from the program this method returns.
    */
+  public static Program create(Location location, ClassLoader classLoader) throws IOException {
+    return new DefaultProgram(location, classLoader);
+  }
+
   public static Program create(Location location) throws IOException {
-    return Programs.create(location, null);
+    return new DefaultProgram(location, getClassLoader());
   }
 
   /**
@@ -61,6 +66,10 @@ public final class Programs {
                                                id.getApplication(), id.getId(), type));
     }
     return programLocation;
+  }
+
+  private static ClassLoader getClassLoader() {
+    return Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), Programs.class.getClassLoader());
   }
 
   private Programs() {

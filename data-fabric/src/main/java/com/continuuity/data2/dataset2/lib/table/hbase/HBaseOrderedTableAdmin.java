@@ -8,6 +8,7 @@ import com.continuuity.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -22,7 +23,10 @@ import java.io.IOException;
  *
  */
 public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
+  public static final String PROPERTY_SPLITS = "hbase.splits";
+
   static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
+  private static final Gson GSON = new Gson();
 
   private final DatasetSpecification spec;
   // todo: datasets should not depend on continuuity configuration!
@@ -48,7 +52,7 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
 
   @Override
   public void create() throws IOException {
-    final String name = HBaseTableUtil.getHBaseTableName(tableName);
+    final byte[] name = Bytes.toBytes(HBaseTableUtil.getHBaseTableName(tableName));
 
     final HColumnDescriptor columnDescriptor = new HColumnDescriptor(DATA_COLUMN_FAMILY);
     // todo: make stuff configurable
@@ -71,8 +75,14 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
     for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
       addCoprocessor(tableDescriptor, coprocessor, coprocessorJar.getJarLocation());
     }
-    tableUtil.createTableIfNotExists(admin, name, tableDescriptor);
 
+    byte[][] splits = null;
+    String splitsProperty = spec.getProperty(PROPERTY_SPLITS);
+    if (splitsProperty != null) {
+      splits = GSON.fromJson(splitsProperty, byte[][].class);
+    }
+
+    tableUtil.createTableIfNotExists(admin, name, tableDescriptor, splits);
   }
 
   @Override
