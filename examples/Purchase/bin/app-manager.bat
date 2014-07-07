@@ -12,7 +12,7 @@ REM Set the base directory
 for %%i in ("%~dp0..\") do (SET APP_HOME=%%~dpi)
 
 REM Set path for curl.exe
-SET PATH=%APP_HOME%\..\..\libexec\bin
+SET PATH=%APP_HOME%libexec
 
 for /r %APP_HOME%\target %%a in (%APP_JAR_PREFIX%*) do SET JAR_PATH=%%~dpnxa
 

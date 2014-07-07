@@ -40,7 +40,7 @@ GOTO :EOF
 
 :DEPLOY
 echo Deploying application...
-FOR /F %%i IN ('curl -H "Authorization: Bearer %ACCESS_TOKEN%" -X POST -o /dev/null -sL -w %%{http_code} -H "X-Archive-Name: %APP_NAME%" --data-binary @"%JAR_PATH%" http://localhost:10000/v2/apps') DO SET RESPONSE=%%i
+FOR /F %%i IN ('curl -H "Authorization: Bearer %ACCESS_TOKEN%" -X POST -o /dev/null -sL -w %%{http_code} -H "X-Archive-Name: %APP_NAME%" --data-binary @"%AJAR_PATH%" http://localhost:10000/v2/apps') DO SET RESPONSE=%%i
 IF  %RESPONSE% == 200  (echo Deployed application 
                         GOTO :EOF)
 
