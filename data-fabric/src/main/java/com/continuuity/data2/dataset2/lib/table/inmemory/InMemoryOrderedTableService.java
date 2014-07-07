@@ -61,7 +61,6 @@ public class InMemoryOrderedTableService {
   public static synchronized void merge(String tableName,
                                         NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes,
                                         long version) {
-    // todo: handle nulls
     ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> table = tables.get(tableName);
     for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> change : changes.entrySet()) {
       merge(table, change.getKey(), change.getValue(), version);
@@ -69,9 +68,13 @@ public class InMemoryOrderedTableService {
   }
 
   private static void merge(ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> table,
-                            byte[] row, Map<byte[], byte[]> changes, long version) {
+                            @Nullable byte[] row, Map<byte[], byte[]> changes, long version) {
     // get the correct row from the table, create it if it doesn't exist
-    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = table.get(row);
+    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = null;
+    if (row != null) {
+      rowMap = table.get(row);
+    }
+
     if (rowMap == null) {
       rowMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
       table.put(row, rowMap);
