@@ -27,6 +27,7 @@ import java.io.Closeable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Mapreduce job runtime context
@@ -46,9 +47,18 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final MetricsCollectionService metricsCollectionService;
   private final ProgramServiceDiscovery serviceDiscovery;
 
+  /**
+   * Input dataset for the MapReduce job. May be set be either inputDataset or inputDatasetName, but not both.
+   */
   private BatchReadable inputDataset;
+  private String inputDatasetName;
   private List<Split> inputDataSelection;
+
+  /**
+   * Output dataset for the MapReduce job. May be set by either outputDataset or outputDatasetName, but not both.
+   */
   private BatchWritable outputDataset;
+  private String outputDatasetName;
   private Job job;
 
   // todo: having it here seems like a hack will be fixed with further post-integration refactoring
@@ -151,12 +161,27 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   @Override
   public void setInput(BatchReadable dataset, List<Split> splits) {
     this.inputDataset = dataset;
+    this.inputDatasetName = null;
+    this.inputDataSelection = splits;
+  }
+
+  @Override
+  public void setInput(String datasetName, List<Split> splits) {
+    this.inputDataset = null;
+    this.inputDatasetName = datasetName;
     this.inputDataSelection = splits;
   }
 
   @Override
   public void setOutput(BatchWritable dataset) {
     this.outputDataset = dataset;
+    this.outputDatasetName = null;
+  }
+
+  @Override
+  public void setOutput(String datasetName) {
+    this.outputDataset = null;
+    this.outputDatasetName = datasetName;
   }
 
   public int getInstanceId() {
@@ -211,16 +236,28 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     return loggingContext;
   }
 
+  @Nullable
   public BatchReadable getInputDataset() {
     return inputDataset;
+  }
+
+  @Nullable
+  public String getInputDatasetName() {
+    return inputDatasetName;
   }
 
   public List<Split> getInputDataSelection() {
     return inputDataSelection;
   }
 
+  @Nullable
   public BatchWritable getOutputDataset() {
     return outputDataset;
+  }
+
+  @Nullable
+  public String getOutputDatasetName() {
+    return outputDatasetName;
   }
 
   Arguments getRuntimeArgs() {
