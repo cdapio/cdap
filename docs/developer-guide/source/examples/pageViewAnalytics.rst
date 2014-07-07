@@ -128,7 +128,7 @@ From within the SDK root directory, this command will start Reactor in local mod
 
 On Windows::
 
-	~SDK> bin\reactor start
+	~SDK> bin\reactor.bat start
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
@@ -159,7 +159,7 @@ to the Stream named *logEventStream* in the ``PageViewAnalyticsApp``::
 
 On Windows::
 
-	~SDK> bin\inject-data
+	~SDK> bin\inject-data.bat
 
 Querying the Results
 ....................
@@ -215,7 +215,7 @@ Either:
 
   :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
 
-  On Windows, run ``~SDK> bin\appManager stop``
+  On Windows, run ``~SDK> bin\appManager.bat stop``
 
 
 Downloading the Example

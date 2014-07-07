@@ -144,7 +144,7 @@ From within the SDK root directory, this command will start Reactor in local mod
 
 On Windows::
 
-	~SDK> bin\reactor start
+	~SDK> bin\reactor.bat start
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`_ in local mode):
 
@@ -163,8 +163,8 @@ Command line tools are also available to deploy and manage apps. From within the
 
 On Windows:
 
-#. To deploy the App JAR file, run ``~SDK> bin\appManager deploy``
-#. To start the App, run ``~SDK> bin\appManager start``
+#. To deploy the App JAR file, run ``~SDK> bin\appManager.bat deploy``
+#. To start the App, run ``~SDK> bin\appManager.bat start``
 
 Running the Example
 -------------------
@@ -182,7 +182,7 @@ to a Stream named *logEventStream* in the ``ResponseCodeAnalyticsApp``::
 
 On Windows::
 
-	~SDK> bin\inject-data
+	~SDK> bin\inject-data.bat
 
 Query
 .....
@@ -224,7 +224,7 @@ Either:
 
   :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
 
-  On Windows, run ``~SDK> bin\appManager stop``
+  On Windows, run ``~SDK> bin\appManager.bat stop``
 
 
 Downloading the Example
