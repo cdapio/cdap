@@ -149,8 +149,8 @@ From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://l
 
 On Windows:
 
-#. To deploy the App JAR file, run ``~SDK> bin\appManager.bat deploy``
-#. To start the App, run ``~SDK> bin\appManager.bat start``
+#. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy``
+#. To start the App, run ``~SDK> bin\app-manager.bat start``
 
 Running the Example
 -------------------
@@ -273,11 +273,11 @@ Either:
 
 or:
 
-- Run ``$ ./bin/appManager.sh --action stop [--gateway <hostname>]``
+- Run ``$ ./bin/app-manager.sh --action stop [--gateway <hostname>]``
 
   :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
 
-  On Windows, run ``~SDK> bin\appManager.bat stop``
+  On Windows, run ``~SDK> bin\app-manager.bat stop``
 
 
 Downloading the Example

@@ -185,15 +185,15 @@ From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://l
 	
 Command line tools are also available to deploy and manage apps. From within the project root:
 
-#. To deploy the Application JAR file, run ``$ bin/appManager.sh --action deploy --gateway <hostname>``
-#. To start the Application, run ``$ bin/appManager.sh --action start [--gateway <hostname>]``
+#. To deploy the Application JAR file, run ``$ bin/app-manager.sh --action deploy --gateway <hostname>``
+#. To start the Application, run ``$ bin/app-manager.sh --action start [--gateway <hostname>]``
 
 :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
 
 On Windows:
 
-#. To deploy the App JAR file, run ``~SDK> bin\appManager.bat deploy``
-#. To start the App, run ``~SDK> bin\appManager.bat start``
+#. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy``
+#. To start the App, run ``~SDK> bin\app-manager.bat start``
 
 Running the Example
 -------------------
@@ -264,11 +264,11 @@ Stopping the Application
 Either:
 
 - On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
-- Run ``$ ./bin/appManager.sh --action stop [--gateway <hostname>]``
+- Run ``$ ./bin/app-manager.sh --action stop [--gateway <hostname>]``
 
   :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
 
-  On Windows, run ``~SDK> bin\appManager.bat stop``
+  On Windows, run ``~SDK> bin\app-manager.bat stop``
 
 
 Downloading the Example
