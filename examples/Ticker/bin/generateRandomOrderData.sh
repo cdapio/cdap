@@ -5,6 +5,15 @@
 
 # timestamp=20131007T103055,symbol=AAPL,exchange=NYSE,broker=JPMC,currency=USD,payload=iVBORw0KGgo
 
+auth_token=
+auth_file="$HOME/.continuuity.accesstoken"
+
+function get_auth_token() {
+  if [ -f $auth_file ]; then
+    auth_token=`cat $auth_file`
+  fi
+}
+
 usage()
 {
 cat <<EOF
@@ -69,7 +78,7 @@ fi
 
 #echo $a | awk '{print tolower($0)}'
 
-SYMBOLS=(`find . -name '*.txt' | sed 's/^.*\/\(.*\)\.us.txt$/\1/' | tr '[a-z]' '[A-Z]'`)
+SYMBOLS=(`find ../resources -name '*.txt' | sed 's/^.*\/\(.*\)\.us.txt$/\1/' | tr '[a-z]' '[A-Z]'`)
 EXCHANGES=('NYSE' 'NASDAQ')
 BROKERS=('JPMC' 'JPMC' 'BAC')
 CURRENCYS=('USD' 'USD' 'USD' 'USD' 'JPY' 'EUR' 'GBP')
@@ -81,6 +90,8 @@ for i in {a..z}; do arr[index]=$i; index=`expr ${index} + 1`; done
 for i in {A..Z}; do arr[index]=$i; index=`expr ${index} + 1`; done
 for i in {0..9}; do arr[index]=$i; index=`expr ${index} + 1`; done
 
+#  get the access token
+get_auth_token
 
 while true ; do
 
@@ -107,7 +118,20 @@ while true ; do
     echo "debug: $DATA"
   fi
   #echo $DATA | nc $DESTHOST $DESTPORT
-  curl -X POST -d "$DATA" "http://$DESTHOST:$DESTPORT/v2/streams/orders"
+  status=`curl -fw "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X POST -d "$DATA" http://$DESTHOST:$DESTPORT/v2/streams/orders`
+
+  if [ $status -ne 200 ]; then
+    echo "Failed to send data."
+    if [ $status == 401 ]; then
+      if [ "x$auth_token" == "x" ]; then
+        echo "No access token provided"
+      else
+        echo "Invalid access token"
+      fi
+    fi
+    echo "Exiting program..."
+    exit 1;
+  fi
 
   sleep $DELAY
 

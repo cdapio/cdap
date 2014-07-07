@@ -56,7 +56,7 @@ public class ActiveOperationRemovalHandler implements RemovalListener<Handle, Op
       } catch (Throwable e) {
         LOG.error("Could not cancel handle {} due to exception", handle.getHandle(), e);
       } finally {
-        LOG.info("Timing out handle {}", handle);
+        LOG.debug("Timing out handle {}", handle);
         try {
           // Finally close the operation
           exploreService.closeInternal(handle, opInfo);

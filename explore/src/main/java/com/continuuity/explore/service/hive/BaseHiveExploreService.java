@@ -21,7 +21,6 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.hadoop.conf.Configuration;
@@ -162,7 +161,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       Map<String, String> sessionConf = startSession();
       // TODO: allow changing of hive user and password - REACTOR-271
-      SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
+      // It looks like the username and password below is not used when security is disabled in Hive Server2.
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       OperationHandle operationHandle = doExecute(sessionHandle, statement);
       Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
       LOG.trace("Executing statement: {} with handle {}", statement, handle);

@@ -123,7 +123,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.14.1</version>
           <configuration>
-            <argLine>-Xmx3072m -Djava.awt.headless=true -XX:MaxPermSize=256m</argLine>
+            <argLine>-Xmx4096m -Djava.awt.headless=true -XX:MaxPermSize=256m</argLine>
             <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
             <reuseForks>false</reuseForks>
             <reportFormat>plain</reportFormat>
