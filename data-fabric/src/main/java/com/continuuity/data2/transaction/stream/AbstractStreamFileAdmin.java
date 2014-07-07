@@ -7,6 +7,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.io.Locations;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.common.utils.OSDetector;
 import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data.stream.StreamFileOffset;
 import com.continuuity.data.stream.StreamUtils;
@@ -253,8 +254,10 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       Locations.newOutputSupplier(tmpConfigLocation), Charsets.UTF_8));
 
     try {
-      // must delete the configLocation before the temp config can be renamed
-      configLocation.delete();
+      // Windows does not allow renaming if the destination file exists so we must delete the configLocation
+      if (OSDetector.isWindows()) {
+        configLocation.delete();
+      }
       tmpConfigLocation.renameTo(streamBaseLocation.append(name).append(CONFIG_FILE_NAME));
     } finally {
       if (tmpConfigLocation.exists()) {
