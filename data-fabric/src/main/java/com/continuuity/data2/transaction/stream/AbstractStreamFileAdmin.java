@@ -251,9 +251,11 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation);
     CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
       Locations.newOutputSupplier(tmpConfigLocation), Charsets.UTF_8));
-    
+
     try {
-      tmpConfigLocation.renameTo(configLocation);
+      // must delete the configLocation before the temp config can be renamed
+      configLocation.delete();
+      tmpConfigLocation.renameTo(streamBaseLocation.append(name).append(CONFIG_FILE_NAME));
     } finally {
       if (tmpConfigLocation.exists()) {
         tmpConfigLocation.delete();
