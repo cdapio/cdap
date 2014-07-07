@@ -8,7 +8,7 @@
   <parent>
     <groupId>com.continuuity</groupId>
     <artifactId>parent</artifactId>
-    <version>2.3.0-SNAPSHOT</version>
+    <version>2.4.0-SNAPSHOT</version>
     <relativePath>../parent/pom.xml</relativePath>
   </parent>
 
@@ -117,7 +117,7 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <excludeGroupIds>org.apache.hbase,com.google.protobuf,asm,org.apache.zookeeper,org.apache.kafka,org.scala-lang</excludeGroupIds>
+                  <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka,org.scala-lang</excludeGroupIds>
                   <excludeArtifactIds>hadoop-hdfs,zkclient</excludeArtifactIds>
                   <silent>true</silent>
                   <includeScope>compile</includeScope>
@@ -181,6 +181,13 @@
                         <include>tx-debugger*</include>
                       </includes>
                     </resource>
+                    <resource>
+                      <directory>${project.parent.parent.basedir}/explore/bin</directory>
+                      <targetPath>bin</targetPath>
+                      <includes>
+                        <include>send-query*</include>
+                      </includes>
+                    </resource>
                     <!-- Copy binaries for Windows -->
                     <resource>
                       <directory>${project.basedir}/libexec</directory>
@@ -222,15 +229,16 @@
                       <directory>${project.parent.parent.basedir}/examples</directory>
                       <targetPath>examples</targetPath>
                       <includes>
+                        <include>README*</include>
                         <include>**/src/**</include>
                         <include>**/bin/*</include>
+                        <include>**/resources/*</include>
                         <include>**/pom.xml</include>
                         <include>**/target/*.jar</include>
                       </includes>
                       <excludes>
                         <exclude>pom.xml</exclude>
                         <exclude>build.gradle</exclude>
-                        <exclude>README.rst</exclude>
                         <exclude>**/target/original*.jar</exclude>
                       </excludes>
                     </resource>
@@ -276,6 +284,11 @@
                 <configuration>
                   <target>
                     <chmod file="${stage.opt.dir}/bin/**" perm="755"/>
+                    <chmod perm="755">
+                      <fileset dir="${stage.opt.dir}/examples">
+                        <include name="**/bin/*"/>
+                      </fileset>
+                    </chmod>
                   </target>
                 </configuration>
                 <goals>

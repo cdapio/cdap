@@ -37,31 +37,20 @@ an implementation of ``com.continuuity.api.Application``.
 
 ::
 
-	public class ResponseCodeAnalyticsApp implements Application {
-	  // The constant to define the row key of a table
-	  private static final byte [] ROW_KEY = Bytes.toBytes("status");
-	
+	public class ResponseCodeAnalyticsApp extends AbstractApplication {
 	  @Override
-	  public ApplicationSpecification configure() {
-	    return ApplicationSpecification.Builder.with()
-	      .setName("ResponseCodeAnalytics")
-	      .setDescription("HTTP response code analytics")
-	      // Ingest data into the Application via Streams
-	      .withStreams()
-	        .add(new Stream("logEventStream"))
-	      // Store processed data in Datasets
-	      .withDataSets()
-	        .add(new Table("statusCodeTable"))
-	      // Process log events in real-time using Flows
-	      .withFlows()
-	        .add(new LogAnalyticsFlow())
-	      // Query the processed data using Procedures
-	      .withProcedures()
-	        .add(new StatusCodeProcedure())
-	      .noMapReduce()
-	      .noWorkflow()
-	      .build();
-	  }
+    public void configure() {
+      setName("ResponseCodeAnalytics");
+      setDescription("HTTP response code analytics");
+      // Ingest data into the app via Streams
+      addStream(new Stream("logEventStream"));
+      // Store processed data in DataSets
+      createDataSet("statusCodeTable", Table.class);
+      // Process log events in real-time using Flows
+      addFlow(new LogAnalyticsFlow());
+      // Query the processed data using Procedures
+      addProcedure(new StatusCodeProcedure());
+    }
 
 Notice that in coding the Application, *Streams* and *Datasets* are defined
 using Continuuity classes, and are referenced by names, 
@@ -101,7 +90,8 @@ Flows and Flowlets for Real-time Data Processing
 ------------------------------------------------
 Data ingested through Streams can be processed in real-time using Flows, which are user-implemented realtime-stream processors. 
 
-A Flow is comprised of one or more Flowlets that are wired together as a Directed Acyclic Graph (DAG). Each Flowlet is able to perform custom logic and execute data operations for each individual data object processed. 
+A Flow is comprised of one or more Flowlets that are wired together as a Directed Acyclic Graph (DAG). 
+Each Flowlet is able to perform custom logic and execute data operations for each individual data object processed. 
 
 In the example, two Flowlets are used to process the data:
 
@@ -128,7 +118,7 @@ Building and Running the Application and Example
 In this remainder of this document, we refer to the Continuuity Reactor runtime as "Reactor", and the
 example code that is running on it as an "Application".
 
-We show the Windows prompt as ``>`` to indicate a command prompt opened in the SDK directory.
+We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
 
 In this example, you can either build the Application from source or deploy the already-compiled JAR file.
 In either case, you then start a Continuuity Reactor, deploy the Application, and then run the example by
@@ -154,7 +144,7 @@ From within the SDK root directory, this command will start Reactor in local mod
 
 On Windows::
 
-	> bin\reactor start
+	~SDK> bin\reactor start
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`_ in local mode):
 
@@ -173,8 +163,8 @@ Command line tools are also available to deploy and manage apps. From within the
 
 On Windows:
 
-#. To deploy the App JAR file, run ``> bin\appManager deploy``
-#. To start the App, run ``> bin\appManager start``
+#. To deploy the App JAR file, run ``~SDK> bin\appManager deploy``
+#. To start the App, run ``~SDK> bin\appManager start``
 
 Running the Example
 -------------------
@@ -192,11 +182,11 @@ to a Stream named *logEventStream* in the ``ResponseCodeAnalyticsApp``::
 
 On Windows::
 
-	> bin\inject-data
+	~SDK> bin\inject-data
 
 Query
 .....
-There are two ways to query the *statusCodeTable* Dataset:
+There are two ways to query the *statusCodeTable* DataSet:
 
 #. Send a query via an HTTP request using the ``curl`` command. For example::
 
@@ -228,7 +218,7 @@ Either:
 
   :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
 
-  On Windows, run ``> bin\appManager stop``
+  On Windows, run ``~SDK> bin\appManager stop``
 
 
 Downloading the Example

@@ -9,14 +9,14 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.runtime.DataFabricLocalModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
-import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueProducer;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueue2Producer;
-import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueue2Producer;
+import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueProducer;
+import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueueProducer;
 import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.google.inject.Guice;
@@ -70,10 +70,10 @@ public class LocalQueueTest extends QueueTest {
       new TransactionMetricsModule(),
       new DataFabricModules().getSingleNodeModules());
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
-    Queue2Producer producer = factory.createProducer(QueueName.fromStream("bigriver"));
-    Assert.assertTrue(producer instanceof LevelDBQueue2Producer);
+    QueueProducer producer = factory.createProducer(QueueName.fromStream("bigriver"));
+    Assert.assertTrue(producer instanceof LevelDBQueueProducer);
     producer = factory.createProducer(QueueName.fromFlowlet("app", "my", "flowlet", "output"));
-    Assert.assertTrue(producer instanceof InMemoryQueue2Producer);
+    Assert.assertTrue(producer instanceof InMemoryQueueProducer);
   }
 
 }

@@ -388,6 +388,7 @@ public class MDTBasedStoreTest {
 
   @Test
   public void testServiceRunnableInstances() throws Exception {
+    AppFabricTestHelper.deployApplication(AppWithServices.class);
     AbstractApplication app = new AppWithServices();
     DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(app);
     app.configure(appConfigurer, new ApplicationContext());

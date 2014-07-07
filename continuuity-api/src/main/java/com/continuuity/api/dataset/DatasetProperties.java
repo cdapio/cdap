@@ -1,5 +1,7 @@
 package com.continuuity.api.dataset;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
@@ -32,6 +34,13 @@ public final class DatasetProperties {
    */
   public Map<String, String> getProperties() {
     return Collections.unmodifiableMap(properties);
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("properties", Joiner.on(",").withKeyValueSeparator("=").join(properties))
+      .toString();
   }
 
   /**

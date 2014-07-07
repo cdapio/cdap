@@ -4,10 +4,13 @@
 
 package com.continuuity.api.data.batch;
 
+import com.continuuity.api.annotation.Beta;
+
 /**
  * Defines a reader of a dataset {@link com.continuuity.api.data.batch.Split}.
  * @param <RECORD> the type of objects that represents a single record
  */
+@Beta
 public abstract class RecordScanner<RECORD> {
 
   /**

@@ -33,7 +33,6 @@
     <module>HelloWorld</module>
     <module>PageViewAnalytics</module>
     <module>Purchase</module>
-    <module>PurchaseAnalytics</module>
     <module>ResourceSpammer</module>
     <module>ResponseCodeAnalytics</module>
     <module>SimpleWriteAndRead</module>

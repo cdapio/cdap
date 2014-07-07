@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -63,9 +64,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final ScheduledExecutorService scheduledExecutorService;
   private final long cleanupJobSchedule;
 
-  protected abstract Status fetchStatus(Handle handle) throws ExploreException, HandleNotFoundException;
-  protected abstract List<Result> fetchNextResults(Handle handle, int size) throws ExploreException,
+  protected abstract Status fetchStatus(OperationHandle handle) throws HiveSQLException, ExploreException,
     HandleNotFoundException;
+  protected abstract List<Result> fetchNextResults(OperationHandle handle, int size)
+    throws HiveSQLException, ExploreException, HandleNotFoundException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
@@ -141,13 +143,14 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     runCacheCleanup();
 
     // Wait for all cleanup jobs to complete
+    scheduledExecutorService.awaitTermination(10, TimeUnit.SECONDS);
     scheduledExecutorService.shutdown();
 
     cliService.stop();
   }
 
   @Override
-  public Handle execute(String statement) throws ExploreException {
+  public Handle execute(String statement) throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
       // TODO: allow changing of hive user and password - REACTOR-271
@@ -157,13 +160,15 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
       LOG.trace("Executing statement: {} with handle {}", statement, handle);
       return handle;
-    } catch (Exception e) {
+    } catch (HiveSQLException e) {
+      throw getSqlException(e);
+    } catch (IOException e) {
       throw new ExploreException(e);
     }
   }
 
   @Override
-  public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException {
+  public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException, SQLException {
     InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
     if (inactiveOperationInfo != null) {
       // Operation has been made inactive, so return the saved status.
@@ -171,18 +176,25 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return inactiveOperationInfo.getStatus();
     }
 
-    // Fetch status from Hive
-    Status status = fetchStatus(handle);
-    if ((status.getStatus() == Status.OpStatus.FINISHED && !status.hasResults()) ||
-      status.getStatus() == Status.OpStatus.ERROR) {
-      // No results or error, so can be timed out aggressively
-      timeoutAggresively(handle, getResultSchema(handle), status);
+    try {
+      // Fetch status from Hive
+      Status status = fetchStatus(getOperationHandle(handle));
+      LOG.trace("Status of handle {} is {}", handle, status);
+
+      if ((status.getStatus() == Status.OpStatus.FINISHED && !status.hasResults()) ||
+        status.getStatus() == Status.OpStatus.ERROR) {
+        // No results or error, so can be timed out aggressively
+        timeoutAggresively(handle, getResultSchema(handle), status);
+      }
+      return status;
+    } catch (HiveSQLException e) {
+      throw getSqlException(e);
     }
-    return status;
   }
 
   @Override
-  public List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
+  public List<Result> nextResults(Handle handle, int size)
+    throws ExploreException, HandleNotFoundException, SQLException {
     InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
     if (inactiveOperationInfo != null) {
       // Operation has been made inactive, so all results should have been fetched already - return empty list.
@@ -190,19 +202,25 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return ImmutableList.of();
     }
 
-    // Fetch results from Hive
-    List<Result> results = fetchNextResults(handle, size);
+    try {
+      // Fetch results from Hive
+      LOG.trace("Getting results for handle {}", handle);
+      List<Result> results = fetchNextResults(getOperationHandle(handle), size);
 
-    Status status = getStatus(handle);
-    if (results.isEmpty() && status.getStatus() == Status.OpStatus.FINISHED) {
-      // Since operation has fetched all the results, handle can be timed out aggressively.
-      timeoutAggresively(handle, getResultSchema(handle), status);
+      Status status = getStatus(handle);
+      if (results.isEmpty() && status.getStatus() == Status.OpStatus.FINISHED) {
+        // Since operation has fetched all the results, handle can be timed out aggressively.
+        timeoutAggresively(handle, getResultSchema(handle), status);
+      }
+      return results;
+    } catch (HiveSQLException e) {
+      throw getSqlException(e);
     }
-    return results;
   }
 
   @Override
-  public List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException, HandleNotFoundException {
+  public List<ColumnDesc> getResultSchema(Handle handle)
+    throws ExploreException, HandleNotFoundException, SQLException {
     try {
       InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
       if (inactiveOperationInfo != null) {
@@ -224,12 +242,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       }
       return listBuilder.build();
     } catch (HiveSQLException e) {
-      throw new ExploreException(e);
+      throw getSqlException(e);
     }
   }
 
   @Override
-  public void cancel(Handle handle) throws ExploreException, HandleNotFoundException {
+  public void cancel(Handle handle) throws ExploreException, HandleNotFoundException, SQLException {
     try {
       InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
       if (inactiveOperationInfo != null) {
@@ -244,29 +262,22 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // Since operation is cancelled, we can aggressively time it out.
       timeoutAggresively(handle, ImmutableList.<ColumnDesc>of(), new Status(Status.OpStatus.CANCELED, false));
     } catch (HiveSQLException e) {
-      throw new ExploreException(e);
+      throw getSqlException(e);
     }
   }
 
   @Override
   public void close(Handle handle) throws ExploreException, HandleNotFoundException {
-    InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
-    if (inactiveOperationInfo != null) {
-      // Operation has been made inactive, so it should already be closed.
-      LOG.trace("Not running close for inactive handle {}", handle);
-      return;
-    }
-
-    OperationInfo opInfo = getOperationInfo(handle);
-    closeInternal(handle, opInfo);
+    activeHandleCache.invalidate(handle);
   }
 
-  void closeInternal(Handle handle, OperationInfo opInfo) throws ExploreException, HandleNotFoundException {
+  void closeInternal(Handle handle, OperationInfo opInfo)
+    throws ExploreException, HandleNotFoundException, SQLException {
     try {
       LOG.trace("Closing operation {}", handle);
       cliService.closeOperation(opInfo.getOperationHandle());
     } catch (HiveSQLException e) {
-      throw new ExploreException(e);
+      throw getSqlException(e);
     } finally {
       try {
         closeSession(opInfo.getSessionHandle());
@@ -392,6 +403,17 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     LOG.trace("Running cache cleanup");
     activeHandleCache.cleanUp();
     inactiveHandleCache.cleanUp();
+  }
+
+  // Hive wraps all exceptions, including SQL exceptions in HiveSQLException. We would like to surface the SQL
+  // exception to the user, and not other Hive server exceptions. We are using a heuristic to determine whether a
+  // HiveSQLException is a SQL exception or not by inspecting the SQLState of HiveSQLException. If SQLState is not
+  // null then we surface the SQL exception.
+  private RuntimeException getSqlException(HiveSQLException e) throws ExploreException, SQLException {
+    if (e.getSQLState() != null) {
+      throw e;
+    }
+    throw new ExploreException(e);
   }
 
   /**

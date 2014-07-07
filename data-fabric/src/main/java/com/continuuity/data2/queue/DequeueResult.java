@@ -24,7 +24,7 @@ public interface DequeueResult<T> extends Iterable<T> {
   /**
    * Reclaim all dequeue entries represented by this result. The effect is to put entries represented by this
    * result back to the dequeued set of the queue consumer. Note that call to this method is transactional
-   * and requires a new transaction on the {@link Queue2Consumer} instance who provides the instance of this
+   * and requires a new transaction on the {@link QueueConsumer} instance who provides the instance of this
    * {@link DequeueResult}.
    *
    * E.g.

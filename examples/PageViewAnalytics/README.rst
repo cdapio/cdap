@@ -1,27 +1,27 @@
-.. :Author: Continuuity. Inc.
+.. :Author: Continuuity, Inc.
    :Description: Continuuity Reactor Advanced Apache Log Event Logger
 
 ============================
 PageViewAnalytics Example
 ============================
 
-**A Continuuity Reactor Application Demonstrating Custom DataSets and Metrics**
+**A Continuuity Reactor Application Demonstrating Custom Datasets and Metrics**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 Overview
 ========
-This example demonstrates use of custom DataSets, batch processing and
+This example demonstrates use of custom Datasets, batch processing and
 custom metrics in an Application.
 It takes data from Apache access logs,
-parses them and save the data in a custom DataSet. It then queries the results to find,
+parses them and save the data in a custom Dataset. It then queries the results to find,
 for a specific URI, pages that are requesting that page and the distribution of those requests.
 
-The custom DataSet shows how you include business logic in the definition of a DataSet.
-By doing so, the DataSet does more than just store or convert data–it
+The custom Dataset shows how you include business logic in the definition of a Dataset.
+By doing so, the Dataset does more than just store or convert data–it
 expresses methods that can perform valuable operations, such as counting and tabulating results
-based on the DataSet's knowledge of its underlying data.
+based on the Dataset's knowledge of its underlying data.
 
 Data from a log will be sent to the Continuuity Reactor by an external script *inject-log*
 to the *logEventStream*. Each entry of the log data—a page view—has two items of interest: 
@@ -31,7 +31,7 @@ and the requested page URI. Together these two tell us which pages are requestin
 The logs are processed by the
 *PageViewFlow*, which parses the log event for its referrer tags, 
 aggregates the counts of the requested pages and then
-stores the results in the custom DataSet *pageViewCDS*, a instance of ``PageViewStore``.
+stores the results in the custom Dataset *pageViewCDS*, a instance of ``PageViewStore``.
 
 You can view the user-defined ("custom") metric by adding—in the 
 Continuuity Reactor Dashboard's Metrics Explorer—a metric
@@ -45,7 +45,7 @@ Let's look at some of these elements, and then run the Application and see the r
 
 The PageViewAnalytics Application
 ---------------------------------
-As in the other `examples <http://continuuity.com/developers/examples>`__, the components
+As in the other `examples <http://continuuity.com/docs/reactor/current/en/examples/>`__, the components
 of the Application are tied together by the class ``PageViewAnalyticsApp``::
 
 	public class PageViewAnalyticsApp extends AbstractApplication {
@@ -54,7 +54,7 @@ of the Application are tied together by the class ``PageViewAnalyticsApp``::
       setName("PageViewAnalytics");
       setDescription("Page view analysis");
       addStream(new Stream("logEventStream"));
-      createDataSet("pageViewCDS", PageViewStore.class);
+      createDataset("pageViewCDS", PageViewStore.class);
       addFlow(new LogAnalyticsFlow());
       addProcedure(new PageViewProcedure());
     }
@@ -62,13 +62,13 @@ of the Application are tied together by the class ``PageViewAnalyticsApp``::
 
 ``PageViewStore``: Custom Data Storage
 --------------------------------------
-The processed data is stored in a custom DataSet, ``PageViewStore``, with these
+The processed data is stored in a custom Dataset, ``PageViewStore``, with these
 methods defined:
 
 #. ``incrementCount(PageView pageView)``
 
-   This method is what actually puts data into the DataSet, by incrementing the
-   DataSet with each page view's referrer and originating URI.
+   This method is what actually puts data into the Dataset, by incrementing the
+   Dataset with each page view's referrer and originating URI.
 
 #. ``Map<String, Long> getPageCount(String referrer)``
 
@@ -163,7 +163,7 @@ On Windows::
 
 Querying the Results
 ....................
-There are two ways to query the *pageViewCDS* custom DataSet:
+There are two ways to query the *pageViewCDS* custom Dataset:
 
 - Send a query via an HTTP request using the ``curl`` command. For example::
 
@@ -215,4 +215,4 @@ Either:
 
 Downloading the Example
 =======================
-`Download the example </developers/examples-files/continuuity-PageViewAnalytics-2.3.0.zip>`_
+`Download the example <http://continuuity.com/docs/reactor/current/en/_downloads/continuuity-PageViewAnalytics-2.3.0.zip>`_

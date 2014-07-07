@@ -270,6 +270,10 @@ start() {
         fi
         grep -A 1 'Reactor started successfully' $APP_HOME/logs/reactor.log
         break
+      elif grep 'Failed to start server' $APP_HOME/logs/reactor.log > /dev/null 2>&1; then
+        echo; echo "Failed to start server"
+        stop
+        break
       else
         echo -n "."
         sleep 1;

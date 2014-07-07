@@ -1,28 +1,38 @@
 package com.continuuity.data2.transaction.coprocessor.hbase94;
 
-import com.continuuity.api.common.Bytes;
+import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionCodec;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.coprocessor.TransactionStateCache;
 import com.continuuity.data2.transaction.coprocessor.TransactionStateCacheSupplier;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.google.common.base.Supplier;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
+import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -33,15 +43,36 @@ public class TransactionDataJanitor extends BaseRegionObserver {
   private static final Log LOG = LogFactory.getLog(TransactionDataJanitor.class);
 
   private TransactionStateCache cache;
+  private final TransactionCodec txCodec;
+  private Map<byte[], Long> ttlByFamily = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+
+  public TransactionDataJanitor() {
+    this.txCodec = new TransactionCodec();
+  }
 
   /* RegionObserver implementation */
 
   @Override
   public void start(CoprocessorEnvironment e) throws IOException {
     if (e instanceof RegionCoprocessorEnvironment) {
-      Supplier<TransactionStateCache> cacheSupplier =
-        getTransactionStateCacheSupplier((RegionCoprocessorEnvironment) e);
+      RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
+      Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(env);
       this.cache = cacheSupplier.get();
+
+      HTableDescriptor tableDesc = env.getRegion().getTableDesc();
+      for (HColumnDescriptor columnDesc : tableDesc.getFamilies()) {
+        String columnTTL = columnDesc.getValue(TxConstants.PROPERTY_TTL);
+        long ttl = 0;
+        if (columnTTL != null) {
+          try {
+            ttl = Long.parseLong(columnTTL);
+          } catch (NumberFormatException nfe) {
+            LOG.warn("Invalid TTL value configured for column family " + columnDesc.getNameAsString() +
+                       ", value = " + columnTTL);
+          }
+        }
+        ttlByFamily.put(columnDesc.getName(), ttl);
+      }
     }
   }
 
@@ -52,6 +83,37 @@ public class TransactionDataJanitor extends BaseRegionObserver {
   @Override
   public void stop(CoprocessorEnvironment e) throws IOException {
     // nothing to do
+  }
+
+  @Override
+  public void preGet(ObserverContext<RegionCoprocessorEnvironment> e, Get get, List<KeyValue> results)
+    throws IOException {
+    Transaction tx = txCodec.getFromOperation(get);
+    if (tx != null) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Applying filter to GET for transaction " + tx.getWritePointer());
+      }
+      get.setMaxVersions(tx.excludesSize() + 1);
+      get.setTimeRange(getOldestTsVisible(tx), getMaxStamp(tx));
+      Filter newFilter = combineFilters(new TransactionVisibilityFilter(tx, ttlByFamily), get.getFilter());
+      get.setFilter(newFilter);
+    }
+  }
+
+  @Override
+  public RegionScanner preScannerOpen(ObserverContext<RegionCoprocessorEnvironment> e, Scan scan, RegionScanner s)
+    throws IOException {
+    Transaction tx = txCodec.getFromOperation(scan);
+    if (tx != null) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Applying filter to SCAN for transaction " + tx.getWritePointer());
+      }
+      scan.setMaxVersions(tx.excludesSize() + 1);
+      scan.setTimeRange(getOldestTsVisible(tx), getMaxStamp(tx));
+      Filter newFilter = combineFilters(new TransactionVisibilityFilter(tx, ttlByFamily), scan.getFilter());
+      scan.setFilter(newFilter);
+    }
+    return s;
   }
 
   @Override
@@ -94,6 +156,32 @@ public class TransactionDataJanitor extends BaseRegionObserver {
                   ", no current transaction state found, defaulting to normal compaction scanner");
     }
     return scanner;
+  }
+
+  private Filter combineFilters(Filter overrideFilter, Filter baseFilter) {
+    if (baseFilter != null) {
+      FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL);
+      filterList.addFilter(baseFilter);
+      filterList.addFilter(overrideFilter);
+      return filterList;
+    }
+    return overrideFilter;
+  }
+
+  private long getOldestTsVisible(Transaction tx) {
+    long oldestVisible = tx.getVisibilityUpperBound();
+    // we know that data will not be cleaned up while this tx is running up to this point as janitor uses it
+    for (Long familyTTL : ttlByFamily.values()) {
+      oldestVisible =
+        Math.min(familyTTL <= 0 ? 0 : tx.getVisibilityUpperBound() - familyTTL * TxConstants.MAX_TX_PER_MS,
+                 oldestVisible);
+    }
+    return oldestVisible;
+  }
+
+  private static long getMaxStamp(Transaction tx) {
+    // NOTE: +1 here because we want read up to readpointer inclusive, but timerange's end is exclusive
+    return tx.getReadPointer() + 1;
   }
 
   private DataJanitorRegionScanner createDataJanitorRegionScanner(ObserverContext<RegionCoprocessorEnvironment> e,

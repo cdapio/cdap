@@ -1,7 +1,5 @@
 package com.continuuity.data2.transaction;
 
-import com.google.common.base.Objects;
-
 import java.util.Arrays;
 
 /**
@@ -91,11 +89,14 @@ public class Transaction {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-                  .add("readPointer", readPointer)
-                  .add("writePointer", writePointer)
-                  .add("invalids", Arrays.toString(invalids))
-                  .add("inProgress", Arrays.toString(inProgress))
-                  .toString();
+    return new StringBuilder(100)
+      .append(Transaction.class.getSimpleName())
+      .append('{')
+      .append("readPointer: ").append(readPointer)
+      .append("writePointer: ").append(writePointer)
+      .append("invalids: ").append(Arrays.toString(invalids))
+      .append("inProgress: ").append(Arrays.toString(inProgress))
+      .append('}')
+      .toString();
   }
 }
