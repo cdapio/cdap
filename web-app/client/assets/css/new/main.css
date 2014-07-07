@@ -483,7 +483,7 @@ a, a:visited {
 	color: #0A234B;
 	position: fixed;
 	width: 100%;
-	z-index: 1;
+	z-index: 50;
 	border-bottom: 1px solid #CECED0;
 }
 
