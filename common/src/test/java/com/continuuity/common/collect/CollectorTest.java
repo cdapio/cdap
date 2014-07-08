@@ -16,57 +16,71 @@
 
 package com.continuuity.common.collect;
 
+import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class CollectorTest {
 
 
-  private Integer[] collect(Collector<Integer> collector, int n) {
+  private Collection<Integer> collect(Collector<Integer> collector, int n) {
     for (int i = 0; i < n; i++) {
       if (!collector.addElement(i)) {
         break;
       }
     }
-    return collector.finish();
+    return collector.finish(new ArrayList<Integer>());
   }
 
   @Test
   public void testAllCollector() {
-    Assert.assertArrayEquals(collect(new AllCollector<Integer>(Integer.class), 0), new Integer[] { });
-    Assert.assertArrayEquals(collect(new AllCollector<Integer>(Integer.class), 4), new Integer[] { 0, 1, 2, 3 });
+    Collector<Integer> collector = new AllCollector<Integer>();
+    Assert.assertEquals(collect(collector, 0), ImmutableList.<Integer>of());
+    Assert.assertEquals(collect(collector, 4), ImmutableList.of(0, 1, 2, 3));
+    Assert.assertEquals(collect(collector, 4), ImmutableList.of(0, 1, 2, 3));
   }
 
   @Test
   public void testFirstNCollector() {
+    Collector<Integer> collector1 = new FirstNCollector<Integer>(1);
+    Collector<Integer> collector4 = new FirstNCollector<Integer>(4);
+    Collector<Integer> collector10 = new FirstNCollector<Integer>(10);
+
     // add 0 elements
-    Assert.assertArrayEquals(collect(new FirstNCollector<Integer>(1, Integer.class), 0), new Integer[] { });
-    Assert.assertArrayEquals(collect(new FirstNCollector<Integer>(10, Integer.class), 0), new Integer[] { });
+    Assert.assertEquals(collect(collector1, 0), ImmutableList.<Integer>of());
+    Assert.assertEquals(collect(collector10, 0), ImmutableList.<Integer>of());
     // add more than capacity
-    Assert.assertArrayEquals(collect(new FirstNCollector<Integer>(1, Integer.class), 10), new Integer[] { 0 });
-    Assert.assertArrayEquals(collect(new FirstNCollector<Integer>(4, Integer.class), 10), new Integer[] { 0, 1, 2, 3 });
+    Assert.assertEquals(collect(collector1, 10), ImmutableList.of(0));
+    Assert.assertEquals(collect(collector4, 10), ImmutableList.of(0, 1, 2, 3));
     // add same as capacity
-    Assert.assertArrayEquals(collect(new FirstNCollector<Integer>(1, Integer.class), 1), new Integer[] { 0 });
-    Assert.assertArrayEquals(collect(new FirstNCollector<Integer>(4, Integer.class), 4), new Integer[] { 0, 1, 2, 3 });
+    Assert.assertEquals(collect(collector1, 1), ImmutableList.of(0));
+    Assert.assertEquals(collect(collector4, 4), ImmutableList.of(0, 1, 2, 3));
     // add less than capacity
-    Assert.assertArrayEquals(collect(new FirstNCollector<Integer>(4, Integer.class), 1), new Integer[] { 0 });
-    Assert.assertArrayEquals(collect(new FirstNCollector<Integer>(10, Integer.class), 4), new Integer[] { 0, 1, 2, 3 });
+    Assert.assertEquals(collect(collector4, 1), ImmutableList.of(0));
+    Assert.assertEquals(collect(collector10, 4), ImmutableList.of(0, 1, 2, 3));
   }
 
   @Test
   public void testLastNCollector() {
+    Collector<Integer> collector1 = new LastNCollector<Integer>(1);
+    Collector<Integer> collector4 = new LastNCollector<Integer>(4);
+    Collector<Integer> collector10 = new LastNCollector<Integer>(10);
+
     // add 0 elements
-    Assert.assertArrayEquals(collect(new LastNCollector<Integer>(1, Integer.class), 0), new Integer[] { });
-    Assert.assertArrayEquals(collect(new LastNCollector<Integer>(10, Integer.class), 0), new Integer[] { });
+    Assert.assertEquals(collect(collector1, 0), ImmutableList.<Integer>of());
+    Assert.assertEquals(collect(collector10, 0), ImmutableList.<Integer>of());
     // add more than capacity
-    Assert.assertArrayEquals(collect(new LastNCollector<Integer>(1, Integer.class), 10), new Integer[] { 9 });
-    Assert.assertArrayEquals(collect(new LastNCollector<Integer>(4, Integer.class), 10), new Integer[] { 6, 7, 8, 9 });
+    Assert.assertEquals(collect(collector1, 10), ImmutableList.of(9));
+    Assert.assertEquals(collect(collector4, 10), ImmutableList.of(6, 7, 8, 9));
     // add same as capacity
-    Assert.assertArrayEquals(collect(new LastNCollector<Integer>(1, Integer.class), 1), new Integer[] { 0 });
-    Assert.assertArrayEquals(collect(new LastNCollector<Integer>(4, Integer.class), 4), new Integer[] { 0, 1, 2, 3 });
+    Assert.assertEquals(collect(collector1, 1), ImmutableList.of(0));
+    Assert.assertEquals(collect(collector4, 4), ImmutableList.of(0, 1, 2, 3));
     // add less than capacity
-    Assert.assertArrayEquals(collect(new LastNCollector<Integer>(4, Integer.class), 1), new Integer[] { 0 });
-    Assert.assertArrayEquals(collect(new LastNCollector<Integer>(10, Integer.class), 4), new Integer[] { 0, 1, 2, 3 });
+    Assert.assertEquals(collect(collector4, 1), ImmutableList.of(0));
+    Assert.assertEquals(collect(collector10, 4), ImmutableList.of(0, 1, 2, 3));
   }
 
 }
