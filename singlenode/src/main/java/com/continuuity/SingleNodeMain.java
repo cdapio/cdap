@@ -13,6 +13,7 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.utils.OSDetector;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.runtime.DataSetsModules;
@@ -214,7 +215,7 @@ public class SingleNodeMain {
     out.println("           The \"node\" executable must be in the system $PATH environment variable");
     out.println("");
     out.println("Usage: ");
-    if (System.getProperty("os.name").startsWith("Windows")) {
+    if (OSDetector.isWindows()) {
       out.println("  reactor.bat [options]");
     } else {
       out.println("  ./reactor.sh [options]");
@@ -272,7 +273,7 @@ public class SingleNodeMain {
     hConf.set(Constants.AppFabric.OUTPUT_DIR, configuration.get(Constants.AppFabric.OUTPUT_DIR));
 
     // Windows specific requirements
-    if (System.getProperty("os.name").startsWith("Windows")) {
+    if (OSDetector.isWindows()) {
       String userDir = System.getProperty("user.dir");
       System.load(userDir + "/lib/native/hadoop.dll");
       hConf.set("hadoop.tmp.dir", userDir + "/" + localDataDir + "/temp");
