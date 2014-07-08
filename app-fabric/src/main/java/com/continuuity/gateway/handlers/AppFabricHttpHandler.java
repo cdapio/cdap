@@ -256,16 +256,27 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static final java.lang.reflect.Type LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
 
-  private enum AppFabricServiceStatus {
+  private static final class AppFabricServiceStatus {
 
-    OK(HttpResponseStatus.OK, ""),
-    PROGRAM_STILL_RUNNING(HttpResponseStatus.FORBIDDEN, "Program is still running"),
-    PROGRAM_ALREADY_RUNNING(HttpResponseStatus.CONFLICT, "Program is already running"),
-    PROGRAM_ALREADY_STOPPED(HttpResponseStatus.CONFLICT, "Program already stopped"),
-    RUNTIME_INFO_NOT_FOUND(HttpResponseStatus.CONFLICT,
-                           UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND)),
-    PROGRAM_NOT_FOUND(HttpResponseStatus.NOT_FOUND, "Program not found"),
-    INTERNAL_ERROR(HttpResponseStatus.INTERNAL_SERVER_ERROR, "");
+    private static final AppFabricServiceStatus OK = new AppFabricServiceStatus(HttpResponseStatus.OK, "");
+
+    private static final AppFabricServiceStatus PROGRAM_STILL_RUNNING =
+      new AppFabricServiceStatus(HttpResponseStatus.FORBIDDEN, "Program is still running");
+
+    private static final AppFabricServiceStatus PROGRAM_ALREADY_RUNNING =
+      new AppFabricServiceStatus(HttpResponseStatus.CONFLICT, "Program is already running");
+
+    private static final AppFabricServiceStatus PROGRAM_ALREADY_STOPPED =
+      new AppFabricServiceStatus(HttpResponseStatus.CONFLICT, "Program already stopped");
+
+    private static final AppFabricServiceStatus RUNTIME_INFO_NOT_FOUND =
+      new AppFabricServiceStatus(HttpResponseStatus.CONFLICT, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
+
+    private static final AppFabricServiceStatus PROGRAM_NOT_FOUND =
+      new AppFabricServiceStatus(HttpResponseStatus.NOT_FOUND, "Program not found");
+
+    private static final AppFabricServiceStatus INTERNAL_ERROR =
+      new AppFabricServiceStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal server error");
 
     private final HttpResponseStatus code;
     private final String message;
@@ -286,7 +297,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       return message;
     }
   }
-
 
   /**
    * Constructs an new instance. Parameters are binded by Guice.
@@ -769,6 +779,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
       return AppFabricServiceStatus.OK;
+    } catch (DataSetInstantiationException e) {
+      return new AppFabricServiceStatus(HttpResponseStatus.UNPROCESSABLE_ENTITY, e.getMessage());
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);
       if (throwable instanceof FileNotFoundException) {
