@@ -21,6 +21,7 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.hadoop.conf.Configuration;
@@ -238,11 +239,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
         ImmutableList.Builder<Result> rowsBuilder = ImmutableList.builder();
         for (TRow tRow : tRowSet.getRows()) {
-          ImmutableList.Builder<Object> colsBuilder = ImmutableList.builder();
+          List<Object> cols = Lists.newArrayList();
           for (TColumnValue tColumnValue : tRow.getColVals()) {
-            colsBuilder.add(tColumnToObject(tColumnValue));
+            cols.add(tColumnToObject(tColumnValue));
           }
-          rowsBuilder.add(new Result(colsBuilder.build()));
+          rowsBuilder.add(new Result(cols));
         }
         return rowsBuilder.build();
       } else {
