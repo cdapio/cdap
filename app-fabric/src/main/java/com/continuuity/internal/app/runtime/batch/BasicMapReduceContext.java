@@ -48,15 +48,17 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final ProgramServiceDiscovery serviceDiscovery;
 
   /**
-   * Input dataset for the MapReduce job. May be set be either inputDataset or inputDatasetName, but not both.
+   * Input dataset for the MapReduce job. Either inputDataset or inputDatasetName is set.
    */
+  @Deprecated
   private BatchReadable inputDataset;
   private String inputDatasetName;
   private List<Split> inputDataSelection;
 
   /**
-   * Output dataset for the MapReduce job. May be set by either outputDataset or outputDatasetName, but not both.
+   * Output dataset for the MapReduce job. Either outputDataset or outputDatasetName is set.
    */
+  @Deprecated
   private BatchWritable outputDataset;
   private String outputDatasetName;
   private Job job;
@@ -158,6 +160,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     return (T) job;
   }
 
+  @Deprecated
   @Override
   public void setInput(BatchReadable dataset, List<Split> splits) {
     this.inputDataset = dataset;
@@ -172,6 +175,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     this.inputDataSelection = splits;
   }
 
+  @Deprecated
   @Override
   public void setOutput(BatchWritable dataset) {
     this.outputDataset = dataset;
