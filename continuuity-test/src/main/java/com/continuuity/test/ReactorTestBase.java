@@ -20,6 +20,7 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.common.utils.OSDetector;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
@@ -185,7 +186,7 @@ public class ReactorTestBase {
                       tmpFolder.newFolder("hive").getAbsolutePath());
 
     // Windows specific requirements
-    if (System.getProperty("os.name").startsWith("Windows")) {
+    if (OSDetector.isWindows()) {
 
       File binDir = new File(tmpDir, "bin");
       binDir.mkdir();
