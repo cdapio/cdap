@@ -144,14 +144,13 @@ function login_staging_server() {
 function build() {
    build_docs
    build_javadocs
-   build_pdf_rest
-   build_pdf_install
    copy_javadocs
    copy_license_pdfs
    make_zip
 }
 
 function build_sdk() {
+  build_pdf_rest
   cd $REACTOR_PATH
   mvn clean package -DskipTests -P examples && mvn package -pl singlenode -am -DskipTests -P dist,release
 }
