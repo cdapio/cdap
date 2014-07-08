@@ -215,16 +215,28 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
 
       runCommand("select my_table.key, my_table.value from " +
-                   "my_table" +
-                   " " +
-                 "join my_table_1 on (my_table.key=my_table_1.key)",
-          true,
-          Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null),
-                             new ColumnDesc("my_table.value",
-                                            "struct<name:string,ints:array<int>>", 2, null)),
-          Lists.newArrayList(
-              new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+                   "my_table " +
+                   "join my_table_1 on (my_table.key=my_table_1.key)",
+                 true,
+                 Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null),
+                                    new ColumnDesc("my_table.value",
+                                                   "struct<name:string,ints:array<int>>", 2, null)),
+                 Lists.newArrayList(
+                   new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
       );
+
+//      runCommand("select my_table.key,my_table.value,my_table_1.key,my_table_1.value from " +
+//                   "my_table " +
+//                   "right outer join my_table_1 on (my_table.key=my_table_1.key)",
+//                 true,
+//                 Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null),
+//                                    new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null),
+//                                    new ColumnDesc("my_table_1.key", "STRING", 3, null),
+//                                    new ColumnDesc("my_table_1.value",
+//                                                   "struct<name:string,ints:array<int>>", 4, null)),
+//                 Lists.newArrayList(
+//                   new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+//      );
     } finally {
       datasetFramework.deleteInstance("my_table_1");
     }
