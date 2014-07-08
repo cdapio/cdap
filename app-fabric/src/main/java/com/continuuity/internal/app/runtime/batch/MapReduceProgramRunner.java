@@ -551,12 +551,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                                            Lists.newArrayList("org.apache.hadoop.hbase",
                                                                               "org.apache.hadoop.hive"));
     Id.Program programId = context.getProgram().getId();
-    String programJarPath = context.getProgram().getJarLocation().toURI().getPath();
-    String programDir = programJarPath.substring(0, programJarPath.lastIndexOf('/'));
 
     Location appFabricDependenciesJarLocation =
-      locationFactory.create(String.format("%s/%s.%s.%s.%s.%s.jar",
-                                           programDir, Type.MAPREDUCE.name().toLowerCase(),
+      locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
+                                           Type.MAPREDUCE.name().toLowerCase(),
                                            programId.getAccountId(), programId.getApplicationId(),
                                            programId.getId(), context.getRunId().getId()));
 
