@@ -71,6 +71,7 @@ public class InMemoryOrderedTableService {
                             @Nullable byte[] row, Map<byte[], byte[]> changes, long version) {
     // get the correct row from the table, create it if it doesn't exist
     NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = null;
+    // TODO: figure out why row is null (shouldn't be null)
     if (row != null) {
       rowMap = table.get(row);
     }

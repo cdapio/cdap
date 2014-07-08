@@ -35,6 +35,7 @@ public interface MapReduceContext extends RuntimeContext {
    * @param dataset Input dataset.
    * @param splits Data selection splits.
    */
+  @Deprecated
   void setInput(BatchReadable dataset, List<Split> splits);
 
   /**
@@ -51,6 +52,7 @@ public interface MapReduceContext extends RuntimeContext {
    *
    * @param dataset Output dataset.
    */
+  @Deprecated
   void setOutput(BatchWritable dataset);
 
   /**
