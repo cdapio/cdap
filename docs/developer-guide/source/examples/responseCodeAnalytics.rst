@@ -156,10 +156,10 @@ From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://l
 	
 Command line tools are also available to deploy and manage apps. From within the project root:
 
-#. To deploy the Application JAR file, run ``$ bin/app-manager.sh --action deploy [--gateway <hostname>]``
-#. To start the Application, run ``$ bin/app-manager.sh --action start [--gateway <hostname>]``
+#. To deploy the Application JAR file, run ``$ bin/app-manager.sh --action deploy [--host <hostname>]``
+#. To start the Application, run ``$ bin/app-manager.sh --action start [--host <hostname>]``
 
-:Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+:Note:	[--host <hostname>] is not available for a *Local Reactor*.
 
 On Windows:
 
@@ -178,9 +178,9 @@ Running this script will inject Apache access log entries
 from the log file ``/resources/apache.accesslog``
 to a Stream named *logEventStream* in the ``ResponseCodeAnalyticsApp``::
 
-	$ bin/inject-data.sh [--gateway <hostname>]
+	$ bin/inject-data.sh [--host <hostname>]
 
-:Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+:Note:	[--host <hostname>] is not available for a *Local Reactor*.
 
 On Windows::
 
@@ -222,9 +222,9 @@ Stopping the Application
 Either:
 
 - On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
-- Run ``$ bin/app-manager.sh --action stop [--gateway <hostname>]``
+- Run ``$ bin/app-manager.sh --action stop [--host <hostname>]``
 
-  :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+  :Note:	[--host <hostname>] is not available for a *Local Reactor*.
 
   On Windows, run ``~SDK> bin\app-manager.bat stop``
 

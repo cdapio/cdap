@@ -163,9 +163,9 @@ Injecting Sentences
 Run this script to inject sentences 
 to the Stream named *purchaseStream* in the ``Purchase`` application::
 
-	$ ./bin/inject-data.sh [--gateway <hostname>]
+	$ ./bin/inject-data.sh [--host <hostname>]
 
-:Note:	``[--gateway <hostname>]`` is not available for a *Local Reactor*.
+:Note:	``[--host <hostname>]`` is not available for a *Local Reactor*.
 
 On Windows::
 
@@ -275,9 +275,9 @@ Either:
 
 or:
 
-- Run ``$ ./bin/app-manager.sh --action stop [--gateway <hostname>]``
+- Run ``$ ./bin/app-manager.sh --action stop [--host <hostname>]``
 
-  :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+  :Note:	[--host <hostname>] is not available for a *Local Reactor*.
 
   On Windows, run ``~SDK> bin\app-manager.bat stop``
 

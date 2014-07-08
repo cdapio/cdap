@@ -155,9 +155,9 @@ Run this script to inject Apache access log entries
 from the log file ``src/test/resources/apache.accesslog``
 to the Stream named *logEventStream* in the ``PageViewAnalyticsApp``::
 
-	$ ./bin/inject-data.sh [--gateway <hostname>]
+	$ ./bin/inject-data.sh [--host <hostname>]
 
-:Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+:Note:	[--host <hostname>] is not available for a *Local Reactor*.
 
 On Windows::
 
@@ -213,9 +213,9 @@ Stopping the Application
 Either:
 
 - On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
-- Run ``$ ./bin/app-manager.sh --action stop [--gateway <hostname>]``
+- Run ``$ ./bin/app-manager.sh --action stop [--host <hostname>]``
 
-  :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+  :Note:	[--host <hostname>] is not available for a *Local Reactor*.
 
   On Windows, run ``~SDK> bin\app-manager.bat stop``
 
