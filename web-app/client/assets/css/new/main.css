@@ -535,6 +535,10 @@ a, a:visited {
 	background-image: url('/assets/img/v2/signout_icon.png');
 }
 
+#global .services-link {
+	position: relative;
+}
+
 #global .services-link:hover {
 	background-image: url('/assets/img/v2/services_active_icon.png');
 }
@@ -564,7 +568,7 @@ a, a:visited {
 	background-position: 8px 0;
 	background-repeat: no-repeat;
 	padding-left: 50px;
-  padding-top: 3px;
+  	padding-top: 3px;
 	white-space: nowrap;
 	border-right: 1px solid #ccc;
 }
@@ -575,15 +579,18 @@ a, a:visited {
 }
 
 #global #failed-services-container {
-	background-color: red;
-	border-radius: 20px;
-	color: white;
-	display: inline-block;
-	margin-left: 10px;
-	height: 36px;
-	width: 36px;
-	text-align: center;
-  display: none;;
+  background-color: red;
+  border-radius: 100%;
+  color: white;
+  height: 18px;
+  width: 18px;
+  text-align: center;
+  display: none;
+  position: absolute;
+  top: -4px;
+  left: 0px;
+  font-size: 12px;
+  line-height: 18px;
 }
 
 ul.top-dropdown-listholder {
