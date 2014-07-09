@@ -64,6 +64,10 @@ Other Reactor Changes
 =====================
 - `A list of deprecated Interfaces, Classes and Methods <javadocs/deprecated-list.html>`__ 
   is included in the Javadocs
+  
+Notes
+=====
+- Metrics for MapReduce jobs aren't populated on secure Hadoop clusters
 
 .. For later
 .. - The term "DataSet" has been standardized in both the APIs and the documentation as either 
