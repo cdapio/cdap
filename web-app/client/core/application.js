@@ -405,7 +405,7 @@ function(Components, Embeddables, HTTP, Util) {
        * Call services on a per second interval and update icon if any fail.
        */
       //Call initially first so there is no wait, then call every 3 seconds.
-      Em.run.next(function() {
+      Em.run(function() {
         callServiceStatus()
         setInterval(function () {
           callServiceStatus();
