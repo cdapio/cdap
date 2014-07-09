@@ -479,8 +479,13 @@ allocated to the Log Saver or increase the number of Log Saver instances. If the
 memory or containers available, you can choose instead to decrease the duration of logs buffered in
 memory. However, decreasing the buffer duration may lead to out-of-order log events. 
 
-You can increase the memory by adjusting ``log.saver.run.memory.megs``; the number of Log Saver instances can be increased using ``log.saver.num.instances``; and the duration of logs is controlled by
-``log.saver.event.processing.delay.ms``, all in the ``continuuity-site.xml``.
+In the ``continuuity-site.xml``, you can:
+
+- Increase the memory by adjusting ``log.saver.run.memory.megs``; 
+- Increase the number of Log Saver instances using ``log.saver.num.instances``;
+- Adjust the duration of logs with ``log.saver.event.processing.delay.ms``; and
+- Adjust ``log.saver.event.processing.delay.ms`` and ``log.saver.event.bucket.interval.ms``
+  to control the buffer size.
 
 Note that it is recommended that ``log.saver.event.processing.delay.ms`` always be kept greater than
 ``log.saver.event.bucket.interval.ms`` by at least a few hundred (300-500) milliseconds.
@@ -707,10 +712,13 @@ see the online document `Reactor Security Guide
      - Logging service account
    * - ``log.saver.event.bucket.interval.ms``
      - ``4000``
-     - Log events published in this interval (in milliseconds) will be processed in a batch
+     - Log events published in this interval (in milliseconds) will be processed in a batch.
+       Smaller values will increase the odds of log events going out-of-order.
    * - ``log.saver.event.processing.delay.ms``
      - ``8000``
-     - Buffer log events in memory for given time, in milliseconds
+     - Buffer log events in memory for given time, in milliseconds. Log events received after 
+       this delay will show up out-of-order. This needs to be greater than
+       ``log.saver.event.bucket.interval.ms`` by at least a few hundred milliseconds.
    * - ``log.saver.num.instances``
      - ``1``
      - Log Saver instances to run in YARN
@@ -783,7 +791,8 @@ see the online document `Reactor Security Guide
    * - ``security.authentication.loginmodule.className``
      - 
      - JAAS LoginModule implementation to use when
-       ``com.continuuity.security.server.JAASAuthenticationHandler`` is configured for ``security.authentication.handlerClassName``
+       ``com.continuuity.security.server.JAASAuthenticationHandler`` is configured for 
+       ``security.authentication.handlerClassName``
    * - ``security.data.keyfile.path``
      - ``${local.data.dir}/security/keyfile``
      - Path to the secret key file (only used in single-node operation)
