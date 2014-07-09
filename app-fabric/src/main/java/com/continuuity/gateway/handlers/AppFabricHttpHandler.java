@@ -270,7 +270,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       new AppFabricServiceStatus(HttpResponseStatus.CONFLICT, "Program already stopped");
 
     private static final AppFabricServiceStatus RUNTIME_INFO_NOT_FOUND =
-      new AppFabricServiceStatus(HttpResponseStatus.CONFLICT, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
+      new AppFabricServiceStatus(HttpResponseStatus.CONFLICT,
+                                 UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
 
     private static final AppFabricServiceStatus PROGRAM_NOT_FOUND =
       new AppFabricServiceStatus(HttpResponseStatus.NOT_FOUND, "Program not found");
