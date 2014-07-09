@@ -535,6 +535,11 @@ a, a:visited {
 	background-image: url('/assets/img/v2/signout_icon.png');
 }
 
+#global .services-link {
+	width: 200px;
+	position: relative;
+}
+
 #global .services-link:hover {
 	background-image: url('/assets/img/v2/services_active_icon.png');
 }
@@ -564,7 +569,7 @@ a, a:visited {
 	background-position: 8px 0;
 	background-repeat: no-repeat;
 	padding-left: 50px;
-  padding-top: 3px;
+  	padding-top: 3px;
 	white-space: nowrap;
 	border-right: 1px solid #ccc;
 }
@@ -579,10 +584,12 @@ a, a:visited {
 	border-radius: 20px;
 	color: white;
 	display: inline-block;
-	margin-left: 10px;
 	height: 36px;
 	width: 36px;
 	text-align: center;
+	position: absolute;
+	top: 0;
+	left: 120px;
 }
 
 ul.top-dropdown-listholder {
