@@ -578,7 +578,7 @@ a, a:visited {
 	background-color: red;
 	border-radius: 20px;
 	color: white;
-	float: right;
+	display: inline-block;
 	margin-left: 10px;
 	height: 36px;
 	width: 36px;
