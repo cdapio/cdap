@@ -55,6 +55,16 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
      'Content-Type': 'application/json'
     })
     .get('/v2/system/services/status')
+    .times(4)
+    .reply(200, system.services.statusIncomplete);
+
+  nock(clientAddr, options)
+    .get('/v2/system/services/status')
+    .times(2)
+    .reply(200, system.services.statusComplete);
+
+  nock(clientAddr, options)
+    .get('/v2/system/services/status')
     .times(2)
     .reply(200, system.services.statusIncomplete);
 

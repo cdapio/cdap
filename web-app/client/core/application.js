@@ -6,6 +6,11 @@ define(['core/components', 'core/embeddables/index', 'core/http',
 				'core/util'],
 function(Components, Embeddables, HTTP, Util) {
 
+  /**
+   * Interval where services are called to check.
+   */
+  var SERVICES_INTERVAL = 3000;
+
 	var Application = Ember.Application.extend({
 
 		/*
@@ -165,29 +170,29 @@ function(Components, Embeddables, HTTP, Util) {
 			});
 		},
 
-    /**
-     * Determines readiness of Reactor by polling all services and checking status.
-     * @param routeHandler Object Ember route handler.
-     * @param callback Function to execute.
-     */
-    checkReactorReadiness: function (routeHandler, callback) {
-      HTTP.create().rest('system/services/status', function (statuses, callStatus) {
-      	if (callStatus !== 200) {
-      		routeHandler.transitionTo('Loading');
-      		return;
-      	}
-        if (routeHandler !== undefined && 'routeName' in routeHandler) {
-          if (C.Util.isLoadingComplete(statuses)) {
-            routeHandler.transitionTo(routeHandler.routeName);
-          } else {
-            routeHandler.transitionTo('Loading');
-          }
-        }
-        if (callback && typeof callback === 'function') {
-          callback();
-        }
-      });
-    },
+//    /**
+//     * Determines readiness of Reactor by polling all services and checking status.
+//     * @param routeHandler Object Ember route handler.
+//     * @param callback Function to execute.
+//     */
+//    checkReactorReadiness: function (routeHandler, callback) {
+//      HTTP.create().rest('system/services/status', function (statuses, callStatus) {
+//      	if (callStatus !== 200) {
+//      		routeHandler.transitionTo('Loading');
+//      		return;
+//      	}
+//        if (routeHandler !== undefined && 'routeName' in routeHandler) {
+//          if (C.Util.isLoadingComplete(statuses)) {
+//            routeHandler.transitionTo(routeHandler.routeName);
+//          } else {
+//            routeHandler.transitionTo('Loading');
+//          }
+//        }
+//        if (callback && typeof callback === 'function') {
+//          callback();
+//        }
+//      });
+//    },
 
 		setupEnvironment: function (env) {
 
@@ -396,8 +401,39 @@ function(Components, Embeddables, HTTP, Util) {
 			  C.setupAuth();
 			}
 
+      /**
+       * Call services on a per second interval and update icon if any fail.
+       */
+      //Call initially first so there is no wait, then call every 3 seconds.
+      Em.run(function() {
+        callServiceStatus()
+        setInterval(function () {
+          callServiceStatus();
+        }, SERVICES_INTERVAL);
+      });
+
 		}
 	});
+
+  /**
+   * Calls the service status endpoint and sets the notification status that displays number of failed services.
+   */
+  var callServiceStatus = function () {
+    HTTP.create().rest('system/services/status', function (statuses, callStatus) {
+      var failedStatusCount = 0;
+      for (var status in statuses) {
+        if (statuses.hasOwnProperty(status) && statuses[status] === 'NOT OK') {
+          failedStatusCount++;
+        }
+      }
+      if (failedStatusCount) {
+        $("#failed-services").html(failedStatusCount);
+        $("#failed-services-container").show();
+      } else {
+        $("#failed-services-container").hide();
+      }
+    });
+};
 
 	/*
 	 * Handle window resize events (e.g. for Sparkline resize)
