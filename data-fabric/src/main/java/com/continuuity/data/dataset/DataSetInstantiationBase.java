@@ -416,7 +416,7 @@ public class DataSetInstantiationBase {
     String msg;
     DataSetInstantiationException exn;
     if (e == null) {
-      msg = String.format("Error instantiating data set: %s.", String.format(message, params));
+      msg = String.format("Error instantiating data set: %s", String.format(message, params));
       exn = new DataSetInstantiationException(msg);
       LOG.error(msg);
     } else {

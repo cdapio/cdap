@@ -88,7 +88,7 @@ define(['core/models/element'], function (Element) {
         data: config
       }, function (response) {
         if (response.error) {
-          C.Modal.show(response.error.name, response.error.message);
+          C.Modal.show(response.error, response.message);
         } else {
           model.set('lastStarted', new Date().getTime() / 1000);
         }
@@ -103,13 +103,12 @@ define(['core/models/element'], function (Element) {
 
       http.rpc(model.get('context'), 'stop', function (response) {
         if (response.error) {
-          C.Modal.show(response.error.name, response.error.message);
+          C.Modal.show(response.error, response.message);
         }
 
         if (typeof done === 'function') {
           done(response);
         }
-
       });
 
     },

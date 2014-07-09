@@ -465,7 +465,6 @@ WebAppServer.prototype.bindRoutes = function() {
     }
 
     request(opts, function (error, response, body) {
-
       if (!error && response.statusCode === 200) {
         res.send(body);
       } else {
@@ -473,7 +472,7 @@ WebAppServer.prototype.bindRoutes = function() {
         if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
-          res.send(500, error || response.statusCode);
+          res.send(500, error || response.body || response.statusCode);
         }
       }
     });
