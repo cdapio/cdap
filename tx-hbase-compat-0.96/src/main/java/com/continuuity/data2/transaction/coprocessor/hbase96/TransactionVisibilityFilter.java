@@ -15,6 +15,11 @@ import java.util.Map;
  *
  */
 public class TransactionVisibilityFilter extends FilterBase {
+  // prefix bytes used to mark values that are deltas vs. full sums
+  private static final byte[] DELTA_MAGIC_PREFIX = new byte[] { 'X', 'D' };
+  // expected length for values storing deltas (prefix + increment value)
+  private static final int DELTA_FULL_LENGTH = DELTA_MAGIC_PREFIX.length + Bytes.SIZEOF_LONG;
+
   private final Transaction tx;
   // oldest visible timestamp by column family, used to apply TTL when reading
   private final Map<byte[], Long> oldestTsByFamily;
@@ -47,11 +52,22 @@ public class TransactionVisibilityFilter extends FilterBase {
       // passed TTL for this column, seek to next
       return ReturnCode.NEXT_COL;
     } else if (tx.isVisible(kvTimestamp)) {
-      // as soon as we find a KV to include we can move to the next column
-      return ReturnCode.INCLUDE_AND_NEXT_COL;
+      if (isIncrement(cell)) {
+        // all visible increments should be included until we get to a non-increment
+        return ReturnCode.INCLUDE;
+      } else {
+        // as soon as we find a KV to include we can move to the next column
+        return ReturnCode.INCLUDE_AND_NEXT_COL;
+      }
     } else {
       return ReturnCode.SKIP;
     }
+  }
+
+  private boolean isIncrement(Cell cell) {
+    return cell.getValueLength() == DELTA_FULL_LENGTH &&
+      Bytes.equals(cell.getValueArray(), cell.getValueOffset(), DELTA_MAGIC_PREFIX.length,
+                   DELTA_MAGIC_PREFIX, 0, DELTA_MAGIC_PREFIX.length);
   }
 
   @Override

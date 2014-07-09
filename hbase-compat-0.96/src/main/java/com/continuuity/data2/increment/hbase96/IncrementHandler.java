@@ -1,9 +1,14 @@
 package com.continuuity.data2.increment.hbase96;
 
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableClient;
+import com.continuuity.data2.transaction.coprocessor.hbase96.Filters;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
@@ -11,6 +16,8 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
@@ -29,20 +36,44 @@ import java.util.TreeMap;
  */
 public class IncrementHandler extends BaseRegionObserver {
   // prefix bytes used to mark values that are deltas vs. full sums
-  private static final byte[] DELTA_MAGIC_PREFIX = new byte[] { 'X', 'D' };
+  public static final byte[] DELTA_MAGIC_PREFIX = new byte[] { 'X', 'D' };
   // expected length for values storing deltas (prefix + increment value)
-  private static final int DELTA_FULL_LENGTH = DELTA_MAGIC_PREFIX.length + Bytes.SIZEOF_LONG;
+  public static final int DELTA_FULL_LENGTH = DELTA_MAGIC_PREFIX.length + Bytes.SIZEOF_LONG;
+
+  private static final Log LOG = LogFactory.getLog(IncrementHandler.class);
+
+  private HRegion region;
 
   @Override
-  public void preGetOp(ObserverContext<RegionCoprocessorEnvironment> e, Get get, List<Cell> results)
-    throws IOException {
-    super.preGetOp(e, get, results);
+  public void start(CoprocessorEnvironment e) throws IOException {
+    if (e instanceof RegionCoprocessorEnvironment) {
+      this.region = ((RegionCoprocessorEnvironment) e).getRegion();
+    }
   }
 
   @Override
-  public void prePut(ObserverContext<RegionCoprocessorEnvironment> e, Put put, WALEdit edit, Durability durability)
+  public void preGetOp(ObserverContext<RegionCoprocessorEnvironment> ctx, Get get, List<Cell> results)
+    throws IOException {
+    Scan scan = new Scan(get);
+    scan.setMaxVersions();
+    scan.setFilter(Filters.combine(new IncrementFilter(), scan.getFilter()));
+    RegionScanner scanner = null;
+    try {
+      scanner = new IncrementSummingScanner(region, scan, region.getScanner(scan));
+      scanner.next(results);
+      LOG.info("Returning results of size " + results.size() + " for preGetOp()");
+      ctx.bypass();
+    } finally {
+      if (scanner != null)
+        scanner.close();
+    }
+  }
+
+  @Override
+  public void prePut(ObserverContext<RegionCoprocessorEnvironment> ctx, Put put, WALEdit edit, Durability durability)
     throws IOException {
     if (put.getAttribute(HBaseOcTableClient.DELTA_WRITE) != null) {
+      LOG.info("Got increment put for row=" + Bytes.toStringBinary(put.getRow()));
       // incremental write
       NavigableMap<byte[], List<Cell>> newFamilyMap = new TreeMap<byte[], List<Cell>>(Bytes.BYTES_COMPARATOR);
       for (Map.Entry<byte[], List<Cell>> entry : put.getFamilyCellMap().entrySet()) {
@@ -61,106 +92,37 @@ public class IncrementHandler extends BaseRegionObserver {
   }
 
   @Override
-  public RegionScanner postScannerOpen(ObserverContext<RegionCoprocessorEnvironment> e, Scan scan, RegionScanner s)
+  public RegionScanner preScannerOpen(ObserverContext<RegionCoprocessorEnvironment> e, Scan scan, RegionScanner s)
     throws IOException {
-    return super.postScannerOpen(e, scan, s);
+    // must see all versions to aggregate increments
+    scan.setMaxVersions();
+    scan.setFilter(Filters.combine(new IncrementFilter(), scan.getFilter()));
+    return s;
   }
 
-  /**
-   * Transforms reads of the stored delta increments into calculated sums for each column.
-   */
-  private static class IncrementSummingScanner implements RegionScanner {
-    private final HRegion region;
-    private final Scan scan;
-    private final RegionScanner baseScanner;
-    private final int batchSize;
+  @Override
+  public RegionScanner postScannerOpen(ObserverContext<RegionCoprocessorEnvironment> ctx, Scan scan,
+                                       RegionScanner scanner)
+    throws IOException {
+    return new IncrementSummingScanner(region, scan, scanner);
+  }
 
-    private IncrementSummingScanner(HRegion region, Scan scan, RegionScanner baseScanner) {
-      this.region = region;
-      this.scan = scan;
-      this.batchSize = scan.getBatch();
-      this.baseScanner = baseScanner;
-    }
+  public static boolean isIncrement(Cell cell) {
+    return cell.getValueLength() == IncrementHandler.DELTA_FULL_LENGTH &&
+      Bytes.equals(cell.getValueArray(), cell.getValueOffset(), IncrementHandler.DELTA_MAGIC_PREFIX.length,
+                   IncrementHandler.DELTA_MAGIC_PREFIX, 0, IncrementHandler.DELTA_MAGIC_PREFIX.length);
+  }
 
+  private static class IncrementFilter extends FilterBase {
     @Override
-    public HRegionInfo getRegionInfo() {
-      return baseScanner.getRegionInfo();
-    }
-
-    @Override
-    public boolean isFilterDone() throws IOException {
-      return baseScanner.isFilterDone();
-    }
-
-    @Override
-    public boolean reseek(byte[] bytes) throws IOException {
-      return baseScanner.reseek(bytes);
-    }
-
-    @Override
-    public long getMaxResultSize() {
-      return baseScanner.getMaxResultSize();
-    }
-
-    @Override
-    public long getMvccReadPoint() {
-      return baseScanner.getMvccReadPoint();
-    }
-
-    @Override
-    public boolean nextRaw(List<Cell> cells) throws IOException {
-      return nextRaw(cells, batchSize);
-    }
-
-    @Override
-    public boolean nextRaw(List<Cell> cells, int limit) throws IOException {
-      return nextInternal(cells, limit);
-    }
-
-    @Override
-    public boolean next(List<Cell> cells) throws IOException {
-      return next(cells, batchSize);
-    }
-
-    @Override
-    public boolean next(List<Cell> cells, int limit) throws IOException {
-      boolean hasMore = false;
-      region.startRegionOperation();
-      try {
-        synchronized (baseScanner) {
-          hasMore = nextInternal(cells, limit);
-        }
-      } finally {
-        region.closeRegionOperation();
+    public ReturnCode filterKeyValue(Cell cell) throws IOException {
+      if (isIncrement(cell)) {
+        // all visible increments should be included until we get to a non-increment
+        return ReturnCode.INCLUDE;
+      } else {
+        // as soon as we find a KV to include we can move to the next column
+        return ReturnCode.INCLUDE_AND_NEXT_COL;
       }
-      return hasMore;
-    }
-
-    private boolean nextInternal(List<Cell> cells, int limit) throws IOException {
-      byte[] currentQualifierKey = null;
-      long runningSum = 0;
-      while (true) {
-        List<Cell> tmpCells = new LinkedList<Cell>();
-        boolean hasMore = baseScanner.nextRaw(tmpCells, limit);
-        // compact any delta writes
-        if (!tmpCells.isEmpty()) {
-          for (Cell cell : tmpCells) {
-            // 1. if this is an increment
-            // 1a. if qualifier matches previous, add to running sum
-            // 1b. if different qualifier, and prev qualifier non-null
-            // 1bi. emit the previous sum
-            // 1bii. reset running sum and add this
-            // 1biii. reset current qualifier
-            // 2. otherwise (not an increment)
-            // 2a. if qualifier matches previous and this is a long, add to running sum, emit, and continue to next column
-          }
-        }
-      }
-    }
-
-    @Override
-    public void close() throws IOException {
-      baseScanner.close();
     }
   }
 }

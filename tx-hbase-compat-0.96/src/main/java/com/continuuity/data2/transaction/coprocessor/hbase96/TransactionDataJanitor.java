@@ -95,7 +95,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
     if (tx != null) {
       get.setMaxVersions(tx.excludesSize() + 1);
       get.setTimeRange(getOldestTsVisible(tx), getMaxStamp(tx));
-      Filter newFilter = combineFilters(new TransactionVisibilityFilter(tx, ttlByFamily), get.getFilter());
+      Filter newFilter = Filters.combine(new TransactionVisibilityFilter(tx, ttlByFamily), get.getFilter());
       get.setFilter(newFilter);
     }
   }
@@ -107,7 +107,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
     if (tx != null) {
       scan.setMaxVersions(tx.excludesSize() + 1);
       scan.setTimeRange(getOldestTsVisible(tx), getMaxStamp(tx));
-      Filter newFilter = combineFilters(new TransactionVisibilityFilter(tx, ttlByFamily), scan.getFilter());
+      Filter newFilter = Filters.combine(new TransactionVisibilityFilter(tx, ttlByFamily), scan.getFilter());
       scan.setFilter(newFilter);
     }
     return s;
@@ -153,16 +153,6 @@ public class TransactionDataJanitor extends BaseRegionObserver {
                   ", no current transaction state found, defaulting to normal compaction scanner");
     //}
     return scanner;
-  }
-
-  private Filter combineFilters(Filter overrideFilter, Filter baseFilter) {
-    if (baseFilter != null) {
-      FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL);
-      filterList.addFilter(baseFilter);
-      filterList.addFilter(overrideFilter);
-      return filterList;
-    }
-    return overrideFilter;
   }
 
   private long getOldestTsVisible(Transaction tx) {
@@ -274,6 +264,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
             previousCell = cell;
           }
 
+          // TODO: we can't drop increments until they're rolled up
           // we met at least one version that is not newer than the oldest of currently used readPointers hence we
           // can skip older ones
           skipSameCells = cell.getTimestamp() <= visibilityUpperBound;
