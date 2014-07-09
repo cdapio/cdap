@@ -117,25 +117,14 @@ class IncrementSummingScanner implements RegionScanner {
               previousIncrement = cell;
               runningSum = 0;
             }
+            // add this increment to the tally
             runningSum += Bytes.toLong(cell.getValueArray(),
                                        cell.getValueOffset() + IncrementHandler.DELTA_MAGIC_PREFIX.length);
-            } else if (sameCell(previousIncrement, cell)) {
-              // 1a. if qualifier matches previous, add to running sum
-              runningSum += Bytes.toLong(cell.getValueArray(),
-                                         cell.getValueOffset() + IncrementHandler.DELTA_MAGIC_PREFIX.length);
-            } else {
-              // 1bii. reset running sum to this, reset previous entry
-              previousIncrement = cell;
-              runningSum = Bytes.toLong(cell.getValueArray(),
-                                        cell.getValueOffset() + IncrementHandler.DELTA_MAGIC_PREFIX.length);
-            }
           } else {
             // 2. otherwise (not an increment)
             if (previousIncrement != null) {
               boolean skipCurrent = false;
-              if (CellUtil.matchingRow(previousIncrement, cell) &&
-                CellUtil.matchingFamily(previousIncrement, cell) &&
-                CellUtil.matchingQualifier(previousIncrement, cell)) {
+              if (sameCell(previousIncrement, cell)) {
                 // 2a. if qualifier matches previous and this is a long, add to running sum, emit
                 runningSum += Bytes.toLong(cell.getValueArray(), cell.getValueOffset());
                 skipCurrent = true;
