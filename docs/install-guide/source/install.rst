@@ -466,15 +466,17 @@ YARN Application Shows ACCEPTED For Some Time But Then Fails
 It's possible that YARN can't extract the .JARs to the ``/tmp``,
 either due to a lack of disk space or permissions.
 
-Log Saver Process Throws an Out-of-Memory Error, Reactor Dashboard Unresponsive
--------------------------------------------------------------------------------
+Log Saver Process Throws an Out-of-Memory Error, Reactor Dashboard Shows Service Not OK
+---------------------------------------------------------------------------------------
 The Continuuity Reactor Log Saver uses an internal buffer that may overflow and result in Out-of-Memory
 Errors when applications create excessive amounts of logs. One symptom of this is that the Reactor
-Dashboard becomes unresponsive, in addition to seeing error messages in the logs.
+Dashboard *Services Explorer* shows the ``log.saver`` Service as not OK, in addition to seeing error
+messages in the logs.
 
 By default, the buffer keeps 8 seconds of logs in memory and the Log Saver process is limited to 1GB of
 memory. When it's expected that logs exceeding these settings will be produced, change the defaults by
-adjusting the settings of ``log.saver.event.processing.delay.ms`` (down) and ``log.saver.run.memory.megs`` (up) in ``continuuity-site.xml``. 
+adjusting the settings of ``log.saver.event.processing.delay.ms`` and ``log.saver.run.memory.megs`` in
+``continuuity-site.xml``. 
 
 Note that it is recommended that ``log.saver.event.processing.delay.ms`` always be kept greater than
 ``log.saver.event.bucket.interval.ms`` by at least a few hundred (300-500) milliseconds.
@@ -702,7 +704,7 @@ see the online document `Reactor Security Guide
      - Size of log buckets in milliseconds 
    * - ``log.saver.event.processing.delay.ms``
      - ``8000``
-     - Size of memory buffer of logs in milliseconds
+     - Buffer log events in memory for given time, in milliseconds
    * - ``log.saver.num.instances``
      - ``1``
      - Log Saver instances to run in YARN
