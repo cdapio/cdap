@@ -3,6 +3,7 @@
  */
 package com.continuuity.data2.transaction.stream.hbase;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.file.FileReader;
 import com.continuuity.data.file.ReadFilter;
 import com.continuuity.data.stream.StreamEventOffset;
@@ -54,12 +55,13 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
    *               responsible for closing the HTable.
    * @param reader For reading stream events. This class is responsible for closing the reader.
    */
-  public HBaseStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig, HTable hTable,
+  public HBaseStreamFileConsumer(CConfiguration cConf,
+                                 StreamConfig streamConfig, ConsumerConfig consumerConfig, HTable hTable,
                                  FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                  StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
                                  @Nullable ReadFilter extraFilter,
                                  AbstractRowKeyDistributor keyDistributor) {
-    super(streamConfig, consumerConfig, reader, stateStore, beginConsumerState, extraFilter);
+    super(cConf, streamConfig, consumerConfig, reader, stateStore, beginConsumerState, extraFilter);
     this.hTable = hTable;
     this.keyDistributor = keyDistributor;
     this.scanExecutor = createScanExecutor(streamConfig.getName());
