@@ -583,6 +583,7 @@ a, a:visited {
 	height: 36px;
 	width: 36px;
 	text-align: center;
+  display: none;;
 }
 
 ul.top-dropdown-listholder {
