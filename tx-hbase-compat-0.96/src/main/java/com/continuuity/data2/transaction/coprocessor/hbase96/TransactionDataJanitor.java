@@ -22,7 +22,6 @@ import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.hadoop.hbase.regionserver.ScanType;
@@ -93,6 +92,9 @@ public class TransactionDataJanitor extends BaseRegionObserver {
     throws IOException {
     Transaction tx = txCodec.getFromOperation(get);
     if (tx != null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Applying get filter for transaction: " + tx.toString());
+      }
       get.setMaxVersions(tx.excludesSize() + 1);
       get.setTimeRange(getOldestTsVisible(tx), getMaxStamp(tx));
       Filter newFilter = Filters.combine(new TransactionVisibilityFilter(tx, ttlByFamily), get.getFilter());
@@ -105,6 +107,9 @@ public class TransactionDataJanitor extends BaseRegionObserver {
     throws IOException {
     Transaction tx = txCodec.getFromOperation(scan);
     if (tx != null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Applying scan filter for transaction: " + tx.toString());
+      }
       scan.setMaxVersions(tx.excludesSize() + 1);
       scan.setTimeRange(getOldestTsVisible(tx), getMaxStamp(tx));
       Filter newFilter = Filters.combine(new TransactionVisibilityFilter(tx, ttlByFamily), scan.getFilter());
@@ -120,10 +125,10 @@ public class TransactionDataJanitor extends BaseRegionObserver {
     if (snapshot != null) {
       return createDataJanitorRegionScanner(e, store, scanner, snapshot);
     }
-    //if (LOG.isDebugEnabled()) {
-      LOG.info("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
                   ", no current transaction state found, defaulting to normal flush scanner");
-    //}
+    }
     return scanner;
   }
 
@@ -134,10 +139,10 @@ public class TransactionDataJanitor extends BaseRegionObserver {
     if (snapshot != null) {
       return createDataJanitorRegionScanner(e, store, scanner, snapshot);
     }
-    //if (LOG.isDebugEnabled()) {
-      LOG.info("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
                   ", no current transaction state found, defaulting to normal compaction scanner");
-    //}
+    }
     return scanner;
   }
 
@@ -148,10 +153,10 @@ public class TransactionDataJanitor extends BaseRegionObserver {
     if (snapshot != null) {
       return createDataJanitorRegionScanner(e, store, scanner, snapshot);
     }
-    //if (LOG.isDebugEnabled()) {
-      LOG.info("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
                   ", no current transaction state found, defaulting to normal compaction scanner");
-    //}
+    }
     return scanner;
   }
 

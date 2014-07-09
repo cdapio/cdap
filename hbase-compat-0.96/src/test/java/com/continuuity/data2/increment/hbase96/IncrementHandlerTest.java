@@ -103,6 +103,28 @@ public class IncrementHandlerTest {
       table.put(p);
 
       assertColumns(table, row2, new byte[][]{ colA, colB }, new long[]{ 3, 10 });
+
+      // check a full scan
+      Scan scan = new Scan();
+      ResultScanner scanner = table.getScanner(scan);
+      // row1
+      Result scanRes = scanner.next();
+      assertNotNull(scanRes);
+      assertFalse(scanRes.isEmpty());
+      Cell scanResCell = scanRes.getColumnLatestCell(FAMILY, colA);
+      assertArrayEquals(row1, scanResCell.getRow());
+      assertEquals(7L, Bytes.toLong(scanResCell.getValue()));
+
+      // row2
+      scanRes = scanner.next();
+      assertNotNull(scanRes);
+      assertFalse(scanRes.isEmpty());
+      scanResCell = scanRes.getColumnLatestCell(FAMILY, colA);
+      assertArrayEquals(row2, scanResCell.getRow());
+      assertEquals(3L, Bytes.toLong(scanResCell.getValue()));
+      scanResCell = scanRes.getColumnLatestCell(FAMILY, colB);
+      assertArrayEquals(row2, scanResCell.getRow());
+      assertEquals(10L, Bytes.toLong(scanResCell.getValue()));
     } finally {
       table.close();
     }

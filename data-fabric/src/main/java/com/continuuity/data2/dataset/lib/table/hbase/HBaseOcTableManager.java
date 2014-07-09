@@ -56,7 +56,11 @@ public class HBaseOcTableManager extends AbstractHBaseDataSetManager {
     ImmutableList<Class<? extends Coprocessor>> coprocessors =
       ImmutableList.of(dataJanitorClass, incrementClass);
     Location jarFile = HBaseTableUtil.createCoProcessorJar("table", jarDir, coprocessors);
-    return new CoprocessorJar(coprocessors, jarFile);
+    CoprocessorJar cpJar = new CoprocessorJar(coprocessors, jarFile);
+    // TODO: hack, the priority should come from the CP implementation
+    cpJar.setPriority(dataJanitorClass, 1);
+    cpJar.setPriority(incrementClass, 2);
+    return cpJar;
   }
 
   @Override
@@ -110,7 +114,12 @@ public class HBaseOcTableManager extends AbstractHBaseDataSetManager {
     CoprocessorJar coprocessorJar = createCoprocessorJar();
 
     for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
-      addCoprocessor(tableDescriptor, coprocessor, coprocessorJar.getJarLocation());
+      Integer priority = coprocessorJar.getPriority(coprocessor);
+      if (priority != null) {
+        addCoprocessor(tableDescriptor, coprocessor, coprocessorJar.getJarLocation(), priority);
+      } else {
+        addCoprocessor(tableDescriptor, coprocessor, coprocessorJar.getJarLocation());
+      }
     }
     tableUtil.createTableIfNotExists(getHBaseAdmin(), tableName, tableDescriptor);
   }

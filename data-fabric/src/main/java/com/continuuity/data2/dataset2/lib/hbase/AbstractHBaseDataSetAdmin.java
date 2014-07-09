@@ -11,6 +11,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
@@ -146,6 +147,11 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI()), Coprocessor.PRIORITY_USER, null);
   }
 
+  protected void addCoprocessor(HTableDescriptor tableDescriptor, Class<? extends Coprocessor> coprocessor,
+                                Location jarFile, int priority) throws IOException {
+    tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI()), priority, null);
+  }
+
   protected abstract CoprocessorJar createCoprocessorJar() throws IOException;
 
   /**
@@ -164,10 +170,19 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
     private final List<Class<? extends Coprocessor>> coprocessors;
     private final Location jarLocation;
+    private final Map<Class<? extends Coprocessor>, Integer> priorities = Maps.newHashMap();
 
     public CoprocessorJar(Iterable<? extends Class<? extends Coprocessor>> coprocessors, Location jarLocation) {
       this.coprocessors = ImmutableList.copyOf(coprocessors);
       this.jarLocation = jarLocation;
+    }
+
+    public void setPriority(Class<? extends Coprocessor> cpClass, int priority) {
+      priorities.put(cpClass, priority);
+    }
+
+    public Integer getPriority(Class<? extends Coprocessor> cpClass) {
+      return priorities.get(cpClass);
     }
 
     public Iterable<? extends Class<? extends Coprocessor>> getCoprocessors() {

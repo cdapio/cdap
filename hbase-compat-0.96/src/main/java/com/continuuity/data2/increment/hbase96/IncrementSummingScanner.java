@@ -105,12 +105,17 @@ class IncrementSummingScanner implements RegionScanner {
 
           // 1. if this is an increment
           if (IncrementHandler.isIncrement(cell)) {
-            LOG.info("Found increment for row=" + Bytes.toStringBinary(CellUtil.cloneRow(cell)) + ", " +
-                       "column=" + Bytes.toStringBinary(CellUtil.cloneQualifier(cell)));
+            if (LOG.isTraceEnabled()) {
+              LOG.info("Found increment for row=" + Bytes.toStringBinary(CellUtil.cloneRow(cell)) + ", " +
+                         "column=" + Bytes.toStringBinary(CellUtil.cloneQualifier(cell)));
+            }
             if (!sameCell(previousIncrement, cell)) {
               if (previousIncrement != null) {
                 // 1b. if different qualifier, and prev qualifier non-null
                 // 1bi. emit the previous sum
+                if (LOG.isTraceEnabled()) {
+                  LOG.trace("Including increment: sum=" + runningSum + ", cell=" + previousIncrement);
+                }
                 cells.add(newCell(previousIncrement, runningSum));
                 addedCnt++;
               }
@@ -129,6 +134,9 @@ class IncrementSummingScanner implements RegionScanner {
                 runningSum += Bytes.toLong(cell.getValueArray(), cell.getValueOffset());
                 skipCurrent = true;
               }
+              if (LOG.isTraceEnabled()) {
+                LOG.trace("Including increment: sum=" + runningSum + ", cell=" + previousIncrement);
+              }
               cells.add(newCell(previousIncrement, runningSum));
               addedCnt++;
               previousIncrement = null;
@@ -139,16 +147,20 @@ class IncrementSummingScanner implements RegionScanner {
               }
             }
             // 2b. otherwise emit the current cell
+            //LOG.info("Including raw cell " + cell);
             cells.add(cell);
             addedCnt++;
           }
         }
         // emit any left over increment, if we hit the end
         if (!hasMore && previousIncrement != null) {
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("Including leftover increment: sum=" + runningSum + ", cell=" + previousIncrement);
+          }
           cells.add(newCell(previousIncrement, runningSum));
         }
       }
-    } while (hasMore && (limit <= 0 || addedCnt < limit));
+    } while (hasMore && limit > 0 && addedCnt < limit);
 
     return hasMore;
   }

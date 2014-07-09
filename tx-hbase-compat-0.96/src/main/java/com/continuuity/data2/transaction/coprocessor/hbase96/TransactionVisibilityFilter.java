@@ -3,6 +3,8 @@ package com.continuuity.data2.transaction.coprocessor.hbase96;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TxConstants;
 import com.google.common.collect.Maps;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.filter.FilterBase;
@@ -15,6 +17,7 @@ import java.util.Map;
  *
  */
 public class TransactionVisibilityFilter extends FilterBase {
+  private static final Log LOG = LogFactory.getLog(TransactionVisibilityFilter.class);
   // prefix bytes used to mark values that are deltas vs. full sums
   private static final byte[] DELTA_MAGIC_PREFIX = new byte[] { 'X', 'D' };
   // expected length for values storing deltas (prefix + increment value)
@@ -48,18 +51,25 @@ public class TransactionVisibilityFilter extends FilterBase {
     }
     // need to apply TTL for the column family here
     long kvTimestamp = cell.getTimestamp();
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Checking cell " + cell.toString());
+    }
     if (kvTimestamp < currentOldestTs) {
       // passed TTL for this column, seek to next
+      LOG.trace("Skipping cell due to TTL");
       return ReturnCode.NEXT_COL;
     } else if (tx.isVisible(kvTimestamp)) {
       if (isIncrement(cell)) {
         // all visible increments should be included until we get to a non-increment
+        LOG.trace("Including cell as visible increment");
         return ReturnCode.INCLUDE;
       } else {
         // as soon as we find a KV to include we can move to the next column
+        LOG.trace("Including cell as visible put");
         return ReturnCode.INCLUDE_AND_NEXT_COL;
       }
     } else {
+      LOG.trace("Skipping excluded cell");
       return ReturnCode.SKIP;
     }
   }
