@@ -297,7 +297,7 @@ endobj
   /Type /Page >>
 endobj
 93 0 obj
-<< /Border [ 0 0 0 ] /Contents () /Dest [ 96 0 R /XYZ 54 729.5 0 ] /Rect [ 266.8 684.75 313.2783 696.75 ] /Subtype /Link /Type /Annot >>
+<< /Border [ 0 0 0 ] /Contents () /Dest [ 96 0 R /XYZ 54 729.5 0 ] /Rect [ 266.8 714.75 313.2783 726.75 ] /Subtype /Link /Type /Annot >>
 endobj
 94 0 obj
 << /Annots [ 93 0 R ] /Contents 160 0 R /MediaBox [ 0 0 612 792 ] /Parent 146 0 R /Resources << /Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ] >> /Rotate 0 
@@ -1372,7 +1372,7 @@ endobj
 << /Outlines 120 0 R /PageLabels 168 0 R /PageMode /UseNone /Pages 146 0 R /Type /Catalog >>
 endobj
 119 0 obj
-<< /Author () /CreationDate (D:20140709162124+08'00') /Creator (\(unspecified\)) /Keywords () /Producer (ReportLab PDF Library - www.reportlab.com) /Subject (\(unspecified\)) 
+<< /Author () /CreationDate (D:20140709163113+08'00') /Creator (\(unspecified\)) /Keywords () /Producer (ReportLab PDF Library - www.reportlab.com) /Subject (\(unspecified\)) 
   /Title (Continuuity Reactor 2.3.0) >>
 endobj
 120 0 obj
@@ -4382,7 +4382,7 @@ Q
 endstream
 endobj
 159 0 obj
-<< /Length 6315 >>
+<< /Length 6197 >>
 stream
 1 0 0 1 0 0 cm 
 q
@@ -4542,7 +4542,7 @@ Q
 q
 1 0 0 1 23 -3 cm
 q
-BT 1 0 0 1 0 2 Tm 12 TL 0 0 0 rg /F2+0 10 Tf 12 TL (Increase the number of Log Saver instances using ) Tj /F5 9 Tf 0 0 0 rg (log.saver.num.instances) Tj 0 0 0 rg /F2+0 10 Tf 12 TL (;) Tj T* ET
+BT 1 0 0 1 0 2 Tm 12 TL 0 0 0 rg /F2+0 10 Tf 12 TL (Increase the number of Log Saver instances using ) Tj /F5 9 Tf 0 0 0 rg (log.saver.num.instances) Tj 0 0 0 rg /F2+0 10 Tf 12 TL (; and) Tj T* ET
 Q
 Q
 q
@@ -4564,36 +4564,20 @@ Q
 q
 1 0 0 1 23 -3 cm
 q
-BT 1 0 0 1 0 2 Tm 12 TL 0 0 0 rg /F2+0 10 Tf 12 TL (Adjust the duration of logs with ) Tj /F5 9 Tf 0 0 0 rg (log.saver.event.processing.delay.ms) Tj 0 0 0 rg /F2+0 10 Tf 12 TL (; and) Tj T* ET
+BT 1 0 0 1 0 2 Tm 12 TL 0 0 0 rg /F2+0 10 Tf 12 TL (Adjust the duration of logs with ) Tj /F5 9 Tf 0 0 0 rg (log.saver.event.processing.delay.ms) Tj 0 0 0 rg /F2+0 10 Tf 12 TL (.) Tj T* ET
 Q
 Q
 q
 Q
 Q
 q
-1 0 0 1 54 130.6 cm
-Q
-q
-1 0 0 1 54 106.6 cm
-0 0 0 rg
-q
-1 0 0 1 6 9 cm
-q
-0 0 0 rg
-BT 1 0 0 1 0 2 Tm 9.854492 0 Td /F2+0 10 Tf 12 TL (\201) Tj T* -9.854492 0 Td ET
-Q
-Q
-q
-1 0 0 1 23 -3 cm
-q
-BT 1 0 0 1 0 14 Tm .415508 Tw 12 TL 0 0 0 rg /F2+0 10 Tf 12 TL (Adjust ) Tj /F5 9 Tf 0 0 0 rg (log.saver.event.processing.delay.ms ) Tj 0 0 0 rg /F2+0 10 Tf 12 TL (and ) Tj /F5 9 Tf 0 0 0 rg (log.saver.event.bucket.interval.ms ) Tj 0 0 0 rg /F2+0 10 Tf 12 TL (to control) Tj T* 0 Tw (the buffer size.) Tj T* ET
-Q
-Q
-q
-Q
+1 0 0 1 54 136.6 cm
 Q
 q
 1 0 0 1 54 106.6 cm
+q
+BT 1 0 0 1 0 14 Tm 2.302504 Tw 12 TL 0 0 0 rg /F2+0 10 Tf 12 TL (Note that it is recommended that ) Tj /F5 9 Tf 0 0 0 rg (log.saver.event.processing.delay.ms ) Tj 0 0 0 rg /F2+0 10 Tf 12 TL (always be kept greater than) Tj T* 0 Tw /F5 9 Tf 0 0 0 rg (log.saver.event.bucket.interval.ms ) Tj 0 0 0 rg /F2+0 10 Tf 12 TL (by at least a few hundred \(300-500\) milliseconds.) Tj T* ET
+Q
 Q
 q
 1 0 0 1 48 48 cm
@@ -4606,23 +4590,17 @@ Q
 endstream
 endobj
 160 0 obj
-<< /Length 977 >>
+<< /Length 565 >>
 stream
 1 0 0 1 0 0 cm 
 q
 1 0 0 1 54 702 cm
 q
-BT 1 0 0 1 0 14 Tm 2.302504 Tw 12 TL 0 0 0 rg /F2+0 10 Tf 12 TL (Note that it is recommended that ) Tj /F5 9 Tf 0 0 0 rg (log.saver.event.processing.delay.ms ) Tj 0 0 0 rg /F2+0 10 Tf 12 TL (always be kept greater than) Tj T* 0 Tw /F5 9 Tf 0 0 0 rg (log.saver.event.bucket.interval.ms ) Tj 0 0 0 rg /F2+0 10 Tf 12 TL (by at least a few hundred \(300-500\) milliseconds.) Tj T* ET
-Q
-Q
-q
-1 0 0 1 54 672 cm
-q
 BT 1 0 0 1 0 14 Tm .667725 Tw 12 TL 0 0 0 rg /F2+0 10 Tf 12 TL (See the ) Tj /F5 9 Tf 0 0 0 rg (log.saver ) Tj 0 0 0 rg /F2+0 10 Tf 12 TL (parameter section of the ) Tj 0 0 .501961 rg (Appendix ) Tj 0 0 0 rg (for a list of these configuration parameters and their) Tj T* 0 Tw (values that can be adjusted.) Tj T* ET
 Q
 Q
 q
-1 0 0 1 54 672 cm
+1 0 0 1 54 702 cm
 Q
 q
 1 0 0 1 48 48 cm
@@ -7909,41 +7887,41 @@ xref
 0000130839 00000 n
 0000133852 00000 n
 0000139092 00000 n
-0000145465 00000 n
-0000146499 00000 n
-0000157180 00000 n
-0000165880 00000 n
-0000175446 00000 n
-0000184899 00000 n
-0000191968 00000 n
-0000200147 00000 n
-0000202836 00000 n
-0000203109 00000 n
-0000203147 00000 n
-0000203185 00000 n
-0000203223 00000 n
-0000203261 00000 n
-0000203299 00000 n
-0000203337 00000 n
-0000203375 00000 n
-0000203413 00000 n
-0000203451 00000 n
-0000203490 00000 n
-0000203529 00000 n
-0000203568 00000 n
-0000203607 00000 n
-0000203646 00000 n
-0000203685 00000 n
-0000203724 00000 n
-0000203763 00000 n
-0000203802 00000 n
-0000203841 00000 n
-0000203880 00000 n
+0000145347 00000 n
+0000145969 00000 n
+0000156650 00000 n
+0000165350 00000 n
+0000174916 00000 n
+0000184369 00000 n
+0000191438 00000 n
+0000199617 00000 n
+0000202306 00000 n
+0000202579 00000 n
+0000202617 00000 n
+0000202655 00000 n
+0000202693 00000 n
+0000202731 00000 n
+0000202769 00000 n
+0000202807 00000 n
+0000202845 00000 n
+0000202883 00000 n
+0000202921 00000 n
+0000202960 00000 n
+0000202999 00000 n
+0000203038 00000 n
+0000203077 00000 n
+0000203116 00000 n
+0000203155 00000 n
+0000203194 00000 n
+0000203233 00000 n
+0000203272 00000 n
+0000203311 00000 n
+0000203350 00000 n
 trailer
 << /ID 
  % ReportLab generated PDF document -- digest (http://www.reportlab.com)
- [(}\252S\305q\027\224[\233\200#\201|H\035\277) (}\252S\305q\027\224[\233\200#\201|H\035\277)]
+ [(=\010\236_\035\354\241&A\313\177\014\335\230\370\361) (=\010\236_\035\354\241&A\313\177\014\335\230\370\361)]
  /Info 119 0 R /Root 118 0 R /Size 190 >>
 startxref
-203919
+203389
 %%EOF

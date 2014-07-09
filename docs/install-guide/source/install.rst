@@ -482,10 +482,8 @@ memory. However, decreasing the buffer duration may lead to out-of-order log eve
 In the ``continuuity-site.xml``, you can:
 
 - Increase the memory by adjusting ``log.saver.run.memory.megs``; 
-- Increase the number of Log Saver instances using ``log.saver.num.instances``;
-- Adjust the duration of logs with ``log.saver.event.processing.delay.ms``; and
-- Adjust ``log.saver.event.processing.delay.ms`` and ``log.saver.event.bucket.interval.ms``
-  to control the buffer size.
+- Increase the number of Log Saver instances using ``log.saver.num.instances``; and
+- Adjust the duration of logs with ``log.saver.event.processing.delay.ms``.
 
 Note that it is recommended that ``log.saver.event.processing.delay.ms`` always be kept greater than
 ``log.saver.event.bucket.interval.ms`` by at least a few hundred (300-500) milliseconds.
