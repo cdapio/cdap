@@ -35,6 +35,7 @@ REST_PDF="$SCRIPT_PATH/$BUILD_PDF/rest.pdf"
 INSTALL_GUIDE="$SCRIPT_PATH/../install-guide"
 INSTALL_SOURCE="$INSTALL_GUIDE/source/install.rst"
 
+WWW_PATH="/var/www/website-docs/reactor"
 
 VERSION_TXT="version.txt"
 
@@ -126,11 +127,11 @@ function stage_docs() {
   version
   echo ""
   echo "To install on server:"
-  echo "cd /var/www/reactor; ls"
+  echo "cd $WWW_PATH; ls"
   echo "sudo rm -rf $reactor_version; ls"
   echo "sudo unzip ~/$ZIP; sudo mv $HTML $reactor_version; ls"
   echo "or"
-  echo "cd /var/www/reactor; ls; sudo rm -rf $reactor_version; sudo unzip ~/$ZIP; sudo mv $HTML $reactor_version; ls"
+  echo "cd $WWW_PATH; ls; sudo rm -rf $reactor_version; sudo unzip ~/$ZIP; sudo mv $HTML $reactor_version; ls"
   echo ""
   login_staging_server
 }
