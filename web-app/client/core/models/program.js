@@ -87,10 +87,8 @@ define(['core/models/element'], function (Element) {
       http.rpc(model.get('context'), 'start', {
         data: config
       }, function (response) {
-        if (response.error && typeof response.error === "string") {
-          C.Modal.show("Error", response.error);
-        } else if (response.error) {
-          C.Modal.show(response.error.name, response.error.message);
+        if (response.error) {
+          C.Modal.show(response.error, response.message);
         } else {
           model.set('lastStarted', new Date().getTime() / 1000);
         }
@@ -104,16 +102,13 @@ define(['core/models/element'], function (Element) {
       model.set('currentState', 'STOPPING');
 
       http.rpc(model.get('context'), 'stop', function (response) {
-        if (response.error && typeof response.error === "string") {
-          C.Modal.show("Error", response.error);
-        } else if (response.error) {
-          C.Modal.show(response.error.name, response.error.message);
+        if (response.error) {
+          C.Modal.show(response.error, response.message);
         }
 
         if (typeof done === 'function') {
           done(response);
         }
-
       });
 
     },

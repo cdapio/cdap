@@ -720,6 +720,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
         return;
       }
+
       responder.sendString(status.getCode(), status.getMessage());
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
