@@ -15,7 +15,7 @@ Additional information about selected examples is available at the Continuuity w
 Building
 ========
 
-Each example comes with Maven .pom file. To build, install Maven, and from the
+Each example comes with a Maven .pom file. To build, install Maven, and from the
 /examples directory prompt, enter:
 
 	mvn clean package

@@ -144,11 +144,11 @@ From within the SDK root directory, this command will start Reactor in local mod
 
 On Windows::
 
-	~SDK> bin\reactor start
+	~SDK> bin\reactor.bat start
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`_ in local mode):
 
-#. Drag and drop the Application JAR file (``target/ResponseCodeAnalytics-1.0.jar``)
+#. Drag and drop the Application JAR file (``target/ResponseCodeAnalytics-...jar``)
    onto your browser window.
    Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
 #. Once loaded, select ``ResponseCodeAnalytics`` Application from the list.
@@ -156,15 +156,17 @@ From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://l
 	
 Command line tools are also available to deploy and manage apps. From within the project root:
 
-#. To deploy the Application JAR file, run ``$ bin/appManager.sh --action deploy [--gateway <hostname>]``
-#. To start the Application, run ``$ bin/appManager.sh --action start [--gateway <hostname>]``
+#. To deploy the Application JAR file, run ``$ bin/app-manager.sh --action deploy [--host <hostname>]``
+#. To start the Application, run ``$ bin/app-manager.sh --action start [--host <hostname>]``
 
-:Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+:Note:	[--host <hostname>] is not available for a *Local Reactor*.
 
 On Windows:
 
-#. To deploy the App JAR file, run ``~SDK> bin\appManager deploy``
-#. To start the App, run ``~SDK> bin\appManager start``
+#. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy`` or drag and drop the
+   Application .JAR file (``target/ResponseCodeAnalytics-<version>.jar`` onto your browser window.
+   (Currently, the *Load App* button does not work under Windows.)
+#. To start the App, run ``~SDK> bin\app-manager.bat start``
 
 Running the Example
 -------------------
@@ -176,13 +178,13 @@ Running this script will inject Apache access log entries
 from the log file ``/resources/apache.accesslog``
 to a Stream named *logEventStream* in the ``ResponseCodeAnalyticsApp``::
 
-	$ bin/inject-data.sh [--gateway <hostname>]
+	$ bin/inject-data.sh [--host <hostname>]
 
-:Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+:Note:	[--host <hostname>] is not available for a *Local Reactor*.
 
 On Windows::
 
-	~SDK> bin\inject-data
+	~SDK> bin\inject-data.bat
 
 Query
 .....
@@ -220,11 +222,11 @@ Stopping the Application
 Either:
 
 - On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
-- Run ``$ bin/appManager.sh --action stop [--gateway <hostname>]``
+- Run ``$ bin/app-manager.sh --action stop [--host <hostname>]``
 
-  :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+  :Note:	[--host <hostname>] is not available for a *Local Reactor*.
 
-  On Windows, run ``~SDK> bin\appManager stop``
+  On Windows, run ``~SDK> bin\app-manager.bat stop``
 
 
 Downloading the Example
