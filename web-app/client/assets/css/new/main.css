@@ -574,16 +574,27 @@ a, a:visited {
 	color: black;
 }
 
+#global #failed-services-container {
+	background-color: red;
+	border-radius: 20px;
+	color: white;
+	float: right;
+	margin-left: 10px;
+	height: 36px;
+	width: 36px;
+	text-align: center;
+}
+
 ul.top-dropdown-listholder {
 
 }
 
 ul.top-dropdown-listholder li {
-	
+
 }
 
-#global ul.top-dropdown-listholder li a { 
-	margin-left: 0px;
+#global ul.top-dropdown-listholder li a {
+	margin-left: 0;
 	float: none;
 	text-align: center;
 	height: 30px;
