@@ -20,10 +20,10 @@ to show how to use a MapReduce job.
 
 Data from a log will be sent to the Continuuity Reactor by an external script *inject-log*
 to the *logEventStream*. The logs are processed by the
-``LogAnalyticsFlow``, which stores the log event in its entirety in *logEventTable*, a ``SimpleTimeseriesTable``.
+``LogAnalyticsFlow``, which stores the log event in its entirety in *logEventTable*, a ``TimeseriesTable``.
 
 As these entries are created, they are taken up by the *LogCountMapReduce* job, which
-goes through the entries and tabulates results in another ``SimpleTimeseriesTable``, *countTable*.
+goes through the entries and tabulates results in another ``TimeseriesTable``, *countTable*.
 
 Finally, you can query the *countTable* by using the ``getCounts`` method of the *LogCountProcedure*. It will
 send back a JSON-formatted result with all the hours for which HTTP requests were tabulated.
@@ -35,7 +35,7 @@ The TrafficAnalytics Application
 As in the other `examples </index.html>`__, the components 
 of the application are tied together by the class ``TrafficAnalyticsApp``::
 
-	public class TrafficAnalyticsApp extends AbstractApplication {
+  public class TrafficAnalyticsApp extends AbstractApplication {
     @Override
     public void configure() {
       setName("TrafficAnalytics");
@@ -46,6 +46,7 @@ of the application are tied together by the class ``TrafficAnalyticsApp``::
       
       // Store processed data in Datasets
       createDataSet("logEventTable", TimeseriesTable.class, DatasetProperties.EMPTY);
+      createDataset("countTable", TimeseriesTable.class, DatasetProperties.EMPTY);
       
       // Process log events in real-time using Flows
       addFlow(new LogAnalyticsFlow());
@@ -55,7 +56,7 @@ of the application are tied together by the class ``TrafficAnalyticsApp``::
       
       // Run a MapReduce job on the acquired data
       addMapReduce(new LogCountMapReduce());
-    }
+  }
 
 Many elements are similar, but there are a few new entries.
 
