@@ -45,6 +45,7 @@ public interface ApplicationConfigurer {
    * Adds a {@link DataSet} to the Application.
    *
    * @param dataset The {@link DataSet} to include in the Application
+   * @deprecated As of Reactor 2.3.0
    */
   @Deprecated
   void addDataSet(DataSet dataset);
