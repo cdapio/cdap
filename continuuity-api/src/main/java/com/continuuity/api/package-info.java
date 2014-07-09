@@ -3,7 +3,9 @@
  */
 
 /**
- * Interfaces for {@link com.continuuity.api.flow.Flow Flows},
+ * Interfaces for 
+ * {@link com.continuuity.api.app.Application Applications},
+ * {@link com.continuuity.api.flow.Flow Flows},
  * {@link com.continuuity.api.flow.flowlet.Flowlet Flowlets},
  * {@link com.continuuity.api.data.stream.Stream Streams}, 
  * {@link com.continuuity.api.data.DataSet DataSets}, 

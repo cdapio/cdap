@@ -11,16 +11,18 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This annotation specifies a public API that is probably subjected to incompatible
- * changes up to the extent of removal from the library in future releases. This annotation
- * if declared on an API is exempting it from compatibility guarantees made by its
- * library.
+ * Annotates a public API that is may be subjected to incompatible changes up to the extent
+ * of removal from the library in future releases.
  *
  * <p>
- *   Note that just having this annotation does not imply differences in quality
- *   with API's that are non-beta or also they are "NOT" inferior in terms of performance
- *   with their non-beta counter parts. This annotation just signifies that the
- *   API's have not been hardened yet and could be subject to change in the near future.
+ * This annotation, if declared on an API, exempts it from compatibility guarantees made by its library.
+ * </p>
+ *
+ * <p>
+ * Note that having this annotation does <b>not</b> imply differences in quality with APIs 
+ * that are non-beta, nor does it imply that they are inferior in terms of performance
+ * with their non-beta counterparts. This annotation just signifies that the
+ * APIs have not been finalized and could be subject to change in the future.
  * </p>
  */
 @Retention(RetentionPolicy.CLASS)

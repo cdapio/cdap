@@ -10,16 +10,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to tag a method for handling {@link com.continuuity.api.procedure.Procedure} calls.
+ * Annotates methods for handling {@link com.continuuity.api.procedure.Procedure} calls.
  *
- * @see com.continuuity.api.procedure.Procedure Procedure
+ * @see com.continuuity.api.procedure.Procedure
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Handle {
 
   /**
-   * Returns array of procedure method names.
+   * Returns an array of Procedure method names.
    */
   String[] value();
 }
