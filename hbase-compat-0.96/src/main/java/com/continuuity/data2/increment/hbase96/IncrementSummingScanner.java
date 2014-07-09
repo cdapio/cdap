@@ -148,7 +148,7 @@ class IncrementSummingScanner implements RegionScanner {
           cells.add(newCell(previousIncrement, runningSum));
         }
       }
-    } while (hasMore && (limit <=0 || addedCnt < limit));
+    } while (hasMore && (limit <= 0 || addedCnt < limit));
 
     return hasMore;
   }

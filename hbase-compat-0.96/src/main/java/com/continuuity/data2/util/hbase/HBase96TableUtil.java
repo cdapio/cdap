@@ -1,5 +1,6 @@
 package com.continuuity.data2.util.hbase;
 
+import com.continuuity.data2.increment.hbase96.IncrementHandler;
 import com.continuuity.data2.transaction.coprocessor.hbase96.ReactorTransactionDataJanitor;
 import com.continuuity.data2.transaction.queue.coprocessor.hbase96.DequeueScanObserver;
 import com.continuuity.data2.transaction.queue.coprocessor.hbase96.HBaseQueueRegionObserver;
@@ -93,5 +94,10 @@ public class HBase96TableUtil extends HBaseTableUtil {
   @Override
   public Class<? extends Coprocessor> getDequeueScanObserverClassForVersion() {
     return DequeueScanObserver.class;
+  }
+
+  @Override
+  public Class<? extends Coprocessor> getIncrementHandlerClassForVersion() {
+    return IncrementHandler.class;
   }
 }

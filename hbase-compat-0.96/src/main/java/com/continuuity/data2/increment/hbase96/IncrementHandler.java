@@ -64,8 +64,9 @@ public class IncrementHandler extends BaseRegionObserver {
       LOG.info("Returning results of size " + results.size() + " for preGetOp()");
       ctx.bypass();
     } finally {
-      if (scanner != null)
+      if (scanner != null) {
         scanner.close();
+      }
     }
   }
 
