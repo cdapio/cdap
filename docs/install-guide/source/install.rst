@@ -474,15 +474,18 @@ Dashboard *Services Explorer* shows the ``log.saver`` Service as not OK, in addi
 messages in the logs.
 
 By default, the buffer keeps 8 seconds of logs in memory and the Log Saver process is limited to 1GB of
-memory. When it's expected that logs exceeding these settings will be produced, change the defaults by
-adjusting the settings of ``log.saver.event.processing.delay.ms`` and ``log.saver.run.memory.megs`` in
-``continuuity-site.xml``.
+memory. When it's expected that logs exceeding these settings will be produced, increase the memory
+allocated to the Log Saver or increase the number of Log Saver instances. If the cluster has limited
+memory or containers available, you can choose instead to decrease the duration of logs buffered in
+memory. However, decreasing the buffer duration may lead to out-of-order log events. 
 
-The number of Log Saver instances can be increased using ``log.saver.num.instances``  in
-``continuuity-site.xml``.
+You can increase the memory by adjusting ``log.saver.run.memory.megs``; the number of Log Saver instances can be increased using ``log.saver.num.instances``; and the duration of logs is controlled by
+``log.saver.event.processing.delay.ms``, all in the ``continuuity-site.xml``.
 
 Note that it is recommended that ``log.saver.event.processing.delay.ms`` always be kept greater than
 ``log.saver.event.bucket.interval.ms`` by at least a few hundred (300-500) milliseconds.
+
+See the ``log.saver`` parameter section of the `Appendix <#appendix>`__ for a list of these configuration parameters and their values that can be adjusted.
 
 .. rst2pdf: CutStart
 
