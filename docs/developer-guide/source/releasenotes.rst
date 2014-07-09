@@ -19,18 +19,18 @@ New Application, Stream, Flowlet, and Dataset Features
 - Stream truncate support via REST
 - Simplified Flowlet ``@Batch`` support: process methods don't require an ``Iterator`` as a parameter
 - New Datasets API that gives more power & flexibility for developing custom Datasets
-- Datasets management outside of application: a REST interface to create, truncate, drop and discover
+- Datasets management outside of applications: a REST interface to create, truncate, drop and discover
   Datasets
 
 New Ad-hoc Querying Feature
 ===========================
-- Reactor now supports ad-hoc SQL queries over Datasets
-- A new API that allows developers to expose the schema of the Dataset and make it query able
+- Continuuity Reactor now supports ad-hoc SQL queries over Datasets
+- A new API that allows developers to expose the schema of the Dataset and make it query-able
 - A new REST API to submit SQL queries over Datasets and retrieve the results
 
 New Security Features
 =====================
-- Reactor now supports perimeter security, restricting access to resources to only authenticated users
+- Continuuity Reactor now supports perimeter security, restricting access to resources only to authenticated users
 - With ``security.enabled=true``, users must then login in order to access the Reactor UI
 - Access to all Reactor REST APIs can be secured by an ``OAuth 2`` Bearer token, which is obtained by
   authentication with the Reactor authentication service using a pluggable mechanism
@@ -40,9 +40,9 @@ New Security Features
 
 New Reactor Services Features
 =============================
-- Reactor application now supports adding Custom User Services  
-- Custom user services can be discovered from Flows, Procedures and MapReduce jobs
-- The number of user service instances can be scaled
+- Continuuity Reactor now supports adding Custom User Services  
+- Custom User Services can be discovered from Flows, Procedures and MapReduce jobs
+- The number of User Service instances can be scaled
 - Facility to see into Reactor system components via the Reactor Dashboard
 - The number of Reactor system component instances can be scaled via the Reactor Dashboard
 
@@ -56,7 +56,6 @@ Documentation Changes
 
 Major Reactor Bug Fixes
 =======================
-
 - Fixed a problem with empty log directories not being deleted after the log files in them were deleted
 - Fixed an issue in the Reactor Dashboard's Metric Explorer, where the user interface controls for 
   selecting metrics were enabled inappropriately
@@ -65,6 +64,10 @@ Other Reactor Changes
 =====================
 - `A list of deprecated Interfaces, Classes and Methods <javadocs/deprecated-list.html>`__ 
   is included in the Javadocs
+  
+Notes
+=====
+- Metrics for MapReduce jobs aren't populated on secure Hadoop clusters
 
 .. For later
 .. - The term "DataSet" has been standardized in both the APIs and the documentation as either 

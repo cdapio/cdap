@@ -20,10 +20,10 @@ to show how to use a MapReduce job.
 
 Data from a log will be sent to the Continuuity Reactor by an external script *inject-log*
 to the *logEventStream*. The logs are processed by the
-``LogAnalyticsFlow``, which stores the log event in its entirety in *logEventTable*, a ``SimpleTimeseriesTable``.
+``LogAnalyticsFlow``, which stores the log event in its entirety in *logEventTable*, a ``TimeseriesTable``.
 
 As these entries are created, they are taken up by the *LogCountMapReduce* job, which
-goes through the entries and tabulates results in another ``SimpleTimeseriesTable``, *countTable*.
+goes through the entries and tabulates results in another ``TimeseriesTable``, *countTable*.
 
 Finally, you can query the *countTable* by using the ``getCounts`` method of the *LogCountProcedure*. It will
 send back a JSON-formatted result with all the hours for which HTTP requests were tabulated.
@@ -35,7 +35,7 @@ The TrafficAnalytics Application
 As in the other `examples </index.html>`__, the components 
 of the application are tied together by the class ``TrafficAnalyticsApp``::
 
-	public class TrafficAnalyticsApp extends AbstractApplication {
+  public class TrafficAnalyticsApp extends AbstractApplication {
     @Override
     public void configure() {
       setName("TrafficAnalytics");
@@ -46,6 +46,7 @@ of the application are tied together by the class ``TrafficAnalyticsApp``::
       
       // Store processed data in Datasets
       createDataSet("logEventTable", TimeseriesTable.class, DatasetProperties.EMPTY);
+      createDataset("countTable", TimeseriesTable.class, DatasetProperties.EMPTY);
       
       // Process log events in real-time using Flows
       addFlow(new LogAnalyticsFlow());
@@ -55,7 +56,7 @@ of the application are tied together by the class ``TrafficAnalyticsApp``::
       
       // Run a MapReduce job on the acquired data
       addMapReduce(new LogCountMapReduce());
-    }
+  }
 
 Many elements are similar, but there are a few new entries.
 
@@ -174,26 +175,28 @@ From within the SDK root directory, this command will start Reactor in local mod
 
 On Windows::
 
-	~SDK> bin\reactor start
+	~SDK> bin\reactor.bat start
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
-#. Drag and drop the Application .JAR file (``target/TrafficAnalytics-1.0.jar``) onto your browser window.
+#. Drag and drop the Application .JAR file (``target/TrafficAnalytics-<version>.jar``) onto your browser window.
    Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
 #. Once loaded, select the ``TrafficAnalytics`` Application from the list.
    On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
 	
 Command line tools are also available to deploy and manage apps. From within the project root:
 
-#. To deploy the Application JAR file, run ``$ bin/appManager.sh --action deploy --gateway <hostname>``
-#. To start the Application, run ``$ bin/appManager.sh --action start [--gateway <hostname>]``
+#. To deploy the Application JAR file, run ``$ bin/app-manager.sh --action deploy [--host <hostname>]``
+#. To start the Application, run ``$ bin/app-manager.sh --action start [--host <hostname>]``
 
-:Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+:Note:	[--host <hostname>] is not available for a *Local Reactor*.
 
 On Windows:
 
-#. To deploy the App JAR file, run ``~SDK> bin\appManager deploy``
-#. To start the App, run ``~SDK> bin\appManager start``
+#. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy`` or drag and drop the
+   Application .JAR file (``target/TrafficAnalytics-<version>.jar`` onto your browser window.
+   (Currently, the *Load App* button does not work under Windows.)
+#. To start the App, run ``~SDK> bin\app-manager.bat start``
 
 Running the Example
 -------------------
@@ -205,13 +208,13 @@ Run this script to inject Apache access log entries
 from the log file ``src/test/resources/apache.accesslog``
 to the Stream named *logEventStream* in the ``AccessLogApp``::
 
-	$ ./bin/inject-log.sh [--gateway <hostname>]
+	$ ./bin/inject-log.sh [--host <hostname>]
 
-:Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+:Note:	[--host <hostname>] is not available for a *Local Reactor*.
 
 On Windows::
 
-	~SDK> bin\inject-data
+	~SDK> bin\inject-data.bat
 
 Running the MapReduce Job
 .........................
@@ -264,11 +267,11 @@ Stopping the Application
 Either:
 
 - On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
-- Run ``$ ./bin/appManager.sh --action stop [--gateway <hostname>]``
+- Run ``$ ./bin/app-manager.sh --action stop [--host <hostname>]``
 
-  :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+  :Note:	[--host <hostname>] is not available for a *Local Reactor*.
 
-  On Windows, run ``~SDK> bin\appManager stop``
+  On Windows, run ``~SDK> bin\app-manager.bat stop``
 
 
 Downloading the Example

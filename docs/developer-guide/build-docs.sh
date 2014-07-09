@@ -46,7 +46,7 @@ fi
 REACTOR_JAVADOCS="$REACTOR_PATH/continuuity-api/target/site/apidocs"
 
 ZIP_FILE_NAME=$HTML
-ZIP_FILE="$ZIP_FILE_NAME.zip"
+ZIP="$ZIP_FILE_NAME.zip"
 STAGING_SERVER="stg-web101.sw.joyent.continuuity.net"
 
 function usage() {
@@ -65,7 +65,7 @@ function usage() {
   echo "    pdf-install  Clean build of Install Guide PDF"
   echo "    login        Logs you into $STAGING_SERVER"
   echo "    reactor      Path to Reactor source for javadocs, if not $REACTOR_PATH"
-  echo "    zip          Zips docs into $ZIP_FILE"
+  echo "    zip          Zips docs into $ZIP"
   echo "  or "
   echo "    depends      Build Site listing dependencies"  
   echo "    sdk          Build SDK"  
@@ -121,16 +121,16 @@ function make_zip() {
 
 function stage_docs() {
   echo "Deploying..."
-  echo "rsync -vz $SCRIPT_PATH/$BUILD/$ZIP_FILE \"$USER@$STAGING_SERVER:$ZIP_FILE\""
-  rsync -vz $SCRIPT_PATH/$BUILD/$ZIP_FILE "$USER@$STAGING_SERVER:$ZIP_FILE"
+  echo "rsync -vz $SCRIPT_PATH/$BUILD/$ZIP \"$USER@$STAGING_SERVER:$ZIP\""
+  rsync -vz $SCRIPT_PATH/$BUILD/$ZIP "$USER@$STAGING_SERVER:$ZIP"
   version
   echo ""
   echo "To install on server:"
   echo "cd /var/www/reactor; ls"
   echo "sudo rm -rf $reactor_version; ls"
-  echo "sudo unzip ~/$ZIP_FILE; sudo mv $HTML $reactor_version"
+  echo "sudo unzip ~/$ZIP; sudo mv $HTML $reactor_version; ls"
   echo "or"
-  echo "cd /var/www/reactor; ls; sudo rm -rf $reactor_version; sudo unzip ~/$ZIP_FILE; sudo mv $HTML $reactor_version"
+  echo "cd /var/www/reactor; ls; sudo rm -rf $reactor_version; sudo unzip ~/$ZIP; sudo mv $HTML $reactor_version; ls"
   echo ""
   login_staging_server
 }
@@ -144,14 +144,13 @@ function login_staging_server() {
 function build() {
    build_docs
    build_javadocs
-   build_pdf_rest
-   build_pdf_install
    copy_javadocs
    copy_license_pdfs
    make_zip
 }
 
 function build_sdk() {
+  build_pdf_rest
   cd $REACTOR_PATH
   mvn clean package -DskipTests -P examples && mvn package -pl singlenode -am -DskipTests -P dist,release
 }
