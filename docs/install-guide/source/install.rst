@@ -476,7 +476,10 @@ messages in the logs.
 By default, the buffer keeps 8 seconds of logs in memory and the Log Saver process is limited to 1GB of
 memory. When it's expected that logs exceeding these settings will be produced, change the defaults by
 adjusting the settings of ``log.saver.event.processing.delay.ms`` and ``log.saver.run.memory.megs`` in
-``continuuity-site.xml``. 
+``continuuity-site.xml``.
+
+The number of Log Saver instances can be increased using ``log.saver.num.instances``  in
+``continuuity-site.xml``.
 
 Note that it is recommended that ``log.saver.event.processing.delay.ms`` always be kept greater than
 ``log.saver.event.bucket.interval.ms`` by at least a few hundred (300-500) milliseconds.
@@ -701,7 +704,7 @@ see the online document `Reactor Security Guide
      - Logging service account
    * - ``log.saver.event.bucket.interval.ms``
      - ``4000``
-     - Size of log buckets in milliseconds 
+     - Log events published in this interval (in milliseconds) will be processed in a batch
    * - ``log.saver.event.processing.delay.ms``
      - ``8000``
      - Buffer log events in memory for given time, in milliseconds
