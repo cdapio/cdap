@@ -164,7 +164,7 @@ Command line tools are also available to deploy and manage apps. From within the
 On Windows:
 
 #. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy`` or drag and drop the
-   Application .JAR file (``target/ResponseCodeAnalytics-...jar`` onto your browser window.
+   Application .JAR file (``target/ResponseCodeAnalytics-<version>.jar`` onto your browser window.
    (Currently, the *Load App* button does not work under Windows.)
 #. To start the App, run ``~SDK> bin\app-manager.bat start``
 

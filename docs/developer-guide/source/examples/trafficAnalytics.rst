@@ -178,14 +178,14 @@ On Windows::
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
-#. Drag and drop the Application .JAR file (``target/TrafficAnalytics-...jar``) onto your browser window.
+#. Drag and drop the Application .JAR file (``target/TrafficAnalytics-<version>.jar``) onto your browser window.
    Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
 #. Once loaded, select the ``TrafficAnalytics`` Application from the list.
    On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
 	
 Command line tools are also available to deploy and manage apps. From within the project root:
 
-#. To deploy the Application JAR file, run ``$ bin/app-manager.sh --action deploy --host <hostname>``
+#. To deploy the Application JAR file, run ``$ bin/app-manager.sh --action deploy [--host <hostname>]``
 #. To start the Application, run ``$ bin/app-manager.sh --action start [--host <hostname>]``
 
 :Note:	[--host <hostname>] is not available for a *Local Reactor*.
@@ -193,7 +193,7 @@ Command line tools are also available to deploy and manage apps. From within the
 On Windows:
 
 #. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy`` or drag and drop the
-   Application .JAR file (``target/TrafficAnalytics-...jar`` onto your browser window.
+   Application .JAR file (``target/TrafficAnalytics-<version>.jar`` onto your browser window.
    (Currently, the *Load App* button does not work under Windows.)
 #. To start the App, run ``~SDK> bin\app-manager.bat start``
 

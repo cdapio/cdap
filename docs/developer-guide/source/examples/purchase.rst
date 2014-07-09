@@ -140,7 +140,7 @@ On Windows::
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
-#. Drag and drop the Application .JAR file (``target/Purchase-...jar``)
+#. Drag and drop the Application .JAR file (``target/Purchase-<version>.jar``)
    onto your browser window.
    Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
 #. Once loaded, select the ``Purchase`` Application from the list.
@@ -150,7 +150,7 @@ From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://l
 On Windows:
 
 #. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy`` or drag and drop the
-   Application .JAR file (``target/Purchase-...jar`` onto your browser window.
+   Application .JAR file (``target/Purchase-<version>.jar`` onto your browser window.
    (Currently, the *Load App* button does not work under Windows.)
 #. To start the App, run ``~SDK> bin\app-manager.bat start``
 
