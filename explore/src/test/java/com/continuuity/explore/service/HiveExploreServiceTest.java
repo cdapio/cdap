@@ -200,8 +200,8 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
       Assert.assertNotNull(table);
       table.startTx(tx1);
 
-      KeyValue.Value value1 = new KeyValue.Value("two", Lists.newArrayList(10, 11, 12, 13, 14));
-      KeyValue.Value value2 = new KeyValue.Value("third", Lists.newArrayList(10, 11, 12, 13, 14));
+      KeyValue.Value value1 = new KeyValue.Value("two", Lists.newArrayList(20, 21, 22, 23, 24));
+      KeyValue.Value value2 = new KeyValue.Value("third", Lists.newArrayList(30, 31, 32, 33, 34));
       table.put("2", value1);
       table.put("3", value2);
       Assert.assertEquals(value1, table.get("2"));
@@ -225,18 +225,55 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                    new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
       );
 
-//      runCommand("select my_table.key,my_table.value,my_table_1.key,my_table_1.value from " +
-//                   "my_table " +
-//                   "right outer join my_table_1 on (my_table.key=my_table_1.key)",
-//                 true,
-//                 Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null),
-//                                    new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null),
-//                                    new ColumnDesc("my_table_1.key", "STRING", 3, null),
-//                                    new ColumnDesc("my_table_1.value",
-//                                                   "struct<name:string,ints:array<int>>", 4, null)),
-//                 Lists.newArrayList(
-//                   new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
-//      );
+      runCommand("select my_table.key, my_table.value, my_table_1.key, my_table_1.value from " +
+                   "my_table " +
+                   "right outer join my_table_1 on (my_table.key=my_table_1.key)",
+                 true,
+                 Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null),
+                                    new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null),
+                                    new ColumnDesc("my_table_1.key", "STRING", 3, null),
+                                    new ColumnDesc("my_table_1.value",
+                                                   "struct<name:string,ints:array<int>>", 4, null)),
+                 Lists.newArrayList(
+                   new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
+                                                         "2", "{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")),
+                   new Result(Lists.<Object>newArrayList(null, null, "3",
+                                                         "{\"name\":\"third\",\"ints\":[30,31,32,33,34]}")))
+      );
+
+      runCommand("select my_table.key, my_table.value, my_table_1.key, my_table_1.value from " +
+                   "my_table " +
+                   "left outer join my_table_1 on (my_table.key=my_table_1.key)",
+                 true,
+                 Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null),
+                                    new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null),
+                                    new ColumnDesc("my_table_1.key", "STRING", 3, null),
+                                    new ColumnDesc("my_table_1.value",
+                                                   "struct<name:string,ints:array<int>>", 4, null)),
+                 Lists.newArrayList(
+                   new Result(Lists.<Object>newArrayList("1",
+                                                         "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}", null, null)),
+                   new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
+                                                         "2", "{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")))
+      );
+
+      runCommand("select my_table.key, my_table.value, my_table_1.key, my_table_1.value from " +
+                   "my_table " +
+                   "full outer join my_table_1 on (my_table.key=my_table_1.key)",
+                 true,
+                 Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null),
+                                    new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null),
+                                    new ColumnDesc("my_table_1.key", "STRING", 3, null),
+                                    new ColumnDesc("my_table_1.value",
+                                                   "struct<name:string,ints:array<int>>", 4, null)),
+                 Lists.newArrayList(
+                   new Result(Lists.<Object>newArrayList("1",
+                                                         "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}", null, null)),
+                   new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
+                                                         "2", "{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")),
+                   new Result(Lists.<Object>newArrayList(null, null, "3",
+                                                         "{\"name\":\"third\",\"ints\":[30,31,32,33,34]}")))
+      );
     } finally {
       datasetFramework.deleteInstance("my_table_1");
     }
