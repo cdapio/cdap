@@ -84,7 +84,7 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
     HTable hTable = new HTable(hConf, hBaseTableName);
     hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
-    return new HBaseStreamFileConsumer(streamConfig, consumerConfig, hTable, reader,
+    return new HBaseStreamFileConsumer(cConf, streamConfig, consumerConfig, hTable, reader,
                                        stateStore, beginConsumerState, extraFilter,
                                        HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR);
   }
