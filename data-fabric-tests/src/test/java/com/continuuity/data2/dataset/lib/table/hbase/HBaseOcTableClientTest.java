@@ -21,6 +21,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +33,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Category(SlowTests.class)
 public class HBaseOcTableClientTest extends BufferingOcTableClientTest<HBaseOcTableClient> {
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseOcTableClientTest.class);
   private static HBaseTestBase testHBase;
 
   @BeforeClass
@@ -81,6 +84,7 @@ public class HBaseOcTableClientTest extends BufferingOcTableClientTest<HBaseOcTa
     table.commitTx();
 
     // now, we should not see first as it should have expired, but see the last one
+    LOG.info("Checking write hiding due to TTL");
     tx = txSystemClient.startShort();
     table.startTx(tx);
     Assert.assertNull(table.get(b("row1"), b("col1")));
