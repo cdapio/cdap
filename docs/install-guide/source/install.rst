@@ -461,11 +461,23 @@ Only the First Flowlet Showing Activity
 ---------------------------------------
 Check that YARN has the capacity to start any of the remaining containers.
  
- 
 YARN Application Shows ACCEPTED For Some Time But Then Fails
 ------------------------------------------------------------
 It's possible that YARN can't extract the .JARs to the ``/tmp``,
 either due to a lack of disk space or permissions.
+
+Log Saver Process Throws an Out-of-Memory Error, Reactor Dashboard Unresponsive
+-------------------------------------------------------------------------------
+The Continuuity Reactor Log Saver uses an internal buffer that may overflow and result in Out-of-Memory
+Errors when applications create excessive amounts of logs. One symptom of this is that the Reactor
+Dashboard becomes unresponsive, in addition to seeing error messages in the logs.
+
+By default, the buffer keeps 8 seconds of logs in memory and the Log Saver process is limited to 1GB of
+memory. When it's expected that logs exceeding these settings will be produced, change the defaults by
+adjusting the settings of ``log.saver.event.processing.delay.ms`` (down) and ``log.saver.run.memory.megs`` (up) in ``continuuity-site.xml``. 
+
+Note that it is recommended that ``log.saver.event.processing.delay.ms`` always be kept greater than
+``log.saver.event.bucket.interval.ms`` by at least a few hundred (300-500) milliseconds.
 
 .. rst2pdf: CutStart
 
@@ -685,9 +697,18 @@ see the online document `Reactor Security Guide
    * - ``log.run.account``
      - ``continuuity``
      - Logging service account
+   * - ``log.saver.event.bucket.interval.ms``
+     - ``4000``
+     - Size of log buckets in milliseconds 
+   * - ``log.saver.event.processing.delay.ms``
+     - ``8000``
+     - Size of memory buffer of logs in milliseconds
    * - ``log.saver.num.instances``
      - ``1``
-     - Log saver instances to run in YARN
+     - Log Saver instances to run in YARN
+   * - ``log.saver.run.memory.megs``
+     - ``1024``
+     - Memory in MB allocated to the Log Saver process
    * - ``metadata.bind.address``
      - ``127.0.0.1``
      - Metadata server address
