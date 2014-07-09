@@ -274,6 +274,9 @@ public class ReactorServiceMain extends DaemonMain {
     configKeys.put(Constants.Service.DATASET_EXECUTOR,
                    ImmutableMap.of("default", Constants.Dataset.Executor.CONTAINER_INSTANCES,
                                    "max", Constants.Dataset.Executor.MAX_INSTANCES));
+    configKeys.put(Constants.Service.EXPLORE_HTTP_USER_SERVICE,
+                   ImmutableMap.of("default", Constants.Explore.CONTAINER_INSTANCES,
+                                   "max", Constants.Explore.MAX_INSTANCES));
     return configKeys;
   }
 
