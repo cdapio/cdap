@@ -65,7 +65,7 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
 
     LevelDBOcTableCore tableCore = new LevelDBOcTableCore(tableName, tableService);
     Object dbLock = getDBLock(tableName);
-    return new LevelDBStreamFileConsumer(streamConfig, consumerConfig, reader,
+    return new LevelDBStreamFileConsumer(cConf, streamConfig, consumerConfig, reader,
                                          stateStore, beginConsumerState, extraFilter,
                                          tableCore, dbLock);
   }
