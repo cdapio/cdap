@@ -18,6 +18,6 @@ public class GSFlowletBasic extends AbstractGSFlowlet {
       .field("iStream", PrimitiveType.UINT)
       .build();
     addGDATInput("intInput", schema);
-    addGSQL("sumOut", "SELECT timestamp, SUM(iStream) as sum FROM intInput GROUP BY timestamp");
+    addGSQL("sumOut", "SELECT timestamp, SUM(iStream) as summation FROM intInput GROUP BY timestamp");
   }
 }
