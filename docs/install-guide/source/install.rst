@@ -461,11 +461,34 @@ Only the First Flowlet Showing Activity
 ---------------------------------------
 Check that YARN has the capacity to start any of the remaining containers.
  
- 
 YARN Application Shows ACCEPTED For Some Time But Then Fails
 ------------------------------------------------------------
 It's possible that YARN can't extract the .JARs to the ``/tmp``,
 either due to a lack of disk space or permissions.
+
+Log Saver Process Throws an Out-of-Memory Error, Reactor Dashboard Shows Service Not OK
+---------------------------------------------------------------------------------------
+The Continuuity Reactor Log Saver uses an internal buffer that may overflow and result in Out-of-Memory
+Errors when applications create excessive amounts of logs. One symptom of this is that the Reactor
+Dashboard *Services Explorer* shows the ``log.saver`` Service as not OK, in addition to seeing error
+messages in the logs.
+
+By default, the buffer keeps 8 seconds of logs in memory and the Log Saver process is limited to 1GB of
+memory. When it's expected that logs exceeding these settings will be produced, increase the memory
+allocated to the Log Saver or increase the number of Log Saver instances. If the cluster has limited
+memory or containers available, you can choose instead to decrease the duration of logs buffered in
+memory. However, decreasing the buffer duration may lead to out-of-order log events. 
+
+In the ``continuuity-site.xml``, you can:
+
+- Increase the memory by adjusting ``log.saver.run.memory.megs``; 
+- Increase the number of Log Saver instances using ``log.saver.num.instances``; and
+- Adjust the duration of logs with ``log.saver.event.processing.delay.ms``.
+
+Note that it is recommended that ``log.saver.event.processing.delay.ms`` always be kept greater than
+``log.saver.event.bucket.interval.ms`` by at least a few hundred (300-500) milliseconds.
+
+See the ``log.saver`` parameter section of the `Appendix <#appendix>`__ for a list of these configuration parameters and their values that can be adjusted.
 
 .. rst2pdf: CutStart
 
@@ -685,9 +708,21 @@ see the online document `Reactor Security Guide
    * - ``log.run.account``
      - ``continuuity``
      - Logging service account
+   * - ``log.saver.event.bucket.interval.ms``
+     - ``4000``
+     - Log events published in this interval (in milliseconds) will be processed in a batch.
+       Smaller values will increase the odds of log events going out-of-order.
+   * - ``log.saver.event.processing.delay.ms``
+     - ``8000``
+     - Buffer log events in memory for given time, in milliseconds. Log events received after 
+       this delay will show up out-of-order. This needs to be greater than
+       ``log.saver.event.bucket.interval.ms`` by at least a few hundred milliseconds.
    * - ``log.saver.num.instances``
      - ``1``
-     - Log saver instances to run in YARN
+     - Log Saver instances to run in YARN
+   * - ``log.saver.run.memory.megs``
+     - ``1024``
+     - Memory in MB allocated to the Log Saver process
    * - ``metadata.bind.address``
      - ``127.0.0.1``
      - Metadata server address
@@ -754,7 +789,8 @@ see the online document `Reactor Security Guide
    * - ``security.authentication.loginmodule.className``
      - 
      - JAAS LoginModule implementation to use when
-       ``com.continuuity.security.server.JAASAuthenticationHandler`` is configured for ``security.authentication.handlerClassName``
+       ``com.continuuity.security.server.JAASAuthenticationHandler`` is configured for 
+       ``security.authentication.handlerClassName``
    * - ``security.data.keyfile.path``
      - ``${local.data.dir}/security/keyfile``
      - Path to the secret key file (only used in single-node operation)
