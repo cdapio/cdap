@@ -227,7 +227,7 @@ public abstract class OrderedTableConcurrentTest<T extends OrderedTable>
   /**
    * tests that creating a table concurrently from two different clients does not fail.
    */
-  @Test(timeout = 6000) // table create wait time is 5 sec
+  @Test(timeout = 20000) // table create wait time is 5 sec
   public void testConcurrentCreate() throws Exception {
     AtomicBoolean success1 = new AtomicBoolean(false);
     AtomicBoolean success2 = new AtomicBoolean(false);

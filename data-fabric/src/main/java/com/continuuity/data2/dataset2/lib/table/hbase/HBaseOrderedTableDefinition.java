@@ -3,8 +3,10 @@ package com.continuuity.data2.dataset2.lib.table.hbase;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
-import com.continuuity.api.dataset.table.ConflictDetection;
+import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data2.dataset.lib.table.ConflictDetection;
+import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableClient;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -16,7 +18,7 @@ import java.io.IOException;
  *
  */
 public class HBaseOrderedTableDefinition
-  extends AbstractDatasetDefinition<HBaseOrderedTable, HBaseOrderedTableAdmin> {
+  extends AbstractDatasetDefinition<OrderedTable, HBaseOrderedTableAdmin> {
 
   @Inject
   private Configuration hConf;
@@ -40,12 +42,12 @@ public class HBaseOrderedTableDefinition
   }
 
   @Override
-  public HBaseOrderedTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public OrderedTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     // -1 means no purging, keep data "forever"
     Integer ttl = Integer.valueOf(spec.getProperty("ttl", "-1"));
-    return new HBaseOrderedTable(spec.getName(), hConf, conflictDetection, ttl);
+    return new HBaseOcTableClient(spec.getName(), conflictDetection, ttl, hConf);
   }
 
   @Override

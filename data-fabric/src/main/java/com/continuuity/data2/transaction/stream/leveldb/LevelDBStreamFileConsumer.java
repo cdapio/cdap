@@ -4,12 +4,12 @@
 package com.continuuity.data2.transaction.stream.leveldb;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.data.file.FileReader;
 import com.continuuity.data.file.ReadFilter;
 import com.continuuity.data.stream.StreamEventOffset;
 import com.continuuity.data.stream.StreamFileOffset;
-import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.leveldb.KeyValue;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
 import com.continuuity.data2.queue.ConsumerConfig;
@@ -103,7 +103,7 @@ public final class LevelDBStreamFileConsumer extends AbstractStreamFileConsumer 
     final Scanner scanner = tableCore.scan(startRow, stopRow, null, null, Transaction.ALL_VISIBLE_LATEST);
     return new StateScanner() {
 
-      private ImmutablePair<byte[], Map<byte[], byte[]>> pair;
+      private Row pair;
 
       @Override
       public boolean nextStateRow() throws IOException {
@@ -113,12 +113,12 @@ public final class LevelDBStreamFileConsumer extends AbstractStreamFileConsumer 
 
       @Override
       public byte[] getRow() {
-        return pair.getFirst();
+        return pair.getRow();
       }
 
       @Override
       public byte[] getState() {
-        return pair.getSecond().get(stateColumnName);
+        return pair.getColumns().get(stateColumnName);
       }
 
       @Override

@@ -19,7 +19,6 @@ import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.TypeRepresentation;
-
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;

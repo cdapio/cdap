@@ -8,6 +8,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
+import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableClient;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.dataset2.lib.table.BufferingOrederedTableTest;
 import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
@@ -24,7 +25,7 @@ import java.io.IOException;
 /**
  * test for LevelDB tables.
  */
-public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBOrderedTable> {
+public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBOcTableClient> {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -45,8 +46,10 @@ public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBO
   }
 
   @Override
-  protected LevelDBOrderedTable getTable(String name, ConflictDetection level) throws IOException {
-    return new LevelDBOrderedTable(name, service, level);
+  protected LevelDBOcTableClient getTable(String name, ConflictDetection level) throws IOException {
+    return new LevelDBOcTableClient(name,
+                                    com.continuuity.data2.dataset.lib.table.ConflictDetection.valueOf(level.name()),
+                                    service);
   }
 
   @Override

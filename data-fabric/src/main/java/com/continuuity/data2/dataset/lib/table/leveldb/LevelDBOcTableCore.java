@@ -1,9 +1,11 @@
 package com.continuuity.data2.dataset.lib.table.leveldb;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
+import com.continuuity.data2.dataset2.lib.table.Result;
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -339,14 +341,14 @@ public class LevelDBOcTableCore {
     seekToStart(deleteIterator, startRow);
     final int deletesPerRound = 1024; // todo make configurable
     try {
-      ImmutablePair<byte[], Map<byte[], byte[]>> rowValues;
+      Row rowValues;
       WriteBatch batch = db.createWriteBatch();
       int deletesInBatch = 0;
 
       // go through all matching cells and delete them in batches.
       while ((rowValues = scanner.next()) != null) {
-        byte[] row = rowValues.getFirst();
-        for (byte[] column : rowValues.getSecond().keySet()) {
+        byte[] row = rowValues.getRow();
+        for (byte[] column : rowValues.getColumns().keySet()) {
           addToDeleteBatch(batch, deleteIterator, row, column);
           deletesInBatch++;
 
@@ -439,7 +441,7 @@ public class LevelDBOcTableCore {
     }
 
     @Override
-    public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
+    public Row next() {
       try {
         while (true) {
           ImmutablePair<byte[], NavigableMap<byte[], byte[]>> result = getRow(iterator, endKey, tx, true, columns, -1);
@@ -464,7 +466,7 @@ public class LevelDBOcTableCore {
               }
             }
           }
-          return ImmutablePair.of(result.getFirst(), (Map<byte[], byte[]>) result.getSecond());
+          return new Result(result.getFirst(), result.getSecond());
         }
       } catch (Exception e) {
         throw Throwables.propagate(e);

@@ -1,8 +1,8 @@
 package com.continuuity.data2.transaction.queue.leveldb;
 
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
@@ -58,14 +58,14 @@ public class LevelDBQueueEvictor implements QueueEvictor {
 
   private synchronized int doEvict(Transaction transaction) throws IOException {
     final byte[] stopRow = QueueEntryRow.getStopRowForTransaction(queueRowPrefix, transaction);
-    ImmutablePair<byte[], Map<byte[], byte[]>> row;
+    Row row;
     List<byte[]> rowsToDelete = Lists.newArrayList();
     // the scan must be non-transactional in order to see the state columns (which have latest timestamp)
     Scanner scanner = core.scan(queueRowPrefix, stopRow, null, null, Transaction.ALL_VISIBLE_LATEST);
     try {
       while ((row = scanner.next()) != null) {
         int processed = 0;
-        for (Map.Entry<byte[], byte[]> entry : row.getSecond().entrySet()) {
+        for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
           // is it a state column for a consumer instance?
           if (!QueueEntryRow.isStateColumn(entry.getKey())) {
             continue;
@@ -76,7 +76,7 @@ public class LevelDBQueueEvictor implements QueueEvictor {
           }
         }
         if (processed >= numGroups) {
-          rowsToDelete.add(row.getFirst());
+          rowsToDelete.add(row.getRow());
         }
       }
     } finally {

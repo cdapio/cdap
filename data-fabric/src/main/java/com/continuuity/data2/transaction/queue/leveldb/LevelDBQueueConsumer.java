@@ -4,9 +4,10 @@
 package com.continuuity.data2.transaction.queue.leveldb;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.leveldb.KeyValue;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
 import com.continuuity.data2.queue.ConsumerConfig;
@@ -136,7 +137,8 @@ public final class LevelDBQueueConsumer extends AbstractQueueConsumer {
     return new QueueScanner() {
       @Override
       public ImmutablePair<byte[], Map<byte[], byte[]>> next() throws IOException {
-        return scanner.next();
+        Row next = scanner.next();
+        return new ImmutablePair<byte[], Map<byte[], byte[]>>(next.getRow(), next.getColumns());
       }
 
       @Override

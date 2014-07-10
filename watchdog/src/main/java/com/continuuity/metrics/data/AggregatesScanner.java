@@ -1,8 +1,8 @@
 package com.continuuity.metrics.data;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.table.Scanner;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.metrics.MetricsConstants;
 import com.google.common.collect.AbstractIterator;
 
@@ -76,10 +76,10 @@ public class AggregatesScanner implements Iterator<AggregatesScanResult> {
         }
 
         // If either no row has been scanned or already exhausted all columns from previous scan, find the next row.
-        ImmutablePair<byte[], Map<byte[], byte[]>> rowResult;
+        Row rowResult;
         while ((rowResult = scanner.next()) != null) {
           rowScanned++;
-          byte[] rowKey = rowResult.getFirst();
+          byte[] rowKey = rowResult.getRow();
 
           // Decode context and metric from key
           int offset = 0;
@@ -100,7 +100,7 @@ public class AggregatesScanner implements Iterator<AggregatesScanResult> {
             continue;
           }
 
-          currentTag = rowResult.getSecond().entrySet().iterator();
+          currentTag = rowResult.getColumns().entrySet().iterator();
           result = findNextResult();
           if (result != null) {
             return result;

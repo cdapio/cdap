@@ -48,7 +48,7 @@ import javax.annotation.Nullable;
  */
 // todo: return immutable maps?
 public abstract class BufferingOrderedTable extends AbstractOrderedTable
-                                             implements TransactionAware, MeteredDataset {
+                                            implements TransactionAware, MeteredDataset {
   protected static final byte[] DELETE_MARKER = new byte[0];
 
   // name
@@ -151,7 +151,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable
    * NOTE: persisted store can also be in-memory, it is called "persisted" to distinguish from in-memory buffer.
    * @param startRow key of the first row in a range, inclusive
    * @param stopRow key of the last row in a range, exclusive
-   * @return instance of {@link com.continuuity.data.table.Scanner}, never null
+   * @return instance of {@link Scanner}, never null
    * @throws Exception
    */
   protected abstract Scanner scanPersisted(byte[] startRow, byte[] stopRow) throws Exception;

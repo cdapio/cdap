@@ -2,8 +2,9 @@ package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.Split;
+import com.continuuity.api.dataset.metrics.MeteredDataset;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.data.table.RuntimeTable;
-import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -46,7 +47,7 @@ import javax.annotation.Nullable;
  */
 // todo: return immutable maps?
 public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTable
-                                             implements DataSetClient, TransactionAware {
+                                             implements DataSetClient, TransactionAware, MeteredDataset {
   protected static final byte[] DELETE_MARKER = new byte[0];
 
   // name of the table
@@ -65,6 +66,9 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
 
   // Report data ops metrics to
   private DataOpsMetrics dataOpsMetrics;
+
+  // Report data ops metrics to
+  private MetricsCollector metricsCollector;
 
   /**
    * Creates an instance of {@link BufferingOcTableClient}.
@@ -172,6 +176,11 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
   @Override
   public void setMetricsCollector(DataOpsMetrics dataOpsMetrics) {
     this.dataOpsMetrics = dataOpsMetrics;
+  }
+
+  @Override
+  public void setMetricsCollector(MetricsCollector metricsCollector) {
+    this.metricsCollector = metricsCollector;
   }
 
   @Override
@@ -646,11 +655,18 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
     if (dataOpsMetrics != null) {
       dataOpsMetrics.recordWrite(numOps, dataSize);
     }
+    if (metricsCollector != null) {
+      metricsCollector.recordWrite(numOps, dataSize);
+    }
   }
 
   private void reportRead(int numOps) {
     if (dataOpsMetrics != null) {
       dataOpsMetrics.recordRead(numOps);
+    }
+    if (metricsCollector != null) {
+      // todo: report amount of data being read
+      metricsCollector.recordRead(numOps, 0);
     }
   }
 

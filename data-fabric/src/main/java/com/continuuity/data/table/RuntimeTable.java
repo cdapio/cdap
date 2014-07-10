@@ -13,7 +13,6 @@ import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Scanner;
 import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
@@ -345,7 +344,7 @@ public class RuntimeTable extends Table {
   public class TableScanner extends SplitReader<byte[], Row> {
 
     // the underlying scanner
-    private com.continuuity.data.table.Scanner scanner;
+    private com.continuuity.api.dataset.table.Scanner scanner;
     // the current key
     private byte[] key = null;
     // the current row, that is, a map from column key to value
@@ -365,14 +364,14 @@ public class RuntimeTable extends Table {
     @Override
     public boolean nextKeyValue() throws InterruptedException {
       // call the underlying scanner, and depending on whether there it returns something, set current key and row.
-      ImmutablePair<byte[], Map<byte[], byte[]>> next = this.scanner.next();
+      com.continuuity.api.dataset.table.Row next = this.scanner.next();
       if (next == null) {
         this.key = null;
         this.row = null;
         return false;
       } else {
-        this.key = next.getFirst();
-        this.row = next.getSecond();
+        this.key = next.getRow();
+        this.row = next.getColumns();
         return true;
       }
     }
@@ -395,16 +394,16 @@ public class RuntimeTable extends Table {
 
   // NOTE: we want this because we don't want to expose internal Scanner. This will change with Table API refactoring
   private static class ScannerAdapter implements Scanner {
-    private final com.continuuity.data.table.Scanner delegate;
+    private final com.continuuity.api.dataset.table.Scanner delegate;
 
-    private ScannerAdapter(com.continuuity.data.table.Scanner delegate) {
+    private ScannerAdapter(com.continuuity.api.dataset.table.Scanner delegate) {
       this.delegate = delegate;
     }
 
     @Override
     public Row next() {
-      ImmutablePair<byte[], Map<byte[], byte[]>> next = delegate.next();
-      return next == null ? null : new Result(next.getFirst(), next.getSecond());
+      com.continuuity.api.dataset.table.Row row = delegate.next();
+      return row == null ? null : new Result(row.getRow(), row.getColumns());
     }
 
     @Override

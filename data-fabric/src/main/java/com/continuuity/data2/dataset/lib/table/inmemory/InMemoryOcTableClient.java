@@ -1,7 +1,7 @@
 package com.continuuity.data2.dataset.lib.table.inmemory;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data.table.Scanner;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.dataset.lib.table.Update;

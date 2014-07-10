@@ -1,7 +1,7 @@
 package com.continuuity.data2.dataset.lib.table.hbase;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data.table.Scanner;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.dataset.lib.table.IncrementValue;
@@ -9,7 +9,6 @@ import com.continuuity.data2.dataset.lib.table.PutValue;
 import com.continuuity.data2.dataset.lib.table.Update;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionCodec;
-import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;

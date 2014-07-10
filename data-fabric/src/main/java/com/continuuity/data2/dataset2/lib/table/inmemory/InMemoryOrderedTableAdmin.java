@@ -1,6 +1,7 @@
 package com.continuuity.data2.dataset2.lib.table.inmemory;
 
 import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableService;
 
 import java.io.IOException;
 
@@ -16,22 +17,22 @@ public class InMemoryOrderedTableAdmin implements DatasetAdmin {
 
   @Override
   public boolean exists() {
-    return InMemoryOrderedTableService.exists(name);
+    return InMemoryOcTableService.exists(name);
   }
 
   @Override
   public void create() {
-    InMemoryOrderedTableService.create(name);
+    InMemoryOcTableService.create(name);
   }
 
   @Override
   public void truncate() {
-    InMemoryOrderedTableService.truncate(name);
+    InMemoryOcTableService.truncate(name);
   }
 
   @Override
   public void drop() {
-    InMemoryOrderedTableService.drop(name);
+    InMemoryOcTableService.drop(name);
   }
 
   @Override

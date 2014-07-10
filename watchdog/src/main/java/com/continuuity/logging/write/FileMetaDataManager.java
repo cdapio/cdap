@@ -5,9 +5,9 @@
 package com.continuuity.logging.write;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
@@ -112,12 +112,12 @@ public final class FileMetaDataManager {
         int deletedColumns = 0;
         Scanner scanner = metaTable.scan(ROW_KEY_PREFIX, ROW_KEY_PREFIX_END);
         try {
-          ImmutablePair<byte[], Map<byte[], byte[]>> row;
+          Row row;
           while ((row = scanner.next()) != null) {
-            byte [] rowKey = row.getFirst();
-            byte [] maxCol = getMaxKey(row.getSecond());
+            byte [] rowKey = row.getRow();
+            byte [] maxCol = getMaxKey(row.getColumns());
 
-            for (Map.Entry<byte[], byte[]> entry : row.getSecond().entrySet()) {
+            for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
               byte [] colName = entry.getKey();
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Got file {} with start time {}", Bytes.toString(entry.getValue()),

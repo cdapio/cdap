@@ -1,7 +1,7 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data.table.Scanner;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -67,10 +67,10 @@ public abstract class BufferingOcTableClientTest<T extends BufferingOcTableClien
   // middle. NOTE: We want to test how every implementation of BufferingOcTableClient handles undoing changes in this
   // case, otherwise we would just test the method of BufferingOcTableClient directly.
 
-  private static class BufferingOcTableWithPersistingFailure extends BufferingOcTableClient {
+  public static class BufferingOcTableWithPersistingFailure extends BufferingOcTableClient {
     private BufferingOcTableClient delegate;
 
-    private BufferingOcTableWithPersistingFailure(BufferingOcTableClient delegate) {
+    public BufferingOcTableWithPersistingFailure(BufferingOcTableClient delegate) {
       super(delegate.getTableName());
       this.delegate = delegate;
     }

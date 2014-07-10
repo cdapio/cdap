@@ -1,7 +1,7 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.data.batch.Split;
-import com.continuuity.data.table.Scanner;
+import com.continuuity.api.dataset.table.Scanner;
 
 import java.util.List;
 import java.util.Map;
