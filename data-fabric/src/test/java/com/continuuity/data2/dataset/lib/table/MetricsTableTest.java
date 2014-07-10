@@ -1,9 +1,10 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.table.Scanner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -283,14 +284,14 @@ public abstract class MetricsTableTest {
     Scanner scanner = table.scan(null, null, new byte[][] { A }, filter);
     int count = 0;
     while (true) {
-      ImmutablePair<byte[], Map<byte[], byte[]>> entry = scanner.next();
+      Row entry = scanner.next();
       if (entry == null) {
         break;
       }
-      Assert.assertTrue(entry.getFirst()[1] == 'b' && entry.getFirst()[3] == 'b');
-      Assert.assertEquals(1, entry.getSecond().size());
-      Assert.assertTrue(entry.getSecond().containsKey(A));
-      Assert.assertFalse(entry.getSecond().containsKey(B));
+      Assert.assertTrue(entry.getRow()[1] == 'b' && entry.getRow()[3] == 'b');
+      Assert.assertEquals(1, entry.getColumns().size());
+      Assert.assertTrue(entry.getColumns().containsKey(A));
+      Assert.assertFalse(entry.getColumns().containsKey(B));
       count++;
     }
     Assert.assertEquals(9, count);
@@ -325,18 +326,18 @@ public abstract class MetricsTableTest {
     Scanner scanner = table.scan(null, null, null, null);
     int count = 0;
     while (true) {
-      ImmutablePair<byte[], Map<byte[], byte[]>> entry = scanner.next();
+      Row entry = scanner.next();
       if (entry == null) {
         break;
       }
-      byte[] row = entry.getFirst();
+      byte[] row = entry.getRow();
       if (row[0] == 'a' && row[1] == 'b' && row[3] == 'b') {
-        Assert.assertFalse(entry.getSecond().containsKey(A));
-        Assert.assertEquals(1, entry.getSecond().size());
+        Assert.assertFalse(entry.getColumns().containsKey(A));
+        Assert.assertEquals(1, entry.getColumns().size());
       } else {
-        Assert.assertTrue(entry.getSecond().containsKey(A));
-        Assert.assertTrue(entry.getSecond().containsKey(B));
-        Assert.assertEquals(2, entry.getSecond().size());
+        Assert.assertTrue(entry.getColumns().containsKey(A));
+        Assert.assertTrue(entry.getColumns().containsKey(B));
+        Assert.assertEquals(2, entry.getColumns().size());
       }
       count++;
     }
@@ -370,17 +371,17 @@ public abstract class MetricsTableTest {
     Scanner scanner = table.scan(null, null, null, null);
     int count = 0;
     while (true) {
-      ImmutablePair<byte[], Map<byte[], byte[]>> entry = scanner.next();
+      Row entry = scanner.next();
       if (entry == null) {
         break;
       }
-      if (entry.getFirst()[0] == 'a') {
-        Assert.assertFalse(entry.getSecond().containsKey(A));
-        Assert.assertEquals(1, entry.getSecond().size());
+      if (entry.getRow()[0] == 'a') {
+        Assert.assertFalse(entry.getColumns().containsKey(A));
+        Assert.assertEquals(1, entry.getColumns().size());
       } else {
-        Assert.assertTrue(entry.getSecond().containsKey(A));
-        Assert.assertTrue(entry.getSecond().containsKey(B));
-        Assert.assertEquals(2, entry.getSecond().size());
+        Assert.assertTrue(entry.getColumns().containsKey(A));
+        Assert.assertTrue(entry.getColumns().containsKey(B));
+        Assert.assertEquals(2, entry.getColumns().size());
       }
       count++;
     }

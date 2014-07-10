@@ -4,9 +4,10 @@
 package com.continuuity.metrics.data;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
@@ -22,7 +23,6 @@ import com.google.common.collect.TreeBasedTable;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Table for storing time series metrics.
@@ -199,9 +199,9 @@ public final class TimeSeriesTable {
 
       // Loop through the scanner entries and collect rows to be deleted
       List<byte[]> rows = Lists.newArrayList();
-      ImmutablePair<byte[], Map<byte[], byte[]>> nextEntry;
+      Row nextEntry;
       while ((nextEntry = scanner.next()) != null) {
-        byte[] rowKey = nextEntry.getFirst();
+        byte[] rowKey = nextEntry.getRow();
 
         // Decode timestamp
         int offset = entityCodec.getEncodedSize(MetricsEntityType.CONTEXT) +

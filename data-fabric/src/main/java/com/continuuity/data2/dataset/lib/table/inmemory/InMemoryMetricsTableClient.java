@@ -1,9 +1,9 @@
 package com.continuuity.data2.dataset.lib.table.inmemory;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.OperationResult;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
@@ -80,10 +80,10 @@ public class InMemoryMetricsTableClient implements MetricsTable {
     Scanner scanner = this.scan(start, stop, columns, filter);
 
     try {
-      ImmutablePair<byte[], Map<byte[], byte[]>> rowValues;
+      Row rowValues;
       while ((rowValues = scanner.next()) != null) {
-        byte[] row = rowValues.getFirst();
-        for (byte[] column : rowValues.getSecond().keySet()) {
+        byte[] row = rowValues.getRow();
+        for (byte[] column : rowValues.getColumns().keySet()) {
           InMemoryOcTableService.deleteColumns(tableName, row, column);
         }
       }

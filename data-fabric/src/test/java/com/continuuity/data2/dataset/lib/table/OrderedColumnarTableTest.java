@@ -1,8 +1,8 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.table.Scanner;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.data2.OperationResult;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.transaction.Transaction;
@@ -1228,10 +1228,10 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
 
   void verify(byte[][] expectedRows, byte[][][] expectedRowMaps, Scanner scan) {
     for (int i = 0; i < expectedRows.length; i++) {
-      ImmutablePair<byte[], Map<byte[], byte[]>> next = scan.next();
+      Row next = scan.next();
       Assert.assertNotNull("Missing result for row: " + Bytes.toStringBinary(expectedRows[i]), next);
-      Assert.assertArrayEquals(expectedRows[i], next.getFirst());
-      verify(expectedRowMaps[i], next.getSecond());
+      Assert.assertArrayEquals(expectedRows[i], next.getRow());
+      verify(expectedRowMaps[i], next.getColumns());
     }
 
     // nothing is left in scan

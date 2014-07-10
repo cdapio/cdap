@@ -7,6 +7,7 @@ import com.continuuity.api.dataset.table.ConflictDetection;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
+import com.continuuity.data2.dataset.lib.table.BufferingOcTableClient;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableClient;
 import com.continuuity.data2.dataset2.lib.table.BufferingOrederedTableTest;
 import com.continuuity.data2.transaction.Transaction;
@@ -37,7 +38,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 @Category(SlowTests.class)
-public class HBaseOrderedTableTest extends BufferingOrederedTableTest<HBaseOrderedTable> {
+public class HBaseOrderedTableTest extends BufferingOrederedTableTest<BufferingOcTableClient> {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseOrderedTableTest.class);
 
   @ClassRule
@@ -58,9 +59,12 @@ public class HBaseOrderedTableTest extends BufferingOrederedTableTest<HBaseOrder
   }
 
   @Override
-  protected HBaseOrderedTable getTable(String name, ConflictDetection conflictLevel) throws Exception {
+  protected BufferingOcTableClient getTable(String name, ConflictDetection conflictLevel) throws Exception {
     // ttl=-1 means "keep data forever"
-    return new HBaseOrderedTable(name, testHBase.getConfiguration(), conflictLevel, -1);
+    return
+      new HBaseOcTableClient(name,
+                             com.continuuity.data2.dataset.lib.table.ConflictDetection.valueOf(conflictLevel.name()),
+                             -1, testHBase.getConfiguration());
   }
 
   @Override
@@ -81,7 +85,9 @@ public class HBaseOrderedTableTest extends BufferingOrederedTableTest<HBaseOrder
     int ttl = 1000;
     DatasetProperties props = DatasetProperties.builder().add(TxConstants.PROPERTY_TTL, String.valueOf(ttl)).build();
     getAdmin("ttl", props).create();
-    HBaseOrderedTable table = new HBaseOrderedTable("ttl", testHBase.getConfiguration(), ConflictDetection.ROW, ttl);
+    HBaseOcTableClient table = new HBaseOcTableClient("ttl",
+                                                      com.continuuity.data2.dataset.lib.table.ConflictDetection.ROW,
+                                                      ttl, testHBase.getConfiguration());
 
     DetachedTxSystemClient txSystemClient = new DetachedTxSystemClient();
     Transaction tx = txSystemClient.startShort();
@@ -109,7 +115,9 @@ public class HBaseOrderedTableTest extends BufferingOrederedTableTest<HBaseOrder
     // test a table with no TTL
     DatasetProperties props2 = DatasetProperties.builder().add(TxConstants.PROPERTY_TTL, String.valueOf(-1)).build();
     getAdmin("nottl", props2).create();
-    HBaseOrderedTable table2 = new HBaseOrderedTable("nottl", testHBase.getConfiguration(), ConflictDetection.ROW, -1);
+    HBaseOcTableClient table2 = new HBaseOcTableClient("nottl",
+                                                     com.continuuity.data2.dataset.lib.table.ConflictDetection.ROW, -1,
+                                                     testHBase.getConfiguration());
 
     tx = txSystemClient.startShort();
     table2.startTx(tx);

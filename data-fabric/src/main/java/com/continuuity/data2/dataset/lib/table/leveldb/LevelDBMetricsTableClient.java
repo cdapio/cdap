@@ -1,7 +1,7 @@
 package com.continuuity.data2.dataset.lib.table.leveldb;
 
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.OperationResult;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;

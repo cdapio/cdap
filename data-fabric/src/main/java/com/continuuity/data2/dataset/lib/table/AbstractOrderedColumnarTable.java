@@ -1,6 +1,7 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.table.OrderedTable;
 import com.google.common.collect.ImmutableSortedMap;
 
 import java.util.Map;
@@ -9,7 +10,7 @@ import java.util.NavigableMap;
 /**
  * Implements some of the methods in a generic way (not necessarily in most efficient way).
  */
-public abstract class AbstractOrderedColumnarTable implements OrderedColumnarTable {
+public abstract class AbstractOrderedColumnarTable implements OrderedColumnarTable, OrderedTable {
   // empty immutable row's column->value map constant
   // Using ImmutableSortedMap instead of Maps.unmodifiableNavigableMap to avoid conflicts with
   // Hadoop, which uses an older version of guava without that method.

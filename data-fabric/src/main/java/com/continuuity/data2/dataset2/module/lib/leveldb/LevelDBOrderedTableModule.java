@@ -3,7 +3,6 @@ package com.continuuity.data2.dataset2.module.lib.leveldb;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.OrderedTable;
-import com.continuuity.data2.dataset2.lib.table.leveldb.LevelDBOrderedTable;
 import com.continuuity.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableDefinition;
 
 /**

@@ -1,7 +1,6 @@
 package com.continuuity.data2.dataset.lib.table.inmemory;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.dataset.table.Increment;
 import com.continuuity.data2.dataset.lib.table.IncrementValue;
 import com.continuuity.data2.dataset.lib.table.PutValue;
 import com.continuuity.data2.dataset.lib.table.Update;
