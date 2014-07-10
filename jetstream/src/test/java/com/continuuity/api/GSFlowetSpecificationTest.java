@@ -23,6 +23,7 @@ public class GSFlowetSpecificationTest {
     flowlet.create(configurer);
     GSFlowletSpecification spec = configurer.createGSFlowletSpec();
     Assert.assertEquals(spec.getName(), "summation");
+    Assert.assertEquals(spec.getDescription(), "sums up the input value over a timewindow");
     Assert.assertEquals(spec.getInputSchema().size(), 1);
     Assert.assertTrue(spec.getInputSchema().containsKey("intInput"));
     GSSchema schema = spec.getInputSchema().get("intInput");
@@ -39,5 +40,19 @@ public class GSFlowetSpecificationTest {
       break;
     }
     Assert.assertEquals(spec.getGSQL().size(), 1);
+  }
+
+  @Test
+  public void testInvalidSchemaFlowlet() {
+    AbstractGSFlowlet flowlet = new InvalidGSFlowlet();
+    DefaultGSFlowletConfigurer configurer = new DefaultGSFlowletConfigurer(flowlet);
+    int testValue = 0;
+    try {
+      flowlet.create(configurer);
+    } catch (Exception e) {
+      testValue = 1;
+    } finally {
+      Assert.assertEquals(testValue, 1);
+    }
   }
 }
