@@ -45,7 +45,9 @@ public abstract class AbstractDistributedReactorServiceManager implements Reacto
     int instances = 0;
     if (twillControllerList != null) {
       for (TwillController twillController : twillControllerList) {
-        instances = twillController.getResourceReport().getRunnableResources(serviceName).size();
+        if (twillController.getResourceReport() != null) {
+          instances = twillController.getResourceReport().getRunnableResources(serviceName).size();
+        }
       }
     }
     return instances;
