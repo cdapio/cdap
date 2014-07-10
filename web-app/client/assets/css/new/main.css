@@ -1453,12 +1453,11 @@ span.service-icon {
   width: 32px;
   background-repeat: no-repeat;
   border: none !important;
-  float: right;
   display: inline-block;
 }
 
 span.service-icon.loading {
-  background-image: url('/assets/img/services-loading-darkBg.gif');
+  background-image: url('/assets/img/services-loading-blue.gif');
 }
 
 span.service-icon.complete {
@@ -1559,6 +1558,18 @@ span.service-icon.complete {
 #reactor-services .instance-wrapper div {
 	width: 65px;
 	float: left;
+}
+
+#reactor-services .services-loading, #reactor-services .services-running {
+	height: 32px;
+	width: 32px;
+}
+#reactor-services .services-loading {
+	background-image: url(../../img/services-loading-blue.gif);
+}
+
+#reactor-services .services-running {
+	background-image: url(../../img/ok-icon.png);
 }
 
 .instance-wrapper {

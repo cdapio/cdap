@@ -24,6 +24,7 @@ define([], function () {
       self.HTTP.rest('system/services', function (services) {
         var servicesArr = [];
         services.map(function(service) {
+          var imgSrc = service.status === 'OK' ? 'complete' : 'loading';
           servicesArr.push(C.Service.create({
             modelId: service.name,
             description: service.description,
@@ -43,7 +44,8 @@ define([], function () {
             logsStatusOk: !!(service.logs === 'OK'),
             logsStatusNotOk: !!(service.logs === 'NOTOK'),
             metricEndpoint: C.Util.getMetricEndpoint(service.name),
-            metricName: C.Util.getMetricName(service.name)
+            metricName: C.Util.getMetricName(service.name),
+            imgClass: imgSrc
           }));
         });
         self.set('services', servicesArr);

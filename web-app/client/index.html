@@ -197,13 +197,10 @@
                 <span class="app-list-status">{{this.description}}</span>
               </td>
               <td style="max-width: 100px;" class="status-col center-align">
-                {{#if this.statusOk}}
-                  <img src="assets/img/ok-icon.png" />
-                {{ else }}
-                    <img src="assets/img/services-loading-blue.gif" />
-                {{/if}}
+                <span {{ bindAttr class=":service-icon this.imgClass" }} ></span>
               </td>
               <td style="max-width: 100px;" class="status-col center-align">
+
                 {{#if this.logsStatusOk}}
                 {{#linkTo 'Service.Log' this}}<img src="assets/img/log-icon.png" />{{/linkTo}}
                 {{ else }}
@@ -214,16 +211,12 @@
                 <div class="instance-wrapper">
                   <div class="instance-num"><span>{{this.requested}}</span></div>
                   <div>
-                    {{#if this.isDecreaseEnabled}}
                     <a class="cursor-pointer" {{action decreaseInstance this.name this.requested }}>
-                      <img src="assets/img/minus.png" />
+                      <span style="background: url('assets/img/minus.png') no-repeat; display: inline-block; height: 30px; width: 30px;"></span>
                     </a>
-                    {{/if}}
-                    {{#if this.isIncreaseEnabled}}
                     <a class="cursor-pointer" {{action increaseInstance this.name this.requested }}>
-                      <img src="assets/img/plus.png" />
+                      <span style="background: url('assets/img/plus.png') no-repeat; display: inline-block; height: 30px; width: 30px;"></span>
                     </a>
-                    {{/if}}
                   </div>
                 </div>
               <td style="max-width: 350px;" class="instance-provisioned service-col">
