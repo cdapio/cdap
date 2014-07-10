@@ -13,6 +13,11 @@ public abstract class AbstractGSFlowlet extends AbstractFlowlet {
    */
   public abstract void create();
 
+  public final void create(GSFlowletConfigurer configurer) {
+    this.configurer = configurer;
+    create();
+  }
+
   protected void setName(String name) {
     configurer.setName(name);
   }
@@ -25,8 +30,8 @@ public abstract class AbstractGSFlowlet extends AbstractFlowlet {
     configurer.addGDATInput(name, schema);
   }
 
-  protected void addGSQL(String sqlName, String gsql, String sqlOutputName) {
-    configurer.addGSQL(sqlName, gsql, sqlOutputName);
+  protected void addGSQL(String sqlOutName, String gsql) {
+    configurer.addGSQL(sqlOutName, gsql);
   }
 
 }

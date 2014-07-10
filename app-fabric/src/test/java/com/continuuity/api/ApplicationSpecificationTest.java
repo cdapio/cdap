@@ -52,7 +52,7 @@ public class ApplicationSpecificationTest {
 
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
 
-    ApplicationSpecification appSpec = appConfigurer.createApplicationSpec();;
+    ApplicationSpecification appSpec = appConfigurer.createApplicationSpec();
     ApplicationSpecification spec = adapter.fromJson(adapter.toJson(appSpec));
 
     Map<String, ServiceSpecification> services = spec.getServices();

@@ -11,5 +11,5 @@ public interface GSFlowletConfigurer {
 
   void addGDATInput(String name, GSSchema schema);
 
-  void addGSQL(String name, String sql, String outputName);
+  void addGSQL(String outputName, String gsql);
 }

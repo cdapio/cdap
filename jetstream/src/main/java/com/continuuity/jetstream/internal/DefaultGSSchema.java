@@ -11,22 +11,30 @@ import java.util.Set;
  */
 public class DefaultGSSchema implements GSSchema {
 
-  private String name;
   private LinkedHashMap<String, PrimitiveType> fieldNames;
   private Set<String> increasingFields;
   private Set<String> decreasingFields;
 
-  public DefaultGSSchema(String name, LinkedHashMap<String, PrimitiveType> fieldNames, Set<String> increasingFields,
+  public DefaultGSSchema(LinkedHashMap<String, PrimitiveType> fieldNames, Set<String> increasingFields,
                          Set<String> decreasingFields) {
-    this.name = name;
     this.fieldNames = fieldNames;
     this.increasingFields = increasingFields;
     this.decreasingFields = decreasingFields;
   }
 
   @Override
-  public String getName() {
-    return name;
+  public LinkedHashMap<String, PrimitiveType> getFieldNames() {
+    return fieldNames;
+  }
+
+  @Override
+  public Set<String> getIncreasingFields() {
+    return increasingFields;
+  }
+
+  @Override
+  public Set<String> getDecreasingFields() {
+    return decreasingFields;
   }
 
 }
