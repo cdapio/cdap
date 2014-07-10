@@ -21,6 +21,15 @@ SET PATH=%PATH%;%CONTINUUITY_HOME%\libexec\bin
 
 cd %CONTINUUITY_HOME%
 
+
+
+REM Get app jar with latest version
+SET APP_JAR_PREFIX=ResponseCodeAnalytics
+for /r %CONTINUUITY_HOME%\examples\%APP_JAR_PREFIX%\target %%a in (%APP_JAR_PREFIX%*) do SET JAR_PATH=%%~dpnxa
+
+if %JAR_PATH% == "" echo "Could not find example application jar with name %APP_JAR_PREFIX%"
+
+
 REM Process command line
 IF "%1" == "start" GOTO START
 IF "%1" == "stop" GOTO STOP
@@ -207,6 +216,22 @@ echo %MyPID% > %~dsp0MyProg.pid
 SET lastPid=%MyPID%
 attrib +h %~dsp0MyProg.pid >NUL
 
+:SearchLogs
+findstr /R /C:".*Failed to start server.*" %CONTINUUITY_HOME%\logs\reactor-process.log >NUL 2>&1
+if %errorlevel% == 0 GOTO :ServerError
+
+findstr /R /C:".*Continuuity Reactor started successfully.*" %CONTINUUITY_HOME%\logs\reactor-process.log >NUL 2>&1
+if not %errorlevel% == 0 GOTO :SearchLogs
+if %errorlevel% == 0 GOTO :ServerSuccess
+:EndSearchLogs
+
+:ServerError
+echo Failed to start, please check logs for more information
+GOTO :STOP
+
+:ServerSuccess
+echo Reactor started succesfully.
+
 IF NOT "!DEBUG_OPTIONS!" == "" (
   echo Remote debugger agent started on port !port!.
 )
@@ -226,8 +251,9 @@ GOTO :FINALLY
 :NUX
 REM New user experience, enable if it is not enabled already
 if not exist %CONTINUUITY_HOME%\.nux_dashboard (
+
   REM Deploy app
-  FOR /F %%i IN ('curl -X POST -sL -w %%{http_code} -H "X-Archive-Name: LogAnalytics.jar" --data-binary @"%CONTINUUITY_HOME%\examples\ResponseCodeAnalytics\target\ResponseCodeAnalytics-1.0.jar" http://127.0.0.1:10000/v2/apps') DO SET RESPONSE=%%i
+  FOR /F %%i IN ('curl -X POST -sL -w %%{http_code} -H "X-Archive-Name: LogAnalytics.jar" --data-binary @"%JAR_PATH%" http://127.0.0.1:10000/v2/apps') DO SET RESPONSE=%%i
   REM IF  NOT %RESPONSE% == 200  (GOTO :EOF)
   REM Start flow
   curl -sL -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/flows/LogAnalyticsFlow/start

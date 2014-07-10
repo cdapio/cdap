@@ -3,6 +3,7 @@ package com.continuuity.internal.app.runtime;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
@@ -10,9 +11,9 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.queue.ConsumerConfig;
-import com.continuuity.data2.queue.Queue2Consumer;
-import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueConsumer;
+import com.continuuity.data2.queue.QueueProducer;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -42,12 +43,14 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
   public AbstractDataFabricFacade(TransactionSystemClient txSystemClient, TransactionExecutorFactory txExecutorFactory,
                                   DataSetAccessor dataSetAccessor, DatasetFramework datasetFramework,
                                   QueueClientFactory queueClientFactory, StreamConsumerFactory streamConsumerFactory,
-                                  LocationFactory locationFactory, Program program) {
+                                  LocationFactory locationFactory, Program program,
+                                  CConfiguration configuration) {
     this.txSystemClient = txSystemClient;
     this.queueClientFactory = queueClientFactory;
     this.streamConsumerFactory = streamConsumerFactory;
     this.txExecutorFactory = txExecutorFactory;
-    this.dataSetContext = createDataSetContext(program, locationFactory, dataSetAccessor, datasetFramework);
+    this.dataSetContext = createDataSetContext(program, locationFactory, dataSetAccessor,
+                                               datasetFramework, configuration);
     this.programId = program.getId();
   }
 
@@ -67,24 +70,24 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
   }
 
   @Override
-  public Queue2Producer createProducer(QueueName queueName) throws IOException {
+  public QueueProducer createProducer(QueueName queueName) throws IOException {
     return createProducer(queueName, QueueMetrics.NOOP_QUEUE_METRICS);
   }
 
   @Override
-  public Queue2Consumer createConsumer(QueueName queueName,
+  public QueueConsumer createConsumer(QueueName queueName,
                                        ConsumerConfig consumerConfig, int numGroups) throws IOException {
-    Queue2Consumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, numGroups);
+    QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, numGroups);
     if (consumer instanceof TransactionAware) {
-      consumer = new CloseableQueue2Consumer(dataSetContext, consumer);
+      consumer = new CloseableQueueConsumer(dataSetContext, consumer);
       dataSetContext.addTransactionAware((TransactionAware) consumer);
     }
     return consumer;
   }
 
   @Override
-  public Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
-    Queue2Producer producer = queueClientFactory.createProducer(queueName, queueMetrics);
+  public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
+    QueueProducer producer = queueClientFactory.createProducer(queueName, queueMetrics);
     if (producer instanceof TransactionAware) {
       dataSetContext.addTransactionAware((TransactionAware) producer);
     }
@@ -109,10 +112,11 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
   private DataSetInstantiator createDataSetContext(Program program,
                                                    LocationFactory locationFactory,
                                                    DataSetAccessor dataSetAccessor,
-                                                   DatasetFramework datasetFramework) {
+                                                   DatasetFramework datasetFramework,
+                                                   CConfiguration configuration) {
     try {
       DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
-      DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework,
+      DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework, configuration,
                                                                         program.getMainClass().getClassLoader());
       dataSetInstantiator.setDataSets(program.getSpecification().getDataSets().values(),
                                       program.getSpecification().getDatasets().values());

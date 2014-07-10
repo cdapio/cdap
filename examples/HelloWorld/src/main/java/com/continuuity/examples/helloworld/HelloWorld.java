@@ -49,7 +49,7 @@ public class HelloWorld extends AbstractApplication {
     setName("HelloWorld");
     setDescription("A Hello World program for the Continuuity Reactor");
     addStream(new Stream("who"));
-    createDataSet("whom", KeyValueTable.class);
+    createDataset("whom", KeyValueTable.class);
     addFlow(new WhoFlow());
     addProcedure(new Greeting());
   }

@@ -1,11 +1,13 @@
 package com.continuuity.explore.client;
 
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -120,6 +122,42 @@ public class DatasetExploreFacadeTest {
     }
   }
 
+  public class Recursive {
+    private final int a;
+    private final Recursive b;
+    private final int c;
+
+    public Recursive(int a, Recursive b) {
+      this.a = a;
+      this.b = b;
+      this.c = a;
+    }
+  }
+
+  public class TransitiveRecursive {
+    private final boolean empty;
+    private final List<TransitiveRecursive> children;
+
+    public TransitiveRecursive(boolean empty, List<TransitiveRecursive> children) {
+      this.empty = empty;
+      this.children = children;
+    }
+  }
+
+  public class Value {
+    private int a;
+  }
+
+  public class NotRecursive {
+    private final Value a;
+    private final Value b;
+
+    public NotRecursive(Value a, Value b) {
+      this.a = a;
+      this.b = b;
+    }
+  }
+
   @Test
   public void testHiveSchemaFor() throws Exception {
 
@@ -134,6 +172,34 @@ public class DatasetExploreFacadeTest {
 
     Assert.assertEquals("(key STRING, value STRUCT<ints:ARRAY<INT>, name:STRING>)",
                         DatasetExploreFacade.hiveSchemaFor(KeyValue.class));
+  }
+
+
+  private void verifyUnsupportedSchema(Type type) {
+    String schema;
+    try {
+      schema = DatasetExploreFacade.hiveSchemaFor(type);
+    } catch (UnsupportedTypeException e) {
+      // expected
+      return;
+    }
+    Assert.fail("Type " + type + " should not be supported and cause exception but returned " + schema);
+  }
+
+  @Test
+  public void testUnsupportedTypes() {
+    verifyUnsupportedSchema(Integer.class);
+    verifyUnsupportedSchema(String.class);
+    verifyUnsupportedSchema(new TypeToken<List<Integer>>() { }.getType());
+    verifyUnsupportedSchema(new TypeToken<Map<String, Integer>>() { }.getType());
+    verifyUnsupportedSchema(Recursive.class);
+    verifyUnsupportedSchema(TransitiveRecursive.class);
+  }
+
+  @Test
+  public void testSupportedTypes() throws Exception {
+    // Should not throw an exception
+    DatasetExploreFacade.hiveSchemaFor(NotRecursive.class);
   }
 
 }

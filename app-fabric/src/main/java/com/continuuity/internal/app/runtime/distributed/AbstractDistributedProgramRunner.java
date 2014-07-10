@@ -4,6 +4,7 @@
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
@@ -12,13 +13,13 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.AbortOnTimeoutEventHandler;
 import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
-import com.continuuity.internal.app.program.ForwardingProgram;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.Credentials;
 import org.apache.twill.api.EventHandler;
@@ -77,13 +78,16 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     final File hConfFile;
     final File cConfFile;
     final Program copiedProgram;
+    final File programDir;    // Temp directory for unpacking the program
+
     try {
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
       // Twill will manage the cleanup of those files in HDFS.
       hConfFile = saveHConf(hConf, File.createTempFile("hConf", ".xml"));
       cConfFile = saveCConf(cConf, File.createTempFile("cConf", ".xml"));
-      copiedProgram = copyProgramJar(program);
+      programDir = Files.createTempDir();
+      copiedProgram = copyProgramJar(program, programDir);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -110,7 +114,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             String.format("--%s", RunnableOptions.JAR), copiedProgram.getJarLocation().getName(),
             String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs
           ).start();
-        return addCleanupListener(twillController, hConfFile, cConfFile, copiedProgram);
+        return addCleanupListener(twillController, hConfFile, cConfFile, copiedProgram, programDir);
       }
     });
   }
@@ -146,7 +150,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
    * Copies the program jar to a local temp file and return a {@link Program} instance
    * with {@link Program#getJarLocation()} points to the local temp file.
    */
-  private Program copyProgramJar(final Program program) throws IOException {
+  private Program copyProgramJar(final Program program, File programDir) throws IOException {
     File tempJar = File.createTempFile(program.getName(), ".jar");
     Files.copy(new InputSupplier<InputStream>() {
       @Override
@@ -156,13 +160,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     }, tempJar);
 
     final Location jarLocation = new LocalLocationFactory().create(tempJar.toURI());
-
-    return new ForwardingProgram(program) {
-      @Override
-      public Location getJarLocation() {
-        return jarLocation;
-      }
-    };
+    return Programs.createWithUnpack(jarLocation, programDir);
   }
 
   /**
@@ -173,7 +171,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
    * @return The same TwillController instance.
    */
   private TwillController addCleanupListener(TwillController controller, final File hConfFile,
-                                             final File cConfFile, final Program program) {
+                                             final File cConfFile, final Program program, final File programDir) {
 
     final AtomicBoolean deleted = new AtomicBoolean(false);
     controller.addListener(new ServiceListenerAdapter() {
@@ -202,6 +200,11 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             program.getJarLocation().delete();
           } catch (IOException e) {
             LOG.warn("Failed to delete program jar {}", program.getJarLocation().toURI(), e);
+          }
+          try {
+            FileUtils.deleteDirectory(programDir);
+          } catch (IOException e) {
+            LOG.warn("Failed to delete program directory {}", programDir, e);
           }
         }
       }

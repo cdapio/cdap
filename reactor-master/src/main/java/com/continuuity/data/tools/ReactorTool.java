@@ -16,6 +16,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.datafabric.dataset.DatasetMetaTableUtil;
 import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
@@ -31,6 +32,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 
@@ -84,6 +86,14 @@ public class ReactorTool {
         new ConfigModule(cConf, hConf),
         new LocationRuntimeModule().getDistributedModules(),
         new DataFabricModules().getDistributedModules(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            install(new FactoryModuleBuilder()
+                      .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                      .build(DatasetDefinitionRegistryFactory.class));
+          }
+        },
         new KafkaClientModule(),
         new MetricsClientRuntimeModule().getDistributedModules(),
         new AbstractModule() {
@@ -180,8 +190,8 @@ public class ReactorTool {
   private DatasetFramework getDatasetFramework(Injector injector) throws Exception {
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
 
-    DatasetDefinitionRegistry registry = injector.getInstance(DefaultDatasetDefinitionRegistry.class);
-    return DatasetMetaTableUtil.createRegisteredDatasetFramework(registry, cConf);
+    DatasetDefinitionRegistryFactory factory = injector.getInstance(DatasetDefinitionRegistryFactory.class);
+    return DatasetMetaTableUtil.createRegisteredDatasetFramework(factory, cConf);
   }
 
   public static void main(String[] args) throws Exception {

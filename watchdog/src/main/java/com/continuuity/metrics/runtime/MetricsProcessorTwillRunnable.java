@@ -12,6 +12,7 @@ import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.migrate.MetricsTableMigrator20to21;
 import com.continuuity.internal.migrate.TableMigrator;
@@ -107,6 +108,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
       new LoggingModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModule(),
       new KafkaMetricsProcessorModule(),
       new MetricsProcessorStatusServiceModule()
      );

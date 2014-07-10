@@ -31,7 +31,7 @@ public class CountCounts extends AbstractApplication {
     setName("CountCounts");
     setDescription("Application for counting counts of words");
     addStream(new Stream("text"));
-    createDataSet(TABLE_NAME, CountCounterTable.class);
+    createDataset(TABLE_NAME, CountCounterTable.class);
     addFlow(new CountCountsFlow());
     addProcedure(new CountCountsProcedure());
   }

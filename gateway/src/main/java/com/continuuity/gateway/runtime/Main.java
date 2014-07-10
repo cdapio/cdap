@@ -11,6 +11,7 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.logging.guice.LoggingModules;
@@ -74,6 +75,7 @@ public class Main extends DaemonMain {
       new MetricsClientRuntimeModule().getDistributedModules(),
       new GatewayModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModule(),
       new LoggingModules().getDistributedModules()
     );
 

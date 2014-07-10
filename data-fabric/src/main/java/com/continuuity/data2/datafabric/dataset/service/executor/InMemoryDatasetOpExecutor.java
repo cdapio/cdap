@@ -1,9 +1,9 @@
 package com.continuuity.data2.datafabric.dataset.service.executor;
 
 import com.continuuity.api.dataset.DatasetAdmin;
-import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.data2.datafabric.dataset.DatasetType;
 import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.dataset2.DatasetManagementException;
@@ -33,14 +33,14 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
   public DatasetSpecification create(String instanceName, DatasetTypeMeta typeMeta, DatasetProperties props)
     throws Exception {
 
-    DatasetDefinition def = client.getDatasetDefinition(typeMeta, null);
+    DatasetType type = client.getDatasetType(typeMeta, null);
 
-    if (def == null) {
+    if (type == null) {
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
     }
 
-    DatasetSpecification spec = def.configure(instanceName, props);
-    DatasetAdmin admin = def.getAdmin(spec, null);
+    DatasetSpecification spec = type.configure(instanceName, props);
+    DatasetAdmin admin = type.getAdmin(spec);
     admin.create();
 
     return spec;
@@ -48,13 +48,13 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
   @Override
   public void drop(DatasetSpecification spec, DatasetTypeMeta typeMeta) throws Exception {
-    DatasetDefinition def = client.getDatasetDefinition(typeMeta, null);
+    DatasetType type = client.getDatasetType(typeMeta, null);
 
-    if (def == null) {
+    if (type == null) {
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
     }
 
-    DatasetAdmin admin = def.getAdmin(spec, null);
+    DatasetAdmin admin = type.getAdmin(spec);
     admin.drop();
   }
 

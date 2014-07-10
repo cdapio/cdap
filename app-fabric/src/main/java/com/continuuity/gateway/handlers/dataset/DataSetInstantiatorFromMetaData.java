@@ -6,6 +6,7 @@ import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
@@ -48,10 +49,10 @@ public final class DataSetInstantiatorFromMetaData {
 
   private Store store;
   @Inject
-  public DataSetInstantiatorFromMetaData(LocationFactory locationFactory,
+  public DataSetInstantiatorFromMetaData(LocationFactory locationFactory, CConfiguration configuration,
                                          DataSetAccessor dataSetAccessor, StoreFactory storeFactory) {
     // set up the data set instantiator
-    this.instantiator = new DataSetInstantiationBase();
+    this.instantiator = new DataSetInstantiationBase(configuration);
     // we don't set the data set specs of the instantiator, instead we will
     // do that on demand every time getDataSet() is called
 
@@ -72,9 +73,9 @@ public final class DataSetInstantiatorFromMetaData {
       // This call needs to be inside the synchronized call, otherwise it's possible that we are adding a DataSet
       // to the instantiator while retrieving an existing one (try to access while updating the underlying map).
       return this.instantiator.getDataSet(name, new DataFabric2Impl(locationFactory, dataSetAccessor),
-                                          // NOTE: it is fine using "empty" ds manager here, we access datasets V2
+                                          // NOTE: it is fine give null as ds framework here, we access datasets V2
                                           //       differently (thru dataset manager that talks to ds service)
-                                          new InMemoryDatasetFramework());
+                                          null);
     }
   }
 

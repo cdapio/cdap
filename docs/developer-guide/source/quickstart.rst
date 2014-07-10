@@ -31,7 +31,7 @@ Start the Reactor from a command line in the SDK directory::
 
 Or, on Windows::
 
-	> bin\reactor start
+	> bin\reactor.bat start
 
 View the Reactor Dashboard in a browser window::
 
@@ -151,7 +151,7 @@ To the class ``StatusCodeProcedure``, add the following ``getClientIPCounts`` me
       responder.sendJson(statusCountMap);
     }
 
-The new ``getClientIPCounts`` method that will query the DataSet (storage) for the IP address occurrences.
+The new ``getClientIPCounts`` method that will query the Dataset (storage) for the IP address occurrences.
 
 After you make your code changes to *ResponseCodeAnalyticsApp.java*, you can build the .JAR file by running::
 

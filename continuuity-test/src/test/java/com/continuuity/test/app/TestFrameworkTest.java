@@ -75,6 +75,10 @@ public class TestFrameworkTest extends ReactorTestBase {
       ProcedureClient client = queryManager.getClient();
       Gson gson = new Gson();
 
+      //Adding sleep so that the test does not fail if the procedure takes sometime to start on slow machines.
+      //TODO : Can be removed after fixing JIRA - REACTOR-373
+      TimeUnit.SECONDS.sleep(2);
+
       Assert.assertEquals("1",
                           gson.fromJson(client.query("result", ImmutableMap.of("type", "highpass")), String.class));
     } finally {
@@ -106,6 +110,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     wfmanager.getSchedule(scheduleId).suspend();
     Assert.assertEquals("SUSPENDED", wfmanager.getSchedule(scheduleId).status());
 
+    TimeUnit.SECONDS.sleep(3);
     history = wfmanager.getHistory();
     workflowRuns = history.size();
 
@@ -190,12 +195,43 @@ public class TestFrameworkTest extends ReactorTestBase {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
     ServiceManager serviceManager = applicationManager.startService("NoOpService");
+    serviceStatusCheck(serviceManager, true);
+    Assert.assertTrue(serviceManager.isRunning());
     LOG.info("Service Started");
     serviceManager.stop();
+    serviceStatusCheck(serviceManager, false);
+    Assert.assertFalse(serviceManager.isRunning());
     LOG.info("Service Stopped");
     // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the REACTOR scope test in
     // TestMetricsCollectionService
 
+  }
+
+  @Test
+  public void testAppwithOnlyService() throws Exception {
+    //App with only service in it.
+    ApplicationManager applicationManager = deployApplication(AppWithOnlyService.class);
+    LOG.info("Deployed.");
+    ServiceManager serviceManager = applicationManager.startService("NoOpService");
+    serviceStatusCheck(serviceManager, true);
+    Assert.assertTrue(serviceManager.isRunning());
+    LOG.info("Service Started");
+    serviceManager.stop();
+    serviceStatusCheck(serviceManager, false);
+    Assert.assertFalse(serviceManager.isRunning());
+    LOG.info("Service Stopped");
+  }
+
+  private void serviceStatusCheck(ServiceManager serviceManger, boolean expected) throws InterruptedException {
+    int trial = 0;
+    boolean state;
+    while (trial++ < 5) {
+      state = serviceManger.isRunning();
+      if (state = expected) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
   }
 
   // todo: passing stream name as a workaround for not cleaning up streams during reset()
@@ -295,10 +331,12 @@ public class TestFrameworkTest extends ReactorTestBase {
                                                                        "BatchSinkFlowlet");
 
       // Generator generators 99 events + 99 batched events
+      sinkMetrics.waitFor("process.events.in", 198, 5, TimeUnit.SECONDS);
       sinkMetrics.waitForProcessed(198, 5, TimeUnit.SECONDS);
       Assert.assertEquals(0L, sinkMetrics.getException());
 
       // Batch sink only get the 99 batch events
+      batchSinkMetrics.waitFor("process.events.in", 99, 5, TimeUnit.SECONDS);
       batchSinkMetrics.waitForProcessed(99, 5, TimeUnit.SECONDS);
       Assert.assertEquals(0L, batchSinkMetrics.getException());
 
@@ -432,7 +470,7 @@ public class TestFrameworkTest extends ReactorTestBase {
       // list the tables and make sure the table is there
       ResultSet results = connection.prepareStatement("show tables").executeQuery();
       Assert.assertTrue(results.next());
-      Assert.assertTrue("continuuity_user_myTable".equalsIgnoreCase(results.getString(1)));
+      Assert.assertTrue("continuuity_user_mytable".equalsIgnoreCase(results.getString(1)));
 
       // run a query over the dataset
       results = connection.prepareStatement("select first from continuuity_user_mytable where second = '1'")

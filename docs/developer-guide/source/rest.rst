@@ -1,5 +1,5 @@
 .. :author: Continuuity, Inc.
-   :version: 2.2.0
+   :version: 2.3.0
    :description: HTTP Interface to the Continuuity Reactor
 
 =================================
@@ -12,19 +12,23 @@ Continuuity Reactor HTTP REST API
 .. rst2pdf: .. contents::
 .. rst2pdf: config _templates/pdf-config
 .. rst2pdf: stylesheets _templates/pdf-stylesheet
+.. rst2pdf: build ../build-pdf/
 
 Introduction
 ============
 
 The Continuuity Reactor has an HTTP interface for a multitude of purposes:
 
-- **Stream:** sending data events to a Stream, or to inspect the contents of a Stream.
-- **Data:** interacting with DataSets (currently limited to Tables).
-- **Procedure:** sending queries to a Procedure.
-- **Reactor:** deploying and managing Applications.
-- **Logs:** retrieving Application logs.
-- **Metrics:** retrieving metrics for system and user Applications (user-defined metrics).
-- **Monitor:** checking the status of various Reactor services.
+- **Stream:** sending data events to a Stream, or to inspect the contents of a Stream
+- **Dataset:** interacting with Datasets, Dataset Modules, and Dataset Types
+- **Data:** interacting with Datasets (deprecated)
+- **Query:** sending ad-hoc queries to Reactor Datasets
+- **Procedure:** sending calls to a stored Procedure
+- **Reactor Client:** deploying and managing Applications, and managing the life cycle of Flows,
+  Procedures, MapReduce jobs, Workflows, and Custom Services
+- **Logging:** retrieving Application logs
+- **Metrics:** retrieving metrics for system and user Applications (user-defined metrics)
+- **Monitor:** checking the status of various Reactor services, both System and Custom
 
 **Note:** The HTTP interface binds to port ``10000``. This port cannot be changed.
 
@@ -71,7 +75,7 @@ Status Codes
 
 
 .. list-table::
-   :widths: 5 24 71
+   :widths: 10 30 60
    :header-rows: 1
 
    * - Code
@@ -126,6 +130,19 @@ and that you authenticate your request by sending your API key in an HTTP header
    * - ``<api-key>``
      - Continuuity Reactor API key, obtained from an account at
        `Continuuity Accounts <http://accounts.continuuity.com>`__
+
+
+Working with Reactor Security
+-----------------------------
+When working with a Reactor cluster with security enabled (``security.enabled=true`` in
+``continuuity-site.xml``), all calls to the HTTP APIs must be authenticated.  Clients must first
+obtain an access token from the authentication server (see the "Security" section of the
+guide). In order to authenticate, all client requests must supply this access token in the
+``Authorization`` header of the request::
+
+   Authorization: Bearer wohng8Xae7thahfohshahphaeNeeM5ie
+
+For Reactor-issued access tokens, the authentication scheme must always be ``Bearer``.
 
 
 Stream HTTP API
@@ -352,6 +369,114 @@ analogous to how you send headers when posting an event to the Stream::
 
 	<stream-id>.<property>:<value>
 
+.. rst2pdf: PageBreak
+
+Truncating a Stream
+-------------------
+Truncation means the deletion of all events that were written to the Stream. 
+This is permanent and cannot be undone.
+A Stream can be truncated with an HTTP POST method to the URL::
+
+	POST <base-url>/streams/<stream-id>/truncate
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<stream-id>``
+     - Name of an existing Stream
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The Stream was successfully truncated
+   * - ``404 Not Found``
+     - The Stream ``<stream-id>`` does not exist
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``POST <base-url>/streams/mystream/truncate``
+   * - Description
+     - Delete all events in the Stream named *mystream*
+
+.. rst2pdf: PageBreak
+
+Setting Time-To-Live Property of a Stream
+------------------------------------------
+The Time-To-Live (TTL) property governs how long an event is valid for consumption since 
+it was written to the Stream.
+The default TTL for all Streams is infinite, meaning that events will never expire.
+The TTL property of a Stream can be changed with an HTTP PUT method to the URL::
+
+	PUT <base-url>/streams/<stream-id>/config
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<stream-id>``
+     - Name of an existing Stream
+
+The new TTL value is passed in the request body as::
+
+	{ "ttl" : <ttl-in-seconds> }
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<ttl-in-seconds>``
+     - Number of seconds that an event will be valid for since ingested
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The stream TTL was changed successfully
+   * - ``400 Bad Request``
+     - The TTL value is not a non-negative integer
+   * - ``404 Not Found``
+     - The Stream does not exist
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``PUT <base-url>/streams/mystream/config``
+
+       with the new TTL value as a JSON string in the body::
+
+	  { "ttl" : 86400 }
+     
+   * - Description
+     - Change the TTL property of the Stream named *mystream* to 1 day
+
+
 Reading Multiple Events
 -----------------------
 Reading multiple events is not supported directly by the Stream HTTP API,
@@ -360,19 +485,192 @@ but the command-line tool ``stream-client`` demonstrates how to view *all*, the 
 For more information, see the Stream Command Line Client ``stream-client`` in the ``/bin`` directory of the
 Continuuity Reactor SDK distribution.
 
-Run at the command line::
+For usage and documentation of options, run at the command line::
 
 	$ stream-client --help
 
-for usage and documentation of options.
 
-Data HTTP API
-=============
+.. rst2pdf: PageBreak
 
-The Data API allows you to interact with Continuuity Reactor Tables (the core DataSets) through HTTP.
+Dataset HTTP API
+================
+The Dataset API allows you to interact with Datasets through HTTP. You can list, create, delete, and truncate Datasets. For details, see the Developer Guide:
+
+.. rst2pdf: CutStart
+
+.. only:: html
+
+	`Continuuity Reactor Advanced Features, Datasets section <advanced.html#datasets-system>`__
+
+.. only:: pdf
+
+.. rst2pdf: CutStop
+
+	`Continuuity Reactor Advanced Features, Datasets section <http://continuuity.com/docs/reactor/current/en/advanced.html#datasets-system>`__
+
+
+Listing all Datasets
+--------------------
+
+You can list all Datasets in the Continuuity Reactor by issuing an HTTP GET request to the URL::
+
+	GET <base-url>/data/datasets
+
+The response body will contain a JSON-formatted list of the existing Datasets::
+
+	{
+	   "name":"continuuity.user.purchases",
+	   "type":"com.continuuity.api.dataset.lib.ObjectStore",
+	   "properties":{
+	      "schema":"...",
+	      "type":"..."
+	   },
+	   "datasetSpecs":{
+	      ...
+	   }
+	 }
+
+.. rst2pdf: PageBreak
+
+Creating a Dataset
+------------------
+
+You can create a Dataset by issuing an HTTP PUT request to the URL::
+
+	PUT <base-url>/data/datasets/<dataset-name>
+  
+with JSON-formatted name of the dataset type and properties in a body::
+
+  {
+     "typeName":"<type-name>",
+     "properties":{<properties>}
+  }
+
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<dataset-name>``
+     - Name of the new Dataset
+   * - ``<type-name>``
+     - Type of the new Dataset
+   * - ``<properties>``
+     - Dataset properties, map of String to String.
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Requested Dataset was successfully created
+   * - ``404 Not Found``
+     - Requested Dataset type was not found
+   * - ``409 Conflict``
+     - Dataset with the same name already exists
+
+Example
+.......
+.. list-table::
+   :widths: 25 75
+   :stub-columns: 1
+
+   * - HTTP Request
+     - ``PUT <base-url>/data/datasets/mydataset``
+   * - Body
+     - ``{"typeName":"com.continuuity.api.dataset.table.Table", "properties":{"ttl":"3600000"}}``
+   * - Description
+     - Creates a Dataset named "mydataset" of the type "table" and time-to-live property set to 1 hour
+
+.. rst2pdf: PageBreak
+
+Deleting a Dataset
+------------------
+
+You can delete a Dataset by issuing an HTTP DELETE request to the URL::
+
+  DELETE <base-url>/data/datasets/<dataset-name>
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Dataset was successfully deleted
+   * - ``404 Not Found``
+     - Dataset named ``<dataset-name>`` could not be found
+
+Example
+.......
+.. list-table::
+   :widths: 25 75
+   :stub-columns: 1
+
+   * - HTTP Request
+     - ``DELETE <base-url>/data/datasets/mydataset``
+   * - Description
+     - Deletes the Dataset named "mydataset"
+
+.. rst2pdf: PageBreak
+
+Deleting all Datasets
+---------------------
+
+You can delete all Datasets by issuing an HTTP DELETE request to the URL::
+
+  DELETE <base-url>/data/unrecoverable/datasets
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - All Datasets were successfully deleted
+
+Truncating a Dataset
+--------------------
+
+You can truncate a Dataset by issuing an HTTP POST request to the URL::
+
+  POST <base-url>/data/datasets/<dataset-name>/admin/truncate
+
+This will clear the existing data from the Dataset. This cannot be undone.
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Dataset was successfully truncated
+
+.. rst2pdf: PageBreak
+
+
+Data HTTP API (Deprecated)
+==========================
+
+The Data API allows you to interact with Continuuity Reactor Tables (the core Datasets) through HTTP.
 You can create Tables, truncate Tables, and read, write, modify, or delete data.
 
-For DataSets other than Tables, you can truncate the DataSet using this API.
+For Datasets other than Tables, you can truncate the Dataset using this API.
 
 Creating a new Table
 --------------------
@@ -401,7 +699,7 @@ HTTP Responses
    * - ``200 OK``
      - The event was successfully received and the Table was either created or already exists
    * - ``409 Conflict``
-     - A DataSet of a different type already exists with the given name
+     - A Dataset of a different type already exists with the given name
 
 Example
 .......
@@ -421,7 +719,7 @@ Table names should only contain ASCII letters, digits and hyphens.
 If a Table with the same name already exists, no error is returned,
 and the existing Table remains in place.
 
-However, if a DataSet of a different type exists with the same name—for example,
+However, if a Dataset of a different type exists with the same name—for example,
 a key/value Table or ``KeyValueTable``—this call will return a ``409 Conflict`` error.
 
 .. rst2pdf: PageBreak
@@ -526,6 +824,8 @@ Example
      - ``GET <base-url>/tables/mytable/rows/status``
    * - Description
      - Read from an existing Table named *mytable*, a row identified as *status*
+
+.. rst2pdf: PageBreak
 
 Comments
 ........
@@ -677,10 +977,10 @@ See the examples under `Reading Data from a Table`_.
 
 .. rst2pdf: PageBreak
 
-Deleting Data from a DataSet
+Deleting Data from a Dataset
 ----------------------------
 
-To clear a DataSet of all data, submit an HTTP POST request::
+To clear a Dataset of all data, submit an HTTP POST request::
 
 	POST <base-url>/datasets/<dataset-name>/truncate
 
@@ -691,7 +991,7 @@ To clear a DataSet of all data, submit an HTTP POST request::
    * - Parameter
      - Description
    * - ``<dataset-name>``
-     - Name of the DataSet to be truncated
+     - Name of the Dataset to be truncated
 
 HTTP Responses
 ..............
@@ -702,9 +1002,9 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event successfully deleted the data of the DataSet
+     - The event successfully deleted the data of the Dataset
    * - ``404 Not Found``
-     - A DataSet with the given name does not exist
+     - A Dataset with the given name does not exist
 
 Example
 .......
@@ -715,11 +1015,11 @@ Example
    * - HTTP Method
      - ``POST <base-url>/datasets/mydataset/truncate``
    * - Description
-     - Delete all of the data from an existing DataSet named *mydataset*
+     - Delete all of the data from an existing Dataset named *mydataset*
 
 Comments
 ........
-Note that this works not only for Tables but with other DataSets, including user-defined Custom DataSets.
+Note that this works not only for Tables but with other Datasets, including user-defined Custom Datasets.
 
 .. rst2pdf: PageBreak
 
@@ -806,11 +1106,222 @@ The response now contains the column key as text and the row value as a numeric 
 Note that you can also specify the ``counter=true`` parameter when writing to a Table.
 This allows you to specify values as numeric strings while using a different encoding for row and column keys.
 
+Query HTTP API
+==============
+
+This interface supports submitting SQL queries over Datasets. Executing a query is asynchronous: 
+
+- first, **submit** the query;
+- then poll for the query's **status** until it is finished;
+- once finished, retrieve the **result schema** and the **results**;
+- finally, **close the query** to free the resources that it holds.
+
+Submitting a Query
+------------------
+To submit a SQL query, post the query string to the ``queries`` URL::
+
+  POST <base-url>/data/queries
+
+The body of the request must contain a JSON string of the form::
+
+  {
+    "query": "<SQL-query-string>"
+  }
+
+where ``<SQL-query-string>`` is the actual SQL query.
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The query execution was successfully initiated, and the body will contain the query-handle
+       used to identify the query in subsequent requests
+   * - ``400 Bad Request``
+     - The query is not well-formed or contains an error, such as a nonexistent table name.
+
+Comments
+........
+If the query execution was successfully initiated, the body will contain a handle 
+used to identify the query in subsequent requests::
+
+	{ "handle":"<query-handle>" }
+
+.. rst2pdf: PageBreak
+
+Status of a Query
+-----------------
+The status of a query is obtained using a HTTP GET request to the query's URL::
+
+  GET <base-url>/data/queries/<query-handle>
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The query exists and the body contains its status
+   * - ``404 Not Found``
+     - The query handle does not match any current query.
+
+Comments
+........
+If the query exists, the body will contain the status of its execution
+and whether the query has a results set::
+
+	{
+	  "status":"<status-code>",
+	  "hasResults":<boolean>
+	 }
+
+Status codes include ``INITIALIZED``, ``RUNNING``, ``FINISHED``, ``CANCELED``, ``CLOSED``,
+``ERROR``, ``UNKNOWN``, and ``PENDING``.
+
+
+Obtaining the Result Schema
+---------------------------
+If the query's status is ``FINISHED`` and it has results, you can obtain the schema of the results::
+
+  GET <base-url>/data/queries/<query-handle>/schema
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The query was successfully received and the query schema was returned in the body
+   * - ``404 Not Found``
+     - The query handle does not match any current query
+
+Comments
+........
+The query's result schema is returned in a JSON body as a list of columns,
+each given by its name, type and position; if the query has no result set, this list is empty::
+
+	[
+	  {"name":"<name>", "type":"<type>", "position":<int>},
+	  ...
+	]
+
+The type of each column is a data type as defined in the `Hive language manual
+<https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL>`_.
+
+
+Retrieving Query Results
+------------------------
+Query results can be retrieved in batches after the query is finished, optionally specifying the batch
+size in the body of the request::
+
+  POST <base-url>/data/queries/<query-handle>/next
+
+The body of the request can contain a JSON string specifying the batch size::
+
+  {
+    "size":<int>
+  }
+
+If the batch size is not specified, it defaults to 20.
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The event was successfully received and the result of the query was returned in the body
+   * - ``404 Not Found``
+     - The query handle does not match any current query
+
+Comments
+........
+The results are returned in a JSON body as a list of columns,
+each given as a structure containing a list of column values.::
+
+	[
+	  { "columns": [ <value_1>, <value_2>, ..., ] },
+	  ...
+	]
+
+The value at each position has the type that was returned in the result schema for that position.
+For example, if the returned type was ``INT``, then the value will be an integer literal,
+whereas for ``STRING`` or ``VARCHAR`` the value will be a string literal.
+
+Repeat the query to retrieve subsequent results. If all results of the query have already 
+been retrieved, then the returned list is empty. 
+
+.. rst2pdf: PageBreak
+
+Closing a Query
+---------------
+The query can be closed by issuing an HTTP DELETE against its URL::
+
+  DELETE <base-url>/data/queries/<query-handle>
+
+This frees all resources that are held by this query.
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The query was closed
+   * - ``400 Bad Request``
+     - The query was not in a state that could be closed; either wait until it is finished, or cancel it
+   * - ``404 Not Found``
+     - The query handle does not match any current query
+
+Canceling a Query
+-----------------
+Execution of a query can be canceled before it is finished with an HTTP POST::
+
+  POST <base-url>/data/queries/<query-handle>/cancel
+
+After this, the query can only be closed.
+
+**Note:** This operation is not supported with CDH 4.x distributions. It will return a
+``500 Internal Server Error`` status code.
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The query was canceled
+   * - ``400 Bad Request``
+     - The query was not in a state that can be canceled
+   * - ``404 Not Found``
+     - The query handle does not match any current query
+
 
 Procedure HTTP API
 ==================
 
-This interface supports sending queries to the methods of an Application’s Procedures.
+This interface supports sending calls to the methods of an Application’s Procedures.
+See the `Reactor Client HTTP API <#reactor-client-http-api>`__ for how to control the life cycle of
+Procedures. 
 
 Executing Procedures
 --------------------
@@ -865,13 +1376,13 @@ Example
 
        {"word":"a"}
 
-..
+.. rst2pdf: PageBreak
 
 Reactor Client HTTP API
 =======================
 
 Use the Reactor Client HTTP API to deploy or delete Applications and manage the life cycle of 
-Flows, Procedures and MapReduce jobs.
+Flows, Procedures, MapReduce jobs, Workflows, and Custom Services.
 
 Deploy an Application
 ---------------------
@@ -903,7 +1414,7 @@ To delete an Application together with all of its Flows, Procedures and MapReduc
 	DELETE <base-url>/apps/<application-name>
 
 .. list-table::
-   :widths: 20 80
+   :widths: 25 75
    :header-rows: 1
 
    * - Parameter
@@ -914,7 +1425,7 @@ To delete an Application together with all of its Flows, Procedures and MapReduc
 Note that the ``<application-name>`` in this URL is the name of the Application 
 as configured by the Application Specification,
 and not necessarily the same as the name of the JAR file that was used to deploy the Application.
-Note also that this does not delete the Streams and DataSets associated with the Application
+Note also that this does not delete the Streams and Datasets associated with the Application
 because they belong to your account, not the Application.
 
 .. rst2pdf: PageBreak
@@ -922,8 +1433,7 @@ because they belong to your account, not the Application.
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
 After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce 
-elements and Workflows,
-and query for their status using HTTP POST and GET methods::
+jobs, Workflows, and Custom Services, and query for their status using HTTP POST and GET methods::
 
 	POST <base-url>/apps/<app-id>/<element-type>/<element-id>/<operation>
 	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/status
@@ -937,40 +1447,29 @@ and query for their status using HTTP POST and GET methods::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<element-type>``
-     - One of ``flows``, ``procedures``, ``mapreduce``, or ``workflows``
+     - One of ``flows``, ``procedures``, ``mapreduce``, ``workflows`` or ``services``
    * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce*, or *WorkFlow*) being called
+     - Name of the element (*Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*)
+       being called
    * - ``<operation>``
      - One of ``start`` or ``stop``
 
 Examples
 ........
-.. list-table::
+
+.. csv-table::
    :widths: 20 80
-   :stub-columns: 1
+   :header-rows: 1
 
-   * - HTTP Method
-     - ``POST <base-url>/apps/HelloWorld/flows/WhoFlow/start``
-   * - Description
-     - Start a Flow *WhoFlow* in the Application *HelloWorld*
+   ,Example / Description
+   **HTTP Method**, ``POST <base-url>/apps/HelloWorld/flows/WhoFlow/start``
+   , Start a Flow *WhoFlow* in the Application *HelloWorld*
+   **HTTP Method**, ``POST <base-url>/apps/Count/procedures/GetCounts/stop``
+   , Stop the Procedure *GetCounts* in the Application *Count*
+   **HTTP Method**, ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/status``
+   , Get the status of the Flow *WhoFlow* in the Application *HelloWorld*
 
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``POST <base-url>/apps/WordCount/procedures/RetrieveCounts/stop``
-   * - Description
-     - Stop the Procedure *RetrieveCounts* in the Application *WordCount*
-
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/status``
-   * - Description
-     - Get the status of the Flow *WhoFlow* in the Application *HelloWorld*
+.. commas above are creating spacers in the table
 
 When starting an element, you can optionally specify runtime arguments as a JSON map in the request body::
 
@@ -980,8 +1479,8 @@ with the arguments as a JSON string in the body::
 
 	{"foo":"bar","this":"that"}
 
-The Continuuity Reactor will use these these runtime arguments only for this single invocation of the element.
-To save the runtime arguments so that the Reactor will use them every time you start the element,
+The Continuuity Reactor will use these these runtime arguments only for this single invocation of the
+element. To save the runtime arguments so that the Reactor will use them every time you start the element,
 issue an HTTP PUT with the parameter ``runtimeargs``::
 
 	PUT <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
@@ -990,76 +1489,12 @@ with the arguments as a JSON string in the body::
 
 	{"foo":"bar","this":"that"}
 
-To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET request to the element's URL using the same parameter ``runtimeargs``::
+.. rst2pdf: PageBreak
+
+To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET 
+request to the element's URL using the same parameter ``runtimeargs``::
 
 	GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
-
-This will return the saved runtime arguments in JSON format.
-
-Services: Start, Stop, Status, and Runtime Arguments
-----------------------------------------------------
-Reactor Application can have Services that can be started, stopped and queried for their
-status using HTTP POST and GET methods::
-
-	POST <base-url>/apps/<app-id>/services/<service-id>/runnables/<operation>
-	GET <base-url>/apps/<app-id>/services/<service-id>/runnables/status
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<app-id>``
-     - Name of the Application being called
-   * - ``<service-id>``
-     - Name of the Service being called
-   * - ``<operation>``
-     - One of ``start`` or ``stop``
-
-Examples
-........
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``POST <base-url>/apps/HelloWorld/services/WhoService/runnables/start``
-   * - Description
-     - Start a Service *WhoService* in the Application *HelloWorld*
-
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``POST <base-url>/apps/WordCount/services/CountService/runnables/stop``
-   * - Description
-     - Stop the Service *CountService* in the Application *WordCount*
-
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/status``
-   * - Description
-     - Get the status of the Service *WhoService* in the Application *HelloWorld*
-
-
-To save the runtime arguments so that the Reactor will use them every time you start the Service,
-issue an HTTP PUT with the parameter ``runtimeargs``::
-
-	PUT <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/runtimeargs
-
-with the arguments as a JSON string in the body::
-
-	{"foo":"bar","this":"that"}
-
-To retrieve the runtime arguments saved for an Application's Service, issue an HTTP GET request to the Service's URL
-using the same parameter ``runtimeargs``::
-
-	GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/runtimeargs
 
 This will return the saved runtime arguments in JSON format.
 
@@ -1067,9 +1502,9 @@ Container Information
 ---------------------
 
 To find out the address of an element's container host and the container’s debug port, you can query
-the Reactor for a Procedure or Flow’s live info via an HTTP GET method::
+the Reactor for a Procedure, Flow or Service’s live info via an HTTP GET method::
 
-	GET <base-url>/apps/<app-id>/<element-type>/live-info
+	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/live-info
 
 .. list-table::
    :widths: 20 80
@@ -1080,20 +1515,30 @@ the Reactor for a Procedure or Flow’s live info via an HTTP GET method::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<element-type>``
-     - One of either ``flows`` or ``procedures``
+     - One of ``flows``, ``procedures`` or ``services``
    * - ``<element-id>``
-     - Name of the element (*Flow* or *Procedure*)
+     - Name of the element (*Flow*, *Procedure* or *Custom Service*)
 
 Example::
 
 	GET <base-url>/apps/WordCount/flows/WordCounter/live-info
 
-The response is formatted in JSON; an example of this is shown in the 
-`Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`_.
+The response is formatted in JSON; an example of this is shown in: 
 
+.. rst2pdf: CutStart
 
-To find out the address of a Service's container host and the container's debug port, you can query the
-Reactor for the live info of a Service's Twill Runnable via an HTTP GET method::
+.. only:: html
+
+	`Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`__
+
+.. only:: pdf
+
+.. rst2pdf: CutStop
+
+	`Continuuity Reactor Testing and Debugging Guide <http://continuuity.com/docs/reactor/current/en/debugging.html#debugging-reactor-applications>`__
+
+To find out the address of a Service's container host and the container's debug port, you 
+can query the Reactor for the live info of a Service's Twill Runnable via an HTTP GET method::
 
   GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/live-info
 
@@ -1106,7 +1551,7 @@ Reactor for the live info of a Service's Twill Runnable via an HTTP GET method::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<service-id>``
-     - Name of the Service being called
+     - Name of the Custom Service being called
    * - ``<runnable-id>``
      - Name of the Twill Runnable being called
 
@@ -1180,8 +1625,8 @@ Examples
 
 Scaling Procedures
 ..................
-In a similar way to `Scaling Flowlets`_, you can query or change the number of instances of a Procedure
-by using the ``instances`` parameter with HTTP GET and PUT methods::
+In a similar way to `Scaling Flowlets`_, you can query or change the number of instances 
+of a Procedure by using the ``instances`` parameter with HTTP GET and PUT methods::
 
 	GET <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
 	PUT <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
@@ -1253,9 +1698,8 @@ Example
 
    * - HTTP Method
      - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/instances``
-       ``instances``
    * - Description
-     - Retreive the number of instances of the Twill Runnable *WhoRunnable* of the Service *WhoService*
+     - Retrieve the number of instances of the Twill Runnable *WhoRunnable* of the Service *WhoService*
 
 .. rst2pdf: PageBreak
 
@@ -1310,7 +1754,8 @@ Example
    * - HTTP Method
      - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/history``
    * - Description
-     - Retrieve the history of the Runnable *WhoRunnable* of the Service *WhoService* of the Application *HelloWorld*
+     - Retrieve the history of the Runnable *WhoRunnable* of the Service *WhoService* of the
+       Application *HelloWorld*
    * - Returns
      - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
        ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
@@ -1391,7 +1836,8 @@ Example
      - ``GET <base-url>/apps/CountTokens/flows/CountTokensFlow/``
        ``logs?start=1382576400&stop=1382576700``
    * - Description
-     - Return the logs for all the events from the Flow *CountTokensFlow* of the *CountTokens* Application,
+     - Return the logs for all the events from the Flow *CountTokensFlow* of the *CountTokens*
+       Application,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 
@@ -1425,7 +1871,8 @@ Example
      - ``GET <base-url>/apps/CountTokens/services/CountTokensService/runnables/CountTokensRunnable/``
        ``logs?start=1382576400&stop=1382576700``
    * - Description
-     - Return the logs for all the events of the Runnable CountTokensRunnable from the Service *CountTokensService*
+     - Return the logs for all the events of the Runnable CountTokensRunnable from the Service
+       *CountTokensService*
        of the *CountTokens* Application,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
@@ -1446,14 +1893,19 @@ As Applications process data, the Continuuity Reactor collects metrics about the
 
 Other metrics are user-defined and differ from Application to Application. 
 For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-Continuuity Reactor Operations Guide.
-
+the Developer Guide:
 
 .. rst2pdf: CutStart
 
-(:doc:`Operations Guide </operations>`)
+.. only:: html
+
+	`Continuuity Reactor Operations Guide <operations.html>`__
+
+.. only:: pdf
 
 .. rst2pdf: CutStop
+
+	`Continuuity Reactor Operations Guide <http://continuuity.com/docs/reactor/current/en/operations.html>`__
 
 
 Metrics Requests
@@ -1509,7 +1961,7 @@ Comments
 ........
 The scope must be either ``reactor`` for system metrics or ``user`` for user-defined metrics.
 
-System metrics are either Application metrics (about Applications and their Flows, Procedures, MapReduce and WorkFlows) or they are Data metrics (relating to Streams or DataSets).
+System metrics are either Application metrics (about Applications and their Flows, Procedures, MapReduce and Workflows) or they are Data metrics (relating to Streams or Datasets).
 
 User metrics are always in the Application context.
 
@@ -1642,25 +2094,27 @@ Stream metrics are only available at the Stream level and the only available con
    * - A single Stream
      - ``/streams/<stream-id>``
 
-DataSet metrics are available at the DataSet level, but they can also be queried down to the
+.. rst2pdf: PageBreak
+
+Dataset metrics are available at the Dataset level, but they can also be queried down to the
 Flowlet, Procedure, Mapper, or Reducer level:
 
 .. list-table::
    :header-rows: 1
    :widths: 30 70
 
-   * - DataSet Metric
+   * - Dataset Metric
      - Context
-   * - A single DataSet in the context of a single Flowlet
+   * - A single Dataset in the context of a single Flowlet
      - ``/datasets/<dataset-id>/apps/<app-id>/flows/``
        ``<flow-id>/flowlets/<flowlet-id>``
-   * - A single DataSet in the context of a single Flow
+   * - A single Dataset in the context of a single Flow
      - ``/datasets/<dataset-id>/apps/<app-id>/flows/<flow-id>``
-   * - A single DataSet in the context of a specific Application
+   * - A single Dataset in the context of a specific Application
      - ``/datasets/<dataset-id>/<any application context>``
-   * - A single DataSet across all Applications
+   * - A single Dataset across all Applications
      - ``/datasets/<dataset-id>``
-   * - All DataSets across all Applications
+   * - All Datasets across all Applications
      - ``/``
 
 .. rst2pdf: PageBreak
@@ -1690,13 +2144,13 @@ These metrics are available in the Flowlet context:
    * - ``process.events.out``
      - Number of events emitted by the Flowlet
    * - ``store.bytes``
-     - Number of bytes written to DataSets
+     - Number of bytes written to Datasets
    * - ``store.ops``
-     - Operations (writes and read) performed on DataSets
+     - Operations (writes and read) performed on Datasets
    * - ``store.reads``
-     - Read operations performed on DataSets
+     - Read operations performed on Datasets
    * - ``store.writes``
-     - Write operations performed on DataSets
+     - Write operations performed on Datasets
 
 These metrics are available in the Mappers and Reducers context:
 
@@ -1739,13 +2193,13 @@ These metrics are available in the Streams context:
    * - ``collect.bytes``
      - Number of bytes collected by the Stream
 
-These metrics are available in the DataSets context:
+These metrics are available in the Datasets context:
 
 .. list-table::
    :header-rows: 1
    :widths: 40 60
 
-   * - DataSets Metric
+   * - Datasets Metric
      - Description
    * - ``store.bytes``
      - Number of bytes written
@@ -1758,22 +2212,63 @@ These metrics are available in the DataSets context:
 
 Monitor HTTP API
 ================
-Reactor internally uses a variety of services that are critical to its functionality. Hence, the ability to check the health of those services can act as an useful initial debug step. This is faciliated by the Metrics HTTP API. To check the status of a service, send a HTTP GET request::
+Reactor internally uses a variety of System Services that are critical to its functionality. This section describes the REST APIs that can be used to see into System Services.
 
-	GET <base-url>/system/services/<service-id>/status
+Details of All Available System Services
+----------------------------------------
 
-The status of these Reactor services can be checked.
+For the detailed information of all available System Services, use::
+
+	GET <base-url>/system/services
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The event successfully called the method, and the body contains the results
+
+Checking Status of All Reactor System Services
+----------------------------------------------
+To check the status of all the System Services, use::
+
+	GET <base-url>/system/services/status
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The event successfully called the method, and the body contains the results
+
+.. rst2pdf: PageBreak
+
+Checking Status of a Specific Reactor System Service
+----------------------------------------------------
+To check the status of a specific System Service, use::
+
+	GET <base-url>/system/services/<service-name>/status
+
+The status of these Reactor System Servcies can be checked:
 
 .. list-table::
    :header-rows: 1
    :widths: 20 20 60
    
-   * - Service Name
-     - Service-Id
+   * - Service 
+     - Service-Name
      - Description of the Service
    * - ``Metrics``
      - ``metrics``
-     - Service that handles metrics related requests
+     - Service that handles metrics related HTTP requests
    * - ``Transaction``
      - ``transaction``
      - Service handling transactions 
@@ -1783,11 +2278,23 @@ The status of these Reactor services can be checked.
    * - ``App Fabric``
      - ``appfabric``
      - Service handling Application Fabric requests
+   * - ``Log Saver``
+     - ``log.saver``
+     - Service aggregating all system and application logs
+   * - ``Metrics Processor``
+     - ``metrics.processor``
+     - Service that aggregates all system and application metrics 
+   * - ``Dataset Executor``
+     - ``dataset.executor``
+     - Service that handles all data-related HTTP requests 
+   * - ``Explore Service``
+     - ``explore.service``
+     - Service that handles all HTTP requests for ad-hoc data exploration
 
-Note that the service status checks are more useful when the Reactor is running in a distributed cluster mode and that some of the status checks may not work in the Local Reactor mode.
+Note that the Service status checks are more useful when the Reactor is running in a distributed cluster mode.
 
 Example
--------
+.......
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -1798,7 +2305,7 @@ Example
      - Returns the status of the Metrics Service
 
 HTTP Responses
---------------
+..............
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -1808,7 +2315,57 @@ HTTP Responses
    * - ``200 OK``
      - The service is up and running
    * - ``404 Not Found``
-     - The service is not running or not found
+     - The service is either not running or not found
+
+.. rst2pdf: PageBreak
+
+Scaling System Services
+-----------------------
+The number of instances for system services can be queried and changed by using these commands::
+
+	GET <base-url>/system/services/<service-name>/instances
+	PUT <base-url>/system/services/<service-name>/instances
+
+with the arguments as a JSON string in the body::
+
+        { "instances" : <quantity> }
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<system-name>``
+     - Name of the system service 
+   * - ``<quantity>``
+     - Number of instances to be used
+
+Examples
+........
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/system/services/metrics/instances``
+       ``instances``
+   * - Description
+     - Determine the number of instances being used for the metrics HTTP service 
+
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``PUT <base-url>/system/services/metrics/instances``
+       ``instances``
+
+       with the arguments as a JSON string in the body::
+
+          { "instances" : 2 }
+   * - Description
+     - Sets the number of instances of the metrics HTTP service to 2
 
 .. rst2pdf: CutStart
 

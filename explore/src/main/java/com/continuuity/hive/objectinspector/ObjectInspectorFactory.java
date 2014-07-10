@@ -12,6 +12,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -106,6 +107,11 @@ public final class ObjectInspectorFactory {
           PrimitiveObjectInspector.PrimitiveCategory.STRING);
     }
 
+    // Array
+    if (c.isArray()) {
+      return getStandardListObjectInspector(getReflectionObjectInspector(c.getComponentType()));
+    }
+
     // Must be struct because List and Map need to be ParameterizedType
     Preconditions.checkState(!List.class.isAssignableFrom(c));
     Preconditions.checkState(!Map.class.isAssignableFrom(c));
@@ -119,6 +125,10 @@ public final class ObjectInspectorFactory {
     Field[] fields = ObjectInspectorUtils.getDeclaredNonStaticFields(c);
     List<ObjectInspector> structFieldObjectInspectors = new ArrayList<ObjectInspector>(fields.length);
     for (int i = 0; i < fields.length; i++) {
+      // Exclude transient fields
+      if (Modifier.isTransient(fields[i].getModifiers())) {
+        continue;
+      }
       if (!oi.shouldIgnoreField(fields[i].getName())) {
         Type newType = fields[i].getGenericType();
         if (newType instanceof TypeVariable) {

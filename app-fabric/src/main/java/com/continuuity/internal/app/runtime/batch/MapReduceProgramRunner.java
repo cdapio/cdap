@@ -6,6 +6,8 @@ import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.stream.StreamBatchReadable;
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.lib.AbstractDataset;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.app.ApplicationSpecification;
@@ -17,6 +19,7 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.lang.CombineClassLoader;
 import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.common.LogWriter;
@@ -46,8 +49,10 @@ import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.continuuity.internal.lang.Reflections;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
@@ -161,7 +166,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
     DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework,
-                                                                      program.getClassLoader());
+                                                                      cConf, program.getClassLoader());
     Map<String, DataSetSpecification> dataSetSpecs = program.getSpecification().getDataSets();
     Map<String, DatasetCreationSpec> datasetSpecs = program.getSpecification().getDatasets();
     dataSetInstantiator.setDataSets(dataSetSpecs.values(), datasetSpecs.values());
@@ -244,7 +249,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
       jobConf.getCredentials().addAll(credentials);
     }
 
-    jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
+    // Create a classloader that have the context/system classloader as parent and the program classloader as child
+    ClassLoader classLoader = new CombineClassLoader(
+      Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), ClassLoader.getSystemClassLoader()),
+      ImmutableList.of(context.getProgram().getClassLoader())
+    );
+
+    jobConf.getConfiguration().setClassLoader(classLoader);
     context.setJob(jobConf);
 
     // additional mapreduce job initialization at run-time
@@ -290,7 +301,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
             LOG.info("Submitting mapreduce job {}", context.toString());
 
             ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(job.getClass().getClassLoader());
+            Thread.currentThread().setContextClassLoader(jobConf.getConfiguration().getClassLoader());
             try {
               // submits job and returns immediately
               jobConf.submit();
@@ -327,6 +338,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
           }
 
         } catch (Exception e) {
+          LOG.warn("Received Exception after submitting MapReduce job.", e);
           throw Throwables.propagate(e);
         } finally {
           // stopping controller when mapreduce job is finished
@@ -471,7 +483,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
     String outputDataSetName = null;
     BatchWritable outputDataset;
     // whatever was set into mapReduceContext e.g. during beforeSubmit(..) takes precedence
-    if (mapReduceContext.getOutputDataset() != null) {
+
+    if (mapReduceContext.getOutputDatasetName() != null) {
+      outputDataSetName = mapReduceContext.getOutputDatasetName();
+    } else if (mapReduceContext.getOutputDataset() != null) {
       outputDataset = mapReduceContext.getOutputDataset();
       if (outputDataset instanceof DataSet) {
         outputDataSetName = ((DataSet) outputDataset).getName();
@@ -496,24 +511,27 @@ public class MapReduceProgramRunner implements ProgramRunner {
     // whatever was set into mapReduceJob e.g. during beforeSubmit(..) takes precedence
     BatchReadable batchReadable = mapReduceContext.getInputDataset();
 
-    if (batchReadable != null && batchReadable instanceof DataSet) {
+    if (mapReduceContext.getInputDatasetName() != null) {
+      inputDataSetName = mapReduceContext.getInputDatasetName();
+    } else if (batchReadable != null && batchReadable instanceof DataSet) {
       inputDataSetName = ((DataSet) batchReadable).getName();
     } else  {
       // trying to init input dataset from spec
       inputDataSetName = mapReduceContext.getSpecification().getInputDataSet();
-      if (inputDataSetName != null) {
-        // TODO: It's a hack for stream
-        if (inputDataSetName.startsWith("stream://")) {
-          batchReadable = new StreamBatchReadable(inputDataSetName.substring("stream://".length()));
-        } else {
-          // We checked on validation phase that it implements BatchReadable
-          BatchReadable inputDataSet = (BatchReadable) mapReduceContext.getDataSet(inputDataSetName);
-          List<Split> inputSplits = mapReduceContext.getInputDataSelection();
-          if (inputSplits == null) {
-            inputSplits = inputDataSet.getSplits();
-          }
-          mapReduceContext.setInput(inputDataSet, inputSplits);
+    }
+
+    if (inputDataSetName != null) {
+      // TODO: It's a hack for stream
+      if (inputDataSetName.startsWith("stream://")) {
+        batchReadable = new StreamBatchReadable(inputDataSetName.substring("stream://".length()));
+      } else {
+        // We checked on validation phase that it implements BatchReadable
+        BatchReadable inputDataSet = (BatchReadable) mapReduceContext.getDataSet(inputDataSetName);
+        List<Split> inputSplits = mapReduceContext.getInputDataSelection();
+        if (inputSplits == null) {
+          inputSplits = inputDataSet.getSplits();
         }
+        mapReduceContext.setInput(inputDataSet, inputSplits);
       }
     }
 
@@ -541,12 +559,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                                            Lists.newArrayList("org.apache.hadoop.hbase",
                                                                               "org.apache.hadoop.hive"));
     Id.Program programId = context.getProgram().getId();
-    String programJarPath = context.getProgram().getJarLocation().toURI().getPath();
-    String programDir = programJarPath.substring(0, programJarPath.lastIndexOf('/'));
 
     Location appFabricDependenciesJarLocation =
-      locationFactory.create(String.format("%s/%s.%s.%s.%s.%s.jar",
-                                           programDir, Type.MAPREDUCE.name().toLowerCase(),
+      locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
+                                           Type.MAPREDUCE.name().toLowerCase(),
                                            programId.getAccountId(), programId.getApplicationId(),
                                            programId.getId(), context.getRunId().getId()));
 

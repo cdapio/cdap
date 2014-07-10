@@ -5,7 +5,7 @@ package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.ConsumerConfig;
-import com.continuuity.data2.queue.Queue2Consumer;
+import com.continuuity.data2.queue.QueueConsumer;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
@@ -72,7 +72,7 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
                                     consumerConfig.getHashKey());
       }
       if (queueName.isQueue()) {
-        Queue2Consumer queueConsumer = dataFabricFacade.createConsumer(queueName, config, numGroups);
+        QueueConsumer queueConsumer = dataFabricFacade.createConsumer(queueName, config, numGroups);
         consumerConfig = queueConsumer.getConfig();
         consumer = queueConsumer;
       } else {

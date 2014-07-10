@@ -5,6 +5,7 @@
 package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.annotation.Batch;
+import com.continuuity.api.annotation.DisableTransaction;
 import com.continuuity.api.annotation.HashPartition;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.RoundRobin;
@@ -45,9 +46,9 @@ import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data.stream.StreamPropertyListener;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
-import com.continuuity.data2.queue.Queue2Consumer;
-import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueConsumer;
+import com.continuuity.data2.queue.QueueProducer;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -159,9 +160,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Preconditions.checkNotNull(runIdOption, "Missing runId");
       RunId runId = RunIds.fromString(runIdOption);
 
-      boolean disableTransaction = Boolean.parseBoolean(
-        options.getArguments().getOption(ProgramOptionConstants.DISABLE_TRANSACTION, Boolean.toString(false)));
-
       ApplicationSpecification appSpec = program.getSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
@@ -175,6 +173,12 @@ public final class FlowletProgramRunner implements ProgramRunner {
       FlowSpecification flowSpec = appSpec.getFlows().get(processorName);
       FlowletDefinition flowletDef = flowSpec.getFlowlets().get(flowletName);
       Preconditions.checkNotNull(flowletDef, "Definition missing for flowlet \"%s\"", flowletName);
+
+      boolean disableTransaction = program.getMainClass().isAnnotationPresent(DisableTransaction.class);
+      if (disableTransaction) {
+        LOG.info("Transaction is disable for flowlet {}.{}.{}",
+                 program.getApplicationId(), program.getId().getId(), flowletName);
+      }
 
       Class<?> clz = Class.forName(flowletDef.getFlowletSpec().getClassName(), true,
                                    program.getMainClass().getClassLoader());
@@ -207,6 +211,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       Flowlet flowlet = new InstantiatorFactory(false).get(TypeToken.of(flowletClass)).create();
       TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);
+
+      // Set the context classloader to the reactor classloader. It is needed for the DatumWriterFactory be able
+      // to load reactor classes
+      Thread.currentThread().setContextClassLoader(FlowletProgramRunner.class.getClassLoader());
 
       // Inject DataSet, OutputEmitter, Metric fields
       Reflections.visit(flowlet, TypeToken.of(flowlet.getClass()),
@@ -438,7 +446,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
               final String queueMetricsName = "process.events.out";
               final String queueMetricsTag = queueSpec.getQueueName().getSimpleName();
-              Queue2Producer producer = queueClientFactory.createProducer(queueSpec.getQueueName(), new QueueMetrics() {
+              QueueProducer producer = queueClientFactory.createProducer(queueSpec.getQueueName(), new QueueMetrics() {
                 @Override
                 public void emitEnqueue(int count) {
                   flowletContext.getSystemMetrics().gauge(queueMetricsName, count, queueMetricsTag);
@@ -449,7 +457,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                   // no-op
                 }
               });
-              return new DatumOutputEmitter<T>(producer,  schema, datumWriterFactory.create(type, schema));
+              return new DatumOutputEmitter<T>(producer, schema, datumWriterFactory.create(type, schema));
             }
           }
 
@@ -515,7 +523,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                 Function<ByteBuffer, T> decoder =
                   wrapInputDecoder(flowletContext, queueName, createInputDatumDecoder(dataType, schema, schemaCache));
 
-                ConsumerSupplier<Queue2Consumer> consumerSupplier = ConsumerSupplier.create(dataFabricFacade, queueName,
+                ConsumerSupplier<QueueConsumer> consumerSupplier = ConsumerSupplier.create(dataFabricFacade, queueName,
                                                                                             consumerConfig, numGroups);
                 queueConsumerSupplierBuilder.add(consumerSupplier);
                 queueReaders.add(queueReaderFactory.createQueueReader(consumerSupplier, batchSize, decoder));

@@ -840,6 +840,10 @@
             <groupId>asm</groupId>
             <artifactId>asm-tree</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -858,6 +862,10 @@
           <exclusion>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-all</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -1090,6 +1098,8 @@
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
         <service.name>${project.artifactId}</service.name>
         <package.name>${project.artifactId}</package.name>
+        <package.depends>--depends continuuity</package.depends>
+        <package.dirs>opt etc</package.dirs>
       </properties>
       <build>
         <pluginManagement>
@@ -1101,6 +1111,7 @@
               <executions>
                 <execution>
                   <id>jar</id>
+                  <phase>prepare-package</phase>
                   <configuration>
                     <outputDirectory>${stage.lib.dir}</outputDirectory>
                     <addMavenDescriptor>${maven.descriptor}</addMavenDescriptor>
@@ -1142,7 +1153,7 @@
               <executions>
                 <execution>
                   <id>copy-opt</id>
-                  <phase>prepare-package</phase>
+                  <phase>process-resources</phase>
                   <goals>
                     <goal>copy-resources</goal>
                   </goals>
@@ -1179,6 +1190,28 @@
                       </resource>
                     </resources>
                   </configuration>
+                </execution>
+              </executions>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-antrun-plugin</artifactId>
+              <version>1.7</version>
+              <executions>
+                <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
+                <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
+                <execution>
+                  <id>bin-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <failOnError>false</failOnError>
+                    <target>
+                      <chmod file="${stage.opt.dir}/bin/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
                 </execution>
               </executions>
             </plugin>
@@ -1276,18 +1309,20 @@
               <executions>
                 <execution>
                   <id>copy-rpm-scripts</id>
-                  <phase>prepare-package</phase>
+                  <phase>process-resources</phase>
                   <goals>
                     <goal>copy-resources</goal>
                   </goals>
                   <configuration>
                     <outputDirectory>${project.build.directory}/dist/rpm</outputDirectory>
+                    <!-- Copy it twice, one with filter, one without -->
                     <resources>
                       <resource>
                         <directory>${project.parent.parent.basedir}/distributions/src/rpm/init.d</directory>
-                        <includes>
-                          <include>continuuity-service</include>
-                        </includes>
+                        <targetPath>unfilter</targetPath>
+                      </resource>
+                      <resource>
+                        <directory>${project.parent.parent.basedir}/distributions/src/rpm/init.d</directory>
                         <filtering>true</filtering>
                       </resource>
                     </resources>
@@ -1302,7 +1337,7 @@
               <executions>
                 <execution>
                   <id>rename-rpm-service</id>
-                  <phase>prepare-package</phase>
+                  <phase>process-resources</phase>
                   <goals>
                     <goal>run</goal>
                   </goals>
@@ -1311,6 +1346,32 @@
                       <copy file="${project.build.directory}/dist/rpm/continuuity-service" tofile="${stage.dir}/etc/rc.d/init.d/continuuity-${service.name}" />
                     </target>
                   </configuration>
+                </execution>
+                <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
+                <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
+                <execution>
+                  <id>rpm-init-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <target>
+                      <chmod file="${stage.dir}/etc/rc.d/init.d/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+                <execution>
+                  <id>rpm-bin-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <target>
+                      <chmod file="${stage.opt.dir}/bin/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
                 </execution>
               </executions>
             </plugin>
@@ -1355,24 +1416,29 @@
                     <resources>
                       <resource>
                         <directory>${stage.dir}</directory>
+                        <includes>
+                          <include>opt/**</include>
+                        </includes>
                       </resource>
                     </resources>
                   </configuration>
                 </execution>
                 <execution>
                   <id>copy-deb-scripts</id>
-                  <phase>prepare-package</phase>
+                  <phase>process-resources</phase>
                   <goals>
                     <goal>copy-resources</goal>
                   </goals>
                   <configuration>
                     <outputDirectory>${project.build.directory}/dist/deb</outputDirectory>
                     <resources>
+                      <!-- Copy it twice, one with filter, one without -->
                       <resource>
                         <directory>${project.parent.parent.basedir}/distributions/src/debian/init.d</directory>
-                        <includes>
-                          <include>continuuity-service</include>
-                        </includes>
+                        <targetPath>unfilter</targetPath>
+                      </resource>
+                      <resource>
+                        <directory>${project.parent.parent.basedir}/distributions/src/debian/init.d</directory>
                         <filtering>true</filtering>
                       </resource>
                     </resources>
@@ -1387,7 +1453,7 @@
               <executions>
                 <execution>
                   <id>rename-deb-service</id>
-                  <phase>prepare-package</phase>
+                  <phase>process-resources</phase>
                   <goals>
                     <goal>run</goal>
                   </goals>
@@ -1396,6 +1462,32 @@
                       <copy file="${project.build.directory}/dist/deb/continuuity-service" tofile="${stage.dir}-deb/etc/init.d/continuuity-${service.name}" />
                     </target>
                   </configuration>
+                </execution>
+                <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
+                <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
+                <execution>
+                  <id>deb-init-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <target>
+                      <chmod file="${stage.dir}-deb/etc/init.d/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+                <execution>
+                  <id>deb-bin-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <target>
+                      <chmod file="${stage.dir}-deb/opt/continuuity/${project.artifactId}/bin/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
                 </execution>
               </executions>
             </plugin>
@@ -1424,68 +1516,28 @@
                   <configuration>
                     <workingDirectory>${project.build.directory}</workingDirectory>
                     <executable>fpm</executable>
-                    <arguments>
-                      <argument>--name</argument>
-                      <argument>continuuity-${project.artifactId}</argument>
-
-                      <argument>--vendor</argument>
-                      <argument>Continuuity Inc.</argument>
-
-                      <argument>--maintainer</argument>
-                      <argument>support@continuuity.com</argument>
-
-                      <argument>--license</argument>
-                      <argument>Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.</argument>
-
-                      <argument>--description</argument>
-                      <argument>Component of Continuuity Enterprise Reactor</argument>
-
-                      <argument>--category</argument>
-                      <argument>misc</argument>
-
-                      <argument>-s</argument>
-                      <argument>dir</argument>
-
-                      <argument>-t</argument>
-                      <argument>rpm</argument>
-
-                      <argument>-C</argument>
-                      <argument>${stage.dir}</argument>
-
-                      <argument>--directories</argument>
-                      <argument>/opt/continuuity/${project.artifactId}</argument>
-
-                      <argument>--version</argument>
-                      <argument>${package.version}</argument>
-
-                      <argument>--architecture</argument>
-                      <argument>all</argument>
-
-                      <argument>--url</argument>
-                      <argument>http://www.continuuity.com/products</argument>
-
-                      <argument>--template-value</argument>
-                      <argument>project=${project.artifactId}</argument>
-
-                      <argument>--depends</argument>
-                      <argument>continuuity</argument>
-
-                      <argument>--after-install</argument>
-                      <argument>${project.parent.parent.basedir}/distributions/src/rpm/scripts/postinst</argument>
-
-                      <argument>--before-remove</argument>
-                      <argument>${project.parent.parent.basedir}/distributions/src/rpm/scripts/prerm</argument>
-
-                      <argument>--after-remove</argument>
-                      <argument>${project.parent.parent.basedir}/distributions/src/rpm/scripts/postrm</argument>
-
-                      <!-- Hardcode to 1 -->
-                      <argument>--iteration</argument>
-                      <argument>1</argument>
-
-                      <argument>opt</argument>
-                      <argument>etc</argument>
-                    </arguments>
+                    <commandlineArgs>
+                        --name "continuuity-${project.artifactId}"
+                        --vendor "Continuuity Inc."
+                        --maintainer "support@continuuity.com"
+                        --license "Copyright 2012-2014 Continuuity,Inc. All Rights Reserved."
+                        --description "Component of Continuuity Enterprise Reactor"
+                        --category misc
+                        -s dir
+                        -t rpm
+                        -C "${stage.dir}"
+                        --directories "/opt/continuuity/${project.artifactId}"
+                        --version "${package.version}"
+                        --architecture all
+                        --url "http://www.continuuity.com/products"
+                        --template-value "project=${project.artifactId}"
+                        --after-install "${project.parent.parent.basedir}/distributions/src/rpm/scripts/postinst"
+                        --before-remove "${project.parent.parent.basedir}/distributions/src/rpm/scripts/prerm"
+                        --after-remove "${project.parent.parent.basedir}/distributions/src/rpm/scripts/postrm"
+                        --iteration 1
+                        ${package.depends}
+                        ${package.dirs}
+                    </commandlineArgs>
                   </configuration>
                 </execution>
               </executions>
@@ -1515,68 +1567,28 @@
                   <configuration>
                     <workingDirectory>${project.build.directory}</workingDirectory>
                     <executable>fpm</executable>
-                    <arguments>
-                      <argument>--name</argument>
-                      <argument>continuuity-${project.artifactId}</argument>
-
-                      <argument>--vendor</argument>
-                      <argument>Continuuity Inc.</argument>
-
-                      <argument>--maintainer</argument>
-                      <argument>support@continuuity.com</argument>
-
-                      <argument>--license</argument>
-                      <argument>Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.</argument>
-
-                      <argument>--description</argument>
-                      <argument>Component of Continuuity Enterprise Reactor</argument>
-
-                      <argument>--category</argument>
-                      <argument>misc</argument>
-
-                      <argument>-s</argument>
-                      <argument>dir</argument>
-
-                      <argument>-t</argument>
-                      <argument>deb</argument>
-
-                      <argument>-C</argument>
-                      <argument>${stage.dir}-deb</argument>
-
-                      <argument>--directories</argument>
-                      <argument>/opt/continuuity/${project.artifactId}</argument>
-
-                      <argument>--version</argument>
-                      <argument>${package.version}</argument>
-
-                      <argument>--architecture</argument>
-                      <argument>all</argument>
-
-                      <argument>--url</argument>
-                      <argument>http://www.continuuity.com/products</argument>
-
-                      <argument>--template-value</argument>
-                      <argument>project=${project.artifactId}</argument>
-
-                      <argument>--depends</argument>
-                      <argument>continuuity</argument>
-
-                      <argument>--after-install</argument>
-                      <argument>${project.parent.parent.basedir}/distributions/src/debian/scripts/postinst</argument>
-
-                      <argument>--before-remove</argument>
-                      <argument>${project.parent.parent.basedir}/distributions/src/debian/scripts/prerm</argument>
-
-                      <argument>--after-remove</argument>
-                      <argument>${project.parent.parent.basedir}/distributions/src/debian/scripts/postrm</argument>
-
-                      <!-- Hardcode to 1 -->
-                      <argument>--iteration</argument>
-                      <argument>1</argument>
-
-                      <argument>opt</argument>
-                      <argument>etc</argument>
-                    </arguments>
+                    <commandlineArgs>
+                      --name "continuuity-${project.artifactId}"
+                      --vendor "Continuuity Inc."
+                      --maintainer "support@continuuity.com"
+                      --license "Copyright 2012-2014 Continuuity,Inc. All Rights Reserved."
+                      --description "Component of Continuuity Enterprise Reactor"
+                      --category misc
+                      -s dir
+                      -t deb
+                      -C "${stage.dir}-deb"
+                      --directories "/opt/continuuity/${project.artifactId}"
+                      --version "${package.version}"
+                      --architecture all
+                      --url "http://www.continuuity.com/products"
+                      --template-value "project=${project.artifactId}"
+                      --after-install "${project.parent.parent.basedir}/distributions/src/debian/scripts/postinst"
+                      --before-remove "${project.parent.parent.basedir}/distributions/src/debian/scripts/prerm"
+                      --after-remove "${project.parent.parent.basedir}/distributions/src/debian/scripts/postrm"
+                      --iteration 1
+                      ${package.depends}
+                      ${package.dirs}
+                    </commandlineArgs>
                   </configuration>
                 </execution>
               </executions>

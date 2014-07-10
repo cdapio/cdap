@@ -1,5 +1,6 @@
 package com.continuuity.internal.app.runtime.distributed;
 
+import com.continuuity.api.common.RuntimeArguments;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.metrics.ServiceRunnableMetrics;
@@ -19,6 +20,7 @@ import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
@@ -34,7 +36,6 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
@@ -73,7 +74,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -176,14 +176,9 @@ public class ServiceTwillRunnable implements TwillRunnable {
                                                                           program.getApplicationId(),
                                                                           program.getName(), runnableName)));
 
-      List<String> appArgList = Lists.newArrayList();
-      Arguments userargs = programOpts.getUserArguments();
-      for (Map.Entry<String, String> kv : userargs) {
-        appArgList.add(kv.getKey());
-        appArgList.add(kv.getValue());
-      }
-
-      final String[] argArray = appArgList.toArray(new String[appArgList.size()]);
+      final String[] argArray = RuntimeArguments.toPosixArray(programOpts.getUserArguments());
+      LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(
+        program.getAccountId(), program.getApplicationId(), program.getName(), runnableName));
       delegate.initialize(new ForwardingTwillContext(context) {
         @Override
         public String[] getApplicationArguments() {
@@ -223,8 +218,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void run() {
-    LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(
-      program.getAccountId(), program.getApplicationId(), program.getName(), runnableName));
     Futures.getUnchecked(
       Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
 
@@ -293,6 +286,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
       new LoggingModules().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -331,7 +325,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
     public Program create(String path) throws IOException {
       Location location = locationFactory.create(path);
-      return Programs.create(location, Files.createTempDir());
+      return Programs.createWithUnpack(location, Files.createTempDir());
     }
   }
 }

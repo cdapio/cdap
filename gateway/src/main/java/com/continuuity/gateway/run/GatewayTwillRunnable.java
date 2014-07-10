@@ -10,6 +10,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.runtime.GatewayModule;
@@ -149,6 +150,7 @@ public class GatewayTwillRunnable extends AbstractTwillRunnable {
       new KafkaClientModule(),
       new GatewayModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),

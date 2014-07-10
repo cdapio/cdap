@@ -226,7 +226,7 @@
             <executions>
               <execution>
                 <id>copy-enterprise</id>
-                <phase>prepare-package</phase>
+                <phase>process-resources</phase>
                 <goals>
                   <goal>run</goal>
                 </goals>

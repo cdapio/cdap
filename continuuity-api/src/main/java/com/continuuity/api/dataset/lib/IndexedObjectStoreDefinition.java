@@ -1,5 +1,6 @@
 package com.continuuity.api.dataset.lib;
 
+import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
@@ -13,6 +14,7 @@ import java.io.IOException;
 /**
  * DatasetDefinition for {@link IndexedObjectStore}.
  */
+@Beta
 public class IndexedObjectStoreDefinition
   extends AbstractDatasetDefinition<IndexedObjectStore, DatasetAdmin> {
 

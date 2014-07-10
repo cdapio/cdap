@@ -13,8 +13,10 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.utils.OSDetector;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data.stream.service.StreamServiceRuntimeModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
@@ -45,6 +47,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.counters.Limits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,8 +103,8 @@ public class SingleNodeMain {
     }
 
     boolean exploreEnabled = configuration.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
-    ExploreServiceUtils.checkHiveVersion(this.getClass().getClassLoader());
     if (exploreEnabled) {
+      ExploreServiceUtils.checkHiveSupportWithoutSecurity(this.getClass().getClassLoader());
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     }
 
@@ -162,22 +165,36 @@ public class SingleNodeMain {
   public void shutDown() {
     LOG.info("Shutting down reactor...");
 
-    streamHttpService.stopAndWait();
-    webCloudAppService.stopAndWait();
-    flumeCollector.stopAndWait();
-    router.stopAndWait();
-    gatewayV2.stopAndWait();
-    metricsQueryService.stopAndWait();
-    appFabricServer.stopAndWait();
-    txService.stopAndWait();
-    datasetService.stopAndWait();
-    if (externalAuthenticationServer != null) {
-      externalAuthenticationServer.stopAndWait();
+    try {
+      // order matters: first shut down web app 'cause it will stop working after router is down
+      webCloudAppService.stopAndWait();
+      //  shut down router, gateway and flume, to stop all incoming traffic
+      router.stopAndWait();
+      gatewayV2.stopAndWait();
+      flumeCollector.stopAndWait();
+      // now the stream writer and the explore service (they need tx)
+      streamHttpService.stopAndWait();
+      if (exploreExecutorService != null) {
+        exploreExecutorService.stopAndWait();
+      }
+      // app fabric will also stop all programs
+      appFabricServer.stopAndWait();
+      // all programs are stopped: dataset service, metrics, transactions can stop now
+      datasetService.stopAndWait();
+      metricsQueryService.stopAndWait();
+      txService.stopAndWait();
+      // auth service is on the side anyway
+      if (externalAuthenticationServer != null) {
+        externalAuthenticationServer.stopAndWait();
+      }
+      logAppenderInitializer.close();
+
+    } catch (Throwable e) {
+      LOG.error("Exception during shutdown", e);
+      // we can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
+      // therefore System.exit() won't do it, we need to farce a halt.
+      Runtime.getRuntime().halt(1);
     }
-    if (exploreExecutorService != null) {
-      exploreExecutorService.stopAndWait();
-    }
-    logAppenderInitializer.close();
   }
 
   /**
@@ -198,7 +215,7 @@ public class SingleNodeMain {
     out.println("           The \"node\" executable must be in the system $PATH environment variable");
     out.println("");
     out.println("Usage: ");
-    if (System.getProperty("os.name").startsWith("Windows")) {
+    if (OSDetector.isWindows()) {
       out.println("  reactor.bat [options]");
     } else {
       out.println("  ./reactor.sh [options]");
@@ -246,12 +263,17 @@ public class SingleNodeMain {
     Configuration hConf = new Configuration();
     hConf.addResource("mapred-site-local.xml");
     hConf.reloadConfiguration();
+    // Due to incredibly stupid design of Limits class, once it is initialized, it keeps its settings. We
+    // want to make sure it uses our settings in this hConf, so we have to force it initialize here before
+    // someone else initializes it.
+    Limits.init(hConf);
+
     String localDataDir = configuration.get(Constants.CFG_LOCAL_DATA_DIR);
     hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir);
     hConf.set(Constants.AppFabric.OUTPUT_DIR, configuration.get(Constants.AppFabric.OUTPUT_DIR));
 
     // Windows specific requirements
-    if (System.getProperty("os.name").startsWith("Windows")) {
+    if (OSDetector.isWindows()) {
       String userDir = System.getProperty("user.dir");
       System.load(userDir + "/lib/native/hadoop.dll");
       hConf.set("hadoop.tmp.dir", userDir + "/" + localDataDir + "/temp");
@@ -293,6 +315,7 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new GatewayModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModule(),
       new DataSetServiceModules().getInMemoryModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
@@ -341,6 +364,7 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new GatewayModule().getSingleNodeModules(),
       new DataFabricModules().getSingleNodeModules(),
+      new DataSetsModules().getLocalModule(),
       new DataSetServiceModules().getLocalModule(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules(),

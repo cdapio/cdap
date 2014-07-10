@@ -1,11 +1,11 @@
 .. :Author: Continuuity, Inc.
-   :Description: Introduction to Programming Applications for the Continuuity Reactor
+   :Description: Introduction to Testing, Debugging, and Troubleshooting Continuuity Reactor Applications
 
 ===============================================
 Testing and Debugging Guide
 ===============================================
 
-Introduction to Testing and Troubleshooting Applications for the Continuuity Reactor
+**Introduction to Testing, Debugging, and Troubleshooting Continuuity Reactor Applications**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
@@ -109,7 +109,7 @@ Strategies in Testing MapReduce Jobs
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce jobs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
-found under :doc:`TrafficAnalytics </examples/TrafficAnalytics/index>`.
+found under `TrafficAnalytics </examples/TrafficAnalytics/index.html>`__.
 
 The ``TrafficAnalyticsTest`` class should extend from
 ``ReactorTestBase`` similar to `Strategies in Testing Flows`.
@@ -126,7 +126,7 @@ method from the ``ReactorTestBase`` class::
 	// Deploy an Application
 	ApplicationManager appManager = deployApplication(TrafficAnalyticsApp.class);
 
-The MapReduce job reads from the ``logEventTable`` DataSet. As a first
+The MapReduce job reads from the ``logEventTable`` Dataset. As a first
 step, the data to the ``logEventTable`` should be populated by running
 the ``RequestCountFlow`` and sending the data to the ``logEventStream``
 Stream::
@@ -161,6 +161,34 @@ the counts::
 	Assert.assertEquals(2, result.size());
 
 The assertion will verify that the correct result was received.
+
+Validating Test Data with SQL
+-----------------------------
+Often the easiest way to verify that a test produced the right data is to run a SQL query - if the data sets involved
+in the test case are record-scannable as described in `Querying Datasets with SQL <query.html>`__. 
+This can be done using a JDBC connection obtained from the test base::
+
+
+  // Obtain a JDBC connection
+  Connection connection = getQueryClient();
+  try {
+      // Run a query over the dataset
+      results = connection.prepareStatement("SELECT key FROM mytable WHERE value = '1'").executeQuery();
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("a", results.getString(1));
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("c", results.getString(1));
+      Assert.assertFalse(results.next());
+
+    } finally {
+      results.close();
+      connection.close();
+    }
+
+The JDBC connection does not implement the full JDBC functionality: it does not allow variable replacement and
+will not allow you to make any changes to datasets. But it is sufficient to perform test validation: you can create
+or prepare statements and execute queries, then iterate over the results set and validate its correctness.
+
 
 Debugging Reactor Applications
 ==============================
@@ -310,7 +338,7 @@ Debugging with Eclipse
 Debugging the Transaction Manager (Advanced Use)
 ------------------------------------------------
 In this advanced use section, we will explain in depth how transactions work internally.
-Transactions are introduced in the :doc:`Advanced Features <advanced>` guide.
+Transactions are introduced in the `Advanced Features <advanced.html>`__ guide.
 
 A transaction is defined by an identifier, which contains the time stamp, in milliseconds,
 of its creation. This identifier—also called the `write pointer`—represents the version
@@ -365,7 +393,7 @@ Here are the states a transaction goes through in its lifecycle:
   of the transactions present in the structure.
 - If there are no conflicts, all the writes of the transaction along with its write pointer
   are stored in the `committing change sets` structure.
-- The client—namely, a DataSet—can then ask the TM to commit the writes. These are retrieved from the
+- The client—namely, a Dataset—can then ask the TM to commit the writes. These are retrieved from the
   `committing change sets` structure. Since the `committed change sets` structure might
   have evolved since the last conflict check, another one is performed. If the
   transaction is in the `excluded set`, the commit will fail regardless
@@ -453,7 +481,7 @@ from the concerned Tables.
 
 Where to Go Next
 ================
-Now that you've had an introduction to Continuuity Reactor, take a look at:
+Now that you've fixed all your bugs with Continuuity Reactor, take a look at:
 
-- `Operating a Continuuity Reactor <operations.html>`__,
-  which covers putting Continuuity Reactor into production.
+- `Reactor Security <security.html>`__,
+  which covers enabling security in a production Continuuity Reactor.

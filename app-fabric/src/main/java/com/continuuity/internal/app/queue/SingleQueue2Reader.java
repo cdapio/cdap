@@ -5,7 +5,7 @@ package com.continuuity.internal.app.queue;
 
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.app.queue.QueueReader;
-import com.continuuity.data2.queue.Queue2Consumer;
+import com.continuuity.data2.queue.QueueConsumer;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 
@@ -14,18 +14,18 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A {@link QueueReader} for reading from {@link Queue2Consumer}.
+ * A {@link QueueReader} for reading from {@link QueueConsumer}.
  *
  * @param <T> Type of input dequeued from this reader.
  */
 
 public final class SingleQueue2Reader<T> extends TimeTrackingQueueReader<T> {
 
-  private final Supplier<Queue2Consumer> consumerSupplier;
+  private final Supplier<QueueConsumer> consumerSupplier;
   private final int batchSize;
   private final Function<byte[], T> decoder;
 
-  SingleQueue2Reader(Supplier<Queue2Consumer> consumerSupplier, int batchSize, final Function<ByteBuffer, T> decoder) {
+  SingleQueue2Reader(Supplier<QueueConsumer> consumerSupplier, int batchSize, final Function<ByteBuffer, T> decoder) {
     this.consumerSupplier = consumerSupplier;
     this.batchSize = batchSize;
     this.decoder = new Function<byte[], T>() {
@@ -38,7 +38,7 @@ public final class SingleQueue2Reader<T> extends TimeTrackingQueueReader<T> {
 
   @Override
   public InputDatum<T> tryDequeue(long timeout, TimeUnit timeoutUnit) throws IOException {
-    Queue2Consumer consumer = consumerSupplier.get();
+    QueueConsumer consumer = consumerSupplier.get();
     return new BasicInputDatum<byte[], T>(consumer.getQueueName(), consumer.dequeue(batchSize), decoder);
   }
 }

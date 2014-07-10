@@ -1,0 +1,4 @@
+# Uncomment the following and set them to the correct values for running Reactor on a Kerberos-enabled Hadoop cluster
+#
+#REACTOR_KEYTAB="/etc/security/keytabs/yarn.keytab"
+#REACTOR_PRINCIPAL="yarn@EXAMPLE.REALM.COM"

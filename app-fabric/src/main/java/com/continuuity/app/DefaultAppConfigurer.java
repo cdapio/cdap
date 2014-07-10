@@ -78,20 +78,20 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void addDataSetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
     Preconditions.checkArgument(moduleName != null, "Dataset module name cannot be null.");
     Preconditions.checkArgument(moduleClass != null, "Dataset module class cannot be null.");
     dataSetModules.put(moduleName, moduleClass.getName());
   }
 
   @Override
-  public void addDataSetType(Class<? extends Dataset> datasetClass) {
+  public void addDatasetType(Class<? extends Dataset> datasetClass) {
     Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null.");
     dataSetModules.put(datasetClass.getName(), datasetClass.getName());
   }
 
   @Override
-  public void createDataSet(String datasetInstanceName, String typeName, DatasetProperties properties) {
+  public void createDataset(String datasetInstanceName, String typeName, DatasetProperties properties) {
     Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
     Preconditions.checkArgument(typeName != null, "Dataset type name cannot be null.");
     Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
@@ -100,7 +100,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void createDataSet(String datasetInstanceName,
+  public void createDataset(String datasetInstanceName,
                             Class<? extends Dataset> datasetClass,
                             DatasetProperties properties) {
 

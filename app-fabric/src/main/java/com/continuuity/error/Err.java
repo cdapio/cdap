@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
  */
 
 package com.continuuity.error;
@@ -50,8 +50,8 @@ public final class Err {
     }
 
     public static final Errors ATLEAST_ONE_PROCESSOR = new Errors(
-      "Application %s has no Flow or Procedure or MapReduce job defined. " +
-        "Should have atleast one of them defined."
+      "Application %s has no Flow, Procedure, MapReduce job, or Service defined; " +
+        "should have at least one of them defined"
     );
   }
 
@@ -66,24 +66,24 @@ public final class Err {
     }
 
     public static final Errors ATLEAST_ONE_FLOWLET = new Errors(
-      "Flow %s has not flowlets defined." +
-        " Should atleast have a flowlet."
+      "Flow %s has no Flowlets defined; " +
+        "should at least have a Flowlet"
     );
     public static final Errors ATLEAST_ONE_CONNECTION = new Errors(
-      "Flow %s has no connections defined." +
-        " Should atleast have one connection."
+      "Flow %s has no connections defined; " +
+        "should at least have one connection"
     );
 
     public static final Errors OUTPUT_NOT_CONNECTED = new Errors(
-      "In Flow '%s', flowlet '%s' has outputs but no consumer."
+      "In Flow '%s', Flowlet '%s' has outputs but no consumer"
     );
 
     public static final Errors NO_INPUT_FOR_OUTPUT = new Errors(
-      "In Flow '%s', input of flowlet '%s' does not define a compatible " +
-        "type method for processing output of '%s' '%s'."
+      "In Flow '%s', input of Flowlet '%s' does not define a compatible " +
+        "type method for processing output of '%s' '%s'"
     );
     public static final Errors MORE_OUTPUT_NOT_ALLOWED = new Errors(
-      "In Flow '%s', the %s '%s' has no consumer for outputs '%s'."
+      "In Flow '%s', the %s '%s' has no consumer for outputs '%s'"
     );
     // Output being emitted
   }

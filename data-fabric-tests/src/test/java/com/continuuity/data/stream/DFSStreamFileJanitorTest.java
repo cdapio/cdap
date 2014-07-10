@@ -7,6 +7,7 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.file.FileWriter;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
@@ -64,7 +65,8 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
           bind(StreamCoordinator.class).to(InMemoryStreamCoordinator.class).in(Scopes.SINGLETON);
           bind(StreamAdmin.class).to(TestStreamFileAdmin.class).in(Scopes.SINGLETON);
         }
-      })
+      }),
+      new DataSetsModules().getDistributedModule()
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);

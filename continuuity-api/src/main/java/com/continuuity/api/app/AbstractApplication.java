@@ -1,3 +1,7 @@
+/*
+ * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.app;
 
 import com.continuuity.api.annotation.Beta;
@@ -16,7 +20,6 @@ import org.apache.twill.api.TwillApplication;
  * A support class for {@link Application}s which reduces repetition and results in
  * a more readable configuration. Simply implement {@link #configure()} to define your application.
  */
-@Beta
 public abstract class AbstractApplication implements Application {
   private ApplicationContext context;
   private ApplicationConfigurer configurer;
@@ -75,48 +78,52 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @see ApplicationConfigurer#addDataSetModule(String, Class)
+   * @see ApplicationConfigurer#addDatasetModule(String, Class)
    */
-  protected void addDataSetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    configurer.addDataSetModule(moduleName, moduleClass);
+  @Beta
+  protected void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+    configurer.addDatasetModule(moduleName, moduleClass);
   }
 
   /**
-   * @see ApplicationConfigurer#addDataSetType(Class)
+   * @see ApplicationConfigurer#addDatasetType(Class)
    */
-  protected void addDataSetType(Class<? extends Dataset> datasetClass) {
-    configurer.addDataSetType(datasetClass);
+  @Beta
+  protected void addDatasetType(Class<? extends Dataset> datasetClass) {
+    configurer.addDatasetType(datasetClass);
   }
 
   /**
-   * Calls {@link #createDataSet(String, String, DatasetProperties) and passes epty properties.
+   * Calls {@link #createDataset(String, String, DatasetProperties)} and passes empty properties.
    */
-  protected void createDataSet(String datasetInstanceName, String typeName) {
-    configurer.createDataSet(datasetInstanceName, typeName, DatasetProperties.EMPTY);
+  @Beta
+  protected void createDataset(String datasetName, String typeName) {
+    configurer.createDataset(datasetName, typeName, DatasetProperties.EMPTY);
   }
 
   /**
-   * @see ApplicationConfigurer#createDataSet(String, String, com.continuuity.api.dataset.DatasetProperties)
+   * @see ApplicationConfigurer#createDataset(String, String, com.continuuity.api.dataset.DatasetProperties)
    */
-  protected void createDataSet(String datasetInstanceName, String typeName, DatasetProperties properties) {
-    configurer.createDataSet(datasetInstanceName, typeName, properties);
+  @Beta
+  protected void createDataset(String datasetName, String typeName, DatasetProperties properties) {
+    configurer.createDataset(datasetName, typeName, properties);
   }
 
   /**
-   * @see ApplicationConfigurer#createDataSet(String, Class, com.continuuity.api.dataset.DatasetProperties)
+   * @see ApplicationConfigurer#createDataset(String, Class, com.continuuity.api.dataset.DatasetProperties)
    */
-  protected void createDataSet(String datasetInstanceName,
+  protected void createDataset(String datasetName,
                                Class<? extends Dataset> datasetClass,
                                DatasetProperties props) {
-    configurer.createDataSet(datasetInstanceName, datasetClass, props);
+    configurer.createDataset(datasetName, datasetClass, props);
   }
 
   /**
-   * @see ApplicationConfigurer#createDataSet(String, Class, DatasetProperties) and passes epty properties
+   * @see ApplicationConfigurer#createDataset(String, Class, DatasetProperties) and passes epty properties
    */
-  protected void createDataSet(String datasetInstanceName,
+  protected void createDataset(String datasetName,
                                Class<? extends Dataset> datasetClass) {
-    configurer.createDataSet(datasetInstanceName, datasetClass, DatasetProperties.EMPTY);
+    configurer.createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 
   /**

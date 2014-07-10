@@ -5,6 +5,7 @@
 package com.continuuity.internal.app.program;
 
 import com.continuuity.AllProgramsApp;
+import com.continuuity.AppWithNoServices;
 import com.continuuity.AppWithServices;
 import com.continuuity.FlowMapReduceApp;
 import com.continuuity.NoProgramsApp;
@@ -16,6 +17,7 @@ import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.app.AbstractApplication;
+import com.continuuity.api.app.Application;
 import com.continuuity.api.app.ApplicationContext;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.dataset.IndexedTable;
@@ -358,8 +360,35 @@ public class MDTBasedStoreTest {
                         stored.getFlows().get("flow2").getClassName());
   }
 
+
+  @Test
+  public void testServiceDeletion() throws Exception {
+    // Store the application specification
+    AbstractApplication app = new AppWithServices();
+
+    ApplicationSpecification appSpec = getAppSpec(app);
+    Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), appSpec.getName());
+    store.addApplication(appId, appSpec, new LocalLocationFactory().create("/appwithservicestestdelete"));
+
+    AbstractApplication newApp = new AppWithNoServices();
+
+    // get the delete program specs after deploying AppWithNoServices
+    List<ProgramSpecification> programSpecs = store.getDeletedProgramSpecifications(appId, getAppSpec(newApp));
+
+    //verify the result.
+    Assert.assertEquals(1, programSpecs.size());
+    Assert.assertEquals("NoOpService", programSpecs.get(0).getName());
+  }
+
+  private ApplicationSpecification getAppSpec(Application application) {
+    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(application);
+    application.configure(appConfigurer, new ApplicationContext());
+    return appConfigurer.createApplicationSpec();
+  }
+
   @Test
   public void testServiceRunnableInstances() throws Exception {
+    AppFabricTestHelper.deployApplication(AppWithServices.class);
     AbstractApplication app = new AppWithServices();
     DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(app);
     app.configure(appConfigurer, new ApplicationContext());
@@ -540,6 +569,7 @@ public class MDTBasedStoreTest {
     args = store.getRunArguments(workflowProgramId);
     Assert.assertEquals(0, args.size());
   }
+
 
   @Test
   public void testCheckDeletedProgramSpecs () throws Exception {

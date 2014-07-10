@@ -2,8 +2,9 @@ package com.continuuity.app.program;
 
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
+import com.continuuity.common.lang.ApiResourceListHolder;
+import com.continuuity.common.lang.ClassLoaders;
 import com.continuuity.common.lang.jar.BundleJarUtil;
-import com.continuuity.common.lang.jar.ProgramClassLoader;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -74,10 +75,14 @@ public final class DefaultProgram implements Program {
     }
   }
 
-  // TODO: Remove this.
   public DefaultProgram(Location programJarLocation, ClassLoader classLoader) throws IOException {
     this(programJarLocation, null, null);
     this.classLoader = classLoader;
+  }
+
+  @Override
+  public String getMainClassName() {
+    return mainClassName;
   }
 
   @SuppressWarnings("unchecked")
@@ -134,7 +139,12 @@ public final class DefaultProgram implements Program {
   public synchronized ClassLoader getClassLoader() {
     if (classLoader == null) {
       expandIfNeeded();
-      classLoader = new ProgramClassLoader(expandFolder, parentClassLoader);
+      try {
+        classLoader = ClassLoaders.newProgramClassLoader(
+          expandFolder, ApiResourceListHolder.getResourceList(), parentClassLoader);
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
     }
     return classLoader;
   }

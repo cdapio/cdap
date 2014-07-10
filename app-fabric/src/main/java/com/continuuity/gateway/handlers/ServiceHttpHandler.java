@@ -73,7 +73,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
         JsonArray services = new JsonArray();
         for (Map.Entry<String, ServiceSpecification> entry : spec.getServices().entrySet()) {
           JsonObject service = new JsonObject();
-          service.addProperty("type", Type.SERVICE.toString());
+          service.addProperty("type", Type.SERVICE.prettyName());
           service.addProperty("app", appId);
           service.addProperty("id", entry.getValue().getName());
           service.addProperty("name", entry.getValue().getName());
@@ -174,9 +174,9 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
+      int oldInstances = store.getServiceRunnableInstances(programId, runnableName);
       store.setServiceRunnableInstances(programId, runnableName, instances);
 
-      int oldInstances = store.getServiceRunnableInstances(programId, runnableName);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getAccountId(),
                                                                       programId.getApplicationId(),
                                                                       programId.getId(),

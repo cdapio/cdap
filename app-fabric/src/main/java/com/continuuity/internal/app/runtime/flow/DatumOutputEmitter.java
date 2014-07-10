@@ -2,8 +2,8 @@ package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.common.io.BinaryEncoder;
-import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueEntry;
+import com.continuuity.data2.queue.QueueProducer;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.Schema;
 import com.google.common.base.Function;
@@ -23,11 +23,11 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T> {
 
   public static final Function<Object, Integer> PARTITION_MAP_TRANSFORMER = new PartitionMapTransformer();
 
-  private final Queue2Producer queueProducer;
+  private final QueueProducer queueProducer;
   private final byte[] schemaHash;
   private final DatumWriter<T> writer;
 
-  public DatumOutputEmitter(Queue2Producer queueProducer, Schema schema, DatumWriter<T> writer) {
+  public DatumOutputEmitter(QueueProducer queueProducer, Schema schema, DatumWriter<T> writer) {
     this.queueProducer = queueProducer;
     this.schemaHash = schema.getSchemaHash().toByteArray();
     this.writer = writer;

@@ -95,8 +95,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.streamMetaStore = streamMetaStore;
     this.dequeuerCache = createDequeuerCache(cConf, streamConsumerFactory, executorFactory, streamCoordinator);
 
-    MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.REACTOR,
-                                                                       Constants.Gateway.METRICS_CONTEXT, "0");
+    MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.REACTOR, getMetricsContext(), "0");
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS, 10), collector);
   }
@@ -273,6 +272,10 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     } catch (IOException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
     }
+  }
+
+  private String getMetricsContext() {
+    return Constants.Gateway.METRICS_CONTEXT + "." + cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0);
   }
 
 

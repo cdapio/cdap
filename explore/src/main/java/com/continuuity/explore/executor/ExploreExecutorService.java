@@ -3,6 +3,8 @@ package com.continuuity.explore.executor;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.hooks.MetricsReporterHook;
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.http.HttpHandler;
@@ -58,6 +60,10 @@ public class ExploreExecutorService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+                                                                       Constants.Logging.COMPONENT_NAME,
+                                                                       Constants.Service.EXPLORE_HTTP_USER_SERVICE));
+
     LOG.info("Starting {}...", ExploreExecutorService.class.getSimpleName());
 
     exploreService.startAndWait();
@@ -83,16 +89,19 @@ public class ExploreExecutorService extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.info("Stopping {}...", ExploreExecutorService.class.getSimpleName());
 
-    if (exploreService != null) {
-      exploreService.stopAndWait();
-    }
-
     try {
+      // First cancel discoverable so that we don't get any more HTTP requests.
       if (cancellable != null) {
         cancellable.cancel();
       }
     } finally {
-      httpService.stopAndWait();
+      try {
+        // Then stop HTTP service so that we don't send anymore requests to explore service.
+        httpService.stopAndWait();
+      } finally {
+        // Finally stop explore service
+        exploreService.stopAndWait();
+      }
     }
   }
 

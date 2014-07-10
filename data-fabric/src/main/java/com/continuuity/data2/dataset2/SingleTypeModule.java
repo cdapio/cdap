@@ -4,10 +4,10 @@ import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.CompositeDatasetDefinition;
-import com.continuuity.api.dataset.module.DataSetType;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
-import com.continuuity.api.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.module.DatasetType;
+import com.continuuity.api.dataset.module.EmbeddedDataset;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -44,14 +44,14 @@ datasetFramework.addModule("myModule", new SingleTypeModule(SimpleKVTable.class)
 // ...
 
 
-&#64;DataSetType("KVTable")
+&#64;DatasetType("KVTable")
 public class SimpleKVTable extends AbstractDataset implements KeyValueTable {
   private static final byte[] COL = new byte[0];
 
   private final Table table;
 
   public SimpleKVTable(DatasetSpecification spec,
-                       &#64;EmbeddedDataSet("data") Table table) {
+                       &#64;EmbeddedDataset("data") Table table) {
     super(spec.getName(), table);
     this.table = table;
   }
@@ -69,7 +69,7 @@ public class SimpleKVTable extends AbstractDataset implements KeyValueTable {
  * }
  * </pre>
  *
- * See {@link DataSetType} and {@link EmbeddedDataSet} for more details on their usage.
+ * See {@link DatasetType} and {@link EmbeddedDataset} for more details on their usage.
  *
  */
 public class SingleTypeModule implements DatasetModule {
@@ -90,7 +90,7 @@ public class SingleTypeModule implements DatasetModule {
 
     final Constructor ctor = findSuitableCtorOrFail(dataSetClass);
 
-    DataSetType typeAnn = dataSetClass.getAnnotation(DataSetType.class);
+    DatasetType typeAnn = dataSetClass.getAnnotation(DatasetType.class);
     // default type name to dataset class name
     String typeName = typeAnn != null ? typeAnn.value() : dataSetClass.getName();
 
@@ -101,7 +101,7 @@ public class SingleTypeModule implements DatasetModule {
 
     // computing parameters for dataset constructor:
     // if param is of type DatasetSpecification we'll need to set spec as a value
-    // if param has EmbeddedDataSet annotation we need to set instance of embedded dataset as a value
+    // if param has EmbeddedDataset annotation we need to set instance of embedded dataset as a value
     final DatasetCtorParam[] ctorParams = new DatasetCtorParam[paramTypes.length];
     for (int i = 0; i < paramTypes.length; i++) {
       if (DatasetSpecification.class.isAssignableFrom(paramTypes[i])) {
@@ -109,9 +109,9 @@ public class SingleTypeModule implements DatasetModule {
         continue;
       }
       for (Annotation ann : paramAnns[i]) {
-        if (ann instanceof EmbeddedDataSet) {
-          String type = ((EmbeddedDataSet) ann).type();
-          if (EmbeddedDataSet.DEFAULT_TYPE_NAME.equals(type)) {
+        if (ann instanceof EmbeddedDataset) {
+          String type = ((EmbeddedDataset) ann).type();
+          if (EmbeddedDataset.DEFAULT_TYPE_NAME.equals(type)) {
             // default to dataset class name
             type = paramTypes[i].getName();
           }
@@ -121,8 +121,8 @@ public class SingleTypeModule implements DatasetModule {
             LOG.error(msg);
             throw new IllegalStateException(msg);
           }
-          defs.put(((EmbeddedDataSet) ann).value(), def);
-          ctorParams[i] = new DatasetParam(((EmbeddedDataSet) ann).value());
+          defs.put(((EmbeddedDataset) ann).value(), def);
+          ctorParams[i] = new DatasetParam(((EmbeddedDataset) ann).value());
           break;
         }
       }
@@ -133,7 +133,7 @@ public class SingleTypeModule implements DatasetModule {
       public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
         Object[] params = new Object[ctorParams.length];
         for (int i = 0; i < ctorParams.length; i++) {
-          params[i] = ctorParams[i] != null ? ctorParams[i].getValue(defs, spec) : null;
+          params[i] = ctorParams[i] != null ? ctorParams[i].getValue(defs, spec, classLoader) : null;
         }
 
         try {
@@ -168,7 +168,7 @@ public class SingleTypeModule implements DatasetModule {
           // checking that annotation is there
           boolean hasAnnotation = false;
           for (Annotation ann : paramAnns[i]) {
-            if (ann instanceof EmbeddedDataSet) {
+            if (ann instanceof EmbeddedDataset) {
               hasAnnotation = true;
               break;
             }
@@ -199,12 +199,13 @@ public class SingleTypeModule implements DatasetModule {
   }
 
   private interface DatasetCtorParam {
-    Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec) throws IOException;
+    Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec, ClassLoader cl)
+      throws IOException;
   }
 
   private static final class DatasetSpecificationParam implements DatasetCtorParam {
     @Override
-    public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec) {
+    public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec, ClassLoader cl) {
       return spec;
     }
   }
@@ -217,8 +218,10 @@ public class SingleTypeModule implements DatasetModule {
     }
 
     @Override
-    public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec) throws IOException {
-      return defs.get(name).getDataset(spec.getSpecification(name), null);
+    public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec, ClassLoader cl)
+      throws IOException {
+
+      return defs.get(name).getDataset(spec.getSpecification(name), cl);
     }
   }
 }
