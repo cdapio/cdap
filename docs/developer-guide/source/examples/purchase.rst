@@ -136,11 +136,11 @@ From within the SDK root directory, this command will start Reactor in local mod
 
 On Windows::
 
-	~SDK> bin\reactor start
+	~SDK> bin\reactor.bat start
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
-#. Drag and drop the Application .JAR file (``target/Purchase-2.3.0.jar``)
+#. Drag and drop the Application .JAR file (``target/Purchase-<version>.jar``)
    onto your browser window.
    Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
 #. Once loaded, select the ``Purchase`` Application from the list.
@@ -149,8 +149,10 @@ From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://l
 
 On Windows:
 
-#. To deploy the App JAR file, run ``~SDK> bin\appManager deploy``
-#. To start the App, run ``~SDK> bin\appManager start``
+#. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy`` or drag and drop the
+   Application .JAR file (``target/Purchase-<version>.jar`` onto your browser window.
+   (Currently, the *Load App* button does not work under Windows.)
+#. To start the App, run ``~SDK> bin\app-manager.bat start``
 
 Running the Example
 -------------------
@@ -161,13 +163,13 @@ Injecting Sentences
 Run this script to inject sentences 
 to the Stream named *purchaseStream* in the ``Purchase`` application::
 
-	$ ./bin/inject-data.sh [--gateway <hostname>]
+	$ ./bin/inject-data.sh [--host <hostname>]
 
-:Note:	``[--gateway <hostname>]`` is not available for a *Local Reactor*.
+:Note:	``[--host <hostname>]`` is not available for a *Local Reactor*.
 
 On Windows::
 
-	~SDK> bin\inject-data
+	~SDK> bin\inject-data.bat
 
 
 Starting the Workflow
@@ -273,11 +275,11 @@ Either:
 
 or:
 
-- Run ``$ ./bin/appManager.sh --action stop [--gateway <hostname>]``
+- Run ``$ ./bin/app-manager.sh --action stop [--host <hostname>]``
 
-  :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+  :Note:	[--host <hostname>] is not available for a *Local Reactor*.
 
-  On Windows, run ``~SDK> bin\appManager stop``
+  On Windows, run ``~SDK> bin\app-manager.bat stop``
 
 
 Downloading the Example

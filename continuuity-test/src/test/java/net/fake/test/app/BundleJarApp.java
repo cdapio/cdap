@@ -63,7 +63,8 @@ public class BundleJarApp implements Application {
 
   public static String loadTestClasses() {
     try {
-      ClassLoader classLoader = BundleJarApp.class.getClassLoader();
+      // Use context classloader instead of BundleJarApp.class.getClassLoader() b/c this is used only in unit test
+      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       String result = classLoader.loadClass("hello.HelloWorld").getName() + "__" + Schedule.class.getName();
       return result.replaceAll("\\.", "_");
     } catch (ClassNotFoundException e) {
@@ -92,10 +93,12 @@ public class BundleJarApp implements Application {
 
     private String loadClassForName(String className) {
       try {
-        return Class.forName(className).getName();
+        // Use context classloader instead of BundleJarApp.class.getClassLoader() b/c this is used only in unit test
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        return classLoader.loadClass(className).getName();
       } catch (Exception e) {
         LOG.error("Error", e);
-        return e.getMessage();
+        return "null";
       }
     }
   }
