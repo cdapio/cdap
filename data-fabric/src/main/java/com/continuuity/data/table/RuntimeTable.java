@@ -13,13 +13,13 @@ import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Scanner;
 import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.dataset.table.TableSplit;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TxConstants;
 import com.google.common.base.Function;
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -307,34 +307,6 @@ public class RuntimeTable extends Table {
   public void write(byte[] key, Put put) {
     Preconditions.checkArgument(Bytes.equals(key, put.getRow()), "The key should be the same as row in Put");
     put(put);
-  }
-
-  /**
-   * Table splits are simply a start and stop key.
-   */
-  public static class TableSplit extends Split {
-    private final byte[] start, stop;
-
-    public TableSplit(byte[] start, byte[] stop) {
-      this.start = start;
-      this.stop = stop;
-    }
-
-    byte[] getStart() {
-      return start;
-    }
-
-    byte[] getStop() {
-      return stop;
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-                    .add("start", Bytes.toString(start))
-                    .add("stop", Bytes.toString(stop))
-                    .toString();
-    }
   }
 
   /**

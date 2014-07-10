@@ -4,7 +4,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.dataset.metrics.MeteredDataset;
 import com.continuuity.api.dataset.table.Scanner;
-import com.continuuity.data.table.RuntimeTable;
+import com.continuuity.api.dataset.table.TableSplit;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -456,7 +456,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
       @Nullable
       @Override
       public Split apply(@Nullable KeyRange input) {
-        return new RuntimeTable.TableSplit(input == null ? null : input.getStart(),
+        return new TableSplit(input == null ? null : input.getStart(),
                                            input == null ? null : input.getStop());
       }
     });
