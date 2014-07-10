@@ -5,8 +5,6 @@
 # Copies the javadocs into place
 # Zips everything up so it can be staged
 
-source ~/.git-prompt.sh
-
 DATE_STAMP=`date`
 SCRIPT=`basename $0`
 
@@ -177,10 +175,8 @@ function version() {
 #   reactor_version=$(cat $VERSION_TXT)
   reactor_version=$(cat $REACTOR_PATH/$VERSION_TXT)
 #   echo "Reactor version: $reactor_version"
-  GIT_BRANCH_TEXT="`(__git_ps1 "%s")`"
-  set -- "$GIT_BRANCH_TEXT" 
-  IFS="/"; declare -a branches=($*)
-  GIT_BRANCH="${branches[1]}"
+  IFS=/ read -a branch <<< "`git rev-parse --abbrev-ref HEAD`"
+  GIT_BRANCH="${branch[1]}"
 #   echo "git branch: $GIT_BRANCH"
 }
 
