@@ -422,7 +422,7 @@ function(Components, Embeddables, HTTP, Util) {
     HTTP.create().rest('system/services/status', function (statuses, callStatus) {
       var failedStatusCount = 0;
       for (var status in statuses) {
-        if (statuses.hasOwnProperty(status) && statuses[status] === 'NOT OK') {
+        if (statuses.hasOwnProperty(status) && statuses[status] !== 'OK') {
           failedStatusCount++;
         }
       }
