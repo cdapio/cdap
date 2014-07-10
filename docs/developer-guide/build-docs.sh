@@ -5,6 +5,8 @@
 # Copies the javadocs into place
 # Zips everything up so it can be staged
 
+source ~/.git-prompt.sh
+
 DATE_STAMP=`date`
 SCRIPT=`basename $0`
 
@@ -125,13 +127,22 @@ function stage_docs() {
   echo "rsync -vz $SCRIPT_PATH/$BUILD/$ZIP \"$USER@$STAGING_SERVER:$ZIP\""
   rsync -vz $SCRIPT_PATH/$BUILD/$ZIP "$USER@$STAGING_SERVER:$ZIP"
   version
+  remove_cmd="cd $WWW_PATH; ls; sudo rm -rf $reactor_version"
+  unzip_cmd="sudo unzip ~/$ZIP; sudo mv $HTML $reactor_version"
   echo ""
   echo "To install on server:"
-  echo "cd $WWW_PATH; ls"
-  echo "sudo rm -rf $reactor_version; ls"
-  echo "sudo unzip ~/$ZIP; sudo mv $HTML $reactor_version; ls"
-  echo "or"
-  echo "cd $WWW_PATH; ls; sudo rm -rf $reactor_version; sudo unzip ~/$ZIP; sudo mv $HTML $reactor_version; ls"
+  echo ""
+  echo "  cd $WWW_PATH; ls"
+  echo "  sudo rm -rf $reactor_version; ls"
+  echo "  sudo unzip ~/$ZIP; sudo mv $HTML $reactor_version; ls"
+  echo ""
+  echo "or, on one line:"
+  echo ""
+  echo "  $remove_cmd; ls; $unzip_cmd; ls"
+  echo ""
+  echo "or, using current branch:"
+  echo ""
+  echo "  $remove_cmd-$GIT_BRANCH; $unzip_cmd-$GIT_BRANCH; ls"
   echo ""
   login_staging_server
 }
@@ -164,8 +175,13 @@ function build_dependencies() {
 function version() {
 #   cd $REACTOR_PATH
 #   reactor_version=$(cat $VERSION_TXT)
-   reactor_version=$(cat $REACTOR_PATH/$VERSION_TXT)
-   echo "Reactor version: $reactor_version"
+  reactor_version=$(cat $REACTOR_PATH/$VERSION_TXT)
+#   echo "Reactor version: $reactor_version"
+  GIT_BRANCH_TEXT="`(__git_ps1 "%s")`"
+  set -- "$GIT_BRANCH_TEXT" 
+  IFS="/"; declare -a branches=($*)
+  GIT_BRANCH="${branches[1]}"
+#   echo "git branch: $GIT_BRANCH"
 }
 
 if [ $# -lt 1 ]; then
