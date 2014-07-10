@@ -11,7 +11,12 @@ define([], function () {
     load: function () {
       var self = this;
       self.set('services', []);
+
       self.resetServices();
+      this.interval = setInterval(function () {
+        self.resetServices();
+      }, C.POLLING_INTERVAL)
+
     },
 
     resetServices: function () {
@@ -34,9 +39,9 @@ define([], function () {
             requested: service.requested,
             provisioned: service.provisioned,
             statusOk: !!(service.status === 'OK'),
-            statusNotOk: !!(service.status === 'NOT OK'),
+            statusNotOk: !!(service.status === 'NOTOK'),
             logsStatusOk: !!(service.logs === 'OK'),
-            logsStatusNotOk: !!(service.logs === 'NOT OK'),
+            logsStatusNotOk: !!(service.logs === 'NOTOK'),
             metricEndpoint: C.Util.getMetricEndpoint(service.name),
             metricName: C.Util.getMetricName(service.name)
           }));
@@ -64,8 +69,8 @@ define([], function () {
             }
           }
         }
-        self.executeInstanceCall(serviceName, payload);        
-      }      
+        self.executeInstanceCall(serviceName, payload);
+      }
     },
 
     decreaseInstance: function (serviceName, instanceCount) {
@@ -83,7 +88,7 @@ define([], function () {
           }
         }
         self.executeInstanceCall(serviceName, payload);
-      }      
+      }
     },
 
     executeInstanceCall: function(serviceName, payload) {

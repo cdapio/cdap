@@ -84,7 +84,7 @@ DevServer.prototype.start = function() {
         this.config['dashboard.bind.port'] = DEFAULT_BIND_PORT;
       }
 
-      this.server.listen(this.config['dashboard.bind.port']);
+      this.server.listen(9998);
 
       this.logger.info('Listening on port', this.config['dashboard.bind.port']);
       this.logger.info(this.config);

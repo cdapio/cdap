@@ -9,7 +9,8 @@ system.services = {
   transaction: {},
   "metrics.processor": {}
 };
-system.services.servicesDefinition = require('./fixtures/system/services.json');
+system.services.servicesIncompleteDefinition = require('./fixtures/system/services-incomplete.json');
+system.services.servicesCompleteDefinition = require('./fixtures/system/services-complete.json');
 system.services.statusIncomplete = require('./fixtures/system/services/status_incomplete.json');
 system.services.statusComplete = require('./fixtures/system/services/status_complete.json');
 
@@ -51,14 +52,30 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
    * Systems call mocks.
    */
   nock(clientAddr, options)
-    .persist()
-    .get('/v2/system/services/status')
+    .get('/v2/system/services/status').times(2)
     .reply(200, system.services.statusIncomplete);
 
   nock(clientAddr, options)
     .persist()
+    .get('/v2/system/services/status')
+    .reply(200, system.services.statusComplete);
+
+  nock(clientAddr, options)
+    .get('/v2/system/services').times(4)
+    .reply(200, system.services.servicesIncompleteDefinition);
+
+  nock(clientAddr, options)
+    .get('/v2/system/services').times(4)
+    .reply(200, system.services.servicesCompleteDefinition);
+
+  nock(clientAddr, options)
+    .get('/v2/system/services').times(2)
+    .reply(200, system.services.servicesIncompleteDefinition);
+
+  nock(clientAddr, options)
+    .persist()
     .get('/v2/system/services')
-    .reply(200, system.services.servicesDefinition);
+    .reply(200, system.services.servicesCompleteDefinition);
 
   nock(clientAddr, options)
     .persist()
