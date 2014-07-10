@@ -12,6 +12,11 @@ public interface ReactorServiceManager {
   public boolean isServiceEnabled();
 
   /**
+   * @return service description.
+   */
+  public String getDescription();
+
+  /**
    * Used to get the count of the instances of the Reactor Service that are currently running.
    * @return the number of instances of the Reactor Service instances alive.
    */

@@ -101,7 +101,7 @@ define([], function () {
 				}
 
 			}).fail(function (xhr, status, error) {
-				callback({ response: null, error: error }, xhr.status, error);
+				callback({ response: null, error: error, message: xhr.responseText }, xhr.status, error);
 			});
 
 		},

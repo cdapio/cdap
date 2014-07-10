@@ -30,29 +30,12 @@ public class MapperWrapper extends Mapper {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapperWrapper.class);
 
-  private File unpackedJarDir;
-
-  @SuppressWarnings("unchecked")
-  @Override
-  protected void cleanup(Context context) throws IOException, InterruptedException {
-    super.cleanup(context);
-
-    if (unpackedJarDir != null) {
-      try {
-        FileUtils.deleteDirectory(unpackedJarDir);
-      } catch (IOException e) {
-        // NO-OP
-      }
-    }
-  }
-
   @SuppressWarnings("unchecked")
   @Override
   public void run(Context context) throws IOException, InterruptedException {
-    unpackedJarDir = Files.createTempDir();
     MapReduceContextProvider mrContextProvider =
       new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Mapper);
-    final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get(unpackedJarDir);
+    final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
     context.getConfiguration().setClassLoader(basicMapReduceContext.getProgram().getClassLoader());
     basicMapReduceContext.getMetricsCollectionService().startAndWait();
 

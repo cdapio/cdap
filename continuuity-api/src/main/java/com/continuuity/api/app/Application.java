@@ -1,12 +1,9 @@
 package com.continuuity.api.app;
 
-import com.continuuity.api.annotation.Beta;
-
 /**
  * Defines Continuuity Reactor Application.
  *
  */
-@Beta
 public interface Application {
   /**
    * Configures application.

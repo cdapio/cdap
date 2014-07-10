@@ -70,6 +70,9 @@ Limitations
   Java ``Map``. This is possible because these interfaces are so commonly used that they deserve special handling.
   These interfaces are parameterized and require special care as described in the next section.
 
+* The record type must not be recursive. In other words, it cannot contain any class that directly or indirectly
+  contains a member of that same class. This is because a recursive type cannot be represented as a SQL schema.
+
 * Fields of a class that are declared static or transient are ignored during schema generation. This means that the
   record type must have at least one non-transient and non-static field. For example,
   the ``java.util.Date`` class has only static and transient fields. Therefore a record type of ``Date`` is not

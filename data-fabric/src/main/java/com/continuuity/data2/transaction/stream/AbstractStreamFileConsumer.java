@@ -5,6 +5,7 @@ package com.continuuity.data2.transaction.stream;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.file.FileReader;
 import com.continuuity.data.file.ReadFilter;
@@ -17,6 +18,7 @@ import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.queue.ConsumerEntryState;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.google.common.base.Function;
@@ -126,6 +128,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
   protected final byte[] stateColumnName;
 
+  private final long txTimeoutNano;
   private final QueueName streamName;
   private final StreamConfig streamConfig;
   private final ConsumerConfig consumerConfig;
@@ -156,13 +159,17 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
    * @param beginConsumerState Consumer state to begin with.
    * @param extraFilter Extra {@link ReadFilter} that is ANDed with default read filter and applied first.
    */
-  protected AbstractStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig,
+  protected AbstractStreamFileConsumer(CConfiguration cConf,
+                                       StreamConfig streamConfig, ConsumerConfig consumerConfig,
                                        FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                        StreamConsumerStateStore consumerStateStore,
                                        StreamConsumerState beginConsumerState,
                                        @Nullable ReadFilter extraFilter) {
 
     LOG.info("Create consumer {}, reader offsets: {}", consumerConfig, reader.getPosition());
+
+    this.txTimeoutNano = TimeUnit.SECONDS.toNanos(cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT,
+                                                               TxConstants.Manager.DEFAULT_TX_TIMEOUT));
     this.streamName = QueueName.fromStream(streamConfig.getName());
     this.streamConfig = streamConfig;
     this.consumerConfig = consumerConfig;
@@ -236,12 +243,30 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     consumerState.setState(reader.getPosition());
 
     // Read from the underlying file reader
-    while (timeoutNano >= 0 && polledEvents.size() < maxEvents) {
+    while (polledEvents.size() < maxEvents) {
       int readCount = reader.read(eventCache, maxRead, timeoutNano, TimeUnit.NANOSECONDS, readFilter);
-      timeoutNano -= stopwatch.elapsedTime(TimeUnit.NANOSECONDS);
+      long elapsedNano = stopwatch.elapsedTime(TimeUnit.NANOSECONDS);
+      timeoutNano -= elapsedNano;
 
       if (readCount > 0) {
-        getEvents(eventCache, polledEvents, maxEvents - polledEvents.size(), fifoStateContent);
+        int eventsClaimed = getEvents(eventCache, polledEvents, maxEvents - polledEvents.size(), fifoStateContent);
+
+        // TODO: This is a quick fix for preventing backoff logic in flowlet drive kicks in too early.
+        // But it doesn't entirely prevent backoff. A proper fix would have a special state in the dequeue result
+        // to let flowlet driver knows it shouldn't have backoff.
+
+        // If able to read some events but nothing is claimed, don't check for normal timeout.
+        // Only do short transaction timeout checks.
+        if (eventsClaimed == 0 && polledEvents.isEmpty()) {
+          if (elapsedNano < (txTimeoutNano / 2)) {
+            // If still last than half of tx timeout, continue polling without checking normal timeout.
+            continue;
+          }
+        }
+      }
+
+      if (timeoutNano <= 0) {
+        break;
       }
     }
 
@@ -404,10 +429,11 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     };
   }
 
-  private void getEvents(List<? extends StreamEventOffset> source,
+  private int getEvents(List<? extends StreamEventOffset> source,
                          List<? super PollStreamEvent> result,
                          int maxEvents, byte[] stateContent) throws IOException {
     Iterator<? extends StreamEventOffset> iterator = Iterators.consumingIterator(source.iterator());
+    int eventsClaimed = 0;
     while (result.size() < maxEvents && iterator.hasNext()) {
       StreamEventOffset event = iterator.next();
       byte[] stateRow = claimEntry(event.getOffset(), stateContent);
@@ -415,7 +441,9 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
         continue;
       }
       result.add(new PollStreamEvent(event, stateRow));
+      eventsClaimed++;
     }
+    return eventsClaimed;
   }
 
   private void persistConsumerState() {

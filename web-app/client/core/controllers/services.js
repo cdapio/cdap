@@ -21,8 +21,10 @@ define([], function () {
         services.map(function(service) {
           servicesArr.push(C.Service.create({
             modelId: service.name,
+            description: service.description,
             id: service.name,
             name: service.name,
+            description: service.description,
             status: service.status,
             min: service.min,
             max: service.max,
@@ -40,6 +42,11 @@ define([], function () {
           }));
         });
         self.set('services', servicesArr);
+
+        // Bind all the tooltips after UI has rendered after call has returned.
+        setTimeout(function () {
+          $("[data-toggle='tooltip']").tooltip();
+        }, 1000);
       });
     },
 

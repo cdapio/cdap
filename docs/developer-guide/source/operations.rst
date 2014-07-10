@@ -28,8 +28,8 @@ The Local Continuuity Reactor allows you to run the entire Reactor stack in a si
 
 The Local Reactor only binds to the localhost address, and is not available for remote access by any outside process or application.
 
-See the *Continuuity Reactor Getting Started Guide* included in
-the *Continuuity Reactor SDK* for information on how to start and manage your Local Reactor.
+.. See the *Continuuity Reactor Getting Started Guide* included in
+.. the *Continuuity Reactor SDK* for information on how to start and manage your Local Reactor.
 
 Sandbox Continuuity Reactor
 ---------------------------
@@ -57,33 +57,39 @@ Continuuity Reactor Dashboard
 Overview
 --------
 
-The **Continuuity Reactor Dashboard** is available for deploying, querying and managing the Continuuity Reactor
-in all modes of the Reactor except an `in-memory Continuuity Reactor <#in-memory-continuuity-reactor>`__.
+The **Continuuity Reactor Dashboard** is available for deploying, querying and managing the Continuuity
+Reactor in all modes of the Reactor except an 
+`in-memory Continuuity Reactor <#in-memory-continuuity-reactor>`__.
 
 .. image:: _images/dashboard/dashboard_01_overview.png
    :width: 600px
 
 Here is a screen-capture of the Dashboard running on an Enterprise Continuuity Reactor.
 
-Down the left sidebar, underneath the **Continuuity** logo, is the Reactor mode identifier (in this case, *Enterprise Reactor*), followed by five buttons:
-*Overview*, `Collect`_, `Process`_, `Store`_ and `Query`_. These buttons gives you access to Dashboard facilities for managing each of these Reactor elements.
+Down the left sidebar, underneath the **Continuuity** logo, is the Reactor mode identifier (in this case, *Enterprise Reactor*), followed by four buttons:
+*Application*, `Process`_, `Store`_ and `Query`_. These buttons gives you access to Dashboard facilities for managing each of these Reactor elements.
 
-In the upper right portion of the display are two buttons: *Reactor* and *Resources*.
+In the far upper-right are two buttons: the `Metrics <#metrics-explorer>`__ and
+`Services <#services-explorer>`__ buttons, which take you to their respective explorers.
 
 .. _sampling-menu:
 
-To the right of the *Resources* button is the **Sampling Menu**, which appears on almost every pane of the Dashboard.
-The menu determines how much data is sampled in the presentation shown on the Dashboard in realtime:
+In the upper right portion of the display are two buttons (*Reactor* and *Resources*) and a menu.
+The menu is the **Sampling Menu**, which appears on almost every pane of the
+Dashboard. 
+
+The menu determines how much data is sampled in the presentation shown on the Dashboard in
+realtime:
 
 .. image:: _images/dashboard/dashboard_10_app_crawler_detail_menu.png
    :width: 200px
 
 By default, the sampling menu is set at "Last 1 Minute", indicating that the graphs are showing
-the last one minute of activity. Be aware that changing the menu to a longer period (such as "Last 1 Hour")
-can adversely affect the performance of the Continuuity Reactor and should only be used for short sessions before returning the setting to the default "Last 1 Minute".
+the last one minute of activity. Be aware that changing the menu to a longer period (such as "Last 
+1 Hour") can adversely affect the performance of the Continuuity Reactor and should only be used for short sessions before returning the setting to the default "Last 1 Minute".
 
-**Reactor** gives you this starting overview, showing which Applications (*Apps*) are currently installed,
-and realtime graphs of *Collect*, *Process*, *Store* and *Query*.
+The **Reactor** button gives you this starting overview, showing which Applications (*Apps*) are currently
+installed, and realtime graphs of *Collect*, *Process*, *Store*, and *Query*.
 Each statistic is per unit of time—events per second, bytes (or larger) per second, queries per second—and
 are sampled and reported based on the sampling menu in the upper right.
 
@@ -108,11 +114,10 @@ Clicking on the name of an Application will take you to the `App's pane <#applic
 :Note: Because of the interconnections in the Dashboard, you can arrive at the same pane by different paths.
        Remember that the left pane buttons will always take you back to the initial summary panes.
 
-**Resources** gives a look at what is being used by the Reactor:
+The **Resources** button gives a look at what is being used by the Reactor:
 
 .. image:: _images/dashboard/dashboard_02_overview_resources.png
    :width: 600px
-
 
 Once again, the top half shows four different elements, all in realtime:
 *AppFabric* consumption (in Yarn containers),
@@ -139,7 +144,8 @@ contacting `Continuuity <http://www.continuuity.com/contact-us>`__,
 contacting Continuuity support, and *Reset*, for resetting the Reactor.
 
 *Reset* deletes all data and applications from the
-Reactor, is irreversible, and returns the Reactor to an original state.
+Reactor, is irreversible, and returns the Reactor to an original state. The button is only visible and
+available if the Reactor has been started with the system property ``enable.unrecoverable.reset`` as ``True``. 
 
 Metrics Explorer
 ----------------
@@ -156,36 +162,26 @@ where you can specify an element and then pick from a list of appropriate metric
 .. image:: _images/dashboard/dashboard_20_metrics_explorer3.png
    :width: 200px
 
-As with other Dashboard realtime graphs, you specify the sampling rate through a pop-down menu in the upper-right.
-You can *Pause* the sampling to prevent excessive load on the Reactor.
+As with other Dashboard realtime graphs, you specify the sampling rate through a pop-down menu in the
+upper-right. You can *Pause* the sampling to prevent excessive load on the Reactor.
 
 If you move your mouse over the graph, you will get detailed information about the statistics presented:
 
 .. image:: _images/dashboard/dashboard_19_metrics_explorer2.png
    :width: 600px
 
+Services Explorer
+-----------------
+In the top portion of the `Overview image <#dashboard>`__, to the right of the **Metrics** button is the
+**Services** button, which takes you to the *Services Explorer:*
 
-.. _Collect:
 
-Collect
--------
-.. image:: _images/dashboard/dashboard_03_collect.png
+.. image:: _images/dashboard/dashboard_31_services_explorer.png
    :width: 600px
 
-The **Collect** pane shows all the Streams collecting data and their details: name, storage, number of events and the arrival rate, with a graph showing arrivals based on the sampling rate menu setting.
-
-.. _Stream:
-
-Clicking on a Stream's name will take you to the Stream's pane:
-
-.. image:: _images/dashboard/dashboard_21_stream.png
-   :width: 600px
-
-The Stream pane shows the details of the number of events per second currently in the Stream,
-the storage and a graph of events over the last sampling period, and a list of all the Flows
-that are attached to the Stream, with processing rate and `busyness`_ for each Flow.
-Clicking on a Flow name will take you to that `Flow's pane <#flow>`__.
-
+Here you can monitor a variety of different System Services of the Reactor. For each service name, status
+is given, if logs are available (and link to them if so), the number of instances requested and
+provisioned.
 
 .. _Process:
 
@@ -270,6 +266,22 @@ are persistent and are not deleted when an Application is deleted.
 
 To delete these, the Reactor needs to be reset using the `Reset button <#reset>`__ located at the bottom of each pane.
 
+
+.. _Stream:
+
+Stream
+------
+
+Clicking on a Stream's name will take you to the Stream's pane:
+
+.. image:: _images/dashboard/dashboard_21_stream.png
+   :width: 600px
+
+The Stream pane shows the details of the number of events per second currently in the Stream,
+the storage and a graph of events over the last sampling period, and a list of all the Flows
+that are attached to the Stream, with processing rate and `busyness`_ for each Flow.
+Clicking on a Flow name will take you to that `Flow's pane <#flow>`__.
+
 .. _flow:
 
 Flow
@@ -339,14 +351,14 @@ and allows you to traverse the DAG completely by selecting appropriate inputs an
 .. image:: _images/dashboard/dashboard_27_dag1.png
    :width: 400px
 
-Here we have clicked on a Flowlet named *normalizer*, and are seeing the first
+Here we have clicked on a Flowlet named *counter*, and are seeing the first
 (*Inputs*) of three panes in this dialog. On the left is a list of inputs to the Flowlet,
-in this case a single input Stream named *news-stream*, and realtime statistics for the flowlet.
+in this case a single input Stream named *parser*, and realtime statistics for the flowlet.
 
-Clicking the name *news-stream* would take you—without leaving the dialog—backwards on the path
+Clicking the name *parser* would take you—without leaving the dialog—backwards on the path
 of the DAG, and allow you to traverse towards the start of the path.
 
-If you go all the way to the begining of the path, you will reach a Stream, and the dialog will change:
+If you go all the way to the beginning of the path, you will reach a Stream, and the dialog will change:
 
 .. image:: _images/dashboard/dashboard_30_dag4.png
    :width: 400px
@@ -380,60 +392,67 @@ The current number of instances is shown for reference.
 Flow Log Explorer
 .................
 
-The Flow Log Explorer pane shows a sample from the logs, with filters for a standard set of filters: *Info*, *Warning*, *Error*, *Debug*, and *Others:*
+The Flow Log Explorer pane shows a sample from the logs, with filters for a standard set of filters: *Info*, *Warning*, *Error*, *Debug*, and *Other:*
 
 .. image:: _images/dashboard/dashboard_08_app_crawler_flow_rss_log.png
    :width: 600px
 
 Flow History
-............
+................
 
-The Flow History pane shows starting and stopping events for the Flow and the results:
+The Flow History pane shows started and ended events for the Flow and the results:
 
-.. image:: _images/dashboard/dashboard_09_app_crawler_flow_rss_history.png
+.. image:: _images/dashboard/dashboard_09b_app_crawler_flow_rss_history.png
    :width: 600px
 
 
 MapReduce
 ---------
+For a MapReduce, the Mapping and Reducing activity is shown, along with status and management controls for starting, stopping and configuration. Buttons for logs and history, similar to those for 
+`Flows <#flow-history>`__ and `Workflows <#workflow>`__, are also available:
+
 
 .. image:: _images/dashboard/dashboard_26_mapreduce.png
    :width: 600px
 
-For a MapReduce, the Mapping and Reducing activity is shown, along with status and management controls for starting, stopping and configuration.
-
 Workflow
 --------
+For a Workflow, the time until the next scheduled run is shown, along with status and management controls for starting, stopping and configuration.
 
 .. image:: _images/dashboard/dashboard_25_workflow.png
    :width: 600px
 
-For a Workflow, the time until the next scheduled run is shown, along with status and management controls for starting, stopping and configuration.
 
+Workflow History
+................
+The Workflow History pane shows started and ended events for the Workflow and the results:
+
+.. image:: _images/dashboard/dashboard_09_app_crawler_flow_rss_history.png
+   :width: 600px
 
 Dataset
 -------
+For a Dataset, write rate (in both bytes and operations per second), read rate and total storage is shown
+along with a list of Flows attached to the Dataset, their processing rate, and `busyness`_.
+
 
 .. image:: _images/dashboard/dashboard_15_dataset.png
    :width: 600px
 
-For a Dataset, write rate (in both bytes and operations per second), read rate and total storage is shown,
-along with a list of Flows attached to the
-Dataset and their processing rate and `busyness`_.
-
 
 Procedure
 ---------
+For a Procedure, request statistics are shown, along with status and management controls for starting, stopping and configuration. The dialog box shown allows for the sending of requests to Procedures, where
+JSON string parameters are passed to the Procedure when calling its methods.
+
+For details of making requests and using Procedures, including configuring the parameters and calling
+methods, see the `Continuuity Reactor HTTP REST API Guide <rest.html>`__.
+
+In a fashion similar to the `Flow Log Explorer`_, you can examine the logs associated with each Procedure.
+
 
 .. image:: _images/dashboard/dashboard_17_procedure_ranker.png
    :width: 600px
-
-For a Procedure, request statistics are shown, along with status and management controls for starting, stopping and configuration. The dialog box shown allows for the generation of 'ad-hoc' requests, where JSON string parameters are passed to the Procedure when calling its methods.
-
-For details of making requests and using Procedures, including configuring the parameters and calling methods,
-see the `Continuuity Reactor HTTP REST API Guide <rest.html>`__.
-
-In a fashion similar to the `Flow Log Explorer`_, you can examine the logs associated with each Procedure.
 
 
 Logging
@@ -483,8 +502,10 @@ You embed user-defined metrics in the methods defining the elements of your appl
 They will then emit their metrics and you can retrieve them
 (along with system metrics) via the `Metrics Explorer`_ in the Dashboard or
 via the Continuuity Reactor’s `REST interfaces <rest.html>`__.
+The names given to the metrics (such as ``names.longnames`` and ``names.bytes`` as in the example below)
+should be composed only of alphanumeric characters.
 
-For example, to add metrics to a Flowlet *NameSaver*::
+To add metrics to a Flowlet *NameSaver*::
 
 	public static class NameSaver extends AbstractFlowlet {
 	  static final byte[] NAME = { 'n', 'a', 'm', 'e' };
@@ -508,7 +529,7 @@ For example, to add metrics to a Flowlet *NameSaver*::
 
 An example of user-defined metrics is in the `PageViewAnalytics example <examples/PageViewAnalytics/index.html>`_.
 
-For details on available system metrics, see the `Metrics section <rest.html#metrics>`__
+For details on available system metrics, see the `Metrics section <rest.html#metrics-http-api>`__
 in the `Continuuity Reactor HTTP REST API Guide <rest.html>`__.
 
 Using Metrics Explorer

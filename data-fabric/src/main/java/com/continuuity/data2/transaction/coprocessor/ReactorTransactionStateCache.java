@@ -1,6 +1,8 @@
 package com.continuuity.data2.transaction.coprocessor;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecV1;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecV2;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import org.apache.hadoop.conf.Configuration;
 
@@ -13,6 +15,11 @@ import java.io.IOException;
  * a restart.
  */
 public class ReactorTransactionStateCache extends TransactionStateCache {
+  // Reactor versions of coprocessors must reference snapshot classes so they get included in generated jar file
+  // DO NOT REMOVE
+  private static final SnapshotCodecV1 codecV1 = null;
+  private static final SnapshotCodecV2 codecV2 = null;
+
   private String tableNamespace;
   private ConfigurationTable configTable;
 

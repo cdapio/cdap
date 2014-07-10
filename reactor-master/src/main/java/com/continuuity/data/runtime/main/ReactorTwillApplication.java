@@ -183,7 +183,8 @@ public class ReactorTwillApplication implements TwillApplication {
       .build();
 
     return builder.add(
-      new DatasetOpExecutorServerTwillRunnable("dataset.executor", "cConf.xml", "hConf.xml"), resourceSpec)
+      new DatasetOpExecutorServerTwillRunnable(Constants.Service.DATASET_EXECUTOR, "cConf.xml", "hConf.xml"),
+      resourceSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())
@@ -191,15 +192,17 @@ public class ReactorTwillApplication implements TwillApplication {
   }
 
   private TwillSpecification.Builder.RunnableSetter addExploreService(TwillSpecification.Builder.MoreRunnable builder) {
+    int instances = instanceCountMap.get(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
 
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
       .setVirtualCores(cConf.getInt(Constants.Explore.CONTAINER_VIRTUAL_CORES, 1))
       .setMemory(cConf.getInt(Constants.Explore.CONTAINER_MEMORY_MB, 512), ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(cConf.getInt(Constants.Explore.CONTAINER_INSTANCES, 1))
+      .setInstances(instances)
       .build();
 
     TwillSpecification.Builder.MoreFile twillSpecs =
-      builder.add(new ExploreServiceTwillRunnable("explore.executor", "cConf.xml", "hConf.xml"), resourceSpec)
+      builder.add(new ExploreServiceTwillRunnable(
+        Constants.Service.EXPLORE_HTTP_USER_SERVICE, "cConf.xml", "hConf.xml"), resourceSpec)
         .withLocalFiles()
         .add("cConf.xml", cConfFile.toURI())
         .add("hConf.xml", hConfFile.toURI());

@@ -1,5 +1,6 @@
 package com.continuuity.api.dataset.module;
 
+import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.dataset.DatasetDefinition;
 
 /**
@@ -7,6 +8,7 @@ import com.continuuity.api.dataset.DatasetDefinition;
  *
  * The implementation of this interface doesn't have to be thread-safe.
  */
+@Beta
 public interface DatasetDefinitionRegistry {
   /**
    * Adds {@link com.continuuity.api.dataset.DatasetDefinition} to the registry.

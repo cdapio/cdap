@@ -11,6 +11,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TransactionSystemTest;
@@ -86,7 +87,8 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new TransactionMetricsModule(),
-      new DataFabricModules().getDistributedModules());
+      new DataFabricModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModule());
 
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();

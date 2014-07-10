@@ -31,7 +31,7 @@ Start the Reactor from a command line in the SDK directory::
 
 Or, on Windows::
 
-	> bin\reactor start
+	> bin\reactor.bat start
 
 View the Reactor Dashboard in a browser window::
 

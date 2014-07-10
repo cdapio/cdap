@@ -116,7 +116,10 @@ final class ProcedureHandlerMethod implements HandlerMethod {
     }
 
     try {
+      ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+      Thread.currentThread().setContextClassLoader(context.getProgram().getClassLoader());
       handlerMethod.handle(request, responder);
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
       context.getSystemMetrics().gauge("query.processed", 1);
     } catch (Throwable t) {
       context.getSystemMetrics().gauge("query.failures", 1);

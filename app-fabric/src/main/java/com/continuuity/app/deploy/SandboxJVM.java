@@ -113,7 +113,7 @@ public class SandboxJVM {
           return -1;
         }
 
-        Program archive = Programs.create(lf.create(jarFilename), unpackedJarDir);
+        Program archive = Programs.createWithUnpack(lf.create(jarFilename), unpackedJarDir);
         app = archive.getMainClass().newInstance();
       } catch (Exception e) {
         LOG.error(e.getMessage());
