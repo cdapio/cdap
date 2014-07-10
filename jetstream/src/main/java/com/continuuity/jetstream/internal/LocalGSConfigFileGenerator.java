@@ -121,7 +121,9 @@ public class LocalGSConfigFileGenerator implements GSConfigFileGenerator {
 
   private String createGSQLContent(String name, String gsql) {
     StringBuilder stringBuilder = new StringBuilder();
-    String header = String.format("DEFINE { query_name '%s'; }", name);
+    //TODO: Providing external visibility to all queries for now. Need to set this only for queries whose outputs
+    //have corresponding process methods for better performance.
+    String header = String.format("DEFINE { query_name '%s'; visibility 'external'; }", name);
     //Use default interface set
     stringBuilder.append(header).append(NEWLINE).append(gsql).append(NEWLINE);
     return stringBuilder.toString();
