@@ -5,7 +5,7 @@ import com.continuuity.jetstream.api.GSSchema;
 import java.util.Map;
 
 /**
- *
+ * Specification of a GSFlowlet.
  */
 public interface GSFlowletSpecification {
 
@@ -16,4 +16,5 @@ public interface GSFlowletSpecification {
   Map<String, GSSchema> getInputSchema();
 
   Map<String, String> getGSQL();
+
 }

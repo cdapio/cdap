@@ -7,7 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Set;
 
 /**
- *
+ * Default GSSchema.
  */
 public class DefaultGSSchema implements GSSchema {
 

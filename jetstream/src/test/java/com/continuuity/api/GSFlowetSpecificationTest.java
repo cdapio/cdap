@@ -12,7 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- *
+ * Tests the GSFlowletSpecification.
  */
 public class GSFlowetSpecificationTest {
 

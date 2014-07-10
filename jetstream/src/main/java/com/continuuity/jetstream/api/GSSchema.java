@@ -9,7 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Set;
 
 /**
- *
+ * Used to define the Schema of a Input Stream to {@link com.continuuity.jetstream.api.AbstractGSFlowlet}.
  */
 public interface GSSchema {
 
@@ -60,6 +60,7 @@ public interface GSSchema {
       }
 
       public GSSchema build() {
+        //TODO: Add a check to make sure there is at least one increasing or decreasing fields.
         return new DefaultGSSchema(fieldNames, increasingFields, decreasingFields);
       }
     }

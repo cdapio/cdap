@@ -10,7 +10,7 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 
 /**
- *
+ * Default GSFlowletConfigurer.
  */
 public class DefaultGSFlowletConfigurer implements GSFlowletConfigurer {
   private String name;

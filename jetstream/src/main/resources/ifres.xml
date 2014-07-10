@@ -1,0 +1,10 @@
+    <Interface Name='CSV0'>
+      <InterfaceType value='CSV'/>
+      <CSVSeparator value='|'/>
+      <Filename value='exampleCsv'/>
+      <StartUpDelay value='10'/>
+      <Verbose value='TRUE'/>
+      <TcpPort value='45678'/>
+    </Interface>
+  </Host>
+</Resources>

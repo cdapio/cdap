@@ -6,7 +6,7 @@ import com.continuuity.jetstream.gsflowlet.GSFlowletSpecification;
 import java.util.Map;
 
 /**
- *
+ * Default GSFlowlet Specification.
  */
 public class DefaultGSFlowletSpecification implements GSFlowletSpecification {
   private String name;

@@ -5,7 +5,7 @@ import com.continuuity.jetstream.api.GSSchema;
 import com.continuuity.jetstream.api.PrimitiveType;
 
 /**
- *
+ * Basic GSFlowlet for Testing.
  */
 public class GSFlowletBasic extends AbstractGSFlowlet {
 
