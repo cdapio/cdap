@@ -202,7 +202,7 @@
               <td style="max-width: 100px;" class="status-col center-align">
 
                 {{#if this.logsStatusOk}}
-                {{#linkTo 'Service.Log' this}}<img src="assets/img/log-icon.png" />{{/linkTo}}
+                {{#linkTo 'Service.Log' this}}<span {{ bindAttr class=":log-icon this.logClass" }} ></span>{{/linkTo}}
                 {{ else }}
                   <span data-toggle="tooltip" data-placement="right" title="Please contact your system admistrator for logs.">NA</span>
                 {{/if}}
@@ -212,10 +212,10 @@
                   <div class="instance-num"><span>{{this.requested}}</span></div>
                   <div>
                     <a class="cursor-pointer" {{action decreaseInstance this.name this.requested }}>
-                      <span style="background: url('assets/img/minus.png') no-repeat; display: inline-block; height: 30px; width: 30px;"></span>
+                      <span class="minus-icon"></span>
                     </a>
                     <a class="cursor-pointer" {{action increaseInstance this.name this.requested }}>
-                      <span style="background: url('assets/img/plus.png') no-repeat; display: inline-block; height: 30px; width: 30px;"></span>
+                      <span class="plus-icon"></span>
                     </a>
                   </div>
                 </div>

@@ -1464,6 +1464,19 @@ span.service-icon.complete {
   background-image: url('/assets/img/ok-icon.png');
 }
 
+span.log-icon.loading {
+  display: none;
+}
+
+span.log-icon.complete {
+  background-image: url('/assets/img/log-icon.png');
+  height: 30px;
+  width: 30px;
+  background-repeat: no-repeat;
+  border: none !important;
+  display: inline-block;
+}
+
 #services-loading {
     position: absolute;
     right: 0;
@@ -1560,18 +1573,6 @@ span.service-icon.complete {
 	float: left;
 }
 
-#reactor-services .services-loading, #reactor-services .services-running {
-	height: 32px;
-	width: 32px;
-}
-#reactor-services .services-loading {
-	background-image: url(../../img/services-loading-blue.gif);
-}
-
-#reactor-services .services-running {
-	background-image: url(../../img/ok-icon.png);
-}
-
 .instance-wrapper {
 	margin: 0 auto;
 	width: 150px;
@@ -1595,9 +1596,22 @@ span.service-icon.complete {
 	text-align: center;
 }
 
-img[src="assets/img/minus.png"] {
-	margin-right: -5px;
+.instance-col span.minus-icon, .instance-col span.plus-icon {
+  height: 30px;
+  width: 30px;
+  background-repeat: no-repeat;
+  border: none !important;
+  display: inline-block;
 }
+
+.instance-col span.minus-icon {
+  background-image: url('/assets/img/minus.png');
+}
+
+.instance-col span.plus-icon {
+  background-image: url('/assets/img/plus.png');
+}
+
 
 /*
  * Bootstrap Overrides
