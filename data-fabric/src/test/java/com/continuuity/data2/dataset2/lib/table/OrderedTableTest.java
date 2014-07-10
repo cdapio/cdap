@@ -430,28 +430,43 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
     }
   }
 
-
   // todo: unify with testBasicIncrementWithTx - it is exactly same
   @Test
   public void testBasicIncrementWriteWithTxSmall() throws Exception {
     DatasetAdmin admin = getTableAdmin("myTable");
     admin.create();
-    OrderedTable myTable;
+    OrderedTable myTable = getTable("myTable");
+
+    // start 1st tx
     Transaction tx = txClient.startShort();
-    myTable = getTable("myTable");
     ((TransactionAware) myTable).startTx(tx);
+
     myTable.incrementWrite(R1, a(C1), la(-3L));
 
-    Assert.assertTrue(txClient.canCommit(tx, ((TransactionAware) myTable).getTxChanges()));
-    Assert.assertTrue(((TransactionAware) myTable).commitTx());
-    Assert.assertTrue(txClient.commit(tx));
+    commitAndAssertSuccess(tx, (TransactionAware) myTable);
 
+    // start 2nd tx
     tx = txClient.startShort();
     ((TransactionAware) myTable).startTx(tx);
-    verify(Bytes.toBytes(-3L), myTable.get(R1, C1));
 
-    Assert.assertTrue(txClient.canCommit(tx, ((TransactionAware) myTable).getTxChanges()));
-    Assert.assertTrue(((TransactionAware) myTable).commitTx());
+    verify(Bytes.toBytes(-3L), myTable.get(R1, C1));
+    myTable.incrementWrite(R1, a(C1), la(-3L));
+    verify(Bytes.toBytes(-6L), myTable.get(R1, C1));
+
+    commitAndAssertSuccess(tx, (TransactionAware) myTable);
+
+    // start 3rd tx
+    tx = txClient.startShort();
+    ((TransactionAware) myTable).startTx(tx);
+
+    verify(Bytes.toBytes(-6L), myTable.get(R1, C1));
+
+    commitAndAssertSuccess(tx, (TransactionAware) myTable);
+  }
+
+  private void commitAndAssertSuccess(Transaction tx, TransactionAware txAware) throws Exception {
+    Assert.assertTrue(txClient.canCommit(tx, txAware.getTxChanges()));
+    Assert.assertTrue(txAware.commitTx());
     Assert.assertTrue(txClient.commit(tx));
   }
 
