@@ -21,8 +21,8 @@ import org.apache.hadoop.hbase.ipc.CoprocessorProtocol;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,35 +32,50 @@ import java.util.Map;
 public class TxAwareTable implements HTableInterface, TransactionAware {
   private Transaction tx;
   private HTable hTable;
-  private HashMap<byte[], Row> currentOperations;
+  private ArrayList<Row> failedTransactions;
 
   public TxAwareTable(HTable hTable) {
     this.hTable = hTable;
+    this.failedTransactions = new ArrayList<Row>();
   }
 
   @Override
   public byte[] getTableName() {
-    return this.hTable.getTableName();
+    return hTable.getTableName();
   }
 
   @Override
   public Configuration getConfiguration() {
-    return this.hTable.getConfiguration();
+    return hTable.getConfiguration();
   }
 
   @Override
   public HTableDescriptor getTableDescriptor() throws IOException {
-    return null;
+    return hTable.getTableDescriptor();
   }
 
   @Override
   public boolean exists(Get get) throws IOException {
-    return false;
+    return hTable.exists(get);
   }
 
+  // TODO: Rollback only failed transactions or all?
   @Override
   public void batch(List<? extends Row> actions, Object[] results) throws IOException, InterruptedException {
-
+    try {
+      hTable.batch(actions, results);
+    } catch (Exception e) {
+      try {
+        for (int i = 0; i < results.length; i++) {
+          if (results[i] == null) {
+            failedTransactions.add(actions.get(i));
+          }
+        }
+        rollbackTx();
+      } catch (Exception e1) {
+        Throwables.propagate(new Exception("Could not rollback failed transactions"));
+      }
+    }
   }
 
   @Override
@@ -70,46 +85,32 @@ public class TxAwareTable implements HTableInterface, TransactionAware {
 
   @Override
   public Result get(Get get) throws IOException {
-    try {
-      currentOperations.put(get.getRow(), get);
-      return hTable.get(get);
-    } catch (IOException e) {
-      try {
-        rollbackTx();
-      } catch (Exception e1) {
-        Throwables.propagate(new IOException("Could not rollback get on failure"));
-      }
-    }
-    return null;
+    return hTable.get(get);
   }
 
   @Override
   public Result[] get(List<Get> gets) throws IOException {
-    Result[] results = new Result[gets.size()];
-    for (int i = 0; i < gets.size(); i++) {
-      results[i] = get(gets.get(i));
-    }
-    return results;
+    return hTable.get(gets);
   }
 
   @Override
   public Result getRowOrBefore(byte[] row, byte[] family) throws IOException {
-    return null;
+    return hTable.getRowOrBefore(row, family);
   }
 
   @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
-    return null;
+    return hTable.getScanner(scan);
   }
 
   @Override
   public ResultScanner getScanner(byte[] family) throws IOException {
-    return null;
+    return hTable.getScanner(family);
   }
 
   @Override
   public ResultScanner getScanner(byte[] family, byte[] qualifier) throws IOException {
-    return null;
+    return hTable.getScanner(family, qualifier);
   }
 
   @Override
@@ -170,66 +171,67 @@ public class TxAwareTable implements HTableInterface, TransactionAware {
 
   @Override
   public boolean isAutoFlush() {
-    return false;
+    return hTable.isAutoFlush();
   }
 
   @Override
   public void flushCommits() throws IOException {
-
+    hTable.flushCommits();
   }
 
   @Override
   public void close() throws IOException {
-
+    hTable.close();
   }
 
+  // TODO: This seems to have been deprecated. Should we just not support it, then?
   @Override
   public RowLock lockRow(byte[] row) throws IOException {
-    return null;
+    return hTable.lockRow(row);
   }
 
   @Override
   public void unlockRow(RowLock rl) throws IOException {
-
+    hTable.unlockRow(rl);
   }
 
   @Override
   public <T extends CoprocessorProtocol> T coprocessorProxy(Class<T> protocol, byte[] row) {
-    return null;
+    return hTable.coprocessorProxy(protocol, row);
   }
 
   @Override
   public <T extends CoprocessorProtocol, R> Map<byte[], R> coprocessorExec(Class<T> protocol, byte[] startKey,
                                                                            byte[] endKey, Batch.Call<T,
     R> callable) throws IOException, Throwable {
-    return null;
+    return hTable.coprocessorExec(protocol, startKey, endKey, callable);
   }
 
   @Override
   public <T extends CoprocessorProtocol, R> void coprocessorExec(Class<T> protocol, byte[] startKey, byte[] endKey,
                                                                  Batch.Call<T, R> callable, Batch.Callback<R>
     callback) throws IOException, Throwable {
-
+    hTable.coprocessorExec(protocol, startKey, endKey, callable, callback);
   }
 
   @Override
   public void setAutoFlush(boolean autoFlush) {
-
+    hTable.setAutoFlush(autoFlush);
   }
 
   @Override
   public void setAutoFlush(boolean autoFlush, boolean clearBufferOnFail) {
-
+    hTable.setAutoFlush(autoFlush, clearBufferOnFail);
   }
 
   @Override
   public long getWriteBufferSize() {
-    return 0;
+    return hTable.getWriteBufferSize();
   }
 
   @Override
   public void setWriteBufferSize(long writeBufferSize) throws IOException {
-
+    hTable.setWriteBufferSize(writeBufferSize);
   }
 
   @Override
@@ -249,21 +251,13 @@ public class TxAwareTable implements HTableInterface, TransactionAware {
 
   @Override
   public void postTxCommit() {
-    currentOperations.clear();
+    this.tx = null;
+    this.failedTransactions.clear();
   }
 
   @Override
   public boolean rollbackTx() throws Exception {
-    for (Map.Entry<byte[], Row> entry : currentOperations.entrySet()) {
-      byte[] rowId = entry.getKey();
-      Row operation = entry.getValue();
-      if (operation instanceof Get) {
-        // Do nothing on rollback for reads;
-      } else if (operation instanceof Put) {
-        // TODO : delete operations on each put that failed
-      }
-    }
-    return true;
+    return false;
   }
 
   @Override
