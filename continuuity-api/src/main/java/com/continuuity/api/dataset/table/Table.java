@@ -163,12 +163,43 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   Row increment(Increment increment);
 
   /**
-   * Scans table.
+   * Increments (atomically) the specified row and columns by the specified amounts, without returning the new value.
    *
-   * @param startRow start row inclusive; {@code null} means start from first row of the table
-   * @param stopRow stop row exclusive; {@code null} means scan all rows to the end of the table
-   * @return instance of {@link Scanner}
+   * @param row row which values to increment
+   * @param column column to increment
+   * @param amount amount to increment by
    */
+  void incrementWrite(byte[] row, byte[] column, long amount);
+
+  /**
+   * Increments (atomically) the specified row and columns by the specified amounts, without returning the new values.
+   *
+   * NOTE: depending on the implementation this may work faster than calling
+   * {@link #incrementWrite(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of rows)
+   *
+   * @param row row which values to increment
+   * @param columns columns to increment
+   * @param amounts amounts to increment columns by (same order as columns)
+   */
+  void incrementWrite(byte[] row, byte[][] columns, long[] amounts);
+
+  /**
+   * Increments (atomically) the specified row and columns by the specified amounts, without returning the new values.
+   *
+   * NOTE: depending on the implementation this may work faster than calling
+   * {@link #incrementWrite(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of rows)
+   *
+   * @param increment the row and column increment amounts
+   */
+  void incrementWrite(Increment increment);
+
+    /**
+     * Scans table.
+     *
+     * @param startRow start row inclusive; {@code null} means start from first row of the table
+     * @param stopRow stop row exclusive; {@code null} means scan all rows to the end of the table
+     * @return instance of {@link Scanner}
+     */
   Scanner scan(@Nullable byte[] startRow, @Nullable byte[] stopRow);
 
   /**
