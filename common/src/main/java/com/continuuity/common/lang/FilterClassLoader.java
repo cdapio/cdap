@@ -15,6 +15,7 @@ public class FilterClassLoader extends ClassLoader {
   private final Predicate<String> resourceAcceptor;
 
   private static final String[] STANDARD_LIB_PREFIXES = {
+    "sun.org.",
     "com.sun.",
     "launcher.",
     "java.",
