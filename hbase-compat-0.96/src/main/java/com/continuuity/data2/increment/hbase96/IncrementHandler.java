@@ -57,7 +57,6 @@ public class IncrementHandler extends BaseRegionObserver {
     try {
       scanner = new IncrementSummingScanner(region, scan, region.getScanner(scan));
       scanner.next(results);
-      LOG.info("Returning results of size " + results.size() + " for preGetOp()");
       ctx.bypass();
     } finally {
       if (scanner != null) {
@@ -70,7 +69,6 @@ public class IncrementHandler extends BaseRegionObserver {
   public void prePut(ObserverContext<RegionCoprocessorEnvironment> ctx, Put put, WALEdit edit, Durability durability)
     throws IOException {
     if (put.getAttribute(HBaseOcTableClient.DELTA_WRITE) != null) {
-      LOG.info("Got increment put for row=" + Bytes.toStringBinary(put.getRow()));
       // incremental write
       NavigableMap<byte[], List<Cell>> newFamilyMap = new TreeMap<byte[], List<Cell>>(Bytes.BYTES_COMPARATOR);
       for (Map.Entry<byte[], List<Cell>> entry : put.getFamilyCellMap().entrySet()) {

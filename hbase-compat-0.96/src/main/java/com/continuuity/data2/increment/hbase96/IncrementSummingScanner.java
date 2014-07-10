@@ -106,7 +106,7 @@ class IncrementSummingScanner implements RegionScanner {
           // 1. if this is an increment
           if (IncrementHandler.isIncrement(cell)) {
             if (LOG.isTraceEnabled()) {
-              LOG.info("Found increment for row=" + Bytes.toStringBinary(CellUtil.cloneRow(cell)) + ", " +
+              LOG.trace("Found increment for row=" + Bytes.toStringBinary(CellUtil.cloneRow(cell)) + ", " +
                          "column=" + Bytes.toStringBinary(CellUtil.cloneQualifier(cell)));
             }
             if (!sameCell(previousIncrement, cell)) {
