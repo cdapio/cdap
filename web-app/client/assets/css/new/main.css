@@ -579,10 +579,10 @@ ul.top-dropdown-listholder {
 }
 
 ul.top-dropdown-listholder li {
-	
+
 }
 
-#global ul.top-dropdown-listholder li a { 
+#global ul.top-dropdown-listholder li a {
 	margin-left: 0px;
 	float: none;
 	text-align: center;
@@ -2012,7 +2012,6 @@ a strong {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background-color: rgba(240, 241, 241, 0.8);
 	z-index: 50;
 }
 
