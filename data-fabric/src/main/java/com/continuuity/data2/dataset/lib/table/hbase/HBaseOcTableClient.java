@@ -20,6 +20,8 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -34,6 +36,8 @@ import javax.annotation.Nullable;
 // todo: extract separate "no delete inside tx" table?
 // todo: consider writing & reading using HTable to do in multi-threaded way
 public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseOcTableClient.class);
+
   public static final String DELTA_WRITE = "d";
   private final HTable hTable;
   private final String hTableName;
@@ -118,10 +122,16 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
       if (incrementPut != null) {
         puts.add(incrementPut);
       }
-      puts.add(put);
+      if (!put.isEmpty()) {
+        puts.add(put);
+      }
     }
-    hTable.put(puts);
-    hTable.flushCommits();
+    if (!puts.isEmpty()) {
+      hTable.put(puts);
+      hTable.flushCommits();
+    } else {
+      LOG.info("No writes to persist!");
+    }
   }
 
   private Put getIncrementalPut(Put existing, byte[] row) {
