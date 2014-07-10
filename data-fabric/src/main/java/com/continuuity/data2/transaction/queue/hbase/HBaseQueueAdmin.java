@@ -351,7 +351,7 @@ public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements Queu
     // Add coprocessors
     CoprocessorJar coprocessorJar = createCoprocessorJar();
     for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
-      addCoprocessor(htd, coprocessor, coprocessorJar.getJarLocation());
+      addCoprocessor(htd, coprocessor, coprocessorJar.getJarLocation(), coprocessorJar.getPriority(coprocessor));
     }
 
     // Create queue table with splits.

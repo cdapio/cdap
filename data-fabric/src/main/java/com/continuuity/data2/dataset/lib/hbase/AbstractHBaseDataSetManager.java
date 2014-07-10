@@ -107,12 +107,12 @@ public abstract class AbstractHBaseDataSetManager implements DataSetManager {
           needUpgrade = true;
           // Remove old one and add the new one.
           tableDescriptor.removeCoprocessor(info.getClassName());
-          addCoprocessor(tableDescriptor, coprocessor, jarLocation);
+          addCoprocessor(tableDescriptor, coprocessor, jarLocation, coprocessorJar.getPriority(coprocessor));
         }
       } else {
         // The coprocessor is missing from the table, add it.
         needUpgrade = true;
-        addCoprocessor(tableDescriptor, coprocessor, jarLocation);
+        addCoprocessor(tableDescriptor, coprocessor, jarLocation, coprocessorJar.getPriority(coprocessor));
       }
     }
 
@@ -149,12 +149,10 @@ public abstract class AbstractHBaseDataSetManager implements DataSetManager {
   }
 
   protected void addCoprocessor(HTableDescriptor tableDescriptor, Class<? extends Coprocessor> coprocessor,
-                                Location jarFile) throws IOException {
-    tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI()), Coprocessor.PRIORITY_USER, null);
-  }
-
-  protected void addCoprocessor(HTableDescriptor tableDescriptor, Class<? extends Coprocessor> coprocessor,
-                                Location jarFile, int priority) throws IOException {
+                                Location jarFile, Integer priority) throws IOException {
+    if (priority == null) {
+      priority = Coprocessor.PRIORITY_USER;
+    }
     tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI()), priority, null);
   }
 

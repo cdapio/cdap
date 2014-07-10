@@ -114,12 +114,8 @@ public class HBaseOcTableManager extends AbstractHBaseDataSetManager {
     CoprocessorJar coprocessorJar = createCoprocessorJar();
 
     for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
-      Integer priority = coprocessorJar.getPriority(coprocessor);
-      if (priority != null) {
-        addCoprocessor(tableDescriptor, coprocessor, coprocessorJar.getJarLocation(), priority);
-      } else {
-        addCoprocessor(tableDescriptor, coprocessor, coprocessorJar.getJarLocation());
-      }
+      addCoprocessor(tableDescriptor, coprocessor, coprocessorJar.getJarLocation(),
+                     coprocessorJar.getPriority(coprocessor));
     }
     tableUtil.createTableIfNotExists(getHBaseAdmin(), tableName, tableDescriptor);
   }
