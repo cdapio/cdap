@@ -30,96 +30,103 @@ public class TxAwareTableTest {
     testUtil.shutdownMiniCluster();
   }
 
+  private static final class TestBytes {
+    private static final byte[] family = Bytes.toBytes("testfamily");
+    private static final byte[] qualifier = Bytes.toBytes("testqualifier");
+    private static final byte[] row = Bytes.toBytes("testrow");
+    private static final byte[] value = Bytes.toBytes("testvalue");
+  }
+
   @Test
   public void testValidTransactionalPutAndGet() throws Exception {
-    HTable hTable = testUtil.createTable(Bytes.toBytes("test"), Bytes.toBytes("family"));
+    HTable hTable = testUtil.createTable(Bytes.toBytes("testtable1"), TestBytes.family);
     TxAwareTable txAwareTable = new TxAwareTable(hTable);
 
     TransactionContext transactionContext = new TransactionContext(new DetachedTxSystemClient(),
                                                                    txAwareTable);
     transactionContext.start();
-    Put put = new Put(Bytes.toBytes("testrow"));
-    put.add(Bytes.toBytes("family"), Bytes.toBytes("testqualifier"), Bytes.toBytes("testvalue"));
+    Put put = new Put(TestBytes.row);
+    put.add(TestBytes.family, TestBytes.qualifier, TestBytes.value);
     txAwareTable.put(put);
     transactionContext.finish();
 
-    Result result = txAwareTable.get(new Get(Bytes.toBytes("testrow")));
-    String value = Bytes.toString(result.getValue(Bytes.toBytes("family"), Bytes.toBytes("testqualifier")));
-    Assert.assertEquals("testvalue", value);
+    Result result = txAwareTable.get(new Get(TestBytes.row));
+    byte[] value = result.getValue(TestBytes.family, TestBytes.qualifier);
+    Assert.assertArrayEquals(TestBytes.value, value);
   }
 
   @Test
   public void testAbortedTransactionPutAndGet() throws Exception {
-    HTable hTable = testUtil.createTable(Bytes.toBytes("test2"), Bytes.toBytes("family2"));
+    HTable hTable = testUtil.createTable(Bytes.toBytes("testtable2"), TestBytes.family);
     TxAwareTable txAwareTable = new TxAwareTable(hTable);
 
     TransactionContext transactionContext = new TransactionContext(new DetachedTxSystemClient(),
                                                                    txAwareTable);
     transactionContext.start();
-    Put put = new Put(Bytes.toBytes("testrow2"));
-    put.add(Bytes.toBytes("family2"), Bytes.toBytes("testqualifier2"), Bytes.toBytes("testvalue2"));
+    Put put = new Put(TestBytes.row);
+    put.add(TestBytes.family, TestBytes.qualifier, TestBytes.value);
     txAwareTable.put(put);
 
     transactionContext.abort();
 
-    Result result = txAwareTable.get(new Get(Bytes.toBytes("testrow2")));
-    String value = Bytes.toString(result.getValue(Bytes.toBytes("family2"), Bytes.toBytes("testqualifier2")));
-    Assert.assertEquals(value, null);
+    Result result = txAwareTable.get(new Get(TestBytes.row));
+    byte[] value = result.getValue(TestBytes.family, TestBytes.qualifier);
+    Assert.assertArrayEquals(value, null);
   }
 
   @Test
   public void testValidTransactionalDelete() throws Exception {
-    HTable hTable = testUtil.createTable(Bytes.toBytes("test3"), Bytes.toBytes("family3"));
+    HTable hTable = testUtil.createTable(Bytes.toBytes("testtable3"), TestBytes.family);
     TxAwareTable txAwareTable = new TxAwareTable(hTable);
 
     TransactionContext transactionContext = new TransactionContext(new DetachedTxSystemClient(),
                                                                    txAwareTable);
     transactionContext.start();
-    Put put = new Put(Bytes.toBytes("testrow3"));
-    put.add(Bytes.toBytes("family3"), Bytes.toBytes("testqualifier3"), Bytes.toBytes("testvalue3"));
+    Put put = new Put(TestBytes.row);
+    put.add(TestBytes.family, TestBytes.qualifier, TestBytes.value);
     txAwareTable.put(put);
     transactionContext.finish();
 
-    Result result = txAwareTable.get(new Get(Bytes.toBytes("testrow3")));
-    String value = Bytes.toString(result.getValue(Bytes.toBytes("family3"), Bytes.toBytes("testqualifier3")));
-    Assert.assertEquals("testvalue3", value);
+    Result result = txAwareTable.get(new Get(TestBytes.row));
+    byte[] value =result.getValue(TestBytes.family, TestBytes.qualifier);
+    Assert.assertEquals(TestBytes.value, value);
 
     transactionContext.start();
-    Delete delete = new Delete(Bytes.toBytes("testrow3"));
+    Delete delete = new Delete(TestBytes.row);
     txAwareTable.delete(delete);
 
     transactionContext.finish();
 
-    result = txAwareTable.get(new Get(Bytes.toBytes("testrow3")));
-    value = Bytes.toString(result.getValue(Bytes.toBytes("family3"), Bytes.toBytes("testqualifier3")));
-    Assert.assertEquals(null, value);
+    result = txAwareTable.get(new Get(TestBytes.row));
+    value = result.getValue(TestBytes.family, TestBytes.qualifier);
+    Assert.assertArrayEquals(value, null);
   }
 
   @Test
-  public void testInvalidTransactionalDelete() throws Exception {
-    HTable hTable = testUtil.createTable(Bytes.toBytes("test4"), Bytes.toBytes("family4"));
+  public void testAbortedTransactionalDelete() throws Exception {
+    HTable hTable = testUtil.createTable(Bytes.toBytes("testtable4"), TestBytes.family);
     TxAwareTable txAwareTable = new TxAwareTable(hTable);
 
     TransactionContext transactionContext = new TransactionContext(new DetachedTxSystemClient(),
                                                                    txAwareTable);
     transactionContext.start();
-    Put put = new Put(Bytes.toBytes("testrow4"));
-    put.add(Bytes.toBytes("family4"), Bytes.toBytes("testqualifier4"), Bytes.toBytes("testvalue4"));
+    Put put = new Put(TestBytes.row);
+    put.add(TestBytes.family, TestBytes.qualifier, TestBytes.value);
     txAwareTable.put(put);
     transactionContext.finish();
 
-    Result result = txAwareTable.get(new Get(Bytes.toBytes("testrow4")));
-    String value = Bytes.toString(result.getValue(Bytes.toBytes("family4"), Bytes.toBytes("testqualifier4")));
-    Assert.assertEquals("testvalue4", value);
+    Result result = txAwareTable.get(new Get(TestBytes.row));
+    byte[] value = result.getValue(TestBytes.family, TestBytes.qualifier);
+    Assert.assertEquals(TestBytes.value, value);
 
     transactionContext.start();
-    Delete delete = new Delete(Bytes.toBytes("testrow4"));
+    Delete delete = new Delete(TestBytes.row);
     txAwareTable.delete(delete);
     transactionContext.abort();
 
-    result = txAwareTable.get(new Get(Bytes.toBytes("testrow4")));
-    value = Bytes.toString(result.getValue(Bytes.toBytes("family4"), Bytes.toBytes("testqualifier4")));
-    Assert.assertEquals("testvalue4", value);
+    result = txAwareTable.get(new Get(TestBytes.row));
+    value = result.getValue(TestBytes.family, TestBytes.qualifier);
+    Assert.assertArrayEquals(TestBytes.value, value);
   }
 
 }

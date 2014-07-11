@@ -162,9 +162,20 @@ public class TxAwareTable implements HTableInterface, TransactionAware {
     return false;
   }
 
+  // TODO: This isn't atomic anymore, as opposed to what the javadoc says.
   @Override
   public void mutateRow(RowMutations rm) throws IOException {
-
+    if (tx == null) {
+      Throwables.propagate(new IOException("Transaction not started"));
+    }
+    ArrayList<Row> transactionalizedActions = new ArrayList<Row>();
+    for (Row action : rm.getMutations()) {
+      if (action instanceof Put) {
+        put((Put) action);
+      } else {
+        delete((Delete) action);
+      }
+    }
   }
 
   @Override
@@ -292,7 +303,7 @@ public class TxAwareTable implements HTableInterface, TransactionAware {
         Row action = transaction.getKey();
         Result result = transaction.getValue();
         if (action instanceof Get) {
-          // pass
+          // Nothing to rollback.
         } else if (action instanceof Put) {
           Delete rollbackDelete = new Delete(action.getRow());
           for (Map.Entry<byte [], List<KeyValue>> family : ((Put) action).getFamilyMap().entrySet()) {
@@ -302,13 +313,9 @@ public class TxAwareTable implements HTableInterface, TransactionAware {
           }
           hTable.delete(rollbackDelete);
         } else if (action instanceof Delete) {
-          // TODO: Wrong. Fix this.
           Put rollbackPut = new Put(action.getRow());
-          for (Map.Entry<byte [], List<KeyValue>> family : ((Delete) action).getFamilyMap().entrySet()) {
-            for (KeyValue value : family.getValue()) {
-              rollbackPut.add(value.getFamily(), value.getQualifier(), value.getTimestamp(),
-                              result.getValue(value.getFamily(), value.getQualifier()));
-            }
+          for (KeyValue value : result.list()) {
+            rollbackPut.add(value.getFamily(), value.getQualifier(), value.getTimestamp(), value.getValue());
           }
           hTable.put(rollbackPut);
         }
@@ -329,8 +336,7 @@ public class TxAwareTable implements HTableInterface, TransactionAware {
     return Bytes.toString(getTableName());
   }
 
-  // The next few functions are helpers to get copies of objects with the
-  // timestamp set to the current transaction timestamp.
+  // Helpers to get copies of objects with the timestamp set to the current transaction timestamp.
 
   private Put transactionalizeAction(Put put) throws IOException {
     Put txPut = new Put(put.getRow(), tx.getWritePointer());
