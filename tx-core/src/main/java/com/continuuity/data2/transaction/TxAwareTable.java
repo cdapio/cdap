@@ -3,6 +3,7 @@ package com.continuuity.data2.transaction;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -23,6 +24,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,11 +35,13 @@ import java.util.Map;
 public class TxAwareTable implements HTableInterface, TransactionAware {
   private Transaction tx;
   private HTable hTable;
-  private ArrayList<Row> failedTransactions;
+  private final TransactionCodec txCodec;
+  private HashMap<Row, Result> currentTransactions;
 
   public TxAwareTable(HTable hTable) {
     this.hTable = hTable;
-    this.failedTransactions = new ArrayList<Row>();
+    this.currentTransactions = new HashMap<Row, Result>();
+    this.txCodec = new TransactionCodec();
   }
 
   @Override
@@ -59,27 +64,14 @@ public class TxAwareTable implements HTableInterface, TransactionAware {
     return hTable.exists(get);
   }
 
-  // TODO: Rollback only failed transactions or all?
   @Override
   public void batch(List<? extends Row> actions, Object[] results) throws IOException, InterruptedException {
-    try {
-      hTable.batch(actions, results);
-    } catch (Exception e) {
-      try {
-        for (int i = 0; i < results.length; i++) {
-          if (results[i] == null) {
-            failedTransactions.add(actions.get(i));
-          }
-        }
-        rollbackTx();
-      } catch (Exception e1) {
-        Throwables.propagate(new Exception("Could not rollback failed transactions"));
-      }
-    }
+    // TODO
   }
 
   @Override
   public Object[] batch(List<? extends Row> actions) throws IOException, InterruptedException {
+    // TODO
     return new Object[0];
   }
 
@@ -115,12 +107,24 @@ public class TxAwareTable implements HTableInterface, TransactionAware {
 
   @Override
   public void put(Put put) throws IOException {
-
+    if (tx == null) {
+      Throwables.propagate(new IOException("Transaction not started"));
+    }
+    Put txPut = transactionalizeAction(put);
+    currentTransactions.put(txPut, null);
   }
 
   @Override
   public void put(List<Put> puts) throws IOException {
-
+    if (tx == null) {
+      Throwables.propagate(new IOException("Transaction not started"));
+    }
+    ArrayList<Put> transactionalizedPuts = new ArrayList<Put>();
+    for (Put put : puts) {
+      Put txPut = transactionalizeAction(put);
+      transactionalizedPuts.add(txPut);
+      currentTransactions.put(txPut, null);
+    }
   }
 
   @Override
@@ -130,16 +134,31 @@ public class TxAwareTable implements HTableInterface, TransactionAware {
 
   @Override
   public void delete(Delete delete) throws IOException {
-
+    if (tx == null) {
+      Throwables.propagate(new IOException("Transaction not started"));
+    }
+    Delete txDelete = transactionalizeAction(delete);
+    Get get = new Get(delete.getRow());
+    currentTransactions.put(txDelete, get(get));
   }
 
   @Override
   public void delete(List<Delete> deletes) throws IOException {
-
+    if (tx == null) {
+      Throwables.propagate(new IOException("Transaction not started"));
+    }
+    ArrayList<Delete> transactionalizedDeletes = new ArrayList<Delete>();
+    for (Delete delete : deletes) {
+      Delete txDelete = transactionalizeAction(delete);
+      Get get = new Get(delete.getRow());
+      transactionalizedDeletes.add(txDelete);
+      currentTransactions.put(txDelete, get(get));
+    }
   }
 
   @Override
-  public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value, Delete delete) throws IOException {
+  public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value, Delete delete)
+    throws IOException {
     return false;
   }
 
@@ -184,7 +203,6 @@ public class TxAwareTable implements HTableInterface, TransactionAware {
     hTable.close();
   }
 
-  // TODO: This seems to have been deprecated. Should we just not support it, then?
   @Override
   public RowLock lockRow(byte[] row) throws IOException {
     return hTable.lockRow(row);
@@ -241,27 +259,106 @@ public class TxAwareTable implements HTableInterface, TransactionAware {
 
   @Override
   public Collection<byte[]> getTxChanges() {
-    return null;
+    // TODO: What is this meant to return?
+    return Collections.emptyList();
   }
 
   @Override
   public boolean commitTx() throws Exception {
-    return false;
+    for (Map.Entry<Row, Result> transaction : currentTransactions.entrySet()) {
+      Row action = transaction.getKey();
+      if (action instanceof Get) {
+        hTable.get((Get) action);
+      } else if (action instanceof Put) {
+        hTable.put((Put) action);
+      } else if (action instanceof Delete) {
+        hTable.delete((Delete) action);
+      }
+    }
+    hTable.flushCommits();
+    return true;
   }
 
   @Override
   public void postTxCommit() {
-    this.tx = null;
-    this.failedTransactions.clear();
+    tx = null;
+    currentTransactions.clear();
   }
 
   @Override
   public boolean rollbackTx() throws Exception {
-    return false;
+    try {
+      for (Map.Entry<Row, Result> transaction : currentTransactions.entrySet()) {
+        Row action = transaction.getKey();
+        Result result = transaction.getValue();
+        if (action instanceof Get) {
+          // pass
+        } else if (action instanceof Put) {
+          Delete rollbackDelete = new Delete(action.getRow());
+          for (Map.Entry<byte [], List<KeyValue>> family : ((Put) action).getFamilyMap().entrySet()) {
+            for (KeyValue value : family.getValue()) {
+              rollbackDelete.deleteColumn(value.getFamily(), value.getQualifier(), value.getTimestamp());
+            }
+          }
+          hTable.delete(rollbackDelete);
+        } else if (action instanceof Delete) {
+          // TODO: Wrong. Fix this.
+          Put rollbackPut = new Put(action.getRow());
+          for (Map.Entry<byte [], List<KeyValue>> family : ((Delete) action).getFamilyMap().entrySet()) {
+            for (KeyValue value : family.getValue()) {
+              rollbackPut.add(value.getFamily(), value.getQualifier(), value.getTimestamp(),
+                              result.getValue(value.getFamily(), value.getQualifier()));
+            }
+          }
+          hTable.put(rollbackPut);
+        }
+      }
+      return true;
+    } catch (Exception e) {
+      Throwables.propagate(e);
+      return false;
+    } finally {
+      hTable.flushCommits();
+      tx = null;
+      currentTransactions.clear();
+    }
   }
 
   @Override
   public String getName() {
     return Bytes.toString(getTableName());
+  }
+
+  // The next few functions are helpers to get copies of objects with the
+  // timestamp set to the current transaction timestamp.
+
+  private Put transactionalizeAction(Put put) throws IOException {
+    Put txPut = new Put(put.getRow(), tx.getWritePointer());
+    for (Map.Entry<byte [], List<KeyValue>> family : put.getFamilyMap().entrySet()) {
+      for (KeyValue value : family.getValue()) {
+        txPut.add(value.getFamily(), value.getQualifier(), tx.getWritePointer(), value.getValue());
+      }
+    }
+    for (Map.Entry<String, byte[]> entry : put.getAttributesMap().entrySet()) {
+      txPut.setAttribute(entry.getKey(), entry.getValue());
+    }
+    txPut.setWriteToWAL(put.getWriteToWAL());
+    txCodec.addToOperation(txPut, tx);
+    return txPut;
+  }
+
+  private Delete transactionalizeAction(Delete delete) throws IOException {
+    Delete txDelete = new Delete(delete.getRow(), tx.getWritePointer());
+    for (Map.Entry<byte [], List<KeyValue>> family : delete.getFamilyMap().entrySet()) {
+      for (KeyValue value : family.getValue()) {
+        txDelete.deleteColumn(value.getFamily(), value.getQualifier(), tx.getWritePointer());
+      }
+    }
+    for (Map.Entry<String, byte[]> entry : delete.getAttributesMap().entrySet()) {
+      txDelete.setAttribute(entry.getKey(), entry.getValue());
+    }
+    txDelete.setWriteToWAL(delete.getWriteToWAL());
+    txCodec.addToOperation(txDelete, tx);
+    return txDelete;
   }
 }
