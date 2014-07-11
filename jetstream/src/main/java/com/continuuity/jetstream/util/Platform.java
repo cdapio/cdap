@@ -18,7 +18,7 @@ public enum Platform {
       return platform;
     }
 
-    if (arch.startsWith("x86_64")) {
+    if (arch.endsWith("64")) {
       if (os.startsWith("win")) {
         platform = X64_WINDOWS;
       } else if (os.endsWith("nux")) {
