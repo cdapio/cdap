@@ -49,12 +49,13 @@ SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 def get_sdk_version():
     # Sets the Reactor Build Version via maven
     mvn_version_cmd = "mvn help:evaluate -o -Dexpression=project.version -f ../../../ | grep -v '^\['"
+    version = None
     try:
-        version = subprocess.check_output(mvn_version_cmd, shell=True).strip()
-        return version.replace("-SNAPSHOT", "")
+        version = subprocess.check_output(mvn_version_cmd, shell=True).strip().replace("-SNAPSHOT", "")
     except:
         print "Could not get version from maven"
         sys.exit(1)
+    return version
 
 def parse_options():
     """ Parses args options.
