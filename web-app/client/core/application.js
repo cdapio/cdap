@@ -421,16 +421,18 @@ function(Components, Embeddables, HTTP, Util) {
   var callServiceStatus = function () {
     HTTP.create().rest('system/services/status', function (statuses, callStatus) {
       var failedStatusCount = 0;
-      for (var status in statuses) {
-        if (statuses.hasOwnProperty(status) && statuses[status] !== 'OK') {
-          failedStatusCount++;
-        }
-      }
-      if (failedStatusCount) {
-        $("#failed-services").html(failedStatusCount);
-        $("#failed-services-container").show();
-      } else {
-        $("#failed-services-container").hide();
+      if (Object.prototype.toString.call(statuses) == '[object Object]') {
+	      for (var status in statuses) {
+	        if (statuses.hasOwnProperty(status) && statuses[status] !== 'OK') {
+	          failedStatusCount++;
+	        }
+	      }
+	      if (failedStatusCount) {
+	        $("#failed-services").html(failedStatusCount);
+	        $("#failed-services-container").show();
+	      } else {
+	        $("#failed-services-container").hide();
+	      }      	
       }
     });
 };

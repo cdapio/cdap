@@ -910,7 +910,7 @@ h1 span {
 
 .sparkline-list-value {
 	float: right;
-	width: 78px;
+	width: 90px;
 	border-left: 0;
 	background-color: white;
 	color: #555;
@@ -931,7 +931,7 @@ h1 span {
 }
 .sparkline-list-container {
 	height: 34px;
-	margin-right: 78px;
+	margin-right: 90px;
 	overflow: hidden;
 }
 
