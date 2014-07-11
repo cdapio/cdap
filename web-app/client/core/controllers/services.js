@@ -11,7 +11,12 @@ define([], function () {
     load: function () {
       var self = this;
       self.set('services', []);
+
       self.resetServices();
+      this.interval = setInterval(function () {
+        self.resetServices();
+      }, C.POLLING_INTERVAL)
+
     },
 
     resetServices: function () {
@@ -19,6 +24,8 @@ define([], function () {
       self.HTTP.rest('system/services', function (services) {
         var servicesArr = [];
         services.map(function(service) {
+          var imgSrc = service.status === 'OK' ? 'complete' : 'loading';
+          var logSrc = service.status === 'OK' ? 'complete' : 'loading';
           servicesArr.push(C.Service.create({
             modelId: service.name,
             description: service.description,
@@ -34,11 +41,13 @@ define([], function () {
             requested: service.requested,
             provisioned: service.provisioned,
             statusOk: !!(service.status === 'OK'),
-            statusNotOk: !!(service.status === 'NOT OK'),
+            statusNotOk: !!(service.status === 'NOTOK'),
             logsStatusOk: !!(service.logs === 'OK'),
-            logsStatusNotOk: !!(service.logs === 'NOT OK'),
+            logsStatusNotOk: !!(service.logs === 'NOTOK'),
             metricEndpoint: C.Util.getMetricEndpoint(service.name),
-            metricName: C.Util.getMetricName(service.name)
+            metricName: C.Util.getMetricName(service.name),
+            imgClass: imgSrc,
+            logClass: logSrc
           }));
         });
         self.set('services', servicesArr);
@@ -64,8 +73,8 @@ define([], function () {
             }
           }
         }
-        self.executeInstanceCall(serviceName, payload);        
-      }      
+        self.executeInstanceCall(serviceName, payload);
+      }
     },
 
     decreaseInstance: function (serviceName, instanceCount) {
@@ -83,7 +92,7 @@ define([], function () {
           }
         }
         self.executeInstanceCall(serviceName, payload);
-      }      
+      }
     },
 
     executeInstanceCall: function(serviceName, payload) {
