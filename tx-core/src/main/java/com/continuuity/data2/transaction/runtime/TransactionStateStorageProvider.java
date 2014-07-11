@@ -19,7 +19,7 @@ import com.google.inject.name.Names;
  * {@link TransactionStateStorage} implementation based on configuration.
  */
 @Singleton
-final class TransactionStateStorageProvider implements Provider<TransactionStateStorage> {
+public final class TransactionStateStorageProvider implements Provider<TransactionStateStorage> {
 
   private final CConfiguration cConf;
   private final Injector injector;
