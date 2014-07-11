@@ -6,10 +6,10 @@ script=`basename $0`
 
 function usage() {
   echo "Tool for sending data to the ResponseCodeAnalytics"
-  echo "Usage: $script [--gateway <hostname>]"
+  echo "Usage: $script [--host <hostname>]"
   echo ""
   echo "  Options"
-  echo "    --gateway   Specifies the hostname the gateway is running on.(Default: localhost)"
+  echo "    --host      Specifies the host that Reactor is running on. (Default: localhost)"
   echo "    --help      This help message"
   echo ""
 }
@@ -19,7 +19,7 @@ stream="logEventStream"
   while [ $# -gt 0 ]
   do
     case "$1" in
-      --gateway) shift; gateway="$1"; shift;;
+      --host) shift; gateway="$1"; shift;;
       *)  usage; exit 1
      esac
   done
