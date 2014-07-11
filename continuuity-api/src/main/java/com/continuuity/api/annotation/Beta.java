@@ -11,8 +11,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotates a public API that is may be subjected to incompatible changes up to the extent
- * of removal from the library in future releases.
+ * Annotates a public API that may be subjected to incompatible changes up to the extent of removal from
+ * the library in future releases.
  *
  * <p>
  * This annotation, if declared on an API, exempts it from compatibility guarantees made by its library.

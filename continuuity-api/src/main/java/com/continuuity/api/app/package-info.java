@@ -96,7 +96,7 @@
  * <p>
  * A {@link com.continuuity.api.flow.flowlet.Flowlet} is a processing unit of a
  * {@link com.continuuity.api.flow.Flow} that defines business logic for
- * processing events received on input. Flowlets can also emit new events on the
+ * processing events received on input. Flowlets can also emit new events to the
  * output for downstream processing. In other words, Flowlets pass Data Objects
  * between one another. Each Flowlet is able to perform custom logic and
  * execute data operations for each individual data object processed.
