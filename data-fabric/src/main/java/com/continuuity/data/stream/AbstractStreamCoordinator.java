@@ -237,7 +237,7 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
       try {
         StreamConfig streamConfig = streamAdmin.getConfig(streamName);
         this.currentProperty = new StreamProperty(StreamUtils.getGeneration(streamConfig), streamConfig.getTTL());
-      } catch (IOException e) {
+      } catch (Exception e) {
         // It's ok if the stream config is not yet available (meaning no data has ever been writen to the stream yet.
         this.currentProperty = new StreamProperty(0, Long.MAX_VALUE);
       }
