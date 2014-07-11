@@ -20,7 +20,7 @@ function get_auth_token() {
 
 function usage() {
 echo "Ticker Order Data Extraction tool."
-echo "Usage: $script --start <start> --end <end> [--gateway <hostname:port>]"
+echo "Usage: $script --start <start> --end <end> [--host <host>]"
 echo ""
 echo "  Options"
   echo "    --start     Specifies start timestamp"
@@ -29,12 +29,12 @@ echo "  Options"
   echo "    --exchange  Specifies exchange"
   echo "    --broker    Specifies broker"
   echo "    --currency  Specifies currency"
-  echo "    --gateway   Specifies the hostname and port gateway is running on.(Default: localhost:10000)"
+  echo "    --host      Specifies the host that Reactor is running on. (Default: localhost)"
   echo "    --help      This help message"
   echo ""
 }
 
-gateway="localhost:10000"
+gateway="localhost"
 id=
 name="keyword"
 start="0"
@@ -52,7 +52,7 @@ do
     --exchange) shift; exchange="$1"; shift;;
     --broker) shift; broker="$1"; shift;;
     --currency) shift; currency="$1"; shift;;
-    --gateway) shift; gateway="$1"; shift;;
+    --host) shift; gateway="$1"; shift;;
     *)  usage; exit 1
   esac
 done
@@ -89,6 +89,8 @@ fi
 
 #get the access token
 get_auth_token
+
+gateway="$gateway:10000"
 
 echo "Querying order management data service"
 echo 
