@@ -42,6 +42,12 @@ public class LevelDBOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
+  public void incrementWrite(byte[] row, byte[][] columns, long[] amounts) throws Exception {
+    // for local operation with leveldb, we don't worry about the cost of reads
+    increment(row, columns, amounts);
+  }
+
+  @Override
   protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> changes) throws Exception {
     persistedVersion = tx == null ? System.currentTimeMillis() : tx.getWritePointer();
 

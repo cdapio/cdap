@@ -36,6 +36,12 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
+  public void incrementWrite(byte[] row, byte[][] columns, long[] amounts) throws Exception {
+    // for in-memory use, no need to do fancy read-less increments
+    increment(row, columns, amounts);
+  }
+
+  @Override
   protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> buff) {
     // split up the increments and puts
     InMemoryOcTableService.merge(getTableName(), buff, tx.getWritePointer());

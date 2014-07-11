@@ -138,6 +138,9 @@ public final class LevelDBQueueConsumer extends AbstractQueueConsumer {
       @Override
       public ImmutablePair<byte[], Map<byte[], byte[]>> next() throws IOException {
         Row next = scanner.next();
+        if (next == null) {
+          return null;
+        }
         return new ImmutablePair<byte[], Map<byte[], byte[]>>(next.getRow(), next.getColumns());
       }
 
