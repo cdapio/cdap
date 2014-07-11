@@ -72,7 +72,7 @@ public abstract class BufferingOrederedTableTest<T extends BufferingOrderedTable
     private BufferingOrderedTable delegate;
 
     private BufferingOrderedTableWithPersistingFailure(BufferingOrderedTable delegate) {
-      super(delegate.getName(), delegate.getConflictLevel());
+      super(delegate.getTransactionAwareName(), delegate.getConflictLevel());
       this.delegate = delegate;
     }
 

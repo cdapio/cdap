@@ -116,8 +116,8 @@ public final class CombineStreamConsumer implements StreamConsumer {
   }
 
   @Override
-  public String getName() {
-    return activeConsumer.getName();
+  public String getTransactionAwareName() {
+    return activeConsumer.getTransactionAwareName();
   }
 
   @Override

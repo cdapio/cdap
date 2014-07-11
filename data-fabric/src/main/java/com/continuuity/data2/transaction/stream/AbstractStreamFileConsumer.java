@@ -358,7 +358,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   }
 
   @Override
-  public String getName() {
+  public String getTransactionAwareName() {
     return toString();
   }
 

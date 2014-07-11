@@ -151,7 +151,7 @@ public interface FlowSpecification extends ProgramSpecification {
 
       /**
        * Add a flowlet to flow with the specified name. The specified name overrides the one
-       * in {@link com.continuuity.api.flow.flowlet.FlowletSpecification#getName() FlowletSpecification.getName()}
+       * in {@link com.continuuity.api.flow.flowlet.FlowletSpecification#getName() FlowletSpecification.getTransactionAwareName()}
        * returned by {@link Flowlet#configure()}.
        * @param name Name of the flowlet
        * @param flowlet {@link Flowlet} instance to be added to flow.
@@ -162,7 +162,7 @@ public interface FlowSpecification extends ProgramSpecification {
       /**
        * Add a flowlet to flow with the specified name with minimum number of instances to start with.
        * The name specified overrides the one
-       * in {@link com.continuuity.api.flow.flowlet.FlowletSpecification#getName() FlowletSpecification.getName()}
+       * in {@link com.continuuity.api.flow.flowlet.FlowletSpecification#getName() FlowletSpecification.getTransactionAwareName()}
        * returned by {@link Flowlet#configure()}.
        * @param name Name of the flowlet
        * @param flowlet {@link Flowlet} instance to be added to flow.

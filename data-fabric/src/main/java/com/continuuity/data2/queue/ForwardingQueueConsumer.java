@@ -31,8 +31,8 @@ public abstract class ForwardingQueueConsumer implements QueueConsumer, Transact
   }
 
   @Override
-  public String getName() {
-    return getClass().getSimpleName() + "(" + txAware.getName() + ")";
+  public String getTransactionAwareName() {
+    return getClass().getSimpleName() + "(" + txAware.getTransactionAwareName() + ")";
   }
 
   @Override

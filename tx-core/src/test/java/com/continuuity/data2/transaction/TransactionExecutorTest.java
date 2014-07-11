@@ -493,7 +493,7 @@ public class TransactionExecutorTest {
     }
 
     @Override
-    public String getName() {
+    public String getTransactionAwareName() {
       return "dummy";
     }
   }

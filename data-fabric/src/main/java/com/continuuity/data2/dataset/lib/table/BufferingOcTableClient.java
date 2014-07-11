@@ -106,7 +106,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
   }
 
   @Override
-  public String getName() {
+  public String getTransactionAwareName() {
     return getClass().getSimpleName() + "(table = " + name + ")";
   }
 

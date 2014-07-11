@@ -149,7 +149,7 @@ public final class QueueToStreamConsumer implements StreamConsumer {
   }
 
   @Override
-  public String getName() {
+  public String getTransactionAwareName() {
     return Objects.toStringHelper(this)
       .add("queue", streamName)
       .add("config", consumerConfig)

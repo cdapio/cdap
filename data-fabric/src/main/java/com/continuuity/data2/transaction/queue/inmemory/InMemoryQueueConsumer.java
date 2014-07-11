@@ -44,7 +44,7 @@ public class InMemoryQueueConsumer implements QueueConsumer, TransactionAware {
   }
 
   @Override
-  public String getName() {
+  public String getTransactionAwareName() {
     return getClass().getSimpleName() + "(queue = " + queueName + ")";
   }
 

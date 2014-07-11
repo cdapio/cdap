@@ -524,7 +524,7 @@ a first Table (``entryCountTable``) to count all the words and a second Table (`
 To define a Dataset you need to implement the ``DatasetDefinition`` interface::
 
   public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
-    String getName();
+    String getTransactionAwareName();
     DatasetSpecification configure(String instanceName, DatasetProperties props);
     A getAdmin(DatasetSpecification spec, ClassLoader cl) throws IOException;
     D getDataset(DatasetSpecification spec, ClassLoader cl) throws IOException;
@@ -557,7 +557,7 @@ an ``entryCountTable`` and an ``uniqueCountTable``, both of type ``Table``::
 	
 	  @Override
 	  public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-	    return DatasetSpecification.builder(instanceName, getName())
+	    return DatasetSpecification.builder(instanceName, getTransactionAwareName())
 	      .properties(properties.getProperties())
 	      .datasets(tableDef.configure("entryCountTable", properties))
 	      .datasets(tableDef.configure("uniqueCountTable", properties))
@@ -572,7 +572,7 @@ an ``entryCountTable`` and an ``uniqueCountTable``, both of type ``Table``::
 	
 	  @Override
 	  public UniqueCountTable getDataset(DatasetSpecification spec, ClassLoader cl) throws IOException {
-	    return new UniqueCountTable(spec.getName(),
+	    return new UniqueCountTable(spec.getTransactionAwareName(),
 	                                tableDef.getDataset(spec.getSpecification("entryCountTable"), cl),
 	                                tableDef.getDataset(spec.getSpecification("uniqueCountTable"), cl));
 	  }
@@ -679,7 +679,7 @@ Here's a simpler look at our ``UniqueCountTable``::
     public UniqueCountTable(DatasetSpecification spec,
                             @EmbeddedDataset("entryCountTable") Table entryCountTable,
                             @EmbeddedDataset("uniqueCountTable") Table uniqueCountTable) {
-      super(spec.getName(), entryCountTable, uniqueCountTable);
+      super(spec.getTransactionAwareName(), entryCountTable, uniqueCountTable);
       this.entryCountTable = entryCountTable;
       this.uniqueCountTable = uniqueCountTable;
     }

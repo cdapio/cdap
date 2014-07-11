@@ -32,13 +32,13 @@ public class InMemoryOrderedTable extends BackedByVersionedStoreOrderedTable {
 
   @Override
   protected void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> buff) {
-    InMemoryOrderedTableService.merge(getName(), buff, tx.getWritePointer());
+    InMemoryOrderedTableService.merge(getTransactionAwareName(), buff, tx.getWritePointer());
   }
 
   @Override
   protected void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted) {
     // NOTE: we could just use merge and pass the changes with all values = null, but separate method is more efficient
-    InMemoryOrderedTableService.undo(getName(), persisted, tx.getWritePointer());
+    InMemoryOrderedTableService.undo(getTransactionAwareName(), persisted, tx.getWritePointer());
   }
 
   @Override
@@ -61,7 +61,7 @@ public class InMemoryOrderedTable extends BackedByVersionedStoreOrderedTable {
   protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) {
     // todo: a lot of inefficient copying from one map to another
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowRange =
-      InMemoryOrderedTableService.getRowRange(getName(), startRow, stopRow, tx == null ? null : tx.getReadPointer());
+      InMemoryOrderedTableService.getRowRange(getTransactionAwareName(), startRow, stopRow, tx == null ? null : tx.getReadPointer());
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> visibleRowRange = getLatestNotExcludedRows(rowRange, tx);
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows = unwrapDeletesForRows(visibleRowRange);
 
@@ -72,13 +72,13 @@ public class InMemoryOrderedTable extends BackedByVersionedStoreOrderedTable {
     // no tx logic needed
     if (tx == null) {
       NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap =
-        InMemoryOrderedTableService.get(getName(), row, NO_TX_VERSION);
+        InMemoryOrderedTableService.get(getTransactionAwareName(), row, NO_TX_VERSION);
 
       return unwrapDeletes(filterByColumns(getLatest(rowMap), columns));
     }
 
     NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap =
-      InMemoryOrderedTableService.get(getName(), row, tx.getReadPointer());
+      InMemoryOrderedTableService.get(getTransactionAwareName(), row, tx.getReadPointer());
 
     if (rowMap == null) {
       return EMPTY_ROW_MAP;

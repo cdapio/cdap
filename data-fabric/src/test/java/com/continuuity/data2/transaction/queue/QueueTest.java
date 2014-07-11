@@ -341,7 +341,7 @@ public abstract class QueueTest {
 
 
       @Override
-      public String getName() {
+      public String getTransactionAwareName() {
         return "test";
       }                                    
     });

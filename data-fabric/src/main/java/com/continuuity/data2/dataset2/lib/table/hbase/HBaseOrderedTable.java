@@ -39,7 +39,7 @@ public class HBaseOrderedTable extends BackedByVersionedStoreOrderedTable {
 
   protected HBaseOrderedTable(String name, Configuration hConf, ConflictDetection level, int ttl) throws IOException {
     super(name, level);
-    HTable hTable = new HTable(hConf, getName());
+    HTable hTable = new HTable(hConf, getTransactionAwareName());
     this.ttl = ttl;
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
@@ -51,7 +51,7 @@ public class HBaseOrderedTable extends BackedByVersionedStoreOrderedTable {
   public String toString() {
     return Objects.toStringHelper(this)
                   .add("hTable", hTable)
-                  .add("hTableName", getName())
+                  .add("hTableName", getTransactionAwareName())
                   .toString();
   }
 

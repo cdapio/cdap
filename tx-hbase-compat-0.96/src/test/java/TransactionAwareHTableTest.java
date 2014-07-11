@@ -1,5 +1,4 @@
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data2.transaction.TransactionAwareHTable;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.inmemory.DetachedTxSystemClient;
 import org.apache.hadoop.hbase.HBaseTestingUtility;

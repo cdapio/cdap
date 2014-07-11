@@ -362,7 +362,7 @@ public abstract class AbstractQueueConsumer implements QueueConsumer, Transactio
   }
 
   @Override
-  public String getName() {
+  public String getTransactionAwareName() {
     return getClass().getSimpleName() + "(queue = " + queueName + ")";
   }
 
