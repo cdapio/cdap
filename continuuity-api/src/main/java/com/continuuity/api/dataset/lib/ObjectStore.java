@@ -6,13 +6,19 @@ import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.dataset.Dataset;
 
 /**
- * This data set allows to store objects of a particular class into a table. The types that are supported are:
+ * A dataset that stores objects of a particular class into a table.
+ * <p>
+ * Supported types are:
+ * </p>
+ * <p>
  * <ul>
  *   <li>a plain java class</li>
  *   <li>a parametrized class</li>
  *   <li>a static inner class of one of the above</li>
  * </ul>
+ *</p>
  * Interfaces and not-static inner classes are not supported.
+ *
  * @param <T> the type of objects in the store
  */
 @Beta

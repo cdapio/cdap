@@ -19,7 +19,7 @@ import java.lang.annotation.Target;
 public @interface Output {
 
   /**
-   * Returns name of the output.
+   * Returns the name of the output.
    */
   String value();
 }

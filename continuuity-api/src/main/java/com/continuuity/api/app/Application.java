@@ -1,14 +1,15 @@
 package com.continuuity.api.app;
 
 /**
- * Defines Continuuity Reactor Application.
+ * Defines a Continuuity Reactor Application.
  *
  */
 public interface Application {
   /**
-   * Configures application.
-   * @param configurer collects application configuration
-   * @param context to be used to access env/app configuration and app arguments (e.g. deploy args)
+   * Configures the Application.
+   *
+   * @param configurer Collects the Application configuration
+   * @param context Used to access the environment, application configuration, and application (deployment) arguments
    */
   void configure(ApplicationConfigurer configurer, ApplicationContext context);
 }
