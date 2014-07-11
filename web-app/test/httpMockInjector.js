@@ -52,7 +52,7 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
    * Systems call mocks.
    */
   nock(clientAddr, options)
-    .get('/v2/system/services/status').times(2)
+    .get('/v2/system/services/status').times(4)
     .reply(200, system.services.statusIncomplete);
 
   nock(clientAddr, options)
