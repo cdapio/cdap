@@ -205,45 +205,46 @@ class DatasetServiceClient {
   }
 
   private HttpResponse doGet(String resource) throws DatasetManagementException {
-    return doRequest(HttpMethod.GET, resolve(resource));
+    return doRequest(HttpMethod.GET, resource);
   }
 
   private HttpResponse doPut(String resource, String body)
     throws DatasetManagementException {
 
-    return doRequest(HttpMethod.PUT, resolve(resource), null, body);
+    return doRequest(HttpMethod.PUT, resource, null, body);
   }
 
   private HttpResponse doDelete(String resource) throws DatasetManagementException {
-    return doRequest(HttpMethod.DELETE, resolve(resource));
+    return doRequest(HttpMethod.DELETE, resource);
   }
 
-  private HttpResponse doRequest(HttpMethod method, String url,
+  private HttpResponse doRequest(HttpMethod method, String resource,
                                @Nullable Map<String, String> headers,
                                @Nullable String body) throws DatasetManagementException {
+
+    String url = resolve(resource);
     try {
       return HttpRequests.execute(new HttpRequest(method, new URL(url), headers, body));
     } catch (IOException e) {
       throw new DatasetManagementException(
         String.format("Error during talking to Dataset Service at %s while doing %s with headers %s and body %s",
-                      url, method, headers == null ? "null" :
-                        Joiner.on(",").withKeyValueSeparator("=").join(headers),
+                      url, method, headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers),
                       body == null ? "null" : body), e);
     }
   }
 
-  private HttpResponse doRequest(HttpMethod method, String url,
+  private HttpResponse doRequest(HttpMethod method, String resource,
                                  @Nullable Map<String, String> headers,
                                  @Nullable InputSupplier<? extends InputStream> body)
     throws DatasetManagementException {
 
+    String url = resolve(resource);
     try {
       return HttpRequests.execute(new HttpRequest(method, new URL(url), headers, body));
     } catch (IOException e) {
       throw new DatasetManagementException(
         String.format("Error during talking to Dataset Service at %s while doing %s with headers %s and body %s",
-                      url, method, headers == null ? "null" :
-          Joiner.on(",").withKeyValueSeparator("=").join(headers),
+                      url, method, headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers),
                       body == null ? "null" : body), e);
     }
   }
