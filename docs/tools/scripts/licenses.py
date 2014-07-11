@@ -41,23 +41,21 @@ SINGLENODE = "reactor-singlenode-dependencies"
 
 LICENSES_SOURCE = "../../developer-guide/source/licenses"
 
-REACTOR_VERSION_FILE = "../../../version.txt"
-
 SPACE = " "*3
 BACK_DASH = "\-"
 
 SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
 def get_sdk_version():
-    # Sets the Reactor Build Version from the version.txt file
-    ver_path = os.path.join(SCRIPT_DIR_PATH, REACTOR_VERSION_FILE)
+    # Sets the Reactor Build Version via maven
+    mvn_version_cmd = "mvn help:evaluate -o -Dexpression=project.version -f ../../../ | grep -v '^\['"
+    version = None
     try:
-        with open(ver_path,'r') as f:
-            sdk_version = f.read()
+        version = subprocess.check_output(mvn_version_cmd, shell=True).strip().replace("-SNAPSHOT", "")
     except:
-        print "Couldn't read DEFAULT_VERSION from path: %s" % ver_path
+        print "Could not get version from maven"
         sys.exit(1)
-    return sdk_version
+    return version
 
 def parse_options():
     """ Parses args options.

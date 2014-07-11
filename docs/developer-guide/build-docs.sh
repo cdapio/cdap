@@ -37,8 +37,6 @@ INSTALL_SOURCE="$INSTALL_GUIDE/source/install.rst"
 
 WWW_PATH="/var/www/website-docs/reactor"
 
-VERSION_TXT="version.txt"
-
 if [ "x$2" == "x" ]; then
   REACTOR_PATH="$SCRIPT_PATH/../../"
 else
@@ -174,7 +172,8 @@ function build_dependencies() {
 }
 
 function version() {
-  REACTOR_VERSION=$(cat $REACTOR_PATH/$VERSION_TXT)
+  cd $REACTOR_PATH
+  REACTOR_VERSION=`mvn help:evaluate -o -Dexpression=project.version | grep -v '^\['`
   IFS=/ read -a branch <<< "`git rev-parse --abbrev-ref HEAD`"
   GIT_BRANCH="${branch[1]}"
 }
