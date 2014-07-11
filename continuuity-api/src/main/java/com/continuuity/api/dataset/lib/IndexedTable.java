@@ -12,15 +12,15 @@ import com.continuuity.api.dataset.table.Table;
 import java.util.Arrays;
 
 /**
- * This data set implements a table that can be accessed via secondary key.
- * The secondary key need not be unique, but a read by secondary key will
- * only return the value with the least primary key.
+ * Implements a table that can be accessed via a secondary key; the secondary key need not be unique, 
+ * but a read by the secondary key will return the value with the least primary key.
  *
- * This data set uses two tables - the actual data table,
- * and a second table for the index. All operations are performed
- * asynchronously, as part of the enclosing transaction (some operations
- * require multiple writes, and we want to make sure they are all committed
- * together).
+ * <p>
+ * This data set uses two tables: the actual data table with
+ * a second table for the index. All operations are performed
+ * asynchronously, as part of the enclosing transaction. (Some operations
+ * require multiple writes, and they all need to be committed together.)
+ * </p>
  */
 public class IndexedTable extends AbstractDataset {
 
@@ -31,6 +31,7 @@ public class IndexedTable extends AbstractDataset {
 
   /**
    * Configuration time constructor.
+   * 
    * @param name the name of the table
    * @param table table to use as the table
    * @param index table to use as the index
@@ -51,6 +52,7 @@ public class IndexedTable extends AbstractDataset {
 
   /**
    * Read by primary key.
+   *
    * @param get the read operation, as if it were on a non-indexed table
    * @return the result of the read on the underlying primary table
    */
@@ -60,12 +62,13 @@ public class IndexedTable extends AbstractDataset {
 
   /**
    * Read by secondary key.
+   * 
    * @param get The read operation, as if it were on the non-indexed table,
-   *             but with the secondary key as the row key of the Read.
+   *             but with the secondary key as the row key of the Read
    * @return an empty result if no row has that secondary key. If there is a
-   * matching row, the result is the same as a read with the row key of the
-   * first row that has this secondary key. The columns are the same as if
-   * the read was performed on a non-indexed table.
+   *           matching row, the result is the same as a read with the row key of the
+   *           first row that has this secondary key. The columns are the same as if
+   *           the read was performed on a non-indexed table.
    */
   public Row readBy(Get get) {
     // read the entire row of the index for the given key
@@ -97,6 +100,7 @@ public class IndexedTable extends AbstractDataset {
   /**
    * A put to an indexed table. This is the same as on an indexed table,
    * except that additional work is done to maintain the index.
+   * 
    * @param put The put operation
    */
   public void put(Put put) {
@@ -134,6 +138,7 @@ public class IndexedTable extends AbstractDataset {
 
   /**
    * Perform a delete by primary key.
+   * 
    * @param delete The delete operation, as if it were on a non-indexed table
    */
   public void delete(Delete delete) {
@@ -158,7 +163,7 @@ public class IndexedTable extends AbstractDataset {
    * Perform a swap operation by primary key.
    * Parameters are as if they were on a non-indexed table.
    * Note that if the swap is on the secondary key column,
-   * then the index must be updated; otherwise this is a
+   * then the index must be updated; otherwise, this is a
    * pass-through to the underlying table.
    */
   public boolean compareAndSwap(byte[] row, byte[] column, byte[] expected, byte[] newValue) throws Exception {
@@ -204,9 +209,10 @@ public class IndexedTable extends AbstractDataset {
 
   /**
    * Perform an increment operation by primary key.
+   *
    * @param increment The increment operation, as if it were on a non-indexed table.
    *             Note that if the increment is on the secondary key column,
-   *             then the index must be updated; otherwise this is a
+   *             then the index must be updated; otherwise, this is a
    *             pass-through to the underlying table.
    */
   public void increment(Increment increment) {

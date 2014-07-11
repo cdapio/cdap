@@ -9,7 +9,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Used to annotate a {@link com.continuuity.api.flow.Flow Flow} to disable transaction support.
+ * Annotates a {@link com.continuuity.api.flow.Flow Flow} to disable transaction support.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.PARAMETER, ElementType.METHOD})

@@ -144,14 +144,14 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
   @Test
   public void testingInvalidUserServiceMetrics() throws Exception {
     MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
-                                                                "WordCount.s.CounterService.CountRunnable", "0");
+                                                                "WordCount.s.InvalidService.CountRunnable", "0");
     collector.gauge("reads", 1);
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
 
     String runnableRequest =
-      "/user/apps/WordCount/service/CounterService/runnables/CountRunnable/reads?aggregate=true";
+      "/user/apps/WordCount/service/InvalidService/runnables/CountRunnable/reads?aggregate=true";
 
     HttpResponse response = doGet("/v2/metrics" + runnableRequest);
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);

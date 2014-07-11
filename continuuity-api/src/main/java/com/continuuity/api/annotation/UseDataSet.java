@@ -10,7 +10,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to declare a method for {@link com.continuuity.api.data.DataSet} usage.
+ * Annotation to declare that a method uses a {@link com.continuuity.api.data.DataSet}.
  *
  * <p>
  * Example: Store the incoming Purchase objects in the purchases dataset:
@@ -29,6 +29,11 @@ import java.lang.annotation.Target;
  * </pre>
  * 
  * See the <i>Continuuity Reactor Developer Guide</i> and the example code for the Purchase application.
+ * <p>
+ * See the <i><a href="http://continuuity.com/docs/reactor/current/en/">Continuuity Reactor Developer Guides</a></i>
+ * and the <a href="http://continuuity.com/docs/reactor/current/en/examples/purchase.html">example code for the 
+ * Purchase application</a> for more information.
+ * </p>
  *
  * @see com.continuuity.api.flow.flowlet.Flowlet Flowlet
  * @see com.continuuity.api.procedure.Procedure Procedure

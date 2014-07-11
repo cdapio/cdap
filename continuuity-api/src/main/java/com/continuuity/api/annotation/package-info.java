@@ -3,6 +3,6 @@
  */
 
 /**
- * Annotations used in applications.
+ * Annotations used when creating Applications.
  */
 package com.continuuity.api.annotation;

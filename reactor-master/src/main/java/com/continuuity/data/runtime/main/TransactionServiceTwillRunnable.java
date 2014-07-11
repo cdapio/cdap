@@ -20,7 +20,8 @@ import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.metrics.ReactorTxMetricsCollector;
 import com.continuuity.data2.transaction.metrics.TxMetricsCollector;
-import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
+import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.continuuity.data2.transaction.runtime.TransactionStateStorageProvider;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -32,6 +33,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
@@ -125,7 +128,9 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
       @Override
       protected void configure() {
         // Bind to provider that create new instances of storage and tx manager every time.
-        bind(HDFSTransactionStateStorage.class).toProvider(HDFSTransactionStateStorageProvider.class);
+        bind(TransactionStateStorage.class).annotatedWith(Names.named("persist"))
+          .toProvider(HDFSTransactionStateStorageProvider.class);
+        bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class);
         bind(InMemoryTransactionManager.class).toProvider(InMemoryTransactionManagerProvider.class);
       }
     });

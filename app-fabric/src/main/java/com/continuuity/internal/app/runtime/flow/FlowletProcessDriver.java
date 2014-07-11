@@ -169,7 +169,8 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         processQueue.drainTo(processList);
 
         // Execute the process method and block until it finished.
-        Future<?> processFuture = processExecutor.submit(createProcessRunner(processQueue, processList));
+        Future<?> processFuture = processExecutor.submit(createProcessRunner(
+          processQueue, processList, flowletContext.getProgram().getClassLoader()));
         while (!processFuture.isDone()) {
           try {
             // Wait uninterruptibly so that stop() won't kill the executing context
@@ -204,10 +205,12 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
    * Creates a {@link Runnable} for execution of calling flowlet process methods.
    */
   private Runnable createProcessRunner(final BlockingQueue<FlowletProcessEntry<?>> processQueue,
-                                       final List<FlowletProcessEntry<?>> processList) {
+                                       final List<FlowletProcessEntry<?>> processList,
+                                       final ClassLoader classLoader) {
     return new Runnable() {
       @Override
       public void run() {
+        Thread.currentThread().setContextClassLoader(classLoader);
         for (FlowletProcessEntry<?> entry : processList) {
           if (!handleProcessEntry(entry, processQueue)) {
             processQueue.offer(entry);

@@ -13,7 +13,6 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.StreamPropertyListener;
-import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
@@ -95,8 +94,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.streamMetaStore = streamMetaStore;
     this.dequeuerCache = createDequeuerCache(cConf, streamConsumerFactory, executorFactory, streamCoordinator);
 
-    MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.REACTOR,
-                                                                       Constants.Gateway.METRICS_CONTEXT, "0");
+    MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.REACTOR, getMetricsContext(), "0");
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS, 10), collector);
   }
@@ -275,6 +273,10 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  private String getMetricsContext() {
+    return Constants.Gateway.METRICS_CONTEXT + "." + cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0);
+  }
+
 
   private StreamConfig getConfigUpdate(HttpRequest request, StreamConfig config) {
     JsonObject json = GSON.fromJson(request.getContent().toString(Charsets.UTF_8), JsonObject.class);
@@ -320,8 +322,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
             throw new IllegalStateException("Stream does not exists");
           }
 
-          StreamConfig streamConfig = streamAdmin.getConfig(key.getStreamName());
-
           // TODO: Deal with dynamic resize of stream handler instances
           int groupSize = cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 1);
           ConsumerConfig config = new ConsumerConfig(key.getGroupId(),
@@ -331,7 +331,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
           StreamConsumer consumer = consumerFactory.create(QueueName.fromStream(key.getStreamName()),
                                                            Constants.Stream.HANDLER_CONSUMER_NS, config);
           Cancellable cancellable = streamCoordinator.addListener(key.getStreamName(),
-                                                                  createStreamPropertyListener(key, streamConfig));
+                                                                  createStreamPropertyListener(key));
           return new StreamDequeuer(consumer, executorFactory, cancellable);
         }
       });
@@ -340,38 +340,27 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   /**
    * Creates a {@link StreamPropertyListener} that would reload cached consumer if any stream properties changed.
    */
-  private StreamPropertyListener createStreamPropertyListener(final ConsumerCacheKey key,
-                                                              final StreamConfig streamConfig) throws IOException {
-    final int currentGeneration = StreamUtils.getGeneration(streamConfig);
-    final long currentTTL = streamConfig.getTTL();
+  private StreamPropertyListener createStreamPropertyListener(final ConsumerCacheKey key) throws IOException {
 
     return new StreamPropertyListener() {
       @Override
       public void generationChanged(String streamName, int generation) {
-        if (streamName.equals(streamConfig.getName()) && currentGeneration < generation) {
-          dequeuerCache.refresh(key);
-        }
+        dequeuerCache.refresh(key);
       }
 
       @Override
       public void generationDeleted(String streamName) {
-        if (streamName.equals(streamConfig.getName())) {
-          dequeuerCache.refresh(key);
-        }
+        dequeuerCache.refresh(key);
       }
 
       @Override
       public void ttlChanged(String streamName, long ttl) {
-        if (streamName.equals(streamConfig.getName()) && currentTTL != ttl) {
-          dequeuerCache.refresh(key);
-        }
+        dequeuerCache.refresh(key);
       }
 
       @Override
       public void ttlDeleted(String streamName) {
-        if (streamName.equals(streamConfig.getName())) {
-          dequeuerCache.refresh(key);
-        }
+        dequeuerCache.refresh(key);
       }
     };
   }

@@ -6,6 +6,8 @@ import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.stream.StreamBatchReadable;
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.lib.AbstractDataset;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.app.ApplicationSpecification;
@@ -481,7 +483,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
     String outputDataSetName = null;
     BatchWritable outputDataset;
     // whatever was set into mapReduceContext e.g. during beforeSubmit(..) takes precedence
-    if (mapReduceContext.getOutputDataset() != null) {
+
+    if (mapReduceContext.getOutputDatasetName() != null) {
+      outputDataSetName = mapReduceContext.getOutputDatasetName();
+    } else if (mapReduceContext.getOutputDataset() != null) {
       outputDataset = mapReduceContext.getOutputDataset();
       if (outputDataset instanceof DataSet) {
         outputDataSetName = ((DataSet) outputDataset).getName();
@@ -506,24 +511,27 @@ public class MapReduceProgramRunner implements ProgramRunner {
     // whatever was set into mapReduceJob e.g. during beforeSubmit(..) takes precedence
     BatchReadable batchReadable = mapReduceContext.getInputDataset();
 
-    if (batchReadable != null && batchReadable instanceof DataSet) {
+    if (mapReduceContext.getInputDatasetName() != null) {
+      inputDataSetName = mapReduceContext.getInputDatasetName();
+    } else if (batchReadable != null && batchReadable instanceof DataSet) {
       inputDataSetName = ((DataSet) batchReadable).getName();
     } else  {
       // trying to init input dataset from spec
       inputDataSetName = mapReduceContext.getSpecification().getInputDataSet();
-      if (inputDataSetName != null) {
-        // TODO: It's a hack for stream
-        if (inputDataSetName.startsWith("stream://")) {
-          batchReadable = new StreamBatchReadable(inputDataSetName.substring("stream://".length()));
-        } else {
-          // We checked on validation phase that it implements BatchReadable
-          BatchReadable inputDataSet = (BatchReadable) mapReduceContext.getDataSet(inputDataSetName);
-          List<Split> inputSplits = mapReduceContext.getInputDataSelection();
-          if (inputSplits == null) {
-            inputSplits = inputDataSet.getSplits();
-          }
-          mapReduceContext.setInput(inputDataSet, inputSplits);
+    }
+
+    if (inputDataSetName != null) {
+      // TODO: It's a hack for stream
+      if (inputDataSetName.startsWith("stream://")) {
+        batchReadable = new StreamBatchReadable(inputDataSetName.substring("stream://".length()));
+      } else {
+        // We checked on validation phase that it implements BatchReadable
+        BatchReadable inputDataSet = (BatchReadable) mapReduceContext.getDataSet(inputDataSetName);
+        List<Split> inputSplits = mapReduceContext.getInputDataSelection();
+        if (inputSplits == null) {
+          inputSplits = inputDataSet.getSplits();
         }
+        mapReduceContext.setInput(inputDataSet, inputSplits);
       }
     }
 
@@ -551,12 +559,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                                            Lists.newArrayList("org.apache.hadoop.hbase",
                                                                               "org.apache.hadoop.hive"));
     Id.Program programId = context.getProgram().getId();
-    String programJarPath = context.getProgram().getJarLocation().toURI().getPath();
-    String programDir = programJarPath.substring(0, programJarPath.lastIndexOf('/'));
 
     Location appFabricDependenciesJarLocation =
-      locationFactory.create(String.format("%s/%s.%s.%s.%s.%s.jar",
-                                           programDir, Type.MAPREDUCE.name().toLowerCase(),
+      locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
+                                           Type.MAPREDUCE.name().toLowerCase(),
                                            programId.getAccountId(), programId.getApplicationId(),
                                            programId.getId(), context.getRunId().getId()));
 

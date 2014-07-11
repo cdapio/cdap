@@ -175,7 +175,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
       boolean useStoredStates = Iterables.all(consumerState.getState(), new Predicate<StreamFileOffset>() {
         @Override
         public boolean apply(StreamFileOffset input) {
-          boolean isExpired = input.getPartitionEnd() + streamConfig.getTTL() < currentTime;
+          boolean isExpired = input.getPartitionEnd() < currentTime - streamConfig.getTTL();
           boolean sameGeneration = generation == input.getGeneration();
           return !isExpired && sameGeneration;
         }

@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Used to annotate fields that needs to capture at deployment time and restore at run time.
+ * Annotates fields that need to be captured at deployment time and restored at runtime.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

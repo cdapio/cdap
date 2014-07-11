@@ -530,6 +530,8 @@ The response body will contain a JSON-formatted list of the existing Datasets::
 	   }
 	 }
 
+.. rst2pdf: PageBreak
+
 Creating a Dataset
 ------------------
 
@@ -573,8 +575,6 @@ HTTP Responses
    * - ``409 Conflict``
      - Dataset with the same name already exists
 
-.. rst2pdf: PageBreak
-
 Example
 .......
 .. list-table::
@@ -587,6 +587,8 @@ Example
      - ``{"typeName":"com.continuuity.api.dataset.table.Table", "properties":{"ttl":"3600000"}}``
    * - Description
      - Creates a Dataset named "mydataset" of the type "table" and time-to-live property set to 1 hour
+
+.. rst2pdf: PageBreak
 
 Deleting a Dataset
 ------------------
@@ -822,6 +824,8 @@ Example
      - ``GET <base-url>/tables/mytable/rows/status``
    * - Description
      - Read from an existing Table named *mytable*, a row identified as *status*
+
+.. rst2pdf: PageBreak
 
 Comments
 ........

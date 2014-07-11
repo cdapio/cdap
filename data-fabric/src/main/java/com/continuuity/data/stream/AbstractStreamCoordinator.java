@@ -138,7 +138,8 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
 
   @Override
   public Cancellable addListener(String streamName, StreamPropertyListener listener) {
-    return propertyStore.get().addChangeListener(streamName, new StreamPropertyChangeListener(listener));
+    return propertyStore.get().addChangeListener(streamName,
+                                                 new StreamPropertyChangeListener(streamAdmin, streamName, listener));
   }
 
   @Override
@@ -231,8 +232,15 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
     // Callback from PropertyStore is
     private StreamProperty currentProperty;
 
-    private StreamPropertyChangeListener(StreamPropertyListener listener) {
+    private StreamPropertyChangeListener(StreamAdmin streamAdmin, String streamName, StreamPropertyListener listener) {
       this.listener = listener;
+      try {
+        StreamConfig streamConfig = streamAdmin.getConfig(streamName);
+        this.currentProperty = new StreamProperty(StreamUtils.getGeneration(streamConfig), streamConfig.getTTL());
+      } catch (Exception e) {
+        // It's ok if the stream config is not yet available (meaning no data has ever been writen to the stream yet.
+        this.currentProperty = new StreamProperty(0, Long.MAX_VALUE);
+      }
     }
 
     @Override

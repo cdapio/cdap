@@ -30,9 +30,7 @@ import javax.annotation.Nullable;
 public final class ClassLoaders {
 
   private static final List<String> HADOOP_PACKAGES = Lists.newArrayList("org.apache.hadoop");
-  private static final List<String> CONTINUUITY_API_PACKAGES = Lists.newArrayList(
-    "com.continuuity.api"/*, "com.continuuity.data2", "com.continuuity.internal"*/
-  );
+  private static final List<String> CONTINUUITY_API_PACKAGES = Lists.newArrayList("com.continuuity.api");
 
   private ClassLoaders() { }
 

@@ -51,6 +51,11 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
+    // Turning off assertions for Hive packages, since some assertions in StandardStructObjectInspector do not work
+    // when outer joins are run. It is okay to turn off Hive assertions since we assume Hive is a black-box that does
+    // the right thing, and we only want to test our/our user's code.
+    getClass().getClassLoader().setPackageAssertionStatus("org.apache.hadoop.hive", false);
+    getClass().getClassLoader().setPackageAssertionStatus("org.apache.hive", false);
     return Modules.combine(new ExploreExecutorModule(), new ExploreLocalModule(true));
   }
 

@@ -16,8 +16,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * This class implements a key/value map on top of {@link Table}. Supported
- * operations are read and write.
+ * A key/value map implementation on top of {@link Table} supporting read and write operations.
  */
 public class KeyValueTable extends AbstractDataset implements
   BatchReadable<byte[], byte[]>,
