@@ -32,13 +32,13 @@ import java.util.Map;
 /**
  *
  */
-public class TxAwareTable implements HTableInterface, TransactionAware {
+public class TransactionAwareHTable implements HTableInterface, TransactionAware {
   private Transaction tx;
   private HTable hTable;
   private final TransactionCodec txCodec;
   private HashMap<Row, Result> currentTransactions;
 
-  public TxAwareTable(HTable hTable) {
+  public TransactionAwareHTable(HTable hTable) {
     this.hTable = hTable;
     this.currentTransactions = new HashMap<Row, Result>();
     this.txCodec = new TransactionCodec();
@@ -270,8 +270,13 @@ public class TxAwareTable implements HTableInterface, TransactionAware {
 
   @Override
   public Collection<byte[]> getTxChanges() {
-    // TODO: What is this meant to return?
-    return Collections.emptyList();
+    Collection transactionChanges = null;
+    try {
+      transactionChanges = Collections.singletonList(txCodec.encode(tx));
+    } catch (IOException e) {
+      Throwables.propagate(e);
+    }
+    return transactionChanges;
   }
 
   @Override
