@@ -37,11 +37,28 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   private HTable hTable;
   private final TransactionCodec txCodec;
   private HashMap<Row, Result> currentTransactions;
+  private boolean allowNonTransactional;
 
   public TransactionAwareHTable(HTable hTable) {
     this.hTable = hTable;
     this.currentTransactions = new HashMap<Row, Result>();
     this.txCodec = new TransactionCodec();
+    this.allowNonTransactional = false;
+  }
+
+  public TransactionAwareHTable(HTable hTable, boolean allowNonTransactional) {
+    this.hTable = hTable;
+    this.currentTransactions = new HashMap<Row, Result>();
+    this.txCodec = new TransactionCodec();
+    this.allowNonTransactional = allowNonTransactional;
+  }
+
+  public boolean getAllowNonTransactional() {
+    return this.allowNonTransactional;
+  }
+
+  public void setAllowNonTransactional(boolean allowNonTransactional) {
+    this.allowNonTransactional = allowNonTransactional;
   }
 
   @Override
@@ -61,7 +78,10 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   @Override
   public boolean exists(Get get) throws IOException {
-    return hTable.exists(get);
+    if (tx == null) {
+      throw new IOException("Transaction not started");
+    }
+    return hTable.exists(transactionalizeAction(get));
   }
 
   @Override
@@ -77,12 +97,22 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   @Override
   public Result get(Get get) throws IOException {
-    return hTable.get(get);
+    if (tx == null) {
+      throw new IOException("Transaction not started");
+    }
+    return hTable.get(transactionalizeAction(get));
   }
 
   @Override
   public Result[] get(List<Get> gets) throws IOException {
-    return hTable.get(gets);
+    if (tx == null) {
+      throw new IOException("Transaction not started");
+    }
+    ArrayList<Get> transactionalizedGets = new ArrayList<Get>();
+    for (Get get : gets) {
+      transactionalizedGets.add(transactionalizeAction(get));
+    }
+    return hTable.get(transactionalizedGets);
   }
 
   @Override
@@ -92,23 +122,36 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
-    return hTable.getScanner(scan);
+    if (tx == null) {
+      throw new IOException("Transaction not started");
+    }
+    return hTable.getScanner(transactionalizeAction(scan));
   }
 
   @Override
   public ResultScanner getScanner(byte[] family) throws IOException {
-    return hTable.getScanner(family);
+    if (tx == null) {
+      throw new IOException("Transaction not started");
+    }
+    Scan scan = new Scan();
+    scan.addFamily(family);
+    return hTable.getScanner(transactionalizeAction(scan));
   }
 
   @Override
   public ResultScanner getScanner(byte[] family, byte[] qualifier) throws IOException {
-    return hTable.getScanner(family, qualifier);
+    if (tx == null) {
+      throw new IOException("Transaction not started");
+    }
+    Scan scan = new Scan();
+    scan.addColumn(family, qualifier);
+    return hTable.getScanner(transactionalizeAction(scan));
   }
 
   @Override
   public void put(Put put) throws IOException {
     if (tx == null) {
-      Throwables.propagate(new IOException("Transaction not started"));
+      throw new IOException("Transaction not started");
     }
     Put txPut = transactionalizeAction(put);
     currentTransactions.put(txPut, null);
@@ -117,7 +160,7 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   @Override
   public void put(List<Put> puts) throws IOException {
     if (tx == null) {
-      Throwables.propagate(new IOException("Transaction not started"));
+      throw new IOException("Transaction not started");
     }
     ArrayList<Put> transactionalizedPuts = new ArrayList<Put>();
     for (Put put : puts) {
@@ -129,13 +172,17 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   @Override
   public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put) throws IOException {
-    return false;
+    if (allowNonTransactional) {
+      return hTable.checkAndPut(row, family, qualifier, value, put);
+    } else {
+      throw new UnsupportedOperationException("Operation is not supported transactionally");
+    }
   }
 
   @Override
   public void delete(Delete delete) throws IOException {
     if (tx == null) {
-      Throwables.propagate(new IOException("Transaction not started"));
+      throw new IOException("Transaction not started");
     }
     Delete txDelete = transactionalizeAction(delete);
     Get get = new Get(delete.getRow());
@@ -159,7 +206,11 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   @Override
   public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value, Delete delete)
     throws IOException {
-    return false;
+    if (allowNonTransactional) {
+      return hTable.checkAndDelete(row, family, qualifier, value, delete);
+    } else {
+      throw new UnsupportedOperationException("Operation is not supported transactionally");
+    }
   }
 
   // TODO: This isn't atomic anymore, as opposed to what the javadoc says.
@@ -180,23 +231,39 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   @Override
   public Result append(Append append) throws IOException {
-    return null;
+    if (allowNonTransactional) {
+      return hTable.append(append);
+    } else {
+      throw new UnsupportedOperationException("Operation is not supported transactionally");
+    }
   }
 
   @Override
   public Result increment(Increment increment) throws IOException {
-    return null;
+    if (allowNonTransactional) {
+      return hTable.increment(increment);
+    } else {
+      throw new UnsupportedOperationException("Operation is not supported transactionally");
+    }
   }
 
   @Override
   public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount) throws IOException {
-    return 0;
+    if (allowNonTransactional) {
+      return hTable.incrementColumnValue(row, family, qualifier, amount);
+    } else {
+      throw new UnsupportedOperationException("Operation is not supported transactionally");
+    }
   }
 
   @Override
   public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount, boolean writeToWAL)
     throws IOException {
-    return 0;
+    if (allowNonTransactional) {
+      return hTable.incrementColumnValue(row, family, qualifier, amount, writeToWAL);
+    } else {
+      throw new UnsupportedOperationException("Operation is not supported transactionally");
+    }
   }
 
   @Override
@@ -284,7 +351,7 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
     for (Map.Entry<Row, Result> transaction : currentTransactions.entrySet()) {
       Row action = transaction.getKey();
       if (action instanceof Get) {
-        hTable.get((Get) action);
+        // Nothing to commit.
       } else if (action instanceof Put) {
         hTable.put((Put) action);
       } else if (action instanceof Delete) {
@@ -342,6 +409,16 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   }
 
   // Helpers to get copies of objects with the timestamp set to the current transaction timestamp.
+
+  private Get transactionalizeAction(Get get) throws IOException {
+    txCodec.addToOperation(get, tx);
+    return get;
+  }
+
+  private Scan transactionalizeAction(Scan scan) throws IOException {
+    txCodec.addToOperation(scan, tx);
+    return scan;
+  }
 
   private Put transactionalizeAction(Put put) throws IOException {
     Put txPut = new Put(put.getRow(), tx.getWritePointer());

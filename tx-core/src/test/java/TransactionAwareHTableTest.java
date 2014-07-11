@@ -69,7 +69,10 @@ public class TransactionAwareHTableTest {
     transactionAwareHTable.put(put);
     transactionContext.finish();
 
+    transactionContext.start();
     Result result = transactionAwareHTable.get(new Get(TestBytes.row));
+    transactionContext.finish();
+
     byte[] value = result.getValue(TestBytes.family, TestBytes.qualifier);
     Assert.assertArrayEquals(TestBytes.value, value);
   }
@@ -83,7 +86,9 @@ public class TransactionAwareHTableTest {
 
     transactionContext.abort();
 
+    transactionContext.start();
     Result result = transactionAwareHTable.get(new Get(TestBytes.row));
+    transactionContext.finish();
     byte[] value = result.getValue(TestBytes.family, TestBytes.qualifier);
     Assert.assertArrayEquals(value, null);
   }
@@ -96,7 +101,9 @@ public class TransactionAwareHTableTest {
     transactionAwareHTable.put(put);
     transactionContext.finish();
 
+    transactionContext.start();
     Result result = transactionAwareHTable.get(new Get(TestBytes.row));
+    transactionContext.finish();
     byte[] value =result.getValue(TestBytes.family, TestBytes.qualifier);
     Assert.assertArrayEquals(TestBytes.value, value);
 
@@ -106,7 +113,9 @@ public class TransactionAwareHTableTest {
 
     transactionContext.finish();
 
+    transactionContext.start();
     result = transactionAwareHTable.get(new Get(TestBytes.row));
+    transactionContext.finish();
     value = result.getValue(TestBytes.family, TestBytes.qualifier);
     Assert.assertArrayEquals(value, null);
   }
@@ -119,7 +128,9 @@ public class TransactionAwareHTableTest {
     transactionAwareHTable.put(put);
     transactionContext.finish();
 
+    transactionContext.start();
     Result result = transactionAwareHTable.get(new Get(TestBytes.row));
+    transactionContext.finish();
     byte[] value = result.getValue(TestBytes.family, TestBytes.qualifier);
     Assert.assertArrayEquals(TestBytes.value, value);
 
@@ -128,7 +139,9 @@ public class TransactionAwareHTableTest {
     transactionAwareHTable.delete(delete);
     transactionContext.abort();
 
+    transactionContext.start();
     result = transactionAwareHTable.get(new Get(TestBytes.row));
+    transactionContext.finish();
     value = result.getValue(TestBytes.family, TestBytes.qualifier);
     Assert.assertArrayEquals(TestBytes.value, value);
   }
