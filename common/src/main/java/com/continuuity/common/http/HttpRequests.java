@@ -1,180 +1,64 @@
 /*
- * Copyright Continuuity,Inc. All Rights Reserved.
+ * Copyright (c) 2012-2014 Continuuity Inc. All rights reserved.
  */
 package com.continuuity.common.http;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.InputSupplier;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
- * Simple HTTP client that uses {@link HttpURLConnection}.
+ * Executes {@link HttpRequest}s and returns an {@link HttpResponse}.
  */
-public final class HttpRequests {
+public class HttpRequests {
 
-  private HttpRequests() {}
-
-  /**
-   * Executes a GET request to the url provided.
-   * @param url URL of the request.
-   * @return response of the request
-   * @throws IOException
-   */
-  public static HttpResponse get(URL url) throws IOException {
-    return doRequest("GET", url, null, (byte[]) null, null);
-  }
-
-  /**
-   * Executes a GET request to the url provided.
-   * @param url URL of the request.
-   * @return response of the request
-   * @throws IOException
-   */
-  public static HttpResponse put(URL url) throws IOException {
-    return doRequest("GET", url, null, (byte[]) null, null);
-  }
-
-  /**
-   * Executes a POST request to the url provided.
-   * @param url URL of the request.
-   * @return response of the request
-   * @throws IOException
-   */
-  public static HttpResponse post(URL url) throws IOException {
-    return doRequest("POST", url, null, (byte[]) null, null);
-  }
-
-  /**
-   * Executes a DELETE request to the url provided.
-   * @param url URL of the request.
-   * @return response of the request
-   * @throws IOException
-   */
-  public static HttpResponse delete(URL url) throws IOException {
-    return doRequest("DELETE", url, null, (byte[]) null, null);
-  }
-
-  /**
-   * Executes a DELETE request to the url provided.
-   * @param url URL of the request.
-   * @param body Body of the request.
-   * @param headers Headers of the request.
-   * @return response of the request
-   * @throws IOException
-   */
-  public static HttpResponse post(URL url, @Nullable String body, Map<String, String> headers) throws IOException {
-    return doRequest("POST", url, headers, body != null ? body.getBytes(Charsets.UTF_8) : null, null);
-  }
-
-  /**
-   * Same as {@link #post(java.net.URL, String, java.util.Map)}, accepts headers as string params for convenience
-   */
-  public static HttpResponse post(URL url, @Nullable String body,
-                                  String headerName, String headerValue) throws IOException {
-
-    return doRequest("POST", url, ImmutableMap.of(headerName, headerValue),
-                     body != null ? body.getBytes(Charsets.UTF_8) : null, null);
-  }
-
-  /**
-   * Same as {@link #post(java.net.URL, String, java.util.Map)}, accepts headers as string params for convenience
-   */
-  public static HttpResponse post(URL url, @Nullable String body,
-                                  String header1Name, String header1Value,
-                                  String header2Name, String header2Value) throws IOException {
-    return doRequest("POST", url, ImmutableMap.of(header1Name, header1Value, header2Name, header2Value),
-                     body != null ? body.getBytes(Charsets.UTF_8) : null, null);
-  }
-
-  /**
-   * Executes a PUT request to the url provided.
-   * @param url URL of the request.
-   * @param body Body of the request.
-   * @param headers Headers of the request.
-   * @return response of the request
-   * @throws IOException
-   */
-  public static HttpResponse put(URL url, @Nullable  String body, Map<String, String> headers) throws IOException {
-    return doRequest("PUT", url, headers, body != null ? body.getBytes(Charsets.UTF_8) : null, null);
-  }
-
-  /**
-   * Same as {@link #put(java.net.URL, String, java.util.Map)} with no extra headers
-   */
-  public static HttpResponse put(URL url, @Nullable  String body) throws IOException {
-    return doRequest("PUT", url, null, body != null ? body.getBytes(Charsets.UTF_8) : null, null);
-  }
-
-  /**
-   * Same as {@link #put(java.net.URL, String, java.util.Map)}, accepts headers as string params for convenience
-   */
-  public static HttpResponse put(URL url, @Nullable String body,
-                                 String headerName, String headerValue) throws IOException {
-
-    return doRequest("PUT", url, ImmutableMap.of(headerName, headerValue),
-                     body != null ? body.getBytes(Charsets.UTF_8) : null, null);
-  }
-
-  /**
-   * Same as {@link #put(java.net.URL, String, java.util.Map)}, accepts headers as string params for convenience
-   */
-  public static HttpResponse put(URL url, @Nullable String body,
-                                  String header1Name, String header1Value,
-                                  String header2Name, String header2Value) throws IOException {
-
-    return doRequest("PUT", url, ImmutableMap.of(header1Name, header1Value, header2Name, header2Value),
-                     body != null ? body.getBytes(Charsets.UTF_8) : null, null);
-  }
+  private static final Gson GSON = new Gson();
 
   /**
    * Executes an HTTP request to the url provided.
-   * @param requestMethod HTTP method of the request.
-   * @param url URL of the request.
-   * @param headers Headers of the request.
-   * @param body Body of the request. If provided, bodySrc must be null.
-   * @param bodySrc Body of the request as an {@link InputStream}. If provided, body must be null.
-   * @return repsonse of the request
-   * @throws IOException
+   *
+   * @param request the HTTP request to execute
+   * @return the HTTP response
    */
-  public static HttpResponse doRequest(String requestMethod, URL url,
-                                 @Nullable Map<String, String> headers,
-                                 @Nullable byte[] body,
-                                 @Nullable InputStream bodySrc) throws IOException {
-
-    Preconditions.checkArgument(!(body != null && bodySrc != null), "only one of body and bodySrc can be used as body");
+  public static HttpResponse execute(HttpRequest request, HttpRequestConfig requestConfig) throws IOException {
+    String requestMethod = request.getMethod().getMethodName();
+    URL url = request.getURL();
 
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod(requestMethod);
+    conn.setReadTimeout(requestConfig.getReadTimeout());
+    conn.setConnectTimeout(requestConfig.getConnectTimeout());
 
+    Map<String, String> headers = request.getHeaders();
     if (headers != null) {
       for (Map.Entry<String, String> header : headers.entrySet()) {
         conn.setRequestProperty(header.getKey(), header.getValue());
       }
     }
 
-    if (body != null || bodySrc != null) {
+    InputSupplier<? extends InputStream> bodySrc = request.getBody();
+    if (bodySrc != null) {
       conn.setDoOutput(true);
     }
 
     conn.connect();
+
     try {
-      if (body != null || bodySrc != null) {
+      if (bodySrc != null) {
         OutputStream os = conn.getOutputStream();
-        if (body != null) {
-          os.write(body);
-        } else {
-          ByteStreams.copy(bodySrc, os);
-        }
+        ByteStreams.copy(bodySrc, os);
       }
 
       try {
@@ -195,26 +79,100 @@ public final class HttpRequests {
     }
   }
 
+  /**
+   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   */
+  public static HttpResponse execute(HttpRequest request) throws IOException {
+    return execute(request, HttpRequestConfig.DEFAULT);
+  }
 
   /**
-   * Executes an HTTP request to the url provided.
-   * @param requestMethod HTTP method of the request.
-   * @param url URL of the request.
-   * @param headers Headers of the request.
-   * @param body Body of the request. If provided, bodySrc must be null.
-   * @param bodySrc Body of the request as an {@link InputStream}. If provided, body must be null.
-   * @return repsonse of the request
-   * @throws IOException
+   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
    */
-  public static HttpResponse doRequest(String requestMethod, URL url,
-                                       @Nullable Map<String, String> headers,
-                                       @Nullable String body,
-                                       @Nullable InputStream bodySrc) throws IOException {
-    return doRequest(requestMethod, url, headers, body != null ? body.getBytes(Charsets.UTF_8) : null, bodySrc);
+  public static HttpResponse execute(HttpMethod httpMethod, URL url) throws IOException {
+    return execute(new HttpRequest(httpMethod, url), HttpRequestConfig.DEFAULT);
+  }
+
+  /**
+   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   */
+  public static HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers) throws IOException {
+    return execute(new HttpRequest(httpMethod, url, headers), HttpRequestConfig.DEFAULT);
+  }
+
+  /**
+   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   */
+  public static HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers,
+                                     String body) throws IOException {
+    return execute(new HttpRequest(httpMethod, url, headers, body), HttpRequestConfig.DEFAULT);
+  }
+
+  /**
+   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   */
+  public static HttpResponse execute(HttpMethod httpMethod, URL url,
+                                     HttpRequestConfig requestConfig) throws IOException {
+    return execute(new HttpRequest(httpMethod, url), requestConfig);
+  }
+
+  /**
+   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   */
+  public static HttpResponse get(URL url) throws IOException {
+    return execute(new HttpRequest(HttpMethod.GET, url), HttpRequestConfig.DEFAULT);
+  }
+
+  /**
+   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   */
+  public static HttpResponse delete(URL url) throws IOException {
+    return execute(new HttpRequest(HttpMethod.DELETE, url), HttpRequestConfig.DEFAULT);
+  }
+
+  /**
+   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   */
+  public static HttpResponse post(URL url) throws IOException {
+    return execute(new HttpRequest(HttpMethod.POST, url), HttpRequestConfig.DEFAULT);
+  }
+
+  /**
+   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   */
+  public static HttpResponse post(URL url, String body) throws IOException {
+    return execute(new HttpRequest(HttpMethod.POST, url, body), HttpRequestConfig.DEFAULT);
+  }
+
+  /**
+   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   */
+  public static HttpResponse post(URL url, JsonElement body) throws IOException {
+    return execute(new HttpRequest(HttpMethod.POST, url, GSON.toJson(body)), HttpRequestConfig.DEFAULT);
+  }
+
+  /**
+   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   */
+  public static HttpResponse post(URL url, File body) throws IOException {
+    return execute(new HttpRequest(HttpMethod.POST, url, body), HttpRequestConfig.DEFAULT);
+  }
+
+  /**
+   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   */
+  public static HttpResponse post(URL url, InputSupplier<? extends InputStream> body) throws IOException {
+    return execute(new HttpRequest(HttpMethod.POST, url, body), HttpRequestConfig.DEFAULT);
+  }
+
+  /**
+   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   */
+  public static HttpResponse put(URL url, String body) throws IOException {
+    return execute(new HttpRequest(HttpMethod.PUT, url, body), HttpRequestConfig.DEFAULT);
   }
 
   private static boolean isSuccessful(int responseCode) {
     return 200 <= responseCode && responseCode < 300;
   }
-
 }

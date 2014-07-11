@@ -7,8 +7,11 @@ import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.exception.HandlerException;
+import com.continuuity.common.http.HttpMethod;
+import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
+import com.continuuity.common.http.ObjectResponse;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
@@ -24,6 +27,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -56,22 +60,23 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
   public DatasetSpecification create(String instanceName, DatasetTypeMeta typeMeta, DatasetProperties props)
     throws Exception {
 
-    HttpResponse httpResponse =
-      HttpRequests.post(resolve(instanceName, "create"), "",
-                        ImmutableMap.of("instance-props", GSON.toJson(props),
-                                        "type-meta", GSON.toJson(typeMeta)));
-    verifyResponse(httpResponse);
 
-    return GSON.fromJson(new String(httpResponse.getResponseBody(), Charsets.UTF_8), DatasetSpecification.class);
+    Map<String, String> headers = ImmutableMap.of("instance-props", GSON.toJson(props),
+                                                  "type-meta", GSON.toJson(typeMeta));
+    HttpRequest request = new HttpRequest(HttpMethod.POST, resolve(instanceName, "create"), headers);
+    HttpResponse response = HttpRequests.execute(request);
+    verifyResponse(response);
+
+    return ObjectResponse.fromJsonBody(response, DatasetSpecification.class).getResponseObject();
   }
 
   @Override
   public void drop(DatasetSpecification spec, DatasetTypeMeta typeMeta) throws Exception {
-    HttpResponse httpResponse =
-      HttpRequests.post(resolve(spec.getName(), "drop"), "",
-                        ImmutableMap.of("instance-spec", GSON.toJson(spec),
-                                        "type-meta", GSON.toJson(typeMeta)));
-    verifyResponse(httpResponse);
+    Map<String, String> headers = ImmutableMap.of("instance-spec", GSON.toJson(spec),
+                                                  "type-meta", GSON.toJson(typeMeta));
+    HttpRequest request = new HttpRequest(HttpMethod.POST, resolve(spec.getName(), "drop"), headers);
+    HttpResponse response = HttpRequests.execute(request);
+    verifyResponse(response);
   }
 
   @Override
@@ -87,7 +92,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
   private DatasetAdminOpResponse executeAdminOp(String instanceName, String opName)
     throws IOException, HandlerException {
 
-    HttpResponse httpResponse = HttpRequests.post(resolve(instanceName, opName));
+    HttpResponse httpResponse = HttpRequests.execute(HttpMethod.POST, resolve(instanceName, opName));
     if (httpResponse.getResponseCode() != 200) {
       throw new HandlerException(HttpResponseStatus.valueOf(httpResponse.getResponseCode()),
                                  httpResponse.getResponseMessage());

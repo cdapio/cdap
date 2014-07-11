@@ -1,6 +1,8 @@
 package com.continuuity.explore.client;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.http.HttpMethod;
+import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
 import com.continuuity.explore.service.ColumnDesc;
@@ -158,31 +160,34 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
   }
 
   private HttpResponse doGet(String resource) throws ExploreException {
-    return doRequest(resource, "GET", null, null, null);
+    return doRequest(resource, "GET", null, null);
   }
 
   private HttpResponse doPost(String resource, String body, Map<String, String> headers) throws ExploreException {
-    return doRequest(resource, "POST", headers, body, null);
+    return doRequest(resource, "POST", headers, body);
   }
 
   private HttpResponse doDelete(String resource) throws ExploreException {
-    return doRequest(resource, "DELETE", null, null, null);
+    return doRequest(resource, "DELETE", null, null);
   }
 
   private HttpResponse doRequest(String resource, String requestMethod,
                                  @Nullable Map<String, String> headers,
-                                 @Nullable String body,
-                                 @Nullable InputStream bodySrc) throws ExploreException {
+                                 @Nullable String body) throws ExploreException {
     String resolvedUrl = resolve(resource);
     try {
       URL url = new URL(resolvedUrl);
-      return HttpRequests.doRequest(requestMethod, url, headers, body, bodySrc);
+      if (body != null) {
+        return HttpRequests.execute(HttpMethod.valueOf(requestMethod), url, headers, body);
+      } else {
+        return HttpRequests.execute(HttpMethod.valueOf(requestMethod), url, headers);
+      }
     } catch (IOException e) {
       throw new ExploreException(
         String.format("Error connecting to Explore Service at %s while doing %s with headers %s and body %s",
                       resolvedUrl, requestMethod,
                       headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers),
-                      body == null ? bodySrc : body), e);
+                      body == null ? "null" : body), e);
     }
   }
 

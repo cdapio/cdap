@@ -1,5 +1,5 @@
 /*
- * Copyright Continuuity,Inc. All Rights Reserved.
+ * Copyright (c) 2012-2014 Continuuity Inc. All rights reserved.
  */
 package com.continuuity.common.http;
 

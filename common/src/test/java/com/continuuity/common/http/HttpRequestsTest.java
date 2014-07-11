@@ -1,7 +1,5 @@
 package com.continuuity.common.http;
 
-import com.continuuity.api.common.Bytes;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
@@ -11,7 +9,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.matcher.Matcher;
-import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
@@ -21,6 +18,7 @@ import org.junit.Test;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -40,7 +38,7 @@ public class HttpRequestsTest {
 
   @Before
   public void setUp() {
-    httpService = new TestHttpService(CConfiguration.create());
+    httpService = new TestHttpService();
     httpService.startAndWait();
   }
 
@@ -87,41 +85,48 @@ public class HttpRequestsTest {
     testPut("/api/testPut409", ImmutableMap.of("sdf", "123zz"), "somebody", only(409), any(), only("somebody123zz409"));
 
     testDelete("/api/testDelete", only(200), any(), any());
-    // TODO: commented out b/c netty-http appears to hang here
 //    testDelete("/api/testWrongMethod", only(405), any(), any());
   }
 
   private void testPost(String path, Map<String, String> headers, String body, Matcher<Object> expectedResponseCode,
                         Matcher<Object> expectedMessage, Matcher<Object> expectedBody) throws Exception {
 
-    HttpResponse response = HttpRequests.post(getBaseURI().resolve(path).toURL(), body, headers);
+    URL url = getBaseURI().resolve(path).toURL();
+    HttpRequest request = new HttpRequest(HttpMethod.POST, url, headers, body);
+    HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
   }
 
   private void testPost(String path, Matcher<Object> expectedResponseCode,
                         Matcher<Object> expectedMessage, Matcher<Object> expectedBody) throws Exception {
 
-    testPost(path, ImmutableMap.<String, String>of(), null, expectedResponseCode, expectedMessage, expectedBody);
+    testPost(path, ImmutableMap.<String, String>of(), "", expectedResponseCode, expectedMessage, expectedBody);
   }
 
   private void testPut(String path, Map<String, String> headers, String body, Matcher<Object> expectedResponseCode,
                         Matcher<Object> expectedMessage, Matcher<Object> expectedBody) throws Exception {
 
-    HttpResponse response = HttpRequests.put(getBaseURI().resolve(path).toURL(), body, headers);
+    URL url = getBaseURI().resolve(path).toURL();
+    HttpRequest request = new HttpRequest(HttpMethod.PUT, url, headers, body);
+    HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
   }
 
   private void testGet(String path, Matcher<Object> expectedResponseCode,
                        Matcher<Object> expectedMessage, Matcher<Object> expectedBody) throws Exception {
 
-    HttpResponse response = HttpRequests.get(getBaseURI().resolve(path).toURL());
+    URL url = getBaseURI().resolve(path).toURL();
+    HttpRequest request = new HttpRequest(HttpMethod.GET, url);
+    HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
   }
 
   private void testDelete(String path, Matcher<Object> expectedResponseCode,
                           Matcher<Object> expectedMessage, Matcher<Object> expectedBody) throws Exception {
 
-    HttpResponse response = HttpRequests.delete(getBaseURI().resolve(path).toURL());
+    URL url = getBaseURI().resolve(path).toURL();
+    HttpRequest request = new HttpRequest(HttpMethod.DELETE, url);
+    HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
   }
 
@@ -136,7 +141,7 @@ public class HttpRequestsTest {
                         + " actual: " + response.getResponseMessage(),
                       expectedMessage.matches(response.getResponseMessage()));
 
-    String actualResponseBody = Bytes.toString(response.getResponseBody());
+    String actualResponseBody = new String(response.getResponseBody());
     Assert.assertTrue("Response body - expected: " + expectedBody.toString()
                         + " actual: " + actualResponseBody,
                       expectedBody.matches(actualResponseBody));
@@ -151,7 +156,7 @@ public class HttpRequestsTest {
 
     private final NettyHttpService httpService;
 
-    public TestHttpService(CConfiguration cConf) {
+    public TestHttpService() {
       this.httpService = NettyHttpService.builder()
         .setHost("localhost")
         .addHttpHandlers(Sets.newHashSet(new TestHandler()))
@@ -188,187 +193,217 @@ public class HttpRequestsTest {
 
     @GET
     @Path("/testHttpStatus")
-    public void testHttpStatus(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testHttpStatus(org.jboss.netty.handler.codec.http.HttpRequest request,
+                               HttpResponder responder) throws Exception {
       responder.sendStatus(HttpResponseStatus.OK);
     }
 
     @GET
     @Path("/testOkWithResponse")
-    public void testOkWithResponse(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testOkWithResponse(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                   HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.OK, "Great response");
     }
 
     @GET
     @Path("/testOkWithResponse201")
-    public void testOkWithResponse201(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testOkWithResponse201(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                      HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.CREATED, "Great response 201");
     }
 
     @GET
     @Path("/testOkWithResponse202")
-    public void testOkWithResponse202(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testOkWithResponse202(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                      HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.ACCEPTED, "Great response 202");
     }
 
     @GET
     @Path("/testOkWithResponse203")
-    public void testOkWithResponse203(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testOkWithResponse203(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                      HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.NON_AUTHORITATIVE_INFORMATION, "Great response 203");
     }
 
     @GET
     @Path("/testOkWithResponse204")
-    public void testOkWithResponse204(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testOkWithResponse204(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                      HttpResponder responder) throws Exception {
       responder.sendStatus(HttpResponseStatus.NO_CONTENT);
     }
 
     @GET
     @Path("/testOkWithResponse205")
-    public void testOkWithResponse205(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testOkWithResponse205(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                      HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.RESET_CONTENT, "Great response 205");
     }
 
     @GET
     @Path("/testOkWithResponse206")
-    public void testOkWithResponse206(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testOkWithResponse206(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                      HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.PARTIAL_CONTENT, "Great response 206");
     }
 
     @GET
     @Path("/testBadRequest")
-    public void testBadRequest(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testBadRequest(org.jboss.netty.handler.codec.http.HttpRequest request,
+                               HttpResponder responder) throws Exception {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
     }
 
     @GET
     @Path("/testBadRequestWithErrorMessage")
-    public void testBadRequestWithErrorMessage(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testBadRequestWithErrorMessage(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                               HttpResponder responder) throws Exception {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, "Cool error message");
     }
 
     @GET
     @Path("/testConflict")
-    public void testConflict(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testConflict(org.jboss.netty.handler.codec.http.HttpRequest request,
+                             HttpResponder responder) throws Exception {
       responder.sendStatus(HttpResponseStatus.CONFLICT);
     }
 
     @GET
     @Path("/testConflictWithMessage")
-    public void testConflictWithMessage(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testConflictWithMessage(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                        HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.CONFLICT, "Conflictmes");
     }
 
     @POST
     @Path("/testHttpStatus")
-    public void testHttpStatusPost(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testHttpStatusPost(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                   HttpResponder responder) throws Exception {
       responder.sendStatus(HttpResponseStatus.OK);
     }
 
     @POST
     @Path("/testOkWithResponse")
-    public void testOkWithResponsePost(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testOkWithResponsePost(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                       HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.OK, "Great response");
     }
 
     @POST
     @Path("/testOkWithResponse201")
-    public void testOkWithResponse201Post(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testOkWithResponse201Post(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                          HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.CREATED, "Great response 201");
     }
 
     @POST
     @Path("/testOkWithResponse202")
-    public void testOkWithResponse202Post(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testOkWithResponse202Post(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                          HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.ACCEPTED, "Great response 202");
     }
 
     @POST
     @Path("/testOkWithResponse203")
-    public void testOkWithResponse203Post(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testOkWithResponse203Post(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                          HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.NON_AUTHORITATIVE_INFORMATION, "Great response 203");
     }
 
     @POST
     @Path("/testOkWithResponse204")
-    public void testOkWithResponse204Post(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testOkWithResponse204Post(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                          HttpResponder responder) throws Exception {
       responder.sendStatus(HttpResponseStatus.NO_CONTENT);
     }
 
     @POST
     @Path("/testOkWithResponse205")
-    public void testOkWithResponse205Post(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testOkWithResponse205Post(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                          HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.RESET_CONTENT, "Great response 205");
     }
 
     @POST
     @Path("/testOkWithResponse206")
-    public void testOkWithResponse206Post(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testOkWithResponse206Post(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                          HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.PARTIAL_CONTENT, "Great response 206");
     }
 
     @POST
     @Path("/testBadRequest")
-    public void testBadRequestPost(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testBadRequestPost(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                   HttpResponder responder) throws Exception {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
     }
 
     @POST
     @Path("/testBadRequestWithErrorMessage")
-    public void testBadRequestWithErrorMessagePost(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testBadRequestWithErrorMessagePost(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                                   HttpResponder responder) throws Exception {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, "Cool error message");
     }
 
     @POST
     @Path("/testConflict")
-    public void testConflictPost(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testConflictPost(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                 HttpResponder responder) throws Exception {
       responder.sendStatus(HttpResponseStatus.CONFLICT);
     }
 
     @POST
     @Path("/testConflictWithMessage")
-    public void testConflictWithMessagePost(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testConflictWithMessagePost(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                            HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.CONFLICT, "Conflictmes");
     }
 
     @POST
     @Path("/testPost")
-    public void testPost(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testPost(org.jboss.netty.handler.codec.http.HttpRequest request,
+                         HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.OK,
                            request.getContent().toString(Charsets.UTF_8) + request.getHeader("sdf"));
     }
 
     @POST
     @Path("/testPost409")
-    public void testPost409(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testPost409(org.jboss.netty.handler.codec.http.HttpRequest request,
+                            HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.CONFLICT, request.getContent().toString(Charsets.UTF_8)
         + request.getHeader("sdf") + "409");
     }
 
     @PUT
     @Path("/testPut")
-    public void testPut(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testPut(org.jboss.netty.handler.codec.http.HttpRequest request,
+                        HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.OK, request.getContent().toString(Charsets.UTF_8)
         + request.getHeader("sdf"));
     }
 
     @PUT
     @Path("/testPut409")
-    public void testPut409(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testPut409(org.jboss.netty.handler.codec.http.HttpRequest request,
+                           HttpResponder responder) throws Exception {
       responder.sendString(HttpResponseStatus.CONFLICT, request.getContent().toString(Charsets.UTF_8)
         + request.getHeader("sdf") + "409");
     }
 
     @DELETE
     @Path("/testDelete")
-    public void testDelete(HttpRequest request, HttpResponder responder) throws Exception {
+    public void testDelete(org.jboss.netty.handler.codec.http.HttpRequest request,
+                           HttpResponder responder) throws Exception {
       responder.sendStatus(HttpResponseStatus.OK);
     }
 
-//    @GET
-//    @Path("/testWrongMethod")
-//    public void testWrongMethod(HttpRequest request, HttpResponder responder) throws Exception {
-//      responder.sendStatus(HttpResponseStatus.OK);
-//    }
+    @GET
+    @Path("/testWrongMethod")
+    public void testWrongMethod(org.jboss.netty.handler.codec.http.HttpRequest request,
+                                HttpResponder responder) throws Exception {
+      responder.sendStatus(HttpResponseStatus.OK);
+    }
   }
 
 }

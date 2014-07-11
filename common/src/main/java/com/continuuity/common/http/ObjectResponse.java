@@ -1,9 +1,10 @@
 /*
- * Copyright Continuuity,Inc. All Rights Reserved.
+ * Copyright (c) 2012-2014 Continuuity Inc. All rights reserved.
  */
 package com.continuuity.common.http;
 
 import com.google.common.base.Charsets;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
 import java.lang.reflect.Type;
@@ -29,6 +30,22 @@ public final class ObjectResponse<T> extends HttpResponse {
   @SuppressWarnings("unchecked")
   public static <T> ObjectResponse<T> fromJsonBody(HttpResponse response, Type typeOfObject) {
     return fromJsonBody(response, typeOfObject, GSON);
+  }
+
+  public static <T> ObjectResponse<T> fromJsonBody(HttpResponse response, TypeToken<T> typeOfObject, Gson gson) {
+    return fromJsonBody(response, (Type) typeOfObject.getType(), gson);
+  }
+
+  public static <T> ObjectResponse<T> fromJsonBody(HttpResponse response, TypeToken<T> typeOfObject) {
+    return fromJsonBody(response, (Type) typeOfObject.getType(), GSON);
+  }
+
+  public static <T> ObjectResponse<T> fromJsonBody(HttpResponse response, Class<T> typeOfObject, Gson gson) {
+    return fromJsonBody(response, (Type) typeOfObject, gson);
+  }
+
+  public static <T> ObjectResponse<T> fromJsonBody(HttpResponse response, Class<T> typeOfObject) {
+    return fromJsonBody(response, (Type) typeOfObject, GSON);
   }
 
   private ObjectResponse(HttpResponse response, T object) {
