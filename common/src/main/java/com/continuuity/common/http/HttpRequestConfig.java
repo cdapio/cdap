@@ -4,7 +4,7 @@
 package com.continuuity.common.http;
 
 /**
- *
+ * Configuration per HTTP request executed by {@link HttpRequests}.
  */
 public class HttpRequestConfig {
 
@@ -13,6 +13,10 @@ public class HttpRequestConfig {
   private final int connectTimeout;
   private final int readTimeout;
 
+  /**
+   * @param connectTimeout Connect timeout, in milliseconds. See {@link java.net.URLConnection#getConnectTimeout()}.
+   * @param readTimeout Read timeout, in milliseconds. See {@link java.net.URLConnection#getReadTimeout()}.
+   */
   public HttpRequestConfig(int connectTimeout, int readTimeout) {
     this.connectTimeout = connectTimeout;
     this.readTimeout = readTimeout;

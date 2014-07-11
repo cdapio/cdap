@@ -29,8 +29,9 @@ public class HttpRequests {
   /**
    * Executes an HTTP request to the url provided.
    *
-   * @param request the HTTP request to execute
-   * @return the HTTP response
+   * @param request HTTP request to execute
+   * @param requestConfig configuration for the HTTP request to execute
+   * @return HTTP response
    */
   public static HttpResponse execute(HttpRequest request, HttpRequestConfig requestConfig) throws IOException {
     String requestMethod = request.getMethod().getMethodName();
@@ -80,28 +81,50 @@ public class HttpRequests {
   }
 
   /**
-   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   * Executes an HTTP request with default request configuration.
+   *
+   * @param request HTTP request to execute
+   * @return HTTP response
+   * @throws IOException
    */
   public static HttpResponse execute(HttpRequest request) throws IOException {
     return execute(request, HttpRequestConfig.DEFAULT);
   }
 
   /**
-   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   * Executes an HTTP request with the specified HTTP method, URL, and default request configuration.
+   *
+   * @param httpMethod HTTP method to use
+   * @param url URL to hit
+   * @return HTTP response
+   * @throws IOException
    */
   public static HttpResponse execute(HttpMethod httpMethod, URL url) throws IOException {
     return execute(new HttpRequest(httpMethod, url), HttpRequestConfig.DEFAULT);
   }
 
   /**
-   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   * Executes an HTTP request with the specified HTTP method, URL, headers, and default request configuration.
+   *
+   * @param httpMethod HTTP method to use
+   * @param url URL to hit
+   * @param headers headers to include in the request
+   * @return HTTP response
+   * @throws IOException
    */
   public static HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers) throws IOException {
     return execute(new HttpRequest(httpMethod, url, headers), HttpRequestConfig.DEFAULT);
   }
 
   /**
-   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   * Executes an HTTP request with the specified HTTP method, URL, headers, body, and default request configuration.
+   *
+   * @param httpMethod HTTP method to use
+   * @param url URL to hit
+   * @param headers headers to include in the request
+   * @param body body of the HTTP request
+   * @return
+   * @throws IOException
    */
   public static HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers,
                                      String body) throws IOException {
@@ -109,7 +132,13 @@ public class HttpRequests {
   }
 
   /**
-   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   * Executes an HTTP request with the specified HTTP method, URL, and default request configuration.
+   *
+   * @param httpMethod HTTP method to use
+   * @param url URL to hit
+   * @param requestConfig configuration for the HTTP request to execute
+   * @return HTTP response
+   * @throws IOException
    */
   public static HttpResponse execute(HttpMethod httpMethod, URL url,
                                      HttpRequestConfig requestConfig) throws IOException {
@@ -117,56 +146,93 @@ public class HttpRequests {
   }
 
   /**
-   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   * Executes a GET request with the specified URL.
+   *
+   * @param url URL to hit
+   * @return HTTP response
+   * @throws IOException
    */
   public static HttpResponse get(URL url) throws IOException {
     return execute(new HttpRequest(HttpMethod.GET, url), HttpRequestConfig.DEFAULT);
   }
 
   /**
-   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   * Executes a DELETE request with the specified URL.
+   *
+   * @param url URL to hit
+   * @return HTTP response
+   * @throws IOException
    */
   public static HttpResponse delete(URL url) throws IOException {
     return execute(new HttpRequest(HttpMethod.DELETE, url), HttpRequestConfig.DEFAULT);
   }
 
   /**
-   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   * Executes a POST request with the specified URL.
+   *
+   * @param url URL to hit
+   * @return HTTP response
+   * @throws IOException
    */
   public static HttpResponse post(URL url) throws IOException {
     return execute(new HttpRequest(HttpMethod.POST, url), HttpRequestConfig.DEFAULT);
   }
 
   /**
-   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   * Executes a POST request with the specified URL and body.
+   *
+   * @param url URL to hit
+   * @param body body of the HTTP request
+   * @return HTTP response
+   * @throws IOException
    */
   public static HttpResponse post(URL url, String body) throws IOException {
     return execute(new HttpRequest(HttpMethod.POST, url, body), HttpRequestConfig.DEFAULT);
   }
 
   /**
-   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   * Executes a POST request with the specified URL and body.
+   *
+   * @param url URL to hit
+   * @param body body of the HTTP request
+   * @return HTTP response
+   * @throws IOException
    */
   public static HttpResponse post(URL url, JsonElement body) throws IOException {
     return execute(new HttpRequest(HttpMethod.POST, url, GSON.toJson(body)), HttpRequestConfig.DEFAULT);
   }
 
   /**
-   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   * Executes a POST request with the specified URL and body.
+   *
+   * @param url URL to hit
+   * @param body body of the HTTP request
+   * @return HTTP response
+   * @throws IOException
    */
   public static HttpResponse post(URL url, File body) throws IOException {
     return execute(new HttpRequest(HttpMethod.POST, url, body), HttpRequestConfig.DEFAULT);
   }
 
   /**
-   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   * Executes a POST request with the specified URL and body.
+   *
+   * @param url URL to hit
+   * @param body body of the HTTP request
+   * @return HTTP response
+   * @throws IOException
    */
   public static HttpResponse post(URL url, InputSupplier<? extends InputStream> body) throws IOException {
     return execute(new HttpRequest(HttpMethod.POST, url, body), HttpRequestConfig.DEFAULT);
   }
 
   /**
-   * Convenience method. See {@link #execute(HttpRequest, HttpRequestConfig)}.
+   * Executes a PUT request with the specified URL and body.
+   *
+   * @param url URL to hit
+   * @param body body of the HTTP request
+   * @return HTTP response
+   * @throws IOException
    */
   public static HttpResponse put(URL url, String body) throws IOException {
     return execute(new HttpRequest(HttpMethod.PUT, url, body), HttpRequestConfig.DEFAULT);
