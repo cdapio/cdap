@@ -7,7 +7,6 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.ExploreMetaData;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
@@ -59,7 +58,7 @@ import java.util.concurrent.TimeUnit;
  * Defines common functionality used by different HiveExploreServices. The common functionality includes
  * starting/stopping transactions, serializing configuration and saving operation information.
  */
-public abstract class BaseHiveExploreService extends AbstractIdleService implements ExploreService, ExploreMetaData {
+public abstract class BaseHiveExploreService extends AbstractIdleService implements ExploreService {
   private static final Logger LOG = LoggerFactory.getLogger(BaseHiveExploreService.class);
 
   private final CConfiguration cConf;
@@ -167,7 +166,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       Map<String, String> sessionConf = startSession();
       // TODO: allow changing of hive user and password - REACTOR-271
-      SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
+      // It looks like the username and password below is not used when security is disabled in Hive Server2.
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       OperationHandle operationHandle = cliService.getColumns(sessionHandle, catalog,
           schemaPattern, tableNamePattern, columnNamePattern);
       Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
@@ -184,7 +184,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       Map<String, String> sessionConf = startSession();
       // TODO: allow changing of hive user and password - REACTOR-271
-      SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
+      // It looks like the username and password below is not used when security is disabled in Hive Server2.
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       OperationHandle operationHandle = cliService.getSchemas(sessionHandle, catalogName, schemaName);
       Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
       LOG.trace("Retrieving schemas: catalog {}, schema {}",
@@ -200,7 +201,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       Map<String, String> sessionConf = startSession();
       // TODO: allow changing of hive user and password - REACTOR-271
-      SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
+      // It looks like the username and password below is not used when security is disabled in Hive Server2.
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       OperationHandle operationHandle = cliService.getFunctions(sessionHandle, catalogName, schemaName, functionName);
       Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
       LOG.trace("Retrieving functions: catalog {}, schema {}, function {}",
@@ -216,7 +218,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       Map<String, String> sessionConf = startSession();
       // TODO: allow changing of hive user and password - REACTOR-271
-      SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
+      // It looks like the username and password below is not used when security is disabled in Hive Server2.
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       MetaDataInfo.InfoType exploreInfoType = MetaDataInfo.InfoType.fromString(infoName);
       if (exploreInfoType == null) {
         return null;
@@ -226,10 +229,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       for (GetInfoType t : GetInfoType.values()) {
         if (t.equals("CLI_" + exploreInfoType.name())) {
           hiveInfoType = t;
+          break;
         }
       }
       if (hiveInfoType == null) {
         // Should not come here, unless there is a mismatch between Explore and Hive info types.
+        LOG.warn("Could not find Hive info type %s", infoName);
         return null;
       }
       GetInfoValue val = cliService.getInfo(sessionHandle, hiveInfoType);
@@ -241,19 +246,22 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public Handle getTables(String catalogName, String schemaName, String tableName, List<String> tableTypes)
-      throws ExploreException {
+  public Handle getTables(String catalogName, String schemaNamePattern,
+                          String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
       // TODO: allow changing of hive user and password - REACTOR-271
-      SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
+      // It looks like the username and password below is not used when security is disabled in Hive Server2.
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       OperationHandle operationHandle = cliService.getTables(sessionHandle, catalogName,
-          schemaName, tableName, tableTypes);
+                                                             schemaNamePattern, tableNamePattern, tableTypes);
       Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
-      LOG.trace("Retrieving tables: catalog {}, schemaPattern {}, tableNamePattern {}, columnNamePattern {}",
-                catalogName, schemaName, tableName, tableTypes);
+      LOG.trace("Retrieving tables: catalog {}, schemaNamePattern {}, tableNamePattern {}, tableTypes {}",
+                catalogName, schemaNamePattern, tableNamePattern, tableTypes);
       return handle;
-    } catch (Exception e) {
+    } catch (HiveSQLException e) {
+      throw getSqlException(e);
+    } catch (IOException e) {
       throw new ExploreException(e);
     }
   }
@@ -263,7 +271,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       Map<String, String> sessionConf = startSession();
       // TODO: allow changing of hive user and password - REACTOR-271
-      SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
+      // It looks like the username and password below is not used when security is disabled in Hive Server2.
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       OperationHandle operationHandle = cliService.getTableTypes(sessionHandle);
       Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
       LOG.trace("Retrieving table types");
@@ -278,7 +287,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       Map<String, String> sessionConf = startSession();
       // TODO: allow changing of hive user and password - REACTOR-271
-      SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
+      // It looks like the username and password below is not used when security is disabled in Hive Server2.
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       OperationHandle operationHandle = cliService.getTypeInfo(sessionHandle);
       Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
       LOG.trace("Retrieving type info");

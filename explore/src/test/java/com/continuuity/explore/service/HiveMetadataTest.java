@@ -14,9 +14,9 @@ import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.explore.client.DiscoveryExploreClient;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.ExploreClientUtil;
-import com.continuuity.explore.client.InternalAsyncExploreClient;
 import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.explore.service.hive.Hive13ExploreService;
@@ -95,7 +95,7 @@ public class HiveMetadataTest {
 
     Assert.assertEquals(value1, table.get("1"));
 
-    exploreClient = injector.getInstance(InternalAsyncExploreClient.class);
+    exploreClient = injector.getInstance(DiscoveryExploreClient.class);
     Assert.assertTrue(exploreClient.isAvailable());
 
   }

@@ -75,4 +75,43 @@ public interface Explore {
    * @throws HandleNotFoundException when handle is not found.
    */
   void close(Handle handle) throws ExploreException, HandleNotFoundException;
+
+  public Handle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
+    throws ExploreException;
+
+  public Handle getSchemas(String catalogName, String schemaName) throws ExploreException;
+
+  public Handle getFunctions(String catalogName, String schemaName, String functionName) throws ExploreException;
+
+  public MetaDataInfo getInfo(String infoName) throws ExploreException;
+
+  /**
+   * As seen in Hive code, the arguments are actually patterns
+   * TODO verify those assumptions with unit tests - got that from
+   * http://docs.oracle.com/javase/7/docs/api/java/sql/DatabaseMetaData.html#getTables
+   *
+   * Retrieves a description of the tables available in the given catalog. Only table descriptions
+   * matching the catalog, schema, table name and type criteria are returned.
+   * They are ordered by TABLE_TYPE, TABLE_CAT, TABLE_SCHEM and TABLE_NAME.
+   *
+   * @param catalogName a catalog name; must match the catalog name as it is stored in the database;
+   *                    "" retrieves those without a catalog;
+   *                    null means that the catalog name should not be used to narrow the search
+   * @param schemaNamePattern a schema name pattern; must match the schema name as it is stored in the database;
+   *                   "" retrieves those without a schema;
+   *                   null means that the schema name should not be used to narrow the search
+   * @param tableNamePattern a table name pattern; must match the table name as it is stored in the database
+   * @param tableTypes a list of table types, which must come from
+   *                   "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM";
+   *                   null returns all types
+   * @return {@link Handle} representing the operation.
+   * @throws ExploreException on any error getting the tables.
+   * @throws SQLException if there are errors in the parameters.
+   */
+  public Handle getTables(String catalogName, String schemaNamePattern, String tableNamePattern,
+                          List<String> tableTypes) throws ExploreException, SQLException;
+
+  public Handle getTableTypes() throws ExploreException;
+
+  public Handle getTypeInfo() throws ExploreException;
 }

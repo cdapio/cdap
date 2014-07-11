@@ -7,6 +7,7 @@ import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.explore.executor.ExploreExecutorHttpHandler;
 import com.continuuity.explore.executor.ExploreExecutorService;
+import com.continuuity.explore.executor.ExploreMetadataHttpHandler;
 import com.continuuity.explore.executor.ExplorePingHandler;
 import com.continuuity.explore.executor.QueryExecutorHttpHandler;
 import com.continuuity.explore.service.ExploreService;
@@ -79,6 +80,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(QueryExecutorHttpHandler.class);
       handlerBinder.addBinding().to(ExploreExecutorHttpHandler.class);
       handlerBinder.addBinding().to(ExplorePingHandler.class);
+      handlerBinder.addBinding().to(ExploreMetadataHttpHandler.class);
       handlerBinder.addBinding().to(PingHandler.class);
 
       bind(ExploreExecutorService.class).in(Scopes.SINGLETON);

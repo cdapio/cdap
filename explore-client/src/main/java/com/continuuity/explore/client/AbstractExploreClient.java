@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -42,6 +43,9 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type COL_DESC_LIST_TYPE = new TypeToken<List<ColumnDesc>>() { }.getType();
   private static final Type ROW_LIST_TYPE = new TypeToken<List<Result>>() { }.getType();
+
+  // TODO figure out if this is the right name
+  private static final String METADATA_PATH = "metadata/";
 
   protected abstract InetSocketAddress getExploreServiceAddress();
 
@@ -154,9 +158,15 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
   }
 
   @Override
-  public Handle getTables(String catalogName, String schemaName, String tableName, List<String> tableTypes)
-      throws ExploreException {
-    return null;
+  public Handle getTables(String catalogName, String schemaNamePattern,
+                          String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
+    String body = GSON.toJson(new ExploreClientUtil.TablesArgs(catalogName, schemaNamePattern,
+                                                               tableNamePattern, tableTypes));
+    HttpResponse response = doPost(METADATA_PATH + "tables", body, null);
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return Handle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
   }
 
   @Override

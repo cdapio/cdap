@@ -5,6 +5,7 @@ import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
+import com.continuuity.explore.service.MetaDataInfo;
 import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
 
@@ -12,6 +13,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -88,5 +90,42 @@ public class MockExploreClient implements ExploreClient {
   public void close(Handle handle) throws ExploreException, HandleNotFoundException {
     handlesToMetadata.remove(handle.getHandle());
     handlesToResults.remove(handle.getHandle());
+  }
+
+  // TODO implement those methods and use them in unit tests
+
+  @Override
+  public Handle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws ExploreException {
+    return null;
+  }
+
+  @Override
+  public Handle getSchemas(String catalogName, String schemaName) throws ExploreException {
+    return null;
+  }
+
+  @Override
+  public Handle getFunctions(String catalogName, String schemaName, String functionName) throws ExploreException {
+    return null;
+  }
+
+  @Override
+  public MetaDataInfo getInfo(String infoName) throws ExploreException {
+    return null;
+  }
+
+  @Override
+  public Handle getTables(String catalogName, String schemaNamePattern, String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
+    return null;
+  }
+
+  @Override
+  public Handle getTableTypes() throws ExploreException {
+    return null;
+  }
+
+  @Override
+  public Handle getTypeInfo() throws ExploreException {
+    return null;
   }
 }
