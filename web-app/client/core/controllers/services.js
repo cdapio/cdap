@@ -60,39 +60,47 @@ define([], function () {
     },
 
     increaseInstance: function (serviceName, instanceCount) {
-      if (confirm("Increase instances for " + serviceName + "?")) {
-        var self = this;
-        var payload = {data: {instances: ++instanceCount}};
-        var services = self.get('services');
-        for (var i = 0; i < services.length; i++) {
-          var service = services[i];
-          if (service.name === serviceName) {
-            if (instanceCount > service.max || instanceCount < service.min) {
-              C.Util.showWarning(ERROR_TXT);
-              return;
+      var self = this;
+      C.Modal.show(
+        "Increase instances",
+        "Increase instances for " + serviceName + "?",
+        function () {
+          
+          var payload = {data: {instances: ++instanceCount}};
+          var services = self.get('services');
+          for (var i = 0; i < services.length; i++) {
+            var service = services[i];
+            if (service.name === serviceName) {
+              if (instanceCount > service.max || instanceCount < service.min) {
+                C.Util.showWarning(ERROR_TXT);
+                return;
+              }
             }
           }
-        }
-        self.executeInstanceCall(serviceName, payload);
-      }
+          self.executeInstanceCall(serviceName, payload);  
+        });
     },
 
     decreaseInstance: function (serviceName, instanceCount) {
-      if (confirm("Decrease instances for " + serviceName + "?")) {
-        var self = this;
-        var payload = {data: {instances: --instanceCount}};
-        var services = self.get('services');
-        for (var i = 0; i < services.length; i++) {
-          var service = services[i];
-          if (service.name === serviceName) {
-            if (instanceCount > service.max || instanceCount < service.min) {
-              C.Util.showWarning(ERROR_TXT);
-              return;
+      var self = this;
+      C.Modal.show(
+        "Decrease instances",
+        "Decrease instances for " + serviceName + "?",
+        function () {
+
+          var payload = {data: {instances: --instanceCount}};
+          var services = self.get('services');
+          for (var i = 0; i < services.length; i++) {
+            var service = services[i];
+            if (service.name === serviceName) {
+              if (instanceCount > service.max || instanceCount < service.min) {
+                C.Util.showWarning(ERROR_TXT);
+                return;
+              }
             }
           }
-        }
-        self.executeInstanceCall(serviceName, payload);
-      }
+          self.executeInstanceCall(serviceName, payload);
+        });  
     },
 
     executeInstanceCall: function(serviceName, payload) {

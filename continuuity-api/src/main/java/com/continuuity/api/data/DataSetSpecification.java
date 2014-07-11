@@ -31,7 +31,7 @@ import java.util.TreeMap;
  *   indexed table.</li>
  * DataSetSpecification uses a builder pattern for construction.
  *
- * @deprecated use {@link com.continuuity.api.dataset.DatasetSpecification} instead
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.DatasetSpecification}
  */
 @Deprecated
 public final class DataSetSpecification implements PropertyProvider {
