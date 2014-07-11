@@ -123,7 +123,7 @@ function make_zip() {
 function stage_docs() {
   echo "Deploying..."
   echo "rsync -vz $SCRIPT_PATH/$BUILD/$ZIP \"$USER@$STAGING_SERVER:$ZIP\""
-#   rsync -vz $SCRIPT_PATH/$BUILD/$ZIP "$USER@$STAGING_SERVER:$ZIP"
+  rsync -vz $SCRIPT_PATH/$BUILD/$ZIP "$USER@$STAGING_SERVER:$ZIP"
   version
   cd_cmd="cd $WWW_PATH; ls"
   remove_cmd="sudo rm -rf $REACTOR_VERSION"
@@ -145,7 +145,7 @@ function stage_docs() {
   echo "  $remove_cmd-$GIT_BRANCH; ls"
   echo "  $unzip_cmd-$GIT_BRANCH; ls"
   echo ""
-#   login_staging_server
+  login_staging_server
 }
 
 function login_staging_server() {
