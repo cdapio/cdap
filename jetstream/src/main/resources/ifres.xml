@@ -1,5 +1,5 @@
-    <Interface Name='CSV0'>
-      <InterfaceType value='CSV'/>
+    <Interface Name='GDAT0'>
+      <InterfaceType value='GDAT'/>
       <CSVSeparator value='|'/>
       <Filename value='exampleCsv'/>
       <StartUpDelay value='10'/>

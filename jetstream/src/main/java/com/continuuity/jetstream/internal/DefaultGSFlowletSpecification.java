@@ -11,14 +11,14 @@ import java.util.Map;
 public class DefaultGSFlowletSpecification implements GSFlowletSpecification {
   private String name;
   private String description;
-  private Map<String, GSSchema> inputSchema;
+  private Map<String, GSSchema> gdatInputSchema;
   private Map<String, String> gsql;
 
-  public DefaultGSFlowletSpecification(String name, String description, Map<String, GSSchema> inputSchema,
+  public DefaultGSFlowletSpecification(String name, String description, Map<String, GSSchema> gdatInputSchema,
                                        Map<String, String> gsql) {
     this.name = name;
     this.description = description;
-    this.inputSchema = inputSchema;
+    this.gdatInputSchema = gdatInputSchema;
     this.gsql = gsql;
   }
 
@@ -33,8 +33,8 @@ public class DefaultGSFlowletSpecification implements GSFlowletSpecification {
   }
 
   @Override
-  public Map<String, GSSchema> getInputSchema() {
-    return inputSchema;
+  public Map<String, GSSchema> getGdatInputSchema() {
+    return gdatInputSchema;
   }
 
   @Override

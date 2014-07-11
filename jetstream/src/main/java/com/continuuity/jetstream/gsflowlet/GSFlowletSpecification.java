@@ -13,7 +13,7 @@ public interface GSFlowletSpecification {
 
   String getDescription();
 
-  Map<String, GSSchema> getInputSchema();
+  Map<String, GSSchema> getGdatInputSchema();
 
   Map<String, String> getGSQL();
 

@@ -66,6 +66,8 @@ public class GSConfigFileGeneratorTest {
     InputStream ifres = this.getClass().getClassLoader().getResourceAsStream(fileName);
     OutputStream outputStream = new FileOutputStream(libZip);
     ByteStreams.copy(ifres, outputStream);
+    ifres.close();
+    outputStream.close();
   }
 
   private void unzipFile(File libZip) throws IOException, InterruptedException {

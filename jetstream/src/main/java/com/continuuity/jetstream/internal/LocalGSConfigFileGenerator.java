@@ -37,7 +37,7 @@ public class LocalGSConfigFileGenerator implements GSConfigFileGenerator {
 
   @Override
   public String generatePacketSchema(GSFlowletSpecification spec) {
-    return createPacketSchema(spec.getInputSchema());
+    return createPacketSchema(spec.getGdatInputSchema());
   }
 
   @Override
@@ -71,15 +71,15 @@ public class LocalGSConfigFileGenerator implements GSConfigFileGenerator {
     InputStream ifres = this.getClass().getClassLoader().getResourceAsStream("ifres.xml");
     try {
       stringBuilder.append(CharStreams.toString(new InputStreamReader(ifres, "UTF-8")));
+      ifres.close();
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
     }
-
     return stringBuilder.toString();
   }
 
   private String createLocalHostIfq(String hostname) {
-    return "default : Contains[InterfaceType,CSV]";
+    return "default : Contains[InterfaceType, GDAT]";
   }
 
   private String createOutputSpec(Map<String, String> gsql) {
@@ -98,6 +98,14 @@ public class LocalGSConfigFileGenerator implements GSConfigFileGenerator {
     return stringBuilder.toString();
   }
 
+  /**
+   * Takes a name for the Schema and the GSSchema object to create the contents for packet_schema.txt file.
+   * Sample file content :
+   * PROTOCOL name {
+   *   ullong timestamp get_gdat_ullong_pos1 (increasing);
+   *   uint istream get_gdat_uint_pos2;
+   * }
+   */
   private String createProtocol(String name, GSSchema schema) {
     StringBuilder stringBuilder = new StringBuilder();
     stringBuilder.append("PROTOCOL ").append(name).append(" {").append(NEWLINE);
