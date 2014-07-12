@@ -133,7 +133,7 @@ set_classpath()
 # and hence need to be isolated.
 set_hive_classpath() {
   if [ "x$HIVE_HOME" = "x" ] || [ "x$HIVE_CONF_DIR" = "x" ]; then
-    if [ `which hive` ]; then
+    if [ `which hive 2>/dev/null` ]; then
       HIVE_VAR_OUT=`hive -e 'set -v' 2>/dev/null`
 
       if [ "x$HIVE_HOME" = "x" ]; then
