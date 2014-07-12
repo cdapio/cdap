@@ -24,14 +24,16 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Triple;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
 
 /**
  *
@@ -40,19 +42,20 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   private Transaction tx;
   private HTable hTable;
   private final TransactionCodec txCodec;
-  private HashMap<Row, Result> currentTransactions;
+  private ArrayList<Triple<byte[], byte[], byte[]>> changeSet;
   private boolean allowNonTransactional;
 
   public TransactionAwareHTable(HTable hTable) {
     this.hTable = hTable;
-    this.currentTransactions = new HashMap<Row, Result>();
+    this.changeSet = new ArrayList<Triple<byte[], byte[], byte[]>>();
     this.txCodec = new TransactionCodec();
     this.allowNonTransactional = false;
   }
 
   public TransactionAwareHTable(HTable hTable, boolean allowNonTransactional) {
     this.hTable = hTable;
-    this.currentTransactions = new HashMap<Row, Result>();
+    this.changeSet = new ArrayList<Triple<byte[], byte[], byte[]>>(
+    );
     this.txCodec = new TransactionCodec();
     this.allowNonTransactional = allowNonTransactional;
   }
@@ -180,7 +183,7 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
       throw new IOException("Transaction not started");
     }
     Put txPut = transactionalizeAction(put);
-    currentTransactions.put(txPut, null);
+    hTable.put(txPut);
   }
 
   @Override
@@ -192,8 +195,8 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
     for (Put put : puts) {
       Put txPut = transactionalizeAction(put);
       transactionalizedPuts.add(txPut);
-      currentTransactions.put(txPut, null);
     }
+    hTable.put(transactionalizedPuts);
   }
 
   @Override
@@ -210,23 +213,21 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
     if (tx == null) {
       throw new IOException("Transaction not started");
     }
-    Delete txDelete = transactionalizeAction(delete);
-    Get get = new Get(delete.getRow());
-    currentTransactions.put(txDelete, get(get));
+    put(transactionalizeAction(delete));
   }
 
   @Override
   public void delete(List<Delete> deletes) throws IOException {
-    if (tx == null) {
-      Throwables.propagate(new IOException("Transaction not started"));
-    }
-    ArrayList<Delete> transactionalizedDeletes = new ArrayList<Delete>();
-    for (Delete delete : deletes) {
-      Delete txDelete = transactionalizeAction(delete);
-      Get get = new Get(delete.getRow());
-      transactionalizedDeletes.add(txDelete);
-      currentTransactions.put(txDelete, get(get));
-    }
+//    if (tx == null) {
+//      Throwables.propagate(new IOException("Transaction not started"));
+//    }
+//    ArrayList<Delete> transactionalizedDeletes = new ArrayList<Delete>();
+//    for (Delete delete : deletes) {
+//      Delete txDelete = transactionalizeAction(delete);
+//      Get get = new Get(delete.getRow());
+//      transactionalizedDeletes.add(txDelete);
+//      changeSet.put(txDelete, get(get));
+//    }
   }
 
   @Override
@@ -239,19 +240,12 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
     }
   }
 
-  // TODO: This isn't atomic anymore, as opposed to what the javadoc says.
   @Override
   public void mutateRow(RowMutations rm) throws IOException {
-    if (tx == null) {
-      Throwables.propagate(new IOException("Transaction not started"));
-    }
-    ArrayList<Row> transactionalizedActions = new ArrayList<Row>();
-    for (Row action : rm.getMutations()) {
-      if (action instanceof Put) {
-        put((Put) action);
-      } else {
-        delete((Delete) action);
-      }
+    if (allowNonTransactional) {
+      hTable.mutateRow(rm);
+    } else {
+      throw new UnsupportedOperationException("Operation is not supported transactionally");
     }
   }
 
@@ -372,16 +366,6 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   @Override
   public boolean commitTx() throws Exception {
-    for (Map.Entry<Row, Result> transaction : currentTransactions.entrySet()) {
-      Row action = transaction.getKey();
-      if (action instanceof Get) {
-        // Nothing to commit.
-      } else if (action instanceof Put) {
-        hTable.put((Put) action);
-      } else if (action instanceof Delete) {
-        hTable.delete((Delete) action);
-      }
-    }
     hTable.flushCommits();
     return true;
   }
@@ -389,32 +373,24 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   @Override
   public void postTxCommit() {
     tx = null;
-    currentTransactions.clear();
+    changeSet.clear();
   }
 
   @Override
   public boolean rollbackTx() throws Exception {
     try {
-      for (Map.Entry<Row, Result> transaction : currentTransactions.entrySet()) {
-        Row action = transaction.getKey();
-        Result result = transaction.getValue();
-        if (action instanceof Get) {
-          // Nothing to rollback.
-        } else if (action instanceof Put) {
-          Delete rollbackDelete = new Delete(action.getRow());
-          for (Map.Entry<byte [], List<KeyValue>> family : ((Put) action).getFamilyMap().entrySet()) {
-            for (KeyValue value : family.getValue()) {
-              rollbackDelete.deleteColumn(value.getFamily(), value.getQualifier(), value.getTimestamp());
-            }
-          }
-          hTable.delete(rollbackDelete);
-        } else if (action instanceof Delete) {
-          Put rollbackPut = new Put(action.getRow());
-          for (KeyValue value : result.list()) {
-            rollbackPut.add(value.getFamily(), value.getQualifier(), value.getTimestamp(), value.getValue());
-          }
-          hTable.put(rollbackPut);
+      for (Triple<byte[], byte[], byte[]> change : changeSet) {
+        byte[] row = change.getFirst();
+        byte[] family = change.getSecond();
+        byte[] qualifier = change.getThird();
+        long transactionTimestamp = tx.getWritePointer();
+        Delete rollbackDelete = new Delete(row, transactionTimestamp);
+        if (family != null && qualifier == null) {
+          rollbackDelete.deleteFamily(family, transactionTimestamp);
+        } else if (family != null && qualifier != null) {
+          rollbackDelete.deleteColumn(family, qualifier, transactionTimestamp);
         }
+        hTable.delete(rollbackDelete);
       }
       return true;
     } catch (Exception e) {
@@ -423,7 +399,7 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
     } finally {
       hTable.flushCommits();
       tx = null;
-      currentTransactions.clear();
+      changeSet.clear();
     }
   }
 
@@ -446,9 +422,20 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   private Put transactionalizeAction(Put put) throws IOException {
     Put txPut = new Put(put.getRow(), tx.getWritePointer());
-    for (Map.Entry<byte [], List<KeyValue>> family : put.getFamilyMap().entrySet()) {
-      for (KeyValue value : family.getValue()) {
-        txPut.add(value.getFamily(), value.getQualifier(), tx.getWritePointer(), value.getValue());
+    Set<Map.Entry<byte[], List<KeyValue>>> familyMap = put.getFamilyMap().entrySet();
+    if (familyMap.isEmpty()) {
+      changeSet.add(new Triple(txPut.getRow(), null, null));
+    } else {
+      for (Map.Entry<byte [], List<KeyValue>> family : familyMap) {
+        List<KeyValue> familyValues = family.getValue();
+        if (familyValues.isEmpty()) {
+          changeSet.add(new Triple(txPut.getRow(), family.getKey(), null));
+        } else {
+          for (KeyValue value : family.getValue()) {
+            txPut.add(value.getFamily(), value.getQualifier(), tx.getWritePointer(), value.getValue());
+            changeSet.add(new Triple(txPut.getRow(), value.getFamily(), value.getQualifier()));
+          }
+        }
       }
     }
     for (Map.Entry<String, byte[]> entry : put.getAttributesMap().entrySet()) {
@@ -459,18 +446,45 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
     return txPut;
   }
 
-  private Delete transactionalizeAction(Delete delete) throws IOException {
-    Delete txDelete = new Delete(delete.getRow(), tx.getWritePointer());
-    for (Map.Entry<byte [], List<KeyValue>> family : delete.getFamilyMap().entrySet()) {
-      for (KeyValue value : family.getValue()) {
-        txDelete.deleteColumn(value.getFamily(), value.getQualifier(), tx.getWritePointer());
+  private List<Put> transactionalizeAction(Delete delete) throws IOException {
+    long transactionTimestamp = tx.getWritePointer();
+    Result result = get(new Get(delete.getRow()));
+    ArrayList<Put> transactionalizedPuts = new ArrayList<Put>();
+
+    byte[] deleteRow = delete.getRow();
+    Map<byte[], List<KeyValue>> familyToDelete = delete.getFamilyMap();
+    if (familyToDelete.isEmpty()) {
+      // Delete everything
+      NavigableMap<byte[], NavigableMap<byte[], byte[]>> resultMap = result.getNoVersionMap();
+      for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> familyEntry : resultMap.entrySet()) {
+        NavigableMap<byte[], byte[]> familyColumns = result.getFamilyMap(familyEntry.getKey());
+        for (Map.Entry<byte[], byte[]> column : familyColumns.entrySet()) {
+          Put put = new Put(deleteRow, transactionTimestamp);
+          put.add(familyEntry.getKey(), column.getKey(), transactionTimestamp, new byte[0]);
+          transactionalizedPuts.add(put);
+        }
+      }
+    } else {
+      for (Map.Entry<byte [], List<KeyValue>> familyEntry : familyToDelete.entrySet()) {
+        byte[] family = familyEntry.getKey();
+        List<KeyValue> entries = familyEntry.getValue();
+        if (entries.isEmpty()) {
+          // Delete entire family
+          NavigableMap<byte[], byte[]> familyColumns = result.getFamilyMap(family);
+          for (Map.Entry<byte[], byte[]> column : familyColumns.entrySet()) {
+            Put put = new Put(deleteRow, transactionTimestamp);
+            put.add(family, column.getKey(), new byte[0]);
+            transactionalizedPuts.add(put);
+          }
+        } else {
+          for (KeyValue value : entries) {
+            Put put = new Put(deleteRow, transactionTimestamp);
+            put.add(value.getFamily(), value.getQualifier(), transactionTimestamp, new byte[0]);
+            transactionalizedPuts.add(put);
+          }
+        }
       }
     }
-    for (Map.Entry<String, byte[]> entry : delete.getAttributesMap().entrySet()) {
-      txDelete.setAttribute(entry.getKey(), entry.getValue());
-    }
-    txDelete.setWriteToWAL(delete.getWriteToWAL());
-    txCodec.addToOperation(txDelete, tx);
-    return txDelete;
+    return transactionalizedPuts;
   }
 }
