@@ -295,10 +295,10 @@ public class ReactorServiceMain extends DaemonMain {
           // If the max value is smaller than the saved instance count, update the store to the max value.
           if (savedCount > maxCount) {
             savedCount = maxCount;
-            serviceStore.setServiceInstance(service, savedCount);
           }
         }
 
+        serviceStore.setServiceInstance(service, savedCount);
         instanceCountMap.put(service, savedCount);
         LOG.info("Setting instance count of {} Service to {}", service, savedCount);
       } catch (Exception e) {

@@ -178,14 +178,13 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     Integer count = serviceStore.getServiceInstance(serviceName);
     int provisioned = 0;
 
-    //If entry is not present in the table, create one by setting to provisioned instance count for the service
+    //In SingleNode, this count will be null. And thus we just return the actual instance count.
     if (count == null) {
       provisioned = reactorServiceManagementMap.get(serviceName).getInstances();
     } else {
       return count;
     }
 
-    serviceStore.setServiceInstance(serviceName, provisioned);
     return provisioned;
   }
 }
