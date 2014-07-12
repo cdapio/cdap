@@ -289,7 +289,7 @@ public class ReactorServiceMain extends DaemonMain {
         int maxCount = cConf.getInt(configKeys.get("max"));
 
         Integer savedCount = serviceStore.getServiceInstance(service);
-        if (savedCount == null) {
+        if (savedCount == null || savedCount == 0) {
           savedCount = Math.min(maxCount, cConf.getInt(configKeys.get("default")));
         } else {
           // If the max value is smaller than the saved instance count, update the store to the max value.
