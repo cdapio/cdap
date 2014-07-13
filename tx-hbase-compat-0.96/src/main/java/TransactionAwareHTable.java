@@ -313,13 +313,16 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   }
 
   @Override
-  public <T extends Service, R> Map<byte[], R> coprocessorService(Class<T> service, byte[] startKey, byte[] endKey, Batch.Call<T, R> callable) throws ServiceException, Throwable {
+  public <T extends Service, R> Map<byte[], R> coprocessorService(Class<T> service, byte[] startKey, byte[] endKey,
+                                                                  Batch.Call<T, R> callable)
+    throws ServiceException, Throwable {
     return hTable.coprocessorService(service, startKey, endKey, callable);
   }
 
   @Override
   public <T extends Service, R> void coprocessorService(Class<T> service, byte[] startKey, byte[] endKey,
-                                                        Batch.Call<T, R> callable, Batch.Callback<R> callback) throws ServiceException, Throwable {
+                                                        Batch.Call<T, R> callable, Batch.Callback<R> callback)
+    throws ServiceException, Throwable {
     hTable.coprocessorService(service, startKey, endKey, callable, callback);
   }
 

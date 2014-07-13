@@ -61,7 +61,8 @@ public class InMemoryOrderedTable extends BackedByVersionedStoreOrderedTable {
   protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) {
     // todo: a lot of inefficient copying from one map to another
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowRange =
-      InMemoryOrderedTableService.getRowRange(getTransactionAwareName(), startRow, stopRow, tx == null ? null : tx.getReadPointer());
+      InMemoryOrderedTableService.getRowRange(getTransactionAwareName(), startRow, stopRow,
+                                              tx == null ? null : tx.getReadPointer());
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> visibleRowRange = getLatestNotExcludedRows(rowRange, tx);
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows = unwrapDeletesForRows(visibleRowRange);
 

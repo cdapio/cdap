@@ -103,7 +103,7 @@ public class TransactionAwareHTableTest {
     transactionContext.start();
     Result result = transactionAwareHTable.get(new Get(TestBytes.row));
     transactionContext.finish();
-    byte[] value =result.getValue(TestBytes.family, TestBytes.qualifier);
+    byte[] value = result.getValue(TestBytes.family, TestBytes.qualifier);
     Assert.assertArrayEquals(TestBytes.value, value);
 
     transactionContext.start();

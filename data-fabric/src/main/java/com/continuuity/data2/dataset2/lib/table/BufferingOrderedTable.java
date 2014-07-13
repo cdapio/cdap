@@ -81,7 +81,8 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable
     // TODO: having central dataset management service will allow us to use table ids instead of names, which will
     //       reduce changeset size transferred to/from server
     // we want it to be of format length+value to avoid conflicts like table="ab", row="cd" vs table="abc", row="d"
-    this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) getTransactionAwareName().length()}, Bytes.toBytes(getTransactionAwareName()));
+    this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) getTransactionAwareName().length()},
+                                          Bytes.toBytes(getTransactionAwareName()));
     this.buff = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
   }
 
