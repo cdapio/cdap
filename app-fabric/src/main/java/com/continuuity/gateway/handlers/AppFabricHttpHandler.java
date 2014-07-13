@@ -338,6 +338,15 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Ping to check handler status.
+   */
+  @Path("/ping")
+  @GET
+  public void ping(HttpRequest request, HttpResponder responder) {
+      responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  /**
    * Retrieve the state of the transaction manager.
    */
   @Path("/transactions/state")

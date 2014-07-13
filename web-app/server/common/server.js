@@ -86,7 +86,7 @@ var SECURITY_ENABLED, AUTH_SERVER_ADDRESSES;
 WebAppServer.prototype.setSecurityStatus = function (callback) {
   var self = this;
 
-  var path = '/' + this.API_VERSION + '/apps';
+  var path = '/' + this.API_VERSION + '/ping';
   var url = ('http://' + this.config['gateway.server.address'] + ':'
     + this.config['gateway.server.port'] + path);
   var interval = setInterval(function () {
