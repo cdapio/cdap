@@ -79,7 +79,8 @@ public class GSConfigFileGeneratorTest {
     Assert.assertEquals(unzip.waitFor(), 0);
   }
 
-  private boolean generateGSProcesses(File configLocation, StringBuilder errorMsg) throws IOException {
+  private boolean generateGSProcesses(File configLocation, StringBuilder errorMsg)
+    throws IOException, InterruptedException {
     String[] command = {"bash", "-c", "../../bin/buildit"};
     ProcessBuilder genGS = new ProcessBuilder(command);
     genGS.directory(configLocation);
@@ -97,6 +98,6 @@ public class GSConfigFileGeneratorTest {
       }
     }
     //Returns query compilation's success condition
-    return p.exitValue() == 0;
+    return p.waitFor() == 0;
   }
 }
