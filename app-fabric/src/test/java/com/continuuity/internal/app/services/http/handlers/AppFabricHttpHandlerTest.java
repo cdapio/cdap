@@ -243,6 +243,15 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   }
 
   /**
+   * Ping test
+   */
+  @Test
+  public void pingTest() throws Exception {
+    HttpResponse response = doGet("/v2/ping");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  /**
    * Tests history of a flow.
    */
   @Category(SlowTests.class)
