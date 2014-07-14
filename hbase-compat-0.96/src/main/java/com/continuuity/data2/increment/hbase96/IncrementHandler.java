@@ -1,7 +1,12 @@
 package com.continuuity.data2.increment.hbase96;
 
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableClient;
+import com.continuuity.data2.transaction.coprocessor.ReactorTransactionStateCacheSupplier;
+import com.continuuity.data2.transaction.coprocessor.TransactionStateCache;
+import com.continuuity.data2.transaction.coprocessor.TransactionStateCacheSupplier;
 import com.continuuity.data2.transaction.coprocessor.hbase96.Filters;
+import com.continuuity.data2.transaction.persist.TransactionSnapshot;
+import com.google.common.base.Supplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
@@ -16,7 +21,11 @@ import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.regionserver.HRegion;
+import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
+import org.apache.hadoop.hbase.regionserver.ScanType;
+import org.apache.hadoop.hbase.regionserver.Store;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -35,16 +44,31 @@ public class IncrementHandler extends BaseRegionObserver {
   public static final byte[] DELTA_MAGIC_PREFIX = new byte[] { 'X', 'D' };
   // expected length for values storing deltas (prefix + increment value)
   public static final int DELTA_FULL_LENGTH = DELTA_MAGIC_PREFIX.length + Bytes.SIZEOF_LONG;
+  public static final int BATCH_UNLIMITED = -1;
 
   private static final Log LOG = LogFactory.getLog(IncrementHandler.class);
 
   private HRegion region;
+  private TransactionStateCache cache;
 
   @Override
   public void start(CoprocessorEnvironment e) throws IOException {
     if (e instanceof RegionCoprocessorEnvironment) {
+      RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       this.region = ((RegionCoprocessorEnvironment) e).getRegion();
+      Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(env);
+      this.cache = cacheSupplier.get();
     }
+  }
+
+  protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(RegionCoprocessorEnvironment env) {
+    String tableName = env.getRegion().getTableDesc().getNameAsString();
+    String[] parts = tableName.split("\\.", 2);
+    String tableNamespace = "";
+    if (parts.length > 0) {
+      tableNamespace = parts[0];
+    }
+    return new ReactorTransactionStateCacheSupplier(tableNamespace, env.getConfiguration());
   }
 
   @Override
@@ -55,7 +79,7 @@ public class IncrementHandler extends BaseRegionObserver {
     scan.setFilter(Filters.combine(new IncrementFilter(), scan.getFilter()));
     RegionScanner scanner = null;
     try {
-      scanner = new IncrementSummingScanner(region, scan, region.getScanner(scan));
+      scanner = new IncrementSummingScanner(region, scan.getBatch(), region.getScanner(scan));
       scanner.next(results);
       ctx.bypass();
     } finally {
@@ -99,13 +123,44 @@ public class IncrementHandler extends BaseRegionObserver {
   public RegionScanner postScannerOpen(ObserverContext<RegionCoprocessorEnvironment> ctx, Scan scan,
                                        RegionScanner scanner)
     throws IOException {
-    return new IncrementSummingScanner(region, scan, scanner);
+    return new IncrementSummingScanner(region, scan.getBatch(), scanner);
+  }
+
+  @Override
+  public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
+                                  InternalScanner scanner) throws IOException {
+    TransactionSnapshot snapshot = cache.getLatestState();
+    if (snapshot != null) {
+      return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, snapshot.getVisibilityUpperBound());
+    }
+    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner);
   }
 
   public static boolean isIncrement(Cell cell) {
     return cell.getValueLength() == IncrementHandler.DELTA_FULL_LENGTH &&
       Bytes.equals(cell.getValueArray(), cell.getValueOffset(), IncrementHandler.DELTA_MAGIC_PREFIX.length,
                    IncrementHandler.DELTA_MAGIC_PREFIX, 0, IncrementHandler.DELTA_MAGIC_PREFIX.length);
+  }
+
+  @Override
+  public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
+                                    InternalScanner scanner, ScanType scanType) throws IOException {
+    TransactionSnapshot snapshot = cache.getLatestState();
+    if (snapshot != null) {
+      return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, snapshot.getVisibilityUpperBound());
+    }
+    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner);
+  }
+
+  @Override
+  public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
+                                    InternalScanner scanner, ScanType scanType, CompactionRequest request)
+    throws IOException {
+    TransactionSnapshot snapshot = cache.getLatestState();
+    if (snapshot != null) {
+      return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, snapshot.getVisibilityUpperBound());
+    }
+    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner);
   }
 
   private static class IncrementFilter extends FilterBase {

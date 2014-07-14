@@ -1,5 +1,6 @@
 package com.continuuity.data2.increment.hbase96;
 
+import com.google.protobuf.Internal;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
@@ -8,6 +9,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.regionserver.HRegion;
+import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -22,20 +24,26 @@ class IncrementSummingScanner implements RegionScanner {
   private static final Log LOG = LogFactory.getLog(IncrementSummingScanner.class);
 
   private final HRegion region;
-  private final Scan scan;
   private final RegionScanner baseScanner;
   private final int batchSize;
+  // highest timestamp, beyond which we cannot aggregate increments during flush and compaction
+  // increments newer to this may still be visible to running transactions
+  private final long compactionUpperBound;
 
-  IncrementSummingScanner(HRegion region, Scan scan, RegionScanner baseScanner) {
+  IncrementSummingScanner(HRegion region, int batchSize, InternalScanner baseScanner) {
+    this(region, batchSize, baseScanner, Long.MAX_VALUE);
+  }
+
+  IncrementSummingScanner(HRegion region, int batchSize, InternalScanner baseScanner, long compationUpperBound) {
     this.region = region;
-    this.scan = scan;
-    this.batchSize = scan.getBatch();
-    this.baseScanner = baseScanner;
+    this.batchSize = batchSize;
+    this.baseScanner = (RegionScanner) baseScanner;
+    this.compactionUpperBound = compationUpperBound;
   }
 
   @Override
   public HRegionInfo getRegionInfo() {
-    return baseScanner.getRegionInfo();
+    return region.getRegionInfo();
   }
 
   @Override
@@ -104,7 +112,7 @@ class IncrementSummingScanner implements RegionScanner {
           }
 
           // 1. if this is an increment
-          if (IncrementHandler.isIncrement(cell)) {
+          if (IncrementHandler.isIncrement(cell) && cell.getTimestamp() < compactionUpperBound) {
             if (LOG.isTraceEnabled()) {
               LOG.trace("Found increment for row=" + Bytes.toStringBinary(CellUtil.cloneRow(cell)) + ", " +
                          "column=" + Bytes.toStringBinary(CellUtil.cloneQualifier(cell)));
