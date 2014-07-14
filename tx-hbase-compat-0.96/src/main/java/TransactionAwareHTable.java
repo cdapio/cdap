@@ -501,7 +501,7 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
           // Delete entire family
           NavigableMap<byte[], byte[]> familyColumns = result.getFamilyMap(family);
           for (Map.Entry<byte[], byte[]> column : familyColumns.entrySet()) {
-            txPut.add(family, column.getKey(), new byte[0]);
+            txPut.add(family, column.getKey(), transactionTimestamp, new byte[0]);
           }
         } else {
           for (KeyValue value : entries) {
