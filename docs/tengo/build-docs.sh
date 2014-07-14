@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# TODO: this is temp until the tengo project moves to its new repo
+#
 # Build script for Tengo javadocs
 # Builds the four modules, copies the HTML files, creates a time-stamped index file
 # 
