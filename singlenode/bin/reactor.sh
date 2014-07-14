@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 # Copyright 2012-2014 Continuuity, Inc.
 #
@@ -13,8 +15,6 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 #
-
-#!/usr/bin/env bash
 
 if [ -d /opt/continuuity ]; then
  CONTINUUITY_HOME=/opt/continuuity; export CONTINUUITY_HOME

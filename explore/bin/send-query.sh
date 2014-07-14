@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 # Copyright 2012-2014 Continuuity, Inc.
 #
@@ -13,8 +15,6 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 #
-
-#!/usr/bin/env bash
 
 bin=`dirname "${BASH_SOURCE-$0}"`
 bin=`cd "$bin"; pwd`

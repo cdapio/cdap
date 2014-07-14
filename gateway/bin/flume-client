@@ -1,3 +1,5 @@
+#!/bin/sh
+
 #
 # Copyright 2012-2014 Continuuity, Inc.
 #
@@ -13,8 +15,6 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 #
-
-#!/bin/sh
 
 # Attempt to set APP_HOME
 # Resolve links: $0 may be a link
