@@ -55,12 +55,10 @@ for %%a in (%*) do (
   )
 )
 
-if "%tokenFileProvided%" == "true" (
-  %JAVACMD% -classpath %CLASSPATH% com.continuuity.security.tools.AccessTokenClient %*
-)
-if "%tokenFileProvided%" == "false" (
+if "%tokenFileProvided%" == "false" if exist %auth_file% (
   %JAVACMD% -classpath %CLASSPATH% com.continuuity.security.tools.AccessTokenClient %* --file %auth_file%
+  GOTO :FINALLY
 )
-
+%JAVACMD% -classpath %CLASSPATH% com.continuuity.security.tools.AccessTokenClient %*
 :FINALLY
 
