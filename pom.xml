@@ -170,6 +170,7 @@
               </goals>
               <configuration>
                 <excludes>
+                  <exclude>LICENSE.txt</exclude>
                   <exclude>README.md</exclude>
                   <exclude>data/**</exclude>
                   <exclude>logs/**</exclude>
