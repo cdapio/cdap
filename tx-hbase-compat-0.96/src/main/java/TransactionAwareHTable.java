@@ -98,7 +98,14 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   @Override
   public Boolean[] exists(List<Get> gets) throws IOException {
-    return new Boolean[0];
+    if (tx == null) {
+      throw new IOException("Transaction not started");
+    }
+    ArrayList<Get> transactionalizedGets = new ArrayList<Get>();
+    for (Get get : gets) {
+      transactionalizedGets.add(transactionalizeAction(get));
+    }
+    return hTable.exists(transactionalizedGets);
   }
 
   @Override
@@ -218,16 +225,15 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   @Override
   public void delete(List<Delete> deletes) throws IOException {
-//    if (tx == null) {
-//      Throwables.propagate(new IOException("Transaction not started"));
-//    }
-//    ArrayList<Delete> transactionalizedDeletes = new ArrayList<Delete>();
-//    for (Delete delete : deletes) {
-//      Delete txDelete = transactionalizeAction(delete);
-//      Get get = new Get(delete.getRow());
-//      transactionalizedDeletes.add(txDelete);
-//      changeSet.put(txDelete, get(get));
-//    }
+    if (tx == null) {
+      throw new IOException("Transaction not started");
+    }
+    ArrayList<Put> transactionalizedPuts = new ArrayList<Put>();
+    for (Delete delete : deletes) {
+      Put txPut = transactionalizeAction(delete);
+      transactionalizedPuts.add(txPut);
+    }
+    hTable.put(transactionalizedPuts);
   }
 
   @Override
@@ -449,12 +455,13 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
     return txPut;
   }
 
-  private List<Put> transactionalizeAction(Delete delete) throws IOException {
+  private Put transactionalizeAction(Delete delete) throws IOException {
     long transactionTimestamp = tx.getWritePointer();
     Result result = get(new Get(delete.getRow()));
-    ArrayList<Put> transactionalizedPuts = new ArrayList<Put>();
 
     byte[] deleteRow = delete.getRow();
+    Put txPut = new Put(deleteRow, transactionTimestamp);
+
     Map<byte[], List<KeyValue>> familyToDelete = delete.getFamilyMap();
     if (familyToDelete.isEmpty()) {
       // Delete everything
@@ -462,9 +469,7 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
       for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> familyEntry : resultMap.entrySet()) {
         NavigableMap<byte[], byte[]> familyColumns = result.getFamilyMap(familyEntry.getKey());
         for (Map.Entry<byte[], byte[]> column : familyColumns.entrySet()) {
-          Put put = new Put(deleteRow, transactionTimestamp);
-          put.add(familyEntry.getKey(), column.getKey(), transactionTimestamp, new byte[0]);
-          transactionalizedPuts.add(put);
+          txPut.add(familyEntry.getKey(), column.getKey(), transactionTimestamp, new byte[0]);
         }
       }
     } else {
@@ -475,19 +480,15 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
           // Delete entire family
           NavigableMap<byte[], byte[]> familyColumns = result.getFamilyMap(family);
           for (Map.Entry<byte[], byte[]> column : familyColumns.entrySet()) {
-            Put put = new Put(deleteRow, transactionTimestamp);
-            put.add(family, column.getKey(), new byte[0]);
-            transactionalizedPuts.add(put);
+            txPut.add(family, column.getKey(), new byte[0]);
           }
         } else {
           for (KeyValue value : entries) {
-            Put put = new Put(deleteRow, transactionTimestamp);
-            put.add(value.getFamily(), value.getQualifier(), transactionTimestamp, new byte[0]);
-            transactionalizedPuts.add(put);
+            txPut.add(value.getFamily(), value.getQualifier(), transactionTimestamp, new byte[0]);
           }
         }
       }
     }
-    return transactionalizedPuts;
+    return txPut;
   }
 }
