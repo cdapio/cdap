@@ -170,13 +170,16 @@
               </goals>
               <configuration>
                 <excludes>
-                  <exclude>LICENSE.txt</exclude>
+                  <exclude>LICENSE*.txt</exclude>
                   <exclude>README.md</exclude>
                   <exclude>data/**</exclude>
                   <exclude>logs/**</exclude>
                   <exclude>docs/**</exclude>
                   <exclude>**/Apache-LICENSE-2.0</exclude>
+                  <exclude>**/VERSION</exclude>
                   <exlcude>**/*.patch</exlcude>
+                  <exclude>**/logrotate.d/**</exclude>
+                  <exclude>**/limits.d/**</exclude>
                   <!-- Excludes AVRO schema files -->
                   <exclude>**/*.avsc</exclude>
                   <!-- Excludes examples by default, include it in the examples profile -->
