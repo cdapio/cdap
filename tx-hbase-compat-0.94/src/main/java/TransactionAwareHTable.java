@@ -19,9 +19,11 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Row;
+import org.apache.hadoop.hbase.client.RowLock;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
+import org.apache.hadoop.hbase.ipc.CoprocessorProtocol;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Triple;
@@ -74,11 +76,6 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   }
 
   @Override
-  public TableName getName() {
-    return hTable.getName();
-  }
-
-  @Override
   public Configuration getConfiguration() {
     return hTable.getConfiguration();
   }
@@ -97,18 +94,6 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   }
 
   @Override
-  public Boolean[] exists(List<Get> gets) throws IOException {
-    if (tx == null) {
-      throw new IOException("Transaction not started");
-    }
-    ArrayList<Get> transactionalizedGets = new ArrayList<Get>();
-    for (Get get : gets) {
-      transactionalizedGets.add(transactionalizeAction(get));
-    }
-    return hTable.exists(transactionalizedGets);
-  }
-
-  @Override
   public void batch(List<? extends Row> actions, Object[] results) throws IOException, InterruptedException {
     // TODO
   }
@@ -116,18 +101,6 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   @Override
   public Object[] batch(List<? extends Row> actions) throws IOException, InterruptedException {
     // TODO
-    return new Object[0];
-  }
-
-  @Override
-  public <R> void batchCallback(List<? extends Row> actions, Object[] results, Batch.Callback<R> callback) throws
-    IOException, InterruptedException {
-
-  }
-
-  @Override
-  public <R> Object[] batchCallback(List<? extends Row> actions, Batch.Callback<R> callback) throws IOException,
-    InterruptedException {
     return new Object[0];
   }
 
@@ -283,16 +256,6 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   }
 
   @Override
-  public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount, Durability durability)
-    throws IOException {
-    if (allowNonTransactional) {
-      return hTable.incrementColumnValue(row, family, qualifier, amount, durability);
-    } else {
-      throw new UnsupportedOperationException("Operation is not supported transactionally");
-    }
-  }
-
-  @Override
   public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount, boolean writeToWAL)
     throws IOException {
     if (allowNonTransactional) {
@@ -318,37 +281,42 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   }
 
   @Override
-  public CoprocessorRpcChannel coprocessorService(byte[] row) {
-    return hTable.coprocessorService(row);
+  public RowLock lockRow(byte[] row) throws IOException {
+    return hTable.lockRow(row);
   }
 
   @Override
-  public <T extends Service, R> Map<byte[], R> coprocessorService(Class<T> service, byte[] startKey, byte[] endKey,
-                                                                  Batch.Call<T, R> callable)
-    throws ServiceException, Throwable {
-    return hTable.coprocessorService(service, startKey, endKey, callable);
+  public void unlockRow(RowLock rl) throws IOException {
+    hTable.unlockRow(rl);
   }
 
   @Override
-  public <T extends Service, R> void coprocessorService(Class<T> service, byte[] startKey, byte[] endKey,
-                                                        Batch.Call<T, R> callable, Batch.Callback<R> callback)
-    throws ServiceException, Throwable {
-    hTable.coprocessorService(service, startKey, endKey, callable, callback);
+  public <T extends CoprocessorProtocol> T coprocessorProxy(Class<T> protocol, byte[] row) {
+    return hTable.coprocessorProxy(protocol, row);
+  }
+
+  @Override
+  public <T extends CoprocessorProtocol, R> Map<byte[], R> coprocessorExec(Class<T> protocol, byte[] startKey,
+                                                                           byte[] endKey, Batch.Call<T,R> callable)
+    throws IOException, Throwable {
+    return hTable.coprocessorExec(protocol, startKey, endKey, callable);
+  }
+
+  @Override
+  public <T extends CoprocessorProtocol, R> void coprocessorExec(Class<T> protocol, byte[] startKey, byte[] endKey,
+                                                                 Batch.Call<T, R> callable, Batch.Callback<R> callback)
+    throws IOException, Throwable {
+    hTable.coprocessorExec(protocol, startKey, endKey, callable, callback);
   }
 
   @Override
   public void setAutoFlush(boolean autoFlush) {
-    setAutoFlushTo(autoFlush);
+    hTable.setAutoFlush(autoFlush);
   }
 
   @Override
   public void setAutoFlush(boolean autoFlush, boolean clearBufferOnFail) {
     hTable.setAutoFlush(autoFlush, clearBufferOnFail);
-  }
-
-  @Override
-  public void setAutoFlushTo(boolean autoFlush) {
-    hTable.setAutoFlushTo(autoFlush);
   }
 
   @Override
