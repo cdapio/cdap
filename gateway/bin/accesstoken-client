@@ -51,7 +51,7 @@ do
   fi
 done
 
-if [ $containsTokenFileArg -eq 0 ] && [ -f $auth_file ]; then
+if [ $containsTokenFileArg -eq 0 ]; then
   set -- "$@" "--file" "$auth_file"
 fi
 
