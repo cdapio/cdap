@@ -18,7 +18,9 @@ import org.junit.Test;
 import java.io.IOException;
 
 /**
- * Tests for TransactionAwareHTables.
+ * A Transaction Aware HTable implementation for HBase 0.94. Operations are committed as usual,
+ * but upon a failed or aborted transaction, they are rolled back to the state before the transaction
+ * was started.
  */
 public class TransactionAwareHTableTest {
   private static HBaseTestingUtility testUtil;

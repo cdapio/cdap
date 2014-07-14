@@ -36,7 +36,9 @@ import java.util.NavigableMap;
 import java.util.Set;
 
 /**
- * A Transaction Aware HTable implementation for HBase 0.96
+ * A Transaction Aware HTable implementation for HBase 0.96. Operations are committed as usual,
+ * but upon a failed or aborted transaction, they are rolled back to the state before the transaction
+ * was started.
  */
 public class TransactionAwareHTable implements HTableInterface, TransactionAware {
   private Transaction tx;
