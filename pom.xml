@@ -175,6 +175,7 @@
                   <exclude>data/**</exclude>
                   <exclude>logs/**</exclude>
                   <exclude>docs/**</exclude>
+                  <exlcude>**/*.patch</exlcude>
                   <!-- Excludes AVRO schema files -->
                   <exclude>**/*.avsc</exclude>
                   <!-- Excludes examples by default, include it in the examples profile -->
