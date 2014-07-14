@@ -76,14 +76,77 @@ public interface Explore {
    */
   void close(Handle handle) throws ExploreException, HandleNotFoundException;
 
+  ////// Metadata methods
+
+
+  /**
+   * Retrieves a description of table columns available in the specified catalog.
+   * Only column descriptions matching the catalog, schema, table and column name criteria are returned.
+   *
+   * See {@link java.sql.DatabaseMetaData#getColumns(String, String, String, String)}.
+   *
+   * @param catalog a catalog name; must match the catalog name as it is stored in the database;
+   *                "" retrieves those without a catalog;
+   *                null means that the catalog name should not be used to narrow the search.
+   * @param schemaPattern a schema name pattern; must match the schema name as it is stored in the database;
+   *                      "" retrieves those without a schema;
+   *                      null means that the schema name should not be used to narrow the search.
+   * @param tableNamePattern a table name pattern; must match the table name as it is stored in the database.
+   * @param columnNamePattern a column name pattern; must match the column name as it is stored in the database.
+   * @return {@link Handle} representing the operation.
+   * @throws ExploreException on any error getting the columns.
+   * @throws SQLException if there are errors in the SQL statement.
+   */
   public Handle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
-    throws ExploreException;
+    throws ExploreException, SQLException;
 
-  public Handle getSchemas(String catalogName, String schemaName) throws ExploreException;
+  /**
+   * Retrieves the schema names available in this database.
+   *
+   * See {@link java.sql.DatabaseMetaData#getSchemas(String, String)}.
+   *
+   * @param catalog a catalog name; must match the catalog name as it is stored in the database;
+   *                "" retrieves those without a catalog;
+   *                null means that the catalog name should not be used to narrow the search.
+   * @param schemaPattern a schema name pattern; must match the schema name as it is stored in the database;
+   *                      "" retrieves those without a schema;
+   *                      null means that the schema name should not be used to narrow the search.
+   * @return {@link Handle} representing the operation.
+   * @throws ExploreException on any error getting the schemas.
+   * @throws SQLException if there are errors in the SQL statement.
+   */
+  public Handle getSchemas(String catalog, String schemaPattern) throws ExploreException, SQLException;
 
-  public Handle getFunctions(String catalogName, String schemaName, String functionName) throws ExploreException;
+  /**
+   * Retrieves a description of the system and user functions available in the given catalog.
+   * Only system and user function descriptions matching the schema and function name criteria are returned.
+   *
+   * See {@link java.sql.DatabaseMetaData#getFunctions(String, String, String)}.
+   *
+   * @param catalog a catalog name; must match the catalog name as it is stored in the database;
+   *                "" retrieves those without a catalog;
+   *                null means that the catalog name should not be used to narrow the search.
+   * @param schemaPattern a schema name pattern; must match the schema name as it is stored in the database;
+   *                      "" retrieves those without a schema;
+   *                      null means that the schema name should not be used to narrow the search.
+   * @param functionNamePattern a function name pattern; must match the function name as it is stored in the database
+   * @return {@link Handle} representing the operation.
+   * @throws ExploreException on any error getting the functions.
+   * @throws SQLException if there are errors in the SQL statement.
+   */
+  public Handle getFunctions(String catalog, String schemaPattern, String functionNamePattern)
+    throws ExploreException, SQLException;
 
-  public MetaDataInfo getInfo(String infoName) throws ExploreException;
+
+  /**
+   * Get information about Reactor as a database.
+   *
+   * @param infoType information type we are interested about.
+   * @return {@link Handle} representing the operation.
+   * @throws ExploreException on any error getting the information.
+   * @throws SQLException if there are errors in the SQL statement.
+   */
+  public MetaDataInfo getInfo(MetaDataInfo.InfoType infoType) throws ExploreException, SQLException;
 
   /**
    * As seen in Hive code, the arguments are actually patterns
@@ -92,26 +155,45 @@ public interface Explore {
    *
    * Retrieves a description of the tables available in the given catalog. Only table descriptions
    * matching the catalog, schema, table name and type criteria are returned.
-   * They are ordered by TABLE_TYPE, TABLE_CAT, TABLE_SCHEM and TABLE_NAME.
    *
-   * @param catalogName a catalog name; must match the catalog name as it is stored in the database;
-   *                    "" retrieves those without a catalog;
-   *                    null means that the catalog name should not be used to narrow the search
-   * @param schemaNamePattern a schema name pattern; must match the schema name as it is stored in the database;
-   *                   "" retrieves those without a schema;
-   *                   null means that the schema name should not be used to narrow the search
-   * @param tableNamePattern a table name pattern; must match the table name as it is stored in the database
+   * See {@link java.sql.DatabaseMetaData#getTables(String, String, String, String[])}.
+   *
+   * @param catalog a catalog name; must match the catalog name as it is stored in the database;
+   *                "" retrieves those without a catalog;
+   *                null means that the catalog name should not be used to narrow the search.
+   * @param schemaPattern a schema name pattern; must match the schema name as it is stored in the database;
+   *                      "" retrieves those without a schema;
+   *                      null means that the schema name should not be used to narrow the search.
+   * @param tableNamePattern a table name pattern; must match the table name as it is stored in the database.
    * @param tableTypes a list of table types, which must come from
    *                   "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM";
-   *                   null returns all types
+   *                   null returns all types.
    * @return {@link Handle} representing the operation.
    * @throws ExploreException on any error getting the tables.
-   * @throws SQLException if there are errors in the parameters.
+   * @throws SQLException if there are errors in the SQL statement.
    */
-  public Handle getTables(String catalogName, String schemaNamePattern, String tableNamePattern,
+  public Handle getTables(String catalog, String schemaPattern, String tableNamePattern,
                           List<String> tableTypes) throws ExploreException, SQLException;
 
-  public Handle getTableTypes() throws ExploreException;
+  /**
+   * Retrieves the table types available in this database.
+   *
+   * See {@link java.sql.DatabaseMetaData#getTableTypes()}.
+   *
+   * @return {@link Handle} representing the operation.
+   * @throws ExploreException on any error getting the table types.
+   * @throws SQLException if there are errors in the SQL statement.
+   */
+  public Handle getTableTypes() throws ExploreException, SQLException;
 
-  public Handle getTypeInfo() throws ExploreException;
+  /**
+   * Retrieves a description of all the data types supported by this database.
+   *
+   * See {@link java.sql.DatabaseMetaData#getTableTypes()}.
+   *
+   * @return {@link Handle} representing the operation.
+   * @throws ExploreException on any error getting the types info.
+   * @throws SQLException if there are errors in the SQL statement.
+   */
+  public Handle getTypeInfo() throws ExploreException, SQLException;
 }

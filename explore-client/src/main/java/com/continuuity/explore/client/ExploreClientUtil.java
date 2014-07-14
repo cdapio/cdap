@@ -5,16 +5,8 @@ import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Status;
-import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
-import com.google.gson.JsonSyntaxException;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpRequest;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -58,24 +50,24 @@ public class ExploreClientUtil {
    * Class to represent a JSON object passed as an argument to the getTables metadata HTTP endpoint.
    */
   public static final class TablesArgs {
-    private final String catalogName;
-    private final String schemaNamePattern;
+    private final String catalog;
+    private final String schemaPattern;
     private final String tableNamePattern;
     private final List<String> tableTypes;
 
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
-        .add("catalogName", catalogName)
-        .add("schemaNamePattern", schemaNamePattern)
+        .add("catalog", catalog)
+        .add("schemaPattern", schemaPattern)
         .add("tableNamePattern", tableNamePattern)
         .add("tableTypes", tableTypes)
         .toString();
     }
 
-    public TablesArgs(String catalogName, String schemaNamePattern, String tableNamePattern, List<String> tableTypes) {
-      this.catalogName = catalogName;
-      this.schemaNamePattern = schemaNamePattern;
+    public TablesArgs(String catalog, String schemaNamePattern, String tableNamePattern, List<String> tableTypes) {
+      this.catalog = catalog;
+      this.schemaPattern = schemaNamePattern;
       this.tableNamePattern = tableNamePattern;
       this.tableTypes = tableTypes;
     }
@@ -88,12 +80,120 @@ public class ExploreClientUtil {
       return tableTypes;
     }
 
-    public String getSchemaNamePattern() {
-      return schemaNamePattern;
+    public String getSchemaPattern() {
+      return schemaPattern;
     }
 
-    public String getCatalogName() {
-      return catalogName;
+    public String getCatalog() {
+      return catalog;
+    }
+  }
+
+  /**
+   * Class to represent a JSON object passed as an argument to the getColumns metadata HTTP endpoint.
+   */
+  public static final class ColumnsArgs {
+    private final String catalog;
+    private final String schemaPattern;
+    private final String tableNamePattern;
+    private final String columnNamePattern;
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("catalog", catalog)
+        .add("schemaPattern", schemaPattern)
+        .add("tableNamePattern", tableNamePattern)
+        .add("columnNamePattern", columnNamePattern)
+        .toString();
+    }
+
+    public ColumnsArgs(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) {
+      this.catalog = catalog;
+      this.schemaPattern = schemaPattern;
+      this.tableNamePattern = tableNamePattern;
+      this.columnNamePattern = columnNamePattern;
+    }
+
+    public String getTableNamePattern() {
+      return tableNamePattern;
+    }
+
+    public String getColumnNamePattern() {
+      return columnNamePattern;
+    }
+
+    public String getSchemaPattern() {
+      return schemaPattern;
+    }
+
+    public String getCatalog() {
+      return catalog;
+    }
+  }
+
+  /**
+   * Class to represent a JSON object passed as an argument to the getSchemas metadata HTTP endpoint.
+   */
+  public static final class SchemaArgs {
+    private final String catalog;
+    private final String schemaPattern;
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("catalog", catalog)
+        .add("schemaPattern", schemaPattern)
+        .toString();
+    }
+
+    public SchemaArgs(String catalog, String schemaPattern) {
+      this.catalog = catalog;
+      this.schemaPattern = schemaPattern;
+    }
+
+    public String getSchemaPattern() {
+      return schemaPattern;
+    }
+
+    public String getCatalog() {
+      return catalog;
+    }
+  }
+
+  /**
+   * Class to represent a JSON object passed as an argument to the getFunctions metadata HTTP endpoint.
+   */
+  public static final class FunctionsArgs {
+    private final String catalog;
+    private final String schemaPattern;
+    private final String functionNamePattern;
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("catalog", catalog)
+        .add("schemaPattern", schemaPattern)
+        .add("functionNamePattern", functionNamePattern)
+        .toString();
+    }
+
+    public FunctionsArgs(String catalog, String schemaPattern, String functionNamePattern) {
+      this.catalog = catalog;
+      this.schemaPattern = schemaPattern;
+      this.functionNamePattern = functionNamePattern;
+    }
+
+    public String getFunctionNamePattern() {
+      return functionNamePattern;
+    }
+
+    public String getSchemaPattern() {
+      return schemaPattern;
+    }
+
+    public String getCatalog() {
+      return catalog;
     }
   }
 }

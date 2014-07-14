@@ -45,7 +45,7 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
   private static final Type ROW_LIST_TYPE = new TypeToken<List<Result>>() { }.getType();
 
   // TODO figure out if this is the right name
-  private static final String METADATA_PATH = "metadata/";
+  private static final String METADATA_PATH = "data/metadata/";
 
   protected abstract InetSocketAddress getExploreServiceAddress();
 
@@ -137,46 +137,74 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
 
   @Override
   public Handle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
-      throws ExploreException {
-    return null;
+    throws ExploreException, SQLException {
+    String body = GSON.toJson(new ExploreClientUtil.ColumnsArgs(catalog, schemaPattern,
+                                                                tableNamePattern, columnNamePattern));
+    HttpResponse response = doPost(METADATA_PATH + "columns", body, null);
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return Handle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException("Cannot get the columns. Reason: " + getDetails(response));
   }
 
   @Override
-  public Handle getSchemas(String catalogName, String schemaName) throws ExploreException {
-    return null;
+  public Handle getSchemas(String catalog, String schemaPattern) throws ExploreException, SQLException {
+    String body = GSON.toJson(new ExploreClientUtil.SchemaArgs(catalog, schemaPattern));
+    HttpResponse response = doPost(METADATA_PATH + "schemas", body, null);
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return Handle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException("Cannot get the schemas. Reason: " + getDetails(response));
   }
 
   @Override
-  public Handle getFunctions(String catalogName, String schemaName, String functionName) throws ExploreException {
-    return null;
+  public Handle getFunctions(String catalog, String schemaPattern, String functionNamePattern)
+    throws ExploreException, SQLException {
+    String body = GSON.toJson(new ExploreClientUtil.FunctionsArgs(catalog, schemaPattern, functionNamePattern));
+    HttpResponse response = doPost(METADATA_PATH + "functions", body, null);
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return Handle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException("Cannot get the functions. Reason: " + getDetails(response));
   }
 
   @Override
-  public MetaDataInfo getInfo(String infoName) throws ExploreException {
-    // TODO careful, the signature is going to change
-    return null;
+  public MetaDataInfo getInfo(MetaDataInfo.InfoType infoType) throws ExploreException, SQLException {
+    HttpResponse response = doGet(METADATA_PATH + "info" + infoType.name());
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return parseJson(response, MetaDataInfo.class);
+    }
+    throw new ExploreException("Cannot get information " + infoType.name() + ". Reason: " + getDetails(response));
   }
 
   @Override
-  public Handle getTables(String catalogName, String schemaNamePattern,
+  public Handle getTables(String catalog, String schemaPattern,
                           String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
-    String body = GSON.toJson(new ExploreClientUtil.TablesArgs(catalogName, schemaNamePattern,
+    String body = GSON.toJson(new ExploreClientUtil.TablesArgs(catalog, schemaPattern,
                                                                tableNamePattern, tableTypes));
     HttpResponse response = doPost(METADATA_PATH + "tables", body, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
-    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
+    throw new ExploreException("Cannot get the tables. Reason: " + getDetails(response));
   }
 
   @Override
-  public Handle getTableTypes() throws ExploreException {
-    return null;
+  public Handle getTableTypes() throws ExploreException, SQLException {
+    HttpResponse response = doPost(METADATA_PATH + "tableTypes", null, null);
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return Handle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException("Cannot get the tables. Reason: " + getDetails(response));
   }
 
   @Override
-  public Handle getTypeInfo() throws ExploreException {
-    return null;
+  public Handle getTypeInfo() throws ExploreException, SQLException {
+    HttpResponse response = doPost(METADATA_PATH + "typeInfo", null, null);
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return Handle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException("Cannot get the tables. Reason: " + getDetails(response));
   }
 
   protected String parseResponseAsMap(HttpResponse response, String key) throws ExploreException {

@@ -95,37 +95,40 @@ public class MockExploreClient implements ExploreClient {
   // TODO implement those methods and use them in unit tests
 
   @Override
-  public Handle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws ExploreException {
+  public Handle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
+    throws ExploreException, SQLException {
     return null;
   }
 
   @Override
-  public Handle getSchemas(String catalogName, String schemaName) throws ExploreException {
+  public Handle getSchemas(String catalog, String schemaPattern) throws ExploreException, SQLException {
     return null;
   }
 
   @Override
-  public Handle getFunctions(String catalogName, String schemaName, String functionName) throws ExploreException {
+  public Handle getFunctions(String catalog, String schemaPattern, String functionNamePattern)
+    throws ExploreException, SQLException {
     return null;
   }
 
   @Override
-  public MetaDataInfo getInfo(String infoName) throws ExploreException {
+  public MetaDataInfo getInfo(MetaDataInfo.InfoType infoType) throws ExploreException, SQLException {
     return null;
   }
 
   @Override
-  public Handle getTables(String catalogName, String schemaNamePattern, String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
+  public Handle getTables(String catalog, String schemaPattern, String tableNamePattern, List<String> tableTypes)
+    throws ExploreException, SQLException {
     return null;
   }
 
   @Override
-  public Handle getTableTypes() throws ExploreException {
+  public Handle getTableTypes() throws ExploreException, SQLException {
     return null;
   }
 
   @Override
-  public Handle getTypeInfo() throws ExploreException {
+  public Handle getTypeInfo() throws ExploreException, SQLException {
     return null;
   }
 }

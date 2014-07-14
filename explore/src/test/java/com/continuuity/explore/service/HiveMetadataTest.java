@@ -77,8 +77,10 @@ public class HiveMetadataTest {
     Transaction tx1 = transactionManager.startShort(100);
     table.startTx(tx1);
 
-    KeyStructValueTableDefinition.KeyValue.Value value1 = new KeyStructValueTableDefinition.KeyValue.Value("first", Lists.newArrayList(1, 2, 3, 4, 5));
-    KeyStructValueTableDefinition.KeyValue.Value value2 = new KeyStructValueTableDefinition.KeyValue.Value("two", Lists.newArrayList(10, 11, 12, 13, 14));
+    KeyStructValueTableDefinition.KeyValue.Value value1 =
+      new KeyStructValueTableDefinition.KeyValue.Value("first", Lists.newArrayList(1, 2, 3, 4, 5));
+    KeyStructValueTableDefinition.KeyValue.Value value2 =
+      new KeyStructValueTableDefinition.KeyValue.Value("two", Lists.newArrayList(10, 11, 12, 13, 14));
     table.put("1", value1);
     table.put("2", value2);
     Assert.assertEquals(value1, table.get("1"));
@@ -215,7 +217,8 @@ public class HiveMetadataTest {
 //        "type": "STRING"
 //    },
 //    {
-//      "comment": "Column size. For char or date types this is the maximum number of characters, for numeric or decimal types this is precision.",
+//      "comment": "Column size. For char or date types this is the maximum number of characters,
+// for numeric or decimal types this is precision.",
 //        "name": "COLUMN_SIZE",
 //        "position": 7,
 //        "type": "INT"
@@ -281,7 +284,8 @@ public class HiveMetadataTest {
 //        "type": "INT"
 //    },
 //    {
-//      "comment": "\"NO\" means column definitely does not allow NULL values; \"YES\" means the column might allow NULL values. An empty string means nobody knows.",
+//      "comment": "\"NO\" means column definitely does not allow NULL values; \"YES\"
+// means the column might allow NULL values. An empty string means nobody knows.",
 //        "name": "IS_NULLABLE",
 //        "position": 18,
 //        "type": "STRING"
@@ -305,7 +309,8 @@ public class HiveMetadataTest {
 //        "type": "STRING"
 //    },
 //    {
-//      "comment": "Source type of a distinct type or user-generated Ref type, SQL type from java.sql.Types (null if DATA_TYPE isn't DISTINCT or user-generated REF)",
+//      "comment": "Source type of a distinct type or user-generated Ref type, SQL type from java.sql.Types
+// (null if DATA_TYPE isn't DISTINCT or user-generated REF)",
 //        "name": "SOURCE_DATA_TYPE",
 //        "position": 22,
 //        "type": "SMALLINT"
