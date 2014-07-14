@@ -55,6 +55,16 @@
       <groupId>it.unimi.dsi</groupId>
       <artifactId>fastutil</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>watchdog</artifactId>
+      <version>2.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>data-fabric</artifactId>
+      <version>2.1.0</version>
+    </dependency>
   </dependencies>
 
   <build>
