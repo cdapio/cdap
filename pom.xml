@@ -175,7 +175,9 @@
                   <exclude>data/**</exclude>
                   <exclude>logs/**</exclude>
                   <exclude>docs/**</exclude>
-                  <!-- Exclude examples by default, include it in the examples profile -->
+                  <!-- Excludes AVRO schema files -->
+                  <exclude>**/*.avsc</exclude>
+                  <!-- Excludes examples by default, include it in the examples profile -->
                   <exclude>examples/**</exclude>
                 </excludes>
               </configuration>
