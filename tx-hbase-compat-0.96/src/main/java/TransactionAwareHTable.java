@@ -29,7 +29,6 @@ import org.apache.hadoop.hbase.util.Triple;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -388,13 +387,11 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   @Override
   public Collection<byte[]> getTxChanges() {
-    Collection transactionChanges = null;
-    try {
-      transactionChanges = Collections.singletonList(txCodec.encode(tx));
-    } catch (IOException e) {
-      Throwables.propagate(e);
+    ArrayList<byte[]> txChanges = new ArrayList<byte[]>();
+    for (Triple<byte[], byte[], byte[]> change : changeSet) {
+      txChanges.add(Bytes.add(change.getFirst(), change.getSecond(), change.getThird()));
     }
-    return transactionChanges;
+    return txChanges;
   }
 
   @Override

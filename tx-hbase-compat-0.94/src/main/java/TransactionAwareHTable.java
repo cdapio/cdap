@@ -354,13 +354,11 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   @Override
   public Collection<byte[]> getTxChanges() {
-    Collection transactionChanges = null;
-    try {
-      transactionChanges = Collections.singletonList(txCodec.encode(tx));
-    } catch (IOException e) {
-      Throwables.propagate(e);
+    ArrayList<byte[]> txChanges = new ArrayList<byte[]>();
+    for (Triple<byte[], byte[], byte[]> change : changeSet) {
+      txChanges.add(Bytes.add(change.getFirst(), change.getSecond(), change.getThird()));
     }
-    return transactionChanges;
+    return txChanges;
   }
 
   @Override
