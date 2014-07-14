@@ -18,7 +18,7 @@ import org.junit.Test;
 import java.io.IOException;
 
 /**
- *
+ * Tests for TransactionAwareHTables.
  */
 public class TransactionAwareHTableTest {
   private static HBaseTestingUtility testUtil;
@@ -60,6 +60,10 @@ public class TransactionAwareHTableTest {
     hBaseAdmin.deleteTable(TestBytes.table);
   }
 
+  /**
+   * Test transactional put and get requests.
+   * @throws Exception
+   */
   @Test
   public void testValidTransactionalPutAndGet() throws Exception {
     transactionContext.start();
@@ -76,6 +80,10 @@ public class TransactionAwareHTableTest {
     Assert.assertArrayEquals(TestBytes.value, value);
   }
 
+  /**
+   * Test aborted put requests, that must be rolled back.
+   * @throws Exception
+   */
   @Test
   public void testAbortedTransactionPutAndGet() throws Exception {
     transactionContext.start();
@@ -92,6 +100,10 @@ public class TransactionAwareHTableTest {
     Assert.assertArrayEquals(value, null);
   }
 
+  /**
+   * Test transactional delete operations.
+   * @throws Exception
+   */
   @Test
   public void testValidTransactionalDelete() throws Exception {
     transactionContext.start();
@@ -119,6 +131,10 @@ public class TransactionAwareHTableTest {
     Assert.assertArrayEquals(value, new byte[0]);
   }
 
+  /**
+   * Test aborted transactional delete requests, that must be rolled back.
+   * @throws Exception
+   */
   @Test
   public void testAbortedTransactionalDelete() throws Exception {
     transactionContext.start();
@@ -143,6 +159,15 @@ public class TransactionAwareHTableTest {
     transactionContext.finish();
     value = result.getValue(TestBytes.family, TestBytes.qualifier);
     Assert.assertArrayEquals(TestBytes.value, value);
+  }
+
+  /**
+   * Expect an exception since a transaction hasn't been started.
+   * @throws Exception
+   */
+  @Test(expected=IOException.class)
+  public void testTransactionlessFailure() throws Exception {
+    transactionAwareHTable.get(new Get(TestBytes.row));
   }
 
 }

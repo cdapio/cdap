@@ -36,7 +36,7 @@ import java.util.NavigableMap;
 import java.util.Set;
 
 /**
- *
+ * A Transaction Aware HTable implementation for HBase 0.96
  */
 public class TransactionAwareHTable implements HTableInterface, TransactionAware {
   private Transaction tx;
@@ -45,6 +45,10 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   private ArrayList<Triple<byte[], byte[], byte[]>> changeSet;
   private boolean allowNonTransactional;
 
+  /**
+   * Create a transactional aware instance of the passed HTable
+   * @param hTable
+   */
   public TransactionAwareHTable(HTable hTable) {
     this.hTable = hTable;
     this.changeSet = new ArrayList<Triple<byte[], byte[], byte[]>>();
@@ -52,6 +56,12 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
     this.allowNonTransactional = false;
   }
 
+  /**
+   * Create a transactional aware instance of the passed HTable, with the option
+   * of allowing non-transaction operations.
+   * @param hTable
+   * @param allowNonTransactional
+   */
   public TransactionAwareHTable(HTable hTable, boolean allowNonTransactional) {
     this.hTable = hTable;
     this.changeSet = new ArrayList<Triple<byte[], byte[], byte[]>>(
@@ -60,10 +70,18 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
     this.allowNonTransactional = allowNonTransactional;
   }
 
+  /**
+   * True if the instance allows non-transaction operations.
+   * @return
+   */
   public boolean getAllowNonTransactional() {
     return this.allowNonTransactional;
   }
 
+  /**
+   * Set whether the instance allows non-transactional operations.
+   * @param allowNonTransactional
+   */
   public void setAllowNonTransactional(boolean allowNonTransactional) {
     this.allowNonTransactional = allowNonTransactional;
   }
