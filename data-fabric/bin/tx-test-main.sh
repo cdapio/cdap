@@ -41,4 +41,7 @@ if [ -d "$conf" ]; then
   CLASSPATH=$CLASSPATH:"$conf"/
 fi
 
+# Load all necessary configs
+CLASSPATH="$CLASSPATH:/etc/continuuity/conf/:/etc/hadoop/conf/:/usr/lib/hadoop/*:/usr/lib/hadoop-hdfs/*:/usr/lib/hbase/lib/*:/usr/lib/hadoop-yarn/*:/opt/continuuity/hbase-compat-0.96/lib/*:/etc/zookeeper/conf/*"
+
 java -cp ${CLASSPATH} -Dscript=$script com.continuuity.data2.transaction.TransactionServiceMain "$@"

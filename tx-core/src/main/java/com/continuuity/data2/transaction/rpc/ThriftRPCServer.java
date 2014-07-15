@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.common.rpc;
+package com.continuuity.data2.transaction.rpc;
 
 import com.continuuity.common.utils.Networks;
 

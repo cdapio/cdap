@@ -4,4 +4,4 @@
 /**
  * This package contains class for writing RPC server and client in simple manner.
  */
-package com.continuuity.common.rpc;
+package com.continuuity.data2.transaction.rpc;
