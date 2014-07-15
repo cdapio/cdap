@@ -172,7 +172,11 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   @Override
   public Result getRowOrBefore(byte[] row, byte[] family) throws IOException {
-    return hTable.getRowOrBefore(row, family);
+    if (allowNonTransactional) {
+      return hTable.getRowOrBefore(row, family);
+    } else {
+      throw new UnsupportedOperationException("Operation is not supported transactionally");
+    }
   }
 
   @Override
