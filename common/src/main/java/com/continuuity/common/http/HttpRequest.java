@@ -49,19 +49,19 @@ public class HttpRequest {
   }
 
   public static Builder get(URL url) {
-    return new Builder(HttpMethod.GET, url);
+    return builder(HttpMethod.GET, url);
   }
 
   public static Builder post(URL url) {
-    return new Builder(HttpMethod.POST, url);
+    return builder(HttpMethod.POST, url);
   }
 
   public static Builder delete(URL url) {
-    return new Builder(HttpMethod.DELETE, url);
+    return builder(HttpMethod.DELETE, url);
   }
 
   public static Builder put(URL url) {
-    return new Builder(HttpMethod.PUT, url);
+    return builder(HttpMethod.PUT, url);
   }
 
   public static Builder builder(HttpMethod method, URL url) {
@@ -90,9 +90,9 @@ public class HttpRequest {
    * Builder for {@link HttpRequest}.
    */
   public static final class Builder {
-    private HttpMethod method;
-    private URL url;
-    private Map<String, String> headers = Maps.newHashMap();
+    private final HttpMethod method;
+    private final URL url;
+    private final Map<String, String> headers = Maps.newHashMap();
     private InputSupplier<? extends InputStream> body;
 
     Builder(HttpMethod method, URL url) {
@@ -129,7 +129,7 @@ public class HttpRequest {
       this.body = new InputSupplier<InputStream>() {
         @Override
         public InputStream getInput() throws IOException {
-          return new ByteBufferInputStream(body);
+          return new ByteBufferInputStream(body.duplicate());
         }
       };
       return this;
