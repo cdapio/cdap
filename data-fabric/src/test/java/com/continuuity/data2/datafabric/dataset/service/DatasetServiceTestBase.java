@@ -151,19 +151,19 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected ObjectResponse<List<DatasetModuleMeta>> getModules() throws IOException {
-    return ObjectResponse.fromJsonBody(HttpRequests.execute(HttpMethod.GET, getUrl("/data/modules")),
+    return ObjectResponse.fromJsonBody(HttpRequests.execute(HttpRequest.get(getUrl("/data/modules")).build()),
                                        new TypeToken<List<DatasetModuleMeta>>() { }.getType());
   }
 
   protected int deleteInstances() throws IOException {
-    return HttpRequests.delete(getUrl("/data/unrecoverable/datasets")).getResponseCode();
+    return HttpRequests.execute(HttpRequest.delete(getUrl("/data/unrecoverable/datasets")).build()).getResponseCode();
   }
 
   protected int deleteModule(String moduleName) throws Exception {
-    return HttpRequests.delete(getUrl("/data/modules/" + moduleName)).getResponseCode();
+    return HttpRequests.execute(HttpRequest.delete(getUrl("/data/modules/" + moduleName)).build()).getResponseCode();
   }
 
   protected int deleteModules() throws IOException {
-    return HttpRequests.delete(getUrl("/data/modules/")).getResponseCode();
+    return HttpRequests.execute(HttpRequest.delete(getUrl("/data/modules/")).build()).getResponseCode();
   }
 }
