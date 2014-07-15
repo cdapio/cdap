@@ -61,7 +61,7 @@ public class ExploreDriver implements Driver {
     int port = jdbcURI.getPort();
     ExploreClient exploreClient = new FixedAddressExploreClient(host, port);
     if (!exploreClient.isAvailable()) {
-      throw new SQLException("Cannot connect to {}, service unavailable", url);
+      throw new SQLException("Cannot connect to " + url + ", service unavailable");
     }
     return new ExploreConnection(exploreClient);
   }

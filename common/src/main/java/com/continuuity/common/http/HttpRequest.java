@@ -105,8 +105,10 @@ public class HttpRequest {
       return this;
     }
 
-    public Builder addHeaders(Map<String, String> headers) {
-      this.headers.putAll(headers);
+    public Builder addHeaders(@Nullable Map<String, String> headers) {
+      if (headers != null) {
+        this.headers.putAll(headers);
+      }
       return this;
     }
 
