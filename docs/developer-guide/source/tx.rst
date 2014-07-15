@@ -1,9 +1,9 @@
 .. :Author: Continuuity, Inc.
    :Description: Codename Tengo
 
-=====================================
+==============
 Codename Tengo
-=====================================
+==============
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
@@ -13,12 +13,18 @@ Codename Tengo
 .. rst2pdf: stylesheets _templates/pdf-stylesheet
 .. rst2pdf: build ../build-pdf/
 
+Introduction
+============
+Codename Tengo provides transactional operations on HBase. That is, operations may be committed as part of a single
+transaction and upon a failure every operation in the transaction the data is rolled back to the state that existed
+prior to the beginning of the transaction. 
+
 Installation
-==================
+============
 // TODO : Note about maven dependency to add?
 
 Client APIs
-==================
+===========
 ``TransactionAwareHTable`` implements ``HTableInterface``, thus providing the same APIs that a standard ``HTable``
 provides. Only certain operations are supported transactionally. They are:
 
@@ -58,7 +64,7 @@ the following methods non-transactionally:
     incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount, boolean writeToWAL)
 
 Usage
-==================
+=====
 To use a ``TransactionalAwareHTable``, you need an instance of ``TransactionContext`` that will automatically
 invoke ``rollback`` on failed transactions. ::
 
@@ -73,9 +79,9 @@ invoke ``rollback`` on failed transactions. ::
   }
 
 Example
-==================
-To demonstrate how you might use a ``TransactionAwareHTable``, below is a basic implementation of a
-``SecondaryIndexTable``. This class encapsulates the usage of ``TransactionContext`` and provides a simple interface
+=======
+To demonstrate how you might use ``TransactionAwareHTable``\s, below is a basic implementation of a
+``SecondaryIndexTable``. This class encapsulates the usage of a ``TransactionContext`` and provides a simple interface
 to a user.
 
 // TODO : Add example here after review.
