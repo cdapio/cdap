@@ -17,8 +17,8 @@
 package com.continuuity.common.collect;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.ObjectArrays;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -31,12 +31,6 @@ public class AllCollector<Element> implements Collector<Element> {
 
   private final List<Element> elements = Lists.newArrayList();
 
-  private final Class<Element> clazz;
-
-  public AllCollector(Class<Element> clazz) {
-    this.clazz = clazz;
-  }
-
   @Override
   public boolean addElement(Element element) {
     elements.add(element);
@@ -44,8 +38,9 @@ public class AllCollector<Element> implements Collector<Element> {
   }
 
   @Override
-  public Element[] finish() {
-    Element[] array = ObjectArrays.newArray(clazz, elements.size());
-    return elements.toArray(array);
+  public <T extends Collection<? super Element>> T finish(T collection) {
+    collection.addAll(elements);
+    elements.clear();
+    return collection;
   }
 }
