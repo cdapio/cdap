@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data2.transaction.coprocessor.hbase96;
 
 import com.continuuity.data2.transaction.Transaction;
@@ -6,6 +22,7 @@ import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.coprocessor.TransactionStateCache;
 import com.continuuity.data2.transaction.coprocessor.TransactionStateCacheSupplier;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
+import com.continuuity.data2.transaction.util.TxUtils;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -38,8 +55,33 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * {@link org.apache.hadoop.hbase.coprocessor.RegionObserver} coprocessor that removes data from invalid transactions
- * during region compactions.
+ * {@code org.apache.hadoop.hbase.coprocessor.RegionObserver} coprocessor that handles server-side processing
+ * for transactions:
+ * <ul>
+ *   <li>applies filtering to exclude data from invalid and in-progress transactions</li>
+ *   <li>overrides the scanner returned for flush and compaction to drop data written by invalidated transactions,
+ *   or expired due to TTL.</li>
+ * </ul>
+ *
+ * <p>In order to use this coprocessor for transactions, configure the class on any table involved in transactions,
+ * or on all user tables by adding the following to hbase-site.xml:
+ * {@code
+ * <property>
+ *   <name>hbase.coprocessor.region.classes</name>
+ *   <value>com.continuuity.data2.transaction.coprocessor.hbase96.TransactionDataJanitor</value>
+ * </property>
+ * }
+ * </p>
+ *
+ * <p>HBase {@code Get} and {@code Scan} operations should have the current transaction serialized on to the operation
+ * as an attribute:
+ * {@code
+ * Transaction t = ...;
+ * Get get = new Get(...);
+ * TransactionCodec codec = new TransactionCodec();
+ * codec.addToOperation(get, t);
+ * }
+ * </p>
  */
 public class TransactionDataJanitor extends BaseRegionObserver {
   private static final Log LOG = LogFactory.getLog(TransactionDataJanitor.class);
@@ -47,6 +89,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
   private TransactionStateCache cache;
   private final TransactionCodec txCodec;
   private Map<byte[], Long> ttlByFamily = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+  private boolean allowEmptyValues = TxConstants.ALLOW_EMPTY_VALUES_DEFAULT;
 
   public TransactionDataJanitor() {
     this.txCodec = new TransactionCodec();
@@ -76,6 +119,9 @@ public class TransactionDataJanitor extends BaseRegionObserver {
         }
         ttlByFamily.put(columnDesc.getName(), ttl);
       }
+
+      this.allowEmptyValues = env.getConfiguration().getBoolean(TxConstants.ALLOW_EMPTY_VALUES_KEY,
+                                                                TxConstants.ALLOW_EMPTY_VALUES_DEFAULT);
     }
   }
 
@@ -94,8 +140,9 @@ public class TransactionDataJanitor extends BaseRegionObserver {
     Transaction tx = txCodec.getFromOperation(get);
     if (tx != null) {
       get.setMaxVersions(tx.excludesSize() + 1);
-      get.setTimeRange(getOldestTsVisible(tx), getMaxStamp(tx));
-      Filter newFilter = combineFilters(new TransactionVisibilityFilter(tx, ttlByFamily), get.getFilter());
+      get.setTimeRange(TxUtils.getOldestTsVisible(ttlByFamily, tx), TxUtils.getMaxStamp(tx));
+      Filter newFilter = combineFilters(new TransactionVisibilityFilter(tx, ttlByFamily, allowEmptyValues),
+                                        get.getFilter());
       get.setFilter(newFilter);
     }
   }
@@ -106,8 +153,9 @@ public class TransactionDataJanitor extends BaseRegionObserver {
     Transaction tx = txCodec.getFromOperation(scan);
     if (tx != null) {
       scan.setMaxVersions(tx.excludesSize() + 1);
-      scan.setTimeRange(getOldestTsVisible(tx), getMaxStamp(tx));
-      Filter newFilter = combineFilters(new TransactionVisibilityFilter(tx, ttlByFamily), scan.getFilter());
+      scan.setTimeRange(TxUtils.getOldestTsVisible(ttlByFamily, tx), TxUtils.getMaxStamp(tx));
+      Filter newFilter = combineFilters(new TransactionVisibilityFilter(tx, ttlByFamily, allowEmptyValues),
+                                        scan.getFilter());
       scan.setFilter(newFilter);
     }
     return s;
@@ -163,22 +211,6 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       return filterList;
     }
     return overrideFilter;
-  }
-
-  private long getOldestTsVisible(Transaction tx) {
-    long oldestVisible = tx.getVisibilityUpperBound();
-    // we know that data will not be cleaned up while this tx is running up to this point as janitor uses it
-    for (Long familyTTL : ttlByFamily.values()) {
-      oldestVisible =
-        Math.min(familyTTL <= 0 ? 0 : tx.getVisibilityUpperBound() - familyTTL * TxConstants.MAX_TX_PER_MS,
-                 oldestVisible);
-    }
-    return oldestVisible;
-  }
-
-  private static long getMaxStamp(Transaction tx) {
-    // NOTE: +1 here because we want read up to readpointer inclusive, but timerange's end is exclusive
-    return tx.getReadPointer() + 1;
   }
 
   private DataJanitorRegionScanner createDataJanitorRegionScanner(ObserverContext<RegionCoprocessorEnvironment> e,

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.ProgramLifecycle;
@@ -30,29 +46,12 @@ public class ReducerWrapper extends Reducer {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapperWrapper.class);
 
-  private File unpackedJarDir;
-
-  @SuppressWarnings("unchecked")
-  @Override
-  protected void cleanup(Context context) throws IOException, InterruptedException {
-    super.cleanup(context);
-
-    if (unpackedJarDir != null) {
-      try {
-        FileUtils.deleteDirectory(unpackedJarDir);
-      } catch (IOException e) {
-        // NO-OP
-      }
-    }
-  }
-
   @SuppressWarnings("unchecked")
   @Override
   public void run(Context context) throws IOException, InterruptedException {
-    unpackedJarDir = Files.createTempDir();
     MapReduceContextProvider mrContextProvider =
       new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Reducer);
-    final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get(unpackedJarDir);
+    final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
     context.getConfiguration().setClassLoader(basicMapReduceContext.getProgram().getClassLoader());
     basicMapReduceContext.getMetricsCollectionService().startAndWait();
 

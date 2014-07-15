@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data.runtime.main;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -183,7 +199,8 @@ public class ReactorTwillApplication implements TwillApplication {
       .build();
 
     return builder.add(
-      new DatasetOpExecutorServerTwillRunnable("dataset.executor", "cConf.xml", "hConf.xml"), resourceSpec)
+      new DatasetOpExecutorServerTwillRunnable(Constants.Service.DATASET_EXECUTOR, "cConf.xml", "hConf.xml"),
+      resourceSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())
@@ -191,15 +208,17 @@ public class ReactorTwillApplication implements TwillApplication {
   }
 
   private TwillSpecification.Builder.RunnableSetter addExploreService(TwillSpecification.Builder.MoreRunnable builder) {
+    int instances = instanceCountMap.get(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
 
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
       .setVirtualCores(cConf.getInt(Constants.Explore.CONTAINER_VIRTUAL_CORES, 1))
       .setMemory(cConf.getInt(Constants.Explore.CONTAINER_MEMORY_MB, 512), ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(cConf.getInt(Constants.Explore.CONTAINER_INSTANCES, 1))
+      .setInstances(instances)
       .build();
 
     TwillSpecification.Builder.MoreFile twillSpecs =
-      builder.add(new ExploreServiceTwillRunnable("explore.executor", "cConf.xml", "hConf.xml"), resourceSpec)
+      builder.add(new ExploreServiceTwillRunnable(
+        Constants.Service.EXPLORE_HTTP_USER_SERVICE, "cConf.xml", "hConf.xml"), resourceSpec)
         .withLocalFiles()
         .add("cConf.xml", cConfFile.toURI())
         .add("hConf.xml", hConfFile.toURI());

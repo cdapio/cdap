@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.api.dataset.DatasetProperties;
@@ -24,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -136,7 +153,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     DatasetSpecification spec;
     try {
-      spec = opExecutorClient.create(name, typeMeta, typeAndProps.getProperties());
+      spec = opExecutorClient.create(name, typeMeta,
+                                     DatasetProperties.builder().addAll(typeAndProps.getProperties()).build());
     } catch (Exception e) {
       String msg = String.format("Cannot create dataset %s of type %s: executing create() failed, reason: %s",
                                  name, typeAndProps.getTypeName(), e.getMessage());
@@ -235,19 +253,19 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
    */
   public static final class DatasetTypeAndProperties {
     private final String typeName;
-    private final DatasetProperties props;
+    private final Map<String, String> properties;
 
-    public DatasetTypeAndProperties(String typeName, DatasetProperties props) {
+    public DatasetTypeAndProperties(String typeName, Map<String, String> properties) {
       this.typeName = typeName;
-      this.props = props;
+      this.properties = properties;
     }
 
     public String getTypeName() {
       return typeName;
     }
 
-    public DatasetProperties getProperties() {
-      return props;
+    public Map<String, String> getProperties() {
+      return properties;
     }
   }
 
@@ -268,7 +286,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       String msg = String.format("Cannot disable exploration of dataset instance %s: %s",
                                  name, e.getMessage());
       LOG.error(msg, e);
-      throw e;
+      // TODO: at this time we want to still drop dataset even if it cannot be disabled for exploration
+//      throw e;
     }
 
     if (!instanceManager.delete(name)) {

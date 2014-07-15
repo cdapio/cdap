@@ -19,14 +19,16 @@ Introduction
 
 The Continuuity Reactor has an HTTP interface for a multitude of purposes:
 
-- **Stream:** sending data events to a Stream, or to inspect the contents of a Stream.
-- **Data:** interacting with Datasets (currently limited to Tables).
-- **Query:** sending ad-hoc queries to Reactor Datasets.
-- **Procedure:** sending calls to a stored Procedure.
-- **Reactor:** deploying and managing Applications.
-- **Logs:** retrieving Application logs.
-- **Metrics:** retrieving metrics for system and user Applications (user-defined metrics).
-- **Monitor:** checking the status of various Reactor services.
+- **Stream:** sending data events to a Stream, or to inspect the contents of a Stream
+- **Dataset:** interacting with Datasets, Dataset Modules, and Dataset Types
+- **Data:** interacting with Datasets (deprecated)
+- **Query:** sending ad-hoc queries to Reactor Datasets
+- **Procedure:** sending calls to a stored Procedure
+- **Reactor Client:** deploying and managing Applications, and managing the life cycle of Flows,
+  Procedures, MapReduce jobs, Workflows, and Custom Services
+- **Logging:** retrieving Application logs
+- **Metrics:** retrieving metrics for system and user Applications (user-defined metrics)
+- **Monitor:** checking the status of various Reactor services, both System and Custom
 
 **Note:** The HTTP interface binds to port ``10000``. This port cannot be changed.
 
@@ -492,9 +494,20 @@ For usage and documentation of options, run at the command line::
 
 Dataset HTTP API
 ================
+The Dataset API allows you to interact with Datasets through HTTP. You can list, create, delete, and truncate Datasets. For details, see the Developer Guide:
 
-The Dataset API allows you to interact with `Continuuity Reactor Datasets <advanced.html#dataset-system>`_ through HTTP.
-You can list, create, delete, and truncate Datasets.
+.. rst2pdf: CutStart
+
+.. only:: html
+
+	`Continuuity Reactor Advanced Features, Datasets section <advanced.html#datasets-system>`__
+
+.. only:: pdf
+
+.. rst2pdf: CutStop
+
+	`Continuuity Reactor Advanced Features, Datasets section <http://continuuity.com/docs/reactor/current/en/advanced.html#datasets-system>`__
+
 
 Listing all Datasets
 --------------------
@@ -517,16 +530,22 @@ The response body will contain a JSON-formatted list of the existing Datasets::
 	   }
 	 }
 
+.. rst2pdf: PageBreak
+
 Creating a Dataset
 ------------------
 
-You can create a Dataset by issuing an HTTP POST request to the URL::
+You can create a Dataset by issuing an HTTP PUT request to the URL::
 
 	PUT <base-url>/data/datasets/<dataset-name>
   
-with the name of the type as a header::
+with JSON-formatted name of the dataset type and properties in a body::
 
-	X-Continuuity-Type-Name: <type-name>
+  {
+     "typeName":"<type-name>",
+     "properties":{<properties>}
+  }
+
 
 .. list-table::
    :widths: 20 80
@@ -538,6 +557,8 @@ with the name of the type as a header::
      - Name of the new Dataset
    * - ``<type-name>``
      - Type of the new Dataset
+   * - ``<properties>``
+     - Dataset properties, map of String to String.
 
 HTTP Responses
 ..............
@@ -554,8 +575,6 @@ HTTP Responses
    * - ``409 Conflict``
      - Dataset with the same name already exists
 
-.. rst2pdf: PageBreak
-
 Example
 .......
 .. list-table::
@@ -564,11 +583,12 @@ Example
 
    * - HTTP Request
      - ``PUT <base-url>/data/datasets/mydataset``
-   * - Header
-     - ``X-Continuuity-Type-Name: myDatasetType``
+   * - Body
+     - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"3600000"}}``
    * - Description
-     - Creates a Dataset named "mydataset" of the type "myDatasetType"; the ``myDatasetType``
-       should be a Dataset type that's already been deployed in a Dataset module
+     - Creates a Dataset named "mydataset" of the type "table" and time-to-live property set to 1 hour
+
+.. rst2pdf: PageBreak
 
 Deleting a Dataset
 ------------------
@@ -642,268 +662,6 @@ HTTP Responses
      - Dataset was successfully truncated
 
 .. rst2pdf: PageBreak
-
-Dataset Module HTTP API
-=======================
-
-The Dataset Module API allows you to interact with 
-`Continuuity Reactor Dataset Modules <advanced.html#dataset-system>`_ through HTTP.
-You can list, add, and delete Dataset modules.
-
-Listing all Dataset Modules
----------------------------
-
-To list all modules, issue an HTTP GET request to the URL::
-
-	GET <base-url>/data/modules
-
-The response will be a JSON String representing a list of ``DatasetModuleMeta`` objects::
-
-	[
-	   {
-	      "name":"core",
-	      "className":"com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule",
-	      "types":[
-	         "table",
-	         "com.continuuity.api.dataset.table.Table",
-	         "keyValueTable",
-	         "com.continuuity.api.dataset.lib.KeyValueTable",
-	         "objectStore",
-	         "com.continuuity.api.dataset.lib.ObjectStore",
-	         "indexedObjectStore",
-	         "com.continuuity.api.dataset.lib.IndexedObjectStore",
-	         "indexedTable",
-	         "com.continuuity.api.dataset.lib.IndexedTable",
-	         "multiObjectStore",
-	         "com.continuuity.api.dataset.lib.MultiObjectStore",
-	         "timeseriesTable",
-	         "com.continuuity.api.dataset.lib.TimeseriesTable"
-	      ],
-	      "usesModules":[
-	         "orderedTable-leveldb"
-	      ],
-	      "usedByModules":[
-	
-	      ]
-	   },
-	   {
-	      "name":"orderedTable-leveldb",
-	      "className":"com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule",
-	      "types":[
-	         "orderedTable",
-	         "com.continuuity.api.dataset.table.OrderedTable"
-	      ],
-	      "usesModules":[
-	
-	      ],
-	      "usedByModules":[
-	         "core"
-	      ]
-	   }
-	]
-
-.. rst2pdf: PageBreak
-
-Adding a Dataset Module
------------------------
-
-To add a module, issue an HTTP POST request to the URL::
-
-  PUT <base-url>/data/modules/<module-name>
-
-with the class name of the Dataset Module as a header::
-
-  X-Continuuity-Class-Name: <class-name>
-
-with a jar containing the class implementing ``DatasetModule`` and all its dependencies 
-in the body of the request.
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<module-name>``
-     - Name of the new module
-   * - ``<class-name>``
-     - Class name of the class implementing ``DatasetModule``
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The event was successfully received and the module was either created or already exists
-   * - ``400 Bad Request``
-     - The Dataset module jar was not provided in the body of the request
-   * - ``409 Conflict``
-     - Either a Dataset module with the same name or one of the types declared by this module, already exists
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``POST <base-url>/data/modules/my-module``
-   * - Headers
-     - X-Continuuity-Class-Name: com.example.dataset.MyModule
-   * - Body
-     - Contents a jar file containing the class ``MyModule`` along with other supporting class files and resources
-   * - Description
-     - Adds a Dataset module named *my-module*, with the class name 
-       ``com.example.dataset.MyModule``
-
-.. rst2pdf: PageBreak
-
-Deleting a Dataset Module
--------------------------
-
-To delete a module, issue an HTTP DELETE request to the URL::
-
-  DELETE <base-url>/data/modules/<module-name>
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - Module was successfully deleted
-   * - ``409 Conflict``
-     - Module with provided <module-name> cannot be deleted because either there's another module that 
-       depends on it or there is an existing Dataset of the type that is declared by this module
-   * - ``404 Not Found``
-     - Module with provided <module-name> could not be found
-
-Deleting all Dataset Modules
-----------------------------
-
-To delete all modules, issue an HTTP DELETE request to the URL::
-
-  DELETE <base-url>/data/modules
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - Dataset modules were successfully deleted
-   * - ``409 Conflict``
-     - Dataset modules cannot be deleted because there are existing Datasets that use the types declared
-       by these modules
-
-.. rst2pdf: PageBreak
-
-Dataset Type HTTP API
-=====================
-
-The Dataset Type API allows you to interact with 
-`Continuuity Reactor Dataset Types <advanced.html#dataset-system>`_ through HTTP.
-You can list all Dataset types and get information about each type. Dataset types are declared by the Dataset modules added to Continuuity Reactor.
-To delete a Dataset type, you delete the Dataset module that contains the type as described under
-`Deleting a Dataset Module <#deleting-a-dataset-module>`_.
-
-
-Listing all Dataset Types
--------------------------
-
-To list all types provided by the existing modules, issue an HTTP GET request to the URL::
-
-  GET <base-url>/data/types
-
-The response will be a JSON array containing JSON objects representing the Dataset types in the format described
-below under `Getting a Dataset Type`_.
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/data/types``
-   * - Description
-     - List all Dataset types
-
-Getting a Dataset Type
-----------------------
-
-To get detailed information about a single type, issue an HTTP GET request to the URL::
-
-  GET <base-url>/data/types/<type-name>
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<type-name>``
-     - Name of the Dataset type
-
-.. rst2pdf: PageBreak
-
-The response will be a JSON String representing a Dataset type metadata along with a list of Dataset modules it depends on::
-
-	{
-	   "name":"table",
-	   "modules":[
-	      {
-	         "name":"orderedTable-leveldb",
-	         "className":"com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule",
-	         "types":[
-	            "orderedTable",
-	            "com.continuuity.api.dataset.table.OrderedTable"
-	         ],
-	         "usesModules":[
-	
-	         ],
-	         "usedByModules":[
-	            "core"
-	         ]
-	      },
-	      {
-	         "name":"core",
-	         "className":"com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule",
-	         "types":[
-	            "table",
-	            "com.continuuity.api.dataset.table.Table",
-	            "keyValueTable",
-	            "com.continuuity.api.dataset.lib.KeyValueTable",
-	            "objectStore",
-	            "com.continuuity.api.dataset.lib.ObjectStore",
-	            "indexedObjectStore",
-	            "com.continuuity.api.dataset.lib.IndexedObjectStore",
-	            "indexedTable",
-	            "com.continuuity.api.dataset.lib.IndexedTable",
-	            "multiObjectStore",
-	            "com.continuuity.api.dataset.lib.MultiObjectStore",
-	            "timeseriesTable",
-	            "com.continuuity.api.dataset.lib.TimeseriesTable"
-	         ],
-	         "usesModules":[
-	            "orderedTable-leveldb"
-	         ],
-	         "usedByModules":[
-	
-	         ]
-	      }
-	   ]
-	}
 
 
 Data HTTP API (Deprecated)
@@ -1066,6 +824,8 @@ Example
      - ``GET <base-url>/tables/mytable/rows/status``
    * - Description
      - Read from an existing Table named *mytable*, a row identified as *status*
+
+.. rst2pdf: PageBreak
 
 Comments
 ........
@@ -1537,6 +1297,9 @@ Execution of a query can be canceled before it is finished with an HTTP POST::
 
 After this, the query can only be closed.
 
+**Note:** This operation is not supported with CDH 4.x distributions. It will return a
+``500 Internal Server Error`` status code.
+
 HTTP Responses
 ..............
 .. list-table::
@@ -1557,6 +1320,8 @@ Procedure HTTP API
 ==================
 
 This interface supports sending calls to the methods of an Application’s Procedures.
+See the `Reactor Client HTTP API <#reactor-client-http-api>`__ for how to control the life cycle of
+Procedures. 
 
 Executing Procedures
 --------------------
@@ -1611,13 +1376,13 @@ Example
 
        {"word":"a"}
 
-..
+.. rst2pdf: PageBreak
 
 Reactor Client HTTP API
 =======================
 
 Use the Reactor Client HTTP API to deploy or delete Applications and manage the life cycle of 
-Flows, Procedures and MapReduce jobs.
+Flows, Procedures, MapReduce jobs, Workflows, and Custom Services.
 
 Deploy an Application
 ---------------------
@@ -1649,7 +1414,7 @@ To delete an Application together with all of its Flows, Procedures and MapReduc
 	DELETE <base-url>/apps/<application-name>
 
 .. list-table::
-   :widths: 20 80
+   :widths: 25 75
    :header-rows: 1
 
    * - Parameter
@@ -1691,32 +1456,20 @@ jobs, Workflows, and Custom Services, and query for their status using HTTP POST
 
 Examples
 ........
-.. list-table::
+
+.. csv-table::
    :widths: 20 80
-   :stub-columns: 1
+   :header-rows: 1
 
-   * - HTTP Method
-     - ``POST <base-url>/apps/HelloWorld/flows/WhoFlow/start``
-   * - Description
-     - Start a Flow *WhoFlow* in the Application *HelloWorld*
+   ,Example / Description
+   **HTTP Method**, ``POST <base-url>/apps/HelloWorld/flows/WhoFlow/start``
+   , Start a Flow *WhoFlow* in the Application *HelloWorld*
+   **HTTP Method**, ``POST <base-url>/apps/Count/procedures/GetCounts/stop``
+   , Stop the Procedure *GetCounts* in the Application *Count*
+   **HTTP Method**, ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/status``
+   , Get the status of the Flow *WhoFlow* in the Application *HelloWorld*
 
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``POST <base-url>/apps/WordCount/procedures/RetrieveCounts/stop``
-   * - Description
-     - Stop the Procedure *RetrieveCounts* in the Application *WordCount*
-
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/status``
-   * - Description
-     - Get the status of the Flow *WhoFlow* in the Application *HelloWorld*
+.. commas above are creating spacers in the table
 
 When starting an element, you can optionally specify runtime arguments as a JSON map in the request body::
 
@@ -1738,7 +1491,8 @@ with the arguments as a JSON string in the body::
 
 .. rst2pdf: PageBreak
 
-To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET request to the element's URL using the same parameter ``runtimeargs``::
+To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET 
+request to the element's URL using the same parameter ``runtimeargs``::
 
 	GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
@@ -1748,9 +1502,9 @@ Container Information
 ---------------------
 
 To find out the address of an element's container host and the container’s debug port, you can query
-the Reactor for a Procedure or Flow’s live info via an HTTP GET method::
+the Reactor for a Procedure, Flow or Service’s live info via an HTTP GET method::
 
-	GET <base-url>/apps/<app-id>/<element-type>/live-info
+	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/live-info
 
 .. list-table::
    :widths: 20 80
@@ -1769,11 +1523,22 @@ Example::
 
 	GET <base-url>/apps/WordCount/flows/WordCounter/live-info
 
-The response is formatted in JSON; an example of this is shown in the 
-`Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`_.
+The response is formatted in JSON; an example of this is shown in: 
 
-To find out the address of a Service's container host and the container's debug port, you can query the
-Reactor for the live info of a Service's Twill Runnable via an HTTP GET method::
+.. rst2pdf: CutStart
+
+.. only:: html
+
+	`Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`__
+
+.. only:: pdf
+
+.. rst2pdf: CutStop
+
+	`Continuuity Reactor Testing and Debugging Guide <http://continuuity.com/docs/reactor/current/en/debugging.html#debugging-reactor-applications>`__
+
+To find out the address of a Service's container host and the container's debug port, you 
+can query the Reactor for the live info of a Service's Twill Runnable via an HTTP GET method::
 
   GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/live-info
 
@@ -1860,8 +1625,8 @@ Examples
 
 Scaling Procedures
 ..................
-In a similar way to `Scaling Flowlets`_, you can query or change the number of instances of a Procedure
-by using the ``instances`` parameter with HTTP GET and PUT methods::
+In a similar way to `Scaling Flowlets`_, you can query or change the number of instances 
+of a Procedure by using the ``instances`` parameter with HTTP GET and PUT methods::
 
 	GET <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
 	PUT <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
@@ -1932,22 +1697,21 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/instances``
-       ``instances``
+     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables`` ``/WhoRunnable/instances``
    * - Description
-     - Retreive the number of instances of the Twill Runnable *WhoRunnable* of the Service *WhoService*
+     - Retrieve the number of instances of the Twill Runnable *WhoRunnable* of the Service *WhoService*
 
 .. rst2pdf: PageBreak
 
 Run History and Schedule
 ------------------------
 
-To see the history of all runs of an element,
-issue an HTTP GET to the element’s URL with ``history`` parameter.
+To see the history of all runs of selected elements (Flows, Procedures, MapReduce jobs, Workflows, and
+Services), issue an HTTP GET to the element’s URL with the ``history`` parameter.
 This will return a JSON list of all completed runs, each with a start time,
 end time and termination status::
 
-	GET <base-url>/apps/<app-id>/flows/<flow-id>/history
+	GET <base-url>/apps/<app-id>/<element>/<element-id>/history
 
 .. list-table::
    :widths: 20 80
@@ -1957,8 +1721,10 @@ end time and termination status::
      - Description
    * - ``<app-id>``
      - Name of the Application
-   * - ``<flow-id>``
-     - Name of the Flow
+   * - ``<element-type>``
+     - One of ``flows``, ``procedures``, ``mapreduce``, ``workflows`` or ``services``
+   * - ``<element-id>``
+     - Name of the element
 
 Example
 .......
@@ -1977,9 +1743,9 @@ Example
 The *runid* field is a UUID that uniquely identifies a run within the Continuuity Reactor,
 with the start and end times in seconds since the start of the Epoch (midnight 1/1/1970).
 
-For Services, you can retrieve the history of a Twill Runnable using::
+For Services, you can retrieve the history of a Twill Service using::
 
-  GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/history
+  GET <base-url>/apps/<app-id>/services/<service-id>/history
 
 Example
 .......
@@ -1988,9 +1754,9 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/history``
+     - ``GET <base-url>/apps/HelloWorld/services/WhoService/history``
    * - Description
-     - Retrieve the history of the Runnable *WhoRunnable* of the Service *WhoService* of the Application *HelloWorld*
+     - Retrieve the history of the Service *WhoService* of the Application *HelloWorld*
    * - Returns
      - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
        ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
@@ -2071,7 +1837,8 @@ Example
      - ``GET <base-url>/apps/CountTokens/flows/CountTokensFlow/``
        ``logs?start=1382576400&stop=1382576700``
    * - Description
-     - Return the logs for all the events from the Flow *CountTokensFlow* of the *CountTokens* Application,
+     - Return the logs for all the events from the Flow *CountTokensFlow* of the *CountTokens*
+       Application,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 
@@ -2105,7 +1872,8 @@ Example
      - ``GET <base-url>/apps/CountTokens/services/CountTokensService/runnables/CountTokensRunnable/``
        ``logs?start=1382576400&stop=1382576700``
    * - Description
-     - Return the logs for all the events of the Runnable CountTokensRunnable from the Service *CountTokensService*
+     - Return the logs for all the events of the Runnable CountTokensRunnable from the Service
+       *CountTokensService*
        of the *CountTokens* Application,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
@@ -2126,14 +1894,19 @@ As Applications process data, the Continuuity Reactor collects metrics about the
 
 Other metrics are user-defined and differ from Application to Application. 
 For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-Continuuity Reactor Operations Guide.
-
+the Developer Guide:
 
 .. rst2pdf: CutStart
 
-(`Operations Guide </operations.html>`)
+.. only:: html
+
+	`Continuuity Reactor Operations Guide <operations.html>`__
+
+.. only:: pdf
 
 .. rst2pdf: CutStop
+
+	`Continuuity Reactor Operations Guide <http://continuuity.com/docs/reactor/current/en/operations.html>`__
 
 
 Metrics Requests
@@ -2189,7 +1962,7 @@ Comments
 ........
 The scope must be either ``reactor`` for system metrics or ``user`` for user-defined metrics.
 
-System metrics are either Application metrics (about Applications and their Flows, Procedures, MapReduce and WorkFlows) or they are Data metrics (relating to Streams or Datasets).
+System metrics are either Application metrics (about Applications and their Flows, Procedures, MapReduce and Workflows) or they are Data metrics (relating to Streams or Datasets).
 
 User metrics are always in the Application context.
 

@@ -1,5 +1,22 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.test.app;
 
+import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDataset;
@@ -9,7 +26,6 @@ import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Increment;
 import com.continuuity.api.dataset.table.Table;
-import com.continuuity.data2.dataset2.lib.table.TableDefinition;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
@@ -62,7 +78,7 @@ public class UniqueCountTableDefinition
   public static class Module implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      TableDefinition tableDefinition = registry.get("table");
+      DatasetDefinition<Table, DatasetAdmin> tableDefinition = registry.get("table");
       UniqueCountTableDefinition keyValueTable = new UniqueCountTableDefinition("uniqueCountTable", tableDefinition);
       registry.add(keyValueTable);
     }

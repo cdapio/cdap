@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.hive.objectinspector;
 
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -7,6 +23,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -70,8 +87,17 @@ public class ReflectionStructObjectInspector extends
       } else {
         sb.append(",");
       }
+      ObjectInspector oi = structField.getFieldObjectInspector();
+      String typeName;
+      // This prevents infinite loop, and prints "this" in case
+      // the object contains a reference to itself
+      if (oi == this) {
+        typeName = "this";
+      } else {
+        typeName = oi.getTypeName();
+      }
       sb.append(structField.getFieldName()).append(":")
-        .append(structField.getFieldObjectInspector().getTypeName());
+        .append(typeName);
     }
     sb.append(">");
     return sb.toString();
@@ -101,6 +127,10 @@ public class ReflectionStructObjectInspector extends
     fields = new ArrayList<MyField>(structFieldObjectInspectors.size());
     int used = 0;
     for (int i = 0; i < reflectionFields.length; i++) {
+      // Exclude transient fields
+      if (Modifier.isTransient(reflectionFields[i].getModifiers())) {
+        continue;
+      }
       if (!shouldIgnoreField(reflectionFields[i].getName())) {
         reflectionFields[i].setAccessible(true);
         fields.add(new MyField(reflectionFields[i], structFieldObjectInspectors.get(used++)));

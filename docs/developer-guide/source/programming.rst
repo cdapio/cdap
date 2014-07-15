@@ -701,7 +701,7 @@ exist. For that you must declare its details in the Application specification.
 For example, to create a DataSet named *myCounters* of type `KeyValueTable`, write::
 
 	public void configure() {
-	    createDataset("myCounters", "KeyValueTable")
+	    createDataset("myCounters", "KeyValueTable");
 	    ...
 
 To use the Dataset in a Flowlet or a Procedure, instruct the runtime
@@ -754,7 +754,12 @@ conveniently, extend the ``AbstractProcedure`` class.
 A Procedure is configured and initialized similarly to a Flowlet, but
 instead of a process method you’ll define a handler method. Upon
 external call, the handler method receives the request and sends a
-response. The most generic way to send a response is to obtain a
+response. 
+
+The initialize method is called when the Procedure handler is created. 
+It is not created until the first request is received for it.
+
+The most generic way to send a response is to obtain a
 ``Writer`` and stream out the response as bytes. Make sure to close the
 ``Writer`` when you are done::
 

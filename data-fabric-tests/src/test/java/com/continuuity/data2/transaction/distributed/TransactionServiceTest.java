@@ -1,5 +1,17 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.data2.transaction.distributed;
 
@@ -15,6 +27,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
@@ -77,7 +90,9 @@ public class TransactionServiceTest {
         new LocationRuntimeModule().getInMemoryModules(),
         new DiscoveryRuntimeModule().getDistributedModules(),
         new TransactionMetricsModule(),
-        new DataFabricModules().getDistributedModules());
+        new DataFabricModules().getDistributedModules(),
+        new DataSetsModules().getDistributedModule()
+      );
 
       ZKClientService zkClient = injector.getInstance(ZKClientService.class);
       zkClient.startAndWait();

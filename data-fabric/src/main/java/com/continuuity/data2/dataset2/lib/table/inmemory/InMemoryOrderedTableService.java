@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data2.dataset2.lib.table.inmemory;
 
 import com.continuuity.api.common.Bytes;
@@ -61,7 +77,6 @@ public class InMemoryOrderedTableService {
   public static synchronized void merge(String tableName,
                                         NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes,
                                         long version) {
-    // todo: handle nulls
     ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> table = tables.get(tableName);
     for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> change : changes.entrySet()) {
       merge(table, change.getKey(), change.getValue(), version);
@@ -69,9 +84,14 @@ public class InMemoryOrderedTableService {
   }
 
   private static void merge(ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> table,
-                            byte[] row, Map<byte[], byte[]> changes, long version) {
+                            @Nullable byte[] row, Map<byte[], byte[]> changes, long version) {
     // get the correct row from the table, create it if it doesn't exist
-    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = table.get(row);
+    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = null;
+    // TODO: figure out why row is null (shouldn't be null)
+    if (row != null) {
+      rowMap = table.get(row);
+    }
+
     if (rowMap == null) {
       rowMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
       table.put(row, rowMap);

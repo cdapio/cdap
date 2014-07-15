@@ -1,8 +1,25 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data2.dataset2;
 
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.module.DatasetModule;
 
 import java.io.IOException;
@@ -27,6 +44,7 @@ import javax.annotation.Nullable;
  *   }
  * </tt>
  */
+// todo: use dataset instead of dataset instance in namings
 public interface DatasetFramework {
 
   /**
@@ -50,6 +68,14 @@ public interface DatasetFramework {
     throws DatasetManagementException;
 
   /**
+   * Deletes dataset modules and its types from the system.
+   * @throws ModuleConflictException when some of modules can't be deleted because of its dependant modules or instances
+   * @throws DatasetManagementException
+   */
+  void deleteAllModules()
+    throws DatasetManagementException;
+
+  /**
    * Adds information about dataset instance to the system.
    *
    * This uses
@@ -57,8 +83,6 @@ public interface DatasetFramework {
    * method to build {@link com.continuuity.api.dataset.DatasetSpecification} which describes dataset instance
    * and later used to initialize {@link DatasetAdmin} and {@link Dataset} for the dataset instance.
    *
-   * NOTE: It does NOT create physical dataset automatically, use {@link #getAdmin(String, ClassLoader)} to obtain
-   *       dataset admin to perform such administrative operations
    * @param datasetTypeName dataset instance type name
    * @param datasetInstanceName dataset instance name
    * @param props dataset instance properties
@@ -70,10 +94,16 @@ public interface DatasetFramework {
     throws DatasetManagementException, IOException;
 
   /**
-   * @return names of all dataset instances
-   * @throws DatasetManagementException
+   * @return a collection of {@link com.continuuity.api.dataset.DatasetSpecification}s for all datasets
    */
-  Collection<String> getInstances() throws DatasetManagementException;
+  Collection<DatasetSpecification> getInstances() throws DatasetManagementException;
+
+  /**
+   * @return {@link com.continuuity.api.dataset.DatasetSpecification} of the dataset or {@code null} if dataset does
+   *         not exist
+   */
+  @Nullable
+  DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException;
 
   /**
    * @return true if instance exists, false otherwise
@@ -90,14 +120,20 @@ public interface DatasetFramework {
   /**
    * Deletes dataset instance from the system.
    *
-   * NOTE: It will NOT delete physical data set, use {@link #getAdmin(String, ClassLoader)} to obtain
-   *       dataset admin to perform such administrative operations
    * @param datasetInstanceName dataset instance name
    * @throws InstanceConflictException if dataset instance cannot be deleted because of its dependencies
    * @throws IOException when deletion of dataset instance using its admin fails
    * @throws DatasetManagementException
    */
   void deleteInstance(String datasetInstanceName) throws DatasetManagementException, IOException;
+
+  /**
+   * Deletes all dataset instances from the system.
+   *
+   * @throws IOException when deletion of dataset instance using its admin fails
+   * @throws DatasetManagementException
+   */
+  void deleteAllInstances() throws DatasetManagementException, IOException;
 
   /**
    * Gets dataset instance admin to be used to perform administrative operations.

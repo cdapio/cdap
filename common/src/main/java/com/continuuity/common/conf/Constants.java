@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.common.conf;
 
 import java.util.concurrent.TimeUnit;
@@ -96,6 +112,8 @@ public final class Constants {
      * Default history results limit.
      */
     public static final int DEFAULT_HISTORY_RESULTS_LIMIT = 100;
+
+    public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
   }
 
   /**
@@ -120,6 +138,9 @@ public final class Constants {
       public static final String MEMORY_MB = "data.tx.memory.mb";
       public static final String MAX_INSTANCES = "data.tx.max.instances";
     }
+
+    public static final String SERVICE_DESCRIPTION = "Service that maintains transaction states.";
+
   }
 
   /**
@@ -178,6 +199,8 @@ public final class Constants {
 
       //max-instances of dataset executor service
       public static final String MAX_INSTANCES = "dataset.executor.max.instances";
+
+      public static final String SERVICE_DESCRIPTION = "Service to perform Dataset operations.";
     }
   }
 
@@ -231,6 +254,7 @@ public final class Constants {
     //max instances of stream handler service
     public static final String MAX_INSTANCES = "stream.container.instances";
 
+    public static final String SERVICE_DESCRIPTION = "Service that handles stream data ingestion.";
     /* End constants used by stream */
   }
 
@@ -327,6 +351,7 @@ public final class Constants {
     public static final String NUM_CORES = "metrics.num.cores";
     public static final String MEMORY_MB = "metrics.memory.mb";
     public static final String MAX_INSTANCES = "metrics.max.instances";
+    public static final String SERVICE_DESCRIPTION = "Service to handle metrics requests.";
   }
 
   /**
@@ -340,6 +365,8 @@ public final class Constants {
 
     public static final String METRICS_PROCESSOR_STATUS_HANDLER = "metrics.processor.status.handler";
     public static final String ADDRESS = "metrics.processor.status.bind.address";
+
+    public static final String SERVICE_DESCRIPTION = "Service to process application and system metrics.";
   }
 
   /**
@@ -352,6 +379,8 @@ public final class Constants {
 
     public static final String LOG_SAVER_STATUS_HANDLER = "log.saver.status.handler";
     public static final String ADDRESS = "log.saver.status.bind.address";
+
+    public static final String SERVICE_DESCRIPTION = "Service to collect and store logs.";
   }
 
   /**
@@ -426,8 +455,8 @@ public final class Constants {
 
     public static final String DATASET_NAME = "reactor.dataset.name";
     public static final String DATASET_STORAGE_HANDLER_CLASS = "com.continuuity.hive.datasets.DatasetStorageHandler";
-    public static final String HIVE_CLASSPATH = "hive.classpath";
-    public static final String HIVE_CONF_FILES = "hive.conf.files";
+    public static final String EXPLORE_CLASSPATH = "explore.classpath";
+    public static final String EXPLORE_CONF_FILES = "explore.conf.files";
 
     public static final String SERVER_ADDRESS = "explore.service.bind.address";
 
@@ -449,6 +478,8 @@ public final class Constants {
     public static final String ACTIVE_OPERATION_TIMEOUT_SECS = "explore.active.operation.timeout.secs";
     public static final String INACTIVE_OPERATION_TIMEOUT_SECS = "explore.inactive.operation.timeout.secs";
     public static final String CLEANUP_JOB_SCHEDULE_SECS = "explore.cleanup.job.schedule.secs";
+
+    public static final String SERVICE_DESCRIPTION = "Service to run Ad-hoc queries.";
 
     /**
      * Explore JDBC constants.

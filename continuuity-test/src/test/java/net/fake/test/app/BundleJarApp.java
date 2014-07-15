@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package net.fake.test.app;
 
 import com.continuuity.api.Application;
@@ -23,7 +39,6 @@ import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -64,7 +79,8 @@ public class BundleJarApp implements Application {
 
   public static String loadTestClasses() {
     try {
-      ClassLoader classLoader = BundleJarApp.class.getClassLoader();
+      // Use context classloader instead of BundleJarApp.class.getClassLoader() b/c this is used only in unit test
+      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       String result = classLoader.loadClass("hello.HelloWorld").getName() + "__" + Schedule.class.getName();
       return result.replaceAll("\\.", "_");
     } catch (ClassNotFoundException e) {
@@ -93,10 +109,12 @@ public class BundleJarApp implements Application {
 
     private String loadClassForName(String className) {
       try {
-        return Class.forName(className).getName();
+        // Use context classloader instead of BundleJarApp.class.getClassLoader() b/c this is used only in unit test
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        return classLoader.loadClass(className).getName();
       } catch (Exception e) {
         LOG.error("Error", e);
-        return e.getMessage();
+        return "null";
       }
     }
   }
@@ -117,7 +135,10 @@ public class BundleJarApp implements Application {
       LOG.info("Hello " + loadTestClasses());
 
       String key = request.getArgument("key");
-      String value = StringUtils.defaultString(Bytes.toString(output.read(Bytes.toBytes(key))), "null");
+      String value = Bytes.toString(output.read(Bytes.toBytes(key)));
+      if (value == null) {
+        value = "null";
+      }
 
       responder.sendJson(ImmutableMap.of(key, value));
     }
@@ -139,7 +160,10 @@ public class BundleJarApp implements Application {
       LOG.info("Hello " + loadTestClasses());
 
       String key = request.getArgument("key");
-      String value = StringUtils.defaultString(Bytes.toString(input.read(Bytes.toBytes(key))), "null");
+      String value = Bytes.toString(input.read(Bytes.toBytes(key)));
+      if (value == null) {
+        value = "null";
+      }
 
       responder.sendJson(ImmutableMap.of(key, value));
     }

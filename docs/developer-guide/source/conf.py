@@ -30,12 +30,14 @@ import os
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.pngmath',
     'sphinx.ext.ifconfig',
     'rst2pdf.pdfbuilder',
 ]
+
+# Remove intersphinx as we are not linking to other peoples's docs with Sphinx
+#    'sphinx.ext.intersphinx',
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -132,7 +134,7 @@ html_theme_path = ['_themes']
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-#html_favicon = None
+html_favicon = '_static/favicon.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -169,7 +171,8 @@ html_sidebars = {'**': ['globaltoc.html', 'relations.html', 'searchbox.html'],}
 #html_split_index = False
 
 # If true, links to the reST sources are added to the pages.
-#html_show_sourcelink = True
+html_show_sourcelink = False
+html_copy_source = False
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 #html_show_sphinx = True
@@ -269,7 +272,7 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'http://docs.python.org/': None}
+#intersphinx_mapping = {'http://docs.python.org/': None}
 
 # -- Options for PDF output --------------------------------------------------
 

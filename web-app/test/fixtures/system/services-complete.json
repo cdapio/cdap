@@ -1,0 +1,47 @@
+[
+  {
+    "min": "1",
+    "max": "1",
+    "status": "OK",
+    "logs": "OK",
+    "name": "saver",
+    "requested": "2",
+    "provisioned": "1"
+  },
+  {
+    "min": "1",
+    "max": "1",
+    "status": "OK",
+    "logs": "OK",
+    "name": "transaction",
+    "requested": "2",
+    "provisioned": "1"
+  },
+  {
+    "min": "1",
+    "max": "1",
+    "status": "OK",
+    "logs": "OK",
+    "name": "metrics.processor",
+    "requested": "2",
+    "provisioned": "1"
+  },
+  {
+    "min": "1",
+    "max": "1",
+    "status": "OK",
+    "logs": "OK",
+    "name": "metrics",
+    "requested": "2",
+    "provisioned": "1"
+  },
+  {
+    "min": "1",
+    "max": "1",
+    "status": "OK",
+    "logs": "OK",
+    "name": "appfabric",
+    "requested": "2",
+    "provisioned": "1"
+  }
+]

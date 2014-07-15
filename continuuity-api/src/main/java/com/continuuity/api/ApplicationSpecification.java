@@ -1,5 +1,17 @@
 /*
- * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package com.continuuity.api;
@@ -86,6 +98,8 @@ public interface ApplicationSpecification {
    * Builder for creating instance of {@link ApplicationSpecification}. 
    * The builder instance is not reusable; each instance of this class can only 
    * be used once to create an instance of an {@link ApplicationSpecification}.
+   *
+   * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
    */
   public static final class Builder {
 
@@ -144,6 +158,8 @@ public interface ApplicationSpecification {
 
     /**
      * Class for setting the Application's name.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public final class NameSetter {
 
@@ -162,6 +178,8 @@ public interface ApplicationSpecification {
 
     /**
      * Class for setting the Application's description.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public final class DescriptionSetter {
 
@@ -180,6 +198,8 @@ public interface ApplicationSpecification {
 
     /**
      * Class for defining Streams.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public final class AfterDescription {
 
@@ -204,6 +224,8 @@ public interface ApplicationSpecification {
 
     /**
      * Class for adding a {@link Stream}.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public interface StreamAdder {
 
@@ -218,6 +240,8 @@ public interface ApplicationSpecification {
 
     /**
      * Class for proceeding to the next configuration step after {@link Stream} configuration is completed.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public interface AfterStream {
 
@@ -238,6 +262,8 @@ public interface ApplicationSpecification {
 
     /**
      * Class for adding more {@link Stream}s to the Application and for proceeding to the next configuration step.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public final class MoreStream implements StreamAdder, AfterStream {
 
@@ -275,6 +301,8 @@ public interface ApplicationSpecification {
 
     /**
      * Adds a {@link DataSet} to the Application.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public interface DataSetAdder {
       /**
@@ -287,6 +315,8 @@ public interface ApplicationSpecification {
 
     /**
      * Class for proceeding to the next configuration step after {@link DataSet} configuration is completed.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public interface AfterDataSet {
 
@@ -307,6 +337,8 @@ public interface ApplicationSpecification {
 
     /**
      * Class for adding more {@link DataSet}s and for proceeding to next configuration step.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public final class MoreDataSet implements DataSetAdder, AfterDataSet {
 
@@ -344,6 +376,8 @@ public interface ApplicationSpecification {
 
     /**
      * Class for adding {@link Flow}.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public interface FlowAdder {
 
@@ -357,6 +391,8 @@ public interface ApplicationSpecification {
 
     /**
      * Class for proceeding to the next configuration step after {@link Flow} configuration is completed.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public interface AfterFlow {
 
@@ -377,6 +413,8 @@ public interface ApplicationSpecification {
 
     /**
      * Class for adding more {@link Flow}s and for proceeding to the next configuration step.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public final class MoreFlow implements FlowAdder, AfterFlow {
 
@@ -414,6 +452,8 @@ public interface ApplicationSpecification {
 
     /**
      * Class for adding a {@link Procedure}.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public interface ProcedureAdder {
 
@@ -437,6 +477,8 @@ public interface ApplicationSpecification {
 
     /**
      * Class for proceeding to next configuration step after {@link Procedure} configuration is completed.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public interface AfterProcedure {
       /**
@@ -454,6 +496,8 @@ public interface ApplicationSpecification {
 
     /**
      * Class for adding more {@link Procedure}s and for proceeding to next configuration step.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public final class MoreProcedure implements ProcedureAdder, AfterProcedure {
 
@@ -495,6 +539,8 @@ public interface ApplicationSpecification {
 
     /**
      * Defines interface for adding mapreduce jobs to the application.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public interface MapReduceAdder {
       /**
@@ -508,6 +554,8 @@ public interface ApplicationSpecification {
 
     /**
      * Defines interface for proceeding to the next step after adding mapreduce jobs to the application.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public interface AfterMapReduce {
 
@@ -528,6 +576,8 @@ public interface ApplicationSpecification {
 
     /**
      * Class for adding more mapreduce jobs to the application.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public final class MoreMapReduce implements MapReduceAdder, AfterMapReduce {
 
@@ -558,6 +608,8 @@ public interface ApplicationSpecification {
 
     /**
      * Define interface for adding workflow to the application.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public interface WorkflowAdder {
       MoreWorkflow add(Workflow workflow);
@@ -565,6 +617,8 @@ public interface ApplicationSpecification {
 
     /**
      * Defines interface for proceeding to the next step after adding workflows to the application.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public interface AfterWorkflow {
       /**
@@ -577,6 +631,8 @@ public interface ApplicationSpecification {
 
     /**
      * Class for adding Workflows to the application.
+     *
+     * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
      */
     public final class MoreWorkflow implements WorkflowAdder, AfterWorkflow {
 

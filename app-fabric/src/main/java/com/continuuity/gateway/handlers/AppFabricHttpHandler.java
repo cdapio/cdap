@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.api.ProgramSpecification;
@@ -42,10 +58,10 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.DatasetMetaTableUtil;
-import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
-import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
@@ -206,7 +222,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Access Dataset Service
    */
-  private final DatasetServiceClient dsClient;
+  private final DatasetFramework dsFramework;
 
   /**
    * App fabric output directory.
@@ -239,8 +255,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final StreamConsumerFactory streamConsumerFactory;
 
-  private final ReactorDatasetNamespace namespace;
-
   /**
    * Number of seconds for timing out a service endpoint discovery.
    */
@@ -258,16 +272,28 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static final java.lang.reflect.Type LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
 
-  private enum AppFabricServiceStatus {
+  private static final class AppFabricServiceStatus {
 
-    OK(HttpResponseStatus.OK, ""),
-    PROGRAM_STILL_RUNNING(HttpResponseStatus.FORBIDDEN, "Program is still running"),
-    PROGRAM_ALREADY_RUNNING(HttpResponseStatus.CONFLICT, "Program is already running"),
-    PROGRAM_ALREADY_STOPPED(HttpResponseStatus.CONFLICT, "Program already stopped"),
-    RUNTIME_INFO_NOT_FOUND(HttpResponseStatus.CONFLICT,
-                           UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND)),
-    PROGRAM_NOT_FOUND(HttpResponseStatus.NOT_FOUND, "Program not found"),
-    INTERNAL_ERROR(HttpResponseStatus.INTERNAL_SERVER_ERROR, "");
+    private static final AppFabricServiceStatus OK = new AppFabricServiceStatus(HttpResponseStatus.OK, "");
+
+    private static final AppFabricServiceStatus PROGRAM_STILL_RUNNING =
+      new AppFabricServiceStatus(HttpResponseStatus.FORBIDDEN, "Program is still running");
+
+    private static final AppFabricServiceStatus PROGRAM_ALREADY_RUNNING =
+      new AppFabricServiceStatus(HttpResponseStatus.CONFLICT, "Program is already running");
+
+    private static final AppFabricServiceStatus PROGRAM_ALREADY_STOPPED =
+      new AppFabricServiceStatus(HttpResponseStatus.CONFLICT, "Program already stopped");
+
+    private static final AppFabricServiceStatus RUNTIME_INFO_NOT_FOUND =
+      new AppFabricServiceStatus(HttpResponseStatus.CONFLICT,
+                                 UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
+
+    private static final AppFabricServiceStatus PROGRAM_NOT_FOUND =
+      new AppFabricServiceStatus(HttpResponseStatus.NOT_FOUND, "Program not found");
+
+    private static final AppFabricServiceStatus INTERNAL_ERROR =
+      new AppFabricServiceStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal server error");
 
     private final HttpResponseStatus code;
     private final String message;
@@ -289,7 +315,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-
   /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
@@ -303,7 +328,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
                               DataSetInstantiatorFromMetaData datasetInstantiator,
-                              DatasetServiceClient dsClient) {
+                              DatasetFramework dsFramework) {
 
     super(authenticator);
     this.locationFactory = locationFactory;
@@ -321,10 +346,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
-    this.dsClient = dsClient;
+    this.dsFramework =
+      new NamespacedDatasetFramework(dsFramework,
+                                     new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER));
     this.datasetInstantiator = datasetInstantiator;
     this.dataSetAccessor = dataSetAccessor;
-    this.namespace = new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER);
   }
 
   /**
@@ -711,6 +737,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
         return;
       }
+
       responder.sendString(status.getCode(), status.getMessage());
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -770,6 +797,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
       return AppFabricServiceStatus.OK;
+    } catch (DataSetInstantiationException e) {
+      return new AppFabricServiceStatus(HttpResponseStatus.UNPROCESSABLE_ENTITY, e.getMessage());
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);
       if (throwable instanceof FileNotFoundException) {
@@ -1954,6 +1983,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private DeployStatus dstatus(String accountId) {
     if (!sessions.containsKey(accountId)) {
       SessionInfo info = retrieve(accountId);
+      if (info == null) {
+        return DeployStatus.NOT_FOUND;
+      }
       return info.getStatus();
     } else {
       SessionInfo info = sessions.get(accountId);
@@ -2902,9 +2934,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           typeName = spec.getType();
         } else {
           // trying to see if that is Dataset V2
-          DatasetInstanceMeta meta = getDatasetInstanceMeta(name);
-          if (meta != null) {
-            typeName = meta.getType().getName();
+          DatasetSpecification dsSpec = getDatasetSpec(name);
+          if (dsSpec != null) {
+            typeName = dsSpec.getType();
           }
         }
         return GSON.toJson(makeDataSetRecord(name, typeName, spec));
@@ -2928,7 +2960,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           result.add(makeDataSetRecord(spec.getName(), spec.getType(), null));
         }
         // also add datasets2 instances
-        Collection<DatasetSpecification> instances = dsClient.getAllInstances();
+        Collection<DatasetSpecification> instances = dsFramework.getInstances();
         for (DatasetSpecification instance : instances) {
           result.add(makeDataSetRecord(instance.getName(), instance.getType(), null));
         }
@@ -2968,12 +3000,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             typeName = spec.getType();
           } else {
             // trying to see if that is Dataset V2
-            // TODO: fix namespacing - see REACTOR-217
-            String namespacedDsName = namespace.namespace(dsName);
-            DatasetInstanceMeta meta = getDatasetInstanceMeta(namespacedDsName);
-            if (meta != null) {
-              typeName = meta.getType().getName();
-              dsName = namespacedDsName;
+            DatasetSpecification dsSpec = getDatasetSpec(dsName);
+            if (dsSpec != null) {
+              typeName = dsSpec.getType();
             }
           }
           result.add(makeDataSetRecord(dsName, typeName, null));
@@ -2995,14 +3024,14 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private DatasetInstanceMeta getDatasetInstanceMeta(String dsName) {
-    DatasetInstanceMeta meta = null;
+  @Nullable
+  private DatasetSpecification getDatasetSpec(String dsName) {
     try {
-      meta = dsClient.getInstance(dsName);
+      return dsFramework.getDatasetSpec(dsName);
     } catch (Exception e) {
-      LOG.warn("Couldn't get info for dataset: " + dsName);
+      LOG.warn("Couldn't get spec for dataset: " + dsName);
+      return null;
     }
-    return meta;
   }
 
   private Set<String> dataSetsUsedBy(FlowSpecification flowSpec) {
@@ -3224,6 +3253,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       if (appRunning) {
         throw new Exception("App Still Running");
       }
+
+      // NOTE: deleting new datasets stuff first because old datasets system deletes all blindly by prefix
+      //       which may damage metadata
+      dsFramework.deleteAllInstances();
+      dsFramework.deleteAllModules();
+
       deleteMetrics(account, null);
       // delete all meta data
       store.removeAll(accountId);
@@ -3250,9 +3285,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       // NOTE: there could be services running at the moment that rely on the system datasets to be available.
       dataSetAccessor.truncateAllExceptBlacklist(DataSetAccessor.Namespace.SYSTEM, datasetsToKeep);
-
-      dsClient.deleteInstances();
-      dsClient.deleteModules();
 
       LOG.info("All data for account '" + account + "' deleted.");
       responder.sendStatus(HttpResponseStatus.OK);

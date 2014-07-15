@@ -1,9 +1,22 @@
 /*
- * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.data2.transaction.stream.leveldb;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.file.FileReader;
 import com.continuuity.data.file.ReadFilter;
@@ -45,12 +58,13 @@ public final class LevelDBStreamFileConsumer extends AbstractStreamFileConsumer 
    * @param consumerConfig Consumer configuration.
    * @param reader         For reading stream events. This class is responsible for closing the reader.
    */
-  public LevelDBStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig,
+  public LevelDBStreamFileConsumer(CConfiguration cConf,
+                                   StreamConfig streamConfig, ConsumerConfig consumerConfig,
                                    FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                    StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
                                    @Nullable ReadFilter extraFilter,
                                    LevelDBOcTableCore tableCore, Object dbLock) {
-    super(streamConfig, consumerConfig, reader, stateStore, beginConsumerState, extraFilter);
+    super(cConf, streamConfig, consumerConfig, reader, stateStore, beginConsumerState, extraFilter);
     this.tableCore = tableCore;
     this.dbLock = dbLock;
     this.rowMapForClaim = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
