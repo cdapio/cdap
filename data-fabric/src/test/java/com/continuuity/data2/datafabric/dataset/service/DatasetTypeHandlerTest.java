@@ -179,7 +179,8 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
   private ObjectResponse<List<DatasetTypeMeta>> getTypes() throws IOException {
     HttpRequest request = HttpRequest.get(getUrl("/data/types")).build();
-    return ObjectResponse.fromJsonBody(HttpRequests.execute(request), new TypeToken<List<DatasetTypeMeta>>() { }.getType());
+    return ObjectResponse.fromJsonBody(HttpRequests.execute(request),
+                                       new TypeToken<List<DatasetTypeMeta>>() { }.getType());
   }
 
   private ObjectResponse<DatasetModuleMeta> getModule(String moduleName) throws IOException {
