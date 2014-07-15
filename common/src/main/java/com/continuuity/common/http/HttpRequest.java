@@ -15,6 +15,7 @@
  */
 package com.continuuity.common.http;
 
+import com.continuuity.internal.io.ByteBufferInputStream;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
@@ -22,8 +23,10 @@ import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -116,6 +119,16 @@ public class HttpRequest {
 
     public Builder withBody(String body) {
       this.body = ByteStreams.newInputStreamSupplier(body.getBytes(Charsets.UTF_8));
+      return this;
+    }
+
+    public Builder withBody(final ByteBuffer body) {
+      this.body = new InputSupplier<InputStream>() {
+        @Override
+        public InputStream getInput() throws IOException {
+          return new ByteBufferInputStream(body);
+        }
+      };
       return this;
     }
 
