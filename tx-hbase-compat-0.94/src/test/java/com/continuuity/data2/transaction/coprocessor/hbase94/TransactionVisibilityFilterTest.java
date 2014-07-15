@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 public class TransactionVisibilityFilterTest extends AbstractTransactionVisibilityFilterTest {
   @Override
   protected Filter createFilter(Transaction tx, Map<byte[], Long> familyTTLs) {
-    return new TransactionVisibilityFilter(tx, familyTTLs);
+    return new TransactionVisibilityFilter(tx, familyTTLs, false);
   }
 
   /**

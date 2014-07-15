@@ -7,7 +7,9 @@ import com.continuuity.data2.transaction.snapshot.DefaultSnapshotCodec;
  */
 public class TxConstants {
   /**
-   * property set for {@link org.apache.hadoop.hbase.HColumnDescriptor}
+   * property set for {@link org.apache.hadoop.hbase.HColumnDescriptor} to configure time-to-live on data within
+   * the column family.  The value given is in milliseconds.  Once a cell's data has surpassed the given value in age,
+   * the cell's data will no longer be visible and may be garbage collected.
    */
   public static final String PROPERTY_TTL = "dataset.table.ttl";
 
@@ -28,6 +30,15 @@ public class TxConstants {
    * </ul>
    */
   public static final long MAX_TX_PER_MS = 1000000;
+
+  /**
+   * Since HBase {@code Delete} operations cannot be undone at the same timestamp, "deleted" data is instead
+   * overwritten with an empty {@code byte[]} to flag it as removed.  Cells with empty values will be filtered out
+   * of the results for read operations.  If cells with empty values should be included in results (meaning data
+   * cannot be transactionally deleted), then set this configuration property to true.
+   */
+  public static final String ALLOW_EMPTY_VALUES_KEY = "data.tx.allow.empty.values";
+  public static final boolean ALLOW_EMPTY_VALUES_DEFAULT = false;
 
   /**
    * TransactionManager configuration.
