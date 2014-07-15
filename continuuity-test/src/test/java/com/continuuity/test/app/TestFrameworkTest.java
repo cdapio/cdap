@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.test.app;
 
 import com.continuuity.api.app.Application;
@@ -470,7 +486,7 @@ public class TestFrameworkTest extends ReactorTestBase {
       // list the tables and make sure the table is there
       ResultSet results = connection.prepareStatement("show tables").executeQuery();
       Assert.assertTrue(results.next());
-      Assert.assertTrue("continuuity_user_myTable".equalsIgnoreCase(results.getString(1)));
+      Assert.assertTrue("continuuity_user_mytable".equalsIgnoreCase(results.getString(1)));
 
       // run a query over the dataset
       results = connection.prepareStatement("select first from continuuity_user_mytable where second = '1'")

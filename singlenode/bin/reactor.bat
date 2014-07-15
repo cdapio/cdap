@@ -1,11 +1,22 @@
 @echo OFF
 
-REM ##############################################################################
+REM #################################################################################
 REM ##
-REM ##  Continuuity Reactor start up script for WINDOWS
-REM ##  Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+REM ## Copyright 2012-2014 Continuuity, Inc.
 REM ##
-REM ##############################################################################
+REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
+REM ## use this file except in compliance with the License. You may obtain a copy of
+REM ## the License at
+REM ##
+REM ## http://www.apache.org/licenses/LICENSE-2.0
+REM ##
+REM ## Unless required by applicable law or agreed to in writing, software
+REM ## distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+REM ## WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+REM ## License for the specific language governing permissions and limitations under
+REM ## the License.
+REM ##
+REM #################################################################################
 
 SET ORIGPATH=%cd%
 SET CONTINUUITY_HOME=%~dp0
@@ -20,6 +31,15 @@ SET CLASSPATH=%CONTINUUITY_HOME%\lib\*;%CONTINUUITY_HOME%\conf\
 SET PATH=%PATH%;%CONTINUUITY_HOME%\libexec\bin
 
 cd %CONTINUUITY_HOME%
+
+
+
+REM Get app jar with latest version
+SET APP_JAR_PREFIX=ResponseCodeAnalytics
+for /r %CONTINUUITY_HOME%\examples\%APP_JAR_PREFIX%\target %%a in (%APP_JAR_PREFIX%*) do SET JAR_PATH=%%~dpnxa
+
+if %JAR_PATH% == "" echo "Could not find example application jar with name %APP_JAR_PREFIX%"
+
 
 REM Process command line
 IF "%1" == "start" GOTO START
@@ -242,8 +262,9 @@ GOTO :FINALLY
 :NUX
 REM New user experience, enable if it is not enabled already
 if not exist %CONTINUUITY_HOME%\.nux_dashboard (
+
   REM Deploy app
-  FOR /F %%i IN ('curl -X POST -sL -w %%{http_code} -H "X-Archive-Name: LogAnalytics.jar" --data-binary @"%CONTINUUITY_HOME%\examples\ResponseCodeAnalytics\target\ResponseCodeAnalytics-1.0.jar" http://127.0.0.1:10000/v2/apps') DO SET RESPONSE=%%i
+  FOR /F %%i IN ('curl -X POST -sL -w %%{http_code} -H "X-Archive-Name: LogAnalytics.jar" --data-binary @"%JAR_PATH%" http://127.0.0.1:10000/v2/apps') DO SET RESPONSE=%%i
   REM IF  NOT %RESPONSE% == 200  (GOTO :EOF)
   REM Start flow
   curl -sL -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/flows/LogAnalyticsFlow/start

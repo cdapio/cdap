@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.explore.service.hive;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -9,6 +25,7 @@ import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -17,6 +34,7 @@ import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationState;
+import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.thrift.TColumnValue;
 import org.apache.hive.service.cli.thrift.TRow;
 import org.apache.hive.service.cli.thrift.TRowSet;
@@ -66,59 +84,8 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  protected List<Result> fetchNextResults(OperationHandle operationHandle, int size)
-    throws ExploreException, HandleNotFoundException, HiveSQLException {
-    try {
-      if (operationHandle.hasResultSet()) {
-        // Rowset is an interface in Hive 13, but a class in Hive 12, so we use reflection
-        // so that the compiler does not make assumption on the return type of fetchResults
-        Object rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
-        Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
-        Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
-        TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
-
-        ImmutableList.Builder<Result> rowsBuilder = ImmutableList.builder();
-        for (TRow tRow : tRowSet.getRows()) {
-          ImmutableList.Builder<Object> colsBuilder = ImmutableList.builder();
-          for (TColumnValue tColumnValue : tRow.getColVals()) {
-            colsBuilder.add(columnToObject(tColumnValue));
-          }
-          rowsBuilder.add(new Result(colsBuilder.build()));
-        }
-        return rowsBuilder.build();
-      } else {
-        return Collections.emptyList();
-      }
-    } catch (ClassNotFoundException e) {
-      throw Throwables.propagate(e);
-    } catch (NoSuchMethodException e) {
-      throw Throwables.propagate(e);
-    } catch (InvocationTargetException e) {
-      throw Throwables.propagate(e);
-    } catch (IllegalAccessException e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  private Object columnToObject(TColumnValue tColumnValue) throws ExploreException {
-    Object obj;
-    if (tColumnValue.isSetBoolVal()) {
-      obj = tColumnValue.getBoolVal().isValue();
-    } else if (tColumnValue.isSetByteVal()) {
-      obj = tColumnValue.getByteVal().getValue();
-    } else if (tColumnValue.isSetDoubleVal()) {
-      obj = tColumnValue.getDoubleVal().getValue();
-    } else if (tColumnValue.isSetI16Val()) {
-      obj = tColumnValue.getI16Val().getValue();
-    } else if (tColumnValue.isSetI32Val()) {
-      obj = tColumnValue.getI32Val().getValue();
-    } else if (tColumnValue.isSetI64Val()) {
-      obj = tColumnValue.getI64Val().getValue();
-    } else if (tColumnValue.isSetStringVal()) {
-      obj = tColumnValue.getStringVal().getValue();
-    } else {
-      throw new ExploreException("Unknown column value encountered: " + tColumnValue);
-    }
-    return obj;
+  protected OperationHandle doExecute(SessionHandle sessionHandle, String statement)
+    throws HiveSQLException, ExploreException {
+    return getCliService().executeStatementAsync(sessionHandle, statement, ImmutableMap.<String, String>of());
   }
 }

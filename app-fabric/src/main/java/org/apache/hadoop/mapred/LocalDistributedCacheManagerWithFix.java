@@ -18,10 +18,12 @@
 
 package org.apache.hadoop.mapred;
 
+
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.lang.ApiResourceListHolder;
+import com.continuuity.common.lang.ClassLoaders;
 import com.continuuity.common.lang.CombineClassLoader;
 import com.continuuity.common.lang.jar.BundleJarUtil;
-import com.continuuity.common.lang.jar.ProgramClassLoader;
 import com.continuuity.common.utils.DirUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -200,13 +202,11 @@ class LocalDistributedCacheManagerWithFix {
     // Update the configuration object with localized data.
     if (!localArchives.isEmpty()) {
       conf.set(MRJobConfig.CACHE_LOCALARCHIVES, StringUtils
-        .arrayToString(localArchives.toArray(new String[localArchives
-          .size()])));
+        .arrayToString(localArchives.toArray(new String[localArchives.size()])));
     }
     if (!localFiles.isEmpty()) {
       conf.set(MRJobConfig.CACHE_LOCALFILES, StringUtils
-        .arrayToString(localFiles.toArray(new String[localArchives
-          .size()])));
+        .arrayToString(localFiles.toArray(new String[localArchives.size()])));
     }
     setupCalled = true;
   }
@@ -235,7 +235,7 @@ class LocalDistributedCacheManagerWithFix {
 
   /**
    * Are the resources that should be added to the classpath? 
-   * Should be called after setup().
+   * Should be calle after setup().
    *
    */
   public boolean hasLocalClasspaths() {
@@ -270,7 +270,9 @@ class LocalDistributedCacheManagerWithFix {
             try {
               File expandDir = Files.createTempDir();
               jarExpandDirs.add(expandDir);
-              return new ProgramClassLoader(BundleJarUtil.unpackProgramJar(lf.create(uri), expandDir), parent);
+              return ClassLoaders.newProgramClassLoader(
+                BundleJarUtil.unpackProgramJar(lf.create(uri), expandDir),
+                ApiResourceListHolder.getResourceList(), parent);
             } catch (IOException e) {
               throw Throwables.propagate(e);
             }

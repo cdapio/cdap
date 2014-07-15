@@ -1,8 +1,21 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.metrics.collect;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
@@ -45,9 +58,9 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
       // Context is expected to look like appId.b.programId.[m|r].[taskId]
       String counterGroup;
       String contextParts[] = splitPattern.split(context);
-      if (contextParts.length < 4) {
-        // using context name as counter group for "unknown"
-        counterGroup = "continuuity." + context;
+      //TODO: Refactor to support any context
+      if (context.equals(Constants.Metrics.DATASET_CONTEXT)) {
+        counterGroup = "continuuity.dataset";
       } else if ("m".equals(contextParts[3])) {
         counterGroup = "continuuity.mapper";
       } else if ("r".equals(contextParts[3])) {

@@ -84,7 +84,13 @@
             </div>
           {{/if}}
       {{/if}}
-      <a href="#/services" class="general-link services-link topmenu-top-padding">Services</a>
+
+      <a href="#/services" class="general-link services-link topmenu-top-padding">Services
+        <span id="failed-services-container">
+          <span id="failed-services"></span>
+        </span>
+      </a>
+
       <a href="#/analyze" class="metrics-link" id="header-metrics">Metrics</a>
       </div>
     </div>
@@ -184,40 +190,33 @@
           <tbody>
           {{#each services}}
             <tr>
-              <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">{{this.name}}</a>
+              <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
+                {{this.name}}
+              </a>
+                <br />
+                <span class="app-list-status">{{this.description}}</span>
               </td>
               <td style="max-width: 100px;" class="status-col center-align">
-                {{#if this.statusOk}}
-                  <img src="assets/img/running-icon.png" />
-                {{ else }}
-                  {{#if this.statusNotOk}}
-                    <img src="assets/img/services-loading-blue.gif" />
-                  {{ else }}
-                    {{this.status}}
-                  {{/if}}
-                {{/if}}
+                <span {{ bindAttr class=":service-icon this.imgClass" }} ></span>
               </td>
               <td style="max-width: 100px;" class="status-col center-align">
+
                 {{#if this.logsStatusOk}}
-                {{#linkTo 'Service.Log' this}}<img src="assets/img/log-icon.png" />{{/linkTo}}
+                {{#linkTo 'Service.Log' this}}<span {{ bindAttr class=":log-icon this.logClass" }} ></span>{{/linkTo}}
                 {{ else }}
-                  NA
+                  <span data-toggle="tooltip" data-placement="right" title="Please contact your system admistrator for logs.">NA</span>
                 {{/if}}
               </td>
               <td style="max-width: 200px;" class="instance-col">
                 <div class="instance-wrapper">
                   <div class="instance-num"><span>{{this.requested}}</span></div>
                   <div>
-                    {{#if this.isDecreaseEnabled}}
                     <a class="cursor-pointer" {{action decreaseInstance this.name this.requested }}>
-                      <img src="assets/img/minus.png" />
+                      <span class="minus-icon"></span>
                     </a>
-                    {{/if}}
-                    {{#if this.isIncreaseEnabled}}
                     <a class="cursor-pointer" {{action increaseInstance this.name this.requested }}>
-                      <img src="assets/img/plus.png" />
+                      <span class="plus-icon"></span>
                     </a>
-                    {{/if}}
                   </div>
                 </div>
               <td style="max-width: 350px;" class="instance-provisioned service-col">
@@ -320,7 +319,7 @@
             <div class="alert alert-info">
               This is a long lasting Access Token that you can use to authenticate against Reactor. Access Tokens are used to identify and authenticate users.
             </div>
-            <br />           
+            <br />
             <table class="table" role="table">
               <tr>
                 <td class="bolder-font">Step 1</td>
@@ -1162,9 +1161,9 @@
             <button class="btn btn-blank" {{action "removeOneInstance" on="click"}}>-</button>
 
             {{#if C.isLocal}}
-              <button disabled="disabled" class="btn btn-blank" style="width: 200px;text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
+              <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
             {{else}}
-              <button disabled="disabled" class="btn btn-blank" style="width: 200px;text-align:left;">{{actualInstances}} ({{model.instances}} Requested)</button>
+              <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{actualInstances}} ({{model.instances}} Requested)</button>
             {{/if}}
 
           </div>
@@ -1731,7 +1730,7 @@
         </div>
       </div>
     </div>
-  </script>  
+  </script>
 
 </body>
 </html>

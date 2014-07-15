@@ -1,12 +1,34 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.internal.app.runtime.distributed;
 
+import com.continuuity.app.Id;
+import com.continuuity.app.program.Type;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.discovery.ZKDiscoveryService;
-import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClients;
 
 /**
@@ -14,20 +36,27 @@ import org.apache.twill.zookeeper.ZKClients;
  */
 public class DistributedProgramServiceDiscovery implements ProgramServiceDiscovery {
 
-  private CConfiguration cConf;
-  private ZKClientService zkClientService;
+  // A loading cache so that only one instance of DiscoveryServiceClient is created per service.
+  // This is needed to minimize number of ZK watches.
+  private final LoadingCache<Id.Program, DiscoveryServiceClient> discoveredCache;
 
   @Inject
-  public DistributedProgramServiceDiscovery(CConfiguration cConf, ZKClientService zkClientService) {
-    this.cConf = cConf;
-    this.zkClientService = zkClientService;
+  public DistributedProgramServiceDiscovery(CConfiguration cConf, ZKClient zkClient) {
+    final ZKClient twillZKClient = ZKClients.namespace(zkClient, cConf.get(Constants.CFG_TWILL_ZK_NAMESPACE));
+    this.discoveredCache = CacheBuilder.newBuilder().build(new CacheLoader<Id.Program, DiscoveryServiceClient>() {
+      @Override
+      public DiscoveryServiceClient load(Id.Program programId) throws Exception {
+        // A twill service started by Reactor would have Twill applicationId = [type].[accountId].[appId].[programId]
+        String namespace = String.format("/%s.%s.%s.%s",
+                                         Type.SERVICE.name().toLowerCase(),
+                                         programId.getAccountId(), programId.getApplicationId(), programId.getId());
+        return new ZKDiscoveryService(ZKClients.namespace(twillZKClient, namespace));
+      }
+    });
   }
 
   @Override
   public ServiceDiscovered discover(String accountId, String appId, String serviceId, String serviceName) {
-    String twillNamespace = cConf.get(Constants.CFG_TWILL_ZK_NAMESPACE);
-    String zkNamespace = String.format("%s/service.%s.%s.%s", twillNamespace, accountId, appId, serviceId);
-    ZKDiscoveryService zkDiscoveryService = new ZKDiscoveryService(ZKClients.namespace(zkClientService, zkNamespace));
-    return zkDiscoveryService.discover(serviceName);
+    return discoveredCache.getUnchecked(Id.Program.from(accountId, appId, serviceId)).discover(serviceName);
   }
 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.data.batch.BatchReadable;
@@ -27,6 +43,7 @@ import java.io.Closeable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Mapreduce job runtime context
@@ -46,9 +63,20 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final MetricsCollectionService metricsCollectionService;
   private final ProgramServiceDiscovery serviceDiscovery;
 
+  /**
+   * Input dataset for the MapReduce job. Either inputDataset or inputDatasetName is set.
+   */
+  @Deprecated
   private BatchReadable inputDataset;
+  private String inputDatasetName;
   private List<Split> inputDataSelection;
+
+  /**
+   * Output dataset for the MapReduce job. Either outputDataset or outputDatasetName is set.
+   */
+  @Deprecated
   private BatchWritable outputDataset;
+  private String outputDatasetName;
   private Job job;
 
   // todo: having it here seems like a hack will be fixed with further post-integration refactoring
@@ -148,15 +176,32 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     return (T) job;
   }
 
+  @Deprecated
   @Override
   public void setInput(BatchReadable dataset, List<Split> splits) {
     this.inputDataset = dataset;
+    this.inputDatasetName = null;
     this.inputDataSelection = splits;
   }
 
   @Override
+  public void setInput(String datasetName, List<Split> splits) {
+    this.inputDataset = null;
+    this.inputDatasetName = datasetName;
+    this.inputDataSelection = splits;
+  }
+
+  @Deprecated
+  @Override
   public void setOutput(BatchWritable dataset) {
     this.outputDataset = dataset;
+    this.outputDatasetName = null;
+  }
+
+  @Override
+  public void setOutput(String datasetName) {
+    this.outputDataset = null;
+    this.outputDatasetName = datasetName;
   }
 
   public int getInstanceId() {
@@ -211,16 +256,28 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     return loggingContext;
   }
 
+  @Nullable
   public BatchReadable getInputDataset() {
     return inputDataset;
+  }
+
+  @Nullable
+  public String getInputDatasetName() {
+    return inputDatasetName;
   }
 
   public List<Split> getInputDataSelection() {
     return inputDataSelection;
   }
 
+  @Nullable
   public BatchWritable getOutputDataset() {
     return outputDataset;
+  }
+
+  @Nullable
+  public String getOutputDatasetName() {
+    return outputDatasetName;
   }
 
   Arguments getRuntimeArgs() {

@@ -1,5 +1,17 @@
 /*
- * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package com.continuuity.data.dataset;
@@ -17,21 +29,19 @@ import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.metrics.MeteredDataset;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.lang.Fields;
+import com.continuuity.common.lang.ClassLoaders;
 import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataFabric;
-import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.table.RuntimeMemoryTable;
 import com.continuuity.data.table.RuntimeTable;
-import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.internal.lang.ClassLoaders;
+import com.continuuity.internal.lang.Fields;
 import com.continuuity.internal.lang.Reflections;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
@@ -48,6 +58,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Implements the core logic of instantiating a dataset, including injection of the data fabric runtime and
@@ -69,7 +80,6 @@ public class DataSetInstantiationBase {
   private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
 
   private final InstantiatorFactory instantiatorFactory = new InstantiatorFactory(false);
-  private final ReactorDatasetNamespace namespace;
 
   public DataSetInstantiationBase(CConfiguration configuration) {
     this(configuration, null);
@@ -78,7 +88,6 @@ public class DataSetInstantiationBase {
   public DataSetInstantiationBase(CConfiguration configuration, ClassLoader classLoader) {
     this.configuration = configuration;
     this.classLoader = classLoader;
-    this.namespace = new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER);
   }
 
   /**
@@ -125,7 +134,8 @@ public class DataSetInstantiationBase {
    *  @throws DataSetInstantiationException If failed to create the DataSet.
    */
   @SuppressWarnings("unchecked")
-  public <T extends Closeable> T getDataSet(String dataSetName, DataFabric fabric, DatasetFramework datasetFramework)
+  public <T extends Closeable> T getDataSet(String dataSetName, DataFabric fabric,
+                                            @Nullable DatasetFramework datasetFramework)
     throws DataSetInstantiationException {
 
     // find the data set specification
@@ -134,9 +144,11 @@ public class DataSetInstantiationBase {
       return (T) getDataSet(spec, fabric, dataSetName);
     }
 
-    T dataSet = (T) getDataset(dataSetName, datasetFramework);
-    if (dataSet != null) {
-      return dataSet;
+    if (datasetFramework != null) {
+      T dataSet = (T) getDataset(dataSetName, datasetFramework);
+      if (dataSet != null) {
+        return dataSet;
+      }
     }
 
     throw logAndException(null, "No data set named %s can be instantiated.", dataSetName);
@@ -416,7 +428,7 @@ public class DataSetInstantiationBase {
     String msg;
     DataSetInstantiationException exn;
     if (e == null) {
-      msg = String.format("Error instantiating data set: %s.", String.format(message, params));
+      msg = String.format("Error instantiating data set: %s", String.format(message, params));
       exn = new DataSetInstantiationException(msg);
       LOG.error(msg);
     } else {
@@ -482,14 +494,14 @@ public class DataSetInstantiationBase {
 
       // datasets API V2
       if (txAware.getKey() instanceof MeteredDataset) {
-        // TODO: fix namespacing - see REACTOR-217
-        final String dataSetName = namespace.namespace(txAware.getValue());
+        // TODO: fix namespacing: we want to capture metrics of namespaced dataset name - see REACTOR-217
+        final String dataSetName = txAware.getValue();
         MeteredDataset.MetricsCollector metricsCollector = new MeteredDataset.MetricsCollector() {
           @Override
           public void recordRead(int opsCount, int dataSize) {
             if (programContextMetrics != null) {
               programContextMetrics.gauge("store.reads", 1, dataSetName);
-              programContextMetrics.gauge("store.ops", 1);
+              programContextMetrics.gauge("store.ops", 1, dataSetName);
             }
             // these metrics are outside the context of any application and will stay unless explicitly
             // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.
@@ -504,7 +516,7 @@ public class DataSetInstantiationBase {
             if (programContextMetrics != null) {
               programContextMetrics.gauge("store.writes", 1, dataSetName);
               programContextMetrics.gauge("store.bytes", dataSize, dataSetName);
-              programContextMetrics.gauge("store.ops", 1);
+              programContextMetrics.gauge("store.ops", 1, dataSetName);
             }
             // these metrics are outside the context of any application and will stay unless explicitly
             // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.

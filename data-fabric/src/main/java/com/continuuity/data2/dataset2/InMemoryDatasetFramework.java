@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data2.dataset2;
 
 import com.continuuity.api.dataset.Dataset;
@@ -17,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * A simple implementation of {@link com.continuuity.data2.dataset2.DatasetFramework} that keeps its state in
@@ -24,20 +41,15 @@ import java.util.Set;
  */
 public class InMemoryDatasetFramework implements DatasetFramework {
   private final Set<String> modules = Sets.newHashSet();
-  private final DatasetDefinitionRegistry registry;
+  private final DatasetDefinitionRegistryFactory registryFactory;
   private final Map<String, DatasetSpecification> instances = Maps.newHashMap();
 
-  public InMemoryDatasetFramework() {
-    this(new InMemoryDatasetDefinitionRegistry());
-  }
+  private DatasetDefinitionRegistry registry;
 
   @Inject
   public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory) {
+    this.registryFactory = registryFactory;
     this.registry = registryFactory.create();
-  }
-
-  public InMemoryDatasetFramework(DatasetDefinitionRegistry registry) {
-    this.registry = registry;
   }
 
   @Override
@@ -57,6 +69,17 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public void deleteAllModules() throws DatasetManagementException {
+    if (!instances.isEmpty()) {
+      // todo: quick check - not enough though
+      throw new ModuleConflictException("Cannot delete all modules, some datasets use them");
+    }
+    modules.clear();
+    registry = registryFactory.create();
+    // todo: remove from registry & check for conflicts. It is fine for now, as we don't use delete with in-mem version
+  }
+
+  @Override
   public synchronized void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
     throws InstanceConflictException, IOException {
     if (instances.get(datasetInstanceName) != null) {
@@ -72,8 +95,14 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public Collection<String> getInstances() {
-    return Collections.unmodifiableSet(instances.keySet());
+  public Collection<DatasetSpecification> getInstances() {
+    return Collections.unmodifiableCollection(instances.values());
+  }
+
+  @Nullable
+  @Override
+  public DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException {
+    return instances.get(name);
   }
 
   @Override
@@ -91,6 +120,11 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     DatasetSpecification spec = instances.remove(datasetInstanceName);
     DatasetDefinition def = registry.get(spec.getType());
     def.getAdmin(spec, null).create();
+  }
+
+  @Override
+  public void deleteAllInstances() throws DatasetManagementException, IOException {
+    instances.clear();
   }
 
   @Override

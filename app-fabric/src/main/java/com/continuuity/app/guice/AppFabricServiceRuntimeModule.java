@@ -1,5 +1,17 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.app.guice;
 
@@ -10,7 +22,6 @@ import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
-import com.continuuity.common.twill.InMemoryReactorServiceManager;
 import com.continuuity.common.twill.ReactorServiceManager;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.stream.StreamServiceManager;
@@ -34,7 +45,13 @@ import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
-import com.continuuity.logging.run.InMemoryLogSaverServiceMananger;
+import com.continuuity.logging.run.AppFabricServiceManager;
+import com.continuuity.logging.run.InMemoryDatasetExecutorServiceManager;
+import com.continuuity.logging.run.InMemoryExploreServiceManager;
+import com.continuuity.logging.run.InMemoryLogSaverServiceManager;
+import com.continuuity.logging.run.InMemoryMetricsProcessorServiceManager;
+import com.continuuity.logging.run.InMemoryMetricsServiceManager;
+import com.continuuity.logging.run.InMemoryStreamServiceManager;
 import com.continuuity.logging.run.LogSaverStatusServiceManager;
 import com.continuuity.metrics.runtime.MetricsProcessorStatusServiceManager;
 import com.continuuity.metrics.runtime.MetricsServiceManager;
@@ -84,22 +101,22 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
                                MapBinder<String, ReactorServiceManager> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, ReactorServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.LOGSAVER).to(
-                                 InMemoryLogSaverServiceMananger.class);
-                               mapBinder.addBinding(Constants.Service.TRANSACTION).to(
-                                 InMemoryTransactionServiceManager.class);
-                               //Using LogSaverStatusServiceManager since status check and logs are not available
-                               //for metrics.processor as well
-                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(
-                                 InMemoryLogSaverServiceMananger.class);
-                               mapBinder.addBinding(Constants.Service.METRICS).to(InMemoryReactorServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP).to(
-                                 InMemoryReactorServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.STREAMS).to(InMemoryReactorServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(
-                                 InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.LOGSAVER)
+                                        .to(InMemoryLogSaverServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.TRANSACTION)
+                                        .to(InMemoryTransactionServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR)
+                                        .to(InMemoryMetricsProcessorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.METRICS)
+                                        .to(InMemoryMetricsServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP)
+                                        .to(AppFabricServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.STREAMS)
+                                        .to(InMemoryStreamServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
+                                        .to(InMemoryDatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
-                                 .to(InMemoryReactorServiceManager.class);
+                                        .to(InMemoryExploreServiceManager.class);
                              }
                            });
   }
@@ -116,22 +133,22 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
                                MapBinder<String, ReactorServiceManager> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, ReactorServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.LOGSAVER).to(
-                                 InMemoryLogSaverServiceMananger.class);
-                               mapBinder.addBinding(Constants.Service.TRANSACTION).to(
-                                 InMemoryTransactionServiceManager.class);
-                               //Using LogSaverStatusServiceManager since status check and logs are not available
-                               //for metrics.processor as well
-                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(
-                                 InMemoryLogSaverServiceMananger.class);
-                               mapBinder.addBinding(Constants.Service.METRICS).to(InMemoryReactorServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP).to(
-                                 InMemoryReactorServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.STREAMS).to(InMemoryReactorServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(
-                                 InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.LOGSAVER)
+                                        .to(InMemoryLogSaverServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.TRANSACTION)
+                                        .to(InMemoryTransactionServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR)
+                                        .to(InMemoryMetricsProcessorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.METRICS)
+                                        .to(InMemoryMetricsServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP)
+                                        .to(AppFabricServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.STREAMS)
+                                        .to(InMemoryStreamServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
+                                        .to(InMemoryDatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
-                                 .to(InMemoryReactorServiceManager.class);
+                                        .to(InMemoryExploreServiceManager.class);
                              }
                            });
   }
@@ -149,18 +166,22 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
                                MapBinder<String, ReactorServiceManager> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, ReactorServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.LOGSAVER).to(LogSaverStatusServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.TRANSACTION).to(TransactionServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(
-                                 MetricsProcessorStatusServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.METRICS).to(MetricsServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP).to(
-                                 InMemoryReactorServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.STREAMS).to(StreamServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(
-                                 DatasetExecutorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.LOGSAVER)
+                                        .to(LogSaverStatusServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.TRANSACTION)
+                                        .to(TransactionServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR)
+                                        .to(MetricsProcessorStatusServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.METRICS)
+                                        .to(MetricsServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP)
+                                        .to(AppFabricServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.STREAMS)
+                                        .to(StreamServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
+                                        .to(DatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
-                                 .to(ExploreServiceManager.class);
+                                        .to(ExploreServiceManager.class);
                              }
                            });
   }

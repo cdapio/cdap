@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.api.dataset.lib;
 
 import com.continuuity.api.annotation.Beta;
@@ -10,16 +26,22 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This data set allows to store objects of a particular class into a table. The types that are supported are:
+ * A dataset that stores objects of a particular class into a table; multiple objects can be stored using different
+ * column names for each object.
+ *
+ * <p>
+ * Supported types are:
+ * </p>
+ * <p>
  * <ul>
  *   <li>a plain java class</li>
  *   <li>a parametrized class</li>
  *   <li>a static inner class of one of the above</li>
  * </ul>
+ * </p>
  * Interfaces and not-static inner classes are not supported.
- * ObjectStore supports storing one or more objects for the same key. Multiple objects can be stored using different
- * column names for each object. If no column name is specified in read or write operations a default column 'c' will
- * be used.
+ * If no column name is specified in read or write operations a default column 'c' will be used.
+ *
  * @param <T> the type of objects in the store
  */
 @Beta

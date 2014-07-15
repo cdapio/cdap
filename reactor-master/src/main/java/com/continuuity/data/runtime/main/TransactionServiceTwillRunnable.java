@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data.runtime.main;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -13,13 +29,15 @@ import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.runtime.HDFSTransactionStateStorageProvider;
 import com.continuuity.data.runtime.InMemoryTransactionManagerProvider;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.metrics.ReactorTxMetricsCollector;
 import com.continuuity.data2.transaction.metrics.TxMetricsCollector;
-import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
+import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.continuuity.data2.transaction.runtime.TransactionStateStorageProvider;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -31,6 +49,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
@@ -105,6 +125,7 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
       new KafkaClientModule(),
       new AuthModule(),
       createDataFabricModule(),
+      new DataSetsModules().getDistributedModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
@@ -123,7 +144,9 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
       @Override
       protected void configure() {
         // Bind to provider that create new instances of storage and tx manager every time.
-        bind(HDFSTransactionStateStorage.class).toProvider(HDFSTransactionStateStorageProvider.class);
+        bind(TransactionStateStorage.class).annotatedWith(Names.named("persist"))
+          .toProvider(HDFSTransactionStateStorageProvider.class);
+        bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class);
         bind(InMemoryTransactionManager.class).toProvider(InMemoryTransactionManagerProvider.class);
       }
     });

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.explore.client;
 
 import com.continuuity.common.utils.ImmutablePair;
@@ -122,6 +138,42 @@ public class DatasetExploreFacadeTest {
     }
   }
 
+  public class Recursive {
+    private final int a;
+    private final Recursive b;
+    private final int c;
+
+    public Recursive(int a, Recursive b) {
+      this.a = a;
+      this.b = b;
+      this.c = a;
+    }
+  }
+
+  public class TransitiveRecursive {
+    private final boolean empty;
+    private final List<TransitiveRecursive> children;
+
+    public TransitiveRecursive(boolean empty, List<TransitiveRecursive> children) {
+      this.empty = empty;
+      this.children = children;
+    }
+  }
+
+  public class Value {
+    private int a;
+  }
+
+  public class NotRecursive {
+    private final Value a;
+    private final Value b;
+
+    public NotRecursive(Value a, Value b) {
+      this.a = a;
+      this.b = b;
+    }
+  }
+
   @Test
   public void testHiveSchemaFor() throws Exception {
 
@@ -156,6 +208,14 @@ public class DatasetExploreFacadeTest {
     verifyUnsupportedSchema(String.class);
     verifyUnsupportedSchema(new TypeToken<List<Integer>>() { }.getType());
     verifyUnsupportedSchema(new TypeToken<Map<String, Integer>>() { }.getType());
+    verifyUnsupportedSchema(Recursive.class);
+    verifyUnsupportedSchema(TransitiveRecursive.class);
+  }
+
+  @Test
+  public void testSupportedTypes() throws Exception {
+    // Should not throw an exception
+    DatasetExploreFacade.hiveSchemaFor(NotRecursive.class);
   }
 
 }

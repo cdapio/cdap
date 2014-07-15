@@ -1,5 +1,22 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.internal.app.runtime.batch;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.google.common.collect.HashBasedTable;
@@ -33,12 +50,14 @@ public class MapReduceMetricsWriter {
   private final BasicMapReduceContext context;
   private final Table<MetricsScope, String, Integer> previousMapStats;
   private final Table<MetricsScope, String, Integer> previousReduceStats;
+  private final Table<MetricsScope, String, Integer> previousDatasetStats;
 
   public MapReduceMetricsWriter(Job jobConf, BasicMapReduceContext context) {
     this.jobConf = jobConf;
     this.context = context;
     this.previousMapStats = HashBasedTable.create();
     this.previousReduceStats = HashBasedTable.create();
+    this.previousDatasetStats = HashBasedTable.create();
   }
 
   public void reportStats() throws IOException, InterruptedException {
@@ -103,21 +122,10 @@ public class MapReduceMetricsWriter {
   // report continuuity stats coming from user metrics or dataset operations
   private void reportContinuuityStats() throws IOException, InterruptedException {
     Counters counters = jobConf.getCounters();
-    // metrics scoped to mapper and reducer tasks
-    for (MetricsScope scope : MetricsScope.values()) {
-      String group = "continuuity.mapper." + scope.name();
-      reportContinuuityStats(counters.getGroup(group),
-                             context.getSystemMapperMetrics(scope), scope, previousMapStats);
-
-      group = "continuuity.reducer." + scope.name();
-      reportContinuuityStats(counters.getGroup(group),
-                             context.getSystemReducerMetrics(scope), scope, previousReduceStats);
-    }
-
-    // also any other metrics (including dataset metrics)
     for (String group : counters.getGroupNames()) {
       if (group.startsWith("continuuity.")) {
-        String scopePart = group.substring(group.lastIndexOf(".") + 1);
+        String[] parts = group.split("\\.");
+        String scopePart = parts[parts.length - 1];
         // last one should be scope
         MetricsScope scope;
         try {
@@ -126,8 +134,19 @@ public class MapReduceMetricsWriter {
           // SHOULD NEVER happen, simply skip if happens
           continue;
         }
-        reportContinuuityStats(counters.getGroup(group),
-                               context.getSystemMetrics(scope), scope, previousReduceStats);
+
+        //TODO: Refactor to support any context
+        String programPart = parts[1];
+        if (programPart.equals("mapper")) {
+          reportContinuuityStats(counters.getGroup(group), context.getSystemMapperMetrics(scope), scope,
+                                 previousMapStats);
+        } else if (programPart.equals("reducer")) {
+          reportContinuuityStats(counters.getGroup(group), context.getSystemReducerMetrics(scope), scope,
+                                 previousReduceStats);
+        } else if (programPart.equals("dataset")) {
+          reportContinuuityStats(counters.getGroup(group), context.getMetricsCollectionService().getCollector(
+            scope, Constants.Metrics.DATASET_CONTEXT, "0"), scope, previousDatasetStats);
+        }
       }
     }
   }

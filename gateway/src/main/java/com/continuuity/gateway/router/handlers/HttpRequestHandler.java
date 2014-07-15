@@ -1,7 +1,24 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.gateway.router.handlers;
 
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.exception.HandlerException;
+import com.continuuity.gateway.router.ProxyRule;
 import com.continuuity.gateway.router.RouterServiceLookup;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
@@ -30,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,14 +64,18 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   private final RouterServiceLookup serviceLookup;
   // Data structure is used to clean up the channel futures on connection close.
   private final Map<WrappedDiscoverable, MessageSender> discoveryLookup;
+  private final List<ProxyRule> proxyRules;
+
   private MessageSender chunkSender;
   private AtomicBoolean channelClosed = new AtomicBoolean(false);
 
   public HttpRequestHandler(ClientBootstrap clientBootstrap,
-                            RouterServiceLookup serviceLookup) {
+                            RouterServiceLookup serviceLookup,
+                            List<ProxyRule> proxyRules) {
     this.clientBootstrap = clientBootstrap;
     this.serviceLookup = serviceLookup;
     this.discoveryLookup = Maps.newHashMap();
+    this.proxyRules = proxyRules;
   }
 
   @Override
@@ -75,6 +97,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     } else if (msg instanceof HttpRequest) {
       // Discover and forward event.
       HttpRequest request = (HttpRequest) msg;
+      request = applyProxyRules(request);
 
       // Suspend incoming traffic until connected to the outbound service.
       inboundChannel.setReadable(false);
@@ -106,6 +129,14 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     } else {
       super.messageReceived(ctx, event);
     }
+  }
+
+  private HttpRequest applyProxyRules(HttpRequest request) {
+    for (ProxyRule rule : proxyRules) {
+      request = rule.apply(request);
+    }
+
+    return request;
   }
 
   @Override

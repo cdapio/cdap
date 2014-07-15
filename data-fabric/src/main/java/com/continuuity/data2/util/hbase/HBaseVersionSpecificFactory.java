@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data2.util.hbase;
 
 import com.google.inject.Provider;
@@ -20,6 +36,10 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
           instance = createInstance(getHBase94Classname());
           break;
         case HBASE_96:
+          instance = createInstance(getHBase96Classname());
+          break;
+        case HBASE_98:
+          // for our needs HBase 0.98 is API compatible with 0.96
           instance = createInstance(getHBase96Classname());
           break;
         case UNKNOWN:

@@ -178,6 +178,7 @@ def process_pdf(input_file, options):
 #     --stylesheets="/Users/john/Source/reactor_2.3.0_docs/docs/developer-guide/source/_templates/pdf-stylesheet" 
 #     -o "/Users/john/Source/reactor_2.3.0_docs/docs/developer-guide/build-pdf/rest2.pdf" 
 #     "/Users/john/Source/reactor_2.3.0_docs/docs/developer-guide/source/rest.rst_temp”
+
     command = '/usr/local/bin/rst2pdf --config="%s" --stylesheets="%s" -o "%s" %s' % (config, stylesheets, output, temp_file)
     print "command: %s" % command
     try:

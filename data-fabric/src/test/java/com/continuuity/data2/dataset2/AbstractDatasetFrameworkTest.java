@@ -1,9 +1,27 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data2.dataset2;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.table.OrderedTable;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
@@ -148,6 +166,50 @@ public abstract class AbstractDatasetFrameworkTest {
         Assert.assertEquals(null, table.get("key1"));
       }
     });
+  }
+
+  @Test
+  public void testBasicManagement() throws Exception {
+    // Adding modules
+    DatasetFramework framework = getFramework();
+
+    framework.addModule("inMemory", new InMemoryOrderedTableModule());
+    framework.addModule("core", new CoreDatasetsModule());
+    Assert.assertTrue(framework.hasType(OrderedTable.class.getName()));
+    Assert.assertTrue(framework.hasType(Table.class.getName()));
+
+    // Creating instances
+    framework.addInstance(OrderedTable.class.getName(), "my_table", DatasetProperties.EMPTY);
+    Assert.assertTrue(framework.hasInstance("my_table"));
+    DatasetSpecification spec = framework.getDatasetSpec("my_table");
+    Assert.assertNotNull(spec);
+    Assert.assertEquals("my_table", spec.getName());
+    Assert.assertEquals(OrderedTable.class.getName(), spec.getType());
+    framework.addInstance(OrderedTable.class.getName(), "my_table2", DatasetProperties.EMPTY);
+    Assert.assertTrue(framework.hasInstance("my_table2"));
+
+    // cleanup
+    try {
+      framework.deleteAllModules();
+      Assert.fail("should not delete modules: there are datasets using their types");
+    } catch (DatasetManagementException e) {
+      // expected
+    }
+    // types are still there
+    Assert.assertTrue(framework.hasType(OrderedTable.class.getName()));
+    Assert.assertTrue(framework.hasType(Table.class.getName()));
+
+    framework.deleteAllInstances();
+    Assert.assertEquals(0, framework.getInstances().size());
+    Assert.assertFalse(framework.hasInstance("my_table"));
+    Assert.assertNull(framework.getDatasetSpec("my_table"));
+    Assert.assertFalse(framework.hasInstance("my_table2"));
+    Assert.assertNull(framework.getDatasetSpec("my_table2"));
+
+    // now it should susceed
+    framework.deleteAllModules();
+    Assert.assertFalse(framework.hasType(OrderedTable.class.getName()));
+    Assert.assertFalse(framework.hasType(Table.class.getName()));
   }
 
 }
