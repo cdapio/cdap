@@ -182,6 +182,24 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
+  public Handle getCatalogs() throws ExploreException, SQLException {
+    SessionHandle sessionHandle = null;
+    try {
+      Map<String, String> sessionConf = startSession();
+      sessionHandle = cliService.openSession("", "", sessionConf);
+      OperationHandle operationHandle = cliService.getCatalogs(sessionHandle);
+      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+      LOG.trace("Retrieving catalogs");
+      return handle;
+    } catch (HiveSQLException e) {
+      closeSession(sessionHandle);
+      throw getSqlException(e);
+    } catch (IOException e) {
+      throw new ExploreException(e);
+    }
+  }
+
+  @Override
   public Handle getSchemas(String catalog, String schemaPattern) throws ExploreException, SQLException {
     SessionHandle sessionHandle = null;
     try {

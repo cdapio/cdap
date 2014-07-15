@@ -40,9 +40,10 @@ public class BaseHiveExploreServiceTest {
   protected static DatasetFramework datasetFramework;
   protected static DatasetService datasetService;
   protected static ExploreExecutorService exploreExecutorService;
-  protected static ExploreClient exploreClient;
-  protected static Injector injector;
 
+  protected static ExploreClient exploreClient;
+
+  protected static Injector injector;
   protected static void startServices(CConfiguration cConf) throws Exception {
     injector = Guice.createInjector(createInMemoryModules(cConf, new Configuration()));
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
@@ -67,10 +68,20 @@ public class BaseHiveExploreServiceTest {
     transactionManager.stopAndWait();
   }
 
-  protected static void runCommand(String command, boolean expectedHasResult,
-                                 List<ColumnDesc> expectedColumnDescs, List<Result> expectedResults) throws Exception {
-    Handle handle = exploreClient.execute(command);
+  public static ExploreClient getExploreClient() {
+    return exploreClient;
+  }
 
+  protected static void runCommand(String command, boolean expectedHasResult,
+                                   List<ColumnDesc> expectedColumnDescs, List<Result> expectedResults)
+    throws Exception {
+    Handle handle = exploreClient.execute(command);
+    expectOnHandle(handle, expectedHasResult, expectedColumnDescs, expectedResults);
+  }
+
+  protected static void expectOnHandle(Handle handle, boolean expectedHasResult,
+                                       List<ColumnDesc> expectedColumnDescs, List<Result> expectedResults)
+    throws Exception {
     Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 20);
     Assert.assertEquals(Status.OpStatus.FINISHED, status.getStatus());
     Assert.assertEquals(expectedHasResult, status.hasResults());

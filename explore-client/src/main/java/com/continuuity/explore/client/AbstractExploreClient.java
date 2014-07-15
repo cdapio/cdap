@@ -148,6 +148,15 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
   }
 
   @Override
+  public Handle getCatalogs() throws ExploreException, SQLException {
+    HttpResponse response = doPost(METADATA_PATH + "catalogs", null, null);
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return Handle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException("Cannot get the catalogs. Reason: " + getDetails(response));
+  }
+
+  @Override
   public Handle getSchemas(String catalog, String schemaPattern) throws ExploreException, SQLException {
     String body = GSON.toJson(new ExploreClientUtil.SchemaArgs(catalog, schemaPattern));
     HttpResponse response = doPost(METADATA_PATH + "schemas", body, null);
@@ -170,7 +179,7 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
 
   @Override
   public MetaDataInfo getInfo(MetaDataInfo.InfoType infoType) throws ExploreException, SQLException {
-    HttpResponse response = doGet(METADATA_PATH + "info" + infoType.name());
+    HttpResponse response = doGet(METADATA_PATH + "info/" + infoType.name());
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, MetaDataInfo.class);
     }

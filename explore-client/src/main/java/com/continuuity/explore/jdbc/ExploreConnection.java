@@ -59,7 +59,7 @@ public class ExploreConnection implements Connection {
     if (isClosed) {
       throw new SQLException("Connection is closed");
     }
-    return new ExploreDatabaseMetaData();
+    return new ExploreDatabaseMetaData(exploreClient);
   }
 
   @Override

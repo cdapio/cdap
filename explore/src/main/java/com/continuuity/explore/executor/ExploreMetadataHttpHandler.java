@@ -8,7 +8,6 @@ import com.continuuity.explore.service.MetaDataInfo;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
@@ -20,16 +19,14 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.lang.reflect.Type;
-import java.sql.SQLException;
-import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.sql.SQLException;
 
 /**
  * Handler that implements explore metadata APIs.
@@ -93,6 +90,32 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
       LOG.trace("Received get columns with params: {}", args.toString());
       Handle handle = exploreService.getColumns(args.getCatalog(), args.getSchemaPattern(),
                                                 args.getTableNamePattern(), args.getColumnNamePattern());
+      JsonObject json = new JsonObject();
+      json.addProperty("handle", handle.getHandle());
+      responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @POST
+  @Path(PATH + "catalogs")
+  public void getCatalogs(HttpRequest request, HttpResponder responder) {
+    // document that we need to pass a json. Returns a handle
+
+    // NOTE: this call is a POST because we need to pass json, and it actually
+    // executes a query.
+    try {
+      LOG.trace("Received get catalogs query.");
+      Handle handle = exploreService.getCatalogs();
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);

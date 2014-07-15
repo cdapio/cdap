@@ -101,6 +101,11 @@ public class MockExploreClient implements ExploreClient {
   }
 
   @Override
+  public Handle getCatalogs() throws ExploreException, SQLException {
+    return null;
+  }
+
+  @Override
   public Handle getSchemas(String catalog, String schemaPattern) throws ExploreException, SQLException {
     return null;
   }

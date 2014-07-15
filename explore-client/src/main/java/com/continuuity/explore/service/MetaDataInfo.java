@@ -1,12 +1,12 @@
 package com.continuuity.explore.service;
 
 /**
- *
+ * Metadata information about Explore service.
  */
 public class MetaDataInfo {
 
   /**
-   *
+   * Information types.
    */
   public enum InfoType {
     MAX_DRIVER_CONNECTIONS,

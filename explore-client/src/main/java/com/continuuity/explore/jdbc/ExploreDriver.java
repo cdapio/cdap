@@ -4,6 +4,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.FixedAddressExploreClient;
 
+import com.sun.xml.internal.bind.v2.TODO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,16 +61,30 @@ public class ExploreDriver implements Driver {
     throw new SQLFeatureNotSupportedException();
   }
 
-  @Override
-  public int getMajorVersion() {
+  /**
+   * Get the major version number of the Explore driver.
+   */
+  static int getMajorDriverVersion() {
     // TODO make it dynamic [REACTOR-319]
     return 2;
   }
 
+  /**
+   * Get the minor version number of the Explore driver.
+   */
+  static int getMinorDriverVersion() {
+    // TODO make it dynamic [REACTOR-319]
+    return 4;
+  }
+
+  @Override
+  public int getMajorVersion() {
+    return ExploreDriver.getMajorDriverVersion();
+  }
+
   @Override
   public int getMinorVersion() {
-    // TODO make it dynamic [REACTOR-319]
-    return 3;
+    return ExploreDriver.getMinorDriverVersion();
   }
 
   @Override

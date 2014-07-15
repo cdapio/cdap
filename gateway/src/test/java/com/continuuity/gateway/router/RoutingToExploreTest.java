@@ -10,7 +10,6 @@ import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.security.auth.AccessTokenTransformer;
 import com.continuuity.security.guice.SecurityModules;
-
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.net.InetAddresses;
@@ -25,14 +24,14 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  *
@@ -63,7 +62,8 @@ public class RoutingToExploreTest {
     // Starting mock DataSet service
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
     mockService = new MockHttpService(discoveryService, Constants.Service.EXPLORE_HTTP_USER_SERVICE,
-                                      new MockExploreExecutorHandler(), new MockExplorePingHandler());
+                                      new MockExploreExecutorHandler(), new MockExplorePingHandler(),
+                                      new MockExploreMetadataHandler());
     mockService.startAndWait();
   }
 
@@ -89,6 +89,18 @@ public class RoutingToExploreTest {
   @Test
   public void testPingHandler() throws Exception {
     Assert.assertEquals("OK.\n", doRequest("/explore/status", "GET"));
+  }
+
+  @Test
+  public void testExploreMetadataHandlerRequests() throws Exception {
+    Assert.assertEquals("tables", doRequest("/data/metadata/tables", "POST"));
+    Assert.assertEquals("columns", doRequest("/data/metadata/columns", "POST"));
+    Assert.assertEquals("catalogs", doRequest("/data/metadata/catalogs", "POST"));
+    Assert.assertEquals("schemas", doRequest("/data/metadata/schemas", "POST"));
+    Assert.assertEquals("functions", doRequest("/data/metadata/functions", "POST"));
+    Assert.assertEquals("tableTypes", doRequest("/data/metadata/tableTypes", "POST"));
+    Assert.assertEquals("typeInfo", doRequest("/data/metadata/typeInfo", "POST"));
+    Assert.assertEquals("info:some_type", doRequest("/data/metadata/info/some_type", "GET"));
   }
 
   @Path(Constants.Gateway.GATEWAY_VERSION)
@@ -141,6 +153,59 @@ public class RoutingToExploreTest {
     @Path("/data/queries/{id}/nextResults")
     public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
       responder.sendString(HttpResponseStatus.OK, "nextResults:" + id);
+    }
+  }
+
+  @Path(Constants.Gateway.GATEWAY_VERSION)
+  public static final class MockExploreMetadataHandler extends AbstractHttpHandler {
+    private static final String PATH = "data/metadata/";
+
+    @POST
+    @Path(PATH + "tables")
+    public void getTables(HttpRequest request, HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.OK, "tables");
+    }
+
+    @POST
+    @Path(PATH + "columns")
+    public void getColumns(HttpRequest request, HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.OK, "columns");
+    }
+
+    @POST
+    @Path(PATH + "catalogs")
+    public void getCatalogs(HttpRequest request, HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.OK, "catalogs");
+    }
+
+    @POST
+    @Path(PATH + "schemas")
+    public void getSchemas(HttpRequest request, HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.OK, "schemas");
+    }
+
+    @POST
+    @Path(PATH + "functions")
+    public void getFunctions(HttpRequest request, HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.OK, "functions");
+    }
+
+    @POST
+    @Path(PATH + "tableTypes")
+    public void getTableTypes(HttpRequest request, HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.OK, "tableTypes");
+    }
+
+    @POST
+    @Path(PATH + "typeInfo")
+    public void getTypeInfo(HttpRequest request, HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.OK, "typeInfo");
+    }
+
+    @GET
+    @Path(PATH + "info/{type}")
+    public void getInfo(HttpRequest request, HttpResponder responder, @PathParam("type") final String type) {
+      responder.sendString(HttpResponseStatus.OK, "info:" + type);
     }
   }
 

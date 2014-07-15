@@ -101,6 +101,15 @@ public interface Explore {
     throws ExploreException, SQLException;
 
   /**
+   * Retrieves the catalog names available in this database.
+   *
+   * @return {@link Handle} representing the operation.
+   * @throws ExploreException on any error getting the columns.
+   * @throws SQLException if there are errors in the SQL statement.
+   */
+  public Handle getCatalogs() throws ExploreException, SQLException;
+
+  /**
    * Retrieves the schema names available in this database.
    *
    * See {@link java.sql.DatabaseMetaData#getSchemas(String, String)}.
