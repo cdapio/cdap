@@ -8,8 +8,4 @@ package com.continuuity.common.http;
  */
 public enum HttpMethod {
   GET, POST, PUT, DELETE;
-
-  public String getMethodName() {
-    return this.name();
-  }
 }

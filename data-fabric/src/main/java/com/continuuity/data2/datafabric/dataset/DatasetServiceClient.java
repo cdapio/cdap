@@ -19,7 +19,6 @@ import com.continuuity.data2.dataset2.InstanceConflictException;
 import com.continuuity.data2.dataset2.ModuleConflictException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
@@ -224,7 +223,7 @@ class DatasetServiceClient {
 
     String url = resolve(resource);
     try {
-      return HttpRequests.execute(new HttpRequest(method, new URL(url), headers, body));
+      return HttpRequests.execute(HttpRequest.builder(method, new URL(url)).addHeaders(headers).withBody(body).build());
     } catch (IOException e) {
       throw new DatasetManagementException(
         String.format("Error during talking to Dataset Service at %s while doing %s with headers %s and body %s",
@@ -240,7 +239,7 @@ class DatasetServiceClient {
 
     String url = resolve(resource);
     try {
-      return HttpRequests.execute(new HttpRequest(method, new URL(url), headers, body));
+      return HttpRequests.execute(HttpRequest.builder(method, new URL(url)).addHeaders(headers).withBody(body).build());
     } catch (IOException e) {
       throw new DatasetManagementException(
         String.format("Error during talking to Dataset Service at %s while doing %s with headers %s and body %s",

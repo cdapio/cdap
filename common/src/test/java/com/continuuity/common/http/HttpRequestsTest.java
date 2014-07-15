@@ -92,7 +92,7 @@ public class HttpRequestsTest {
                         Matcher<Object> expectedMessage, Matcher<Object> expectedBody) throws Exception {
 
     URL url = getBaseURI().resolve(path).toURL();
-    HttpRequest request = new HttpRequest(HttpMethod.POST, url, headers, body);
+    HttpRequest request = HttpRequest.post(url).addHeaders(headers).withBody(body).build();
     HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
   }
@@ -107,7 +107,7 @@ public class HttpRequestsTest {
                         Matcher<Object> expectedMessage, Matcher<Object> expectedBody) throws Exception {
 
     URL url = getBaseURI().resolve(path).toURL();
-    HttpRequest request = new HttpRequest(HttpMethod.PUT, url, headers, body);
+    HttpRequest request = HttpRequest.put(url).addHeaders(headers).withBody(body).build();
     HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
   }
@@ -116,7 +116,7 @@ public class HttpRequestsTest {
                        Matcher<Object> expectedMessage, Matcher<Object> expectedBody) throws Exception {
 
     URL url = getBaseURI().resolve(path).toURL();
-    HttpRequest request = new HttpRequest(HttpMethod.GET, url);
+    HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
   }
@@ -125,7 +125,7 @@ public class HttpRequestsTest {
                           Matcher<Object> expectedMessage, Matcher<Object> expectedBody) throws Exception {
 
     URL url = getBaseURI().resolve(path).toURL();
-    HttpRequest request = new HttpRequest(HttpMethod.DELETE, url);
+    HttpRequest request = HttpRequest.delete(url).build();
     HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
   }

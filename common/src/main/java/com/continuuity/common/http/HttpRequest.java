@@ -4,6 +4,7 @@
 package com.continuuity.common.http;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
@@ -35,40 +36,24 @@ public class HttpRequest {
     this.body = body;
   }
 
-  public HttpRequest(HttpMethod method, URL url) {
-    this(method, url, null, (InputSupplier<? extends InputStream>) null);
+  public static Builder get(URL url) {
+    return new Builder(HttpMethod.GET, url);
   }
 
-  public HttpRequest(HttpMethod method, URL url, InputSupplier<? extends InputStream> body) {
-    this(method, url, null, body);
+  public static Builder post(URL url) {
+    return new Builder(HttpMethod.POST, url);
   }
 
-  public HttpRequest(HttpMethod method, URL url, Map<String, String> headers, File body) {
-    this(method, url, headers, Files.newInputStreamSupplier(body));
+  public static Builder delete(URL url) {
+    return new Builder(HttpMethod.DELETE, url);
   }
 
-  public HttpRequest(HttpMethod method, URL url, File body) {
-    this(method, url, null, Files.newInputStreamSupplier(body));
+  public static Builder put(URL url) {
+    return new Builder(HttpMethod.PUT, url);
   }
 
-  public HttpRequest(HttpMethod method, URL url, String body) {
-    this(method, url, null, stringBody(body));
-  }
-
-  public HttpRequest(HttpMethod method, URL url, Map<String, String> headers, String body) {
-    this(method, url, headers, stringBody(body));
-  }
-
-  public HttpRequest(HttpMethod method, URL url, Map<String, String> headers) {
-    this(method, url, headers, (InputSupplier<? extends InputStream>) null);
-  }
-
-  public static final InputSupplier<? extends InputStream> stringBody(String body) {
-    return ByteStreams.newInputStreamSupplier(body.getBytes(Charsets.UTF_8));
-  }
-
-  public static final InputSupplier<? extends InputStream> stringBody(String body, Charset charset) {
-    return ByteStreams.newInputStreamSupplier(body.getBytes(charset));
+  public static Builder builder(HttpMethod method, URL url) {
+    return new Builder(method, url);
   }
 
   public HttpMethod getMethod() {
@@ -87,5 +72,46 @@ public class HttpRequest {
   @Nullable
   public InputSupplier<? extends InputStream> getBody() {
     return body;
+  }
+
+  public static final class Builder {
+    private HttpMethod method;
+    private URL url;
+    private Map<String, String> headers = Maps.newHashMap();
+    private InputSupplier<? extends InputStream> body;
+
+    Builder(HttpMethod method, URL url) {
+      this.method = method;
+      this.url = url;
+    }
+
+    public Builder addHeader(String key, String value) {
+      this.headers.put(key, value);
+      return this;
+    }
+
+    public Builder addHeaders(Map<String, String> headers) {
+      this.headers.putAll(headers);
+      return this;
+    }
+
+    public Builder withBody(InputSupplier<? extends InputStream> body) {
+      this.body = body;
+      return this;
+    }
+
+    public Builder withBody(File body) {
+      this.body = Files.newInputStreamSupplier(body);
+      return this;
+    }
+
+    public Builder withBody(String body) {
+      this.body = ByteStreams.newInputStreamSupplier(body.getBytes(Charsets.UTF_8));
+      return this;
+    }
+
+    public HttpRequest build() {
+      return new HttpRequest(method, url, headers, body);
+    }
   }
 }

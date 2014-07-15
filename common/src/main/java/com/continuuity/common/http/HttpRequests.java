@@ -7,7 +7,6 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -15,7 +14,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 
@@ -34,7 +32,7 @@ public class HttpRequests {
    * @return HTTP response
    */
   public static HttpResponse execute(HttpRequest request, HttpRequestConfig requestConfig) throws IOException {
-    String requestMethod = request.getMethod().getMethodName();
+    String requestMethod = request.getMethod().name();
     URL url = request.getURL();
 
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -59,7 +57,11 @@ public class HttpRequests {
     try {
       if (bodySrc != null) {
         OutputStream os = conn.getOutputStream();
-        ByteStreams.copy(bodySrc, os);
+        try {
+          ByteStreams.copy(bodySrc, os);
+        } finally {
+          os.close();
+        }
       }
 
       try {
@@ -100,49 +102,7 @@ public class HttpRequests {
    * @throws IOException
    */
   public static HttpResponse execute(HttpMethod httpMethod, URL url) throws IOException {
-    return execute(new HttpRequest(httpMethod, url), HttpRequestConfig.DEFAULT);
-  }
-
-  /**
-   * Executes an HTTP request with the specified HTTP method, URL, headers, and default request configuration.
-   *
-   * @param httpMethod HTTP method to use
-   * @param url URL to hit
-   * @param headers headers to include in the request
-   * @return HTTP response
-   * @throws IOException
-   */
-  public static HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers) throws IOException {
-    return execute(new HttpRequest(httpMethod, url, headers), HttpRequestConfig.DEFAULT);
-  }
-
-  /**
-   * Executes an HTTP request with the specified HTTP method, URL, headers, body, and default request configuration.
-   *
-   * @param httpMethod HTTP method to use
-   * @param url URL to hit
-   * @param headers headers to include in the request
-   * @param body body of the HTTP request
-   * @return
-   * @throws IOException
-   */
-  public static HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers,
-                                     String body) throws IOException {
-    return execute(new HttpRequest(httpMethod, url, headers, body), HttpRequestConfig.DEFAULT);
-  }
-
-  /**
-   * Executes an HTTP request with the specified HTTP method, URL, and default request configuration.
-   *
-   * @param httpMethod HTTP method to use
-   * @param url URL to hit
-   * @param requestConfig configuration for the HTTP request to execute
-   * @return HTTP response
-   * @throws IOException
-   */
-  public static HttpResponse execute(HttpMethod httpMethod, URL url,
-                                     HttpRequestConfig requestConfig) throws IOException {
-    return execute(new HttpRequest(httpMethod, url), requestConfig);
+    return execute(HttpRequest.builder(httpMethod, url).build(), HttpRequestConfig.DEFAULT);
   }
 
   /**
@@ -153,7 +113,7 @@ public class HttpRequests {
    * @throws IOException
    */
   public static HttpResponse get(URL url) throws IOException {
-    return execute(new HttpRequest(HttpMethod.GET, url), HttpRequestConfig.DEFAULT);
+    return execute(HttpRequest.get(url).build(), HttpRequestConfig.DEFAULT);
   }
 
   /**
@@ -164,7 +124,7 @@ public class HttpRequests {
    * @throws IOException
    */
   public static HttpResponse delete(URL url) throws IOException {
-    return execute(new HttpRequest(HttpMethod.DELETE, url), HttpRequestConfig.DEFAULT);
+    return execute(HttpRequest.delete(url).build(), HttpRequestConfig.DEFAULT);
   }
 
   /**
@@ -175,7 +135,7 @@ public class HttpRequests {
    * @throws IOException
    */
   public static HttpResponse post(URL url) throws IOException {
-    return execute(new HttpRequest(HttpMethod.POST, url), HttpRequestConfig.DEFAULT);
+    return execute(HttpRequest.post(url).build(), HttpRequestConfig.DEFAULT);
   }
 
   /**
@@ -187,7 +147,7 @@ public class HttpRequests {
    * @throws IOException
    */
   public static HttpResponse post(URL url, String body) throws IOException {
-    return execute(new HttpRequest(HttpMethod.POST, url, body), HttpRequestConfig.DEFAULT);
+    return execute(HttpRequest.post(url).withBody(body).build(), HttpRequestConfig.DEFAULT);
   }
 
   /**
@@ -199,7 +159,7 @@ public class HttpRequests {
    * @throws IOException
    */
   public static HttpResponse post(URL url, JsonElement body) throws IOException {
-    return execute(new HttpRequest(HttpMethod.POST, url, GSON.toJson(body)), HttpRequestConfig.DEFAULT);
+    return execute(HttpRequest.post(url).withBody(GSON.toJson(body)).build(), HttpRequestConfig.DEFAULT);
   }
 
   /**
@@ -211,7 +171,7 @@ public class HttpRequests {
    * @throws IOException
    */
   public static HttpResponse post(URL url, File body) throws IOException {
-    return execute(new HttpRequest(HttpMethod.POST, url, body), HttpRequestConfig.DEFAULT);
+    return execute(HttpRequest.post(url).withBody(body).build(), HttpRequestConfig.DEFAULT);
   }
 
   /**
@@ -223,7 +183,7 @@ public class HttpRequests {
    * @throws IOException
    */
   public static HttpResponse post(URL url, InputSupplier<? extends InputStream> body) throws IOException {
-    return execute(new HttpRequest(HttpMethod.POST, url, body), HttpRequestConfig.DEFAULT);
+    return execute(HttpRequest.post(url).withBody(body).build(), HttpRequestConfig.DEFAULT);
   }
 
   /**
@@ -235,7 +195,7 @@ public class HttpRequests {
    * @throws IOException
    */
   public static HttpResponse put(URL url, String body) throws IOException {
-    return execute(new HttpRequest(HttpMethod.PUT, url, body), HttpRequestConfig.DEFAULT);
+    return execute(HttpRequest.post(url).withBody(body).build(), HttpRequestConfig.DEFAULT);
   }
 
   private static boolean isSuccessful(int responseCode) {

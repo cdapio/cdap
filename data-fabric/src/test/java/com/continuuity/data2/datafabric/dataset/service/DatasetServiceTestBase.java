@@ -120,14 +120,14 @@ public abstract class DatasetServiceTestBase {
 
     final FileInputStream is = new FileInputStream(jarPath);
     try {
-      HttpRequest request = new HttpRequest(HttpMethod.PUT, getUrl("/data/modules/" + moduleName),
-                                            ImmutableMap.of("X-Continuuity-Class-Name", moduleClass.getName()),
-                                            new InputSupplier<InputStream>() {
-                                              @Override
-                                              public InputStream getInput() throws IOException {
-                                                return is;
-                                              }
-                                            });
+      HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
+        .addHeader("X-Continuuity-Class-Name", moduleClass.getName())
+        .withBody(new InputSupplier<InputStream>() {
+        @Override
+        public InputStream getInput() throws IOException {
+          return is;
+        }
+      }).build();
       return HttpRequests.execute(request).getResponseCode();
     } finally {
       is.close();

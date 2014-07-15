@@ -13,7 +13,6 @@ import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
 import com.continuuity.common.http.ObjectResponse;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
-import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
@@ -63,7 +62,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
 
     Map<String, String> headers = ImmutableMap.of("instance-props", GSON.toJson(props),
                                                   "type-meta", GSON.toJson(typeMeta));
-    HttpRequest request = new HttpRequest(HttpMethod.POST, resolve(instanceName, "create"), headers);
+    HttpRequest request = HttpRequest.post(resolve(instanceName, "create")).addHeaders(headers).build();
     HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response);
 
@@ -74,7 +73,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
   public void drop(DatasetSpecification spec, DatasetTypeMeta typeMeta) throws Exception {
     Map<String, String> headers = ImmutableMap.of("instance-spec", GSON.toJson(spec),
                                                   "type-meta", GSON.toJson(typeMeta));
-    HttpRequest request = new HttpRequest(HttpMethod.POST, resolve(spec.getName(), "drop"), headers);
+    HttpRequest request = HttpRequest.post(resolve(spec.getName(), "drop")).addHeaders(headers).build();
     HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response);
   }

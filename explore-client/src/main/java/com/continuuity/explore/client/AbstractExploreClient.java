@@ -178,9 +178,11 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
     try {
       URL url = new URL(resolvedUrl);
       if (body != null) {
-        return HttpRequests.execute(HttpMethod.valueOf(requestMethod), url, headers, body);
+        return HttpRequests.execute(HttpRequest.builder(HttpMethod.valueOf(requestMethod), url)
+                                      .addHeaders(headers).withBody(body).build());
       } else {
-        return HttpRequests.execute(HttpMethod.valueOf(requestMethod), url, headers);
+        return HttpRequests.execute(HttpRequest.builder(HttpMethod.valueOf(requestMethod), url)
+                                      .addHeaders(headers).build());
       }
     } catch (IOException e) {
       throw new ExploreException(
