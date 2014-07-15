@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -124,6 +125,11 @@ public class HttpRequest {
 
     public Builder withBody(String body) {
       this.body = ByteStreams.newInputStreamSupplier(body.getBytes(Charsets.UTF_8));
+      return this;
+    }
+
+    public Builder withBody(String body, Charset charset) {
+      this.body = ByteStreams.newInputStreamSupplier(body.getBytes(charset));
       return this;
     }
 
