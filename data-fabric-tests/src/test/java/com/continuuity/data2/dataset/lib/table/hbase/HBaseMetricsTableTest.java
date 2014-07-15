@@ -49,7 +49,6 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     testHBase.startHBase();
     CConfiguration conf = CConfiguration.create();
     conf.unset(Constants.CFG_HDFS_USER);
-    conf.setBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
     Injector injector = Guice.createInjector(new DataFabricDistributedModule(),
                                              new ConfigModule(conf, testHBase.getConfiguration()),
                                              new ZKClientModule(),

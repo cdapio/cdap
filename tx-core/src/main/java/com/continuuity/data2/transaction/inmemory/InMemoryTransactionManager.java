@@ -193,8 +193,8 @@ public class InMemoryTransactionManager extends AbstractService {
     inProgress.clear();
     committedChangeSets.clear();
     committingChangeSets.clear();
-    readPointer = 0;
     nextWritePointer = 1;
+    readPointer = 0;
     lastSnapshotTime = 0;
   }
 
@@ -217,6 +217,12 @@ public class InMemoryTransactionManager extends AbstractService {
     startMetricsThread();
     // initialize the WAL if we did not force a snapshot in recoverState()
     initLog();
+    // initialize next write pointer if needed
+    if (nextWritePointer == 1) {
+      nextWritePointer = getNextWritePointer();
+      readPointer = nextWritePointer - 1;
+    }
+
     notifyStarted();
   }
 
@@ -464,8 +470,8 @@ public class InMemoryTransactionManager extends AbstractService {
   private void restoreSnapshot(TransactionSnapshot snapshot) {
     LOG.info("Restoring transaction state from snapshot at " + snapshot.getTimestamp());
     Preconditions.checkState(lastSnapshotTime == 0, "lastSnapshotTime has been set!");
-    Preconditions.checkState(readPointer == 0, "readPointer has been set!");
-    Preconditions.checkState(nextWritePointer == 1, "nextWritePointer has been set!");
+    //Preconditions.checkState(readPointer == 0, "readPointer has been set!");
+    //Preconditions.checkState(nextWritePointer == 1, "nextWritePointer has been set!");
     Preconditions.checkState(invalid.isEmpty(), "invalid list should be empty!");
     Preconditions.checkState(inProgress.isEmpty(), "inProgress map should be empty!");
     Preconditions.checkState(committingChangeSets.isEmpty(), "committingChangeSets should be empty!");
