@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data.runtime.main;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
@@ -289,16 +305,16 @@ public class ReactorServiceMain extends DaemonMain {
         int maxCount = cConf.getInt(configKeys.get("max"));
 
         Integer savedCount = serviceStore.getServiceInstance(service);
-        if (savedCount == null) {
+        if (savedCount == null || savedCount == 0) {
           savedCount = Math.min(maxCount, cConf.getInt(configKeys.get("default")));
         } else {
           // If the max value is smaller than the saved instance count, update the store to the max value.
           if (savedCount > maxCount) {
             savedCount = maxCount;
-            serviceStore.setServiceInstance(service, savedCount);
           }
         }
 
+        serviceStore.setServiceInstance(service, savedCount);
         instanceCountMap.put(service, savedCount);
         LOG.info("Setting instance count of {} Service to {}", service, savedCount);
       } catch (Exception e) {

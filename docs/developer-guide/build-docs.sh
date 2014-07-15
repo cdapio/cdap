@@ -37,8 +37,6 @@ INSTALL_SOURCE="$INSTALL_GUIDE/source/install.rst"
 
 WWW_PATH="/var/www/website-docs/reactor"
 
-VERSION_TXT="version.txt"
-
 if [ "x$2" == "x" ]; then
   REACTOR_PATH="$SCRIPT_PATH/../../"
 else
@@ -89,7 +87,7 @@ function build_docs() {
 }
 
 function build_pdf_rest() {
-  version
+#   version # version is not needed because the renaming is done by the pom.xml file
   rm -rf $SCRIPT_PATH/$BUILD_PDF
   mkdir $SCRIPT_PATH/$BUILD_PDF
   python $DOCS_PY -g pdf -o $REST_PDF $REST_SOURCE
@@ -97,7 +95,7 @@ function build_pdf_rest() {
 
 function build_pdf_install() {
   version
-  INSTALL_PDF="$INSTALL_GUIDE/$BUILD_PDF/Reactor-Installation-Guide-v$reactor_version.pdf"
+  INSTALL_PDF="$INSTALL_GUIDE/$BUILD_PDF/Reactor-Installation-Guide-v$REACTOR_VERSION.pdf"
   rm -rf $INSTALL_GUIDE/$BUILD_PDF
   mkdir $INSTALL_GUIDE/$BUILD_PDF
   python $DOCS_PY -g pdf -o $INSTALL_PDF $INSTALL_SOURCE
@@ -125,13 +123,25 @@ function stage_docs() {
   echo "rsync -vz $SCRIPT_PATH/$BUILD/$ZIP \"$USER@$STAGING_SERVER:$ZIP\""
   rsync -vz $SCRIPT_PATH/$BUILD/$ZIP "$USER@$STAGING_SERVER:$ZIP"
   version
+  cd_cmd="cd $WWW_PATH; ls"
+  remove_cmd="sudo rm -rf $REACTOR_VERSION"
+  unzip_cmd="sudo unzip ~/$ZIP; sudo mv $HTML $REACTOR_VERSION"
   echo ""
   echo "To install on server:"
-  echo "cd $WWW_PATH; ls"
-  echo "sudo rm -rf $reactor_version; ls"
-  echo "sudo unzip ~/$ZIP; sudo mv $HTML $reactor_version; ls"
-  echo "or"
-  echo "cd $WWW_PATH; ls; sudo rm -rf $reactor_version; sudo unzip ~/$ZIP; sudo mv $HTML $reactor_version; ls"
+  echo ""
+  echo "  $cd_cmd"
+  echo "  $remove_cmd; ls"
+  echo "  $unzip_cmd; ls"
+  echo ""
+  echo "or, on one line:"
+  echo ""
+  echo "  $cd_cmd; $remove_cmd; ls; $unzip_cmd; ls"
+  echo ""
+  echo "or, using current branch:"
+  echo ""
+  echo "  $cd_cmd"
+  echo "  $remove_cmd-$GIT_BRANCH; ls"
+  echo "  $unzip_cmd-$GIT_BRANCH; ls"
   echo ""
   login_staging_server
 }
@@ -162,10 +172,10 @@ function build_dependencies() {
 }
 
 function version() {
-#   cd $REACTOR_PATH
-#   reactor_version=$(cat $VERSION_TXT)
-   reactor_version=$(cat $REACTOR_PATH/$VERSION_TXT)
-   echo "Reactor version: $reactor_version"
+  cd $REACTOR_PATH
+  REACTOR_VERSION=`mvn help:evaluate -o -Dexpression=project.version | grep -v '^\['`
+  IFS=/ read -a branch <<< "`git rev-parse --abbrev-ref HEAD`"
+  GIT_BRANCH="${branch[1]}"
 }
 
 if [ $# -lt 1 ]; then

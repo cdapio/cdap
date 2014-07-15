@@ -1,5 +1,17 @@
 /*
- * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package com.continuuity.api.app;
@@ -17,15 +29,21 @@ import com.continuuity.api.workflow.Workflow;
 import org.apache.twill.api.TwillApplication;
 
 /**
- * A support class for {@link Application}s which reduces repetition and results in
- * a more readable configuration. Simply implement {@link #configure()} to define your application.
+ * A support class for {@link Application Applications} which reduces repetition and results in
+ * a more readable configuration.
+ *
+ * <p>
+ * Implement the {@link #configure()} method to define your application.
+ * </p>
+ * 
+ * @see com.continuuity.api.app
  */
 public abstract class AbstractApplication implements Application {
   private ApplicationContext context;
   private ApplicationConfigurer configurer;
 
   /**
-   * Override this method to configure the application.
+   * Override this method to declare and configure the application.
    */
   public abstract void configure();
 
@@ -38,12 +56,15 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @return {@link ApplicationConfigurer} used to configure this {@link Application}
+   * @return The {@link ApplicationConfigurer} used to configure the {@link Application}
    */
   protected ApplicationConfigurer getConfigurer() {
     return configurer;
   }
 
+  /**
+   * @return The {@link ApplicationContext} of the {@link Application}
+   */
   protected final ApplicationContext getContext() {
     return context;
   }
@@ -56,7 +77,7 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @see ApplicationConfigurer#setDescription(String) (String)
+   * @see ApplicationConfigurer#setDescription(String)
    */
   protected void setDescription(String description) {
     configurer.setDescription(description);
@@ -71,6 +92,7 @@ public abstract class AbstractApplication implements Application {
 
   /**
    * @see ApplicationConfigurer#addDataSet(DataSet)
+   * @deprecated As of Reactor 2.3.0
    */
   @Deprecated
   protected void addDataSet(DataSet dataSet) {
@@ -94,7 +116,9 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * Calls {@link #createDataset(String, String, DatasetProperties)} and passes empty properties.
+   * Calls {@link ApplicationConfigurer#createDataset(String, String, DatasetProperties)}, passing empty properties.
+   *
+   * @see ApplicationConfigurer#createDataset(String, String, DatasetProperties)
    */
   @Beta
   protected void createDataset(String datasetName, String typeName) {
@@ -102,6 +126,9 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
+   * Calls {@link ApplicationConfigurer#createDataset(String, String, DatasetProperties)}, passing the type name and
+   * properties.
+   *
    * @see ApplicationConfigurer#createDataset(String, String, com.continuuity.api.dataset.DatasetProperties)
    */
   @Beta
@@ -110,16 +137,21 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
+   * Calls {@link ApplicationConfigurer#createDataset(String, String, DatasetProperties)}, passing the dataset class
+   * and properties.
+   *
    * @see ApplicationConfigurer#createDataset(String, Class, com.continuuity.api.dataset.DatasetProperties)
    */
   protected void createDataset(String datasetName,
                                Class<? extends Dataset> datasetClass,
-                               DatasetProperties props) {
-    configurer.createDataset(datasetName, datasetClass, props);
+                               DatasetProperties properties) {
+    configurer.createDataset(datasetName, datasetClass, properties);
   }
 
   /**
-   * @see ApplicationConfigurer#createDataset(String, Class, DatasetProperties) and passes epty properties
+   * Calls {@link ApplicationConfigurer#createDataset(String, Class, DatasetProperties)}, passing empty properties.
+   *
+   * @see ApplicationConfigurer#createDataset(String, Class, DatasetProperties)
    */
   protected void createDataset(String datasetName,
                                Class<? extends Dataset> datasetClass) {

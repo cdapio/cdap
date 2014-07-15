@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.app.store.ServiceStore;
@@ -176,16 +192,12 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
   private int getSystemServiceInstanceCount(String serviceName) throws Exception {
     Integer count = serviceStore.getServiceInstance(serviceName);
-    int provisioned = 0;
 
-    //If entry is not present in the table, create one by setting to provisioned instance count for the service
+    //In SingleNode, this count will be null. And thus we just return the actual instance count.
     if (count == null) {
-      provisioned = reactorServiceManagementMap.get(serviceName).getInstances();
+      return reactorServiceManagementMap.get(serviceName).getInstances();
     } else {
       return count;
     }
-
-    serviceStore.setServiceInstance(serviceName, provisioned);
-    return provisioned;
   }
 }

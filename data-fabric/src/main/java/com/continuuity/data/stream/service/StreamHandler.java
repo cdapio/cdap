@@ -1,5 +1,17 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.data.stream.service;
 
@@ -13,7 +25,6 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.StreamPropertyListener;
-import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
@@ -323,8 +334,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
             throw new IllegalStateException("Stream does not exists");
           }
 
-          StreamConfig streamConfig = streamAdmin.getConfig(key.getStreamName());
-
           // TODO: Deal with dynamic resize of stream handler instances
           int groupSize = cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 1);
           ConsumerConfig config = new ConsumerConfig(key.getGroupId(),
@@ -334,7 +343,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
           StreamConsumer consumer = consumerFactory.create(QueueName.fromStream(key.getStreamName()),
                                                            Constants.Stream.HANDLER_CONSUMER_NS, config);
           Cancellable cancellable = streamCoordinator.addListener(key.getStreamName(),
-                                                                  createStreamPropertyListener(key, streamConfig));
+                                                                  createStreamPropertyListener(key));
           return new StreamDequeuer(consumer, executorFactory, cancellable);
         }
       });
@@ -343,38 +352,27 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   /**
    * Creates a {@link StreamPropertyListener} that would reload cached consumer if any stream properties changed.
    */
-  private StreamPropertyListener createStreamPropertyListener(final ConsumerCacheKey key,
-                                                              final StreamConfig streamConfig) throws IOException {
-    final int currentGeneration = StreamUtils.getGeneration(streamConfig);
-    final long currentTTL = streamConfig.getTTL();
+  private StreamPropertyListener createStreamPropertyListener(final ConsumerCacheKey key) throws IOException {
 
     return new StreamPropertyListener() {
       @Override
       public void generationChanged(String streamName, int generation) {
-        if (streamName.equals(streamConfig.getName()) && currentGeneration < generation) {
-          dequeuerCache.refresh(key);
-        }
+        dequeuerCache.refresh(key);
       }
 
       @Override
       public void generationDeleted(String streamName) {
-        if (streamName.equals(streamConfig.getName())) {
-          dequeuerCache.refresh(key);
-        }
+        dequeuerCache.refresh(key);
       }
 
       @Override
       public void ttlChanged(String streamName, long ttl) {
-        if (streamName.equals(streamConfig.getName()) && currentTTL != ttl) {
-          dequeuerCache.refresh(key);
-        }
+        dequeuerCache.refresh(key);
       }
 
       @Override
       public void ttlDeleted(String streamName) {
-        if (streamName.equals(streamConfig.getName())) {
-          dequeuerCache.refresh(key);
-        }
+        dequeuerCache.refresh(key);
       }
     };
   }
