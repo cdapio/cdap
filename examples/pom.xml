@@ -62,6 +62,46 @@
   </properties>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.rat</groupId>
+          <artifactId>apache-rat-plugin</artifactId>
+          <version>0.10</version>
+          <executions>
+            <execution>
+              <id>rat-check</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+              <configuration>
+                <excludes>
+                  <exclude>build-number.txt</exclude>
+                  <exclude>LICENSE*.txt</exclude>
+                  <exclude>README.md</exclude>
+                  <exclude>logs/**</exclude>
+                  <exclude>docs/**</exclude>
+                  <exclude>conf/**</exclude>
+                  <exclude>**/data/**</exclude>
+                  <exclude>**/Apache-LICENSE-2.0</exclude>
+                  <exclude>**/VERSION</exclude>
+                  <exlcude>**/*.patch</exlcude>
+                  <exclude>**/logrotate.d/**</exclude>
+                  <exclude>**/limits.d/**</exclude>
+                  <exclude>**/resources/**/*.txt</exclude>
+                  <exclude>**/resources/**/*.accesslog</exclude>
+                  <exclude>**/resources/**/*.css</exclude>
+                  <exclude>**/resources/**/*.scss</exclude>
+                  <exclude>**/resources/**/*.js</exclude>
+                  <exclude>**/resources/**/*.svg</exclude>
+                </excludes>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
