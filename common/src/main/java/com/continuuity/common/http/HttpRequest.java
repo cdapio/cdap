@@ -86,6 +86,9 @@ public class HttpRequest {
     return body;
   }
 
+  /**
+   * Builder for {@link HttpRequest}.
+   */
   public static final class Builder {
     private HttpMethod method;
     private URL url;
