@@ -1,6 +1,7 @@
 package com.continuuity.data2.transaction.coprocessor;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
@@ -67,7 +68,7 @@ public class TransactionStateCache extends AbstractIdleService implements Config
    */
   private void tryInit() {
     try {
-      CConfiguration conf = getSnapshotConfiguration();
+      Configuration conf = getSnapshotConfiguration();
       if (conf != null) {
         this.storage = new HDFSTransactionStateStorage(conf, hConf, new SnapshotCodecProvider(conf));
         this.storage.startAndWait();
@@ -82,8 +83,8 @@ public class TransactionStateCache extends AbstractIdleService implements Config
     }
   }
 
-  protected CConfiguration getSnapshotConfiguration() throws IOException {
-    CConfiguration conf = CConfiguration.create();
+  protected Configuration getSnapshotConfiguration() throws IOException {
+    Configuration conf = TxConfiguration.create();
     conf.unset(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES);
     return conf;
   }

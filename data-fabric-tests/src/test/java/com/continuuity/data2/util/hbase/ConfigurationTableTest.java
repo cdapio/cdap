@@ -3,6 +3,7 @@ package com.continuuity.data2.util.hbase;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.test.SlowTests;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -40,7 +41,7 @@ public class ConfigurationTableTest {
     ConfigurationTable configTable = new ConfigurationTable(hbaseUtil.getConfiguration());
     configTable.write(ConfigurationTable.Type.DEFAULT, cconf);
 
-    CConfiguration cconf2 = configTable.read(ConfigurationTable.Type.DEFAULT, expectedNamespace);
+    Configuration cconf2 = configTable.read(ConfigurationTable.Type.DEFAULT, expectedNamespace);
     assertNotNull(cconf2);
 
     for (Map.Entry<String, String> e : cconf) {

@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+ Copyright (c) 2013, Continuuity Inc
+
+ All rights reserved.
+
+ Redistribution and use in source and binary forms,
+ with or without modification, are not permitted
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<configuration>
+    <property>
+      <name>data.tx.bind.port</name>
+      <value>15165</value>
+      <description>The port number for the transaction
+        service</description>
+    </property>
+
+    <property>
+    <name>data.tx.bind.address</name>
+    <value>127.0.0.1</value>
+    <description>The inet address for the transaction
+      service</description>
+    </property>
+
+    <property>
+    <name>data.tx.server.io.threads</name>
+    <value>2</value>
+    <description>The number of IO threads for the transaction
+      service</description>
+    </property>
+
+    <property>
+    <name>data.tx.server.threads</name>
+    <value>25</value>
+    <description>The number of threads for the transaction
+      service</description>
+    </property>
+
+    <property>
+    <name>data.tx.client.count</name>
+    <value>5</value>
+    <description>The number of pooled instanced of the transaction
+      client</description>
+    </property>
+
+    <property>
+    <name>data.tx.client.provider</name>
+    <value>thread-local</value>
+    <description>The provider strategy for transaction clients;
+      valid values are "pool" and "thread-local"</description>
+    </property>
+
+    <property>
+    <name>data.queue.table.name</name>
+    <value>queues</value>
+    <description>Specifies the name of the table for queues</description>
+    </property>
+
+    <property>
+    <name>data.tx.snapshot.codecs</name>
+    <value>
+      com.continuuity.data2.transaction.snapshot.SnapshotCodecV1,
+      com.continuuity.data2.transaction.snapshot.SnapshotCodecV2
+    </value>
+    <description>Specifies the class names of all supported transaction state codecs</description>
+    </property>
+
+    <property>
+    <name>data.tx.snapshot.dir</name>
+    <value>${hdfs.namespace}/tx.snapshot</value>
+    <description>Directory in HDFS used to store snapshots and logs of
+      transaction state</description>
+    </property>
+
+    <property>
+    <name>data.tx.snapshot.local.dir</name>
+    <value>${local.data.dir}/tx.snapshot</value>
+    <description>Directory on the local filesystem used to store snapshots
+      and logs of transaction state for single-node operation</description>
+    </property>
+
+    <property>
+    <name>data.tx.snapshot.interval</name>
+    <value>300</value>
+    <description>Frequency, in seconds, at which snapshots of transaction
+      state should be written</description>
+    </property>
+
+    <property>
+    <name>data.tx.snapshot.retain</name>
+    <value>10</value>
+    <description>Number of transaction snapshot files to retain as
+      backups</description>
+    </property>
+
+    <property>
+    <name>data.tx.janitor.enable</name>
+    <value>true</value>
+    <description>Whether or not the TransactionDataJanitor coprocessor
+      should be enabled on tables; should normally be true</description>
+    </property>
+
+    <property>
+    <name>data.tx.num.instances</name>
+    <value>1</value>
+    </property>
+
+    <property>
+    <name>data.tx.max.instances</name>
+    <value>${reactor.service.max.instances}</value>
+    </property>
+
+    <property>
+    <name>data.tx.num.cores</name>
+    <value>${reactor.service.num.cores}</value>
+    </property>
+
+    <property>
+    <name>data.tx.memory.mb</name>
+    <value>${reactor.service.memory.mb}</value>
+    </property>
+</configuration>

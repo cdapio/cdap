@@ -29,6 +29,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import com.google.inject.name.Names;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +67,8 @@ public class DataFabricDistributedModule extends AbstractModule {
 
     // bind transactions
     install(new TransactionModules().getDistributedModules());
+    bind(Configuration.class).annotatedWith(Names.named("transaction"))
+      .toProvider(TxConfigurationProvider.class);
 
   }
 

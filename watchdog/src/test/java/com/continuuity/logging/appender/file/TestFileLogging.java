@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.logging.LoggingConfiguration;
@@ -16,6 +17,7 @@ import com.continuuity.logging.read.SingleNodeLogReader;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
 import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -49,7 +51,10 @@ public class TestFileLogging {
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
 
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+    Configuration txConf = TxConfiguration.create();
+    cConf.copyTo(txConf);
+
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager(txConf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
 

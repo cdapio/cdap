@@ -21,6 +21,8 @@ import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metadata.SerializingMetaDataTable;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
+import com.google.inject.name.Names;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * The Guice module of data fabric bindings for in memory execution.
@@ -44,5 +46,9 @@ public class DataFabricInMemoryModule extends AbstractModule {
 
     // bind transactions
     install(new TransactionModules().getInMemoryModules());
+
+    //bind configuration for transaction
+    bind(Configuration.class).annotatedWith(Names.named("transaction"))
+      .toProvider(TxConfigurationProvider.class);
   }
 }

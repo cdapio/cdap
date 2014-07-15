@@ -2,6 +2,7 @@ package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * A retry strategy that makes N attempts and then gives up. This does
@@ -38,7 +39,7 @@ public class RetryNTimes extends RetryStrategy {
     }
 
     @Override
-    public void configure(CConfiguration config) {
+    public void configure(Configuration config) {
       nTimes = config.getInt(TxConstants.Service.CFG_DATA_TX_CLIENT_ATTEMPTS, nTimes);
     }
 

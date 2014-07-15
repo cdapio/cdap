@@ -14,6 +14,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * Guice bindings for running in distributed mode on a cluster.

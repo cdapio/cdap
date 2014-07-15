@@ -15,12 +15,14 @@ import com.continuuity.data2.dataset2.AbstractDatasetFrameworkTest;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.explore.client.DatasetExploreFacade;
 import com.continuuity.explore.client.DiscoveryExploreClient;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
@@ -50,12 +52,15 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 
+    Configuration txConf = TxConfiguration.create();
+    cConf.copyTo(txConf);
+
     // Starting DatasetService service
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
 
     // Tx Manager to support working with datasets
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager(txConf);
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 

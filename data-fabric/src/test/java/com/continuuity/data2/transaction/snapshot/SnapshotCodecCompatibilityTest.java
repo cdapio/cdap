@@ -2,6 +2,7 @@ package com.continuuity.data2.transaction.snapshot;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -11,6 +12,7 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -48,7 +50,9 @@ public class SnapshotCodecCompatibilityTest {
     CConfiguration configV1 = CConfiguration.create();
     configV1.setStrings(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES,
                         SnapshotCodecV1.class.getName());
-    SnapshotCodecProvider codecV1 = new SnapshotCodecProvider(configV1);
+    Configuration txConfigV1 = TxConfiguration.create();
+    configV1.copyTo(txConfigV1);
+    SnapshotCodecProvider codecV1 = new SnapshotCodecProvider(txConfigV1);
 
     // encoding with codec of v1
     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -63,7 +67,9 @@ public class SnapshotCodecCompatibilityTest {
     configV1V2.setStrings(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES,
                           SnapshotCodecV1.class.getName(),
                           SnapshotCodecV2.class.getName());
-    SnapshotCodecProvider codecV1V2 = new SnapshotCodecProvider(configV1V2);
+    Configuration txConfigV1V2 = TxConfiguration.create();
+    configV1V2.copyTo(txConfigV1V2);
+    SnapshotCodecProvider codecV1V2 = new SnapshotCodecProvider(txConfigV1V2);
     TransactionSnapshot decoded = codecV1V2.decode(new ByteArrayInputStream(out.toByteArray()));
 
     assertEquals(snapshot, decoded);

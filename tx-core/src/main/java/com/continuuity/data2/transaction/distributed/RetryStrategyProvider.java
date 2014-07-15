@@ -1,6 +1,7 @@
 package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.CConfiguration;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * A retry strategy provider is used by the tx client to get a new retry strategy for every call.
@@ -17,6 +18,6 @@ public interface RetryStrategyProvider {
    * Configure the strategy.
    * @param config the configuration
    */
-  void configure(CConfiguration config);
+  void configure(Configuration config);
 
 }

@@ -6,6 +6,7 @@ import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,7 @@ public class SnapshotCodecProvider implements SnapshotCodec {
   private final SortedMap<Integer, SnapshotCodec> codecs = Maps.newTreeMap();
 
   @Inject
-  public SnapshotCodecProvider(CConfiguration configuration) {
+  public SnapshotCodecProvider(Configuration configuration) {
     initialize(configuration);
   }
 
@@ -33,7 +34,7 @@ public class SnapshotCodecProvider implements SnapshotCodec {
    * Register all codec specified in the configuration with this provider.
    * There can only be one codec for a given version.
    */
-  private void initialize(CConfiguration configuration) {
+  private void initialize(Configuration configuration) {
     Class<?>[] codecClasses = configuration.getClasses(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES);
     if (codecClasses == null || codecClasses.length == 0) {
       codecClasses = TxConstants.Persist.DEFAULT_TX_SNAPHOT_CODEC_CLASSES;

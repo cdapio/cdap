@@ -16,6 +16,8 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hdfs.DFSClient;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -94,7 +96,7 @@ public class TransactionManagerDebuggerMain {
 
   private final SnapshotCodecProvider codecProvider;
 
-  private TransactionManagerDebuggerMain (CConfiguration configuration) {
+  private TransactionManagerDebuggerMain (Configuration configuration) {
     codecProvider = new SnapshotCodecProvider(configuration);
     buildOptions();
   }
@@ -124,7 +126,7 @@ public class TransactionManagerDebuggerMain {
    * @param conf default configuration
    * @return true if the arguments were parsed successfully and comply with the expected usage
    */
-  private boolean parseArgsAndExecMode(String[] args, CConfiguration conf) {
+  private boolean parseArgsAndExecMode(String[] args, Configuration conf) {
     CommandLineParser parser = new GnuParser();
     // Check all the options of the command line
     try {
@@ -634,7 +636,7 @@ public class TransactionManagerDebuggerMain {
     return "['" + id + "' start time: " + formatter.format(date) + " number: " + (id % TxConstants.MAX_TX_PER_MS) + "]";
   }
 
-  private boolean execute(String[] args, CConfiguration conf) {
+  private boolean execute(String[] args, Configuration conf) {
     if (args.length <= 0) {
       printUsage(true);
       return false;
@@ -684,7 +686,10 @@ public class TransactionManagerDebuggerMain {
 
   public static void main(String[] args) {
     // create a config and load the gateway properties
-    CConfiguration config = CConfiguration.create();
+    // todo : removed cConf, currently parseArgsAndExecMode needs gateway information,can remove after cleanup
+    CConfiguration cConf = CConfiguration.create();
+    Configuration config = TxConfiguration.create();
+    cConf.copyTo(config);
     TransactionManagerDebuggerMain instance = new TransactionManagerDebuggerMain(config);
     boolean success = instance.execute(args, config);
     if (!success) {

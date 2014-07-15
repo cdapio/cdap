@@ -5,6 +5,7 @@ import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 
 /**
@@ -15,17 +16,20 @@ public class HDFSTransactionStateStorageProvider implements Provider<HDFSTransac
   private final CConfiguration conf;
   private final Configuration hConf;
   private final SnapshotCodecProvider codecProvider;
+  private Configuration txConfig;
 
   @Inject
   public HDFSTransactionStateStorageProvider(CConfiguration config, Configuration hConf,
-                                             SnapshotCodecProvider codecProvider) {
+                                             SnapshotCodecProvider codecProvider,
+                                             @Named("transaction") Configuration txConfig) {
     this.conf = config;
     this.hConf = hConf;
     this.codecProvider = codecProvider;
+    this.txConfig = txConfig;
   }
 
   @Override
   public HDFSTransactionStateStorage get() {
-    return new HDFSTransactionStateStorage(conf, hConf, codecProvider);
+    return new HDFSTransactionStateStorage(txConfig, hConf, codecProvider);
   }
 }

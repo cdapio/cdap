@@ -3,6 +3,8 @@ package com.continuuity.common.conf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Properties;
+
 /**
  * CConfiguration is an extension of the Hadoop Configuration class. By default,
  * this class provides a empty configuration. To add a set of resources from an
@@ -32,4 +34,10 @@ public class CConfiguration extends Configuration {
     return conf;
   }
 
+  public void copyTo(org.apache.hadoop.conf.Configuration destination) {
+    Properties props = getProps();
+    for (String property : props.stringPropertyNames()) {
+      destination.set(property, get(property));
+    }
+  }
 }

@@ -2,6 +2,7 @@ package com.continuuity.data2.transaction.persist;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.snapshot.DefaultSnapshotCodec;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
@@ -38,9 +39,9 @@ public class HDFSTransactionStateStorageTest extends AbstractTransactionStateSto
   }
 
   @Override
-  protected CConfiguration getConfiguration(String testName) throws IOException {
+  protected Configuration getConfiguration(String testName) throws IOException {
     String localTestDir = TEST_DIR + "/" + testName;
-    CConfiguration conf = CConfiguration.create();
+    Configuration conf = TxConfiguration.create();
     // tests should use the current user for HDFS
     conf.unset(Constants.CFG_HDFS_USER);
     conf.set(TxConstants.Manager.CFG_TX_SNAPSHOT_DIR, localTestDir);
@@ -50,7 +51,7 @@ public class HDFSTransactionStateStorageTest extends AbstractTransactionStateSto
   }
 
   @Override
-  protected AbstractTransactionStateStorage getStorage(CConfiguration conf) {
+  protected AbstractTransactionStateStorage getStorage(Configuration conf) {
     return new HDFSTransactionStateStorage(conf, hConf, new SnapshotCodecProvider(conf));
   }
 }

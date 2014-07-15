@@ -16,6 +16,8 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.runtime.HDFSTransactionStateStorageProvider;
 import com.continuuity.data.runtime.InMemoryTransactionManagerProvider;
+import com.continuuity.data.runtime.TxConfigurationProvider;
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.metrics.ReactorTxMetricsCollector;
@@ -37,6 +39,8 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -101,7 +105,7 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
     services.add(txService);
   }
 
-  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
+  static Injector createGuiceInjector(final CConfiguration cConf, final Configuration hConf) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
@@ -130,6 +134,8 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
         // Bind to provider that create new instances of storage and tx manager every time.
         bind(TransactionStateStorage.class).annotatedWith(Names.named("persist"))
           .toProvider(HDFSTransactionStateStorageProvider.class);
+        bind(Configuration.class).annotatedWith(Names.named("transaction"))
+          .toProvider(TxConfigurationProvider.class);
         bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class);
         bind(InMemoryTransactionManager.class).toProvider(InMemoryTransactionManagerProvider.class);
       }

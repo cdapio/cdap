@@ -24,6 +24,8 @@ import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metadata.SerializingMetaDataTable;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
+import com.google.inject.name.Names;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * DataFabricLocalModule defines the Local/HyperSQL bindings for the data fabric.
@@ -52,5 +54,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
 
     // bind transactions
     install(new TransactionModules().getInMemoryModules());
+    bind(Configuration.class).annotatedWith(Names.named("transaction"))
+      .toProvider(TxConfigurationProvider.class);
   }
 }

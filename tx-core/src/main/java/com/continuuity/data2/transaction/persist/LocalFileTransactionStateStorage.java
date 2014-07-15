@@ -10,6 +10,7 @@ import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +46,7 @@ public class LocalFileTransactionStateStorage extends AbstractTransactionStateSt
   private File snapshotDir;
 
   @Inject
-  public LocalFileTransactionStateStorage(CConfiguration conf, SnapshotCodecProvider codecProvider) {
+  public LocalFileTransactionStateStorage(Configuration conf, SnapshotCodecProvider codecProvider) {
     super(codecProvider);
     this.configuredSnapshotDir = conf.get(TxConstants.Manager.CFG_TX_SNAPSHOT_LOCAL_DIR);
   }

@@ -1,6 +1,5 @@
 package com.continuuity.data2.transaction;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
@@ -8,7 +7,6 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.data2.transaction.runtime.TransactionModules;
 import com.continuuity.data2.transaction.snapshot.DefaultSnapshotCodec;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
@@ -17,6 +15,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.util.Modules;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -30,23 +29,23 @@ import javax.annotation.Nullable;
  * Tests the transaction executor.
  */
 public class TransactionExecutorTest {
-  static final CConfiguration CCONF = CConfiguration.create();
+  static final Configuration TXCONF = TxConfiguration.create();
   static Injector injector;
   static DummyTxClient txClient;
   static TransactionExecutorFactory factory;
 
   @BeforeClass
   public static void setup() {
-    CCONF.set(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES, DefaultSnapshotCodec.class.getName());
+    TXCONF.set(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES, DefaultSnapshotCodec.class.getName());
     injector = Guice.createInjector(
-      new ConfigModule(CCONF),
+      new ConfigModule(TXCONF),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       Modules.override(
         new TransactionModules().getInMemoryModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
-          InMemoryTransactionManager txManager = new InMemoryTransactionManager(CCONF);
+          InMemoryTransactionManager txManager = new InMemoryTransactionManager(TXCONF);
           txManager.startAndWait();
           bind(InMemoryTransactionManager.class).toInstance(txManager);
           bind(TransactionSystemClient.class).to(DummyTxClient.class).in(Singleton.class);

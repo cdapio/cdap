@@ -21,7 +21,7 @@ public class HDFSTransactionLog extends AbstractTransactionLog {
   private static final Logger LOG = LoggerFactory.getLogger(HDFSTransactionLog.class);
 
   private final FileSystem fs;
-  private final CConfiguration conf;
+  private final Configuration conf;
   private final Configuration hConf;
   private final Path logPath;
 
@@ -32,7 +32,7 @@ public class HDFSTransactionLog extends AbstractTransactionLog {
    * @param hConf HDFS cluster configuration.
    * @param logPath Path to the log file.
    */
-  public HDFSTransactionLog(final CConfiguration conf, final FileSystem fs, final Configuration hConf,
+  public HDFSTransactionLog(final Configuration conf, final FileSystem fs, final Configuration hConf,
                             final Path logPath, long timestamp) {
     super(timestamp);
     this.fs = fs;

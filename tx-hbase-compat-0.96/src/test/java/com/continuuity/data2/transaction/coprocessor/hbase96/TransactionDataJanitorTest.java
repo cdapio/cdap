@@ -2,6 +2,7 @@ package com.continuuity.data2.transaction.coprocessor.hbase96;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.coprocessor.TransactionStateCache;
 import com.continuuity.data2.transaction.coprocessor.TransactionStateCacheSupplier;
@@ -98,8 +99,11 @@ public class TransactionDataJanitorTest {
     testUtil.startMiniCluster();
     testUtil.getDFSCluster().waitClusterUp();
     CConfiguration conf = CConfiguration.create();
-    conf.unset(Constants.CFG_HDFS_USER);
-    conf.unset(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES);
+
+    Configuration txConfig = TxConfiguration.create();
+    conf.copyTo(txConfig);
+    txConfig.unset(Constants.CFG_HDFS_USER);
+    txConfig.unset(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES);
 
     // write an initial transaction snapshot
     TransactionSnapshot snapshot =
@@ -109,7 +113,7 @@ public class TransactionDataJanitorTest {
         Maps.newTreeMap(ImmutableSortedMap.of(5L, new InMemoryTransactionManager.InProgressTx(V[6], Long.MAX_VALUE))),
         new HashMap<Long, Set<ChangeId>>(), new TreeMap<Long, Set<ChangeId>>());
     HDFSTransactionStateStorage tmpStorage =
-      new HDFSTransactionStateStorage(conf, hConf, new SnapshotCodecProvider(conf));
+      new HDFSTransactionStateStorage(txConfig, hConf, new SnapshotCodecProvider(txConfig));
     tmpStorage.startAndWait();
     tmpStorage.writeSnapshot(snapshot);
     tmpStorage.stopAndWait();

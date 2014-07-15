@@ -10,6 +10,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -17,6 +18,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,14 +56,14 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
   // buffer size used for HDFS reads and writes
   private static final int BUFFER_SIZE = 16384;
 
-  private CConfiguration conf;
+  private Configuration conf;
   private FileSystem fs;
   private Configuration hConf;
   private String configuredSnapshotDir;
   private Path snapshotDir;
 
   @Inject
-  public HDFSTransactionStateStorage(CConfiguration config, Configuration hConf,
+  public HDFSTransactionStateStorage(@Named("transaction") Configuration config, Configuration hConf,
                                      SnapshotCodecProvider codecProvider) {
     super(codecProvider);
     this.conf = config;
@@ -359,10 +361,11 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
       printUsage("ERROR: Either -s or -l is required to set mode.", 1);
     }
 
-    CConfiguration config = CConfiguration.create();
+
+    Configuration txConfig = HBaseConfiguration.create();
 
     HDFSTransactionStateStorage storage =
-      new HDFSTransactionStateStorage(config, new Configuration(), new SnapshotCodecProvider(config));
+      new HDFSTransactionStateStorage(txConfig, new Configuration(), new SnapshotCodecProvider(txConfig));
     storage.startAndWait();
     try {
       switch (mode) {

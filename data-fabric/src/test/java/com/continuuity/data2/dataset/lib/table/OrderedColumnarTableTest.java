@@ -1,6 +1,7 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.OperationResult;
@@ -8,11 +9,13 @@ import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -60,7 +63,10 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
 
   @Before
   public void before() {
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+    CConfiguration cConf = CConfiguration.create();
+    Configuration txConf = TxConfiguration.create();
+    cConf.copyTo(txConf);
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager(txConf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
   }

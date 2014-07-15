@@ -3,6 +3,7 @@ package com.continuuity.data2.util.hbase;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.transaction.TxConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -107,10 +108,11 @@ public class ConfigurationTable {
    *         was found for the given type.
    * @throws IOException If an error occurs while attempting to read the table or the table does not exist.
    */
-  public CConfiguration read(Type type, String namespace) throws IOException {
+  public Configuration read(Type type, String namespace) throws IOException {
     String tableName = getTableName(namespace);
 
     CConfiguration conf = null;
+    Configuration txConf = TxConfiguration.create();
     HTable table = null;
     try {
       table = new HTable(hbaseConf, tableName);
@@ -140,7 +142,10 @@ public class ConfigurationTable {
         }
       }
     }
-    return conf;
+    if (conf != null) {
+      conf.copyTo(txConf);
+    }
+    return txConf;
   }
 
   private static String getTableName(String reactorNamespace) {

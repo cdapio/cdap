@@ -13,6 +13,7 @@ import com.google.inject.Key;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * A provider for {@link TransactionStateStorage} that provides different
@@ -21,18 +22,18 @@ import com.google.inject.name.Names;
 @Singleton
 public final class TransactionStateStorageProvider implements Provider<TransactionStateStorage> {
 
-  private final CConfiguration cConf;
+  private final Configuration conf;
   private final Injector injector;
 
   @Inject
-  TransactionStateStorageProvider(CConfiguration cConf, Injector injector) {
-    this.cConf = cConf;
+  TransactionStateStorageProvider(Configuration conf, Injector injector) {
+    this.conf = conf;
     this.injector = injector;
   }
 
   @Override
   public TransactionStateStorage get() {
-    if (cConf.getBoolean(TxConstants.Manager.CFG_DO_PERSIST, true)) {
+    if (conf.getBoolean(TxConstants.Manager.CFG_DO_PERSIST, true)) {
       return injector.getInstance(Key.get(TransactionStateStorage.class, Names.named("persist")));
     } else {
       return injector.getInstance(NoOpTransactionStateStorage.class);

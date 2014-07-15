@@ -15,6 +15,7 @@ import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TransactionSystemTest;
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
@@ -43,6 +44,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static CConfiguration cConf;
+  private static Configuration txConf;
   private static InMemoryZKServer zkServer;
   private static TransactionService server;
   private static TransactionStateStorage txStateStorage;
@@ -76,6 +78,9 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     // we want persisting for this test
     cConf.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, true);
+
+    txConf = TxConfiguration.create();
+    cConf.copyTo(txConf);
 
     server = TransactionServiceTest.createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(),
                                                     hConf, tmpFolder.newFolder());
@@ -115,7 +120,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   @Test
   public void testGetSnapshot() throws Exception {
     TransactionSystemClient client = getClient();
-    SnapshotCodecProvider codecProvider = new SnapshotCodecProvider(cConf);
+    SnapshotCodecProvider codecProvider = new SnapshotCodecProvider(txConf);
 
     Transaction tx1 = client.startShort();
     long currentTime = System.currentTimeMillis();

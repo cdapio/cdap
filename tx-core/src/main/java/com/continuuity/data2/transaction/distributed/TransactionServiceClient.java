@@ -13,7 +13,6 @@ import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionNotInProgressException;
 import com.continuuity.data2.transaction.runtime.TransactionModules;
-
 import com.google.common.base.Throwables;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -114,7 +113,7 @@ public class TransactionServiceClient implements TransactionSystemClient {
    * @throws TException
    */
   @Inject
-  public TransactionServiceClient(CConfiguration config,
+  public TransactionServiceClient(Configuration config,
                                   ThriftClientProvider clientProvider) {
 
     // initialize the retry logic

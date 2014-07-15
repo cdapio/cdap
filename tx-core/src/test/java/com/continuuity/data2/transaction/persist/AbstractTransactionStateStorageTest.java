@@ -2,6 +2,7 @@ package com.continuuity.data2.transaction.persist;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -10,6 +11,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -34,13 +36,13 @@ public abstract class AbstractTransactionStateStorageTest {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTransactionStateStorageTest.class);
   private static Random random = new Random();
 
-  protected abstract CConfiguration getConfiguration(String testName) throws IOException;
+  protected abstract Configuration getConfiguration(String testName) throws IOException;
 
-  protected abstract AbstractTransactionStateStorage getStorage(CConfiguration conf);
+  protected abstract AbstractTransactionStateStorage getStorage(Configuration conf);
 
   @Test
   public void testSnapshotPersistence() throws Exception {
-    CConfiguration conf = getConfiguration("testSnapshotPersistence");
+    Configuration conf = getConfiguration("testSnapshotPersistence");
 
     TransactionSnapshot snapshot = createRandomSnapshot();
     TransactionStateStorage storage = getStorage(conf);
@@ -58,7 +60,7 @@ public abstract class AbstractTransactionStateStorageTest {
 
   @Test
   public void testLogWriteAndRead() throws Exception {
-    CConfiguration conf = getConfiguration("testLogWriteAndRead");
+    Configuration conf = getConfiguration("testLogWriteAndRead");
 
     // create some random entries
     List<TransactionEdit> edits = createRandomEdits(100);
@@ -97,7 +99,7 @@ public abstract class AbstractTransactionStateStorageTest {
 
   @Test
   public void testTransactionManagerPersistence() throws Exception {
-    CConfiguration conf = getConfiguration("testTransactionManagerPersistence");
+    Configuration conf = getConfiguration("testTransactionManagerPersistence");
     conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
     // start snapshot thread, but with long enough interval so we only get snapshots on shutdown
     conf.setInt(TxConstants.Manager.CFG_TX_SNAPSHOT_INTERVAL, 600);
@@ -203,7 +205,7 @@ public abstract class AbstractTransactionStateStorageTest {
    */
   @Test
   public void testCommittedSetClearing() throws Exception {
-    CConfiguration conf = getConfiguration("testCommittedSetClearing");
+    Configuration conf = getConfiguration("testCommittedSetClearing");
     conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
     conf.setInt(TxConstants.Manager.CFG_TX_SNAPSHOT_INTERVAL, 0); // no periodic snapshots
 
@@ -255,7 +257,7 @@ public abstract class AbstractTransactionStateStorageTest {
    */
   @Test
   public void testOldFileRemoval() throws Exception {
-    CConfiguration conf = getConfiguration("testOldFileRemoval");
+    Configuration conf = getConfiguration("testOldFileRemoval");
     TransactionStateStorage storage = null;
     try {
       storage = getStorage(conf);

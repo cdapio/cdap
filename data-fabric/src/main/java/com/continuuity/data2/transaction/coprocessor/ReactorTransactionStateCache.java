@@ -33,7 +33,7 @@ public class ReactorTransactionStateCache extends TransactionStateCache {
     this.configTable = new ConfigurationTable(conf);
   }
 
-  protected CConfiguration getSnapshotConfiguration() throws IOException {
+  protected Configuration getSnapshotConfiguration() throws IOException {
     return configTable.read(ConfigurationTable.Type.DEFAULT, tableNamespace);
   }
 }
