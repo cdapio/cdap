@@ -72,7 +72,7 @@ public class MultiObjectStoreDefinition
 
     TypeRepresentation typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
     Schema schema = GSON.fromJson(spec.getProperty("schema"), Schema.class);
-    return new MultiObjectStoreDataset(spec.getName(), table, typeRep, schema);
+    return new MultiObjectStoreDataset(spec.getName(), table, typeRep, schema, classLoader);
   }
 
 }
