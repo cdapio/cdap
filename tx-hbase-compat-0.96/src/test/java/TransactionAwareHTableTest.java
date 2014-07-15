@@ -165,7 +165,7 @@ public class TransactionAwareHTableTest {
    * Expect an exception since a transaction hasn't been started.
    * @throws Exception
    */
-  @Test(expected=IOException.class)
+  @Test(expected = IOException.class)
   public void testTransactionlessFailure() throws Exception {
     transactionAwareHTable.get(new Get(TestBytes.row));
   }
