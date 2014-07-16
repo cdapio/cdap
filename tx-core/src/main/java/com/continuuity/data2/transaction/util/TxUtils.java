@@ -33,7 +33,7 @@ public class TxUtils {
    * @param tx The current transaction
    * @return The oldest timestamp that will be visible for the given transaction and TTL configuration
    */
-  public static long getOldestTsVisible(Map<byte[], Long> ttlByFamily, Transaction tx) {
+  public static long getOldestVisibleTimestamp(Map<byte[], Long> ttlByFamily, Transaction tx) {
     long oldestVisible = tx.getVisibilityUpperBound();
     // we know that data will not be cleaned up while this tx is running up to this point as janitor uses it
     for (Long familyTTL : ttlByFamily.values()) {
@@ -49,7 +49,7 @@ public class TxUtils {
    * @param tx The current transaction
    * @return The maximum timestamp (exclusive) to use for time-range operations
    */
-  public static long getMaxStamp(Transaction tx) {
+  public static long getMaxVisibleTimestamp(Transaction tx) {
     // NOTE: +1 here because we want read up to readpointer inclusive, but timerange's end is exclusive
     return tx.getReadPointer() + 1;
   }

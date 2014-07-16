@@ -140,7 +140,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
     Transaction tx = txCodec.getFromOperation(get);
     if (tx != null) {
       get.setMaxVersions(tx.excludesSize() + 1);
-      get.setTimeRange(TxUtils.getOldestTsVisible(ttlByFamily, tx), TxUtils.getMaxStamp(tx));
+      get.setTimeRange(TxUtils.getOldestVisibleTimestamp(ttlByFamily, tx), TxUtils.getMaxVisibleTimestamp(tx));
       Filter newFilter = combineFilters(new TransactionVisibilityFilter(tx, ttlByFamily, allowEmptyValues),
                                         get.getFilter());
       get.setFilter(newFilter);
@@ -153,7 +153,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
     Transaction tx = txCodec.getFromOperation(scan);
     if (tx != null) {
       scan.setMaxVersions(tx.excludesSize() + 1);
-      scan.setTimeRange(TxUtils.getOldestTsVisible(ttlByFamily, tx), TxUtils.getMaxStamp(tx));
+      scan.setTimeRange(TxUtils.getOldestVisibleTimestamp(ttlByFamily, tx), TxUtils.getMaxVisibleTimestamp(tx));
       Filter newFilter = combineFilters(new TransactionVisibilityFilter(tx, ttlByFamily, allowEmptyValues),
                                         scan.getFilter());
       scan.setFilter(newFilter);
@@ -292,6 +292,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
 
           boolean sameAsPreviousCell = previousCell != null && sameCell(cell, previousCell);
 
+          // TODO: should check if this is a delete (empty byte[]) and !allowEmptyValues, then drop and skip to next col
           // skip same as previous if told so
           if (sameAsPreviousCell && skipSameCells) {
             oldFilteredCount++;

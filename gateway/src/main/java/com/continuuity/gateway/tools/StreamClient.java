@@ -48,7 +48,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -398,14 +400,12 @@ public class StreamClient extends ClientToolBase {
         }
       }
       Collector<StreamEvent> collector =
-        all ? new AllCollector<StreamEvent>(StreamEvent.class) :
-          first != null ? new FirstNCollector<StreamEvent>(first, StreamEvent.class) :
-            last != null ? new LastNCollector<StreamEvent>(last, StreamEvent.class) :
-              new FirstNCollector<StreamEvent>(10, StreamEvent.class);
+        all ? new AllCollector<StreamEvent>() :
+          first != null ? new FirstNCollector<StreamEvent>(first) :
+            last != null ? new LastNCollector<StreamEvent>(last) :
+              new FirstNCollector<StreamEvent>(10);
       try {
-        StreamEvent[] events =
-          fetchAll(requestUrl, consumer, collector);
-        return printEvents(events);
+        return printEvents(fetchAll(requestUrl, consumer, collector));
       } catch (Exception e) {
         System.err.println(e.getMessage());
         return null;
@@ -509,16 +509,16 @@ public class StreamClient extends ClientToolBase {
    * @return all events collected
    * @throws Exception if something goes wrong
    */
-  StreamEvent[] fetchAll(String uri, String consumer, Collector<StreamEvent> collector)
+  Collection<StreamEvent> fetchAll(String uri, String consumer, Collector<StreamEvent> collector)
     throws Exception {
     while (true) {
       StreamEvent event = fetchOne(uri, consumer);
       if (event == null) {
-        return collector.finish();
+        return collector.finish(new ArrayList<StreamEvent>());
       }
       boolean collectMore = collector.addElement(event);
       if (!collectMore) {
-        return collector.finish();
+        return collector.finish(new ArrayList<StreamEvent>());
       }
     }
   }
@@ -578,8 +578,8 @@ public class StreamClient extends ClientToolBase {
    * @param events An array of events
    * @return a String indicating how many events were printed
    */
-  String printEvents(StreamEvent[] events) {
-    System.out.println(events.length + " events: ");
+  String printEvents(Collection<StreamEvent> events) {
+    System.out.println(events.size() + " events: ");
     for (StreamEvent event : events) {
       String sep = "";
       for (String name : event.getHeaders().keySet()) {
@@ -600,7 +600,7 @@ public class StreamClient extends ClientToolBase {
       }
       System.out.println();
     }
-    return events.length + " events.";
+    return events.size() + " events.";
   }
 
   private boolean isId(String id) {
