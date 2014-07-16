@@ -24,7 +24,7 @@ import org.apache.hadoop.conf.Configuration;
 import javax.inject.Inject;
 
 /**
- * Google Guice Provider for {@link com.continuuity.data2.transaction.TxConfiguration} instances.
+ * Google Guice Provider for {@link org.apache.hadoop.conf.Configuration} instances.
  * Each call to {@link #get()} will
  * return a new {@link org.apache.hadoop.conf.Configuration} instance.
  */
