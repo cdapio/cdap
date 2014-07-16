@@ -85,8 +85,6 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
       Configuration txConf = injector.getInstance(Key.get(Configuration.class, Names.named("transaction")));
       txConf.set(Constants.Transaction.Container.ADDRESS, context.getHost().getCanonicalHostName());
 
-      LOG.info("TransactionService TwillRunnable started at {}", txConf.get(Constants.Transaction.Container.ADDRESS));
-
       injector.getInstance(LogAppenderInitializer.class).initialize();
       LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                          Constants.Logging.COMPONENT_NAME,

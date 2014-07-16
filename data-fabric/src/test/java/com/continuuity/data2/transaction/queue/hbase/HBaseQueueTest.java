@@ -30,7 +30,6 @@ import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;

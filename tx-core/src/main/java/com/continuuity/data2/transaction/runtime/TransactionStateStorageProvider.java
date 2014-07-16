@@ -26,6 +26,8 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 
+import javax.inject.Named;
+
 /**
  * A provider for {@link TransactionStateStorage} that provides different
  * {@link TransactionStateStorage} implementation based on configuration.
@@ -37,7 +39,7 @@ public final class TransactionStateStorageProvider implements Provider<Transacti
   private final Injector injector;
 
   @Inject
-  TransactionStateStorageProvider(Configuration conf, Injector injector) {
+  TransactionStateStorageProvider(@Named("transaction")Configuration conf, Injector injector) {
     this.conf = conf;
     this.injector = injector;
   }

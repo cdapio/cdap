@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
+import javax.inject.Named;
 
 /**
  * Persists transaction snapshots and write-ahead logs to files on the local filesystem.
@@ -61,7 +62,7 @@ public class LocalFileTransactionStateStorage extends AbstractTransactionStateSt
   private File snapshotDir;
 
   @Inject
-  public LocalFileTransactionStateStorage(Configuration conf, SnapshotCodecProvider codecProvider) {
+  public LocalFileTransactionStateStorage(@Named("transaction")Configuration conf, SnapshotCodecProvider codecProvider) {
     super(codecProvider);
     this.configuredSnapshotDir = conf.get(TxConstants.Manager.CFG_TX_SNAPSHOT_LOCAL_DIR);
   }

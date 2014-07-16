@@ -73,8 +73,6 @@
     <name>data.tx.snapshot.codecs</name>
     <value>
       com.continuuity.data2.transaction.snapshot.DefaultSnapshotCodec
-      com.continuuity.data2.transaction.snapshot.SnapshotCodecV1,
-      com.continuuity.data2.transaction.snapshot.SnapshotCodecV2
     </value>
     <description>Specifies the class names of all supported transaction state codecs</description>
     </property>

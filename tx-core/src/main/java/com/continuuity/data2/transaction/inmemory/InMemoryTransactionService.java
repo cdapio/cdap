@@ -60,9 +60,6 @@ public class InMemoryTransactionService extends AbstractService {
     this.txManagerProvider = txManagerProvider;
 
     address = conf.get(Constants.Transaction.Container.ADDRESS);
-
-    LOG.info("InMemoryTransactionService trying to Connect at {}", address);
-
     // Retrieve the number of threads for the service
     threads = conf.getInt(TxConstants.Service.CFG_DATA_TX_SERVER_THREADS,
                           TxConstants.Service.DEFAULT_DATA_TX_SERVER_THREADS);
