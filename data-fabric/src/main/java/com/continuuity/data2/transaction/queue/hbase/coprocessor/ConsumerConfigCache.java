@@ -61,7 +61,7 @@ public class ConsumerConfigCache {
   private long configCacheUpdateFrequency = QueueConstants.DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY;
   private ConfigurationTable configTable;
   private String tableNamespace;
-  private Configuration conf;
+  private CConfiguration conf;
   // timestamp of the last update from the configuration table
   private long lastConfigUpdate;
 

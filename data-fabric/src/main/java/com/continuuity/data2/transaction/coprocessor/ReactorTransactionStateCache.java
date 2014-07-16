@@ -17,6 +17,7 @@
 package com.continuuity.data2.transaction.coprocessor;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecV1;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecV2;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
@@ -50,6 +51,8 @@ public class ReactorTransactionStateCache extends TransactionStateCache {
   }
 
   protected Configuration getSnapshotConfiguration() throws IOException {
-    return configTable.read(ConfigurationTable.Type.DEFAULT, tableNamespace);
+     Configuration conf = TxConfiguration.create();
+     configTable.read(ConfigurationTable.Type.DEFAULT, tableNamespace).copyTo(conf);
+     return conf;
   }
 }

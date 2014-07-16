@@ -112,9 +112,6 @@ public abstract class HBaseQueueTest extends QueueTest {
     cConf.unset(Constants.CFG_HDFS_USER);
     cConf.setLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY, 1L);
 
-    Configuration configuration = TxConfiguration.create();
-    cConf.copyTo(configuration);
-
     final DataFabricDistributedModule dfModule =
       new DataFabricDistributedModule();
     // turn off persistence in tx manager to get rid of ugly zookeeper warnings
@@ -127,7 +124,7 @@ public abstract class HBaseQueueTest extends QueueTest {
       });
 
     ConfigurationTable configTable = new ConfigurationTable(hConf);
-    configTable.write(ConfigurationTable.Type.DEFAULT, configuration);
+    configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
 
     final Injector injector = Guice.createInjector(dataFabricModule,
                                                    new ConfigModule(cConf, hConf),

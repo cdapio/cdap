@@ -19,7 +19,6 @@ package com.continuuity.data2.util.hbase;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.transaction.TxConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -37,8 +36,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * Reads and writes current {@link org.apache.hadoop.conf.Configuration} to a table in HBase.
- * This make the configuration available
+ * Reads and writes current {@link CConfiguration} to a table in HBase.  This make the configuration available
  * to processes running on the HBase servers (such as coprocessors).  The entire configuration is stored in
  * a single row, keyed by the configuration type (to allow future expansion), with the configuration
  * key as the column name, and the configuration value as the value.
@@ -64,14 +62,13 @@ public class ConfigurationTable {
   }
 
   /**
-   * Writes the {@link org.apache.hadoop.conf.Configuration} instance as a new row to the HBase table.
-   * The {@link Type} given is used as
+   * Writes the {@link CConfiguration} instance as a new row to the HBase table.  The {@link Type} given is used as
    * the row key (allowing multiple configurations to be stored).  After the new configuration is written, this will
    * delete any configurations written with an earlier timestamp (to prevent removed values from being visible).
-   * @param conf The Configuration instance to store
+   * @param conf The CConfiguration instance to store
    * @throws IOException If an error occurs while writing the configuration
    */
-  public void write(Type type, Configuration conf) throws IOException {
+  public void write(Type type, CConfiguration conf) throws IOException {
     String tableName = getTableName(conf.get(DataSetAccessor.CFG_TABLE_PREFIX, DataSetAccessor.DEFAULT_TABLE_PREFIX));
     byte[] tableBytes = Bytes.toBytes(tableName);
 
@@ -122,15 +119,14 @@ public class ConfigurationTable {
    * given "namespace".
    * @param type Type of configuration to read in
    * @param namespace Namespace to use in constructing the table name (should be the same as reactor.namespace)
-   * @return The {@link org.apache.hadoop.conf.Configuration} instance populated with the stored values,
-   * or {@code null} if no row was found for the given type.
+   * @return The {@link CConfiguration} instance populated with the stored values, or {@code null} if no row
+   *         was found for the given type.
    * @throws IOException If an error occurs while attempting to read the table or the table does not exist.
    */
-  public Configuration read(Type type, String namespace) throws IOException {
+  public CConfiguration read(Type type, String namespace) throws IOException {
     String tableName = getTableName(namespace);
 
     CConfiguration conf = null;
-    Configuration txConf = TxConfiguration.create();
     HTable table = null;
     try {
       table = new HTable(hbaseConf, tableName);
@@ -160,10 +156,7 @@ public class ConfigurationTable {
         }
       }
     }
-    if (conf != null) {
-      conf.copyTo(txConf);
-    }
-    return txConf;
+    return conf;
   }
 
   private static String getTableName(String reactorNamespace) {
