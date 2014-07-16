@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.api.dataset.Dataset;
@@ -12,6 +28,7 @@ import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Put;
 import com.continuuity.api.dataset.table.Table;
+import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.ObjectResponse;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
@@ -179,23 +196,25 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   private int createInstance(String instanceName, String typeName, DatasetProperties props) throws IOException {
     DatasetInstanceHandler.DatasetTypeAndProperties typeAndProps =
       new DatasetInstanceHandler.DatasetTypeAndProperties(typeName, props.getProperties());
-    return HttpRequests.put(getUrl("/data/datasets/" + instanceName), new Gson().toJson(typeAndProps))
-      .getResponseCode();
+    HttpRequest request = HttpRequest.put(getUrl("/data/datasets/" + instanceName))
+      .withBody(new Gson().toJson(typeAndProps)).build();
+    return HttpRequests.execute(request).getResponseCode();
   }
 
   private ObjectResponse<List<DatasetSpecification>> getInstances() throws IOException {
-    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/datasets")),
-                                       new TypeToken<List<DatasetSpecification>>() {
-                                       }.getType());
+    HttpRequest request = HttpRequest.get(getUrl("/data/datasets")).build();
+    return ObjectResponse.fromJsonBody(HttpRequests.execute(request),
+                                       new TypeToken<List<DatasetSpecification>>() { }.getType());
   }
 
   private ObjectResponse<DatasetInstanceMeta> getInstance(String instanceName) throws IOException {
-    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/datasets/" + instanceName)),
-                                       DatasetInstanceMeta.class);
+    HttpRequest request = HttpRequest.get(getUrl("/data/datasets/" + instanceName)).build();
+    return ObjectResponse.fromJsonBody(HttpRequests.execute(request), DatasetInstanceMeta.class);
   }
 
   private int deleteInstance(String instanceName) throws IOException {
-    return HttpRequests.delete(getUrl("/data/datasets/" + instanceName)).getResponseCode();
+    HttpRequest request = HttpRequest.delete(getUrl("/data/datasets/" + instanceName)).build();
+    return HttpRequests.execute(request).getResponseCode();
   }
 
   /**

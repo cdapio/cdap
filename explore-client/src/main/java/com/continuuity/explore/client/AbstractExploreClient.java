@@ -1,6 +1,24 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.explore.client;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.http.HttpMethod;
+import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
 import com.continuuity.explore.service.ColumnDesc;
@@ -158,31 +176,36 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
   }
 
   private HttpResponse doGet(String resource) throws ExploreException {
-    return doRequest(resource, "GET", null, null, null);
+    return doRequest(resource, "GET", null, null);
   }
 
   private HttpResponse doPost(String resource, String body, Map<String, String> headers) throws ExploreException {
-    return doRequest(resource, "POST", headers, body, null);
+    return doRequest(resource, "POST", headers, body);
   }
 
   private HttpResponse doDelete(String resource) throws ExploreException {
-    return doRequest(resource, "DELETE", null, null, null);
+    return doRequest(resource, "DELETE", null, null);
   }
 
   private HttpResponse doRequest(String resource, String requestMethod,
                                  @Nullable Map<String, String> headers,
-                                 @Nullable String body,
-                                 @Nullable InputStream bodySrc) throws ExploreException {
+                                 @Nullable String body) throws ExploreException {
     String resolvedUrl = resolve(resource);
     try {
       URL url = new URL(resolvedUrl);
-      return HttpRequests.doRequest(requestMethod, url, headers, body, bodySrc);
+      if (body != null) {
+        return HttpRequests.execute(HttpRequest.builder(HttpMethod.valueOf(requestMethod), url)
+                                      .addHeaders(headers).withBody(body).build());
+      } else {
+        return HttpRequests.execute(HttpRequest.builder(HttpMethod.valueOf(requestMethod), url)
+                                      .addHeaders(headers).build());
+      }
     } catch (IOException e) {
       throw new ExploreException(
         String.format("Error connecting to Explore Service at %s while doing %s with headers %s and body %s",
                       resolvedUrl, requestMethod,
                       headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers),
-                      body == null ? bodySrc : body), e);
+                      body == null ? "null" : body), e);
     }
   }
 

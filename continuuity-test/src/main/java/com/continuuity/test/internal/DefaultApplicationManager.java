@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.test.internal;
 
 import com.continuuity.app.ApplicationSpecification;
@@ -29,10 +45,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -56,7 +73,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   private final StreamWriterFactory streamWriterFactory;
   private final ProcedureClientFactory procedureClientFactory;
   private final AppFabricHttpHandler httpHandler;
-
+  private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
   public DefaultApplicationManager(LocationFactory locationFactory,
@@ -66,15 +83,17 @@ public class DefaultApplicationManager implements ApplicationManager {
                                    StreamWriterFactory streamWriterFactory,
                                    ProcedureClientFactory procedureClientFactory,
                                    CConfiguration configuration,
+                                   DiscoveryServiceClient discoveryServiceClient,
+                                   AppFabricHttpHandler httpHandler,
                                    @Assisted("accountId") String accountId,
                                    @Assisted("applicationId") String applicationId,
                                    @Assisted Location deployedJar,
-                                   @Assisted ApplicationSpecification appSpec,
-                                   AppFabricHttpHandler httpHandler) {
+                                   @Assisted ApplicationSpecification appSpec) {
     this.accountId = accountId;
     this.applicationId = applicationId;
     this.streamWriterFactory = streamWriterFactory;
     this.procedureClientFactory = procedureClientFactory;
+    this.discoveryServiceClient = discoveryServiceClient;
     this.txSystemClient = txSystemClient;
     this.httpHandler = httpHandler;
 
@@ -245,24 +264,12 @@ public class DefaultApplicationManager implements ApplicationManager {
       return new WorkflowManager() {
         @Override
         public List<String> getSchedules() {
-          List<String> schedules = Lists.newArrayList();
-          try {
-            schedules = AppFabricTestHelper.getSchedules(httpHandler, applicationId, workflowName);
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-          return schedules;
+          return AppFabricTestHelper.getSchedules(httpHandler, applicationId, workflowName);
         }
 
         @Override
         public List<RunRecord> getHistory() {
-          List<RunRecord> history = Lists.newArrayList();
-          try {
-            history = AppFabricTestHelper.getHistory(httpHandler, applicationId, workflowName);
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-          return history;
+          return AppFabricTestHelper.getHistory(httpHandler, applicationId, workflowName);
         }
 
         public ScheduleManager getSchedule(final String schedName) {
@@ -270,31 +277,17 @@ public class DefaultApplicationManager implements ApplicationManager {
           return new ScheduleManager() {
             @Override
             public void suspend() {
-              try {
-                AppFabricTestHelper.suspend(httpHandler, applicationId, workflowName, schedName);
-              } catch (Exception e) {
-                throw Throwables.propagate(e);
-              }
+              AppFabricTestHelper.suspend(httpHandler, applicationId, workflowName, schedName);
             }
 
             @Override
             public void resume() {
-              try {
-                AppFabricTestHelper.resume(httpHandler, applicationId, workflowName, schedName);
-              } catch (Exception e) {
-                throw Throwables.propagate(e);
-              }
+              AppFabricTestHelper.resume(httpHandler, applicationId, workflowName, schedName);
             }
 
             @Override
             public String status() {
-              String status = null;
-              try {
-                status = AppFabricTestHelper.scheduleStatus(httpHandler, applicationId, workflowName, schedName);
-              } catch (Exception e) {
-                throw Throwables.propagate(e);
-              }
-              return status;
+              return AppFabricTestHelper.scheduleStatus(httpHandler, applicationId, workflowName, schedName);
             }
           };
         }
@@ -340,6 +333,12 @@ public class DefaultApplicationManager implements ApplicationManager {
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }
+        }
+
+        @Override
+        public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
+          String discoveryName = String.format("service.%s.%s.%s.%s", accountId, applicationId, serviceId, serviceName);
+          return discoveryServiceClient.discover(discoveryName);
         }
       };
     } catch (Exception e) {

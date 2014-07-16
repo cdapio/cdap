@@ -584,7 +584,7 @@ Example
    * - HTTP Request
      - ``PUT <base-url>/data/datasets/mydataset``
    * - Body
-     - ``{"typeName":"com.continuuity.api.dataset.table.Table", "properties":{"ttl":"3600000"}}``
+     - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"3600000"}}``
    * - Description
      - Creates a Dataset named "mydataset" of the type "table" and time-to-live property set to 1 hour
 
@@ -1697,7 +1697,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/instances``
+     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables`` ``/WhoRunnable/instances``
    * - Description
      - Retrieve the number of instances of the Twill Runnable *WhoRunnable* of the Service *WhoService*
 
@@ -1706,12 +1706,12 @@ Example
 Run History and Schedule
 ------------------------
 
-To see the history of all runs of an element,
-issue an HTTP GET to the element’s URL with ``history`` parameter.
+To see the history of all runs of selected elements (Flows, Procedures, MapReduce jobs, Workflows, and
+Services), issue an HTTP GET to the element’s URL with the ``history`` parameter.
 This will return a JSON list of all completed runs, each with a start time,
 end time and termination status::
 
-	GET <base-url>/apps/<app-id>/flows/<flow-id>/history
+	GET <base-url>/apps/<app-id>/<element>/<element-id>/history
 
 .. list-table::
    :widths: 20 80
@@ -1721,8 +1721,10 @@ end time and termination status::
      - Description
    * - ``<app-id>``
      - Name of the Application
-   * - ``<flow-id>``
-     - Name of the Flow
+   * - ``<element-type>``
+     - One of ``flows``, ``procedures``, ``mapreduce``, ``workflows`` or ``services``
+   * - ``<element-id>``
+     - Name of the element
 
 Example
 .......
@@ -1741,9 +1743,9 @@ Example
 The *runid* field is a UUID that uniquely identifies a run within the Continuuity Reactor,
 with the start and end times in seconds since the start of the Epoch (midnight 1/1/1970).
 
-For Services, you can retrieve the history of a Twill Runnable using::
+For Services, you can retrieve the history of a Twill Service using::
 
-  GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/history
+  GET <base-url>/apps/<app-id>/services/<service-id>/history
 
 Example
 .......
@@ -1752,10 +1754,9 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/history``
+     - ``GET <base-url>/apps/HelloWorld/services/WhoService/history``
    * - Description
-     - Retrieve the history of the Runnable *WhoRunnable* of the Service *WhoService* of the
-       Application *HelloWorld*
+     - Retrieve the history of the Service *WhoService* of the Application *HelloWorld*
    * - Returns
      - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
        ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
