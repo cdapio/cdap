@@ -70,5 +70,5 @@ Where to Go Next
 ================
 Now that you've seen some examples using Continuuity Reactor, take a look at:
 
-- `Continuuity Reactor Programming Guide <../programming.html>`,
+- `Continuuity Reactor Programming Guide <../programming.html>`__,
   an introduction to programming applications for the Continuuity Reactor.
