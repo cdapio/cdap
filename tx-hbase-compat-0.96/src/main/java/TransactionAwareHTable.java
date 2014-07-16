@@ -17,7 +17,6 @@
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionCodec;
-import com.google.common.base.Throwables;
 import com.google.protobuf.Service;
 import com.google.protobuf.ServiceException;
 import org.apache.hadoop.conf.Configuration;
@@ -41,7 +40,8 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.Triple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -60,8 +60,9 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   private Transaction tx;
   private final HTable hTable;
   private final TransactionCodec txCodec;
-  private final List<Triple<byte[], byte[], byte[]>> changeSet;
+  private final List<ActionChange> changeSet;
   private boolean allowNonTransactional;
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionAwareHTable.class);
 
   /**
    * Create a transactional aware instance of the passed HTable
@@ -73,13 +74,13 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   /**
    * Create a transactional aware instance of the passed HTable, with the option
-   * of allowing non-transaction operations.
+   * of allowing non-transactional operations.
    * @param hTable
    * @param allowNonTransactional
    */
   public TransactionAwareHTable(HTable hTable, boolean allowNonTransactional) {
     this.hTable = hTable;
-    this.changeSet = new ArrayList<Triple<byte[], byte[], byte[]>>();
+    this.changeSet = new ArrayList<ActionChange>();
     this.txCodec = new TransactionCodec();
     this.allowNonTransactional = allowNonTransactional;
   }
@@ -435,8 +436,8 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   @Override
   public Collection<byte[]> getTxChanges() {
     List<byte[]> txChanges = new ArrayList<byte[]>();
-    for (Triple<byte[], byte[], byte[]> change : changeSet) {
-      txChanges.add(Bytes.add(change.getFirst(), change.getSecond(), change.getThird()));
+    for (ActionChange change : changeSet) {
+      txChanges.add(Bytes.add(change.getRow(), change.getFamily(), change.getQualifier()));
     }
     return txChanges;
   }
@@ -456,10 +457,11 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   @Override
   public boolean rollbackTx() throws Exception {
     try {
-      for (Triple<byte[], byte[], byte[]> change : changeSet) {
-        byte[] row = change.getFirst();
-        byte[] family = change.getSecond();
-        byte[] qualifier = change.getThird();
+      List<Delete> rollbackDeletes = new ArrayList<Delete>(changeSet.size());
+      for (ActionChange change : changeSet) {
+        byte[] row = change.getRow();
+        byte[] family = change.getFamily();
+        byte[] qualifier = change.getQualifier();
         long transactionTimestamp = tx.getWritePointer();
         Delete rollbackDelete = new Delete(row, transactionTimestamp);
         if (family != null && qualifier == null) {
@@ -467,14 +469,16 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
         } else if (family != null && qualifier != null) {
           rollbackDelete.deleteColumn(family, qualifier, transactionTimestamp);
         }
-        hTable.delete(rollbackDelete);
+        rollbackDeletes.add(rollbackDelete);
       }
+      hTable.delete(rollbackDeletes);
       return true;
-    } catch (Exception e) {
-      Throwables.propagate(e);
-      return false;
     } finally {
-      hTable.flushCommits();
+      try {
+        hTable.flushCommits();
+      } catch (Exception e) {
+        LOG.error("Could not flush HTable commits", e);
+      }
       tx = null;
       changeSet.clear();
     }
@@ -483,6 +487,34 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   @Override
   public String getTransactionAwareName() {
     return Bytes.toString(getTableName());
+  }
+
+  /**
+   * Record of each transaction that causes a change. This reference is used to rollback
+   * any operation upon failure.
+   */
+  private class ActionChange {
+    private final byte[] row;
+    private final byte[] family;
+    private final byte[] qualifier;
+
+    private ActionChange(byte[] row, byte[] family, byte[] qualifier) {
+      this.row = row;
+      this.family = family;
+      this.qualifier = qualifier;
+    }
+
+    private byte[] getRow() {
+      return row;
+    }
+
+    private byte[] getFamily() {
+      return family;
+    }
+
+    private byte[] getQualifier() {
+      return qualifier;
+    }
   }
 
   // Helpers to get copies of objects with the timestamp set to the current transaction timestamp.
@@ -506,7 +538,7 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
         if (!familyValues.isEmpty()) {
           for (KeyValue value : familyValues) {
             txPut.add(value.getFamily(), value.getQualifier(), tx.getWritePointer(), value.getValue());
-            changeSet.add(new Triple(txPut.getRow(), value.getFamily(), value.getQualifier()));
+            changeSet.add(new ActionChange(txPut.getRow(), value.getFamily(), value.getQualifier()));
           }
         }
       }
@@ -521,13 +553,13 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   private Put transactionalizeAction(Delete delete) throws IOException {
     long transactionTimestamp = tx.getWritePointer();
-    Result result = get(new Get(delete.getRow()));
 
     byte[] deleteRow = delete.getRow();
     Put txPut = new Put(deleteRow, transactionTimestamp);
 
     Map<byte[], List<KeyValue>> familyToDelete = delete.getFamilyMap();
     if (familyToDelete.isEmpty()) {
+      Result result = get(new Get(delete.getRow()));
       // Delete everything
       NavigableMap<byte[], NavigableMap<byte[], byte[]>> resultMap = result.getNoVersionMap();
       for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> familyEntry : resultMap.entrySet()) {
@@ -541,6 +573,7 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
         byte[] family = familyEntry.getKey();
         List<KeyValue> entries = familyEntry.getValue();
         if (entries.isEmpty()) {
+          Result result = get(new Get(delete.getRow()));
           // Delete entire family
           NavigableMap<byte[], byte[]> familyColumns = result.getFamilyMap(family);
           for (Map.Entry<byte[], byte[]> column : familyColumns.entrySet()) {

@@ -16,7 +16,7 @@
 
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionFailureException;
-import com.continuuity.data2.transaction.inmemory.DetachedTxSystemClient;
+import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Get;
@@ -45,12 +45,13 @@ public class SecondaryIndexTable {
   private TransactionContext transactionContext;
   private static final byte[] DELIMITER  = new byte[] {0};
 
-  public SecondaryIndexTable(HTable hTable, HTable secondaryTable, byte[] secondaryIndex) {
+  public SecondaryIndexTable(TransactionServiceClient transactionServiceClient, HTable hTable,
+                             HTable secondaryTable, byte[] secondaryIndex) {
     this.secondaryIndex = secondaryIndex;
     this.secondaryIndexFamily = Bytes.toBytes("indexFamily");
     this.transactionAwareHTable = new TransactionAwareHTable(hTable);
     this.secondaryIndexTable = new TransactionAwareHTable(secondaryTable);
-    this.transactionContext = new TransactionContext(new DetachedTxSystemClient(), transactionAwareHTable,
+    this.transactionContext = new TransactionContext(transactionServiceClient, transactionAwareHTable,
                                                 secondaryIndexTable);
   }
 
@@ -129,7 +130,7 @@ public class SecondaryIndexTable {
       try {
         transactionContext.abort();
       } catch (TransactionFailureException e1) {
-        throw new IOException("Could not rollback transaction");
+        throw new IOException("Could not rollback transaction", e1);
       }
     }
   }
