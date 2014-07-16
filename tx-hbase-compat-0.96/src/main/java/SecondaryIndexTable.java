@@ -43,6 +43,7 @@ public class SecondaryIndexTable {
   private TransactionAwareHTable transactionAwareHTable;
   private TransactionAwareHTable secondaryIndexTable;
   private TransactionContext transactionContext;
+  private static final byte[] DELIMITER  = new byte[] {0};
 
   public SecondaryIndexTable(HTable hTable, HTable secondaryTable, byte[] secondaryIndex) {
     this.secondaryIndex = secondaryIndex;
@@ -67,7 +68,7 @@ public class SecondaryIndexTable {
       try {
         transactionContext.abort();
       } catch (TransactionFailureException e1) {
-        throw new IOException("Could not rollback transaction");
+        throw new IOException("Could not rollback transaction", e1);
       }
     }
     return null;
@@ -92,7 +93,7 @@ public class SecondaryIndexTable {
       try {
         transactionContext.abort();
       } catch (TransactionFailureException e1) {
-        throw new IOException("Could not rollback transaction");
+        throw new IOException("Could not rollback transaction", e1);
       }
     }
     return null;
@@ -113,8 +114,8 @@ public class SecondaryIndexTable {
         for (Map.Entry<byte [], List<KeyValue>> family : familyMap) {
           for (KeyValue value : family.getValue()) {
             if (value.getQualifier().equals(secondaryIndex)) {
-              byte[] secondaryQualifier = Bytes.add(Bytes.add(value.getQualifier(), new byte[0], value.getValue()),
-                                                    new byte[0], value.getRow());
+              byte[] secondaryQualifier = Bytes.add(Bytes.add(value.getQualifier(), DELIMITER, value.getValue()),
+                                                    DELIMITER, value.getRow());
               secondaryIndexPut.add(secondaryIndexFamily, secondaryQualifier, value.getValue());
             }
           }

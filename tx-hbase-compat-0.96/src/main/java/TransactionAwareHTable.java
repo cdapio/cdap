@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -57,9 +58,9 @@ import java.util.Set;
  */
 public class TransactionAwareHTable implements HTableInterface, TransactionAware {
   private Transaction tx;
-  private HTable hTable;
+  private final HTable hTable;
   private final TransactionCodec txCodec;
-  private ArrayList<Triple<byte[], byte[], byte[]>> changeSet;
+  private final List<Triple<byte[], byte[], byte[]>> changeSet;
   private boolean allowNonTransactional;
 
   /**
@@ -67,10 +68,7 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
    * @param hTable
    */
   public TransactionAwareHTable(HTable hTable) {
-    this.hTable = hTable;
-    this.changeSet = new ArrayList<Triple<byte[], byte[], byte[]>>();
-    this.txCodec = new TransactionCodec();
-    this.allowNonTransactional = false;
+    this(hTable, false);
   }
 
   /**
@@ -81,8 +79,7 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
    */
   public TransactionAwareHTable(HTable hTable, boolean allowNonTransactional) {
     this.hTable = hTable;
-    this.changeSet = new ArrayList<Triple<byte[], byte[], byte[]>>(
-    );
+    this.changeSet = new ArrayList<Triple<byte[], byte[], byte[]>>();
     this.txCodec = new TransactionCodec();
     this.allowNonTransactional = allowNonTransactional;
   }
@@ -136,7 +133,7 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
     if (tx == null) {
       throw new IOException("Transaction not started");
     }
-    ArrayList<Get> transactionalizedGets = new ArrayList<Get>();
+    List<Get> transactionalizedGets = new ArrayList<Get>(gets.size());
     for (Get get : gets) {
       transactionalizedGets.add(transactionalizeAction(get));
     }
@@ -145,13 +142,36 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   @Override
   public void batch(List<? extends Row> actions, Object[] results) throws IOException, InterruptedException {
-    // TODO
+    List<Row> transactionalizedActions = new ArrayList<Row>(actions.size());
+    for (Row action : actions) {
+      if (action instanceof Get) {
+        transactionalizedActions.add(transactionalizeAction((Get) action));
+      } else if (action instanceof Put) {
+        transactionalizedActions.add(transactionalizeAction((Put) action));
+      } else if (action instanceof Delete) {
+        transactionalizedActions.add(transactionalizeAction((Delete) action));
+      } else {
+        transactionalizedActions.add(action);
+      }
+    }
+    hTable.batch(transactionalizedActions, results);
   }
 
   @Override
   public Object[] batch(List<? extends Row> actions) throws IOException, InterruptedException {
-    // TODO
-    return new Object[0];
+    List<Row> transactionalizedActions = new ArrayList<Row>(actions.size());
+    for (Row action : actions) {
+      if (action instanceof Get) {
+        transactionalizedActions.add(transactionalizeAction((Get) action));
+      } else if (action instanceof Put) {
+        transactionalizedActions.add(transactionalizeAction((Put) action));
+      } else if (action instanceof Delete) {
+        transactionalizedActions.add(transactionalizeAction((Delete) action));
+      } else {
+        transactionalizedActions.add(action);
+      }
+    }
+    return hTable.batch(transactionalizedActions);
   }
 
   @Override
@@ -237,7 +257,7 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
     if (tx == null) {
       throw new IOException("Transaction not started");
     }
-    ArrayList<Put> transactionalizedPuts = new ArrayList<Put>();
+    List<Put> transactionalizedPuts = new ArrayList<Put>(puts.size());
     for (Put put : puts) {
       Put txPut = transactionalizeAction(put);
       transactionalizedPuts.add(txPut);
@@ -267,7 +287,7 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
     if (tx == null) {
       throw new IOException("Transaction not started");
     }
-    ArrayList<Put> transactionalizedPuts = new ArrayList<Put>();
+    List<Put> transactionalizedPuts = new ArrayList<Put>(deletes.size());
     for (Delete delete : deletes) {
       Put txPut = transactionalizeAction(delete);
       transactionalizedPuts.add(txPut);
@@ -287,11 +307,18 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   @Override
   public void mutateRow(RowMutations rm) throws IOException {
-    if (allowNonTransactional) {
-      hTable.mutateRow(rm);
-    } else {
-      throw new UnsupportedOperationException("Operation is not supported transactionally");
+    if (tx == null) {
+      throw new IOException("Transaction not started");
     }
+    RowMutations transactionalMutations = new RowMutations();
+    for (Mutation mutation : rm.getMutations()) {
+      if (mutation instanceof Put) {
+        transactionalMutations.add(transactionalizeAction((Put) mutation));
+      } else if (mutation instanceof Delete) {
+        transactionalMutations.add(transactionalizeAction((Delete) mutation));
+      }
+    }
+    hTable.mutateRow(transactionalMutations);
   }
 
   @Override
@@ -407,7 +434,7 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   @Override
   public Collection<byte[]> getTxChanges() {
-    ArrayList<byte[]> txChanges = new ArrayList<byte[]>();
+    List<byte[]> txChanges = new ArrayList<byte[]>();
     for (Triple<byte[], byte[], byte[]> change : changeSet) {
       txChanges.add(Bytes.add(change.getFirst(), change.getSecond(), change.getThird()));
     }
@@ -473,15 +500,11 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   private Put transactionalizeAction(Put put) throws IOException {
     Put txPut = new Put(put.getRow(), tx.getWritePointer());
     Set<Map.Entry<byte[], List<KeyValue>>> familyMap = put.getFamilyMap().entrySet();
-    if (familyMap.isEmpty()) {
-      changeSet.add(new Triple(txPut.getRow(), null, null));
-    } else {
-      for (Map.Entry<byte [], List<KeyValue>> family : familyMap) {
+    if (!familyMap.isEmpty()) {
+      for (Map.Entry<byte[], List<KeyValue>> family : familyMap) {
         List<KeyValue> familyValues = family.getValue();
-        if (familyValues.isEmpty()) {
-          changeSet.add(new Triple(txPut.getRow(), family.getKey(), null));
-        } else {
-          for (KeyValue value : family.getValue()) {
+        if (!familyValues.isEmpty()) {
+          for (KeyValue value : familyValues) {
             txPut.add(value.getFamily(), value.getQualifier(), tx.getWritePointer(), value.getValue());
             changeSet.add(new Triple(txPut.getRow(), value.getFamily(), value.getQualifier()));
           }
