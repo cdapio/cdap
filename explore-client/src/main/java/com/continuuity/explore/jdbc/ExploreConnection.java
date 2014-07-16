@@ -91,9 +91,26 @@ public class ExploreConnection implements Connection {
   }
 
   @Override
+  public boolean isReadOnly() throws SQLException {
+    // Explore does not support writing to datasets using SQL queries
+    String s = "Test";
+    return true;
+  }
+
+  @Override
   public boolean getAutoCommit() throws SQLException {
     // We don't (yet) support write, but with Hive, every statement is auto commit.
     return true;
+  }
+
+  @Override
+  public String getCatalog() throws SQLException {
+    return "";
+  }
+
+  @Override
+  public int getTransactionIsolation() throws SQLException {
+    return Connection.TRANSACTION_NONE;
   }
 
   @Override
@@ -127,27 +144,12 @@ public class ExploreConnection implements Connection {
   }
 
   @Override
-  public boolean isReadOnly() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public void setCatalog(String s) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
-  public String getCatalog() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public void setTransactionIsolation(int i) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public int getTransactionIsolation() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 

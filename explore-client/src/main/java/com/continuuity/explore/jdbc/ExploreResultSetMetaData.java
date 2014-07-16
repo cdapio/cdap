@@ -138,7 +138,8 @@ public class ExploreResultSetMetaData implements ResultSetMetaData {
   }
 
   @Override
-  public int getColumnDisplaySize(int i) throws SQLException {
+  public int getColumnDisplaySize(int column) throws SQLException {
+    int columnType = getColumnType(column);
     throw new SQLFeatureNotSupportedException();
   }
 
