@@ -17,16 +17,16 @@
 package com.continuuity.internal.app.runtime.service;
 
 import com.continuuity.internal.app.runtime.AbstractProgramController;
-import org.apache.twill.internal.BasicTwillContext;
+import org.apache.twill.api.TwillContext;
 
 /**
  * Program Controller for Service runnable
  */
-public class InMemoryRunnableProgramController extends AbstractProgramController {
+final class InMemoryRunnableProgramController extends AbstractProgramController {
   private InMemoryRunnableDriver driver;
 
-  public InMemoryRunnableProgramController(String serviceName, String runnableName, BasicTwillContext twillContext,
-                                           InMemoryRunnableDriver driver) {
+  InMemoryRunnableProgramController(String serviceName, String runnableName,
+                                    TwillContext twillContext, InMemoryRunnableDriver driver) {
     super(serviceName + ":" + runnableName, twillContext.getRunId());
     this.driver = driver;
   }

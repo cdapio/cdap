@@ -30,6 +30,7 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
+import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
 import com.continuuity.common.utils.Networks;
@@ -207,7 +208,7 @@ public class DatasetOpExecutorServiceTest {
     String path = String.format("/data/datasets/%s/admin/%s", instanceName, opName);
 
     URL targetUrl = resolve(path);
-    HttpResponse response = HttpRequests.post(targetUrl);
+    HttpResponse response = HttpRequests.execute(HttpRequest.post(targetUrl).build());
     DatasetAdminOpResponse body = getResponse(response.getResponseBody());
     Assert.assertEquals(expectedStatus, response.getResponseCode());
     Assert.assertEquals(expectedResult, body.getResult());
