@@ -37,7 +37,8 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * Reads and writes current {@link CConfiguration} to a table in HBase.  This make the configuration available
+ * Reads and writes current {@link org.apache.hadoop.conf.Configuration} to a table in HBase.
+ * This make the configuration available
  * to processes running on the HBase servers (such as coprocessors).  The entire configuration is stored in
  * a single row, keyed by the configuration type (to allow future expansion), with the configuration
  * key as the column name, and the configuration value as the value.
@@ -121,8 +122,8 @@ public class ConfigurationTable {
    * given "namespace".
    * @param type Type of configuration to read in
    * @param namespace Namespace to use in constructing the table name (should be the same as reactor.namespace)
-   * @return The {@link CConfiguration} instance populated with the stored values, or {@code null} if no row
-   *         was found for the given type.
+   * @return The {@link org.apache.hadoop.conf.Configuration} instance populated with the stored values,
+   * or {@code null} if no row was found for the given type.
    * @throws IOException If an error occurs while attempting to read the table or the table does not exist.
    */
   public Configuration read(Type type, String namespace) throws IOException {
