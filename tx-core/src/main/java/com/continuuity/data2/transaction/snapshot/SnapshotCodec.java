@@ -17,12 +17,9 @@
 package com.continuuity.data2.transaction.snapshot;
 
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
-import com.google.common.base.Charsets;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 
 /**
  * Interface to decode and encode a transaction snapshot. Each codec implements one version of the encoding.

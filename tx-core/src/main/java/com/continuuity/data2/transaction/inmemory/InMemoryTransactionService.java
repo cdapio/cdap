@@ -15,12 +15,13 @@
  */
 package com.continuuity.data2.transaction.inmemory;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.TxConstants;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.name.Named;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -51,7 +52,7 @@ public class InMemoryTransactionService extends AbstractService {
   protected final int maxReadBufferBytes;
 
   @Inject
-  public InMemoryTransactionService(CConfiguration conf,
+  public InMemoryTransactionService(@Named("transaction")Configuration conf,
                             DiscoveryService discoveryService,
                             Provider<InMemoryTransactionManager> txManagerProvider) {
 

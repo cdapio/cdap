@@ -16,14 +16,12 @@
 
 package com.continuuity.data2.transaction.hbase;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;

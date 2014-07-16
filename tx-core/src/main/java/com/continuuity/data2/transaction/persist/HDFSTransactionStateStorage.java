@@ -16,9 +16,7 @@
 
 package com.continuuity.data2.transaction.persist;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.google.common.base.Function;

@@ -54,6 +54,8 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.security.User;
@@ -104,6 +106,7 @@ public class ReactorServiceMain extends DaemonMain {
 
   protected final CConfiguration cConf;
   protected final Configuration hConf;
+  private Configuration txConf;
 
   private final AtomicBoolean isLeader = new AtomicBoolean(false);
 
@@ -163,6 +166,8 @@ public class ReactorServiceMain extends DaemonMain {
     serviceStore = baseInjector.getInstance(ServiceStore.class);
 
     secureStoreUpdater = baseInjector.getInstance(HBaseSecureStoreUpdater.class);
+
+    txConf = baseInjector.getInstance(Key.get(Configuration.class, Names.named("transaction")));
 
     checkTransactionRequirements();
     checkExploreRequirements();
@@ -300,13 +305,25 @@ public class ReactorServiceMain extends DaemonMain {
     Map<String, Integer> instanceCountMap = new HashMap<String, Integer>();
     for (Map.Entry<String, Map<String, String>> entry : getConfigKeys().entrySet()) {
       String service = entry.getKey();
+
       Map<String, String> configKeys = entry.getValue();
       try {
-        int maxCount = cConf.getInt(configKeys.get("max"));
+        int maxCount;
+        if (service == Constants.Service.TRANSACTION) {
+          maxCount = txConf.getInt(configKeys.get("max"), 1);
+        } else {
+          maxCount = cConf.getInt(configKeys.get("max"));
+        }
 
         Integer savedCount = serviceStore.getServiceInstance(service);
         if (savedCount == null || savedCount == 0) {
-          savedCount = Math.min(maxCount, cConf.getInt(configKeys.get("default")));
+          int defInstance;
+          if (service == Constants.Service.TRANSACTION) {
+            defInstance = txConf.getInt(configKeys.get("default"), 1);
+          } else {
+            defInstance = cConf.getInt(configKeys.get("default"));
+          }
+          savedCount = Math.min(maxCount, defInstance);
         } else {
           // If the max value is smaller than the saved instance count, update the store to the max value.
           if (savedCount > maxCount) {
@@ -326,7 +343,8 @@ public class ReactorServiceMain extends DaemonMain {
 
   private TwillApplication createTwillApplication(final Map<String, Integer> instanceCountMap) {
     try {
-      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf(), isExploreEnabled, instanceCountMap);
+      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf(), txConf,
+                                         isExploreEnabled, instanceCountMap);
     } catch (Exception e) {
       throw  Throwables.propagate(e);
     }

@@ -16,7 +16,7 @@
 
 package com.continuuity.data2.transaction.distributed;
 
-import com.continuuity.common.conf.CConfiguration;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.thrift.TException;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -30,7 +30,7 @@ public class SingleUseClientProvider extends AbstractClientProvider {
   private static final Logger LOG =
       LoggerFactory.getLogger(SingleUseClientProvider.class);
 
-  public SingleUseClientProvider(CConfiguration conf, DiscoveryServiceClient discoveryServiceClient, int timeout) {
+  public SingleUseClientProvider(Configuration conf, DiscoveryServiceClient discoveryServiceClient, int timeout) {
     super(conf, discoveryServiceClient);
     this.timeout = timeout;
   }

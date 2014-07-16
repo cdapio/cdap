@@ -16,7 +16,6 @@
 
 package com.continuuity.data2.transaction.persist;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;

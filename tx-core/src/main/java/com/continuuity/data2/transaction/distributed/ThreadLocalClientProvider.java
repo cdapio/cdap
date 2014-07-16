@@ -16,7 +16,7 @@
 
 package com.continuuity.data2.transaction.distributed;
 
-import com.continuuity.common.conf.CConfiguration;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.thrift.TException;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -33,7 +33,7 @@ public class ThreadLocalClientProvider extends AbstractClientProvider {
   ThreadLocal<TransactionServiceThriftClient> clients =
       new ThreadLocal<TransactionServiceThriftClient>();
 
-  public ThreadLocalClientProvider(CConfiguration conf, DiscoveryServiceClient discoveryServiceClient) {
+  public ThreadLocalClientProvider(Configuration conf, DiscoveryServiceClient discoveryServiceClient) {
     super(conf, discoveryServiceClient);
   }
 

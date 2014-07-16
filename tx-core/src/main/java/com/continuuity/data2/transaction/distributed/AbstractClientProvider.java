@@ -16,9 +16,9 @@
 
 package com.continuuity.data2.transaction.distributed;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.TxConstants;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
@@ -46,12 +46,12 @@ public abstract class AbstractClientProvider implements ThriftClientProvider {
   protected final AtomicBoolean initialized = new AtomicBoolean(false);
 
   // the configuration
-  final CConfiguration configuration;
+  final Configuration configuration;
 
   // the endpoint strategy for service discovery.
   EndpointStrategy endpointStrategy;
 
-  protected AbstractClientProvider(CConfiguration configuration, DiscoveryServiceClient discoveryServiceClient) {
+  protected AbstractClientProvider(Configuration configuration, DiscoveryServiceClient discoveryServiceClient) {
     this.configuration = configuration;
     this.discoveryServiceClient = discoveryServiceClient;
   }

@@ -24,6 +24,7 @@ import com.continuuity.logging.run.LogSaverTwillRunnable;
 import com.continuuity.metrics.runtime.MetricsProcessorTwillRunnable;
 import com.continuuity.metrics.runtime.MetricsTwillRunnable;
 import com.google.common.base.Preconditions;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
@@ -45,15 +46,17 @@ public class ReactorTwillApplication implements TwillApplication {
   private final CConfiguration cConf;
   private final File cConfFile;
   private final File hConfFile;
+  private final Configuration txConf;
 
   private final boolean runHiveService;
   private final Map<String, Integer> instanceCountMap;
 
-  public ReactorTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile, boolean runHiveService,
-                                 Map<String, Integer> instanceCountMap) {
+  public ReactorTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile, Configuration txConf,
+                                 boolean runHiveService, Map<String, Integer> instanceCountMap) {
     this.cConf = cConf;
     this.cConfFile = cConfFile;
     this.hConfFile = hConfFile;
+    this.txConf = txConf;
     this.runHiveService = runHiveService;
     this.instanceCountMap = instanceCountMap;
   }
@@ -153,8 +156,8 @@ public class ReactorTwillApplication implements TwillApplication {
 
   private TwillSpecification.Builder.RunnableSetter addTransactionService(TwillSpecification.Builder.MoreRunnable
                                                                             builder) {
-    int txNumCores = cConf.getInt(Constants.Transaction.Container.NUM_CORES, 2);
-    int txMemoryMb = cConf.getInt(Constants.Transaction.Container.MEMORY_MB, 2048);
+    int txNumCores = txConf.getInt(Constants.Transaction.Container.NUM_CORES, 2);
+    int txMemoryMb = txConf.getInt(Constants.Transaction.Container.MEMORY_MB, 2048);
     int txInstances = instanceCountMap.get(Constants.Service.TRANSACTION);
 
     ResourceSpecification transactionSpec = ResourceSpecification.Builder

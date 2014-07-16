@@ -25,12 +25,10 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
-import org.apache.hadoop.conf.Configuration;
 
 /**
  * Guice bindings for running in distributed mode on a cluster.

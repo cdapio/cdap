@@ -15,7 +15,6 @@
  */
 package com.continuuity.data2.transaction.runtime;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;

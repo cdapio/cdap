@@ -25,7 +25,6 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.data2.transaction.persist.LocalFileTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;

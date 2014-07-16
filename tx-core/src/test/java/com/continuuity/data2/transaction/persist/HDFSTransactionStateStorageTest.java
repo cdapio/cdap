@@ -16,7 +16,6 @@
 
 package com.continuuity.data2.transaction.persist;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;

@@ -16,7 +16,6 @@
 
 package com.continuuity.data2.transaction.distributed;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.rpc.ThriftRPCServer;
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
@@ -28,6 +27,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.zookeeper.ZKClient;
@@ -50,7 +50,7 @@ public final class TransactionService extends InMemoryTransactionService {
   private ThriftRPCServer<TransactionServiceThriftHandler, TTransactionServer> server;
 
   @Inject
-  public TransactionService(CConfiguration conf,
+  public TransactionService(@Named("transaction") Configuration conf,
                             ZKClient zkClient,
                             DiscoveryService discoveryService,
                             Provider<InMemoryTransactionManager> txManagerProvider) {

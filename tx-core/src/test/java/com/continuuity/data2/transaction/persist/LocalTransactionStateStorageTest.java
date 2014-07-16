@@ -16,7 +16,6 @@
 
 package com.continuuity.data2.transaction.persist;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.snapshot.DefaultSnapshotCodec;

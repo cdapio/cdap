@@ -17,7 +17,6 @@
 package com.continuuity.data2.transaction.coprocessor;
 
 import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 
 /**

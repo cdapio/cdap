@@ -16,7 +16,6 @@
 
 package com.continuuity.data2.transaction.distributed;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import org.apache.hadoop.conf.Configuration;
 

@@ -16,8 +16,8 @@
 
 package com.continuuity.data2.transaction.distributed;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.thrift.TException;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -54,7 +54,7 @@ public class PooledClientProvider extends AbstractClientProvider {
   // the limit for the number of active clients
   int maxClients;
 
-  public PooledClientProvider(CConfiguration conf, DiscoveryServiceClient discoveryServiceClient) {
+  public PooledClientProvider(Configuration conf, DiscoveryServiceClient discoveryServiceClient) {
     super(conf, discoveryServiceClient);
   }
 

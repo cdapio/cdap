@@ -45,6 +45,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -94,12 +95,12 @@ public class DataFabricDistributedModule extends AbstractModule {
   @Singleton
   private static final class ThriftClientProviderSupplier implements Provider<ThriftClientProvider> {
 
-    private final CConfiguration cConf;
+    private final Configuration txConf;
     private DiscoveryServiceClient discoveryServiceClient;
 
     @Inject
-    ThriftClientProviderSupplier(CConfiguration cConf) {
-      this.cConf = cConf;
+    ThriftClientProviderSupplier(@Named("transaction")Configuration cConf) {
+      this.txConf = cConf;
     }
 
     @Inject(optional = true)
@@ -110,13 +111,13 @@ public class DataFabricDistributedModule extends AbstractModule {
     @Override
     public ThriftClientProvider get() {
       // configure the client provider
-      String provider = cConf.get(TxConstants.Service.CFG_DATA_TX_CLIENT_PROVIDER,
+      String provider = txConf.get(TxConstants.Service.CFG_DATA_TX_CLIENT_PROVIDER,
                                   TxConstants.Service.DEFAULT_DATA_TX_CLIENT_PROVIDER);
       ThriftClientProvider clientProvider;
       if ("pool".equals(provider)) {
-        clientProvider = new PooledClientProvider(cConf, discoveryServiceClient);
+        clientProvider = new PooledClientProvider(txConf, discoveryServiceClient);
       } else if ("thread-local".equals(provider)) {
-        clientProvider = new ThreadLocalClientProvider(cConf, discoveryServiceClient);
+        clientProvider = new ThreadLocalClientProvider(txConf, discoveryServiceClient);
       } else {
         String message = "Unknown Transaction Service Client Provider '" + provider + "'.";
         LOG.error(message);

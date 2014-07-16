@@ -35,6 +35,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -141,7 +142,7 @@ public class TransactionServiceClient implements TransactionSystemClient {
    * @throws TException
    */
   @Inject
-  public TransactionServiceClient(Configuration config,
+  public TransactionServiceClient(@Named("transaction")Configuration config,
                                   ThriftClientProvider clientProvider) {
 
     // initialize the retry logic
