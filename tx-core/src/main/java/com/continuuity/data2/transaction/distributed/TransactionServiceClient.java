@@ -25,14 +25,17 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionNotInProgressException;
 import com.continuuity.data2.transaction.runtime.TransactionModules;
 import com.google.common.base.Throwables;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.thrift.TException;
@@ -74,14 +77,23 @@ public class TransactionServiceClient implements TransactionSystemClient {
     }
 
     LOG.info("Starting tx server client test.");
-    CConfiguration cConf = CConfiguration.create();
+    final CConfiguration cConf = CConfiguration.create();
     Configuration hConf = HBaseConfiguration.create();
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new TransactionModules().getDistributedModules()
+      new TransactionModules().getDistributedModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          Configuration configuration = TxConfiguration.create();
+          cConf.copyTo(configuration);
+          bind(Configuration.class).annotatedWith(Names.named("transaction"))
+            .toInstance(configuration);
+        }
+      }
     );
 
     ZKClientService zkClient = injector.getInstance(ZKClientService.class);

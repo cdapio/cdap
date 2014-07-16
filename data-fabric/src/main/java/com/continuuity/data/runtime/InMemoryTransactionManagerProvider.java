@@ -20,14 +20,10 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.metrics.TxMetricsCollector;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
-import com.continuuity.http.HttpHandler;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-
-import java.util.Set;
 
 /**
  * Google Guice Provider for {@link InMemoryTransactionManager} instances.  Each call to {@link #get()} will
