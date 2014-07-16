@@ -11,10 +11,10 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 /**
- *
+ * Tests explore metadata endpoints.
  */
 @Category(SlowTests.class)
-public class HiveMetadataTest extends BaseHiveExploreServiceTest {
+public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
 
   @BeforeClass
   public static void start() throws Exception {

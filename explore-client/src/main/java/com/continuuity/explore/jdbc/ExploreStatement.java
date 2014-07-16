@@ -34,7 +34,7 @@ import java.sql.Statement;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Reactor JDBC Statement. At most one {@link ExploreQueryResultSet} object can be produced by instances
+ * Reactor JDBC Statement. At most one {@link ExploreResultSet} object can be produced by instances
  * of this class.
  */
 public class ExploreStatement implements Statement {
@@ -107,7 +107,7 @@ public class ExploreStatement implements Statement {
       stmtCompleted = true;
       switch (status.getStatus()) {
         case FINISHED:
-          resultSet = new ExploreQueryResultSet(exploreClient, this, stmtHandle);
+          resultSet = new ExploreResultSet(exploreClient, this, stmtHandle);
           // NOTE: Javadoc states: "returns false if the first result is an update count or there is no result"
           // Here we have a result, it may contain rows or may be empty, but it exists.
           return true;
@@ -161,7 +161,7 @@ public class ExploreStatement implements Statement {
   }
 
   /**
-   * This method is not private to let {@link ExploreQueryResultSet} access it when closing its results.
+   * This method is not private to let {@link ExploreResultSet} access it when closing its results.
    */
   void closeClientOperation() throws SQLException {
     if (stmtHandle != null) {

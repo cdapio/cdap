@@ -23,4 +23,28 @@ public class ExploreJDBCUtils {
 
   public static final String URI_JDBC_PREFIX = "jdbc:";
 
+  /**
+   * Takes a version string delmited by '.' and '-' characters
+   * and returns a partial version.
+   *
+   * @param fullVersion
+   *          version string.
+   * @param position
+   *          position of version string to get starting at 0. eg, for a X.x.xxx
+   *          string, 0 will return the major version, 1 will return minor
+   *          version.
+   * @return version part, or -1 if version string was malformed.
+   */
+  static int getVersionPart(String fullVersion, int position) {
+    try {
+      String[] tokens = fullVersion.split("[\\.-]"); //$NON-NLS-1$
+      if (tokens != null && tokens.length > 1 && tokens[position] != null) {
+        return Integer.parseInt(tokens[position]);
+      }
+    } catch (Exception e) {
+      // Do nothing
+    }
+    return -1;
+  }
+
 }

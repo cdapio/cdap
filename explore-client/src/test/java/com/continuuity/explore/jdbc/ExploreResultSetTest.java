@@ -37,7 +37,7 @@ import java.util.List;
 /**
  *
  */
-public class ExploreQueryResultSetTest {
+public class ExploreResultSetTest {
   @Test
   public void testResultSet() throws Exception {
     ExploreClient exploreClient = new MockExploreClient(
@@ -79,7 +79,7 @@ public class ExploreQueryResultSetTest {
         ))
     );
 
-    ResultSet resultSet = new ExploreQueryResultSet(exploreClient,
+    ResultSet resultSet = new ExploreResultSet(exploreClient,
                                                     new ExploreStatement(null, exploreClient),
                                                     Handle.fromId("foobar"));
     Assert.assertTrue(resultSet.next());
@@ -121,9 +121,8 @@ public class ExploreQueryResultSetTest {
         ))
     );
 
-    ResultSet resultSet = new ExploreQueryResultSet(exploreClient,
-                                                    new ExploreStatement(null, exploreClient),
-                                                    Handle.fromId("foobar"));
+    ResultSet resultSet = new ExploreResultSet(exploreClient, new ExploreStatement(null, exploreClient),
+                                               Handle.fromId("foobar"));
     Assert.assertTrue(resultSet.next());
     Assert.assertEquals(1, resultSet.findColumn("column1"));
     Assert.assertEquals(1, resultSet.getObject("column1"));

@@ -108,48 +108,46 @@ public class MockExploreClient implements ExploreClient {
     handlesToResults.remove(handle.getHandle());
   }
 
-  // TODO implement those methods and use them in unit tests
-
   @Override
   public Handle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
     throws ExploreException, SQLException {
-    return null;
+    return Handle.fromId("columns_handle");
   }
 
   @Override
   public Handle getCatalogs() throws ExploreException, SQLException {
-    return null;
+    return Handle.fromId("catalogs_handle");
   }
 
   @Override
   public Handle getSchemas(String catalog, String schemaPattern) throws ExploreException, SQLException {
-    return null;
+    return Handle.fromId("schemas_handle");
   }
 
   @Override
   public Handle getFunctions(String catalog, String schemaPattern, String functionNamePattern)
     throws ExploreException, SQLException {
-    return null;
+    return Handle.fromId("functions_handle");
   }
 
   @Override
   public MetaDataInfo getInfo(MetaDataInfo.InfoType infoType) throws ExploreException, SQLException {
-    return null;
+    return new MetaDataInfo("foobar", (short) 0, 1, (long) 2);
   }
 
   @Override
   public Handle getTables(String catalog, String schemaPattern, String tableNamePattern, List<String> tableTypes)
     throws ExploreException, SQLException {
-    return null;
+    return Handle.fromId("tables_handle");
   }
 
   @Override
   public Handle getTableTypes() throws ExploreException, SQLException {
-    return null;
+    return Handle.fromId("tableTypes_handle");
   }
 
   @Override
   public Handle getTypeInfo() throws ExploreException, SQLException {
-    return null;
+    return Handle.fromId("typeInfo_handle");
   }
 }

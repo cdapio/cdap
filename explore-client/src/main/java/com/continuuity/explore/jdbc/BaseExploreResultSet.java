@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Continuuity, Inc.
+ * Copyright 2014 Continuuity, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,17 +16,6 @@
 
 package com.continuuity.explore.jdbc;
 
-import com.continuuity.explore.service.ColumnDesc;
-import com.continuuity.explore.service.Explore;
-import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
-import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Result;
-
-import com.google.common.base.Charsets;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -39,7 +28,6 @@ import java.sql.Date;
 import java.sql.NClob;
 import java.sql.Ref;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -50,121 +38,25 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Calendar;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 /**
- * Result set created by an {@link ExploreStatement}, containing the results of a query made to the Explore service.
+ * Base result set created by an {@link ExploreStatement}, containing the results
+ * of a query made to the Explore service.
  */
-public class ExploreQueryResultSet implements ResultSet {
-  private static final Logger LOG = LoggerFactory.getLogger(ExploreQueryResultSet.class);
-
+abstract class BaseExploreResultSet implements ResultSet {
   private boolean isClosed = false;
   private int fetchSize;
 
-  private boolean hasMoreResults = true;
-  private Iterator<Result> rowsItr;
-  private Result currentRow;
-  private ExploreResultSetMetaData metaData;
-
   private boolean wasNull = false;
-  private ExploreStatement statement;
-  private Handle stmtHandle;
-  private Explore exploreClient;
-
-  public ExploreQueryResultSet(Explore exploreClient, ExploreStatement statement, Handle stmtHandle)
-      throws SQLException {
-    this.exploreClient = exploreClient;
-    this.statement = statement;
-    this.stmtHandle = stmtHandle;
-    this.fetchSize = statement.getFetchSize();
-  }
-
-  @Override
-  public boolean next() throws SQLException {
-    if (isClosed) {
-      throw new SQLException("ResultSet is closed");
-    }
-
-    if (!hasMoreResults) {
-      return false;
-    }
-
-    if (rowsItr != null && rowsItr.hasNext()) {
-      currentRow = rowsItr.next();
-      return true;
-    }
-
-    try {
-      if (stmtHandle == null) {
-        throw new SQLException("Handle is null.");
-      }
-      List<Result> fetchedRows;
-      fetchedRows = exploreClient.nextResults(stmtHandle, fetchSize);
-      rowsItr = fetchedRows.iterator();
-      if (!rowsItr.hasNext()) {
-        hasMoreResults = false;
-        currentRow = null;
-        return false;
-      }
-      currentRow = rowsItr.next();
-      return true;
-    } catch (HandleNotFoundException e) {
-      LOG.error("Could not fetch results with handle {}", stmtHandle);
-      throw new SQLException("Could not fetch results with handle " + stmtHandle, e);
-    } catch (ExploreException e) {
-      LOG.error("Caught exception", e);
-      throw new SQLException(e);
-    }
-  }
-
-  @Override
-  public void close() throws SQLException {
-    if (isClosed) {
-      // No-op
-      return;
-    }
-    try {
-      statement.closeClientOperation();
-    } finally {
-      exploreClient = null;
-      stmtHandle = null;
-      statement = null;
-      isClosed = true;
-    }
-  }
 
   @Override
   public boolean isClosed() throws SQLException {
     return isClosed;
   }
 
-  @Override
-  public Object getObject(int columnIndex) throws SQLException {
-    if (isClosed) {
-      throw new SQLException("ResultSet is closed");
-    }
-    if (currentRow == null) {
-      throw new SQLException("No row found.");
-    }
-    List<Object> columns = currentRow.getColumns();
-    if (columns.isEmpty()) {
-      throw new SQLException("RowSet does not contain any columns!");
-    }
-    if (columnIndex < 1 || columnIndex > columns.size()) {
-      throw new SQLException("Invalid columnIndex: " + columnIndex);
-    }
-
-    int columnType = getMetaData().getColumnType(columnIndex);
-    try {
-      Object evaluated = evaluate(columnType, columns.get(columnIndex - 1));
-      wasNull = (evaluated == null);
-      return evaluated;
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new SQLException("Unrecognized column type:" + columnType, e);
-    }
+  protected void setIsClosed(boolean isClosed) {
+    this.isClosed = isClosed;
   }
 
   @Override
@@ -172,7 +64,7 @@ public class ExploreQueryResultSet implements ResultSet {
     return getObject(findColumn(s));
   }
 
-  private Object evaluate(int sqlType, Object value) {
+  protected Object evaluate(int sqlType, Object value) {
     if (value == null) {
       return null;
     }
@@ -198,6 +90,10 @@ public class ExploreQueryResultSet implements ResultSet {
       default:
         return value;
     }
+  }
+
+  protected void setWasNull(boolean wasNull) {
+    this.wasNull = wasNull;
   }
 
   @Override
@@ -240,38 +136,6 @@ public class ExploreQueryResultSet implements ResultSet {
     }
     // We cannot update a ExploreResultSet object
     return CONCUR_READ_ONLY;
-  }
-
-  @Override
-  public ResultSetMetaData getMetaData() throws SQLException {
-    if (isClosed) {
-      throw new SQLException("Resultset is closed");
-    }
-    if (metaData == null) {
-      try {
-        List<ColumnDesc> columnDescs = exploreClient.getResultSchema(stmtHandle);
-        metaData = new ExploreResultSetMetaData(columnDescs);
-      } catch (ExploreException e) {
-        LOG.error("Caught exception", e);
-        throw new SQLException(e);
-      } catch (HandleNotFoundException e) {
-        LOG.error("Handle not found when retrieving result set meta data", e);
-        throw new SQLException("Handle not found when retrieving result set meta data", e);
-      }
-    }
-    return metaData;
-  }
-
-  @Override
-  public int findColumn(String name) throws SQLException {
-    if (isClosed) {
-      throw new SQLException("Resultset is closed");
-    }
-    if (metaData == null) {
-      getMetaData();
-    }
-    // Column names are case insensitive, as per the ResultSet interface javadoc
-    return metaData.getColumnPosition(name.toLowerCase());
   }
 
   @Override

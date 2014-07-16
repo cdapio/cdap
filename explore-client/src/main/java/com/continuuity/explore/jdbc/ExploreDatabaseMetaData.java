@@ -1,6 +1,16 @@
 package com.continuuity.explore.jdbc;
 
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.client.ExploreClientUtil;
+import com.continuuity.explore.service.ExploreException;
+import com.continuuity.explore.service.Handle;
+import com.continuuity.explore.service.HandleNotFoundException;
+import com.continuuity.explore.service.MetaDataInfo;
+import com.continuuity.explore.service.Status;
+import com.google.common.collect.ImmutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -8,23 +18,407 @@ import java.sql.ResultSet;
 import java.sql.RowIdLifetime;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Explore database meta data, informing of the capabilities of Explore as a DBMS.
  */
 public class ExploreDatabaseMetaData implements DatabaseMetaData {
+  private static final Logger LOG = LoggerFactory.getLogger(ExploreDatabaseMetaData.class);
 
+  private static final int MAX_POLL_TRIES = 1000000;
+  private static final int RESULT_FETCH_SIZE = 100;
   private static final String CATALOG_SEPARATOR = ".";
+  private static final char SEARCH_STRING_ESCAPE = '\\';
 
+  private final ExploreConnection connection;
   private final ExploreClient exploreClient;
 
-  public ExploreDatabaseMetaData(ExploreClient exploreClient) {
+  //  Cached values, to save on round trips to database.
+  private String dbVersion = null;
+
+  public ExploreDatabaseMetaData(ExploreConnection connection, ExploreClient exploreClient) {
+    this.connection = connection;
     this.exploreClient = exploreClient;
+  }
+
+  private ResultSet getMetadataResultSet(HandleProducer call) throws SQLException {
+    // TODO in future, the polling logic should be in another SyncExploreClient
+    try {
+      Handle stmtHandle = call.getHandle();
+      Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, stmtHandle, 200, TimeUnit.MILLISECONDS,
+                                                                MAX_POLL_TRIES);
+      if (status.getStatus().equals(Status.OpStatus.FINISHED)) {
+        return new ExploreResultSet(exploreClient, stmtHandle, RESULT_FETCH_SIZE);
+      }
+      throw new SQLException(String.format("Meta data call execution did not finish successfully. " +
+                                             "Got final state - %s", status.getStatus().toString()));
+    } catch (HandleNotFoundException e) {
+      // Cannot happen unless explore server restarted.
+      LOG.error("Error executing query", e);
+      throw new SQLException("Unknown state");
+    } catch (InterruptedException e) {
+      LOG.error("Caught exception", e);
+      Thread.currentThread().interrupt();
+      throw new SQLException(e);
+    } catch (ExploreException e) {
+      LOG.error("Caught exception", e);
+      throw new SQLException(e);
+    }
   }
 
   @Override
   public String getCatalogSeparator() throws SQLException {
     return CATALOG_SEPARATOR;
+  }
+
+  @Override
+  public ResultSet getTableTypes() throws SQLException {
+    return getMetadataResultSet(new HandleProducer() {
+      @Override
+      public Handle getHandle() throws ExploreException, SQLException {
+        return exploreClient.getTableTypes();
+      }
+    });
+  }
+
+  @Override
+  public ResultSet getColumns(final String catalog, final String schemaPattern, final String tableNamePattern,
+                              final String columnNamePattern) throws SQLException {
+    return getMetadataResultSet(new HandleProducer() {
+      @Override
+      public Handle getHandle() throws ExploreException, SQLException {
+        return exploreClient.getColumns(catalog, schemaPattern, tableNamePattern, columnNamePattern);
+      }
+    });
+  }
+
+  @Override
+  public ResultSet getTypeInfo() throws SQLException {
+    return getMetadataResultSet(new HandleProducer() {
+      @Override
+      public Handle getHandle() throws ExploreException, SQLException {
+        return exploreClient.getTypeInfo();
+      }
+    });
+  }
+
+  @Override
+  public ResultSet getTables(final String catalog, final String schemaPattern, final String tableNamePattern,
+                             final String[] types) throws SQLException {
+    return getMetadataResultSet(new HandleProducer() {
+      @Override
+      public Handle getHandle() throws ExploreException, SQLException {
+        return exploreClient.getTables(catalog, schemaPattern, tableNamePattern,
+                                       (types == null) ? null : Arrays.asList(types));
+      }
+    });
+  }
+
+  @Override
+  public ResultSet getFunctions(final String catalog, final String schemaPattern,
+                                final String functionNamePattern) throws SQLException {
+    return getMetadataResultSet(new HandleProducer() {
+      @Override
+      public Handle getHandle() throws ExploreException, SQLException {
+        return exploreClient.getFunctions(catalog, schemaPattern, functionNamePattern);
+      }
+    });
+  }
+
+  @Override
+  public ResultSet getSchemas() throws SQLException {
+    return getSchemas(null, null);
+  }
+
+  @Override
+  public ResultSet getSchemas(final String catalog, final String schemaPattern) throws SQLException {
+    return getMetadataResultSet(new HandleProducer() {
+      @Override
+      public Handle getHandle() throws ExploreException, SQLException {
+        return exploreClient.getSchemas(catalog, schemaPattern);
+      }
+    });
+  }
+
+  @Override
+  public ResultSet getCatalogs() throws SQLException {
+    return getMetadataResultSet(new HandleProducer() {
+      @Override
+      public Handle getHandle() throws ExploreException, SQLException {
+        return exploreClient.getCatalogs();
+      }
+    });
+  }
+
+  @Override
+  public Connection getConnection() throws SQLException {
+    return connection;
+  }
+
+  @Override
+  public String getDatabaseProductName() throws SQLException {
+    return getInfo(MetaDataInfo.InfoType.DBMS_NAME).getStringValue();
+  }
+
+  @Override
+  public String getDatabaseProductVersion() throws SQLException {
+    if (dbVersion == null) {
+      // TODO Here we return database version that Hive returns, is that what we want?
+      dbVersion = getInfo(MetaDataInfo.InfoType.DBMS_VER).getStringValue();
+    }
+    return dbVersion;
+  }
+
+  @Override
+  public int getDatabaseMajorVersion() throws SQLException {
+    return ExploreJDBCUtils.getVersionPart(getDatabaseProductVersion(), 0);
+  }
+
+  @Override
+  public int getDatabaseMinorVersion() throws SQLException {
+    return ExploreJDBCUtils.getVersionPart(getDatabaseProductVersion(), 1);
+  }
+
+  @Override
+  public int getDriverMajorVersion() {
+    return ExploreDriver.getMajorDriverVersion();
+  }
+
+  @Override
+  public int getDriverMinorVersion() {
+    return ExploreDriver.getMinorDriverVersion();
+  }
+
+  private MetaDataInfo getInfo(MetaDataInfo.InfoType infoType) throws SQLException {
+    try {
+      return exploreClient.getInfo(infoType);
+    } catch (ExploreException e) {
+      LOG.error("Error while retrieving information {}.", infoType.name(), e);
+      throw new SQLException(e);
+    }
+  }
+
+  @Override
+  public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
+    // NOTE: This static bloc is copied from Hive JDBC Driver
+    return new StaticEmptyExploreResultSet(
+      ImmutableList.of(
+        ImmutablePair.of("PKTABLE_CAT", "STRING"),
+        ImmutablePair.of("PKTABLE_SCHEM", "STRING"),
+        ImmutablePair.of("PKTABLE_NAME", "STRING"),
+        ImmutablePair.of("PKCOLUMN_NAME", "STRING"),
+        ImmutablePair.of("FKTABLE_CAT", "STRING"),
+        ImmutablePair.of("FKTABLE_SCHEM", "STRING"),
+        ImmutablePair.of("FKTABLE_NAME", "STRING"),
+        ImmutablePair.of("FKCOLUMN_NAME", "STRING"),
+        ImmutablePair.of("KEY_SEQ", "SMALLINT"),
+        ImmutablePair.of("UPDATE_RULE", "SMALLINT"),
+        ImmutablePair.of("DELETE_RULE", "SMALLINT"),
+        ImmutablePair.of("FK_NAME", "STRING"),
+        ImmutablePair.of("PK_NAME", "STRING"),
+        ImmutablePair.of("DEFERRABILITY", "STRING")
+      )
+    );
+  }
+
+  @Override
+  public ResultSet getPrimaryKeys(String s, String s2, String s3) throws SQLException {
+    // NOTE: This static bloc is copied from Hive JDBC Driver
+    return new StaticEmptyExploreResultSet(
+      ImmutableList.of(
+        ImmutablePair.of("TABLE_CAT", "STRING"),
+        ImmutablePair.of("TABLE_SCHEM", "STRING"),
+        ImmutablePair.of("TABLE_NAME", "STRING"),
+        ImmutablePair.of("COLUMN_NAME", "STRING"),
+        ImmutablePair.of("KEY_SEQ", "INT"),
+        ImmutablePair.of("PK_NAME", "STRING")
+      )
+    );
+  }
+
+  @Override
+  public ResultSet getProcedureColumns(String s, String s2, String s3, String s4) throws SQLException {
+    // NOTE: This static bloc is copied from Hive JDBC Driver
+    return new StaticEmptyExploreResultSet(
+      ImmutableList.of(
+        ImmutablePair.of("PROCEDURE_CAT", "STRING"),
+        ImmutablePair.of("PROCEDURE_SCHEM", "STRING"),
+        ImmutablePair.of("PROCEDURE_NAME", "STRING"),
+        ImmutablePair.of("COLUMN_NAME", "STRING"),
+        ImmutablePair.of("COLUMN_TYPE", "SMALLINT"),
+        ImmutablePair.of("DATA_TYPE", "INT"),
+        ImmutablePair.of("TYPE_NAME", "STRING"),
+        ImmutablePair.of("PRECISION", "INT"),
+        ImmutablePair.of("LENGTH", "INT"),
+        ImmutablePair.of("SCALE", "SMALLINT"),
+        ImmutablePair.of("RADIX", "SMALLINT"),
+        ImmutablePair.of("NULLABLE", "SMALLINT"),
+        ImmutablePair.of("REMARKS", "STRING"),
+        ImmutablePair.of("COLUMN_DEF", "STRING"),
+        ImmutablePair.of("SQL_DATA_TYPE", "INT"),
+        ImmutablePair.of("SQL_DATETIME_SUB", "INT"),
+        ImmutablePair.of("CHAR_OCTET_LENGTH", "INT"),
+        ImmutablePair.of("ORDINAL_POSITION", "INT"),
+        ImmutablePair.of("IS_NULLABLE", "STRING"),
+        ImmutablePair.of("SPECIFIC_NAME", "STRING")
+      )
+    );
+  }
+
+  @Override
+  public ResultSet getProcedures(String s, String s2, String s3) throws SQLException {
+    // NOTE: This static bloc is copied from Hive JDBC Driver
+    return new StaticEmptyExploreResultSet(
+      ImmutableList.of(
+        ImmutablePair.of("PROCEDURE_CAT", "STRING"),
+        ImmutablePair.of("PROCEDURE_SCHEM", "STRING"),
+        ImmutablePair.of("PROCEDURE_NAME", "STRING"),
+        ImmutablePair.of("RESERVERD", "STRING"),
+        ImmutablePair.of("RESERVERD", "INT"),
+        ImmutablePair.of("RESERVERD", "STRING"),
+        ImmutablePair.of("REMARKS", "STRING"),
+        ImmutablePair.of("PROCEDURE_TYPE", "SMALLINT"),
+        ImmutablePair.of("SPECIFIC_NAME", "STRING")
+      )
+    );
+  }
+
+  @Override
+  public String getNumericFunctions() throws SQLException {
+    // NOTE: this is what Hive returns in its JDBC Driver
+    return "";
+  }
+
+  @Override
+  public int getSQLStateType() throws SQLException {
+    // NOTE: this is what Hive returns in its JDBC Driver
+    return DatabaseMetaData.sqlStateSQL99;
+  }
+
+  @Override
+  public String getSchemaTerm() throws SQLException {
+    return "database";
+  }
+
+  @Override
+  public String getSearchStringEscape() throws SQLException {
+    return String.valueOf(SEARCH_STRING_ESCAPE);
+  }
+
+  @Override
+  public String getStringFunctions() throws SQLException {
+    // NOTE: this is what Hive returns in its JDBC Driver
+    return "";
+  }
+
+  @Override
+  public String getSystemFunctions() throws SQLException {
+    // NOTE: this is what Hive returns in its JDBC Driver
+    return "";
+  }
+
+  @Override
+  public String getTimeDateFunctions() throws SQLException {
+    // NOTE: this is what Hive returns in its JDBC Driver
+    return "";
+  }
+
+  @Override
+  public ResultSet getUDTs(String s, String s2, String s3, int[] ints) throws SQLException {
+    // NOTE: This static bloc is copied from Hive JDBC Driver
+    return new StaticEmptyExploreResultSet(
+      ImmutableList.of(
+        ImmutablePair.of("TYPE_CAT", "STRING"),
+        ImmutablePair.of("TYPE_SCHEM", "STRING"),
+        ImmutablePair.of("TYPE_NAME", "STRING"),
+        ImmutablePair.of("CLASS_NAME", "STRING"),
+        ImmutablePair.of("DATA_TYPE", "INT"),
+        ImmutablePair.of("REMARKS", "STRING"),
+        ImmutablePair.of("BASE_TYPE", "INT")
+      )
+    );
+  }
+
+  @Override
+  public boolean supportsSchemasInDataManipulation() throws SQLException {
+    return false;
+  }
+
+  @Override
+  public boolean supportsSchemasInProcedureCalls() throws SQLException {
+    return false;
+  }
+
+  @Override
+  public boolean supportsSchemasInTableDefinitions() throws SQLException {
+    return false;
+  }
+
+  @Override
+  public boolean supportsSchemasInIndexDefinitions() throws SQLException {
+    return false;
+  }
+
+  @Override
+  public boolean supportsAlterTableWithAddColumn() throws SQLException {
+    return false;
+  }
+
+  @Override
+  public boolean supportsAlterTableWithDropColumn() throws SQLException {
+    return false;
+  }
+
+  @Override
+  public boolean supportsColumnAliasing() throws SQLException {
+    return true;  // So Hive says
+  }
+
+  @Override
+  public boolean supportsOuterJoins() throws SQLException {
+    return true;
+  }
+
+  @Override
+  public boolean supportsPositionedDelete() throws SQLException {
+    return false;
+  }
+
+  @Override
+  public boolean supportsPositionedUpdate() throws SQLException {
+    return false;
+  }
+
+  @Override
+  public boolean supportsSelectForUpdate() throws SQLException {
+    return false;
+  }
+
+  @Override
+  public boolean supportsStoredProcedures() throws SQLException {
+    return false;
+  }
+
+  @Override
+  public boolean supportsTransactions() throws SQLException {
+    return false;
+  }
+
+  @Override
+  public boolean supportsResultSetType(int i) throws SQLException {
+    return true;
+  }
+
+  @Override
+  public boolean supportsResultSetHoldability(int i) throws SQLException {
+    return false;
+  }
+
+  @Override
+  public boolean supportsSavepoints() throws SQLException {
+    return false;
   }
 
   @Override
@@ -73,16 +467,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   }
 
   @Override
-  public String getDatabaseProductName() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public String getDatabaseProductVersion() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public String getDriverName() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
@@ -90,16 +474,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   @Override
   public String getDriverVersion() throws SQLException {
     throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public int getDriverMajorVersion() {
-    return ExploreDriver.getMajorDriverVersion();
-  }
-
-  @Override
-  public int getDriverMinorVersion() {
-    return ExploreDriver.getMinorDriverVersion();
   }
 
   @Override
@@ -163,47 +537,7 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   }
 
   @Override
-  public String getNumericFunctions() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public String getStringFunctions() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public String getSystemFunctions() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public String getTimeDateFunctions() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public String getSearchStringEscape() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public String getExtraNameCharacters() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsAlterTableWithAddColumn() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsAlterTableWithDropColumn() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsColumnAliasing() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -313,22 +647,12 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   }
 
   @Override
-  public boolean supportsOuterJoins() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public boolean supportsFullOuterJoins() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean supportsLimitedOuterJoins() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public String getSchemaTerm() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -344,26 +668,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public boolean isCatalogAtStart() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsSchemasInDataManipulation() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsSchemasInProcedureCalls() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsSchemasInTableDefinitions() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsSchemasInIndexDefinitions() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -394,26 +698,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsPositionedDelete() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsPositionedUpdate() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsSelectForUpdate() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsStoredProcedures() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -583,11 +867,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   }
 
   @Override
-  public boolean supportsTransactions() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public boolean supportsTransactionIsolationLevel(int i) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
@@ -613,41 +892,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   }
 
   @Override
-  public ResultSet getProcedures(String s, String s2, String s3) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public ResultSet getProcedureColumns(String s, String s2, String s3, String s4) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public ResultSet getTables(String s, String s2, String s3, String[] strings) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public ResultSet getSchemas() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public ResultSet getCatalogs() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public ResultSet getTableTypes() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public ResultSet getColumns(String s, String s2, String s3, String s4) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public ResultSet getColumnPrivileges(String s, String s2, String s3, String s4) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
@@ -668,16 +912,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   }
 
   @Override
-  public ResultSet getPrimaryKeys(String s, String s2, String s3) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public ResultSet getImportedKeys(String s, String s2, String s3) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public ResultSet getExportedKeys(String s, String s2, String s3) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
@@ -689,17 +923,7 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   }
 
   @Override
-  public ResultSet getTypeInfo() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public ResultSet getIndexInfo(String s, String s2, String s3, boolean b, boolean b2) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsResultSetType(int i) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -759,21 +983,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   }
 
   @Override
-  public ResultSet getUDTs(String s, String s2, String s3, int[] ints) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public Connection getConnection() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsSavepoints() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public boolean supportsNamedParameters() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
@@ -804,22 +1013,7 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   }
 
   @Override
-  public boolean supportsResultSetHoldability(int i) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public int getResultSetHoldability() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public int getDatabaseMajorVersion() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public int getDatabaseMinorVersion() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -830,11 +1024,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public int getJDBCMinorVersion() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public int getSQLStateType() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -854,11 +1043,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   }
 
   @Override
-  public ResultSet getSchemas(String s, String s2) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
@@ -870,11 +1054,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public ResultSet getClientInfoProperties() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public ResultSet getFunctions(String s, String s2, String s3) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -891,5 +1070,23 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   @Override
   public boolean isWrapperFor(Class<?> aClass) throws SQLException {
     throw new SQLFeatureNotSupportedException();
+  }
+
+  public ResultSet getPseudoColumns(String catalog, String schemaPattern,
+                                    String tableNamePattern, String columnNamePattern) throws SQLException {
+    // JDK 1.7
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  public boolean generatedKeyAlwaysReturned() throws SQLException {
+    // JDK 1.7
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  /**
+   * Produces an explore handle.
+   */
+  private interface HandleProducer {
+    Handle getHandle() throws ExploreException, SQLException;
   }
 }
