@@ -49,7 +49,7 @@ public class DefaultInputFlowletSpecification implements InputFlowletSpecificati
   }
 
   @Override
-  public Map<String, StreamSchema> getGdatInputSchema() {
+  public Map<String, StreamSchema> getGDATInputSchema() {
     return gdatInputSchema;
   }
 

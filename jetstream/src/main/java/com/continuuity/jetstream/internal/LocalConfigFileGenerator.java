@@ -53,7 +53,7 @@ public class LocalConfigFileGenerator implements ConfigFileGenerator {
 
   @Override
   public String generatePacketSchema(InputFlowletSpecification spec) {
-    return createPacketSchema(spec.getGdatInputSchema());
+    return createPacketSchema(spec.getGDATInputSchema());
   }
 
   @Override

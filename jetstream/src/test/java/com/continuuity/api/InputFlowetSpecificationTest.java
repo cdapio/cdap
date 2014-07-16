@@ -40,9 +40,9 @@ public class InputFlowetSpecificationTest {
     InputFlowletSpecification spec = configurer.createInputFlowletSpec();
     Assert.assertEquals(spec.getName(), "summation");
     Assert.assertEquals(spec.getDescription(), "sums up the input value over a timewindow");
-    Assert.assertEquals(spec.getGdatInputSchema().size(), 1);
-    Assert.assertTrue(spec.getGdatInputSchema().containsKey("intInput"));
-    StreamSchema schema = spec.getGdatInputSchema().get("intInput");
+    Assert.assertEquals(spec.getGDATInputSchema().size(), 1);
+    Assert.assertTrue(spec.getGDATInputSchema().containsKey("intInput"));
+    StreamSchema schema = spec.getGDATInputSchema().get("intInput");
     Assert.assertEquals(schema.getIncreasingFields().size(), 1);
     Assert.assertTrue(schema.getIncreasingFields().contains("timestamp"));
     Assert.assertEquals(schema.getDecreasingFields().size(), 0);

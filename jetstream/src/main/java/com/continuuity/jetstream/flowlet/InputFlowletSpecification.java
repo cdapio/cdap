@@ -29,7 +29,7 @@ public interface InputFlowletSpecification {
 
   String getDescription();
 
-  Map<String, StreamSchema> getGdatInputSchema();
+  Map<String, StreamSchema> getGDATInputSchema();
 
   Map<String, String> getGSQL();
 

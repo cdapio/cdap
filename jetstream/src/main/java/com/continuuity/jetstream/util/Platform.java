@@ -17,7 +17,7 @@
 package com.continuuity.jetstream.util;
 
 /**
- *
+ * Platform detection.
  */
 public enum Platform {
   X64_OSX,

@@ -34,14 +34,14 @@ public interface InputFlowletConfigurer {
   void setDescription(String description);
 
   /**
-   * Adds a GDAT Input to the Flowlet.
+   * Adds a GDAT Input to the InputFlowlet.
    * @param name Name of the Input.
    * @param schema Attach a schema to the Input.
    */
   void addGDATInput(String name, StreamSchema schema);
 
   /**
-   * Adds a GSQL query to the Flowlet.
+   * Adds a GSQL query to the InputFlowlet.
    * @param outputName Name of the GSQL Query (also the name of the output stream).
    * @param gsql GSQL query.
    */
