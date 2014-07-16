@@ -24,6 +24,8 @@ import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.twill.AbstractDistributedReactorServiceManager;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -39,18 +41,23 @@ public class TransactionServiceManager extends AbstractDistributedReactorService
   private static final Logger LOG = LoggerFactory.getLogger(TransactionServiceManager.class);
   private TransactionSystemClient txClient;
   private DiscoveryServiceClient discoveryServiceClient;
+  private Configuration txConf;
 
   @Inject
-  public TransactionServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
+  public TransactionServiceManager(CConfiguration cConf, @Named("transaction") Configuration txConf,
+                                   TwillRunnerService twillRunnerService,
                                    TransactionSystemClient txClient, DiscoveryServiceClient discoveryServiceClient) {
+
     super(cConf, Constants.Service.TRANSACTION, twillRunnerService, discoveryServiceClient);
+    this.txConf = txConf;
     this.txClient = txClient;
     this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @Override
   public int getMaxInstances() {
-    return cConf.getInt(Constants.Transaction.Container.MAX_INSTANCES);
+    //todo : Configuration has to provide default value, can we make this better?
+    return txConf.getInt(Constants.Transaction.Container.MAX_INSTANCES, 5);
   }
 
   @Override

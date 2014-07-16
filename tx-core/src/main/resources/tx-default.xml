@@ -80,7 +80,7 @@
 
     <property>
     <name>data.tx.snapshot.dir</name>
-    <value>continuuity/tx.snapshot</value>
+    <value>/continuuity/tx.snapshot</value>
     <description>Directory in HDFS used to store snapshots and logs of
       transaction state</description>
     </property>

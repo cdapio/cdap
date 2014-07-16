@@ -33,7 +33,6 @@ import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.runtime.HDFSTransactionStateStorageProvider;
 import com.continuuity.data.runtime.InMemoryTransactionManagerProvider;
 import com.continuuity.data.runtime.TxConfigurationProvider;
-import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.metrics.ReactorTxMetricsCollector;
@@ -49,14 +48,12 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -83,14 +80,17 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
   @Override
   protected void doInit(TwillContext context) {
     try {
-      getCConfiguration().set(Constants.Transaction.Container.ADDRESS, context.getHost().getCanonicalHostName());
-
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
+
+      Configuration txConf = injector.getInstance(Key.get(Configuration.class, Names.named("transaction")));
+      txConf.set(Constants.Transaction.Container.ADDRESS, context.getHost().getCanonicalHostName());
+
+      LOG.info("TransactionService TwillRunnable started at {}", txConf.get(Constants.Transaction.Container.ADDRESS));
+
       injector.getInstance(LogAppenderInitializer.class).initialize();
       LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                          Constants.Logging.COMPONENT_NAME,
                                                                          Constants.Service.TRANSACTION));
-
       LOG.info("Initializing runnable {}", name);
       // Set the hostname of the machine so that cConf can be used to start internal services
       LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
@@ -151,7 +151,7 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
         bind(TransactionStateStorage.class).annotatedWith(Names.named("persist"))
           .toProvider(HDFSTransactionStateStorageProvider.class);
         bind(Configuration.class).annotatedWith(Names.named("transaction"))
-          .toProvider(TxConfigurationProvider.class);
+          .toProvider(TxConfigurationProvider.class).in(Scopes.SINGLETON);
         bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class);
         bind(InMemoryTransactionManager.class).toProvider(InMemoryTransactionManagerProvider.class);
       }

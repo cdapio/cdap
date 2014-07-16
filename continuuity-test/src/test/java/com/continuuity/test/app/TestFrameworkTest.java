@@ -38,10 +38,14 @@ import com.continuuity.test.WorkflowManager;
 import com.continuuity.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,11 +55,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.Socket;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -206,23 +213,51 @@ public class TestFrameworkTest extends ReactorTestBase {
     testApp(WordCountAppV2.class, true, "text");
   }
 
+  @Category(SlowTests.class)
   @Test
   public void testAppwithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
-    ServiceManager serviceManager = applicationManager.startService("NoOpService");
+    ServiceManager serviceManager = applicationManager.startService("ServerService");
     serviceStatusCheck(serviceManager, true);
-    Assert.assertTrue(serviceManager.isRunning());
+
     LOG.info("Service Started");
+
+    // Look for service endpoint
+    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices", "ServerService", "server");
+    final BlockingQueue<Discoverable> discoverables = new LinkedBlockingQueue<Discoverable>();
+    serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
+      @Override
+      public void onChange(ServiceDiscovered serviceDiscovered) {
+        Iterables.addAll(discoverables, serviceDiscovered);
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
+
+    // There should be one endpoint only
+    Discoverable discoverable = discoverables.poll(5, TimeUnit.SECONDS);
+    Assert.assertNotNull(discoverable);
+    Assert.assertTrue(discoverables.isEmpty());
+
+    // Connect and close. This should stop the leader instance.
+    Socket socket = new Socket(discoverable.getSocketAddress().getAddress(), discoverable.getSocketAddress().getPort());
+    socket.close();
+
+    // The leader is stopped. The follower becomes the new leader and a new endpoint should get announced
+    Discoverable discoverable2 = discoverables.poll(5, TimeUnit.SECONDS);
+    Assert.assertNotNull(discoverable2);
+    Assert.assertTrue(discoverables.isEmpty());
+
+    Assert.assertNotEquals(discoverable.getSocketAddress(), discoverable2.getSocketAddress());
+
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
-    Assert.assertFalse(serviceManager.isRunning());
     LOG.info("Service Stopped");
     // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the REACTOR scope test in
     // TestMetricsCollectionService
 
   }
 
+  @Category(SlowTests.class)
   @Test
   public void testAppwithOnlyService() throws Exception {
     //App with only service in it.
@@ -230,24 +265,21 @@ public class TestFrameworkTest extends ReactorTestBase {
     LOG.info("Deployed.");
     ServiceManager serviceManager = applicationManager.startService("NoOpService");
     serviceStatusCheck(serviceManager, true);
-    Assert.assertTrue(serviceManager.isRunning());
     LOG.info("Service Started");
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
-    Assert.assertFalse(serviceManager.isRunning());
     LOG.info("Service Stopped");
   }
 
-  private void serviceStatusCheck(ServiceManager serviceManger, boolean expected) throws InterruptedException {
+  private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
     int trial = 0;
-    boolean state;
     while (trial++ < 5) {
-      state = serviceManger.isRunning();
-      if (state = expected) {
+      if (serviceManger.isRunning() == running) {
         return;
       }
       TimeUnit.SECONDS.sleep(1);
     }
+    throw new IllegalStateException("Service state not executed. Expected " + running);
   }
 
   // todo: passing stream name as a workaround for not cleaning up streams during reset()
