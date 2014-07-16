@@ -36,6 +36,4 @@ public class TransactionDistributedModule extends AbstractModule {
               .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
               .build(TransactionExecutorFactory.class));
   }
-
-
 }
