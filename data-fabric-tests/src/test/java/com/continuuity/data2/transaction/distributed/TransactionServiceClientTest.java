@@ -81,6 +81,8 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
 
     txConf = TxConfiguration.create();
     cConf.copyTo(txConf);
+    //todo : make sure if we need to do this ?
+    txConf.unset(Constants.CFG_HDFS_USER);
 
     server = TransactionServiceTest.createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(),
                                                     hConf, tmpFolder.newFolder());
