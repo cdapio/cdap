@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.metadata;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -37,7 +53,6 @@ public abstract class HBaseMetaDataStoreTest extends MetaDataTableTest {
     conf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
     // tests should interact with HDFS as the current user
     conf.unset(Constants.CFG_HDFS_USER);
-    conf.setBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
     DataFabricDistributedModule dfModule = new DataFabricDistributedModule();
     Module module = Modules.override(dfModule).with(
       new AbstractModule() {

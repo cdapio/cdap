@@ -1,9 +1,26 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data2.dataset2.lib.table.hbase;
 
 import com.continuuity.api.dataset.table.ConflictDetection;
 import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.data2.dataset2.lib.table.BackedByVersionedStoreOrderedTable;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionCodec;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.google.common.base.Objects;
@@ -34,8 +51,8 @@ public class HBaseOrderedTable extends BackedByVersionedStoreOrderedTable {
   private final int ttl;
 
   private Transaction tx;
-  /** oldest visible based on ttl */
-  private long oldestVisible;
+
+  private final TransactionCodec txCodec;
 
   protected HBaseOrderedTable(String name, Configuration hConf, ConflictDetection level, int ttl) throws IOException {
     super(name, level);
@@ -45,6 +62,7 @@ public class HBaseOrderedTable extends BackedByVersionedStoreOrderedTable {
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     this.hTable = hTable;
+    this.txCodec = new TransactionCodec();
   }
 
   @Override
@@ -59,8 +77,6 @@ public class HBaseOrderedTable extends BackedByVersionedStoreOrderedTable {
   public void startTx(Transaction tx) {
     super.startTx(tx);
     this.tx = tx;
-    // we know that data will not be cleaned up while this tx is running up to this point as janitor uses it
-    this.oldestVisible = ttl <= 0 ? 0 : tx.getVisibilityUpperBound() - ttl * TxConstants.MAX_TX_PER_MS;
   }
 
   @Override
@@ -133,9 +149,7 @@ public class HBaseOrderedTable extends BackedByVersionedStoreOrderedTable {
       scan.setStopRow(stopRow);
     }
 
-    scan.setTimeRange(oldestVisible, getMaxStamp(tx));
-    // todo: optimise for no excluded list separately
-    scan.setMaxVersions(tx.excludesSize() + 1);
+    txCodec.addToOperation(scan, tx);
 
     ResultScanner resultScanner = hTable.getScanner(scan);
     return new HBaseScanner(resultScanner, tx);
@@ -159,26 +173,7 @@ public class HBaseOrderedTable extends BackedByVersionedStoreOrderedTable {
       return result.isEmpty() ? EMPTY_ROW_MAP : result.getFamilyMap(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY);
     }
 
-    // todo: actually we want to read up to write pointer... when we start flushing periodically
-    get.setTimeRange(oldestVisible, getMaxStamp(tx));
-
-    // if exclusion list is empty, do simple "read last" value call todo: explain
-    if (!tx.hasExcludes()) {
-      get.setMaxVersions(1);
-      Result result = hTable.get(get);
-      if (result.isEmpty()) {
-        return EMPTY_ROW_MAP;
-      }
-      NavigableMap<byte[], byte[]> rowMap = result.getFamilyMap(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY);
-      return unwrapDeletes(rowMap);
-    }
-
-    // todo: provide max known not excluded version, so that we can figure out how to fetch even fewer versions
-    //       on the other hand, looks like the above suggestion WILL NOT WORK
-    get.setMaxVersions(tx.excludesSize() + 1);
-
-    // todo: push filtering logic to server
-    // todo: cache fetched from server locally
+    txCodec.addToOperation(get, tx);
 
     Result result = hTable.get(get);
     return getRowMap(result, tx);
@@ -192,10 +187,5 @@ public class HBaseOrderedTable extends BackedByVersionedStoreOrderedTable {
     NavigableMap<byte[], byte[]> rowMap =
       getLatestNotExcluded(result.getMap().get(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY), tx);
     return unwrapDeletes(rowMap);
-  }
-
-  private static long getMaxStamp(Transaction tx) {
-    // NOTE: +1 here because we want read up to readpointer inclusive, but timerange's end is exclusive
-    return tx.getReadPointer() + 1;
   }
 }

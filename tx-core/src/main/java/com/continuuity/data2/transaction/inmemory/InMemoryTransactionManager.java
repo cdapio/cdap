@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data2.transaction.inmemory;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -177,8 +193,8 @@ public class InMemoryTransactionManager extends AbstractService {
     inProgress.clear();
     committedChangeSets.clear();
     committingChangeSets.clear();
-    readPointer = 0;
     nextWritePointer = 1;
+    readPointer = 0;
     lastSnapshotTime = 0;
   }
 
@@ -201,6 +217,12 @@ public class InMemoryTransactionManager extends AbstractService {
     startMetricsThread();
     // initialize the WAL if we did not force a snapshot in recoverState()
     initLog();
+    // initialize next write pointer if needed
+    if (nextWritePointer == 1) {
+      nextWritePointer = getNextWritePointer();
+      readPointer = nextWritePointer - 1;
+    }
+
     notifyStarted();
   }
 
@@ -448,8 +470,8 @@ public class InMemoryTransactionManager extends AbstractService {
   private void restoreSnapshot(TransactionSnapshot snapshot) {
     LOG.info("Restoring transaction state from snapshot at " + snapshot.getTimestamp());
     Preconditions.checkState(lastSnapshotTime == 0, "lastSnapshotTime has been set!");
-    Preconditions.checkState(readPointer == 0, "readPointer has been set!");
-    Preconditions.checkState(nextWritePointer == 1, "nextWritePointer has been set!");
+    //Preconditions.checkState(readPointer == 0, "readPointer has been set!");
+    //Preconditions.checkState(nextWritePointer == 1, "nextWritePointer has been set!");
     Preconditions.checkState(invalid.isEmpty(), "invalid list should be empty!");
     Preconditions.checkState(inProgress.isEmpty(), "inProgress map should be empty!");
     Preconditions.checkState(committingChangeSets.isEmpty(), "committingChangeSets should be empty!");

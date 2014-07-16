@@ -1,5 +1,17 @@
 /*
- * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package com.continuuity.api.app;
@@ -17,69 +29,76 @@ import com.continuuity.api.workflow.Workflow;
 import org.apache.twill.api.TwillApplication;
 
 /**
- * Configures Reactor application.
+ * Configures a Reactor Application.
  */
 public interface ApplicationConfigurer {
   /**
    * Sets the Application's name.
    *
-   * @param name Name of the Application.
+   * @param name The Application name
    */
   void setName(String name);
 
   /**
    * Sets the Application's description.
    *
-   * @param description Description of the Application.
+   * @param description The Application description
    */
   void setDescription(String description);
 
   /**
    * Adds a {@link Stream} to the Application.
    *
-   * @param stream The {@link Stream} to be included in the Application.
+   * @param stream The {@link Stream} to include in the Application
    */
   void addStream(Stream stream);
 
   /**
    * Adds a {@link DataSet} to the Application.
-   * @param dataset The {@link DataSet} to be included in the Application.
+   *
+   * @param dataset The {@link DataSet} to include in the Application
+   * @deprecated As of Reactor 2.3.0
    */
   @Deprecated
   void addDataSet(DataSet dataset);
 
   /**
-   * Adds a {@link DatasetModule} to be deployed automatically (if absent in a system) during application deploy.
-   * @param moduleName name of the module to deploy
-   * @param moduleClass class of the module
+   * Adds a {@link DatasetModule} to be deployed automatically (if absent in the Reactor) during application 
+   * deployment.
+   *
+   * @param moduleName Name of the module to deploy
+   * @param moduleClass Class of the module
    */
   @Beta
   void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass);
 
   /**
-   * Same as {@link #addDatasetModule(String, Class)} but uses {@link Dataset} as a base for {@link DatasetModule}.
-   * The module will have single dataset type of name equals to name of the class in datasetClass param.
-   * @param datasetClass class of the dataset. Name of the module is same as name of the class in datasetClass param.
+   * Adds a {@link DatasetModule} to be deployed automatically (if absent in the Reactor) during application
+   * deployment, using {@link Dataset} as a base for the {@link DatasetModule}.
+   * The module will have a single dataset type identical to the name of the class in the datasetClass parameter.
+   *
+   * @param datasetClass Class of the dataset; module name will be the same as the class in the parameter
    */
   @Beta
   void addDatasetType(Class<? extends Dataset> datasetClass);
 
   /**
-   * Adds a dataset instance to be created automatically (if not exists) by application components.
-   * See {@link com.continuuity.api.dataset.DatasetDefinition} for more details.
-   * @param datasetName name of the dataset instance
-   * @param typeName name of the dataset type
-   * @param properties dataset instance properties
+   * Adds a Dataset instance, created automatically if absent in the Reactor.
+   * See {@link com.continuuity.api.dataset.DatasetDefinition} for details.
+   *
+   * @param datasetName Name of the dataset instance
+   * @param typeName Name of the dataset type
+   * @param properties Dataset instance properties
    */
   @Beta
   void createDataset(String datasetName, String typeName, DatasetProperties properties);
 
   /**
-   * Adds a dataset instance to be created automatically (if not exists) by application components
-   * and deploys dataset type as per {@link #addDatasetType(Class)} using datasetClass parameter as dataset class.
+   * Adds a Dataset instance, created automatically (if absent in the Reactor), deploying a Dataset type
+   * using the datasetClass parameter as the dataset class and the given properties.
    *
    * @param datasetName dataset instance name
-   * @param datasetClass dataset class to create type from
+   * @param datasetClass dataset class to create the Dataset type from
    * @param props dataset instance properties
    */
   void createDataset(String datasetName,
@@ -88,41 +107,45 @@ public interface ApplicationConfigurer {
 
   /**
    * Adds a {@link Flow} to the Application.
-   * @param flow The {@link Flow} to be included in the Application.
+   *
+   * @param flow The {@link Flow} to include in the Application
    */
   void addFlow(Flow flow);
 
   /**
-   * Adds a {@link com.continuuity.api.procedure.Procedure} to the application with one instance.
+   * Adds a {@link Procedure} to the Application with a single instance.
    *
-   * @param procedure The {@link com.continuuity.api.procedure.Procedure} to include in the application.
+   * @param procedure The {@link Procedure} to include in the Application
    */
   void addProcedure(Procedure procedure);
 
   /**
-   * Adds a {@link Procedure} to the application with the number of instances.
+   * Adds a {@link Procedure} to the Application with a number of instances.
    *
-   * @param procedure The {@link Procedure} to include in the application.
-   * @param instances number of instances.
+   * @param procedure The {@link Procedure} to include in the Application
+   * @param instances Number of instances to be included
    */
   void addProcedure(Procedure procedure, int instances);
 
   /**
-   * Adds MapReduce job to the application. Use it when you need to re-use existing MapReduce jobs that rely on
-   * Hadoop MapReduce APIs.
-   * @param mapReduce The MapReduce job to add
+   * Adds a {@link MapReduce MapReduce job} to the Application. Use it when you need to re-use existing MapReduce jobs
+   * that rely on Hadoop MapReduce APIs.
+   *
+   * @param mapReduce The {@link MapReduce MapReduce job} to include in the Application
    */
   void addMapReduce(MapReduce mapReduce);
 
   /**
    * Adds a {@link Workflow} to the Application.
-   * @param workflow The {@link Workflow} to be included in the Application.
+   *
+   * @param workflow The {@link Workflow} to include in the Application
    */
   void addWorkflow(Workflow workflow);
 
   /**
-   * Adds a service - {@link TwillApplication} to the Reactor application.
-   * @param application Service - {@link TwillApplication} to be included in the Reactor application.
+   * Adds a Custom Service {@link TwillApplication} to the Application.
+   *
+   * @param application Custom Service {@link TwillApplication} to include in the Application
    */
   void addService(TwillApplication application);
 }
