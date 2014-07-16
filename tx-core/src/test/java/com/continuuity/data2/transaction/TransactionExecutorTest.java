@@ -30,6 +30,7 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
@@ -61,6 +62,7 @@ public class TransactionExecutorTest {
         new TransactionModules().getInMemoryModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
+          bind(Configuration.class).annotatedWith(Names.named("transaction")).toInstance(TXCONF);
           InMemoryTransactionManager txManager = new InMemoryTransactionManager(TXCONF);
           txManager.startAndWait();
           bind(InMemoryTransactionManager.class).toInstance(txManager);
