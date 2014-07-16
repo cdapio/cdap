@@ -107,8 +107,8 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   }
 
   @Override
-  public String getTransactionAwareName() {
-    return hTable.getName().getNameAsString();
+  public TableName getName() {
+    return hTable.getName();
   }
 
   @Override
@@ -485,8 +485,8 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   }
 
   @Override
-  public TableName getName() {
-    return hTable.getName();
+  public String getTransactionAwareName() {
+    return Bytes.toString(getTableName());
   }
 
   /**

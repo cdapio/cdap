@@ -1,8 +1,8 @@
 .. :Author: Continuuity, Inc.
-   :Description: Tephra
+   :Description: Codename Tengo
 
 ==============
-Tephra
+Codename Tengo
 ==============
 
 .. reST Editor: .. section-numbering::
@@ -15,7 +15,7 @@ Tephra
 
 Introduction
 ============
-Tephra provides transactional operations on HBase. That is, operations may be committed as part of a single
+Codename Tengo provides transactional operations on HBase. That is, operations may be committed as part of a single
 transaction and upon a failure every operation in the transaction the data is rolled back to the state that existed
 prior to the beginning of the transaction. 
 
