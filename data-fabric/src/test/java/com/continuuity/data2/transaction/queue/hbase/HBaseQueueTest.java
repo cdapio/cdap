@@ -30,6 +30,7 @@ import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
@@ -111,6 +112,9 @@ public abstract class HBaseQueueTest extends QueueTest {
     cConf.unset(Constants.CFG_HDFS_USER);
     cConf.setLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY, 1L);
 
+    Configuration configuration = TxConfiguration.create();
+    cConf.copyTo(configuration);
+
     final DataFabricDistributedModule dfModule =
       new DataFabricDistributedModule();
     // turn off persistence in tx manager to get rid of ugly zookeeper warnings
@@ -123,7 +127,7 @@ public abstract class HBaseQueueTest extends QueueTest {
       });
 
     ConfigurationTable configTable = new ConfigurationTable(hConf);
-    configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
+    configTable.write(ConfigurationTable.Type.DEFAULT, configuration);
 
     final Injector injector = Guice.createInjector(dataFabricModule,
                                                    new ConfigModule(cConf, hConf),

@@ -63,13 +63,14 @@ public class ConfigurationTable {
   }
 
   /**
-   * Writes the {@link CConfiguration} instance as a new row to the HBase table.  The {@link Type} given is used as
+   * Writes the {@link org.apache.hadoop.conf.Configuration} instance as a new row to the HBase table.
+   * The {@link Type} given is used as
    * the row key (allowing multiple configurations to be stored).  After the new configuration is written, this will
    * delete any configurations written with an earlier timestamp (to prevent removed values from being visible).
-   * @param conf The CConfiguration instance to store
+   * @param conf The Configuration instance to store
    * @throws IOException If an error occurs while writing the configuration
    */
-  public void write(Type type, CConfiguration conf) throws IOException {
+  public void write(Type type, Configuration conf) throws IOException {
     String tableName = getTableName(conf.get(DataSetAccessor.CFG_TABLE_PREFIX, DataSetAccessor.DEFAULT_TABLE_PREFIX));
     byte[] tableBytes = Bytes.toBytes(tableName);
 

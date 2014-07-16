@@ -18,6 +18,7 @@ package com.continuuity.data2.util.hbase;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.test.SlowTests;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
@@ -51,22 +52,22 @@ public class ConfigurationTableTest {
 
   @Test
   public void testConfigurationSerialization() throws Exception {
-    CConfiguration cconf = CConfiguration.create();
-    String expectedNamespace = cconf.get(DataSetAccessor.CFG_TABLE_PREFIX, DataSetAccessor.DEFAULT_TABLE_PREFIX);
+    Configuration conf = TxConfiguration.create();
+    String expectedNamespace = conf.get(DataSetAccessor.CFG_TABLE_PREFIX, DataSetAccessor.DEFAULT_TABLE_PREFIX);
 
     ConfigurationTable configTable = new ConfigurationTable(hbaseUtil.getConfiguration());
-    configTable.write(ConfigurationTable.Type.DEFAULT, cconf);
+    configTable.write(ConfigurationTable.Type.DEFAULT, conf);
 
     Configuration cconf2 = configTable.read(ConfigurationTable.Type.DEFAULT, expectedNamespace);
     assertNotNull(cconf2);
 
-    for (Map.Entry<String, String> e : cconf) {
+    for (Map.Entry<String, String> e : conf) {
       assertEquals("Configuration value mismatch (cconf -> cconf2) for key: " + e.getKey(),
                    e.getValue(), cconf2.get(e.getKey()));
     }
     for (Map.Entry<String, String> e : cconf2) {
       assertEquals("Configuration value mismatch (cconf2 -> cconf) for key: " + e.getKey(),
-                   e.getValue(), cconf.get(e.getKey()));
+                   e.getValue(), conf.get(e.getKey()));
     }
   }
 }

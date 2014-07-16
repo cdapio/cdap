@@ -78,7 +78,7 @@ public class TransactionStateCache extends AbstractIdleService implements Config
   }
 
   /**
-   * Try to initialize the CConfiguration and TransactionStateStorage instances.  Obtaining the CConfiguration may
+   * Try to initialize the Configuration and TransactionStateStorage instances.  Obtaining the Configuration may
    * fail until ReactorServiceMain has been started.
    */
   private void tryInit() {

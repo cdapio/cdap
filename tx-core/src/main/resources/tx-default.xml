@@ -87,7 +87,7 @@
 
     <property>
     <name>data.tx.snapshot.local.dir</name>
-    <value>${local.data.dir}/tx.snapshot</value>
+    <value>data/tx.snapshot</value>
     <description>Directory on the local filesystem used to store snapshots
       and logs of transaction state for single-node operation</description>
     </property>

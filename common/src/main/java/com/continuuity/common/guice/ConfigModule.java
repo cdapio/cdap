@@ -17,7 +17,6 @@ package com.continuuity.common.guice;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.google.inject.AbstractModule;
-import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 
