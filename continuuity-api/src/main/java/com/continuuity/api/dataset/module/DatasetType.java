@@ -41,7 +41,7 @@ import java.lang.annotation.Target;
  * {@literal @}DatasetType("KVTable")
  * public class SimpleKVTable extends AbstractDataset {
  *   public SimpleKVTable(DatasetSpecification spec, {@literal @}EmbeddedDataset("data") Table table) {
- *     super(spec.getTransactionAwareName(), table);
+ *     super(spec.getName(), table);
  *   }
  *
  *   //...

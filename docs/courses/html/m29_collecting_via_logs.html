@@ -1832,10 +1832,10 @@ private static Logger LOG = LoggerFactory.getLogger(WordCounter.class);
 // ...
 &#64;ProcessInput
 public void process(String line) {
-  LOG.info(this.getContext().getTransactionAwareName() + &quot;: Received line &quot; + line);
+  LOG.info(this.getContext().getName() + &quot;: Received line &quot; + line);
 
   // ... processing
-  LOG.info(this.getContext().getTransactionAwareName() + &quot;: Emitting count &quot; + wordCount);
+  LOG.info(this.getContext().getName() + &quot;: Emitting count &quot; + wordCount);
   output.emit(wordCount);
 }
 </pre></section>

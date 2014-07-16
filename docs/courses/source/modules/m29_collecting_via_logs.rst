@@ -50,10 +50,10 @@ In a Flowlet you can write:
 	// ...
 	@ProcessInput
 	public void process(String line) {
-	  LOG.info(this.getContext().getTransactionAwareName() + ": Received line " + line);
+	  LOG.info(this.getContext().getName() + ": Received line " + line);
 
 	  // ... processing
-	  LOG.info(this.getContext().getTransactionAwareName() + ": Emitting count " + wordCount);
+	  LOG.info(this.getContext().getName() + ": Emitting count " + wordCount);
 	  output.emit(wordCount);
 	}
 

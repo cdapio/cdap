@@ -68,7 +68,7 @@ public class SimpleKVTable extends AbstractDataset implements KeyValueTable {
 
   public SimpleKVTable(DatasetSpecification spec,
                        &#64;EmbeddedDataset("data") Table table) {
-    super(spec.getTransactionAwareName(), table);
+    super(spec.getName(), table);
     this.table = table;
   }
 

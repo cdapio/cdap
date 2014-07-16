@@ -21,7 +21,6 @@ import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.data2.dataset2.lib.table.BackedByVersionedStoreOrderedTable;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionCodec;
-import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
