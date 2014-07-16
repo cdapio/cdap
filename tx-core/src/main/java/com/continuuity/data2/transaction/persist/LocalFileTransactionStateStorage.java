@@ -62,7 +62,8 @@ public class LocalFileTransactionStateStorage extends AbstractTransactionStateSt
   private File snapshotDir;
 
   @Inject
-  public LocalFileTransactionStateStorage(@Named("transaction")Configuration conf, SnapshotCodecProvider codecProvider) {
+  public LocalFileTransactionStateStorage(@Named("transaction")Configuration conf,
+                                          SnapshotCodecProvider codecProvider) {
     super(codecProvider);
     this.configuredSnapshotDir = conf.get(TxConstants.Manager.CFG_TX_SNAPSHOT_LOCAL_DIR);
   }
