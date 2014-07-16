@@ -17,6 +17,11 @@
   -->
 <configuration>
     <property>
+      <name>local.data.dir</name>
+      <value>data</value>
+      <description>Data directory for local mode</description>
+    </property>
+    <property>
       <name>data.tx.bind.port</name>
       <value>15165</value>
       <description>The port number for the transaction
@@ -75,7 +80,7 @@
 
     <property>
     <name>data.tx.snapshot.dir</name>
-    <value>${hdfs.namespace}/tx.snapshot</value>
+    <value>continuuity/tx.snapshot</value>
     <description>Directory in HDFS used to store snapshots and logs of
       transaction state</description>
     </property>
@@ -115,16 +120,16 @@
 
     <property>
     <name>data.tx.max.instances</name>
-    <value>${reactor.service.max.instances}</value>
+    <value>5</value>
     </property>
 
     <property>
     <name>data.tx.num.cores</name>
-    <value>${reactor.service.num.cores}</value>
+    <value>2</value>
     </property>
 
     <property>
     <name>data.tx.memory.mb</name>
-    <value>${reactor.service.memory.mb}</value>
+    <value>512</value>
     </property>
 </configuration>

@@ -45,3 +45,4 @@ dependency-reduced-pom.xml
 
 # Hive db Stuff
 derby.log
+version.txt

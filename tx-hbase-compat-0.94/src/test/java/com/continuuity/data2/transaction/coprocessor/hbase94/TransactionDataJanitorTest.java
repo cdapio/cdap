@@ -94,6 +94,8 @@ public class TransactionDataJanitorTest {
     testUtil.startMiniCluster();
     testUtil.getDFSCluster().waitClusterUp();
     CConfiguration conf = CConfiguration.create();
+    conf.unset(Constants.CFG_HDFS_USER);
+    conf.unset(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES);
 
     Configuration txConf = TxConfiguration.create();
     conf.copyTo(txConf);

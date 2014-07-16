@@ -22,6 +22,7 @@ import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ public class SnapshotCodecProvider implements SnapshotCodec {
   private final SortedMap<Integer, SnapshotCodec> codecs = Maps.newTreeMap();
 
   @Inject
-  public SnapshotCodecProvider(Configuration configuration) {
+  public SnapshotCodecProvider(@Named("transaction") Configuration configuration) {
     initialize(configuration);
   }
 
