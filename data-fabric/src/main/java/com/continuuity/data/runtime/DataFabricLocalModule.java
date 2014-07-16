@@ -21,9 +21,7 @@ import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueClientFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
-import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
-import org.apache.hadoop.conf.Configuration;
 
 /**
  * DataFabricLocalModule defines the Local/HyperSQL bindings for the data fabric.
