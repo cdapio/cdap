@@ -109,9 +109,9 @@ public class Transaction {
       .append(Transaction.class.getSimpleName())
       .append('{')
       .append("readPointer: ").append(readPointer)
-      .append("writePointer: ").append(writePointer)
-      .append("invalids: ").append(Arrays.toString(invalids))
-      .append("inProgress: ").append(Arrays.toString(inProgress))
+      .append(", writePointer: ").append(writePointer)
+      .append(", invalids: ").append(Arrays.toString(invalids))
+      .append(", inProgress: ").append(Arrays.toString(inProgress))
       .append('}')
       .toString();
   }

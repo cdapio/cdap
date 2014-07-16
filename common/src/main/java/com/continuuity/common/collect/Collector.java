@@ -16,6 +16,8 @@
 
 package com.continuuity.common.collect;
 
+import java.util.Collection;
+
 /**
  * This can be used to collect with different strategies while iterating
  * over a stream of elements. For every element in the stream, add the
@@ -31,11 +33,14 @@ public interface Collector<Element> {
    * @param element the element to collect
    * @return whether more elements need to be collected
    */
-  public boolean addElement(Element element);
+  boolean addElement(Element element);
 
   /**
-   * Finish collection of elements and return all elements that were added.
-   * @return all the collected elements
+   * Finish collection of elements and add all collected elements into the given {@link Collection}.
+   *
+   * @param collection {@link Collection} for storing collected elements.
+   * @param <T> Type of collection
+   * @return The same {@link Collection} instance given in the parameter.
    */
-  public Element[] finish();
+  <T extends Collection<? super Element>> T finish(T collection);
 }
