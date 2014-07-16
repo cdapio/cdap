@@ -17,7 +17,9 @@ package com.continuuity.common.http;
 
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.google.common.base.Charsets;
+import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
@@ -38,10 +40,10 @@ public class HttpRequest {
 
   private final HttpMethod method;
   private final URL url;
-  private final Map<String, String> headers;
+  private final Multimap<String, String> headers;
   private final InputSupplier<? extends InputStream> body;
 
-  public HttpRequest(HttpMethod method, URL url, @Nullable Map<String, String> headers,
+  public HttpRequest(HttpMethod method, URL url, @Nullable Multimap<String, String> headers,
                      @Nullable InputSupplier<? extends InputStream> body) {
     this.method = method;
     this.url = url;
@@ -78,7 +80,7 @@ public class HttpRequest {
   }
 
   @Nullable
-  public Map<String, String> getHeaders() {
+  public Multimap<String, String> getHeaders() {
     return headers;
   }
 
@@ -93,7 +95,7 @@ public class HttpRequest {
   public static final class Builder {
     private final HttpMethod method;
     private final URL url;
-    private final Map<String, String> headers = Maps.newHashMap();
+    private final Multimap<String, String> headers = LinkedListMultimap.create();
     private InputSupplier<? extends InputStream> body;
 
     Builder(HttpMethod method, URL url) {
@@ -106,9 +108,18 @@ public class HttpRequest {
       return this;
     }
 
-    public Builder addHeaders(@Nullable Map<String, String> headers) {
+    public Builder addHeaders(@Nullable Multimap<String, String> headers) {
       if (headers != null) {
         this.headers.putAll(headers);
+      }
+      return this;
+    }
+
+    public Builder addHeaders(@Nullable Map<String, String> headers) {
+      if (headers != null) {
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+          this.headers.put(entry.getKey(), entry.getValue());
+        }
       }
       return this;
     }

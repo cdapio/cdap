@@ -45,11 +45,11 @@ public final class ObjectResponse<T> extends HttpResponse {
   }
 
   public static <T> ObjectResponse<T> fromJsonBody(HttpResponse response, TypeToken<T> typeOfObject, Gson gson) {
-    return fromJsonBody(response, (Type) typeOfObject.getType(), gson);
+    return fromJsonBody(response, typeOfObject.getType(), gson);
   }
 
   public static <T> ObjectResponse<T> fromJsonBody(HttpResponse response, TypeToken<T> typeOfObject) {
-    return fromJsonBody(response, (Type) typeOfObject.getType(), GSON);
+    return fromJsonBody(response, typeOfObject.getType(), GSON);
   }
 
   public static <T> ObjectResponse<T> fromJsonBody(HttpResponse response, Class<T> typeOfObject, Gson gson) {

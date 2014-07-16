@@ -15,6 +15,7 @@
  */
 package com.continuuity.common.http;
 
+import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
@@ -32,9 +33,11 @@ import java.util.Map;
 /**
  * Executes {@link HttpRequest}s and returns an {@link HttpResponse}.
  */
-public class HttpRequests {
+public final class HttpRequests {
 
   private static final Gson GSON = new Gson();
+
+  private HttpRequests() { }
 
   /**
    * Executes an HTTP request to the url provided.
@@ -52,9 +55,9 @@ public class HttpRequests {
     conn.setReadTimeout(requestConfig.getReadTimeout());
     conn.setConnectTimeout(requestConfig.getConnectTimeout());
 
-    Map<String, String> headers = request.getHeaders();
+    Multimap<String, String> headers = request.getHeaders();
     if (headers != null) {
-      for (Map.Entry<String, String> header : headers.entrySet()) {
+      for (Map.Entry<String, String> header : headers.entries()) {
         conn.setRequestProperty(header.getKey(), header.getValue());
       }
     }
