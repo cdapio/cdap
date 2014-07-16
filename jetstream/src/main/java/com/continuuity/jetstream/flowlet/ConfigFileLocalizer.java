@@ -14,28 +14,12 @@
  * the License.
  */
 
-package com.continuuity.jetstream.api;
+package com.continuuity.jetstream.flowlet;
 
 /**
- * PrimitiveTypes used in the GDAT format.
+ * Creates Config Files.
  */
-public enum PrimitiveType {
-  BOOL("bool"),
-  USHORT("ushort"),
-  UINT("uint"),
-  INT("int"),
-  ULLONG("ullong"),
-  LLONG("llong"),
-  FLOAT("float"),
-  STRING("string");
+public interface ConfigFileLocalizer {
 
-  private String type;
-
-  private PrimitiveType(String type) {
-    this.type = type;
-  }
-
-  public String getType() {
-    return type;
-  }
+  public void localizeConfigFiles(InputFlowletSpecification spec);
 }

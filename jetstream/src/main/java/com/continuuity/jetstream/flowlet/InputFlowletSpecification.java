@@ -14,28 +14,23 @@
  * the License.
  */
 
-package com.continuuity.jetstream.api;
+package com.continuuity.jetstream.flowlet;
+
+import com.continuuity.jetstream.api.StreamSchema;
+
+import java.util.Map;
 
 /**
- * PrimitiveTypes used in the GDAT format.
+ * Specification of a InputFlowlet.
  */
-public enum PrimitiveType {
-  BOOL("bool"),
-  USHORT("ushort"),
-  UINT("uint"),
-  INT("int"),
-  ULLONG("ullong"),
-  LLONG("llong"),
-  FLOAT("float"),
-  STRING("string");
+public interface InputFlowletSpecification {
 
-  private String type;
+  String getName();
 
-  private PrimitiveType(String type) {
-    this.type = type;
-  }
+  String getDescription();
 
-  public String getType() {
-    return type;
-  }
+  Map<String, StreamSchema> getGdatInputSchema();
+
+  Map<String, String> getGSQL();
+
 }

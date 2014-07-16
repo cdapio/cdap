@@ -1,4 +1,4 @@
-    <Interface Name='GDAT0'>
+<Interface Name='GDAT0'>
       <InterfaceType value='GDAT'/>
       <CSVSeparator value='|'/>
       <Filename value='exampleCsv'/>

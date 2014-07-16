@@ -14,28 +14,22 @@
  * the License.
  */
 
-package com.continuuity.jetstream.api;
+package com.continuuity.jetstream.flowlet;
+
+import java.util.Map;
 
 /**
- * PrimitiveTypes used in the GDAT format.
+ * Configuration Content Generator.
  */
-public enum PrimitiveType {
-  BOOL("bool"),
-  USHORT("ushort"),
-  UINT("uint"),
-  INT("int"),
-  ULLONG("ullong"),
-  LLONG("llong"),
-  FLOAT("float"),
-  STRING("string");
+public interface ConfigFileGenerator {
 
-  private String type;
+  public String generatePacketSchema(InputFlowletSpecification spec);
 
-  private PrimitiveType(String type) {
-    this.type = type;
-  }
+  public String generateOutputSpec(InputFlowletSpecification spec);
 
-  public String getType() {
-    return type;
-  }
+  public Map<String, String> generateGSQLFiles(InputFlowletSpecification spec);
+
+  public Map<String, String> generateHostIfq();
+
+  public String generateIfresXML();
 }

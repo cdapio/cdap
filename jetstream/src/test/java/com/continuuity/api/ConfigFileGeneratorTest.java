@@ -1,12 +1,28 @@
+/*
+ * Copyright 2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.api;
 
-import com.continuuity.jetstream.api.AbstractGSFlowlet;
-import com.continuuity.jetstream.gsflowlet.GSConfigFileGenerator;
-import com.continuuity.jetstream.gsflowlet.GSConfigFileLocalizer;
-import com.continuuity.jetstream.gsflowlet.GSFlowletSpecification;
-import com.continuuity.jetstream.internal.DefaultGSFlowletConfigurer;
-import com.continuuity.jetstream.internal.LocalGSConfigFileGenerator;
-import com.continuuity.jetstream.internal.LocalGSConfigFileLocalizer;
+import com.continuuity.jetstream.api.AbstractInputFlowlet;
+import com.continuuity.jetstream.flowlet.ConfigFileGenerator;
+import com.continuuity.jetstream.flowlet.ConfigFileLocalizer;
+import com.continuuity.jetstream.flowlet.InputFlowletSpecification;
+import com.continuuity.jetstream.internal.DefaultInputFlowletConfigurer;
+import com.continuuity.jetstream.internal.LocalConfigFileGenerator;
+import com.continuuity.jetstream.internal.LocalConfigFileLocalizer;
 import com.continuuity.jetstream.util.Platform;
 import com.google.common.io.ByteStreams;
 import org.junit.Assert;
@@ -23,25 +39,25 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 
 /**
- * Tests the successful creation of GS Config Files.
+ * Tests the successful creation of Config Files.
  */
-public class GSConfigFileGeneratorTest {
+public class ConfigFileGeneratorTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   @Test
-  public void testBasicGSFlowletConfig() throws IOException, InterruptedException {
-    AbstractGSFlowlet flowlet = new GSFlowletBasic();
-    DefaultGSFlowletConfigurer configurer = new DefaultGSFlowletConfigurer(flowlet);
+  public void testBasicFlowletConfig() throws IOException, InterruptedException {
+    AbstractInputFlowlet flowlet = new InputFlowletBasic();
+    DefaultInputFlowletConfigurer configurer = new DefaultInputFlowletConfigurer(flowlet);
     flowlet.create(configurer);
-    GSFlowletSpecification spec = configurer.createGSFlowletSpec();
-    GSConfigFileGenerator configFileGenerator = new LocalGSConfigFileGenerator();
+    InputFlowletSpecification spec = configurer.createInputFlowletSpec();
+    ConfigFileGenerator configFileGenerator = new LocalConfigFileGenerator();
     File tempDir = TEMP_FOLDER.newFolder();
     tempDir.mkdir();
 
     //Get the library zip, copy it to temp dir, unzip it
-    String libFile = Platform.gsLibraryResource();
+    String libFile = Platform.libraryResource();
     File libZip = new File(tempDir, libFile);
     copyResourceFileToDir(libFile, libZip);
     unzipFile(libZip);
@@ -53,12 +69,12 @@ public class GSConfigFileGeneratorTest {
     queryDir.mkdir();
 
     //Create the GS config files
-    GSConfigFileLocalizer configFileLocalizer = new LocalGSConfigFileLocalizer(queryDir, configFileGenerator);
-    configFileLocalizer.localizeGSConfigFiles(spec);
+    ConfigFileLocalizer configFileLocalizer = new LocalConfigFileLocalizer(queryDir, configFileGenerator);
+    configFileLocalizer.localizeConfigFiles(spec);
 
     //Create GS binaries - and get the status of generation (if the generation was ok or not)
     StringBuilder errorMsg = new StringBuilder();
-    boolean testExitValue = generateGSProcesses(queryDir, errorMsg);
+    boolean testExitValue = generateBinaries(queryDir, errorMsg);
     Assert.assertTrue(errorMsg.toString(), testExitValue);
   }
 
@@ -79,7 +95,7 @@ public class GSConfigFileGeneratorTest {
     Assert.assertEquals(unzip.waitFor(), 0);
   }
 
-  private boolean generateGSProcesses(File configLocation, StringBuilder errorMsg)
+  private boolean generateBinaries(File configLocation, StringBuilder errorMsg)
     throws IOException, InterruptedException {
     String[] command = {"bash", "-c", "../../bin/buildit"};
     ProcessBuilder genGS = new ProcessBuilder(command);

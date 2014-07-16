@@ -1,9 +1,25 @@
+/*
+ * Copyright 2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.jetstream.internal;
 
-import com.continuuity.jetstream.api.GSSchema;
+import com.continuuity.jetstream.api.StreamSchema;
 import com.continuuity.jetstream.api.PrimitiveType;
-import com.continuuity.jetstream.gsflowlet.GSConfigFileGenerator;
-import com.continuuity.jetstream.gsflowlet.GSFlowletSpecification;
+import com.continuuity.jetstream.flowlet.ConfigFileGenerator;
+import com.continuuity.jetstream.flowlet.InputFlowletSpecification;
 import com.google.common.collect.Maps;
 import com.google.common.io.CharStreams;
 import org.slf4j.Logger;
@@ -17,15 +33,15 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * GSConfig File Content Generator.
+ * Config File Content Generator.
  */
-public class LocalGSConfigFileGenerator implements GSConfigFileGenerator {
-  private static final Logger LOG = LoggerFactory.getLogger(LocalGSConfigFileGenerator.class);
+public class LocalConfigFileGenerator implements ConfigFileGenerator {
+  private static final Logger LOG = LoggerFactory.getLogger(LocalConfigFileGenerator.class);
   private static final String OUTPUTSPEC_SUFFIX = ",stream,,,,,";
   private static final String NEWLINE = System.getProperty("line.separator");
   private final String hostname;
 
-  public LocalGSConfigFileGenerator() {
+  public LocalConfigFileGenerator() {
     String host;
     try {
       host = InetAddress.getLocalHost().getHostName();
@@ -36,17 +52,17 @@ public class LocalGSConfigFileGenerator implements GSConfigFileGenerator {
   }
 
   @Override
-  public String generatePacketSchema(GSFlowletSpecification spec) {
+  public String generatePacketSchema(InputFlowletSpecification spec) {
     return createPacketSchema(spec.getGdatInputSchema());
   }
 
   @Override
-  public String generateOutputSpec(GSFlowletSpecification spec) {
+  public String generateOutputSpec(InputFlowletSpecification spec) {
     return createOutputSpec(spec.getGSQL());
   }
 
   @Override
-  public Map<String, String> generateGSQLFiles(GSFlowletSpecification spec) {
+  public Map<String, String> generateGSQLFiles(InputFlowletSpecification spec) {
     return createGSQLFiles(spec.getGSQL());
   }
 
@@ -90,23 +106,23 @@ public class LocalGSConfigFileGenerator implements GSConfigFileGenerator {
     return stringBuilder.toString();
   }
 
-  private String createPacketSchema(Map<String, GSSchema> schemaMap) {
+  private String createPacketSchema(Map<String, StreamSchema> schemaMap) {
     StringBuilder stringBuilder = new StringBuilder();
-    for (Map.Entry<String, GSSchema> entry : schemaMap.entrySet()) {
+    for (Map.Entry<String, StreamSchema> entry : schemaMap.entrySet()) {
       stringBuilder.append(createProtocol(entry.getKey(), entry.getValue()));
     }
     return stringBuilder.toString();
   }
 
   /**
-   * Takes a name for the Schema and the GSSchema object to create the contents for packet_schema.txt file.
+   * Takes a name for the Schema and the StreamSchema object to create the contents for packet_schema.txt file.
    * Sample file content :
    * PROTOCOL name {
    *   ullong timestamp get_gdat_ullong_pos1 (increasing);
    *   uint istream get_gdat_uint_pos2;
    * }
    */
-  private String createProtocol(String name, GSSchema schema) {
+  private String createProtocol(String name, StreamSchema schema) {
     StringBuilder stringBuilder = new StringBuilder();
     stringBuilder.append("PROTOCOL ").append(name).append(" {").append(NEWLINE);
     Set<String> increasingFields = schema.getIncreasingFields();
