@@ -16,7 +16,6 @@
 
 package com.continuuity.data2.transaction;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
@@ -32,6 +31,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.common.Services;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.zookeeper.RetryStrategies;
@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class TransactionServiceMain {
 
-  private CConfiguration cConf = null;
+  private Configuration cConf = null;
 
   private TransactionService txService = null;
 
@@ -96,7 +96,7 @@ public class TransactionServiceMain {
    * Invoked by jsvc to initialize the program.
    */
   public void init(String[] args) {
-    cConf = CConfiguration.create();
+    cConf = new Configuration();
   }
 
   /**
@@ -175,11 +175,11 @@ public class TransactionServiceMain {
   @Singleton
   private static final class ThriftClientProviderSupplier implements Provider<ThriftClientProvider> {
 
-    private final CConfiguration cConf;
+    private final Configuration cConf;
     private DiscoveryServiceClient discoveryServiceClient;
 
     @Inject
-    ThriftClientProviderSupplier(CConfiguration cConf) {
+    ThriftClientProviderSupplier(Configuration cConf) {
       this.cConf = cConf;
     }
 

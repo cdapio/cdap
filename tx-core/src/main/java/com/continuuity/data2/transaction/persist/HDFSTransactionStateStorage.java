@@ -86,7 +86,6 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
     Preconditions.checkState(configuredSnapshotDir != null,
         "Snapshot directory is not configured.  Please set " + TxConstants.Manager.CFG_TX_SNAPSHOT_DIR +
         " in configuration.");
-    //todo : check if this will work?
     String hdfsUser = hConf.get(Constants.CFG_HDFS_USER);
     if (hdfsUser == null || UserGroupInformation.isSecurityEnabled()) {
       if (hdfsUser != null && LOG.isDebugEnabled()) {
