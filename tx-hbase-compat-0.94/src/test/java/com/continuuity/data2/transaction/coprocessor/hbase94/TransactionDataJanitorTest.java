@@ -92,8 +92,6 @@ public class TransactionDataJanitorTest {
     testUtil.startMiniCluster();
     testUtil.getDFSCluster().waitClusterUp();
     Configuration conf = testUtil.getConfiguration();
-    conf.addResource("tx-default.xml");
-    conf.addResource("tx-site.xml");
     conf.unset(Constants.CFG_HDFS_USER);
     conf.unset(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES);
     String localTestDir = "/tmp/transactionDataJanitorTest";

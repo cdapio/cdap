@@ -99,8 +99,6 @@ public class TransactionStateCache extends AbstractIdleService implements Config
 
   protected Configuration getSnapshotConfiguration() throws IOException {
     Configuration conf = new Configuration();
-    conf.addResource("tx-default.xml");
-    conf.addResource("tx-site.xml");
     conf.unset(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES);
     return conf;
   }
