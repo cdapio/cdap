@@ -53,7 +53,7 @@ public class CConfiguration extends Configuration {
   public void copyTxProperties(org.apache.hadoop.conf.Configuration destination) {
     Properties props = getProps();
     for (String property : props.stringPropertyNames()) {
-      if (property.startsWith("data.tx")) {
+      if (property.startsWith("data.tx") || property.startsWith("tx.persist")) {
         destination.set(property, get(property));
       }
     }

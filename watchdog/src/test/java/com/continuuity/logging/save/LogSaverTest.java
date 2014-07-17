@@ -51,6 +51,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
@@ -112,7 +113,7 @@ public class LogSaverTest extends KafkaTestBase {
     cConf.set(LoggingConfiguration.LOG_SAVER_EVENT_PROCESSING_DELAY_MS, "600");
     cConf.set(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS, "10");
 
-    Configuration conf = new Configuration();
+    Configuration conf = HBaseConfiguration.create();
     cConf.copyTxProperties(conf);
     InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf);
     txManager.startAndWait();

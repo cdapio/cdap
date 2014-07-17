@@ -20,6 +20,7 @@ import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.snapshot.DefaultSnapshotCodec;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
@@ -37,7 +38,7 @@ public class LocalTransactionStateStorageTest extends AbstractTransactionStateSt
   @Override
   protected Configuration getConfiguration(String testName) throws IOException {
     File testDir = tmpDir.newFolder(testName);
-    Configuration conf = new Configuration();
+    Configuration conf = HBaseConfiguration.create();
     conf.set(TxConstants.Manager.CFG_TX_SNAPSHOT_LOCAL_DIR, testDir.getAbsolutePath());
     conf.set(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES, DefaultSnapshotCodec.class.getName());
 

@@ -30,6 +30,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -698,7 +699,7 @@ public class TransactionManagerDebuggerMain {
 
   public static void main(String[] args) {
     // create a config and load the gateway properties
-    Configuration config = new Configuration();
+    Configuration config = HBaseConfiguration.create();
     TransactionManagerDebuggerMain instance = new TransactionManagerDebuggerMain(config);
     boolean success = instance.execute(args, config);
     if (!success) {

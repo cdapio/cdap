@@ -32,6 +32,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -74,7 +75,7 @@ public class LogCleanupTest {
     DataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor(cConf);
     OrderedColumnarTable metaTable = new LogSaverTableUtil(dataSetAccessor).getMetaTable();
 
-    Configuration conf = new Configuration();
+    Configuration conf = HBaseConfiguration.create();
     cConf.copyTxProperties(conf);
     InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf);
     txManager.startAndWait();

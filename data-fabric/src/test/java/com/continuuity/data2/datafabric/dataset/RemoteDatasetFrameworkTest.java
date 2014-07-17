@@ -37,6 +37,7 @@ import com.continuuity.explore.client.DatasetExploreFacade;
 import com.continuuity.explore.client.DiscoveryExploreClient;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
@@ -71,7 +72,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
 
     // Tx Manager to support working with datasets
-    Configuration txConf = new Configuration();
+    Configuration txConf = HBaseConfiguration.create();
     cConf.copyTxProperties(txConf);
     InMemoryTransactionManager txManager = new InMemoryTransactionManager(txConf);
     txManager.startAndWait();

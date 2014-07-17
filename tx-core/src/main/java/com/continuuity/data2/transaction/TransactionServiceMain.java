@@ -32,6 +32,7 @@ import com.google.inject.Injector;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.common.Services;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.zookeeper.RetryStrategies;
@@ -96,7 +97,7 @@ public class TransactionServiceMain {
    * Invoked by jsvc to initialize the program.
    */
   public void init(String[] args) {
-    cConf = new Configuration();
+    cConf = HBaseConfiguration.create();
   }
 
   /**

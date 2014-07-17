@@ -34,6 +34,7 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -48,7 +49,7 @@ import javax.annotation.Nullable;
  */
 public class TransactionExecutorTest {
   static final CConfiguration CCONF = CConfiguration.create();
-  static final Configuration HCONF = new Configuration();
+  static final Configuration HCONF = HBaseConfiguration.create();
   static Injector injector;
   static DummyTxClient txClient;
   static TransactionExecutorFactory factory;

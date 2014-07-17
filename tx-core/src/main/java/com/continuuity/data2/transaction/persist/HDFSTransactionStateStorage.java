@@ -31,6 +31,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -371,7 +372,7 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
       printUsage("ERROR: Either -s or -l is required to set mode.", 1);
     }
 
-    Configuration config = new Configuration();
+    Configuration config = HBaseConfiguration.create();
 
     HDFSTransactionStateStorage storage =
       new HDFSTransactionStateStorage(config, new SnapshotCodecProvider(config));
