@@ -16,10 +16,10 @@
 
 package com.continuuity.data2.transaction.distributed;
 
-import com.continuuity.common.rpc.ThriftRPCServer;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionServer;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionService;
+import com.continuuity.data2.transaction.rpc.ThriftRPCServer;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
