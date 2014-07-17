@@ -698,7 +698,7 @@ public class TransactionManagerDebuggerMain {
 
   public static void main(String[] args) {
     // create a config and load the gateway properties
-    Configuration config = TxConfiguration.getConfiguration();
+    Configuration config = new Configuration();
     TransactionManagerDebuggerMain instance = new TransactionManagerDebuggerMain(config);
     boolean success = instance.execute(args, config);
     if (!success) {

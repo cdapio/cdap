@@ -20,7 +20,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
-import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.logging.KafkaTestBase;
@@ -54,7 +53,7 @@ public class TestKafkaLogging extends KafkaTestBase {
 
   @BeforeClass
   public static void init() throws IOException {
-    Configuration txConf = TxConfiguration.getConfiguration();
+    Configuration txConf = new Configuration();
     InMemoryTransactionManager txManager = new InMemoryTransactionManager(txConf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);

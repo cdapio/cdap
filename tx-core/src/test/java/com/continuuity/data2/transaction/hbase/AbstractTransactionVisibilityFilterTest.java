@@ -17,7 +17,6 @@
 package com.continuuity.data2.transaction.hbase;
 
 import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.collect.Lists;
@@ -45,7 +44,7 @@ public abstract class AbstractTransactionVisibilityFilterTest {
 
   @Before
   public void setup() throws Exception {
-    Configuration conf = TxConfiguration.getConfiguration();
+    Configuration conf = new Configuration();
     conf.unset(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES);
     txManager = new InMemoryTransactionManager(conf);
     txManager.startAndWait();

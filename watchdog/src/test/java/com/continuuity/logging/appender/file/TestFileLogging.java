@@ -20,7 +20,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
-import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.logging.LoggingConfiguration;
@@ -68,7 +67,7 @@ public class TestFileLogging {
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
 
 
-    Configuration conf = TxConfiguration.getConfiguration();
+    Configuration conf = new Configuration();
     cConf.copyTo(conf);
     InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf);
     txManager.startAndWait();

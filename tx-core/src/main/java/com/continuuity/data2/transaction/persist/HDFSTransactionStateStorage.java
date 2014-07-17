@@ -17,7 +17,6 @@
 package com.continuuity.data2.transaction.persist;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.google.common.base.Function;
@@ -373,7 +372,7 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
       printUsage("ERROR: Either -s or -l is required to set mode.", 1);
     }
 
-    Configuration config = TxConfiguration.getConfiguration();
+    Configuration config = new Configuration();
 
     HDFSTransactionStateStorage storage =
       new HDFSTransactionStateStorage(config, new SnapshotCodecProvider(config));

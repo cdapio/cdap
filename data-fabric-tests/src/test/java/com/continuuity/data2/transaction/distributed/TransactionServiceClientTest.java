@@ -27,7 +27,6 @@ import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TransactionSystemTest;
-import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
@@ -128,7 +127,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   @Test
   public void testGetSnapshot() throws Exception {
     TransactionSystemClient client = getClient();
-    Configuration txConf = TxConfiguration.getConfiguration();
+    Configuration txConf = new Configuration();
     cConf.copyTo(txConf);
     SnapshotCodecProvider codecProvider = new SnapshotCodecProvider(txConf);
 

@@ -17,7 +17,6 @@
 package com.continuuity.data2.transaction.coprocessor.hbase94;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.coprocessor.TransactionStateCache;
 import com.continuuity.data2.transaction.coprocessor.TransactionStateCacheSupplier;
