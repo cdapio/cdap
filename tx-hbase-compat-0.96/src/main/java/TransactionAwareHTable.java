@@ -143,23 +143,35 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   @Override
   public void batch(List<? extends Row> actions, Object[] results) throws IOException, InterruptedException {
+    if (tx == null) {
+      throw new IOException("Transaction not started");
+    }
     hTable.batch(transactionalizeActions(actions), results);
   }
 
   @Override
   public Object[] batch(List<? extends Row> actions) throws IOException, InterruptedException {
+    if (tx == null) {
+      throw new IOException("Transaction not started");
+    }
     return hTable.batch(transactionalizeActions(actions));
   }
 
   @Override
   public <R> void batchCallback(List<? extends Row> actions, Object[] results, Batch.Callback<R> callback) throws
     IOException, InterruptedException {
+    if (tx == null) {
+      throw new IOException("Transaction not started");
+    }
     hTable.batchCallback(transactionalizeActions(actions), results, callback);
   }
 
   @Override
   public <R> Object[] batchCallback(List<? extends Row> actions, Batch.Callback<R> callback) throws IOException,
     InterruptedException {
+    if (tx == null) {
+      throw new IOException("Transaction not started");
+    }
     return hTable.batchCallback(transactionalizeActions(actions), callback);
   }
 
@@ -542,6 +554,7 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
         NavigableMap<byte[], byte[]> familyColumns = result.getFamilyMap(familyEntry.getKey());
         for (Map.Entry<byte[], byte[]> column : familyColumns.entrySet()) {
           txPut.add(familyEntry.getKey(), column.getKey(), transactionTimestamp, new byte[0]);
+          changeSet.add(new ActionChange(deleteRow, familyEntry.getKey(), column.getKey()));
         }
       }
     } else {
@@ -554,10 +567,12 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
           NavigableMap<byte[], byte[]> familyColumns = result.getFamilyMap(family);
           for (Map.Entry<byte[], byte[]> column : familyColumns.entrySet()) {
             txPut.add(family, column.getKey(), transactionTimestamp, new byte[0]);
+            changeSet.add(new ActionChange(deleteRow, family, column.getKey()));
           }
         } else {
           for (KeyValue value : entries) {
             txPut.add(value.getFamily(), value.getQualifier(), transactionTimestamp, new byte[0]);
+            changeSet.add(new ActionChange(deleteRow, value.getFamily(), value.getQualifier()));
           }
         }
       }

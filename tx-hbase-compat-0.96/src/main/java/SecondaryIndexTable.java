@@ -39,16 +39,18 @@ import java.util.Set;
  */
 public class SecondaryIndexTable {
   private byte[] secondaryIndex;
-  private byte[] secondaryIndexFamily;
+  private final byte[] secondaryIndexFamily;
+  private final byte[] secondaryIndexQualifier;
   private TransactionAwareHTable transactionAwareHTable;
   private TransactionAwareHTable secondaryIndexTable;
   private TransactionContext transactionContext;
   private static final byte[] DELIMITER  = new byte[] {0};
 
   public SecondaryIndexTable(TransactionServiceClient transactionServiceClient, HTable hTable,
-                             HTable secondaryTable, byte[] secondaryIndex) {
+                             HTable secondaryTable, byte[] secondaryIndexFamily, byte[] secondaryIndex) {
     this.secondaryIndex = secondaryIndex;
-    this.secondaryIndexFamily = Bytes.toBytes("indexFamily");
+    this.secondaryIndexFamily = secondaryIndexFamily;
+    this.secondaryIndexQualifier = new byte[] {'r'};
     this.transactionAwareHTable = new TransactionAwareHTable(hTable);
     this.secondaryIndexTable = new TransactionAwareHTable(secondaryTable);
     this.transactionContext = new TransactionContext(transactionServiceClient, transactionAwareHTable,
@@ -79,6 +81,7 @@ public class SecondaryIndexTable {
     try {
       transactionContext.start();
       Scan scan = new Scan(value, Bytes.add(value, new byte[0]));
+      scan.addColumn(secondaryIndexFamily, secondaryIndexQualifier);
       ResultScanner indexScanner = secondaryIndexTable.getScanner(scan);
 
       ArrayList<Get> gets = new ArrayList<Get>();
@@ -110,19 +113,21 @@ public class SecondaryIndexTable {
       transactionContext.start();
       ArrayList<Put> secondaryIndexPuts = new ArrayList<Put>();
       for (Put put : puts) {
-        Put secondaryIndexPut = new Put(put.getRow());
+        List<Put> indexPuts = new ArrayList<Put>();
         Set<Map.Entry<byte[], List<KeyValue>>> familyMap = put.getFamilyMap().entrySet();
         for (Map.Entry<byte [], List<KeyValue>> family : familyMap) {
           for (KeyValue value : family.getValue()) {
             if (value.getQualifier().equals(secondaryIndex)) {
-              byte[] secondaryQualifier = Bytes.add(value.getQualifier(), DELIMITER,
+              byte[] secondaryRow = Bytes.add(value.getQualifier(), DELIMITER,
                                                     Bytes.add(value.getValue(), DELIMITER,
                                                               value.getRow()));
-              secondaryIndexPut.add(secondaryIndexFamily, secondaryQualifier, value.getValue());
+              Put indexPut = new Put(secondaryRow);
+              indexPut.add(secondaryIndexFamily, secondaryIndexQualifier, put.getRow());
+              indexPuts.add(indexPut);
             }
           }
         }
-        secondaryIndexPuts.add(secondaryIndexPut);
+        secondaryIndexPuts.addAll(indexPuts);
       }
       transactionAwareHTable.put(puts);
       secondaryIndexTable.put(secondaryIndexPuts);

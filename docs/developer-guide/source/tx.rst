@@ -27,6 +27,10 @@ provides. Only certain operations are supported transactionally. They are:
     exists(List<Get> gets)
     get(Get get)
     get(List<Get> gets)
+    batch(List<? extends Row> actions, Object[] results)
+    batch(List<? extends Row> actions)
+    batchCallback(List<? extends Row> actions, Object[] results, Batch.Callback<R> callback) [0.96]
+    batchCallback(List<? extends Row> actions, Batch.Callback<R> callback) [0.96]
     getScanner(byte[] family)
     getScanner(byte[] family, byte[] qualifier)
     put(Put put)
@@ -43,8 +47,6 @@ the following methods non-transactionally:
   :widths: 100
   :delim: 0x9
 
-    batch(List<? extends Row> actions, Object[] results)
-    batch(List<? extends Row> actions)
     getRowOrBefore(byte[] row, byte[], family)
     checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put)
     checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value, Delete delete)
@@ -54,6 +56,8 @@ the following methods non-transactionally:
     incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount)
     incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount, Durability durability)
     incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount, boolean writeToWAL)
+
+Note that for ``batch`` operations, only supported operations are applied transactionally.
 
 Usage
 =====
@@ -81,16 +85,18 @@ to a user. ::
    */
   public class SecondaryIndexTable {
     private byte[] secondaryIndex;
-    private byte[] secondaryIndexFamily;
+    private final byte[] secondaryIndexFamily;
+    private final byte[] secondaryIndexQualifier;
     private TransactionAwareHTable transactionAwareHTable;
     private TransactionAwareHTable secondaryIndexTable;
     private TransactionContext transactionContext;
     private static final byte[] DELIMITER  = new byte[] {0};
 
     public SecondaryIndexTable(TransactionServiceClient transactionServiceClient, HTable hTable,
-                               HTable secondaryTable, byte[] secondaryIndex) {
+                               HTable secondaryTable, byte[] secondaryIndexFamily, byte[] secondaryIndex) {
       this.secondaryIndex = secondaryIndex;
-      this.secondaryIndexFamily = Bytes.toBytes("indexFamily");
+      this.secondaryIndexFamily = secondaryIndexFamily;
+      this.secondaryIndexQualifier = new byte[] {'r'};
       this.transactionAwareHTable = new TransactionAwareHTable(hTable);
       this.secondaryIndexTable = new TransactionAwareHTable(secondaryTable);
       this.transactionContext = new TransactionContext(transactionServiceClient, transactionAwareHTable,
@@ -121,6 +127,7 @@ to a user. ::
       try {
         transactionContext.start();
         Scan scan = new Scan(value, Bytes.add(value, new byte[0]));
+        scan.addColumn(secondaryIndexFamily, secondaryIndexQualifier);
         ResultScanner indexScanner = secondaryIndexTable.getScanner(scan);
 
         ArrayList<Get> gets = new ArrayList<Get>();
@@ -152,19 +159,21 @@ to a user. ::
         transactionContext.start();
         ArrayList<Put> secondaryIndexPuts = new ArrayList<Put>();
         for (Put put : puts) {
-          Put secondaryIndexPut = new Put(put.getRow());
+          List<Put> indexPuts = new ArrayList<Put>();
           Set<Map.Entry<byte[], List<KeyValue>>> familyMap = put.getFamilyMap().entrySet();
           for (Map.Entry<byte [], List<KeyValue>> family : familyMap) {
             for (KeyValue value : family.getValue()) {
               if (value.getQualifier().equals(secondaryIndex)) {
-                byte[] secondaryQualifier = Bytes.add(value.getQualifier(), DELIMITER,
+                byte[] secondaryRow = Bytes.add(value.getQualifier(), DELIMITER,
                                                       Bytes.add(value.getValue(), DELIMITER,
                                                                 value.getRow()));
-                secondaryIndexPut.add(secondaryIndexFamily, secondaryQualifier, value.getValue());
+                Put indexPut = new Put(secondaryRow);
+                indexPut.add(secondaryIndexFamily, secondaryIndexQualifier, put.getRow());
+                indexPuts.add(indexPut);
               }
             }
           }
-          secondaryIndexPuts.add(secondaryIndexPut);
+          secondaryIndexPuts.addAll(indexPuts);
         }
         transactionAwareHTable.put(puts);
         secondaryIndexTable.put(secondaryIndexPuts);
