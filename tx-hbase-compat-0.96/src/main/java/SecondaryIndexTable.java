@@ -115,8 +115,9 @@ public class SecondaryIndexTable {
         for (Map.Entry<byte [], List<KeyValue>> family : familyMap) {
           for (KeyValue value : family.getValue()) {
             if (value.getQualifier().equals(secondaryIndex)) {
-              byte[] secondaryQualifier = Bytes.add(Bytes.add(value.getQualifier(), DELIMITER, value.getValue()),
-                                                    DELIMITER, value.getRow());
+              byte[] secondaryQualifier = Bytes.add(value.getQualifier(), DELIMITER,
+                                                    Bytes.add(value.getValue(), DELIMITER,
+                                                              value.getRow()));
               secondaryIndexPut.add(secondaryIndexFamily, secondaryQualifier, value.getValue());
             }
           }
