@@ -50,7 +50,7 @@ public abstract class AbstractQueueProducer implements QueueProducer, Transactio
   }
 
   @Override
-  public String getName() {
+  public String getTransactionAwareName() {
     return getClass().getSimpleName() + "(queue = " + queueName + ")";
   }
 
