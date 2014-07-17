@@ -16,6 +16,7 @@
 
 package com.continuuity.data.runtime;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.stream.DistributedStreamCoordinator;
@@ -90,12 +91,14 @@ public class DataFabricDistributedModule extends AbstractModule {
   @Singleton
   private static final class ThriftClientProviderSupplier implements Provider<ThriftClientProvider> {
 
-    private final Configuration cConf;
+    private final CConfiguration cConf;
+    private final Configuration hConf;
     private DiscoveryServiceClient discoveryServiceClient;
 
     @Inject
-    ThriftClientProviderSupplier(Configuration cConf) {
+    ThriftClientProviderSupplier(CConfiguration cConf, Configuration hConf) {
       this.cConf = cConf;
+      this.hConf = hConf;
     }
 
     @Inject(optional = true)
@@ -110,9 +113,9 @@ public class DataFabricDistributedModule extends AbstractModule {
                                   TxConstants.Service.DEFAULT_DATA_TX_CLIENT_PROVIDER);
       ThriftClientProvider clientProvider;
       if ("pool".equals(provider)) {
-        clientProvider = new PooledClientProvider(cConf, discoveryServiceClient);
+        clientProvider = new PooledClientProvider(hConf, discoveryServiceClient);
       } else if ("thread-local".equals(provider)) {
-        clientProvider = new ThreadLocalClientProvider(cConf, discoveryServiceClient);
+        clientProvider = new ThreadLocalClientProvider(hConf, discoveryServiceClient);
       } else {
         String message = "Unknown Transaction Service Client Provider '" + provider + "'.";
         LOG.error(message);
