@@ -13,8 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package com.continuuity.data2.transaction.hbase;
 
-import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.inmemory.DetachedTxSystemClient;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -34,7 +35,9 @@ import org.junit.Test;
 import java.io.IOException;
 
 /**
- * Tests for TransactionAwareHTables.
+ * A Transaction Aware HTable implementation for HBase 0.94. Operations are committed as usual,
+ * but upon a failed or aborted transaction, they are rolled back to the state before the transaction
+ * was started.
  */
 public class TransactionAwareHTableTest {
   private static HBaseTestingUtility testUtil;
