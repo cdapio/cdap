@@ -16,7 +16,6 @@
 
 package com.continuuity.data.runtime;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.stream.DistributedStreamCoordinator;
@@ -45,6 +44,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,11 +90,11 @@ public class DataFabricDistributedModule extends AbstractModule {
   @Singleton
   private static final class ThriftClientProviderSupplier implements Provider<ThriftClientProvider> {
 
-    private final CConfiguration cConf;
+    private final Configuration cConf;
     private DiscoveryServiceClient discoveryServiceClient;
 
     @Inject
-    ThriftClientProviderSupplier(CConfiguration cConf) {
+    ThriftClientProviderSupplier(Configuration cConf) {
       this.cConf = cConf;
     }
 

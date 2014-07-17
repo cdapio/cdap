@@ -42,6 +42,6 @@ public class HDFSTransactionStateStorageProvider implements Provider<HDFSTransac
 
   @Override
   public HDFSTransactionStateStorage get() {
-    return new HDFSTransactionStateStorage(conf, hConf, codecProvider);
+    return new HDFSTransactionStateStorage(hConf, codecProvider);
   }
 }

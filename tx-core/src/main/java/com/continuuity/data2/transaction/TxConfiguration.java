@@ -14,25 +14,20 @@
  * the License.
  */
 
-package com.continuuity.data2.transaction.distributed;
+package com.continuuity.data2.transaction;
 
 import org.apache.hadoop.conf.Configuration;
 
 /**
- * A retry strategy provider is used by the tx client to get a new retry strategy for every call.
+ *  Utility Class to get the Configuration with tx-default and tx-site configurations added to it.
  */
-public interface RetryStrategyProvider {
+public class TxConfiguration {
 
-  /**
-   * Provides a new instance of a retry strategy.
-   * @return a retry strategy
-   */
-  RetryStrategy newRetryStrategy();
-
-  /**
-   * Configure the strategy.
-   * @param config the configuration
-   */
-  void configure(Configuration config);
+  public static Configuration getConfiguration() {
+    Configuration conf = new Configuration();
+    conf.addResource("tx-default.xml");
+    conf.addResource("tx-site.xml");
+    return conf;
+  }
 
 }

@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+  Copyright 2012-2014 Continuuity, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+  -->
+<configuration>
+  <property>
+    <name>data.tx.bind.port</name>
+    <value>15165</value>
+    <description>The port number for the transaction
+      service</description>
+  </property>
+
+  <property>
+    <name>data.tx.bind.address</name>
+    <value>127.0.0.1</value>
+    <description>The inet address for the transaction
+      service</description>
+  </property>
+
+  <property>
+    <name>data.tx.server.io.threads</name>
+    <value>2</value>
+    <description>The number of IO threads for the transaction
+      service</description>
+  </property>
+
+  <property>
+    <name>data.tx.server.threads</name>
+    <value>25</value>
+    <description>The number of threads for the transaction
+      service</description>
+  </property>
+
+  <property>
+    <name>data.tx.client.count</name>
+    <value>5</value>
+    <description>The number of pooled instanced of the transaction
+      client</description>
+  </property>
+
+  <property>
+    <name>data.tx.client.provider</name>
+    <value>thread-local</value>
+    <description>The provider strategy for transaction clients;
+      valid values are "pool" and "thread-local"</description>
+  </property>
+
+  <property>
+    <name>data.tx.snapshot.codecs</name>
+    <value>
+      com.continuuity.data2.transaction.snapshot.DefaultSnapshotCodec
+    </value>
+    <description>Specifies the class names of all supported transaction state codecs</description>
+  </property>
+
+  <property>
+    <name>data.tx.snapshot.dir</name>
+    <value>/continuuity/tx.snapshot</value>
+    <description>Directory in HDFS used to store snapshots and logs of
+      transaction state</description>
+  </property>
+
+  <property>
+    <name>data.tx.snapshot.local.dir</name>
+    <value>data/tx.snapshot</value>
+    <description>Directory on the local filesystem used to store snapshots
+      and logs of transaction state for single-node operation</description>
+  </property>
+
+  <property>
+    <name>data.tx.snapshot.interval</name>
+    <value>300</value>
+    <description>Frequency, in seconds, at which snapshots of transaction
+      state should be written</description>
+  </property>
+
+  <property>
+    <name>data.tx.snapshot.retain</name>
+    <value>10</value>
+    <description>Number of transaction snapshot files to retain as
+      backups</description>
+  </property>
+
+  <property>
+    <name>data.tx.janitor.enable</name>
+    <value>true</value>
+    <description>Whether or not the TransactionDataJanitor coprocessor
+      should be enabled on tables; should normally be true</description>
+  </property>
+
+  <property>
+    <name>data.tx.num.instances</name>
+    <value>1</value>
+  </property>
+
+  <property>
+    <name>data.tx.max.instances</name>
+    <value>5</value>
+  </property>
+
+  <property>
+    <name>data.tx.num.cores</name>
+    <value>2</value>
+  </property>
+
+  <property>
+    <name>data.tx.memory.mb</name>
+    <value>512</value>
+  </property>
+</configuration>

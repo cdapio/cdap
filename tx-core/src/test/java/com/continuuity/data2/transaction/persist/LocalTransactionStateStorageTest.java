@@ -16,10 +16,11 @@
 
 package com.continuuity.data2.transaction.persist;
 
-import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.snapshot.DefaultSnapshotCodec;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
@@ -35,9 +36,9 @@ public class LocalTransactionStateStorageTest extends AbstractTransactionStateSt
   public static TemporaryFolder tmpDir = new TemporaryFolder();
 
   @Override
-  protected CConfiguration getConfiguration(String testName) throws IOException {
+  protected Configuration getConfiguration(String testName) throws IOException {
     File testDir = tmpDir.newFolder(testName);
-    CConfiguration conf = CConfiguration.create();
+    Configuration conf = TxConfiguration.getConfiguration();
     conf.set(TxConstants.Manager.CFG_TX_SNAPSHOT_LOCAL_DIR, testDir.getAbsolutePath());
     conf.set(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES, DefaultSnapshotCodec.class.getName());
 
@@ -45,7 +46,7 @@ public class LocalTransactionStateStorageTest extends AbstractTransactionStateSt
   }
 
   @Override
-  protected AbstractTransactionStateStorage getStorage(CConfiguration conf) {
+  protected AbstractTransactionStateStorage getStorage(Configuration conf) {
     return new LocalFileTransactionStateStorage(conf, new SnapshotCodecProvider(conf));
   }
 }

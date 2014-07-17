@@ -22,18 +22,19 @@ import com.continuuity.data2.transaction.metrics.TxMetricsCollector;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * Google Guice Provider for {@link InMemoryTransactionManager} instances.  Each call to {@link #get()} will
  * return a new {@link InMemoryTransactionManager} instance.
  */
 public class InMemoryTransactionManagerProvider implements Provider<InMemoryTransactionManager> {
-  private final CConfiguration conf;
+  private final Configuration conf;
   private final Provider<TransactionStateStorage> storageProvider;
   private final TxMetricsCollector txMetricsCollector;
 
   @Inject
-  public InMemoryTransactionManagerProvider(CConfiguration config, Provider<TransactionStateStorage> storageProvider,
+  public InMemoryTransactionManagerProvider(Configuration config, Provider<TransactionStateStorage> storageProvider,
                                             TxMetricsCollector txMetricsCollector) {
     this.conf = config;
     this.storageProvider = storageProvider;

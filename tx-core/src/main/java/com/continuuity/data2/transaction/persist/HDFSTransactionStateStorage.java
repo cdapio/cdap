@@ -16,9 +16,8 @@
 
 package com.continuuity.data2.transaction.persist;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.google.common.base.Function;
@@ -70,19 +69,17 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
   // buffer size used for HDFS reads and writes
   private static final int BUFFER_SIZE = 16384;
 
-  private CConfiguration conf;
   private FileSystem fs;
   private Configuration hConf;
   private String configuredSnapshotDir;
   private Path snapshotDir;
 
   @Inject
-  public HDFSTransactionStateStorage(CConfiguration config, Configuration hConf,
+  public HDFSTransactionStateStorage(Configuration hConf,
                                      SnapshotCodecProvider codecProvider) {
     super(codecProvider);
-    this.conf = config;
     this.hConf = hConf;
-    configuredSnapshotDir = config.get(TxConstants.Manager.CFG_TX_SNAPSHOT_DIR);
+    configuredSnapshotDir = hConf.get(TxConstants.Manager.CFG_TX_SNAPSHOT_DIR);
   }
 
   @Override
@@ -90,7 +87,8 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
     Preconditions.checkState(configuredSnapshotDir != null,
         "Snapshot directory is not configured.  Please set " + TxConstants.Manager.CFG_TX_SNAPSHOT_DIR +
         " in configuration.");
-    String hdfsUser = conf.get(Constants.CFG_HDFS_USER);
+    //todo : check if this will work?
+    String hdfsUser = hConf.get(Constants.CFG_HDFS_USER);
     if (hdfsUser == null || UserGroupInformation.isSecurityEnabled()) {
       if (hdfsUser != null && LOG.isDebugEnabled()) {
         LOG.debug("Ignoring configuration {}={}, running on secure Hadoop", Constants.CFG_HDFS_USER, hdfsUser);
@@ -240,7 +238,7 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
   }
 
   private TransactionLog openLog(Path path, long timestamp) {
-    return new HDFSTransactionLog(conf, fs, hConf, path, timestamp);
+    return new HDFSTransactionLog(fs, hConf, path, timestamp);
   }
 
   @Override
@@ -375,10 +373,10 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
       printUsage("ERROR: Either -s or -l is required to set mode.", 1);
     }
 
-    CConfiguration config = CConfiguration.create();
+    Configuration config = TxConfiguration.getConfiguration();
 
     HDFSTransactionStateStorage storage =
-      new HDFSTransactionStateStorage(config, new Configuration(), new SnapshotCodecProvider(config));
+      new HDFSTransactionStateStorage(config, new SnapshotCodecProvider(config));
     storage.startAndWait();
     try {
       switch (mode) {

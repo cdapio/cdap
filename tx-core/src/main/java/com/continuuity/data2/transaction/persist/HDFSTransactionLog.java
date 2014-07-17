@@ -16,7 +16,6 @@
 
 package com.continuuity.data2.transaction.persist;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -37,22 +36,19 @@ public class HDFSTransactionLog extends AbstractTransactionLog {
   private static final Logger LOG = LoggerFactory.getLogger(HDFSTransactionLog.class);
 
   private final FileSystem fs;
-  private final CConfiguration conf;
   private final Configuration hConf;
   private final Path logPath;
 
   /**
    * Creates a new HDFS-backed write-ahead log for storing transaction state.
-   * @param conf Continuuity configuration to use.
    * @param fs Open FileSystem instance for opening log files in HDFS.
    * @param hConf HDFS cluster configuration.
    * @param logPath Path to the log file.
    */
-  public HDFSTransactionLog(final CConfiguration conf, final FileSystem fs, final Configuration hConf,
+  public HDFSTransactionLog(final FileSystem fs, final Configuration hConf,
                             final Path logPath, long timestamp) {
     super(timestamp);
     this.fs = fs;
-    this.conf = conf;
     this.hConf = hConf;
     this.logPath = logPath;
   }

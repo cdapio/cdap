@@ -16,15 +16,16 @@
 
 package com.continuuity.data2.transaction.inmemory;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TransactionSystemTest;
+import com.continuuity.data2.transaction.TxConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.metrics.TxMetricsCollector;
 import com.continuuity.data2.transaction.persist.InMemoryTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class InMemoryTransactionManagerTest extends TransactionSystemTest {
 
-  static CConfiguration conf = CConfiguration.create();
+  static Configuration conf = TxConfiguration.getConfiguration();
 
   InMemoryTransactionManager txManager = null;
   TransactionStateStorage txStateStorage = null;
