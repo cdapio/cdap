@@ -57,12 +57,12 @@ import java.util.Set;
  * was started.
  */
 public class TransactionAwareHTable implements HTableInterface, TransactionAware {
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionAwareHTable.class);
   private Transaction tx;
   private final HTable hTable;
   private final TransactionCodec txCodec;
   private final List<ActionChange> changeSet;
   private boolean allowNonTransactional;
-  private static final Logger LOG = LoggerFactory.getLogger(TransactionAwareHTable.class);
 
   /**
    * Create a transactional aware instance of the passed HTable
@@ -425,7 +425,8 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
   public Collection<byte[]> getTxChanges() {
     List<byte[]> txChanges = new ArrayList<byte[]>();
     for (ActionChange change : changeSet) {
-      txChanges.add(Bytes.add(change.getRow(), change.getFamily(), change.getQualifier()));
+      txChanges.add(Bytes.add(getTableName(), change.getRow(),
+                              Bytes.add(change.getFamily(), change.getQualifier())));
     }
     return txChanges;
   }
