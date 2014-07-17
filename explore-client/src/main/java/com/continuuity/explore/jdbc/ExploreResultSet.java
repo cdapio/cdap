@@ -22,36 +22,13 @@ import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Result;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
-import java.io.Reader;
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.net.URL;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
-import java.sql.Date;
-import java.sql.NClob;
-import java.sql.Ref;
-import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.RowId;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
-import java.sql.SQLWarning;
-import java.sql.SQLXML;
-import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.sql.Types;
-import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Result set created by an {@link ExploreStatement}, containing the results of a query made to the Explore service.

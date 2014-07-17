@@ -60,8 +60,14 @@ public class ExploreStatement implements Statement {
   // TODO pass it to the result set
   private int maxRows = 0;
 
+  /**
+   * Add SQLWarnings to the warningChain if needed.
+   */
+  private SQLWarning warningChain = null;
+
   private volatile boolean isClosed = false;
   private volatile Handle stmtHandle = null;
+
   private volatile boolean stmtCompleted;
 
   private Connection connection;
@@ -148,6 +154,11 @@ public class ExploreStatement implements Statement {
       throw new SQLException("max rows must be >= 0");
     }
     maxRows = max;
+  }
+
+  @Override
+  public int getUpdateCount() throws SQLException {
+    return -1;
   }
 
   @Override
@@ -264,21 +275,16 @@ public class ExploreStatement implements Statement {
 
   @Override
   public SQLWarning getWarnings() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return warningChain;
   }
 
   @Override
   public void clearWarnings() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    warningChain = null;
   }
 
   @Override
   public void setCursorName(String s) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public int getUpdateCount() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 

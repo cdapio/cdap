@@ -19,8 +19,6 @@ package com.continuuity.explore.jdbc;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.FixedAddressExploreClient;
-
-import com.sun.xml.internal.bind.v2.TODO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

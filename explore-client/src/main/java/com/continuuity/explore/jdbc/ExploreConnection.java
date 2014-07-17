@@ -71,6 +71,25 @@ public class ExploreConnection implements Connection {
   }
 
   @Override
+  public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
+    if (resultSetType == ResultSet.TYPE_FORWARD_ONLY && resultSetConcurrency == ResultSet.CONCUR_READ_ONLY) {
+      return createStatement();
+    }
+    throw new SQLFeatureNotSupportedException(
+      "The resultSetType can only be TYPE_FORWARD_ONLY and the concurrency CONCUR_READ_ONLY");
+  }
+
+  @Override
+  public PreparedStatement prepareStatement(String s, int resultSetType, int resultSetConcurrency)
+    throws SQLException {
+    if (resultSetType == ResultSet.TYPE_FORWARD_ONLY && resultSetConcurrency == ResultSet.CONCUR_READ_ONLY) {
+      return prepareStatement(s);
+    }
+    throw new SQLFeatureNotSupportedException(
+      "The resultSetType can only be TYPE_FORWARD_ONLY and the concurrency CONCUR_READ_ONLY");
+  }
+
+  @Override
   public DatabaseMetaData getMetaData() throws SQLException {
     if (isClosed) {
       throw new SQLException("Connection is closed");
@@ -93,7 +112,6 @@ public class ExploreConnection implements Connection {
   @Override
   public boolean isReadOnly() throws SQLException {
     // Explore does not support writing to datasets using SQL queries
-    String s = "Test";
     return true;
   }
 
@@ -161,25 +179,6 @@ public class ExploreConnection implements Connection {
   @Override
   public void clearWarnings() throws SQLException {
     throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-    if (resultSetType == ResultSet.TYPE_FORWARD_ONLY && resultSetConcurrency == ResultSet.CONCUR_READ_ONLY) {
-      return createStatement();
-    }
-    throw new SQLFeatureNotSupportedException(
-      "The resultSetType can only be TYPE_FORWARD_ONLY and the concurrency CONCUR_READ_ONLY");
-  }
-
-  @Override
-  public PreparedStatement prepareStatement(String s, int resultSetType, int resultSetConcurrency)
-      throws SQLException {
-    if (resultSetType == ResultSet.TYPE_FORWARD_ONLY && resultSetConcurrency == ResultSet.CONCUR_READ_ONLY) {
-      return prepareStatement(s);
-    }
-    throw new SQLFeatureNotSupportedException(
-      "The resultSetType can only be TYPE_FORWARD_ONLY and the concurrency CONCUR_READ_ONLY");
   }
 
   @Override

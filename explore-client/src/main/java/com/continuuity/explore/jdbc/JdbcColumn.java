@@ -29,35 +29,51 @@ import java.sql.Types;
 public class JdbcColumn {
 
   /**
+   * Default precision when user doesn't specify in the column metadata, such as
+   * decimal and decimal(8).
+   * TODO right now we don't return precision and scale given by a user - this should be returned with
+   * columns metadata [REACTOR-560].
+   */
+  public static final int USER_DEFAULT_PRECISION = 10;
+
+  /**
    * Sql types and corresponding hive type names and Java classes names.
    */
   public enum SqlTypes {
-    STRING("string", Types.VARCHAR, String.class.getName()),
-    VARCHAR("varchar", Types.VARCHAR, String.class.getName()),
-    CHAR("char", Types.CHAR, String.class.getName()),
-    FLOAT("float", Types.FLOAT, Float.class.getName()),
-    DOUBLE("double", Types.DOUBLE, Double.class.getName()),
-    BOOLEAN("boolean", Types.BOOLEAN, Boolean.class.getName()),
-    TINYINT("tinyint", Types.TINYINT, Byte.class.getName()),
-    SMALLINT("smallint", Types.SMALLINT, Short.class.getName()),
-    INT("int", Types.INTEGER, Integer.class.getName()),
-    BIGINT("bigint", Types.BIGINT, Long.class.getName()),
-    TIMESTAMP("timestamp", Types.TIMESTAMP, Timestamp.class.getName()),
-    DATE("date", Types.DATE, Date.class.getName()),
-    DECIMAL("decimal", Types.DECIMAL, BigInteger.class.getName()),
-    BINARY("binary", Types.BINARY, byte[].class.getName()),
-    MAP("map", Types.JAVA_OBJECT, String.class.getName()),
-    ARRAY("array", Types.ARRAY, String.class.getName()),
-    STRUCT("struct", Types.STRUCT, String.class.getName());
+    STRING("string", Types.VARCHAR, String.class.getName(), Integer.MAX_VALUE, 0, Integer.MAX_VALUE),
+    VARCHAR("varchar", Types.VARCHAR, String.class.getName(), Integer.MAX_VALUE, 0, Integer.MAX_VALUE),
+    CHAR("char", Types.CHAR, String.class.getName(), Integer.MAX_VALUE, 0, Integer.MAX_VALUE),
+    FLOAT("float", Types.FLOAT, Float.class.getName(), 7, 7, 24),
+    DOUBLE("double", Types.DOUBLE, Double.class.getName(), 15, 15, 25),
+    BOOLEAN("boolean", Types.BOOLEAN, Boolean.class.getName(), 1, 0, 1),
+    TINYINT("tinyint", Types.TINYINT, Byte.class.getName(), 3, 0, 4),
+    SMALLINT("smallint", Types.SMALLINT, Short.class.getName(), 5, 0, 6),
+    INT("int", Types.INTEGER, Integer.class.getName(), 10, 0, 11),
+    BIGINT("bigint", Types.BIGINT, Long.class.getName(), 19, 0, 20),
+    TIMESTAMP("timestamp", Types.TIMESTAMP, Timestamp.class.getName(), 29, 9, 29),
+    DATE("date", Types.DATE, Date.class.getName(), 10, 0, 10),
+    DECIMAL("decimal", Types.DECIMAL, BigInteger.class.getName(), USER_DEFAULT_PRECISION, Integer.MAX_VALUE,
+            USER_DEFAULT_PRECISION + 2),
+    BINARY("binary", Types.BINARY, byte[].class.getName(), Integer.MAX_VALUE, 0, Integer.MAX_VALUE),
+    MAP("map", Types.JAVA_OBJECT, String.class.getName(), Integer.MAX_VALUE, 0, Integer.MAX_VALUE),
+    ARRAY("array", Types.ARRAY, String.class.getName(), Integer.MAX_VALUE, 0, Integer.MAX_VALUE),
+    STRUCT("struct", Types.STRUCT, String.class.getName(), Integer.MAX_VALUE, 0, Integer.MAX_VALUE);
 
-    private String typeName;
-    private int sqlType;
-    private String className;
+    private final String typeName;
+    private final int sqlType;
+    private final String className;
+    private final int precision;
+    private final int scale;
 
-    SqlTypes(String typeName, int sqlType, String className) {
+    private final int displaySize;
+
+    SqlTypes(String typeName, int sqlType, String className, int precision, int scale, int displaySize) {
       this.typeName = typeName;
       this.sqlType = sqlType;
       this.className = className;
+      this.precision = precision;
+      this.scale = scale;
+      this.displaySize = displaySize;
     }
 
     public String getTypeName() {
@@ -71,10 +87,48 @@ public class JdbcColumn {
     public int getSqlType() {
       return sqlType;
     }
+
+    public int getPrecision() {
+      return precision;
+    }
+    public int getScale() {
+      return scale;
+    }
+
+    public int getDisplaySize() {
+      return displaySize;
+    }
+
+  }
+
+  static int columnDisplaySize(int columnType) throws SQLException {
+    for (SqlTypes t : SqlTypes.values()) {
+      if (t.getSqlType() == columnType) {
+        return t.getDisplaySize();
+      }
+    }
+    throw new SQLException("Invalid column type: " + columnType);
+  }
+
+  static int columnScale(int columnType) throws SQLException {
+    for (SqlTypes t : SqlTypes.values()) {
+      if (t.getSqlType() == columnType) {
+        return t.getScale();
+      }
+    }
+    throw new SQLException("Invalid column type: " + columnType);
+  }
+
+  static int columnPrecision(int columnType) throws SQLException {
+    for (SqlTypes t : SqlTypes.values()) {
+      if (t.getSqlType() == columnType) {
+        return t.getPrecision();
+      }
+    }
+    throw new SQLException("Invalid column type: " + columnType);
   }
 
   static String columnClassName(int columnType) throws SQLException {
-    // according to hiveTypeToSqlType possible options are:
     for (SqlTypes t : SqlTypes.values()) {
       if (t.getSqlType() == columnType) {
         return t.getClassName();

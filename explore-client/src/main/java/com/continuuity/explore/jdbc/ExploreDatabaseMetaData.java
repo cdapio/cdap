@@ -48,6 +48,8 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   private static final String CATALOG_SEPARATOR = ".";
   private static final char SEARCH_STRING_ESCAPE = '\\';
 
+  private static final String DRIVER_NAME = "Reactor JDBC";
+
   private final ExploreConnection connection;
   private final ExploreClient exploreClient;
 
@@ -171,6 +173,16 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   @Override
   public Connection getConnection() throws SQLException {
     return connection;
+  }
+
+  @Override
+  public String getDriverName() throws SQLException {
+    return DRIVER_NAME;
+  }
+
+  @Override
+  public String getDriverVersion() throws SQLException {
+    return String.format("%d.%d.0", ExploreDriver.getMajorDriverVersion(), ExploreDriver.getMinorDriverVersion());
   }
 
   @Override
@@ -438,6 +450,48 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   }
 
   @Override
+  public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException {
+    return false;
+  }
+
+  @Override
+  public boolean supportsCatalogsInDataManipulation() throws SQLException {
+    return false;
+  }
+
+  @Override
+  public boolean supportsCatalogsInProcedureCalls() throws SQLException {
+    return false;
+  }
+
+  @Override
+  public boolean supportsMultipleResultSets() throws SQLException {
+    return false;
+  }
+
+  @Override
+  public String getSQLKeywords() throws SQLException {
+    return "";
+  }
+
+  @Override
+  public String getProcedureTerm() throws SQLException {
+    // NOTE: this is Hive's preferred term for 'Procedure'
+    return "UDF";
+  }
+
+  @Override
+  public String getCatalogTerm() throws SQLException {
+    // NOTE: this is Hive's preferred term for 'Catalog'
+    return "instance";
+  }
+
+  @Override
+  public boolean supportsCatalogsInTableDefinitions() throws SQLException {
+    return false;
+  }
+
+  @Override
   public boolean allProceduresAreCallable() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
@@ -479,16 +533,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public boolean nullsAreSortedAtEnd() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public String getDriverName() throws SQLException {
-    return ExploreDriver.class.getName();
-  }
-
-  @Override
-  public String getDriverVersion() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -544,11 +588,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public String getIdentifierQuoteString() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public String getSQLKeywords() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -613,11 +652,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   }
 
   @Override
-  public boolean supportsMultipleResultSets() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public boolean supportsMultipleTransactions() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
@@ -673,38 +707,8 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   }
 
   @Override
-  public String getProcedureTerm() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public String getCatalogTerm() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public boolean isCatalogAtStart() throws SQLException {
     throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsCatalogsInDataManipulation() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsCatalogsInProcedureCalls() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public boolean supportsCatalogsInTableDefinitions() throws SQLException {
-    return false;
   }
 
   @Override
