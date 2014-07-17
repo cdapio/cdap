@@ -1,0 +1,9 @@
+[
+  {
+    "type":"Service",
+    "app":"CountCounts",
+    "id":"loadgenCUSTOM",
+    "name":"loadgen",
+    "description":"Load generator"
+  }
+]

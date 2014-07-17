@@ -21,8 +21,8 @@ define([], function () {
 
     resetServices: function () {
       var self = this;
+      var servicesArr = [];
       self.HTTP.rest('system/services', function (services) {
-        var servicesArr = [];
         services.map(function(service) {
           var imgSrc = service.status === 'OK' ? 'complete' : 'loading';
           var logSrc = service.status === 'OK' ? 'complete' : 'loading';
@@ -47,7 +47,9 @@ define([], function () {
             metricEndpoint: C.Util.getMetricEndpoint(service.name),
             metricName: C.Util.getMetricName(service.name),
             imgClass: imgSrc,
-            logClass: logSrc
+            logClass: logSrc,
+            isSystem: true,
+            isUser:   false,
           }));
         });
         self.set('services', servicesArr);
@@ -57,6 +59,52 @@ define([], function () {
           $("[data-toggle='tooltip']").tooltip();
         }, 1000);
       });
+
+      self.HTTP.rest('apps', function (apps) {
+        apps.forEach(function(app) {
+          var appUrl = 'apps/' + app.name + '/services';
+          self.HTTP.rest(appUrl, function (services) {
+            services.map(function(service) {
+              console.log(service);
+              var imgSrc = service.status === 'OK' ? 'complete' : 'loading';
+              var logSrc = service.status === 'OK' ? 'complete' : 'loading';
+              servicesArr.push(C.Service.create({
+                modelId: service.name,
+                description: service.description,
+                id: service.name,
+                name: service.name,
+                description: service.description,
+                status: service.status,
+                min: service.min,
+                max: service.max,
+                isIncreaseEnabled: service.requested < service.max,
+                isDecreaseEnabled: service.requested > service.min,
+                logs: service.logs,
+                requested: service.requested,
+                provisioned: service.provisioned,
+                statusOk: !!(service.status === 'OK'),
+                statusNotOk: !!(service.status === 'NOTOK'),
+                logsStatusOk: !!(service.logs === 'OK'),
+                logsStatusNotOk: !!(service.logs === 'NOTOK'),
+                metricEndpoint: C.Util.getMetricEndpoint(service.name),
+                metricName: C.Util.getMetricName(service.name),
+                imgClass: imgSrc,
+                logClass: logSrc,
+                isSystem: true,
+                isUser:   true,
+              }));
+            });
+            self.set('services', servicesArr);
+
+            // Bind all the tooltips after UI has rendered after call has returned.
+            setTimeout(function () {
+              $("[data-toggle='tooltip']").tooltip();
+            }, 1000);
+          });
+        });
+      });
+
+
     },
 
     increaseInstance: function (serviceName, instanceCount) {
@@ -65,7 +113,7 @@ define([], function () {
         "Increase instances",
         "Increase instances for " + serviceName + "?",
         function () {
-          
+
           var payload = {data: {instances: ++instanceCount}};
           var services = self.get('services');
           for (var i = 0; i < services.length; i++) {
@@ -77,7 +125,7 @@ define([], function () {
               }
             }
           }
-          self.executeInstanceCall(serviceName, payload);  
+          self.executeInstanceCall(serviceName, payload);
         });
     },
 

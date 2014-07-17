@@ -216,9 +216,9 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @GET
   @Path("/apps/{app-id}/services/{service-id}/live-info")
-  public void liveInfo(HttpRequest request, HttpResponder responder,
-                       @PathParam("app-id") String appId,
-                       @PathParam("service-id") String serviceId) {
+  private void liveInfo(HttpRequest request, HttpResponder responder,
+                        @PathParam("app-id") String appId,
+                        @PathParam("service-id") String serviceId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
       responder.sendJson(HttpResponseStatus.OK,

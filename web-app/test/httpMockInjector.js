@@ -14,6 +14,22 @@ system.services.servicesCompleteDefinition = require('./fixtures/system/services
 system.services.statusIncomplete = require('./fixtures/system/services/status_incomplete.json');
 system.services.statusComplete = require('./fixtures/system/services/status_complete.json');
 
+// User services endpoints.
+var apps = {};
+apps.WordCount = {
+  services: {
+    loadgen: {}
+  }
+};
+apps.WordCount.services.servicesCompleteDefinition  = require('./fixtures/user/services-complete.json');
+apps.WordCount.services.loadgen                     = require('./fixtures/user/services/service-spec.json');
+apps.WordCount.services.loadgen.instances           = require('./fixtures/user/services/instances.json');
+apps.WordCount.services.loadgen.status              = require('./fixtures/user/services/status.json');
+apps.WordCount.services.loadgen.runetimeargs        = require('./fixtures/user/services/runtime-args.json');
+apps.WordCount.services.loadgen.history             = require('./fixtures/user/services/history.json');
+apps.WordCount.services.loadgen.liveinfo           = require('./fixtures/user/services/live-info.json');
+
+
 // Appfabric service endpoints.
 system.services.appfabric.status = require('./fixtures/system/services/appfabric/status.json');
 system.services.appfabric.instances = require('./fixtures/system/services/appfabric/instances.json');
@@ -164,5 +180,41 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
     .persist()
     .get('/v2/system/services/metrics.processor/instances')
     .reply(200, system.services['metrics.processor'].instances);
+
+// User Services:
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services')
+    .reply(200, apps.WordCount.services.servicesCompleteDefinition);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/loadgen')
+    .reply(200, apps.WordCount.services.loadgen);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/loadgen/runnables/runnableID/instances')
+    .reply(200, apps.WordCount.services.loadgen.instances);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/loadgen/status')
+    .reply(200, apps.WordCount.services.loadgen.status);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/loadgen/runtimeargs')
+    .reply(200, apps.WordCount.services.loadgen.runetimeargs);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/loadgen/history')
+    .reply(200, apps.WordCount.services.loadgen.history);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/loadgen/live-info')
+    .reply(200, apps.WordCount.services.loadgen.liveinfo);
 
 };
