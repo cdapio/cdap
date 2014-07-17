@@ -70,9 +70,6 @@ if [ -d "$conf" ]; then
   CLASSPATH=$CLASSPATH:"$conf"/
 fi
 
-# Load all necessary configs
-CLASSPATH="$CLASSPATH:/etc/continuuity/conf/:/etc/hadoop/conf/:/usr/lib/hadoop/*:/usr/lib/hadoop-hdfs/*:/usr/lib/hbase/lib/*:/usr/lib/hadoop-yarn/*:/opt/continuuity/hbase-compat-0.96/lib/*:/etc/zookeeper/conf/*"
-
 # Set Log location
 export LOG_PREFIX="tx-service-$IDENT_STRING-$HOSTNAME"
 export LOGFILE=$LOG_PREFIX.log
@@ -82,6 +79,36 @@ if [ ! -e "$loglog" ] ; then
   touch "$loglog"
 fi
 
+# set the classpath to include hadoop and hbase dependencies
+set_classpath()
+{
+  COMP_HOME=$1
+  CCONF=$2
+  if [ -n "$HBASE_HOME" ]; then
+    HBASE_CP=`$HBASE_HOME/bin/hbase classpath`
+  elif [ `which hbase` ]; then
+    HBASE_CP=`hbase classpath`
+  fi
+
+  export HBASE_CP
+
+  if [ -n "$HBASE_CP" ]; then
+    CP=$COMP_HOME/lib/*:$HBASE_CP:$CCONF/:$COMP_HOME/conf/:$EXTRA_CLASSPATH
+  else
+    # assume Hadoop/HBase libs are included via EXTRA_CLASSPATH
+    echo "WARN: could not find Hadoop and HBase libraries"
+    CP=$COMP_HOME/lib/*:$CCONF/:$COMP_HOME/conf/:$EXTRA_CLASSPATH
+  fi
+
+  # Setup classpaths.
+  if [ -n "$CLASSPATH" ]; then
+    CLASSPATH=$CLASSPATH:$CP
+  else
+    CLASSPATH=$CP
+  fi
+
+  export CLASSPATH
+}
 
 stop() {
   if [ -f $pid ]; then
@@ -108,6 +135,10 @@ stop() {
   fi
 }
 
+
+# set the classpaths
+set_classpath
+
 if [ $# -ne 1 ]; then
   echo "Usage: $0 {start|stop}"
   exit 1
@@ -130,5 +161,6 @@ if [ "x$1" == "xhelp" ]; then
 fi
 
 # incorrect params
+echo "Usage: $0 {start|stop}"
 exit 1
 
