@@ -1,8 +1,8 @@
 .. :Author: Continuuity, Inc.
-   :Description: Codename Tengo
+   :Description: Tephra
 
 ==============
-Codename Tengo
+Tephra
 ==============
 
 .. reST Editor: .. section-numbering::
@@ -12,16 +12,6 @@ Codename Tengo
 .. rst2pdf: config _templates/pdf-config
 .. rst2pdf: stylesheets _templates/pdf-stylesheet
 .. rst2pdf: build ../build-pdf/
-
-Introduction
-============
-Codename Tengo provides transactional operations on HBase. That is, operations may be committed as part of a single
-transaction and upon a failure every operation in the transaction the data is rolled back to the state that existed
-prior to the beginning of the transaction. 
-
-Installation
-============
-// TODO : Note about maven dependency to add?
 
 Client APIs
 ===========
@@ -53,6 +43,8 @@ the following methods non-transactionally:
   :widths: 100
   :delim: 0x9
 
+    batch(List<? extends Row> actions, Object[] results)
+    batch(List<? extends Row> actions)
     getRowOrBefore(byte[] row, byte[], family)
     checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put)
     checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value, Delete delete)
@@ -82,6 +74,106 @@ Example
 =======
 To demonstrate how you might use ``TransactionAwareHTable``\s, below is a basic implementation of a
 ``SecondaryIndexTable``. This class encapsulates the usage of a ``TransactionContext`` and provides a simple interface
-to a user.
+to a user. ::
 
-// TODO : Add example here after review.
+  /**
+   * A Transactional SecondaryIndexTable.
+   */
+  public class SecondaryIndexTable {
+    private byte[] secondaryIndex;
+    private byte[] secondaryIndexFamily;
+    private TransactionAwareHTable transactionAwareHTable;
+    private TransactionAwareHTable secondaryIndexTable;
+    private TransactionContext transactionContext;
+    private static final byte[] DELIMITER  = new byte[] {0};
+
+    public SecondaryIndexTable(TransactionServiceClient transactionServiceClient, HTable hTable,
+                               HTable secondaryTable, byte[] secondaryIndex) {
+      this.secondaryIndex = secondaryIndex;
+      this.secondaryIndexFamily = Bytes.toBytes("indexFamily");
+      this.transactionAwareHTable = new TransactionAwareHTable(hTable);
+      this.secondaryIndexTable = new TransactionAwareHTable(secondaryTable);
+      this.transactionContext = new TransactionContext(transactionServiceClient, transactionAwareHTable,
+                                                  secondaryIndexTable);
+    }
+
+    public Result get(Get get) throws IOException {
+      return get(Collections.singletonList(get))[0];
+    }
+
+    public Result[] get(List<Get> gets) throws IOException {
+      try {
+        transactionContext.start();
+        Result[] result = transactionAwareHTable.get(gets);
+        transactionContext.finish();
+        return result;
+      } catch (Exception e) {
+        try {
+          transactionContext.abort();
+        } catch (TransactionFailureException e1) {
+          throw new IOException("Could not rollback transaction", e1);
+        }
+      }
+      return null;
+    }
+
+    public Result[] getByIndex(byte[] value) throws IOException {
+      try {
+        transactionContext.start();
+        Scan scan = new Scan(value, Bytes.add(value, new byte[0]));
+        ResultScanner indexScanner = secondaryIndexTable.getScanner(scan);
+
+        ArrayList<Get> gets = new ArrayList<Get>();
+        for (Result result : indexScanner) {
+          for (Cell cell : result.listCells()) {
+            gets.add(new Get(cell.getValue()));
+          }
+        }
+        Result[] results = transactionAwareHTable.get(gets);
+        transactionContext.finish();
+        return results;
+      } catch (Exception e) {
+        try {
+          transactionContext.abort();
+        } catch (TransactionFailureException e1) {
+          throw new IOException("Could not rollback transaction", e1);
+        }
+      }
+      return null;
+    }
+
+    public void put(Put put) throws IOException {
+      put(Collections.singletonList(put));
+    }
+
+
+    public void put(List<Put> puts) throws IOException {
+      try {
+        transactionContext.start();
+        ArrayList<Put> secondaryIndexPuts = new ArrayList<Put>();
+        for (Put put : puts) {
+          Put secondaryIndexPut = new Put(put.getRow());
+          Set<Map.Entry<byte[], List<KeyValue>>> familyMap = put.getFamilyMap().entrySet();
+          for (Map.Entry<byte [], List<KeyValue>> family : familyMap) {
+            for (KeyValue value : family.getValue()) {
+              if (value.getQualifier().equals(secondaryIndex)) {
+                byte[] secondaryQualifier = Bytes.add(Bytes.add(value.getQualifier(), DELIMITER, value.getValue()),
+                                                      DELIMITER, value.getRow());
+                secondaryIndexPut.add(secondaryIndexFamily, secondaryQualifier, value.getValue());
+              }
+            }
+          }
+          secondaryIndexPuts.add(secondaryIndexPut);
+        }
+        transactionAwareHTable.put(puts);
+        secondaryIndexTable.put(secondaryIndexPuts);
+        transactionContext.finish();
+      } catch (Exception e) {
+        try {
+          transactionContext.abort();
+        } catch (TransactionFailureException e1) {
+          throw new IOException("Could not rollback transaction", e1);
+        }
+      }
+    }
+  }

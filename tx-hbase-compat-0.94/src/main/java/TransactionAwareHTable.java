@@ -121,36 +121,12 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
 
   @Override
   public void batch(List<? extends Row> actions, Object[] results) throws IOException, InterruptedException {
-    List<Row> transactionalizedActions = new ArrayList<Row>(actions.size());
-    for (Row action : actions) {
-      if (action instanceof Get) {
-        transactionalizedActions.add(transactionalizeAction((Get) action));
-      } else if (action instanceof Put) {
-        transactionalizedActions.add(transactionalizeAction((Put) action));
-      } else if (action instanceof Delete) {
-        transactionalizedActions.add(transactionalizeAction((Delete) action));
-      } else {
-        transactionalizedActions.add(action);
-      }
-    }
-    hTable.batch(transactionalizedActions, results);
+    hTable.batch(transactionalizeActions(actions), results);
   }
 
   @Override
   public Object[] batch(List<? extends Row> actions) throws IOException, InterruptedException {
-    List<Row> transactionalizedActions = new ArrayList<Row>(actions.size());
-    for (Row action : actions) {
-      if (action instanceof Get) {
-        transactionalizedActions.add(transactionalizeAction((Get) action));
-      } else if (action instanceof Put) {
-        transactionalizedActions.add(transactionalizeAction((Put) action));
-      } else if (action instanceof Delete) {
-        transactionalizedActions.add(transactionalizeAction((Delete) action));
-      } else {
-        transactionalizedActions.add(action);
-      }
-    }
-    return hTable.batch(transactionalizedActions);
+    return hTable.batch(transactionalizeActions(actions));
   }
 
   @Override
@@ -548,5 +524,21 @@ public class TransactionAwareHTable implements HTableInterface, TransactionAware
       }
     }
     return txPut;
+  }
+
+  private List<? extends Row> transactionalizeActions(List<? extends Row> actions) throws IOException {
+    List<Row> transactionalizedActions = new ArrayList<Row>(actions.size());
+    for (Row action : actions) {
+      if (action instanceof Get) {
+        transactionalizedActions.add(transactionalizeAction((Get) action));
+      } else if (action instanceof Put) {
+        transactionalizedActions.add(transactionalizeAction((Put) action));
+      } else if (action instanceof Delete) {
+        transactionalizedActions.add(transactionalizeAction((Delete) action));
+      } else {
+        transactionalizedActions.add(action);
+      }
+    }
+    return transactionalizedActions;
   }
 }
