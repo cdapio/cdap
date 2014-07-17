@@ -52,7 +52,7 @@ public class ReactorTransactionStateCache extends TransactionStateCache {
   protected Configuration getSnapshotConfiguration() throws IOException {
     CConfiguration cConf = configTable.read(ConfigurationTable.Type.DEFAULT, tableNamespace);
     Configuration txConf = new Configuration();
-    cConf.copyTo(txConf);
+    cConf.copyTxProperties(txConf);
     return txConf;
   }
 }

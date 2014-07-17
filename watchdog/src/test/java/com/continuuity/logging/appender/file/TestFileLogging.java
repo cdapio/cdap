@@ -68,7 +68,7 @@ public class TestFileLogging {
 
 
     Configuration conf = new Configuration();
-    cConf.copyTo(conf);
+    cConf.copyTxProperties(conf);
     InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);

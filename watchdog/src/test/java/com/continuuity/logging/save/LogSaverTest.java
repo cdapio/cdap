@@ -113,7 +113,7 @@ public class LogSaverTest extends KafkaTestBase {
     cConf.set(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS, "10");
 
     Configuration conf = new Configuration();
-    cConf.copyTo(conf);
+    cConf.copyTxProperties(conf);
     InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);

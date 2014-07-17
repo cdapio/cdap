@@ -89,7 +89,7 @@ public abstract class DatasetServiceTestBase {
 
     // Tx Manager to support working with datasets
     Configuration txConf = new Configuration();
-    cConf.copyTo(txConf);
+    cConf.copyTxProperties(txConf);
     txManager = new InMemoryTransactionManager(txConf);
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);

@@ -127,9 +127,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   @Test
   public void testGetSnapshot() throws Exception {
     TransactionSystemClient client = getClient();
-    Configuration txConf = new Configuration();
-    cConf.copyTo(txConf);
-    SnapshotCodecProvider codecProvider = new SnapshotCodecProvider(txConf);
+    SnapshotCodecProvider codecProvider = new SnapshotCodecProvider(injector.getInstance(Configuration.class));
 
     Transaction tx1 = client.startShort();
     long currentTime = System.currentTimeMillis();

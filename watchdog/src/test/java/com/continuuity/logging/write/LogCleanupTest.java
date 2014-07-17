@@ -75,7 +75,7 @@ public class LogCleanupTest {
     OrderedColumnarTable metaTable = new LogSaverTableUtil(dataSetAccessor).getMetaTable();
 
     Configuration conf = new Configuration();
-    cConf.copyTo(conf);
+    cConf.copyTxProperties(conf);
     InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf);
     txManager.startAndWait();
     TransactionSystemClient txClient = new InMemoryTxSystemClient(txManager);

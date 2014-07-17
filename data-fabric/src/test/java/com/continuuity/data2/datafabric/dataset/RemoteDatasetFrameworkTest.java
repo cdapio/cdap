@@ -72,7 +72,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     // Tx Manager to support working with datasets
     Configuration txConf = new Configuration();
-    cConf.copyTo(txConf);
+    cConf.copyTxProperties(txConf);
     InMemoryTransactionManager txManager = new InMemoryTransactionManager(txConf);
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);

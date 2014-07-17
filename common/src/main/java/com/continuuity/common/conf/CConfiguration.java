@@ -50,10 +50,12 @@ public class CConfiguration extends Configuration {
     return conf;
   }
 
-  public void copyTo(org.apache.hadoop.conf.Configuration destination) {
+  public void copyTxProperties(org.apache.hadoop.conf.Configuration destination) {
     Properties props = getProps();
     for (String property : props.stringPropertyNames()) {
-      destination.set(property, get(property));
+      if (property.startsWith("data.tx")) {
+        destination.set(property, get(property));
+      }
     }
   }
 }
