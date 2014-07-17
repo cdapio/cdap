@@ -181,6 +181,8 @@
   <div id="reactor-services">
     <div id="panels">
 
+      
+      {{#if systemServices}}
       <div class="panel">
         <table class="table">
           <thead>
@@ -192,8 +194,7 @@
             <th style="min-width: 200px;" class="instance-col center-align">Provisioned</th>
           </thead>
           <tbody>
-          {{#each services}}
-            {{#if this.isSystem}}
+          {{#each systemServices}}
             <tr>
               <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
                 {{this.name}}
@@ -205,7 +206,6 @@
                 <span {{ bindAttr class=":service-icon this.imgClass" }} ></span>
               </td>
               <td style="max-width: 100px;" class="status-col center-align">
-
                 {{#if this.logsStatusOk}}
                 {{#linkTo 'Service.Log' this}}<span {{ bindAttr class=":log-icon this.logClass" }} ></span>{{/linkTo}}
                 {{ else }}
@@ -228,14 +228,14 @@
                   <div class="instance-num auto-margin"><span>{{this.provisioned}}</span></div>
               </td>
             </tr>
-            {{/if}}
           {{/each}}
           </tbody>
         </table>
+        </div>
+        {{/if}}
 
-      </div>
-
-      <div class="panel">
+        {{#if userServices}}
+        <div class="panel">
         <table class="table">
           <thead>
             <th style="padding-left: 14px; min-width: 350px" class="service-col">Name</th>
@@ -247,9 +247,7 @@
             <th> Start/Stop </th>
           </thead>
           <tbody>
-          {{#each services}}
-
-            {{#if this.isUser}}
+          {{#each userServices}}
             <tr>
               <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
                 {{this.name}}
@@ -307,12 +305,11 @@
 
               </td>
             </tr>
-
-              {{/if}}
           {{/each}}
           </tbody>
         </table>
-      </div>
+        </div>
+        {{/if}}
 
 
     </div>

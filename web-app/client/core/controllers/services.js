@@ -10,7 +10,8 @@ define([], function () {
 
     load: function () {
       var self = this;
-      self.set('services', []);
+      self.set('systemServices', []);
+      self.set('userServices', []);
 
       self.resetServices();
       this.interval = setInterval(function () {
@@ -21,12 +22,14 @@ define([], function () {
 
     resetServices: function () {
       var self = this;
-      var servicesArr = [];
+      var systemServices = [];
+      var userServices = [];
+
       self.HTTP.rest('system/services', function (services) {
         services.map(function(service) {
           var imgSrc = service.status === 'OK' ? 'complete' : 'loading';
           var logSrc = service.status === 'OK' ? 'complete' : 'loading';
-          servicesArr.push(C.Service.create({
+          systemServices.push(C.Service.create({
             modelId: service.name,
             description: service.description,
             id: service.name,
@@ -52,7 +55,7 @@ define([], function () {
             isUser:   false,
           }));
         });
-        self.set('services', servicesArr);
+        self.set('systemServices', systemServices);
 
         // Bind all the tooltips after UI has rendered after call has returned.
         setTimeout(function () {
@@ -65,10 +68,9 @@ define([], function () {
           var appUrl = 'apps/' + app.name + '/services';
           self.HTTP.rest(appUrl, function (services) {
             services.map(function(service) {
-              console.log(service);
               var imgSrc = service.status === 'OK' ? 'complete' : 'loading';
               var logSrc = service.status === 'OK' ? 'complete' : 'loading';
-              servicesArr.push(C.Service.create({
+              userServices.push(C.Service.create({
                 modelId: service.name,
                 description: service.description,
                 id: service.name,
@@ -94,7 +96,7 @@ define([], function () {
                 isUser:   true,
               }));
             });
-            self.set('services', servicesArr);
+            self.set('userServices', userServices);
 
             // Bind all the tooltips after UI has rendered after call has returned.
             setTimeout(function () {
