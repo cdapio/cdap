@@ -85,20 +85,37 @@ to a user. ::
    */
   public class SecondaryIndexTable {
     private byte[] secondaryIndex;
-    private final byte[] secondaryIndexFamily;
-    private final byte[] secondaryIndexQualifier;
     private TransactionAwareHTable transactionAwareHTable;
     private TransactionAwareHTable secondaryIndexTable;
     private TransactionContext transactionContext;
+    private final TableName secondaryIndexTableName;
+    private static final byte[] secondaryIndexFamily = Bytes.toBytes("secondaryIndexFamily");
+    private static final byte[] secondaryIndexQualifier = Bytes.toBytes('r');
     private static final byte[] DELIMITER  = new byte[] {0};
 
-    public SecondaryIndexTable(TransactionServiceClient transactionServiceClient, HTable hTable,
-                               HTable secondaryTable, byte[] secondaryIndexFamily, byte[] secondaryIndex) {
+    public SecondaryIndexTable(TransactionServiceClient transactionServiceClient, HTable hTable, byte[] secondaryIndex) {
+      secondaryIndexTableName = TableName.valueOf(hTable.getName().getNameAsString() + ".idx");
+      HTable secondaryIndexHTable = null;
+      HBaseAdmin hBaseAdmin = null;
+      try {
+        hBaseAdmin = new HBaseAdmin(hTable.getConfiguration());
+        if (!hBaseAdmin.tableExists(secondaryIndexTableName)) {
+          hBaseAdmin.createTable(new HTableDescriptor(secondaryIndexTableName));
+        }
+        secondaryIndexHTable = new HTable(hTable.getConfiguration(), secondaryIndexTableName);
+      } catch (Exception e) {
+        Throwables.propagate(e);
+      } finally {
+        try {
+          hBaseAdmin.close();
+        } catch (Exception e) {
+          Throwables.propagate(e);
+        }
+      }
+
       this.secondaryIndex = secondaryIndex;
-      this.secondaryIndexFamily = secondaryIndexFamily;
-      this.secondaryIndexQualifier = new byte[] {'r'};
       this.transactionAwareHTable = new TransactionAwareHTable(hTable);
-      this.secondaryIndexTable = new TransactionAwareHTable(secondaryTable);
+      this.secondaryIndexTable = new TransactionAwareHTable(secondaryIndexHTable);
       this.transactionContext = new TransactionContext(transactionServiceClient, transactionAwareHTable,
                                                   secondaryIndexTable);
     }
@@ -187,3 +204,4 @@ to a user. ::
       }
     }
   }
+

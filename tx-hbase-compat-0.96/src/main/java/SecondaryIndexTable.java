@@ -54,14 +54,21 @@ public class SecondaryIndexTable {
   public SecondaryIndexTable(TransactionServiceClient transactionServiceClient, HTable hTable, byte[] secondaryIndex) {
     secondaryIndexTableName = TableName.valueOf(hTable.getName().getNameAsString() + ".idx");
     HTable secondaryIndexHTable = null;
+    HBaseAdmin hBaseAdmin = null;
     try {
-      HBaseAdmin hBaseAdmin = new HBaseAdmin(hTable.getConfiguration());
+      hBaseAdmin = new HBaseAdmin(hTable.getConfiguration());
       if (!hBaseAdmin.tableExists(secondaryIndexTableName)) {
         hBaseAdmin.createTable(new HTableDescriptor(secondaryIndexTableName));
       }
       secondaryIndexHTable = new HTable(hTable.getConfiguration(), secondaryIndexTableName);
     } catch (Exception e) {
       Throwables.propagate(e);
+    } finally {
+      try {
+        hBaseAdmin.close();
+      } catch (Exception e) {
+        Throwables.propagate(e);
+      }
     }
 
     this.secondaryIndex = secondaryIndex;
