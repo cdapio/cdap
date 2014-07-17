@@ -196,7 +196,7 @@ index c86377f..a55de0b 100644
    <groupId>com.continuuity</groupId>
    <artifactId>hive-exec</artifactId>
 -  <version>0.13.0-SNAPSHOT</version>
-+  <version>0.13.0-continuuity-2.3.0-SNAPSHOT</version>
++  <version>0.13.0-continuuity-2.3.0</version>
    <packaging>jar</packaging>
    <name>Hive Query Language</name>
  

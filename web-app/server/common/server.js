@@ -82,11 +82,12 @@ var SECURITY_ENABLED, AUTH_SERVER_ADDRESSES;
  * Determines security status. Continues until it is able to determine if security is enabled if
  * reactor is down.
  * @param  {Function} callback to call after security status is determined.
+ * TODO: https://jira.continuuity.com/browse/REACTOR-531
  */
 WebAppServer.prototype.setSecurityStatus = function (callback) {
   var self = this;
 
-  var path = '/' + this.API_VERSION + '/apps';
+  var path = '/' + this.API_VERSION + '/ping';
   var url = ('http://' + this.config['gateway.server.address'] + ':'
     + this.config['gateway.server.port'] + path);
   var interval = setInterval(function () {
