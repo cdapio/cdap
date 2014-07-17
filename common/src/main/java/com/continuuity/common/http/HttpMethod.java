@@ -13,7 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package com.continuuity.common.http;
+
 /**
- * This package contains class for writing RPC server and client in simple manner.
+ * Represents HTTP methods.
  */
-package com.continuuity.common.rpc;
+public enum HttpMethod {
+  GET, POST, PUT, DELETE;
+}

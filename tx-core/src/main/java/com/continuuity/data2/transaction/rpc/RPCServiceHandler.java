@@ -13,25 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-package com.continuuity.common.zookeeper.election;
+package com.continuuity.data2.transaction.rpc;
 
 /**
- * Handles events of election/un-election of leader.
+ * Defines lifecycle interface for all rpc handlers.
  */
-public interface ElectionHandler {
+public interface RPCServiceHandler {
 
-  /**
-   * This method will get invoked when a participant becomes a leader in a
-   * leader election process. It is guaranteed that this method won't get called
-   * consecutively (i.e. called twice or more in a row).
-   */
-  void leader();
+  void init() throws Exception;
 
-  /**
-   * This method will get invoked when a participant is a follower in a
-   * leader election process. This method might get called multiple times without
-   * the {@link #leader()} method being called.
-   */
-  void follower();
+  void destroy() throws Exception;
 }

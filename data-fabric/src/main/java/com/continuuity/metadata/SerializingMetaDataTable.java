@@ -348,13 +348,15 @@ public class SerializingMetaDataTable implements MetaDataTable {
 
     // throw exception if not existing
     if (result.isEmpty()) {
-      throw new OperationException(StatusCode.ENTRY_NOT_FOUND, "Meta data entry does not exist.");
+      throw new OperationException(StatusCode.ENTRY_NOT_FOUND, "Meta data entry for row=" + Bytes.toStringBinary(row) +
+        ", column=" + Bytes.toStringBinary(column) + " does not exist.");
     }
 
     // get the raw (serialized) bytes of the entry
     byte[] bytes = result.get(column);
     if (bytes == null) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, "Meta data entry is null.");
+      throw new OperationException(StatusCode.INTERNAL_ERROR, "Meta data entry for row=" + Bytes.toStringBinary(row) +
+        ", column=" + Bytes.toStringBinary(column) + " is null.");
     }
 
     // de-serialize the entry
