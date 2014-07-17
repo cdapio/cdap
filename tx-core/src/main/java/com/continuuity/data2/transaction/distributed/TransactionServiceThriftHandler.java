@@ -17,7 +17,6 @@
 package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.Constants;
-
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.distributed.thrift.TBoolean;
 import com.continuuity.data2.transaction.distributed.thrift.TTransaction;
