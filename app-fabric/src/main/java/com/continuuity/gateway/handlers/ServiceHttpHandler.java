@@ -216,7 +216,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @GET
   @Path("/apps/{app-id}/services/{service-id}/live-info")
-  private void liveInfo(HttpRequest request, HttpResponder responder,
+  public void liveInfo(HttpRequest request, HttpResponder responder,
                         @PathParam("app-id") String appId,
                         @PathParam("service-id") String serviceId) {
     try {
@@ -238,6 +238,9 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   private ServiceSpecification getServiceSpecification(String accountId, String id,
                                                        String serviceName) throws OperationException {
     ApplicationSpecification applicationSpecification = store.getApplication(Id.Application.from(accountId, id));
+    if (applicationSpecification == null) {
+      return null;
+    }
     Map<String, ServiceSpecification> serviceSpecs = applicationSpecification.getServices();
     if (serviceSpecs.containsKey(serviceName)) {
       return serviceSpecs.get(serviceName);

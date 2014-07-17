@@ -241,7 +241,6 @@
             <th style="padding-left: 14px; min-width: 350px" class="service-col">Name</th>
             <th style="min-width: 100px;" class="status-col center-align">Status
             </th>
-            <th style="min-width: 100px;" class="logs-col center-align">Logs</th>
             <th style="min-width: 200px;" class="instance-col center-align">Instances Requested</th>
             <th style="min-width: 200px;" class="instance-col center-align">Provisioned</th>
             <th> Start/Stop </th>
@@ -257,13 +256,6 @@
               </td>
               <td style="max-width: 100px;" class="status-col center-align">
                 <span {{ bindAttr class=":service-icon this.imgClass" }} ></span>
-              </td>
-              <td style="max-width: 100px;" class="status-col center-align">
-                {{#if this.logsStatusOk}}
-                {{#linkTo 'Service.Log' this}}<span {{ bindAttr class=":log-icon this.logClass" }} ></span>{{/linkTo}}
-                {{ else }}
-                  <span data-toggle="tooltip" data-placement="right" title="Please contact your system admistrator for logs.">NA</span>
-                {{/if}}
               </td>
               <td style="max-width: 200px;" class="instance-col">
                 <div class="instance-wrapper">
@@ -282,8 +274,8 @@
               </td>
               <td>
                   <div class="btn-group start-stop-btns">
-                      <button class="btn start"><img src="/assets/img/v2/play_active_icon.png"></button>
-                      <button class="btn stop"><img src="/assets/img/v2/stop_active_icon.png"></button>
+                      <button class="btn start" {{action start this.appID this.id}}><img src="/assets/img/v2/play_active_icon.png"></button>
+                      <button class="btn stop" {{action stop this.appID this.id}}><img src="/assets/img/v2/stop_active_icon.png"></button>
                   </div>
 
                   <div id="action-buttons" class="btn-group">
@@ -292,7 +284,7 @@
                     </button>
                     <ul class="dropdown-menu">
                       <li style="min-width:200px; padding:4px 16px 2px;">
-                        More Options Here
+                        Run-time Args
                       </li>
                       <li style="min-width:200px; padding:4px 16px 2px;">
                         More Options Here

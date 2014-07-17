@@ -51,8 +51,7 @@ define([], function () {
             metricName: C.Util.getMetricName(service.name),
             imgClass: imgSrc,
             logClass: logSrc,
-            isSystem: true,
-            isUser:   false,
+            //appID: service.app, //system services have no associated app.
           }));
         });
         self.set('systemServices', systemServices);
@@ -70,6 +69,8 @@ define([], function () {
             services.map(function(service) {
               var imgSrc = service.status === 'OK' ? 'complete' : 'loading';
               var logSrc = service.status === 'OK' ? 'complete' : 'loading';
+              var statusCheckURL = appUrl + '/' + service.name + '/status';
+              self.HTTP.rest(statusCheckURL, function(f){ console.log(f); } );
               userServices.push(C.Service.create({
                 modelId: service.name,
                 description: service.description,
@@ -81,19 +82,18 @@ define([], function () {
                 max: service.max,
                 isIncreaseEnabled: service.requested < service.max,
                 isDecreaseEnabled: service.requested > service.min,
-                logs: service.logs,
+                //logs: service.logs,
                 requested: service.requested,
                 provisioned: service.provisioned,
                 statusOk: !!(service.status === 'OK'),
                 statusNotOk: !!(service.status === 'NOTOK'),
-                logsStatusOk: !!(service.logs === 'OK'),
-                logsStatusNotOk: !!(service.logs === 'NOTOK'),
+                //logsStatusOk: !!(service.logs === 'OK'),
+                //logsStatusNotOk: !!(service.logs === 'NOTOK'),
                 metricEndpoint: C.Util.getMetricEndpoint(service.name),
                 metricName: C.Util.getMetricName(service.name),
                 imgClass: imgSrc,
                 logClass: logSrc,
-                isSystem: true,
-                isUser:   true,
+                appID: service.app,
               }));
             });
             self.set('userServices', userServices);
@@ -109,6 +109,34 @@ define([], function () {
 
     },
 
+    start: function (appID, serviceID) {
+      var self = this;
+      C.Modal.show(
+        "Start Service",
+        "Start Service: " + appID + "?",
+        function () {
+          var startURL = 'apps/' + appID + '/services/' + serviceID + '/start';
+          self.HTTP.post(startURL);
+        }
+      );
+    },
+
+    stop: function (appID, serviceID) {
+      var self = this;
+      C.Modal.show(
+        "Stop Service",
+        "Stop Service: " + appID + "?",
+        function () {
+          var stopURL = 'apps/' + appID + '/services/' + serviceID + '/stop';
+          self.HTTP.post(stopURL);
+        }
+      );
+    },
+
+    setRuntimeArgs: function () {
+
+    },
+
     increaseInstance: function (serviceName, instanceCount) {
       var self = this;
       C.Modal.show(
@@ -117,7 +145,7 @@ define([], function () {
         function () {
 
           var payload = {data: {instances: ++instanceCount}};
-          var services = self.get('services');
+          var services = self.get('systemServices');
           for (var i = 0; i < services.length; i++) {
             var service = services[i];
             if (service.name === serviceName) {
@@ -139,7 +167,7 @@ define([], function () {
         function () {
 
           var payload = {data: {instances: --instanceCount}};
-          var services = self.get('services');
+          var services = self.get('systemServices');
           for (var i = 0; i < services.length; i++) {
             var service = services[i];
             if (service.name === serviceName) {
