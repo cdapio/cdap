@@ -66,11 +66,6 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path(PATH + "tables")
   public void getTables(HttpRequest request, HttpResponder responder) {
-    // document that we need to pass a json. Returns a handle
-    // By default asks for everything
-
-    // NOTE: this call is a POST because we need to pass json, and it actually
-    // executes a query.
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
       @Override
       public Handle execute(HttpRequest request, HttpResponder responder)
@@ -87,11 +82,6 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path(PATH + "columns")
   public void getColumns(HttpRequest request, HttpResponder responder) {
-    // document that we need to pass a json. Returns a handle
-    // By default asks for everything
-
-    // NOTE: this call is a POST because we need to pass json, and it actually
-    // executes a query.
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
       @Override
       public Handle execute(HttpRequest request, HttpResponder responder)
@@ -108,10 +98,6 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path(PATH + "catalogs")
   public void getCatalogs(HttpRequest request, HttpResponder responder) {
-    // document that we need to pass a json. Returns a handle
-
-    // NOTE: this call is a POST because we need to pass json, and it actually
-    // executes a query.
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
       @Override
       public Handle execute(HttpRequest request, HttpResponder responder)
@@ -125,11 +111,6 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path(PATH + "schemas")
   public void getSchemas(HttpRequest request, HttpResponder responder) {
-    // document that we need to pass a json. Returns a handle
-    // By default asks for everything
-
-    // NOTE: this call is a POST because we need to pass json, and it actually
-    // executes a query.
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
       @Override
       public Handle execute(HttpRequest request, HttpResponder responder)
@@ -145,11 +126,6 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path(PATH + "functions")
   public void getFunctions(HttpRequest request, HttpResponder responder) {
-    // document that we need to pass a json. Returns a handle
-    // By default asks for everything
-
-    // NOTE: this call is a POST because we need to pass json, and it actually
-    // executes a query.
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
       @Override
       public Handle execute(HttpRequest request, HttpResponder responder)
@@ -166,10 +142,6 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path(PATH + "tableTypes")
   public void getTableTypes(HttpRequest request, HttpResponder responder) {
-    // document that we need to pass a json. Returns a handle
-
-    // NOTE: this call is a POST because we need to pass json, and it actually
-    // executes a query.
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
       @Override
       public Handle execute(HttpRequest request, HttpResponder responder)
@@ -183,10 +155,6 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path(PATH + "types")
   public void getTypes(HttpRequest request, HttpResponder responder) {
-    // document that we need to pass a json. Returns a handle
-
-    // NOTE: this call is a POST because we need to pass json, and it actually
-    // executes a query.
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
       @Override
       public Handle execute(HttpRequest request, HttpResponder responder)
@@ -200,10 +168,6 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   @GET
   @Path(PATH + "info/{type}")
   public void getInfo(HttpRequest request, HttpResponder responder, @PathParam("type") final String type) {
-    // document that we need to pass a json. Returns a handle
-
-    // NOTE: this call is a POST because we need to pass json, and it actually
-    // executes a query.
     genericEndpointExecution(request, responder, new EndpointCoreExecution<Void>() {
       @Override
       public Void execute(HttpRequest request, HttpResponder responder)
