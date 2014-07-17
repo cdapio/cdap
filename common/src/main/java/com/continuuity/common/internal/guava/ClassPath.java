@@ -20,6 +20,7 @@ import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
@@ -90,8 +91,21 @@ public final class ClassPath {
    *         failed.
    */
   public static ClassPath from(ClassLoader classloader) throws IOException {
+    return from(classloader, Predicates.<URI>alwaysTrue());
+  }
+
+  /**
+   * Returns a {@code ClassPath} representing all classes and resources loadable from {@code
+   * classloader} and its parent class loaders that satisfy the given predicate.
+   *
+   * <p>Currently only {@link URLClassLoader} and only {@code file://} urls are supported.
+   *
+   * @throws IOException if the attempt to read class path resources (jar files or directories)
+   *         failed.
+   */
+  public static ClassPath from(ClassLoader classloader, Predicate<URI> predicate) throws IOException {
     Scanner scanner = new Scanner();
-    for (Map.Entry<URI, ClassLoader> entry : getClassPathEntries(classloader).entrySet()) {
+    for (Map.Entry<URI, ClassLoader> entry : getClassPathEntries(classloader, predicate).entrySet()) {
       scanner.scan(entry.getKey(), entry.getValue());
     }
     return new ClassPath(scanner.getResources());
@@ -310,13 +324,13 @@ public final class ClassPath {
     }
   }
 
-  @VisibleForTesting static ImmutableMap<URI, ClassLoader> getClassPathEntries(
-      ClassLoader classloader) {
+  @VisibleForTesting
+  static ImmutableMap<URI, ClassLoader> getClassPathEntries(ClassLoader classloader, Predicate<URI> predicate) {
     LinkedHashMap<URI, ClassLoader> entries = Maps.newLinkedHashMap();
     // Search parent first, since it's the order ClassLoader#loadClass() uses.
     ClassLoader parent = classloader.getParent();
     if (parent != null) {
-      entries.putAll(getClassPathEntries(parent));
+      entries.putAll(getClassPathEntries(parent, predicate));
     }
     if (classloader instanceof URLClassLoader) {
       URLClassLoader urlClassLoader = (URLClassLoader) classloader;
@@ -324,6 +338,9 @@ public final class ClassPath {
         URI uri;
         try {
           uri = entry.toURI();
+          if (!predicate.apply(uri)) {
+            continue;
+          }
         } catch (URISyntaxException e) {
           throw new IllegalArgumentException(e);
         }
