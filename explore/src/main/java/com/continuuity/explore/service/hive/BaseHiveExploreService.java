@@ -258,6 +258,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   public MetaDataInfo getInfo(MetaDataInfo.InfoType infoType) throws ExploreException, SQLException {
     SessionHandle sessionHandle = null;
     try {
+      MetaDataInfo ret = infoType.getDefaultValue();
+      if (ret != null) {
+        return ret;
+      }
+
       Map<String, String> sessionConf = startSession();
       sessionHandle = cliService.openSession("", "", sessionConf);
       // Convert to GetInfoType
@@ -294,13 +299,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       Map<String, String> sessionConf = startSession();
       sessionHandle = cliService.openSession("", "", sessionConf);
-      OperationHandle operationHandle = null;
-      try {
-        operationHandle = cliService.getTables(sessionHandle, catalog, schemaPattern, tableNamePattern, tableTypes);
-      } catch (Throwable e) {
-        closeSession(sessionHandle);
-        Throwables.propagate(e);
-      }
+      OperationHandle operationHandle = cliService.getTables(sessionHandle, catalog,
+                                                             schemaPattern, tableNamePattern, tableTypes);
       Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
       LOG.trace("Retrieving tables: catalog {}, schemaNamePattern {}, tableNamePattern {}, tableTypes {}",
                 catalog, schemaPattern, tableNamePattern, tableTypes);

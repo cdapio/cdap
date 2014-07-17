@@ -40,14 +40,14 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 /**
  *
@@ -115,7 +115,7 @@ public class RoutingToExploreTest {
     Assert.assertEquals("schemas", doRequest("/data/metadata/schemas", "POST"));
     Assert.assertEquals("functions", doRequest("/data/metadata/functions", "POST"));
     Assert.assertEquals("tableTypes", doRequest("/data/metadata/tableTypes", "POST"));
-    Assert.assertEquals("typeInfo", doRequest("/data/metadata/typeInfo", "POST"));
+    Assert.assertEquals("types", doRequest("/data/metadata/types", "POST"));
     Assert.assertEquals("info:some_type", doRequest("/data/metadata/info/some_type", "GET"));
   }
 
@@ -213,9 +213,9 @@ public class RoutingToExploreTest {
     }
 
     @POST
-    @Path(PATH + "typeInfo")
+    @Path(PATH + "types")
     public void getTypeInfo(HttpRequest request, HttpResponder responder) {
-      responder.sendString(HttpResponseStatus.OK, "typeInfo");
+      responder.sendString(HttpResponseStatus.OK, "types");
     }
 
     @GET

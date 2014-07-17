@@ -18,6 +18,7 @@ package com.continuuity.explore.service;
 
 import java.sql.SQLException;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Interface for exploring datasets.
@@ -92,8 +93,8 @@ public interface Explore {
    */
   void close(Handle handle) throws ExploreException, HandleNotFoundException;
 
-  ////// Metadata methods
 
+  ////// Metadata methods
 
   /**
    * Retrieves a description of table columns available in the specified catalog.
@@ -113,7 +114,8 @@ public interface Explore {
    * @throws ExploreException on any error getting the columns.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public Handle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
+  public Handle getColumns(@Nullable String catalog, @Nullable String schemaPattern,
+                           String tableNamePattern, String columnNamePattern)
     throws ExploreException, SQLException;
 
   /**
@@ -140,7 +142,8 @@ public interface Explore {
    * @throws ExploreException on any error getting the schemas.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public Handle getSchemas(String catalog, String schemaPattern) throws ExploreException, SQLException;
+  public Handle getSchemas(@Nullable String catalog, @Nullable String schemaPattern)
+    throws ExploreException, SQLException;
 
   /**
    * Retrieves a description of the system and user functions available in the given catalog.
@@ -159,7 +162,7 @@ public interface Explore {
    * @throws ExploreException on any error getting the functions.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public Handle getFunctions(String catalog, String schemaPattern, String functionNamePattern)
+  public Handle getFunctions(@Nullable String catalog, @Nullable String schemaPattern, String functionNamePattern)
     throws ExploreException, SQLException;
 
 
@@ -174,10 +177,6 @@ public interface Explore {
   public MetaDataInfo getInfo(MetaDataInfo.InfoType infoType) throws ExploreException, SQLException;
 
   /**
-   * As seen in Hive code, the arguments are actually patterns
-   * TODO verify those assumptions with unit tests - got that from
-   * http://docs.oracle.com/javase/7/docs/api/java/sql/DatabaseMetaData.html#getTables
-   *
    * Retrieves a description of the tables available in the given catalog. Only table descriptions
    * matching the catalog, schema, table name and type criteria are returned.
    *
@@ -197,8 +196,8 @@ public interface Explore {
    * @throws ExploreException on any error getting the tables.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public Handle getTables(String catalog, String schemaPattern, String tableNamePattern,
-                          List<String> tableTypes) throws ExploreException, SQLException;
+  public Handle getTables(@Nullable String catalog, @Nullable String schemaPattern, String tableNamePattern,
+                          @Nullable List<String> tableTypes) throws ExploreException, SQLException;
 
   /**
    * Retrieves the table types available in this database.
@@ -214,7 +213,7 @@ public interface Explore {
   /**
    * Retrieves a description of all the data types supported by this database.
    *
-   * See {@link java.sql.DatabaseMetaData#getTableTypes()}.
+   * See {@link java.sql.DatabaseMetaData#getTypeInfo()}.
    *
    * @return {@link Handle} representing the operation.
    * @throws ExploreException on any error getting the types info.

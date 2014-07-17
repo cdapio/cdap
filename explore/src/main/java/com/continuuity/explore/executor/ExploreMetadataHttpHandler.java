@@ -18,6 +18,7 @@ package com.continuuity.explore.executor;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.client.ExploreClientUtil;
+import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.MetaDataInfo;
@@ -35,14 +36,14 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.sql.SQLException;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * Handler that implements explore metadata APIs.
@@ -70,26 +71,17 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
     // NOTE: this call is a POST because we need to pass json, and it actually
     // executes a query.
-    try {
-      ExploreClientUtil.TablesArgs args = decodeArguments(request, ExploreClientUtil.TablesArgs.class,
-                                                          new ExploreClientUtil.TablesArgs(null, null, "%", null));
-      LOG.trace("Received get tables with params: {}", args.toString());
-      Handle handle = exploreService.getTables(args.getCatalog(), args.getSchemaPattern(),
-                                               args.getTableNamePattern(), args.getTableTypes());
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
-    } catch (IllegalArgumentException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (SQLException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
+      @Override
+      public Handle execute(HttpRequest request, HttpResponder responder)
+        throws IllegalArgumentException, SQLException, ExploreException, IOException {
+        ExploreClientUtil.TablesArgs args = decodeArguments(request, ExploreClientUtil.TablesArgs.class,
+                                                            new ExploreClientUtil.TablesArgs(null, null, "%", null));
+        LOG.trace("Received get tables with params: {}", args.toString());
+        return exploreService.getTables(args.getCatalog(), args.getSchemaPattern(),
+                                        args.getTableNamePattern(), args.getTableTypes());
+      }
+    });
   }
 
   @POST
@@ -100,26 +92,17 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
     // NOTE: this call is a POST because we need to pass json, and it actually
     // executes a query.
-    try {
-      ExploreClientUtil.ColumnsArgs args = decodeArguments(request, ExploreClientUtil.ColumnsArgs.class,
-                                                           new ExploreClientUtil.ColumnsArgs(null, null, "%", "%"));
-      LOG.trace("Received get columns with params: {}", args.toString());
-      Handle handle = exploreService.getColumns(args.getCatalog(), args.getSchemaPattern(),
-                                                args.getTableNamePattern(), args.getColumnNamePattern());
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
-    } catch (IllegalArgumentException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (SQLException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
+      @Override
+      public Handle execute(HttpRequest request, HttpResponder responder)
+        throws IllegalArgumentException, SQLException, ExploreException, IOException {
+        ExploreClientUtil.ColumnsArgs args = decodeArguments(request, ExploreClientUtil.ColumnsArgs.class,
+                                                             new ExploreClientUtil.ColumnsArgs(null, null, "%", "%"));
+        LOG.trace("Received get columns with params: {}", args.toString());
+        return exploreService.getColumns(args.getCatalog(), args.getSchemaPattern(),
+                                         args.getTableNamePattern(), args.getColumnNamePattern());
+      }
+    });
   }
 
   @POST
@@ -129,23 +112,14 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
     // NOTE: this call is a POST because we need to pass json, and it actually
     // executes a query.
-    try {
-      LOG.trace("Received get catalogs query.");
-      Handle handle = exploreService.getCatalogs();
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
-    } catch (IllegalArgumentException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (SQLException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
+      @Override
+      public Handle execute(HttpRequest request, HttpResponder responder)
+        throws IllegalArgumentException, SQLException, ExploreException, IOException {
+        LOG.trace("Received get catalogs query.");
+        return exploreService.getCatalogs();
+      }
+    });
   }
 
   @POST
@@ -156,25 +130,16 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
     // NOTE: this call is a POST because we need to pass json, and it actually
     // executes a query.
-    try {
-      ExploreClientUtil.SchemaArgs args = decodeArguments(request, ExploreClientUtil.SchemaArgs.class,
-                                                          new ExploreClientUtil.SchemaArgs(null, null));
-      LOG.trace("Received get schemas with params: {}", args.toString());
-      Handle handle = exploreService.getSchemas(args.getCatalog(), args.getSchemaPattern());
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
-    } catch (IllegalArgumentException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (SQLException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
+      @Override
+      public Handle execute(HttpRequest request, HttpResponder responder)
+        throws IllegalArgumentException, SQLException, ExploreException, IOException {
+        ExploreClientUtil.SchemaArgs args = decodeArguments(request, ExploreClientUtil.SchemaArgs.class,
+                                                            new ExploreClientUtil.SchemaArgs(null, null));
+        LOG.trace("Received get schemas with params: {}", args.toString());
+        return exploreService.getSchemas(args.getCatalog(), args.getSchemaPattern());
+      }
+    });
   }
 
   @POST
@@ -185,26 +150,17 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
     // NOTE: this call is a POST because we need to pass json, and it actually
     // executes a query.
-    try {
-      ExploreClientUtil.FunctionsArgs args = decodeArguments(request, ExploreClientUtil.FunctionsArgs.class,
-                                                          new ExploreClientUtil.FunctionsArgs(null, null, "%"));
-      LOG.trace("Received get functions with params: {}", args.toString());
-      Handle handle = exploreService.getFunctions(args.getCatalog(), args.getSchemaPattern(),
-                                                  args.getFunctionNamePattern());
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
-    } catch (IllegalArgumentException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (SQLException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
+      @Override
+      public Handle execute(HttpRequest request, HttpResponder responder)
+        throws IllegalArgumentException, SQLException, ExploreException, IOException {
+        ExploreClientUtil.FunctionsArgs args = decodeArguments(request, ExploreClientUtil.FunctionsArgs.class,
+                                                               new ExploreClientUtil.FunctionsArgs(null, null, "%"));
+        LOG.trace("Received get functions with params: {}", args.toString());
+        return exploreService.getFunctions(args.getCatalog(), args.getSchemaPattern(),
+                                           args.getFunctionNamePattern());
+      }
+    });
   }
 
   @POST
@@ -214,49 +170,31 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
     // NOTE: this call is a POST because we need to pass json, and it actually
     // executes a query.
-    try {
-      LOG.trace("Received get table types query.");
-      Handle handle = exploreService.getTableTypes();
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
-    } catch (IllegalArgumentException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (SQLException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
+      @Override
+      public Handle execute(HttpRequest request, HttpResponder responder)
+        throws IllegalArgumentException, SQLException, ExploreException, IOException {
+        LOG.trace("Received get table types query.");
+        return exploreService.getTableTypes();
+      }
+    });
   }
 
   @POST
-  @Path(PATH + "typeInfo")
-  public void getTypeInfo(HttpRequest request, HttpResponder responder) {
+  @Path(PATH + "types")
+  public void getTypes(HttpRequest request, HttpResponder responder) {
     // document that we need to pass a json. Returns a handle
 
     // NOTE: this call is a POST because we need to pass json, and it actually
     // executes a query.
-    try {
-      LOG.trace("Received get type info query.");
-      Handle handle = exploreService.getTypeInfo();
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
-    } catch (IllegalArgumentException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (SQLException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
+      @Override
+      public Handle execute(HttpRequest request, HttpResponder responder)
+        throws IllegalArgumentException, SQLException, ExploreException, IOException {
+        LOG.trace("Received get type info query.");
+        return exploreService.getTypeInfo();
+      }
+    });
   }
 
   @GET
@@ -266,11 +204,38 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
     // NOTE: this call is a POST because we need to pass json, and it actually
     // executes a query.
+    genericEndpointExecution(request, responder, new EndpointCoreExecution<Void>() {
+      @Override
+      public Void execute(HttpRequest request, HttpResponder responder)
+        throws IllegalArgumentException, SQLException, ExploreException, IOException {
+        LOG.trace("Received get info for {}", type);
+        MetaDataInfo.InfoType infoType = MetaDataInfo.InfoType.fromString(type);
+        MetaDataInfo metadataInfo = exploreService.getInfo(infoType);
+        responder.sendJson(HttpResponseStatus.OK, metadataInfo);
+        return null;
+      }
+    });
+  }
+
+  private void handleResponseEndpointExecution(HttpRequest request, HttpResponder responder,
+                                               final EndpointCoreExecution<Handle> execution) {
+    genericEndpointExecution(request, responder, new EndpointCoreExecution<Void>() {
+      @Override
+      public Void execute(HttpRequest request, HttpResponder responder)
+        throws IllegalArgumentException, SQLException, ExploreException, IOException {
+        Handle handle = execution.execute(request, responder);
+        JsonObject json = new JsonObject();
+        json.addProperty("handle", handle.getHandle());
+        responder.sendJson(HttpResponseStatus.OK, json);
+        return null;
+      }
+    });
+  }
+
+  private void genericEndpointExecution(HttpRequest request, HttpResponder responder,
+                                        EndpointCoreExecution<Void> execution) {
     try {
-      LOG.trace("Received get info for {}", type);
-      MetaDataInfo.InfoType infoType = MetaDataInfo.InfoType.fromString(type);
-      MetaDataInfo metadataInfo = exploreService.getInfo(infoType);
-      responder.sendJson(HttpResponseStatus.OK, metadataInfo);
+      execution.execute(request, responder);
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -292,7 +257,7 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
     try {
       T args = GSON.fromJson(reader, argsType);
-      return args == null ? defaultValue : args;
+      return (args == null) ? defaultValue : args;
     } catch (JsonSyntaxException e) {
       LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
       throw e;
@@ -301,4 +266,11 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
     }
   }
 
+  /**
+   * Represents the core execution of an endpoint.
+   */
+  private static interface EndpointCoreExecution<T> {
+    T execute(HttpRequest request, HttpResponder responder)
+      throws IllegalArgumentException, SQLException, ExploreException, IOException;
+  }
 }

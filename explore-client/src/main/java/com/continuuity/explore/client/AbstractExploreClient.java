@@ -227,7 +227,7 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
 
   @Override
   public Handle getTypeInfo() throws ExploreException, SQLException {
-    HttpResponse response = doPost(METADATA_PATH + "typeInfo", null, null);
+    HttpResponse response = doPost(METADATA_PATH + "types", null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
     }

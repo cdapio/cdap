@@ -25,54 +25,60 @@ public class MetaDataInfo {
    * Information types.
    */
   public enum InfoType {
-    MAX_DRIVER_CONNECTIONS,
-    MAX_CONCURRENT_ACTIVITIES,
-    DATA_SOURCE_NAME,
-    FETCH_DIRECTION,
-    SERVER_NAME,
-    SEARCH_PATTERN_ESCAPE,
-    DBMS_NAME,
-    DBMS_VER,
-    ACCESSIBLE_TABLES,
-    ACCESSIBLE_PROCEDURES,
-    CURSOR_COMMIT_BEHAVIOR,
-    DATA_SOURCE_READ_ONLY,
-    DEFAULT_TXN_ISOLATION,
-    IDENTIFIER_CASE,
-    IDENTIFIER_QUOTE_CHAR,
-    MAX_COLUMN_NAME_LEN,
-    MAX_CURSOR_NAME_LEN,
-    MAX_SCHEMA_NAME_LEN,
-    MAX_CATALOG_NAME_LEN,
-    MAX_TABLE_NAME_LEN,
-    SCROLL_CONCURRENCY,
-    TXN_CAPABLE,
-    USER_NAME,
-    TXN_ISOLATION_OPTION,
-    INTEGRITY,
-    GETDATA_EXTENSIONS,
-    NULL_COLLATION,
-    ALTER_TABLE,
-    ORDER_BY_COLUMNS_IN_SELECT,
-    SPECIAL_CHARACTERS,
-    MAX_COLUMNS_IN_GROUP_BY,
-    MAX_COLUMNS_IN_INDEX,
-    MAX_COLUMNS_IN_ORDER_BY,
-    MAX_COLUMNS_IN_SELECT,
-    MAX_COLUMNS_IN_TABLE,
-    MAX_INDEX_SIZE,
-    MAX_ROW_SIZE,
-    MAX_STATEMENT_LEN,
-    MAX_TABLES_IN_SELECT,
-    MAX_USER_NAME_LEN,
-    OJ_CAPABILITIES,
+    MAX_DRIVER_CONNECTIONS(null),
+    MAX_CONCURRENT_ACTIVITIES(null),
+    DATA_SOURCE_NAME(null),
+    FETCH_DIRECTION(null),
+    SERVER_NAME(null),
+    SEARCH_PATTERN_ESCAPE(null),
+    DBMS_NAME(new MetaDataInfo("Continuuity Reactor")),
+    DBMS_VER(new MetaDataInfo("2.4.0")),  // TODO make it dynamic [REACTOR-319]
+    ACCESSIBLE_TABLES(null),
+    ACCESSIBLE_PROCEDURES(null),
+    CURSOR_COMMIT_BEHAVIOR(null),
+    DATA_SOURCE_READ_ONLY(null),
+    DEFAULT_TXN_ISOLATION(null),
+    IDENTIFIER_CASE(null),
+    IDENTIFIER_QUOTE_CHAR(null),
+    MAX_COLUMN_NAME_LEN(null),
+    MAX_CURSOR_NAME_LEN(null),
+    MAX_SCHEMA_NAME_LEN(null),
+    MAX_CATALOG_NAME_LEN(null),
+    MAX_TABLE_NAME_LEN(null),
+    SCROLL_CONCURRENCY(null),
+    TXN_CAPABLE(null),
+    USER_NAME(null),
+    TXN_ISOLATION_OPTION(null),
+    INTEGRITY(null),
+    GETDATA_EXTENSIONS(null),
+    NULL_COLLATION(null),
+    ALTER_TABLE(null),
+    ORDER_BY_COLUMNS_IN_SELECT(null),
+    SPECIAL_CHARACTERS(null),
+    MAX_COLUMNS_IN_GROUP_BY(null),
+    MAX_COLUMNS_IN_INDEX(null),
+    MAX_COLUMNS_IN_ORDER_BY(null),
+    MAX_COLUMNS_IN_SELECT(null),
+    MAX_COLUMNS_IN_TABLE(null),
+    MAX_INDEX_SIZE(null),
+    MAX_ROW_SIZE(null),
+    MAX_STATEMENT_LEN(null),
+    MAX_TABLES_IN_SELECT(null),
+    MAX_USER_NAME_LEN(null),
+    OJ_CAPABILITIES(null),
 
-    XOPEN_CLI_YEAR,
-    CURSOR_SENSITIVITY,
-    DESCRIBE_PARAMETER,
-    CATALOG_NAME,
-    COLLATION_SEQ,
-    MAX_IDENTIFIER_LEN;
+    XOPEN_CLI_YEAR(null),
+    CURSOR_SENSITIVITY(null),
+    DESCRIBE_PARAMETER(null),
+    CATALOG_NAME(null),
+    COLLATION_SEQ(null),
+    MAX_IDENTIFIER_LEN(null);
+
+    private final MetaDataInfo defaultValue;
+
+    private InfoType(MetaDataInfo defaultValue) {
+      this.defaultValue = defaultValue;
+    }
 
     public static InfoType fromString(String str) {
       for (InfoType infoType : InfoType.values()) {
@@ -81,6 +87,10 @@ public class MetaDataInfo {
         }
       }
       return null;
+    }
+
+    public MetaDataInfo getDefaultValue() {
+      return defaultValue;
     }
   }
 
@@ -95,6 +105,7 @@ public class MetaDataInfo {
     this.intValue = intValue;
     this.longValue = longValue;
   }
+
   public MetaDataInfo(String stringValue) {
     this.stringValue = stringValue;
   }
