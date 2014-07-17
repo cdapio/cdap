@@ -16,7 +16,6 @@
 
 package com.continuuity.data2.transaction.coprocessor.hbase94;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.coprocessor.TransactionStateCache;
@@ -25,6 +24,7 @@ import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
+import com.continuuity.data2.transaction.snapshot.DefaultSnapshotCodec;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.continuuity.test.SlowTests;
 import com.google.common.collect.ImmutableSortedMap;
@@ -89,12 +89,14 @@ public class TransactionDataJanitorTest {
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
     testUtil = new HBaseTestingUtility();
-    Configuration hConf = testUtil.getConfiguration();
     testUtil.startMiniCluster();
     testUtil.getDFSCluster().waitClusterUp();
-    CConfiguration conf = CConfiguration.create();
+    Configuration conf = testUtil.getConfiguration();
     conf.unset(Constants.CFG_HDFS_USER);
     conf.unset(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES);
+    String localTestDir = "/tmp/transactionDataJanitorTest";
+    conf.set(TxConstants.Manager.CFG_TX_SNAPSHOT_DIR, localTestDir);
+    conf.set(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES, DefaultSnapshotCodec.class.getName());
 
     // write an initial transaction snapshot
     TransactionSnapshot snapshot =
@@ -104,7 +106,7 @@ public class TransactionDataJanitorTest {
         Maps.newTreeMap(ImmutableSortedMap.of(5L, new InMemoryTransactionManager.InProgressTx(V[6], Long.MAX_VALUE))),
         new HashMap<Long, Set<ChangeId>>(), new TreeMap<Long, Set<ChangeId>>());
     HDFSTransactionStateStorage tmpStorage =
-      new HDFSTransactionStateStorage(conf, hConf, new SnapshotCodecProvider(conf));
+      new HDFSTransactionStateStorage(conf, new SnapshotCodecProvider(conf));
     tmpStorage.startAndWait();
     tmpStorage.writeSnapshot(snapshot);
     tmpStorage.stopAndWait();

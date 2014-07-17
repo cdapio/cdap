@@ -45,6 +45,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,11 +92,13 @@ public class DataFabricDistributedModule extends AbstractModule {
   private static final class ThriftClientProviderSupplier implements Provider<ThriftClientProvider> {
 
     private final CConfiguration cConf;
+    private final Configuration hConf;
     private DiscoveryServiceClient discoveryServiceClient;
 
     @Inject
-    ThriftClientProviderSupplier(CConfiguration cConf) {
+    ThriftClientProviderSupplier(CConfiguration cConf, Configuration hConf) {
       this.cConf = cConf;
+      this.hConf = hConf;
     }
 
     @Inject(optional = true)
@@ -110,9 +113,9 @@ public class DataFabricDistributedModule extends AbstractModule {
                                   TxConstants.Service.DEFAULT_DATA_TX_CLIENT_PROVIDER);
       ThriftClientProvider clientProvider;
       if ("pool".equals(provider)) {
-        clientProvider = new PooledClientProvider(cConf, discoveryServiceClient);
+        clientProvider = new PooledClientProvider(hConf, discoveryServiceClient);
       } else if ("thread-local".equals(provider)) {
-        clientProvider = new ThreadLocalClientProvider(cConf, discoveryServiceClient);
+        clientProvider = new ThreadLocalClientProvider(hConf, discoveryServiceClient);
       } else {
         String message = "Unknown Transaction Service Client Provider '" + provider + "'.";
         LOG.error(message);

@@ -16,7 +16,6 @@
 
 package com.continuuity.data2.transaction.inmemory;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TxConstants;
@@ -38,6 +37,7 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.Inject;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -158,20 +158,12 @@ public class InMemoryTransactionManager extends AbstractService {
   private final Lock logWriteLock = logLock.writeLock();
 
 
-  /**
-   * This constructor should only be used for testing. It uses default configuration and a no-op persistor.
-   * If this constructor is used, there is no need to call init().
-   */
-  public InMemoryTransactionManager() {
-    this(CConfiguration.create());
-  }
-
-  public InMemoryTransactionManager(CConfiguration config) {
+  public InMemoryTransactionManager(Configuration config) {
     this(config, new NoOpTransactionStateStorage(new SnapshotCodecProvider(config)), new TxMetricsCollector());
   }
 
   @Inject
-  public InMemoryTransactionManager(CConfiguration conf, @Nonnull TransactionStateStorage persistor,
+  public InMemoryTransactionManager(Configuration conf, @Nonnull TransactionStateStorage persistor,
                                     TxMetricsCollector txMetricsCollector) {
     this.persistor = persistor;
     cleanupInterval = conf.getInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL,

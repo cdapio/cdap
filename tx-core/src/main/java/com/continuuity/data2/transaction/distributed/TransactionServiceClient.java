@@ -130,7 +130,7 @@ public class TransactionServiceClient implements TransactionSystemClient {
    * @throws TException
    */
   @Inject
-  public TransactionServiceClient(CConfiguration config,
+  public TransactionServiceClient(Configuration config,
                                   ThriftClientProvider clientProvider) {
 
     // initialize the retry logic
