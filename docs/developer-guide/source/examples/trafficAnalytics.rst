@@ -36,6 +36,7 @@ As in the other `examples </index.html>`__, the components
 of the application are tied together by the class ``TrafficAnalyticsApp``::
 
   public class TrafficAnalyticsApp extends AbstractApplication {
+
     @Override
     public void configure() {
       setName("TrafficAnalytics");
@@ -83,40 +84,50 @@ we'll use the default ``onFinish`` implementation (which does nothing), as we do
 anything be done after the job has run. That leaves two methods to actually be 
 implemented: ``configure`` and ``beforeSubmit``::
 
-	  public static class LogCountMapReduce extends AbstractMapReduce {
-	    // Annotation indicates the Dataset used in this MapReduce.
-	    @UseDataSet("logEventTable")
-	    private TimeseriesTable logs;
-	
-	    @Override
-	    public MapReduceSpecification configure() {
-	      return MapReduceSpecification.Builder.with()
-	        .setName("RequestCountMapReduce")
-	        .setDescription("Apache access log count MapReduce job")
-	        // Specify the Dataset for Mapper to read.
-	        .useInputDataSet("logEventTable")
-	        // Specify the Dataset for Reducer to write.
-	        .useOutputDataSet("countTable")
-	        .build();
-	    }
-	...
-	    @Override
-	    public void beforeSubmit(MapReduceContext context) throws Exception {
-	      Job job = context.getHadoopJob();
-	      long endTime = System.currentTimeMillis();
-	      long startTime = endTime - TIME_WINDOW;
-	      // A Mapper processes log data for the last 24 hours in logs table by 2 splits.
-	      context.setInput(logs, logs.getInput(2, ROW_KEY, startTime, endTime));
-	      // Set the Mapper class.
-	      job.setMapperClass(LogMapper.class);
-	      // Set the output key of the Reducer class.
-	      job.setMapOutputKeyClass(LongWritable.class);
-	      // Set the output value of the Reducer class.
-	      job.setMapOutputValueClass(IntWritable.class);
-	      // Set the Reducer class.
-	      job.setReducerClass(LogReducer.class);
-	    }
-	
+  public static class LogCountMapReduce extends AbstractMapReduce {
+
+    // Annotation indicates the Dataset used in this MapReduce.
+    @UseDataSet("logEventTable")
+    private TimeseriesTable logs;
+
+    @Override
+    public MapReduceSpecification configure() {
+      return MapReduceSpecification.Builder.with()
+        .setName("RequestCountMapReduce")
+        .setDescription("Apache access log count MapReduce job")
+
+        // Specify the Dataset for Mapper to read.
+        .useInputDataSet("logEventTable")
+
+        // Specify the Dataset for Reducer to write.
+        .useOutputDataSet("countTable")
+        .build();
+    }
+
+    //...
+
+    @Override
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+      Job job = context.getHadoopJob();
+      long endTime = System.currentTimeMillis();
+      long startTime = endTime - TIME_WINDOW;
+
+      // A Mapper processes log data for the last 24 hours in logs table by 2 splits.
+      context.setInput(logs, logs.getInput(2, ROW_KEY, startTime, endTime));
+
+      // Set the Mapper class.
+      job.setMapperClass(LogMapper.class);
+
+      // Set the output key of the Reducer class.
+      job.setMapOutputKeyClass(LongWritable.class);
+
+      // Set the output value of the Reducer class.
+      job.setMapOutputValueClass(IntWritable.class);
+
+      // Set the Reducer class.
+      job.setReducerClass(LogReducer.class);
+    }
+
 These two methods configure and define the MapReduce job.
 The work is done by instances of two additional classes: a *Mapper* and a *Reducer*.
 

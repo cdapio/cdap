@@ -37,20 +37,25 @@ an implementation of ``com.continuuity.api.Application``.
 
 ::
 
-	public class ResponseCodeAnalyticsApp extends AbstractApplication {
-	  @Override
-    public void configure() {
-      setName("ResponseCodeAnalytics");
-      setDescription("HTTP response code analytics");
-      // Ingest data into the app via Streams
-      addStream(new Stream("logEventStream"));
-      // Store processed data in DataSets
-      createDataSet("statusCodeTable", Table.class);
-      // Process log events in real-time using Flows
-      addFlow(new LogAnalyticsFlow());
-      // Query the processed data using Procedures
-      addProcedure(new StatusCodeProcedure());
-    }
+    public class ResponseCodeAnalyticsApp extends AbstractApplication {
+
+      @Override
+      public void configure() {
+        setName("ResponseCodeAnalytics");
+        setDescription("HTTP response code analytics");
+
+        // Ingest data into the app via Streams
+        addStream(new Stream("logEventStream"));
+
+        // Store processed data in DataSets
+        createDataSet("statusCodeTable", Table.class);
+
+        // Process log events in real-time using Flows
+        addFlow(new LogAnalyticsFlow());
+
+        // Query the processed data using Procedures
+        addProcedure(new StatusCodeProcedure());
+      }
 
 Notice that in coding the Application, *Streams* and *Datasets* are defined
 using Continuuity classes, and are referenced by names, 
