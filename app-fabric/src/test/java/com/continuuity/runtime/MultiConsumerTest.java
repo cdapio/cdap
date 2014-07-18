@@ -50,6 +50,7 @@ import com.google.common.primitives.Longs;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
@@ -61,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
+@Ignore
 public class MultiConsumerTest {
 
   @ClassRule

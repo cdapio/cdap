@@ -34,6 +34,7 @@ import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  *
  */
+@Ignore
 public class DeployRunStopTest {
 
   private static AppFabricHttpHandler server;
