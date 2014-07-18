@@ -17,11 +17,11 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionConflictException;
-import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.TransactionExecutorFactory;
+import com.continuuity.tephra.DefaultTransactionExecutor;
+import com.continuuity.tephra.TransactionAware;
+import com.continuuity.tephra.TransactionConflictException;
+import com.continuuity.tephra.TransactionExecutor;
+import com.continuuity.tephra.TransactionExecutorFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import org.junit.Assert;

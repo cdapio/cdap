@@ -58,14 +58,6 @@ public final class Constants {
   }
 
   /**
-   * Thrift configuration.
-   */
-  public static final class Thrift {
-    public static final String MAX_READ_BUFFER = "thrift.max.read.buffer";
-    public static final int DEFAULT_MAX_READ_BUFFER = 16 * 1024 * 1024;
-  }
-
-  /**
    * Dangerous Options.
    */
   public static final class Dangerous {
@@ -132,6 +124,7 @@ public final class Constants {
      * Twill Runnable configuration.
      */
     public static final class Container {
+      // TODO: This is duplicated from TxConstants. Needs to be removed.
       public static final String ADDRESS = "data.tx.bind.address";
       public static final String NUM_INSTANCES = "data.tx.num.instances";
       public static final String NUM_CORES = "data.tx.num.cores";

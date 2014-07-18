@@ -67,13 +67,6 @@
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
-      <artifactId>tx-core</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.continuuity</groupId>
       <artifactId>hbase-compat-0.96</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
@@ -86,6 +79,11 @@
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-testing-util</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.continuuity.tephra</groupId>
+      <artifactId>tephra-core</artifactId>
+      <type>test-jar</type>
     </dependency>
   </dependencies>
 

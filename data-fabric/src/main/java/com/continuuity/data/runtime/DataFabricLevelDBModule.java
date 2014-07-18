@@ -25,7 +25,6 @@ import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueueClientFactory;
-import com.continuuity.data2.transaction.runtime.TransactionModules;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
@@ -34,6 +33,7 @@ import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metadata.SerializingMetaDataTable;
+import com.continuuity.tephra.runtime.TransactionModules;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 

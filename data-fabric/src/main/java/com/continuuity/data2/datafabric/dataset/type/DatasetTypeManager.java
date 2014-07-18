@@ -27,7 +27,7 @@ import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.module.lib.DatasetModules;
 import com.continuuity.data2.dataset2.tx.TxCallable;
-import com.continuuity.data2.transaction.TransactionFailureException;
+import com.continuuity.tephra.TransactionFailureException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;

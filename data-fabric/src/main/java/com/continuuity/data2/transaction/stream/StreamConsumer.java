@@ -19,7 +19,7 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
-import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.tephra.TransactionAware;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -32,7 +32,8 @@ import java.util.concurrent.TimeUnit;
  * On transaction rollback, all events that are read by poll calls will be reverted so that when poll is issued on a
  * new transaction afterwards, it will start giving stream events from the where last committed poll ended.
  */
-public interface StreamConsumer extends Closeable, TransactionAware {
+public interface
+  StreamConsumer extends Closeable, TransactionAware {
 
   /**
    * @return Name of the stream this consumer is consuming.

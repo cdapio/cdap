@@ -25,7 +25,7 @@ import com.continuuity.api.dataset.table.Row;
 import com.continuuity.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.data2.dataset2.TableTest;
 import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
-import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.tephra.TransactionExecutor;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

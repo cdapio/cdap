@@ -16,7 +16,7 @@
 package com.continuuity.data.runtime.main;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;

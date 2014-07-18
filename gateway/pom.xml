@@ -62,6 +62,11 @@
       <groupId>com.continuuity</groupId>
       <artifactId>http</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.continuuity.tephra</groupId>
+      <artifactId>tephra-core</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

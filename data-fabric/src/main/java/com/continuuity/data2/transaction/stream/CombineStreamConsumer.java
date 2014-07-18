@@ -19,7 +19,7 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
-import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.tephra.Transaction;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
