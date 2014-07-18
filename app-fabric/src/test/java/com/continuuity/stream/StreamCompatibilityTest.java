@@ -15,37 +15,43 @@
  */
 package com.continuuity.stream;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.annotation.ProcessInput;
-import com.continuuity.api.data.stream.Stream;
-import com.continuuity.api.flow.Flow;
-import com.continuuity.api.flow.FlowSpecification;
-import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.stream.StreamEventData;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.common.stream.StreamEventCodec;
 import com.continuuity.common.stream.StreamEventDataCodec;
+import com.continuuity.data.DataFabric2Impl;
+import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.QueueProducer;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
+import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaGenerator;
+import com.continuuity.stream.app.StreamApp;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
@@ -57,26 +63,21 @@ import com.google.inject.Key;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 /**
  *
  */
-@Ignore
 public class StreamCompatibilityTest {
 
   @ClassRule
@@ -93,8 +94,6 @@ public class StreamCompatibilityTest {
       }
     }
   };
-
-  private static final BlockingQueue<String> MESSAGE_QUEUE = new ArrayBlockingQueue<String>(2);
 
   @Test
   public void decodeOldStream() throws Exception {
@@ -115,8 +114,42 @@ public class StreamCompatibilityTest {
     writer.write("Old stream event", oldEncoder);
     writer.write("New stream event", newEncoder);
 
-    Assert.assertEquals("Old stream event", MESSAGE_QUEUE.poll(10, TimeUnit.SECONDS));
-    Assert.assertEquals("New stream event", MESSAGE_QUEUE.poll(10, TimeUnit.SECONDS));
+    // Read the data from dataset
+    LocationFactory locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
+    DataSetAccessor dataSetAccessor = AppFabricTestHelper.getInjector().getInstance(DataSetAccessor.class);
+    DatasetFramework datasetFramework = AppFabricTestHelper.getInjector().getInstance(DatasetFramework.class);
+
+    DataSetInstantiator dataSetInstantiator =
+      new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
+                              datasetFramework, CConfiguration.create(),
+                              getClass().getClassLoader());
+    ApplicationSpecification spec = Specifications.from(new StreamApp().configure());
+    dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
+
+    final KeyValueTable streamOut = dataSetInstantiator.getDataSet("streamout");
+    TransactionExecutorFactory txExecutorFactory =
+      AppFabricTestHelper.getInjector().getInstance(TransactionExecutorFactory.class);
+
+    // Should be able to read by old and new stream event
+    int trial = 0;
+    while (trial < 60) {
+      try {
+        txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware())
+          .execute(new TransactionExecutor.Subroutine() {
+            @Override
+            public void apply() throws Exception {
+              Assert.assertEquals(1L, Bytes.toLong(streamOut.read("Old stream event".getBytes(Charsets.UTF_8))));
+              Assert.assertEquals(1L, Bytes.toLong(streamOut.read("New stream event".getBytes(Charsets.UTF_8))));
+            }
+          });
+        break;
+      } catch (TransactionFailureException e) {
+        // No-op
+        trial++;
+        TimeUnit.SECONDS.sleep(1);
+      }
+    }
+    Assert.assertTrue(trial < 60);
 
     controller.stop().get();
   }
@@ -231,58 +264,4 @@ public class StreamCompatibilityTest {
     }
   }
 
-  /**
-   *
-   */
-  public static final class StreamApp implements Application {
-
-    @Override
-    public ApplicationSpecification configure() {
-      return ApplicationSpecification.Builder.with()
-        .setName("StreamApp")
-        .setDescription("StreamApp")
-        .withStreams()
-          .add(new Stream("stream"))
-        .noDataSet()
-        .withFlows()
-          .add(new StreamFlow())
-        .noProcedure()
-        .noMapReduce()
-        .noWorkflow()
-        .build();
-    }
-  }
-
-  /**
-   *
-   */
-  public static final class StreamFlow implements Flow {
-
-    @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("StreamFlow")
-        .setDescription("StreamFlow")
-        .withFlowlets()
-          .add("reader", new StreamReader())
-        .connect()
-          .fromStream("stream").to("reader")
-        .build();
-    }
-  }
-
-  /**
-   *
-   */
-  public static final class StreamReader extends AbstractFlowlet {
-
-    private static final Logger LOG = LoggerFactory.getLogger(StreamReader.class);
-
-    @ProcessInput
-    public void process(StreamEvent event) throws InterruptedException {
-      String msg = Charsets.UTF_8.decode(event.getBody()).toString();
-      LOG.info(msg);
-      MESSAGE_QUEUE.put(msg);
-    }
-  }
 }
