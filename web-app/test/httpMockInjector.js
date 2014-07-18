@@ -16,18 +16,18 @@ system.services.statusComplete = require('./fixtures/system/services/status_comp
 
 // User services endpoints.
 var apps = {};
-apps.WordCount = {
+apps.CountCounts = {
   services: {
     loadgen: {}
   }
 };
-apps.WordCount.services.servicesCompleteDefinition  = require('./fixtures/user/services-complete.json');
-apps.WordCount.services.loadgen                     = require('./fixtures/user/services/service-spec.json');
-apps.WordCount.services.loadgen.instances           = require('./fixtures/user/services/instances.json');
-apps.WordCount.services.loadgen.status              = require('./fixtures/user/services/status.json');
-apps.WordCount.services.loadgen.runetimeargs        = require('./fixtures/user/services/runtime-args.json');
-apps.WordCount.services.loadgen.history             = require('./fixtures/user/services/history.json');
-apps.WordCount.services.loadgen.liveinfo           = require('./fixtures/user/services/live-info.json');
+apps.CountCounts.services.servicesCompleteDefinition  = require('./fixtures/user/services-complete.json');
+apps.CountCounts.services.loadgen                     = require('./fixtures/user/services/service-spec.json');
+apps.CountCounts.services.loadgen.instances           = require('./fixtures/user/services/instances.json');
+apps.CountCounts.services.loadgen.status              = require('./fixtures/user/services/status.json');
+apps.CountCounts.services.loadgen.runtimeargs        = require('./fixtures/user/services/runtime-args.json');
+apps.CountCounts.services.loadgen.history             = require('./fixtures/user/services/history.json');
+apps.CountCounts.services.loadgen.liveinfo           = require('./fixtures/user/services/live-info.json');
 
 
 // Appfabric service endpoints.
@@ -181,71 +181,87 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
     .get('/v2/system/services/metrics.processor/instances')
     .reply(200, system.services['metrics.processor'].instances);
 
+//TESTING removal from UI when removing an app.
+  var tmp = [
+    {"type":"App","id":"CountCounts","name":"CountCounts","description":"Application for counting counts of words"},
+    {"type":"App","id":"PurchaseHistory","name":"PurchaseHistory","description":"Purchase history app"}];
+
 // User Services:
+  nock(clientAddr, options)
+    .get('/v2/apps').times(1)
+    .reply(200, tmp);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps')
+    .reply(200, [tmp[0]]);
+
+
+
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps/CountCounts/services')
-    .reply(200, apps.WordCount.services.servicesCompleteDefinition);
+    .reply(200, apps.CountCounts.services.servicesCompleteDefinition);
 
   //loadgen service:
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps/CountCounts/services/loadgen')
-    .reply(200, apps.WordCount.services.loadgen);
+    .reply(200, apps.CountCounts.services.loadgen);
 
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps/CountCounts/services/loadgen/runnables/runnableID/instances')
-    .reply(200, apps.WordCount.services.loadgen.instances);
+    .reply(200, apps.CountCounts.services.loadgen.instances);
 
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps/CountCounts/services/loadgen/status')
-    .reply(200, apps.WordCount.services.loadgen.status);
+    .reply(200, apps.CountCounts.services.loadgen.status);
 
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps/CountCounts/services/loadgen/runtimeargs')
-    .reply(200, apps.WordCount.services.loadgen.runetimeargs);
+    .reply(200, apps.CountCounts.services.loadgen.runtimeargs);
 
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps/CountCounts/services/loadgen/history')
-    .reply(200, apps.WordCount.services.loadgen.history);
+    .reply(200, apps.CountCounts.services.loadgen.history);
 
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps/CountCounts/services/loadgen/live-info')
-    .reply(200, apps.WordCount.services.loadgen.liveinfo);
+    .reply(200, apps.CountCounts.services.loadgen.liveinfo);
 
   //simpleName service:
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps/CountCounts/services/simpleName')
-    .reply(200, apps.WordCount.services.loadgen);
+    .reply(200, apps.CountCounts.services.loadgen);
 
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps/CountCounts/services/simpleName/runnables/runnableID/instances')
-    .reply(200, apps.WordCount.services.loadgen.instances);
+    .reply(200, apps.CountCounts.services.loadgen.instances);
 
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps/CountCounts/services/simpleName/status')
-    .reply(200, apps.WordCount.services.loadgen.status);
+    .reply(200, apps.CountCounts.services.loadgen.status);
 
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps/CountCounts/services/simpleName/runtimeargs')
-    .reply(200, apps.WordCount.services.loadgen.runetimeargs);
+    .reply(200, apps.CountCounts.services.loadgen.runetimeargs);
 
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps/CountCounts/services/simpleName/history')
-    .reply(200, apps.WordCount.services.loadgen.history);
+    .reply(200, apps.CountCounts.services.loadgen.history);
 
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps/CountCounts/services/simpleName/live-info')
-    .reply(200, apps.WordCount.services.loadgen.liveinfo);
+    .reply(200, apps.CountCounts.services.loadgen.liveinfo);
 };

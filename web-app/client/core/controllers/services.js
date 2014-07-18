@@ -11,8 +11,7 @@ define([], function () {
     load: function () {
       var self = this;
       self.set('systemServices', []);
-      self.set('userServices2', Em.Object.create());
-      self.set('userServicesProxy', []);
+      self.set('userServices', []);
 
       self.resetServices();
       this.interval = setInterval(function () {
@@ -21,18 +20,11 @@ define([], function () {
 
     },
 
-    // isDone: function () {
-    //   return false;
-    // }.observes("userServices2").property(),
-
-    // portUserServicesToArray: function () {
-
-    // }.observes("userServices2"),
-
     resetServices: function () {
       var self = this;
       var systemServices = [];
-      var userServices = [];
+      var userServices = self.get('userServices');
+
       self.HTTP.rest('system/services', function (services) {
         services.map(function(service) {
           var imgSrc = service.status === 'OK' ? 'complete' : 'loading';
@@ -59,7 +51,6 @@ define([], function () {
             metricName: C.Util.getMetricName(service.name),
             imgClass: imgSrc,
             logClass: logSrc,
-            //appID: service.app, //system services have no associated app.
           }));
         });
         self.set('systemServices', systemServices);
@@ -70,6 +61,16 @@ define([], function () {
         }, 1000);
       });
 
+
+      for (var i=0; i < userServices.length; i++) {
+        if(userServices[i].get('isValid') == false) {
+          userServices.splice(i);
+          userServices.arrayContentDidChange();
+          console.log('deleting');
+          continue;
+        }
+        userServices[i].set('isValid', false);
+      }
       self.HTTP.rest('apps', function (apps) {
         apps.forEach(function(app) {
           var appUrl = 'apps/' + app.name + '/services';
@@ -80,39 +81,58 @@ define([], function () {
               self.HTTP.rest(statusCheckURL, function(f) {
                 var status = f.status;
                 for (var i=0; i < userServices.length; i++) {
-                  if  (userServices[i].get('name') === service.name) {
+                  if  (userServices[i].get('name') === service.name && userServices[i].get('appID') === app.name) {
                     userServices[i].set('status', status);
                     userServices[i].set('statusOk', !!(status === 'RUNNING'));
                     userServices[i].set('statusNotOk', !!(status === 'STOPPED'));
                     userServices[i].set('imgClass', status === 'RUNNING' ? 'complete' : 'loading');
+                    userServices.arrayContentDidChange();
                   }
                 }
-                self.set('userServices', userServices);
               });
 
+              /*
               var instancesCheckUrl = appUrl + '/' + service.name + '/runnables' + '/CatalogService' + '/instances';
               self.HTTP.rest(instancesCheckUrl, function(f) {
                 for (var i=0; i < userServices.length; i++) {
-                  if  (userServices[i].get('name') === service.name) {
+                  if  (userServices[i].get('name') === service.name && userServices[i].get('appID') === app.name) {
                     userServices[i].set('requested', f.requested);
                     userServices[i].set('provisioned', f.provisioned);
+                    userServices.arrayContentDidChange();
                   }
                 }
-                self.set('userServices', userServices);
-              });
+              });*/
 
-              userServices.push(C.Service.create({
-                modelId: service.name,
-                description: service.description,
-                id: service.name,
-                name: service.name,
-                description: service.description,
-                metricEndpoint: C.Util.getMetricEndpoint(service.name),
-                metricName: C.Util.getMetricName(service.name),
-                appID: service.app,
-              }));
+              var modified = false;
+              for (var i=0; i < userServices.length; i++) {
+                if (userServices[i].get('name') === service.name && userServices[i].get('appID') === app.name) {
+                  userServices[i].set('modelID', service.name);
+                  userServices[i].set('description', service.description);
+                  userServices[i].set('id', service.name);
+                  userServices[i].set('name', service.name);
+                  userServices[i].set('description', service.description);
+                  userServices[i].set('metricEndpoint', C.Util.getMetricEndpoint(service.name));
+                  userServices[i].set('metricName', C.Util.getMetricName(service.name));
+                  userServices[i].set('appID', service.app);
+                  userServices[i].set('isValid', true);
+                  modified = true;
+                }
+              }
+              if (!modified) {
+                userServices.push(C.Service.create({
+                  modelId: service.name,
+                  description: service.description,
+                  id: service.name,
+                  name: service.name,
+                  description: service.description,
+                  metricEndpoint: C.Util.getMetricEndpoint(service.name),
+                  metricName: C.Util.getMetricName(service.name),
+                  appID: service.app,
+                  isValid: true,
+                }));
+              }
+              userServices.arrayContentDidChange();
             });
-
 
           });
         });
