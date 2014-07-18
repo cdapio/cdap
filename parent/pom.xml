@@ -37,10 +37,6 @@
       <url>https://repository.continuuity.com/content/repositories/releases</url>
     </repository>
     <repository>
-      <id>continuuity-public</id>
-      <url>https://repository.continuuity.com/content/repositories/public</url>
-    </repository>
-    <repository>
       <id>continuuity</id>
       <url>https://repository.continuuity.com/content/repositories/snapshots</url>
     </repository>
@@ -95,6 +91,21 @@
             <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>com.continuuity.tephra</groupId>
+        <artifactId>tephra-core</artifactId>
+        <version>${tephra.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.continuuity.tephra</groupId>
+        <artifactId>tephra-hbase-compat-0.94</artifactId>
+        <version>${tephra.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.continuuity.tephra</groupId>
+        <artifactId>tephra-hbase-compat-0.96</artifactId>
+        <version>${tephra.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
@@ -895,6 +906,13 @@
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.continuuity.tephra</groupId>
+        <artifactId>tephra-core</artifactId>
+        <version>${tephra.version}</version>
+        <type>test-jar</type>
         <scope>test</scope>
       </dependency>
       <dependency>

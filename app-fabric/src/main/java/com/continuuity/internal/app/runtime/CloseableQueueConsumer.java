@@ -18,7 +18,7 @@ package com.continuuity.internal.app.runtime;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data2.queue.ForwardingQueueConsumer;
 import com.continuuity.data2.queue.QueueConsumer;
-import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.tephra.TransactionAware;
 
 import java.io.Closeable;
 import java.io.IOException;

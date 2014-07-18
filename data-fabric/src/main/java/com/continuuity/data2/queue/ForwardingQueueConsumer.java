@@ -16,8 +16,8 @@
 package com.continuuity.data2.queue;
 
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionAware;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
