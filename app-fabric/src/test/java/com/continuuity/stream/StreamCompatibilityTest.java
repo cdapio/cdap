@@ -47,6 +47,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
@@ -63,6 +64,7 @@ import javax.inject.Inject;
 /**
  *
  */
+@Ignore
 public class StreamCompatibilityTest {
 
   @ClassRule
