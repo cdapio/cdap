@@ -187,6 +187,7 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
     .get('/v2/apps/CountCounts/services')
     .reply(200, apps.WordCount.services.servicesCompleteDefinition);
 
+  //loadgen service:
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps/CountCounts/services/loadgen')
@@ -217,4 +218,34 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
     .get('/v2/apps/CountCounts/services/loadgen/live-info')
     .reply(200, apps.WordCount.services.loadgen.liveinfo);
 
+  //simpleName service:
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/simpleName')
+    .reply(200, apps.WordCount.services.loadgen);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/simpleName/runnables/runnableID/instances')
+    .reply(200, apps.WordCount.services.loadgen.instances);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/simpleName/status')
+    .reply(200, apps.WordCount.services.loadgen.status);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/simpleName/runtimeargs')
+    .reply(200, apps.WordCount.services.loadgen.runetimeargs);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/simpleName/history')
+    .reply(200, apps.WordCount.services.loadgen.history);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/simpleName/live-info')
+    .reply(200, apps.WordCount.services.loadgen.liveinfo);
 };
