@@ -16,6 +16,7 @@
 
 package com.continuuity.internal.app.runtime.distributed;
 
+import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnableSpecification;
@@ -61,6 +62,11 @@ public abstract class ForwardingTwillContext implements TwillContext {
   }
 
   @Override
+  public String[] getApplicationArguments() {
+    return delegate.getApplicationArguments();
+  }
+
+  @Override
   public TwillRunnableSpecification getSpecification() {
     return delegate.getSpecification();
   }
@@ -83,6 +89,11 @@ public abstract class ForwardingTwillContext implements TwillContext {
   @Override
   public ServiceDiscovered discover(String s) {
     return delegate.discover(s);
+  }
+
+  @Override
+  public Cancellable electLeader(String name, ElectionHandler participantHandler) {
+    return delegate.electLeader(name, participantHandler);
   }
 
   @Override

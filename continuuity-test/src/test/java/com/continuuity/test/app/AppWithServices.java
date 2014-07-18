@@ -23,23 +23,27 @@ import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
+import com.google.common.base.Throwables;
 import org.apache.twill.api.AbstractTwillRunnable;
+import org.apache.twill.api.ElectionHandler;
+import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillSpecification;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.twill.common.Cancellable;
 
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 /**
  * AppWithServices with a DummyService for unit testing.
  */
 public class AppWithServices extends AbstractApplication {
-  private static final Logger LOG = LoggerFactory.getLogger(AppWithServices.class);
 
     @Override
     public void configure() {
-      setName("WordCountApp");
+      setName("AppWithServices");
       addStream(new Stream("text"));
       addProcedure(new NoOpProcedure());
       addService(new TwillService());
@@ -59,24 +63,76 @@ public class AppWithServices extends AbstractApplication {
     @Override
     public TwillSpecification configure() {
       return TwillSpecification.Builder.with()
-        .setName("NoOpService")
+        .setName("ServerService")
         .withRunnable()
-        .add(new DummyService())
+        .add(new ServerService(),
+             ResourceSpecification.Builder.with()
+               .setVirtualCores(1)
+               .setMemory(512, ResourceSpecification.SizeUnit.MEGA)
+               .setInstances(2)
+               .build())
         .noLocalFiles()
         .anyOrder()
         .build();
     }
   }
 
-  public static final class DummyService extends AbstractTwillRunnable {
+  public static final class ServerService extends AbstractTwillRunnable {
+
+    private Cancellable discoveryCancel;
+    private ServerSocket serverSocket;
+
+    @Override
+    public void initialize(final TwillContext context) {
+      super.initialize(context);
+
+      try {
+        serverSocket = new ServerSocket(0);
+        context.electLeader("server", new ElectionHandler() {
+          @Override
+          public void leader() {
+            discoveryCancel = context.announce("server", serverSocket.getLocalPort());
+          }
+
+          @Override
+          public void follower() {
+            if (discoveryCancel != null) {
+              discoveryCancel.cancel();
+            }
+          }
+        });
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
     @Override
     public void run() {
-      //No-op
-      LOG.info("Runnable DummyService Started");
+      try {
+        // Block for an incoming connection
+        Socket socket = serverSocket.accept();
+        socket.close();
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
     }
+
     @Override
     public void stop() {
-      LOG.info("Runnable DummyService Stopped");
+      try {
+        serverSocket.close();
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    @Override
+    public void destroy() {
+      try {
+        serverSocket.close();
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
     }
   }
 }

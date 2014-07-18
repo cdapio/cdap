@@ -16,6 +16,8 @@
 
 package com.continuuity.test;
 
+import org.apache.twill.discovery.ServiceDiscovered;
+
 /**
  * Managing the running Service in an application.
  */
@@ -29,4 +31,13 @@ public interface ServiceManager {
    * Checks if Service is Running
    */
   boolean isRunning();
+
+  /**
+   * Used to discover services inside a given application and twill-service.
+   * @param applicationId Application Name.
+   * @param serviceId Service Name.
+   * @param serviceName Announced Name.
+   * @return ServiceDiscovered
+   */
+  ServiceDiscovered discover(String applicationId, String serviceId, String serviceName);
 }

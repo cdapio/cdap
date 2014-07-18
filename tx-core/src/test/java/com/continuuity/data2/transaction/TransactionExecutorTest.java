@@ -33,6 +33,8 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.util.Modules;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -47,6 +49,7 @@ import javax.annotation.Nullable;
  */
 public class TransactionExecutorTest {
   static final CConfiguration CCONF = CConfiguration.create();
+  static final Configuration HCONF = HBaseConfiguration.create();
   static Injector injector;
   static DummyTxClient txClient;
   static TransactionExecutorFactory factory;
@@ -55,14 +58,14 @@ public class TransactionExecutorTest {
   public static void setup() {
     CCONF.set(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES, DefaultSnapshotCodec.class.getName());
     injector = Guice.createInjector(
-      new ConfigModule(CCONF),
+      new ConfigModule(CCONF, HCONF),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       Modules.override(
         new TransactionModules().getInMemoryModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
-          InMemoryTransactionManager txManager = new InMemoryTransactionManager(CCONF);
+          InMemoryTransactionManager txManager = new InMemoryTransactionManager(HCONF);
           txManager.startAndWait();
           bind(InMemoryTransactionManager.class).toInstance(txManager);
           bind(TransactionSystemClient.class).to(DummyTxClient.class).in(Singleton.class);
@@ -509,7 +512,7 @@ public class TransactionExecutorTest {
     }
 
     @Override
-    public String getName() {
+    public String getTransactionAwareName() {
       return "dummy";
     }
   }

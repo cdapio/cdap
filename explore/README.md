@@ -10,6 +10,8 @@ To modify the hive-exec jar again, follow these steps:
 
 1. Clone Hive repository from Github and checkout to branch `release-0.13.0-rc2`
 2. Create another branch: ``git checkout -b my_patched_branch``
+3. Apply the existing patch:
+  ``git apply --stat explore/hive-exec-0.13.0-continuuity-xxx.patch``
 3. Make your changes in the ``ql`` module (it will be packaged as hive-exec.jar)
 4. You can modify ``pom.xml`` in module ``ql`` to change the version number of the generated jar, according
 to what version of Reactor you are modifying.
@@ -18,5 +20,5 @@ to what version of Reactor you are modifying.
 6. Change your dependencies in Reactor to point to the same version number you specified in step 4. for
 hive-exec.
 7. Don't forget to create a new patch file and to put it here:
-  ``git format-patch release-0.13.0-rc2 --stdout > my_new_hive-exec-path.patch``
+  ``git format-patch release-0.13.0-rc2 --stdout > explore/hive-exec-0.13.0-continuuity-xxx.patch``
 

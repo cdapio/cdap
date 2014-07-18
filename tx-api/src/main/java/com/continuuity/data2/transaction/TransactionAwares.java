@@ -89,11 +89,11 @@ public final class TransactionAwares {
     }
 
     @Override
-    public String getName() {
+    public String getTransactionAwareName() {
       // todo: will go away, see comment at TransactionAware
       StringBuilder sb = new StringBuilder("{");
       for (TransactionAware txAware : this) {
-        sb.append(txAware.getName()).append(",");
+        sb.append(txAware.getTransactionAwareName()).append(",");
       }
       sb.replace(sb.length() - 1, sb.length() - 1, "}");
       return sb.toString();

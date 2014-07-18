@@ -16,7 +16,6 @@
 
 package com.continuuity.data2.transaction.coprocessor;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
@@ -27,6 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -78,14 +78,14 @@ public class TransactionStateCache extends AbstractIdleService implements Config
   }
 
   /**
-   * Try to initialize the CConfiguration and TransactionStateStorage instances.  Obtaining the CConfiguration may
+   * Try to initialize the Configuration and TransactionStateStorage instances.  Obtaining the Configuration may
    * fail until ReactorServiceMain has been started.
    */
   private void tryInit() {
     try {
-      CConfiguration conf = getSnapshotConfiguration();
+      Configuration conf = getSnapshotConfiguration();
       if (conf != null) {
-        this.storage = new HDFSTransactionStateStorage(conf, hConf, new SnapshotCodecProvider(conf));
+        this.storage = new HDFSTransactionStateStorage(hConf, new SnapshotCodecProvider(conf));
         this.storage.startAndWait();
         this.snapshotRefreshFrequency = conf.getLong(TxConstants.Manager.CFG_TX_SNAPSHOT_INTERVAL,
                                                      TxConstants.Manager.DEFAULT_TX_SNAPSHOT_INTERVAL) * 1000;
@@ -98,8 +98,8 @@ public class TransactionStateCache extends AbstractIdleService implements Config
     }
   }
 
-  protected CConfiguration getSnapshotConfiguration() throws IOException {
-    CConfiguration conf = CConfiguration.create();
+  protected Configuration getSnapshotConfiguration() throws IOException {
+    Configuration conf = HBaseConfiguration.create();
     conf.unset(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES);
     return conf;
   }

@@ -53,7 +53,7 @@ public class TransactionContext {
         txAware.startTx(currentTx);
       } catch (Throwable e) {
         String message = String.format("Unable to start transaction-aware '%s' for transaction %d. ",
-                                       txAware.getName(), currentTx.getWritePointer());
+                                       txAware.getTransactionAwareName(), currentTx.getWritePointer());
         LOG.warn(message, e);
         txClient.abort(currentTx);
         throw new TransactionFailureException(message, e);
@@ -101,7 +101,7 @@ public class TransactionContext {
           }
         } catch (Throwable e) {
           String message = String.format("Unable to roll back changes in transaction-aware '%s' for transaction %d. ",
-                                         txAware.getName(), currentTx.getWritePointer());
+                                         txAware.getTransactionAwareName(), currentTx.getWritePointer());
           LOG.warn(message, e);
           if (cause == null) {
             cause = new TransactionFailureException(message, e);
@@ -129,7 +129,7 @@ public class TransactionContext {
         changes.addAll(txAware.getTxChanges());
       } catch (Throwable e) {
         String message = String.format("Unable to retrieve changes from transaction-aware '%s' for transaction %d. ",
-                                       txAware.getName(), currentTx.getWritePointer());
+                                       txAware.getTransactionAwareName(), currentTx.getWritePointer());
         LOG.warn(message, e);
         abort(new TransactionFailureException(message, e));
         // abort will throw that exception
@@ -169,7 +169,7 @@ public class TransactionContext {
       }
       if (!success) {
         String message = String.format("Unable to persist changes of transaction-aware '%s' for transaction %d. ",
-                                       txAware.getName(), currentTx.getWritePointer());
+                                       txAware.getTransactionAwareName(), currentTx.getWritePointer());
         if (cause == null) {
           LOG.warn(message);
         } else {
@@ -210,7 +210,7 @@ public class TransactionContext {
         txAware.postTxCommit();
       } catch (Throwable e) {
         String message = String.format("Unable to perform post-commit in transaction-aware '%s' for transaction %d. ",
-                                       txAware.getName(), currentTx.getWritePointer());
+                                       txAware.getTransactionAwareName(), currentTx.getWritePointer());
         LOG.warn(message, e);
         cause = new TransactionFailureException(message, e);
       }

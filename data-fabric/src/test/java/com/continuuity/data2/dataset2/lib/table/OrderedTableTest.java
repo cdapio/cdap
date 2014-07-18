@@ -31,6 +31,8 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -78,7 +80,8 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
 
   @Before
   public void before() {
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+    Configuration txConf = HBaseConfiguration.create();
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager(txConf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
   }

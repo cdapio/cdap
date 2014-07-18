@@ -13,18 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-package com.continuuity.common.lang;
-
-import com.google.inject.AbstractModule;
+package com.continuuity.common.http;
 
 /**
- *
+ * Represents HTTP methods.
  */
-public class ApiResourceListModule extends AbstractModule {
-
-  @Override
-  protected void configure() {
-    bind(ApiResourceList.class).toInstance(new ApiResourceList());
-  }
+public enum HttpMethod {
+  GET, POST, PUT, DELETE;
 }

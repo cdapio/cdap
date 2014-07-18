@@ -15,7 +15,6 @@
  */
 package com.continuuity.data2.transaction.runtime;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
@@ -25,6 +24,7 @@ import com.google.inject.Key;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * A provider for {@link TransactionStateStorage} that provides different
@@ -33,11 +33,11 @@ import com.google.inject.name.Names;
 @Singleton
 public final class TransactionStateStorageProvider implements Provider<TransactionStateStorage> {
 
-  private final CConfiguration cConf;
+  private final Configuration cConf;
   private final Injector injector;
 
   @Inject
-  TransactionStateStorageProvider(CConfiguration cConf, Injector injector) {
+  TransactionStateStorageProvider(Configuration cConf, Injector injector) {
     this.cConf = cConf;
     this.injector = injector;
   }

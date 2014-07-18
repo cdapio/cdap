@@ -43,6 +43,7 @@ public final class ConfigModule extends AbstractModule {
   public ConfigModule(CConfiguration cConf, Configuration hConf) {
     this.cConf = cConf;
     this.hConf = hConf;
+    cConf.copyTxProperties(hConf);
   }
 
   @Override

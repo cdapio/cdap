@@ -21,6 +21,7 @@ import com.continuuity.data2.transaction.snapshot.SnapshotCodecV1;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecV2;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 
 import java.io.IOException;
 
@@ -49,7 +50,10 @@ public class ReactorTransactionStateCache extends TransactionStateCache {
     this.configTable = new ConfigurationTable(conf);
   }
 
-  protected CConfiguration getSnapshotConfiguration() throws IOException {
-    return configTable.read(ConfigurationTable.Type.DEFAULT, tableNamespace);
+  protected Configuration getSnapshotConfiguration() throws IOException {
+    CConfiguration cConf = configTable.read(ConfigurationTable.Type.DEFAULT, tableNamespace);
+    Configuration txConf = HBaseConfiguration.create();
+    cConf.copyTxProperties(txConf);
+    return txConf;
   }
 }

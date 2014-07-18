@@ -16,12 +16,12 @@
 
 package com.continuuity.data2.transaction.hbase;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.collect.Lists;
-import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
@@ -45,7 +45,7 @@ public abstract class AbstractTransactionVisibilityFilterTest {
 
   @Before
   public void setup() throws Exception {
-    CConfiguration conf = CConfiguration.create();
+    Configuration conf = HBaseConfiguration.create();
     conf.unset(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES);
     txManager = new InMemoryTransactionManager(conf);
     txManager.startAndWait();
