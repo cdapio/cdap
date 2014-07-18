@@ -19,6 +19,7 @@ package com.continuuity.data2.datafabric.dataset.service;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.ObjectResponse;
 import com.continuuity.common.lang.jar.JarFinder;
@@ -39,7 +40,10 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.explore.client.DatasetExploreFacade;
 import com.continuuity.explore.client.DiscoveryExploreClient;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.InputSupplier;
 import com.google.gson.reflect.TypeToken;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
@@ -50,6 +54,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -84,7 +89,9 @@ public abstract class DatasetServiceTestBase {
     MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
 
     // Tx Manager to support working with datasets
-    txManager = new InMemoryTransactionManager();
+    Configuration txConf = HBaseConfiguration.create();
+    cConf.copyTxProperties(txConf);
+    txManager = new InMemoryTransactionManager(txConf);
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
@@ -130,31 +137,36 @@ public abstract class DatasetServiceTestBase {
   protected int deployModule(String moduleName, Class moduleClass) throws Exception {
     String jarPath = JarFinder.getJar(moduleClass);
 
-    FileInputStream is = new FileInputStream(jarPath);
+    final FileInputStream is = new FileInputStream(jarPath);
     try {
-      return HttpRequests.doRequest("PUT", getUrl("/data/modules/" + moduleName),
-                                    ImmutableMap.of("X-Continuuity-Class-Name", moduleClass.getName()),
-                                    (byte[]) null, is).getResponseCode();
+      HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
+        .addHeader("X-Continuuity-Class-Name", moduleClass.getName())
+        .withBody(new InputSupplier<InputStream>() {
+        @Override
+        public InputStream getInput() throws IOException {
+          return is;
+        }
+      }).build();
+      return HttpRequests.execute(request).getResponseCode();
     } finally {
       is.close();
     }
   }
 
   protected ObjectResponse<List<DatasetModuleMeta>> getModules() throws IOException {
-    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/modules")),
-                                       new TypeToken<List<DatasetModuleMeta>>() {
-                                       }.getType());
+    return ObjectResponse.fromJsonBody(HttpRequests.execute(HttpRequest.get(getUrl("/data/modules")).build()),
+                                       new TypeToken<List<DatasetModuleMeta>>() { }.getType());
   }
 
   protected int deleteInstances() throws IOException {
-    return HttpRequests.delete(getUrl("/data/unrecoverable/datasets")).getResponseCode();
+    return HttpRequests.execute(HttpRequest.delete(getUrl("/data/unrecoverable/datasets")).build()).getResponseCode();
   }
 
   protected int deleteModule(String moduleName) throws Exception {
-    return HttpRequests.delete(getUrl("/data/modules/" + moduleName)).getResponseCode();
+    return HttpRequests.execute(HttpRequest.delete(getUrl("/data/modules/" + moduleName)).build()).getResponseCode();
   }
 
   protected int deleteModules() throws IOException {
-    return HttpRequests.delete(getUrl("/data/modules/")).getResponseCode();
+    return HttpRequests.execute(HttpRequest.delete(getUrl("/data/modules/")).build()).getResponseCode();
   }
 }

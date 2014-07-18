@@ -27,6 +27,8 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -61,9 +63,10 @@ public class SnapshotCodecCompatibilityTest {
                               ImmutableMap.<Long, Set<ChangeId>>of(16L, Sets.newHashSet(
                                 new ChangeId(Bytes.toBytes("ch2")), new ChangeId(Bytes.toBytes("ch3")))));
 
-    CConfiguration configV1 = CConfiguration.create();
+    Configuration configV1 = HBaseConfiguration.create();
     configV1.setStrings(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES,
                         SnapshotCodecV1.class.getName());
+
     SnapshotCodecProvider codecV1 = new SnapshotCodecProvider(configV1);
 
     // encoding with codec of v1
@@ -75,7 +78,7 @@ public class SnapshotCodecCompatibilityTest {
     }
 
     // decoding
-    CConfiguration configV1V2 = CConfiguration.create();
+    Configuration configV1V2 = HBaseConfiguration.create();
     configV1V2.setStrings(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES,
                           SnapshotCodecV1.class.getName(),
                           SnapshotCodecV2.class.getName());

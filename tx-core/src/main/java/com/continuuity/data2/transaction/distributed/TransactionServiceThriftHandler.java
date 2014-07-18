@@ -17,7 +17,6 @@
 package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.rpc.RPCServiceHandler;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.distributed.thrift.TBoolean;
 import com.continuuity.data2.transaction.distributed.thrift.TTransaction;
@@ -25,6 +24,7 @@ import com.continuuity.data2.transaction.distributed.thrift.TTransactionCouldNot
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionNotInProgressException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionServer;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.rpc.RPCServiceHandler;
 import com.google.common.collect.Sets;
 import org.apache.thrift.TException;
 

@@ -29,7 +29,7 @@ public final class ApiResourceListHolder {
 
   public static synchronized Iterable<String> getResourceList() throws IOException {
     if (resourceList == null) {
-      resourceList = ClassLoaders.getApiResourceList(ApiResourceListHolder.class.getClassLoader());
+      resourceList = ClassLoaders.getAPIResources(ApiResourceListHolder.class.getClassLoader());
     }
     return resourceList;
   }

@@ -13,7 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package com.continuuity.data2.transaction.rpc;
+
 /**
- * This package contains class for writing RPC server and client in simple manner.
+ * Defines lifecycle interface for all rpc handlers.
  */
-package com.continuuity.common.rpc;
+public interface RPCServiceHandler {
+
+  void init() throws Exception;
+
+  void destroy() throws Exception;
+}

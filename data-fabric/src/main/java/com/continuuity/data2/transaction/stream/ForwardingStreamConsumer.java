@@ -83,7 +83,7 @@ public abstract class ForwardingStreamConsumer implements StreamConsumer {
   }
 
   @Override
-  public String getName() {
-    return delegate.getName();
+  public String getTransactionAwareName() {
+    return delegate.getTransactionAwareName();
   }
 }

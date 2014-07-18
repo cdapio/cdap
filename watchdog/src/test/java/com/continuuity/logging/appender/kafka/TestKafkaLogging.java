@@ -32,6 +32,8 @@ import com.continuuity.logging.read.DistributedLogReader;
 import com.continuuity.test.SlowTests;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -52,7 +54,8 @@ public class TestKafkaLogging extends KafkaTestBase {
 
   @BeforeClass
   public static void init() throws IOException {
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+    Configuration txConf = HBaseConfiguration.create();
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager(txConf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
 

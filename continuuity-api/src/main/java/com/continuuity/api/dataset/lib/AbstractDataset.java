@@ -95,7 +95,7 @@ public abstract class AbstractDataset implements Dataset, MeteredDataset, Transa
   }
 
   @Override
-  public String getName() {
+  public String getTransactionAwareName() {
     return instanceName;
   }
 

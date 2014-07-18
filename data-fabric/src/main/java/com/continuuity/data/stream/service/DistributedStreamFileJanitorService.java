@@ -17,13 +17,13 @@ package com.continuuity.data.stream.service;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.zookeeper.election.ElectionHandler;
-import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data.stream.StreamFileJanitor;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.twill.api.ElectionHandler;
+import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.zookeeper.ZKClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

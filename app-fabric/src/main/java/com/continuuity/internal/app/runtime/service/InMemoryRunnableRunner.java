@@ -25,6 +25,7 @@ import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
+import com.continuuity.common.election.InMemoryElectionRegistry;
 import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
@@ -44,7 +45,6 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.apache.twill.internal.BasicTwillContext;
 import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,20 +62,22 @@ public class InMemoryRunnableRunner implements ProgramRunner {
   private final MetricsCollectionService metricsCollectionService;
   private final ProgramServiceDiscovery serviceDiscovery;
   private final DiscoveryService dsService;
+  private final InMemoryElectionRegistry electionRegistry;
 
   @Inject
   public InMemoryRunnableRunner(MetricsCollectionService metricsCollectionService,
                                 ProgramServiceDiscovery serviceDiscovery,
-                                DiscoveryService dsService) {
+                                DiscoveryService dsService, InMemoryElectionRegistry electionRegistry) {
     this.metricsCollectionService = metricsCollectionService;
     this.serviceDiscovery = serviceDiscovery;
     this.dsService = dsService;
+    this.electionRegistry = electionRegistry;
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public ProgramController run(final Program program, ProgramOptions options) {
-    BasicTwillContext twillContext = null;
+    InMemoryTwillContext twillContext = null;
     try {
       // Extract and verify parameters
       String runnableName = options.getName();
@@ -141,11 +143,11 @@ public class InMemoryRunnableRunner implements ProgramRunner {
         }
       };
 
-      twillContext = new BasicTwillContext(twillRunId, runId, InetAddress.getLocalHost(), new String[0], argArray,
-                                           runnableSpec.getRunnableSpecification(), instanceId, dService,
-                                           dClient, instanceCount,
-                                           runnableSpec.getResourceSpecification().getMemorySize(),
-                                           runnableSpec.getResourceSpecification().getVirtualCores());
+      twillContext = new InMemoryTwillContext(twillRunId, runId, InetAddress.getLocalHost(), new String[0], argArray,
+                                              runnableSpec.getRunnableSpecification(), instanceId,
+                                              runnableSpec.getResourceSpecification().getVirtualCores(),
+                                              runnableSpec.getResourceSpecification().getMemorySize(),
+                                              dClient, dService, instanceCount, electionRegistry);
 
       TypeToken<? extends  TwillRunnable> runnableType = TypeToken.of(runnableClass);
       TwillRunnable runnable = new InstantiatorFactory(false).get(runnableType).create();

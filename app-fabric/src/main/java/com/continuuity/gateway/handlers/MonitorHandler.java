@@ -178,10 +178,10 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
         reply.addProperty("name", service);
         reply.addProperty("logs", logs);
         reply.addProperty("status", canCheck);
-        reply.addProperty("min", String.valueOf(serviceManager.getMinInstances()));
-        reply.addProperty("max", String.valueOf(serviceManager.getMaxInstances()));
-        reply.addProperty("requested", String.valueOf(getSystemServiceInstanceCount(service)));
-        reply.addProperty("provisioned", String.valueOf(serviceManager.getInstances()));
+        reply.addProperty("min", serviceManager.getMinInstances());
+        reply.addProperty("max", serviceManager.getMaxInstances());
+        reply.addProperty("requested", getSystemServiceInstanceCount(service));
+        reply.addProperty("provisioned", serviceManager.getInstances());
         reply.addProperty("description", serviceManager.getDescription());
         //TODO: Add metric name for Event Rate monitoring
         serviceSpec.add(reply);

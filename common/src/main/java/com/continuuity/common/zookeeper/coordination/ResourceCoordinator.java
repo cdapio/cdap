@@ -51,7 +51,7 @@ import java.util.concurrent.Executors;
 /**
  * Allocate resources to registered handler. It is expected to have single instance of this class
  * running per ZK namespace (determined by the ZKClient passed to constructor). User can use
- * {@link com.continuuity.common.zookeeper.election.LeaderElection} class to help archiving requirement.
+ * {@link org.apache.twill.internal.zookeeper.LeaderElection} class to help archiving requirement.
  *
  * ZK structure.
  *
