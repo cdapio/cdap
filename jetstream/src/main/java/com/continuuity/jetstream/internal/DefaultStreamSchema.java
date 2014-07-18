@@ -16,8 +16,8 @@
 
 package com.continuuity.jetstream.internal;
 
-import com.continuuity.jetstream.api.StreamSchema;
 import com.continuuity.jetstream.api.PrimitiveType;
+import com.continuuity.jetstream.api.StreamSchema;
 
 import java.util.LinkedHashMap;
 import java.util.Set;

@@ -17,8 +17,8 @@
 package com.continuuity.api;
 
 import com.continuuity.jetstream.api.AbstractInputFlowlet;
-import com.continuuity.jetstream.api.StreamSchema;
 import com.continuuity.jetstream.api.PrimitiveType;
+import com.continuuity.jetstream.api.StreamSchema;
 
 /**
  * Basic InputFlowlet for Testing.

@@ -17,8 +17,8 @@
 package com.continuuity.api;
 
 import com.continuuity.jetstream.api.AbstractInputFlowlet;
-import com.continuuity.jetstream.api.StreamSchema;
 import com.continuuity.jetstream.api.PrimitiveType;
+import com.continuuity.jetstream.api.StreamSchema;
 
 /**
  * Invalid Flowlet since the Schema has two fields with the same name.
