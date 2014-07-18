@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Continuuity, Inc.
+ * Copyright 2014 Continuuity, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,6 @@ import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
 import com.continuuity.explore.service.ColumnDesc;
-import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
@@ -41,7 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -50,10 +48,12 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP.
+ * The methods of this class call the HTTP APIs exposed by explore and return the raw information
+ * contained in their json responses. This class is only meant to be extended by classes
+ * which implement ExploreClient.
  */
-public abstract class AbstractExploreClient implements Explore, ExploreClient {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractExploreClient.class);
+abstract class ExploreHttpClient {
+  private static final Logger LOG = LoggerFactory.getLogger(ExploreHttpClient.class);
   private static final Gson GSON = new Gson();
 
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
@@ -62,8 +62,7 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
 
   protected abstract InetSocketAddress getExploreServiceAddress();
 
-  @Override
-  public boolean isAvailable() {
+  protected boolean isAvailable() {
     try {
       HttpResponse response = doGet(String.format("explore/status"));
       return HttpResponseStatus.OK.getCode() == response.getResponseCode();
@@ -73,28 +72,25 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
     }
   }
 
-  @Override
-  public Handle enableExplore(String datasetInstance) throws ExploreException {
+  protected Handle doEnableExplore(String datasetInstance) throws ExploreException {
     HttpResponse response = doPost(String.format("explore/instances/%s/enable", datasetInstance), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
     throw new ExploreException("Cannot enable explore on dataset " + datasetInstance + ". Reason: " +
-                               getDetails(response));
+                                 getDetails(response));
   }
 
-  @Override
-  public Handle disableExplore(String datasetInstance) throws ExploreException {
+  protected Handle doDisableExplore(String datasetInstance) throws ExploreException {
     HttpResponse response = doPost(String.format("explore/instances/%s/disable", datasetInstance), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
     throw new ExploreException("Cannot disable explore on dataset " + datasetInstance + ". Reason: " +
-                               getDetails(response));
+                                 getDetails(response));
   }
 
-  @Override
-  public Handle execute(String statement) throws ExploreException {
+  protected Handle doExecute(String statement) throws ExploreException {
     HttpResponse response = doPost("data/queries", GSON.toJson(ImmutableMap.of("query", statement)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
@@ -102,8 +98,7 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
     throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
   }
 
-  @Override
-  public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException {
+  protected Status doGetStatus(Handle handle) throws ExploreException, HandleNotFoundException {
     HttpResponse response = doGet(String.format("data/queries/%s/%s", handle.getHandle(), "status"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, Status.class);
@@ -111,8 +106,7 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
     throw new ExploreException("Cannot get status. Reason: " + getDetails(response));
   }
 
-  @Override
-  public List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException, HandleNotFoundException {
+  protected List<ColumnDesc> doGetResultSchema(Handle handle) throws ExploreException, HandleNotFoundException {
     HttpResponse response = doGet(String.format("data/queries/%s/%s", handle.getHandle(), "schema"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, COL_DESC_LIST_TYPE);
@@ -120,8 +114,7 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
     throw new ExploreException("Cannot get result schema. Reason: " + getDetails(response));
   }
 
-  @Override
-  public List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
+  protected List<Result> doNextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
     HttpResponse response = doPost(String.format("data/queries/%s/%s", handle.getHandle(), "next"),
                                    GSON.toJson(ImmutableMap.of("size", size)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
@@ -130,8 +123,7 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
     throw new ExploreException("Cannot get next results. Reason: " + getDetails(response));
   }
 
-  @Override
-  public void cancel(Handle handle) throws ExploreException, HandleNotFoundException {
+  protected void doCancel(Handle handle) throws ExploreException, HandleNotFoundException {
     HttpResponse response = doPost(String.format("data/queries/%s/%s", handle.getHandle(), "cancel"), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return;
@@ -139,8 +131,7 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
     throw new ExploreException("Cannot cancel operation. Reason: " + getDetails(response));
   }
 
-  @Override
-  public void close(Handle handle) throws ExploreException, HandleNotFoundException {
+  protected void doClose(Handle handle) throws ExploreException, HandleNotFoundException {
     HttpResponse response = doDelete(String.format("data/queries/%s", handle.getHandle()));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return;
@@ -224,4 +215,5 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
     LOG.trace("Explore URL = {}", url);
     return url;
   }
+
 }

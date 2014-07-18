@@ -16,12 +16,15 @@
 
 package com.continuuity.explore.jdbc;
 
-import com.continuuity.explore.client.ExploreClientUtil;
 import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
+import com.continuuity.explore.service.ResultIterator;
+import com.continuuity.explore.service.StatementExecutionFuture;
 import com.continuuity.explore.service.Status;
+import com.continuuity.explore.service.UnexpectedQueryStatusException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +34,7 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Reactor JDBC Statement. At most one {@link ExploreQueryResultSet} object can be produced by instances
@@ -54,6 +57,7 @@ public class ExploreStatement implements Statement {
   private volatile boolean isClosed = false;
   private volatile Handle stmtHandle = null;
   private volatile boolean stmtCompleted;
+  private volatile StatementExecutionFuture<ResultIterator> futureResults;
 
   private Connection connection;
   private Explore exploreClient;
@@ -90,36 +94,32 @@ public class ExploreStatement implements Statement {
       resultSet = null;
     }
 
-    // TODO in future, the polling logic should be in another SyncExploreClient
+    futureResults = exploreClient.execute(sql);
     try {
-      stmtHandle = exploreClient.execute(sql);
-      Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, stmtHandle, 200,
-                                                                TimeUnit.MILLISECONDS, MAX_POLL_TRIES);
-      stmtCompleted = true;
-      switch (status.getStatus()) {
-        case FINISHED:
-          resultSet = new ExploreQueryResultSet(exploreClient, this, stmtHandle);
-          // NOTE: Javadoc states: "returns false if the first result is an update count or there is no result"
-          // Here we have a result, it may contain rows or may be empty, but it exists.
-          return true;
-        case CANCELED:
-          return false;
-        default:
-          // Any other state can be considered as a "database" access error
-          throw new SQLException(String.format("Statement '%s' execution did not finish successfully. " +
-                                               "Got final state - %s", sql, status.getStatus().toString()));
-      }
-    } catch (HandleNotFoundException e) {
-      // Cannot happen unless explore server restarted.
-      LOG.error("Error executing query", e);
-      throw new SQLException("Unknown state");
+      ResultIterator resultIterator = futureResults.get();
+      resultSet = new ExploreQueryResultSet(futureResults, resultIterator, this);
+      // NOTE: Javadoc states: "returns false if the first result is an update count or there is no result"
+      // Here we have a result, it may contain rows or may be empty, but it exists.
+      return true;
     } catch (InterruptedException e) {
       LOG.error("Caught exception", e);
       Thread.currentThread().interrupt();
       return false;
-    } catch (ExploreException e) {
+    } catch (ExecutionException e) {
+      Throwable t = e.getCause();
+      if (t instanceof HandleNotFoundException) {
+        LOG.error("Error executing query", e);
+        throw new SQLException("Unknown state");
+      } else if (t instanceof UnexpectedQueryStatusException) {
+        UnexpectedQueryStatusException sE = (UnexpectedQueryStatusException) t;
+        if (Status.OpStatus.CANCELED.equals(sE.getStatus())) {
+          return false;
+        }
+        throw new SQLException(String.format("Statement '%s' execution did not finish successfully. " +
+                                             "Got final state - %s", sql, sE.getStatus().toString()));
+      }
       LOG.error("Caught exception", e);
-      throw new SQLException(e);
+      throw new SQLException(e.getCause());
     }
   }
 
@@ -144,7 +144,7 @@ public class ExploreStatement implements Statement {
   void closeClientOperation() throws SQLException {
     if (stmtHandle != null) {
       try {
-        exploreClient.close(stmtHandle);
+        futureResults.close();
       } catch (HandleNotFoundException e) {
         LOG.error("Ignoring cannot find handle during close.");
       } catch (ExploreException e) {
@@ -192,7 +192,7 @@ public class ExploreStatement implements Statement {
       return;
     }
     try {
-      exploreClient.cancel(stmtHandle);
+      futureResults.cancel();
     } catch (HandleNotFoundException e) {
       LOG.error("Ignoring cannot find handle during cancel.");
     } catch (ExploreException e) {

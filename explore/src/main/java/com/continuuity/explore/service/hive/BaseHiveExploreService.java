@@ -27,6 +27,8 @@ import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Result;
+import com.continuuity.explore.service.ResultIterator;
+import com.continuuity.explore.service.StatementExecutionFuture;
 import com.continuuity.explore.service.Status;
 import com.continuuity.hive.context.CConfCodec;
 import com.continuuity.hive.context.ConfigurationUtil;

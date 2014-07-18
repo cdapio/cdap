@@ -20,6 +20,8 @@ import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 
+import com.google.common.util.concurrent.ListenableFuture;
+
 /**
  * Explore client discovers explore service, and executes explore commands using the service.
  */
@@ -32,13 +34,17 @@ public interface ExploreClient extends Explore {
 
   /**
    * Enables ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.
+   *
    * @param datasetInstance dataset instance name.
+   * @return a {@code Future} object containing a boolean set to true if successful, false otherwise.
    */
-  Handle enableExplore(String datasetInstance) throws ExploreException;
+  ListenableFuture<Boolean> enableExplore(String datasetInstance);
 
   /**
    * Disable ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.
+   *
    * @param datasetInstance dataset instance name.
+   * @return a {@code Future} object containing a boolean set to true if successful, false otherwise.
    */
-  Handle disableExplore(String datasetInstance) throws ExploreException;
+  ListenableFuture<Boolean> disableExplore(String datasetInstance);
 }

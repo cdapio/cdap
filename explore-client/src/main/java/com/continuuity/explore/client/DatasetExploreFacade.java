@@ -23,10 +23,12 @@ import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Status;
+import com.continuuity.explore.service.UnexpectedQueryStatusException;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +37,9 @@ import java.io.StringWriter;
 import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Explore client facade to be used by datasets.
@@ -64,29 +68,32 @@ public class DatasetExploreFacade {
       return;
     }
 
-    Handle handle = exploreClient.enableExplore(datasetInstance);
+    ListenableFuture<Boolean> futureSuccess = exploreClient.enableExplore(datasetInstance);
     try {
-      Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 50);
-
-      if (status.getStatus() != Status.OpStatus.FINISHED) {
-        LOG.error("Enable explore did not finish successfully for dataset instance {}. Got final state - {}",
-                  datasetInstance, status.getStatus());
-        throw new ExploreException("Cannot enable explore for dataset instance " + datasetInstance);
-      }
-    } catch (HandleNotFoundException e) {
-      // Cannot happen unless explore server restarted.
-      LOG.error("Error running enable explore", e);
-      throw Throwables.propagate(e);
+      futureSuccess.get(20, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       LOG.error("Caught exception", e);
       Thread.currentThread().interrupt();
-    } finally {
-      try {
-        exploreClient.close(handle);
-      } catch (HandleNotFoundException e) {
-        LOG.error("Ignoring cannot find handle during close of enable explore for dataset instance {}",
+    } catch (ExecutionException e) {
+      Throwable t = e.getCause();
+      if (t instanceof ExploreException) {
+        LOG.error("Enable explore did not finish successfully for dataset instance {}.",
                   datasetInstance);
+        throw (ExploreException) t;
+      } else if (t instanceof SQLException) {
+        throw (SQLException) t;
+      } else if (t instanceof HandleNotFoundException) {
+        // Cannot happen unless explore server restarted, or someone calls close in between.
+        LOG.error("Error running enable explore", e);
+        throw Throwables.propagate(e);
+      } else if (t instanceof UnexpectedQueryStatusException) {
+        UnexpectedQueryStatusException sE = (UnexpectedQueryStatusException) t;
+        LOG.error("Enable explore operation ended in an unexpected state - {}", sE.getStatus().name(), e);
+        throw Throwables.propagate(e);
       }
+    } catch (TimeoutException e) {
+      LOG.error("Error running enable explore - operation timed out", e);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -99,29 +106,32 @@ public class DatasetExploreFacade {
       return;
     }
 
-    Handle handle = exploreClient.disableExplore(datasetInstance);
+    ListenableFuture<Boolean> futureSuccess = exploreClient.disableExplore(datasetInstance);
     try {
-      Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 50);
-
-      if (status.getStatus() != Status.OpStatus.FINISHED) {
-        LOG.error("Disable explore did not finish successfully for dataset instance {}. Got final state - {}",
-                  datasetInstance, status.getStatus());
-        throw new ExploreException("Cannot disable explore for dataset instance " + datasetInstance);
-      }
-    } catch (HandleNotFoundException e) {
-      // Cannot happen unless explore server restarted.
-      LOG.error("Error running disable explore", e);
-      throw Throwables.propagate(e);
+      futureSuccess.get(20, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       LOG.error("Caught exception", e);
       Thread.currentThread().interrupt();
-    } finally {
-      try {
-        exploreClient.close(handle);
-      } catch (HandleNotFoundException e) {
-        LOG.error("Ignoring cannot find handle during close of disable explore for dataset instance {}",
+    } catch (ExecutionException e) {
+      Throwable t = e.getCause();
+      if (t instanceof ExploreException) {
+        LOG.error("Disable explore did not finish successfully for dataset instance {}.",
                   datasetInstance);
+        throw (ExploreException) t;
+      } else if (t instanceof SQLException) {
+        throw (SQLException) t;
+      } else if (t instanceof HandleNotFoundException) {
+        // Cannot happen unless explore server restarted, or someone calls close in between.
+        LOG.error("Error running disable explore", e);
+        throw Throwables.propagate(e);
+      } else if (t instanceof UnexpectedQueryStatusException) {
+        UnexpectedQueryStatusException sE = (UnexpectedQueryStatusException) t;
+        LOG.error("Disable explore operation ended in an unexpected state - {}", sE.getStatus().name(), e);
+        throw Throwables.propagate(e);
       }
+    } catch (TimeoutException e) {
+      LOG.error("Error running disable explore - operation timed out", e);
+      throw Throwables.propagate(e);
     }
   }
 

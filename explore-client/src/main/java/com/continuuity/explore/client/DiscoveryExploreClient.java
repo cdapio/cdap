@@ -37,7 +37,7 @@ import static com.continuuity.common.conf.Constants.Service;
  * An Explore Client that talks to a server implementing {@link Explore} over HTTP,
  * and that uses discovery to find the endpoints.
  */
-public class DiscoveryExploreClient extends AbstractExploreClient {
+public class DiscoveryExploreClient extends BaseExploreClient {
   private static final Logger LOG = LoggerFactory.getLogger(DiscoveryExploreClient.class);
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
