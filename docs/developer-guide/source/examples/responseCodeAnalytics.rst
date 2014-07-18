@@ -56,6 +56,7 @@ an implementation of ``com.continuuity.api.Application``.
         // Query the processed data using Procedures
         addProcedure(new StatusCodeProcedure());
       }
+      // ...
 
 Notice that in coding the Application, *Streams* and *Datasets* are defined
 using Continuuity classes, and are referenced by names, 

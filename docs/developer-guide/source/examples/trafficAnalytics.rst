@@ -57,7 +57,8 @@ of the application are tied together by the class ``TrafficAnalyticsApp``::
       
       // Run a MapReduce job on the acquired data
       addMapReduce(new LogCountMapReduce());
-  }
+    }
+    // ...
 
 Many elements are similar, but there are a few new entries.
 
