@@ -11,7 +11,8 @@ define([], function () {
     load: function () {
       var self = this;
       self.set('systemServices', []);
-      self.set('userServices2', []);
+      self.set('userServices2', Em.Object.create());
+      self.set('userServicesProxy', []);
 
       self.resetServices();
       this.interval = setInterval(function () {
@@ -19,6 +20,14 @@ define([], function () {
       }, C.POLLING_INTERVAL)
 
     },
+
+    // isDone: function () {
+    //   return false;
+    // }.observes("userServices2").property(),
+
+    // portUserServicesToArray: function () {
+
+    // }.observes("userServices2"),
 
     resetServices: function () {
       var self = this;
@@ -66,21 +75,17 @@ define([], function () {
           var appUrl = 'apps/' + app.name + '/services';
           self.HTTP.rest(appUrl, function (services) {
             services.map(function(service) {
-              //var imgSrc = service.status === 'OK' ? 'complete' : 'loading';
-              //var logSrc = service.status === 'OK' ? 'complete' : 'loading';
-///*
 
               var statusCheckURL = appUrl + '/' + service.name + '/status';
               self.HTTP.rest(statusCheckURL, function(f) {
                 var status = f.status;
                 for (var i=0; i < userServices.length; i++) {
-                  if  (userServices[i].get('name') != service.name) {
-                    continue;
+                  if  (userServices[i].get('name') === service.name) {
+                    userServices[i].set('status', status);
+                    userServices[i].set('statusOk', !!(status === 'RUNNING'));
+                    userServices[i].set('statusNotOk', !!(status === 'STOPPED'));
+                    userServices[i].set('imgClass', status === 'RUNNING' ? 'complete' : 'loading');
                   }
-                  userServices[i].set('status', status);
-                  userServices[i].set('statusOk', !!(status === 'RUNNING'));
-                  userServices[i].set('statusNotOk', !!(status === 'STOPPED'));
-                  userServices[i].set('imgClass', status === 'RUNNING' ? 'complete' : 'loading');
                 }
                 self.set('userServices', userServices);
               });
@@ -88,38 +93,22 @@ define([], function () {
               var instancesCheckUrl = appUrl + '/' + service.name + '/runnables' + '/CatalogService' + '/instances';
               self.HTTP.rest(instancesCheckUrl, function(f) {
                 for (var i=0; i < userServices.length; i++) {
-                  if  (userServices[i].get('name') != service.name) {
-                    continue;
+                  if  (userServices[i].get('name') === service.name) {
+                    userServices[i].set('requested', f.requested);
+                    userServices[i].set('provisioned', f.provisioned);
                   }
-                  userServices[i].set('requested', f.requested);
-                  userServices[i].set('provisioned', f.provisioned);
                 }
                 self.set('userServices', userServices);
               });
-              //*/
-              console.log('pushed');
+
               userServices.push(C.Service.create({
                 modelId: service.name,
                 description: service.description,
                 id: service.name,
                 name: service.name,
                 description: service.description,
-                //status: service.status,
-                //min: service.min,
-                //max: service.max,
-                //isIncreaseEnabled: service.requested < service.max,
-                //isDecreaseEnabled: service.requested > service.min,
-                //logs: service.logs,
-                //requested: service.requested,
-                //provisioned: service.provisioned,
-                //statusOk: !!(service.status === 'OK'),
-                //statusNotOk: !!(service.status === 'NOTOK'),
-                //logsStatusOk: !!(service.logs === 'OK'),
-                //logsStatusNotOk: !!(service.logs === 'NOTOK'),
                 metricEndpoint: C.Util.getMetricEndpoint(service.name),
                 metricName: C.Util.getMetricName(service.name),
-                //imgClass: imgSrc,
-                //logClass: logSrc,
                 appID: service.app,
               }));
             });

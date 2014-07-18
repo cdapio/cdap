@@ -243,7 +243,7 @@
             </th>
             <th style="min-width: 200px;" class="instance-col center-align">Instances Requested</th>
             <th style="min-width: 200px;" class="instance-col center-align">Provisioned</th>
-            <th> Start/Stop </th>
+            <th style="min-width: 200px;" class="instance-col center-align"> Start/Stop </th>
           </thead>
           <tbody>
           {{#each userServices}}
@@ -272,29 +272,11 @@
               <td style="max-width: 350px;" class="instance-provisioned service-col">
                   <div class="instance-num auto-margin"><span>{{this.provisioned}}</span></div>
               </td>
-              <td>
+              <td class="center-align">
                   <div class="btn-group start-stop-btns">
                       <button class="btn start" {{action start this.appID this.id}}><img src="/assets/img/v2/play_active_icon.png"></button>
                       <button class="btn stop" {{action stop this.appID this.id}}><img src="/assets/img/v2/stop_active_icon.png"></button>
                   </div>
-
-                  <div id="action-buttons" class="btn-group">
-                    <button class="btn btn-blank dropdown-toggle" data-toggle="dropdown">
-                      <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu">
-                      <li style="min-width:200px; padding:4px 16px 2px;">
-                        Run-time Args
-                      </li>
-                      <li style="min-width:200px; padding:4px 16px 2px;">
-                        More Options Here
-                      </li>
-                      <li style="min-width:200px; padding:4px 16px 2px;">
-                        More Options Here
-                      </li>
-                    </ul>
-                  </div>
-
               </td>
             </tr>
           {{/each}}
