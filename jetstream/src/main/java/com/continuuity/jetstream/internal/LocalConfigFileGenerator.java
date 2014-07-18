@@ -16,17 +16,14 @@
 
 package com.continuuity.jetstream.internal;
 
-import com.continuuity.jetstream.api.StreamSchema;
 import com.continuuity.jetstream.api.PrimitiveType;
+import com.continuuity.jetstream.api.StreamSchema;
 import com.continuuity.jetstream.flowlet.ConfigFileGenerator;
 import com.continuuity.jetstream.flowlet.InputFlowletSpecification;
 import com.google.common.collect.Maps;
-import com.google.common.io.CharStreams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Map;
@@ -40,6 +37,17 @@ public class LocalConfigFileGenerator implements ConfigFileGenerator {
   private static final String OUTPUTSPEC_SUFFIX = ",stream,,,,,";
   private static final String NEWLINE = System.getProperty("line.separator");
   private final String hostname;
+  private static final String IFRESXML_CONTENT =
+    "<Interface Name='GDAT0'>\n" +
+    "      <InterfaceType value='GDAT'/>\n" +
+    "      <CSVSeparator value='|'/>\n" +
+    "      <Filename value='exampleCsv'/>\n" +
+    "      <StartUpDelay value='10'/>\n" +
+    "      <Verbose value='TRUE'/>\n" +
+    "      <TcpPort value='45678'/>\n" +
+    "    </Interface>\n" +
+    "  </Host>\n" +
+    "</Resources>\n";
 
   public LocalConfigFileGenerator() {
     String host;
@@ -67,11 +75,9 @@ public class LocalConfigFileGenerator implements ConfigFileGenerator {
   }
 
   @Override
-  public Map<String, String> generateHostIfq() {
-    Map<String, String> fileContent = Maps.newHashMap();
+  public Map.Entry<String, String> generateHostIfq() {
     String contents = createLocalHostIfq(hostname);
-    fileContent.put(hostname, contents);
-    return fileContent;
+    return Maps.immutableEntry(hostname, contents);
   }
 
   @Override
@@ -79,18 +85,12 @@ public class LocalConfigFileGenerator implements ConfigFileGenerator {
     return createIfresXML(hostname);
   }
 
+  //TODO: This won't be necessary won't localhost becomes the DEFAULT in GSTool.
   private String createIfresXML(String hostname) {
     StringBuilder stringBuilder = new StringBuilder();
-    //TODO: Ifres.xml won't be necessary after a default localhost fix in GSTool
     stringBuilder.append("<Resources>").append(NEWLINE).append("<Host Name='").append(hostname).append("'>")
       .append(NEWLINE);
-    InputStream ifres = this.getClass().getClassLoader().getResourceAsStream("ifres.xml");
-    try {
-      stringBuilder.append(CharStreams.toString(new InputStreamReader(ifres, "UTF-8")));
-      ifres.close();
-    } catch (Throwable t) {
-      LOG.error(t.getMessage(), t);
-    }
+    stringBuilder.append(IFRESXML_CONTENT);
     return stringBuilder.toString();
   }
 

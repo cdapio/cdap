@@ -25,18 +25,22 @@ import com.continuuity.jetstream.internal.LocalConfigFileGenerator;
 import com.continuuity.jetstream.internal.LocalConfigFileLocalizer;
 import com.continuuity.jetstream.util.Platform;
 import com.google.common.io.ByteStreams;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.URI;
 
 /**
  * Tests the successful creation of Config Files.
@@ -46,6 +50,13 @@ public class ConfigFileGeneratorTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
+  private static LocationFactory locationFactory;
+
+  @BeforeClass
+  public static void init() throws IOException {
+    locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
+  }
+
   @Test
   public void testBasicFlowletConfig() throws IOException, InterruptedException {
     AbstractInputFlowlet flowlet = new InputFlowletBasic();
@@ -53,20 +64,24 @@ public class ConfigFileGeneratorTest {
     flowlet.create(configurer);
     InputFlowletSpecification spec = configurer.createInputFlowletSpec();
     ConfigFileGenerator configFileGenerator = new LocalConfigFileGenerator();
-    File tempDir = TEMP_FOLDER.newFolder();
-    tempDir.mkdir();
+
+    // Create base dir
+    Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
+    baseDir.mkdirs();
 
     //Get the library zip, copy it to temp dir, unzip it
     String libFile = Platform.libraryResource();
-    File libZip = new File(tempDir, libFile);
+    Location libZip = baseDir.append(libFile);
+    libZip.createNew();
     copyResourceFileToDir(libFile, libZip);
     unzipFile(libZip);
 
     //Create directory structure to place the GS Config Files
-    File workDir = new File(tempDir, "work");
-    workDir.mkdir();
-    File queryDir = new File(workDir, "query");
-    queryDir.mkdir();
+    Location workDir = baseDir.append("work");
+    workDir.mkdirs();
+    Location queryDir = workDir.append("query");
+    queryDir.mkdirs();
+
 
     //Create the GS config files
     ConfigFileLocalizer configFileLocalizer = new LocalConfigFileLocalizer(queryDir, configFileGenerator);
@@ -78,28 +93,41 @@ public class ConfigFileGeneratorTest {
     Assert.assertTrue(errorMsg.toString(), testExitValue);
   }
 
-  private void copyResourceFileToDir(String fileName, File libZip) throws IOException {
+  private void copyResourceFileToDir(String fileName, Location libZip) throws IOException {
     InputStream ifres = this.getClass().getClassLoader().getResourceAsStream(fileName);
-    OutputStream outputStream = new FileOutputStream(libZip);
+    OutputStream outputStream = libZip.getOutputStream();
     ByteStreams.copy(ifres, outputStream);
     ifres.close();
     outputStream.close();
   }
 
-  private void unzipFile(File libZip) throws IOException, InterruptedException {
-    String path = libZip.getAbsolutePath();
-    String dir = libZip.getParent();
+  private void unzipFile(Location libZip) throws IOException, InterruptedException {
+    String path = libZip.toURI().getPath();
+    String dir = getParent(libZip).toURI().getPath();
     Runtime rt = Runtime.getRuntime();
     String cmd = String.format("unzip %s -d %s", path, dir);
     Process unzip = rt.exec(cmd);
     Assert.assertEquals(unzip.waitFor(), 0);
   }
 
-  private boolean generateBinaries(File configLocation, StringBuilder errorMsg)
+  public static Location getParent(Location location) {
+    URI source = location.toURI();
+
+    // If it is root, return null
+    if ("/".equals(source.getPath())) {
+      return null;
+    }
+
+    URI resolvedParent = URI.create(source.toString() + "/..").normalize();
+    return location.getLocationFactory().create(resolvedParent);
+  }
+
+  private boolean generateBinaries(Location configLocation, StringBuilder errorMsg)
     throws IOException, InterruptedException {
     String[] command = {"bash", "-c", "../../bin/buildit"};
     ProcessBuilder genGS = new ProcessBuilder(command);
-    genGS.directory(configLocation);
+    File processWorkingDir = new File(configLocation.toURI().getPath());
+    genGS.directory(processWorkingDir);
     //Capture both stdout and stderr
     genGS.redirectErrorStream(true);
     Process p = genGS.start();

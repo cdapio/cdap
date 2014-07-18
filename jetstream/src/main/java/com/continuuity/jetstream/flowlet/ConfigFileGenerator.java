@@ -29,7 +29,7 @@ public interface ConfigFileGenerator {
 
   public Map<String, String> generateGSQLFiles(InputFlowletSpecification spec);
 
-  public Map<String, String> generateHostIfq();
+  public Map.Entry<String, String> generateHostIfq();
 
   public String generateIfresXML();
 }

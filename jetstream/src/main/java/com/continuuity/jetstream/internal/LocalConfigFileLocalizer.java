@@ -19,12 +19,12 @@ package com.continuuity.jetstream.internal;
 import com.continuuity.jetstream.flowlet.ConfigFileGenerator;
 import com.continuuity.jetstream.flowlet.ConfigFileLocalizer;
 import com.continuuity.jetstream.flowlet.InputFlowletSpecification;
-import com.google.common.io.Files;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.nio.charset.Charset;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Map;
 
 /**
@@ -34,10 +34,10 @@ import java.util.Map;
 public class LocalConfigFileLocalizer implements ConfigFileLocalizer {
 
   private static final Logger LOG = LoggerFactory.getLogger(LocalConfigFileLocalizer.class);
-  private File dir;
+  private Location dir;
   private ConfigFileGenerator generator;
 
-  public LocalConfigFileLocalizer(File dir, ConfigFileGenerator generator) {
+  public LocalConfigFileLocalizer(Location dir, ConfigFileGenerator generator) {
     this.dir = dir;
     this.generator = generator;
   }
@@ -46,27 +46,41 @@ public class LocalConfigFileLocalizer implements ConfigFileLocalizer {
   public void localizeConfigFiles(InputFlowletSpecification spec) {
     try {
       if (!dir.exists()) {
-        dir.mkdir();
+        dir.mkdirs();
       }
 
-      File outputSpec = new File(dir, "output_spec.cfg");
-      File packetSchema = new File(dir, "packet_schema.txt");
-      File ifresXml = new File(dir, "ifres.xml");
-      Map.Entry<String, String> ifqContent = generator.generateHostIfq().entrySet().iterator().next();
+      Location outputSpec = createFile(dir, "output_spec.cfg");
+      Location packetSchema = createFile(dir, "packet_schema.txt");
+      Location ifresXml = createFile(dir, "ifres.xml");
+      Map.Entry<String, String> ifqContent = generator.generateHostIfq();
       String ifqFile = String.format("%s.ifq", ifqContent.getKey());
-      File hostIfq = new File(dir, ifqFile);
-      Files.write(generator.generateOutputSpec(spec), outputSpec, Charset.defaultCharset());
-      Files.write(generator.generatePacketSchema(spec), packetSchema, Charset.defaultCharset());
-      Files.write(generator.generateIfresXML(), ifresXml, Charset.defaultCharset());
-      Files.write(ifqContent.getValue(), hostIfq, Charset.defaultCharset());
+      Location hostIfq = createFile(dir, ifqFile);
+
+      writeToLocation(outputSpec, generator.generateOutputSpec(spec));
+      writeToLocation(packetSchema, generator.generatePacketSchema(spec));
+      writeToLocation(ifresXml, generator.generateIfresXML());
+      writeToLocation(hostIfq, generator.generateHostIfq().getValue());
+
       Map<String, String> gsqlFiles = generator.generateGSQLFiles(spec);
       for (Map.Entry<String, String> gsqlFile : gsqlFiles.entrySet()) {
         String fileName = String.format("%s.gsql", gsqlFile.getKey());
-        File file = new File(dir, fileName);
-        Files.write(gsqlFile.getValue(), file, Charset.defaultCharset());
+        Location file = createFile(dir, fileName);
+        writeToLocation(file, gsqlFile.getValue());
       }
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
     }
+  }
+
+  private Location createFile(Location dir, String name) throws IOException {
+    Location file = dir.append(name);
+    file.createNew();
+    return file;
+  }
+
+  private void writeToLocation(Location loc, String content) throws IOException {
+    OutputStream out = loc.getOutputStream();
+    out.write(content.getBytes());
+    out.close();
   }
 }
