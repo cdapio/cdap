@@ -18,11 +18,11 @@ package com.continuuity.explore.service.hive;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
