@@ -17,10 +17,11 @@
 package com.continuuity.data2.transaction;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data2.transaction.inmemory.ChangeId;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.persist.TransactionSnapshot;
-import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
+import com.continuuity.tephra.TxConstants;
+import com.continuuity.tephra.inmemory.ChangeId;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.persist.TransactionSnapshot;
+import com.continuuity.tephra.snapshot.SnapshotCodecProvider;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import org.apache.commons.cli.CommandLine;

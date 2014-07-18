@@ -19,6 +19,7 @@ package com.continuuity.data2.transaction.metrics;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.tephra.metrics.TxMetricsCollector;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

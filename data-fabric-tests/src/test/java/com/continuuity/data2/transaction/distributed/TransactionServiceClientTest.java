@@ -24,14 +24,15 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetsModules;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.TransactionSystemTest;
-import com.continuuity.data2.transaction.TxConstants;
-import com.continuuity.data2.transaction.persist.TransactionSnapshot;
-import com.continuuity.data2.transaction.persist.TransactionStateStorage;
-import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
-import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
+import com.continuuity.data.runtime.TransactionMetricsModule;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionSystemClient;
+import com.continuuity.tephra.TransactionSystemTest;
+import com.continuuity.tephra.TxConstants;
+import com.continuuity.tephra.distributed.TransactionService;
+import com.continuuity.tephra.persist.TransactionSnapshot;
+import com.continuuity.tephra.persist.TransactionStateStorage;
+import com.continuuity.tephra.snapshot.SnapshotCodecProvider;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -113,7 +114,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   public static void afterClass() throws Exception {
     try {
       try {
-        server.doStop();
+        server.stopAndWait();
       } finally {
         zkClient.stopAndWait();
         txStateStorage.stopAndWait();

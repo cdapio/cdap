@@ -16,7 +16,7 @@
 
 package com.continuuity.app.store;
 
-import com.continuuity.data2.transaction.TransactionFailureException;
+import com.continuuity.tephra.TransactionFailureException;
 
 /**
  * Stores/Retrieves Information about System Services.
