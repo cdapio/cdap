@@ -168,7 +168,7 @@ public class MetricsTableMigrator20to21Test {
     testHBase.startHBase();
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
-    cConf.unset(Constants.CFG_HDFS_USER);
+    cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, testHBase.getConfiguration()),
       new DiscoveryRuntimeModule().getDistributedModules(),

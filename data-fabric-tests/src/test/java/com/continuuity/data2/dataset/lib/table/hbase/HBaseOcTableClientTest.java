@@ -72,7 +72,7 @@ public class HBaseOcTableClientTest extends BufferingOcTableClientTest<HBaseOcTa
   protected DataSetManager getTableManager() throws Exception {
     Configuration hConf = testHBase.getConfiguration();
     CConfiguration conf = CConfiguration.create();
-    conf.unset(Constants.CFG_HDFS_USER);
+    conf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
     return new HBaseOcTableManager(conf, hConf, new HDFSLocationFactory(hConf), tableUtil);
   }

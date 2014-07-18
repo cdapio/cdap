@@ -51,7 +51,7 @@ public abstract class HBaseMetaDataStoreTest extends MetaDataTableTest {
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
     // tests should interact with HDFS as the current user
-    conf.unset(Constants.CFG_HDFS_USER);
+    conf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     DataFabricDistributedModule dfModule = new DataFabricDistributedModule();
     Module module = Modules.override(dfModule).with(
       new AbstractModule() {

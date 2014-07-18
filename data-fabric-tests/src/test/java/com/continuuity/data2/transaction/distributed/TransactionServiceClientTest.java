@@ -84,7 +84,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
 
     cConf = CConfiguration.create();
     // tests should use the current user for HDFS
-    cConf.unset(Constants.CFG_HDFS_USER);
+    cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     // we want persisting for this test

@@ -81,7 +81,7 @@ public class TransactionServiceTest {
     try {
       CConfiguration cConf = CConfiguration.create();
       // tests should use the current user for HDFS
-      cConf.unset(Constants.CFG_HDFS_USER);
+      cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
       cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
       cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
@@ -189,7 +189,7 @@ public class TransactionServiceTest {
                                              Configuration hConf, final File outPath) {
     final CConfiguration cConf = CConfiguration.create();
     // tests should use the current user for HDFS
-    cConf.unset(Constants.CFG_HDFS_USER);
+    cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     cConf.set(Constants.Zookeeper.QUORUM, zkConnectionString);
     cConf.set(TxConstants.Service.CFG_DATA_TX_BIND_PORT,
               Integer.toString(txServicePort));

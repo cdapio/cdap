@@ -505,7 +505,7 @@ public class TimeSeriesTableTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "300");
-    cConf.unset(Constants.CFG_HDFS_USER);
+    cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
 
     Injector injector = Guice.createInjector(new ConfigModule(cConf, testHBase.getConfiguration()),
                                              new DiscoveryRuntimeModule().getDistributedModules(),
