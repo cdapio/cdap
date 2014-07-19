@@ -20,8 +20,8 @@ import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.explore.client.ExploreClientUtil;
 import com.continuuity.test.XSlowTests;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -134,7 +134,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
 
-    Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 20);
+    Status status = ExploreServiceUtils.waitForCompletionStatus(exploreService, handle, 200, TimeUnit.MILLISECONDS, 20);
     Assert.assertEquals(Status.OpStatus.FINISHED, status.getStatus());
     Assert.assertTrue(status.hasResults());
 
@@ -218,7 +218,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
 
-    Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 20);
+    Status status = ExploreServiceUtils.waitForCompletionStatus(exploreService, handle, 200, TimeUnit.MILLISECONDS, 20);
     Assert.assertEquals(Status.OpStatus.FINISHED, status.getStatus());
     Assert.assertFalse(status.hasResults());
 

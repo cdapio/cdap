@@ -27,8 +27,6 @@ import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Result;
-import com.continuuity.explore.service.ResultIterator;
-import com.continuuity.explore.service.StatementExecutionFuture;
 import com.continuuity.explore.service.Status;
 import com.continuuity.hive.context.CConfCodec;
 import com.continuuity.hive.context.ConfigurationUtil;
@@ -193,7 +191,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
-  @Override
   public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException, SQLException {
     InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
     if (inactiveOperationInfo != null) {
@@ -218,7 +215,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
-  @Override
   public List<Result> nextResults(Handle handle, int size)
     throws ExploreException, HandleNotFoundException, SQLException {
     InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
@@ -278,7 +274,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
-  @Override
   public List<ColumnDesc> getResultSchema(Handle handle)
     throws ExploreException, HandleNotFoundException, SQLException {
     try {
@@ -306,7 +301,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
-  @Override
   public void cancel(Handle handle) throws ExploreException, HandleNotFoundException, SQLException {
     try {
       InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
@@ -326,7 +320,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
-  @Override
   public void close(Handle handle) throws ExploreException, HandleNotFoundException {
     activeHandleCache.invalidate(handle);
   }

@@ -16,16 +16,12 @@
 
 package com.continuuity.explore.client;
 
-import com.continuuity.explore.service.Explore;
-import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
-
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * Explore client discovers explore service, and executes explore commands using the service.
  */
-public interface ExploreClient extends Explore {
+public interface ExploreClient {
 
   /**
    * Returns true if the explore service is up and running.
@@ -47,4 +43,15 @@ public interface ExploreClient extends Explore {
    * @return a {@code Future} object containing a boolean set to true if successful, false otherwise.
    */
   ListenableFuture<Boolean> disableExplore(String datasetInstance);
+
+  /**
+   * Execute a Hive SQL statement asynchronously. The returned
+   * {@link com.continuuity.explore.client.StatementExecutionFuture} can be used to get the
+   * schema of the operation, and it contains an iterator on the results of the statement.
+
+   * @param statement SQL statement.
+   * @return {@link com.continuuity.explore.client.StatementExecutionFuture} eventually containing
+   * the results of the statement execution.
+   */
+  StatementExecutionFuture submit(String statement);
 }

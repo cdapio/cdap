@@ -21,8 +21,6 @@ import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Result;
-import com.continuuity.explore.service.ResultIterator;
-import com.continuuity.explore.service.StatementExecutionFuture;
 import com.continuuity.explore.service.Status;
 import com.continuuity.explore.service.UnexpectedQueryStatusException;
 
@@ -34,6 +32,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
@@ -45,8 +44,6 @@ import javax.annotation.Nullable;
  * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP.
  */
 public abstract class BaseExploreClient extends ExploreHttpClient implements ExploreClient {
-  private static final Logger LOG = LoggerFactory.getLogger(BaseExploreClient.class);
-
   private final StatementExecutor executor = new StatementExecutor(
     MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(100)));
 
@@ -63,14 +60,12 @@ public abstract class BaseExploreClient extends ExploreHttpClient implements Exp
         return doDisableExplore(datasetInstance);
       }
     });
-    StatementExecutionFuture<ResultIterator> futureResults = getFutureResultsFromHandle(futureHandle);
+    StatementExecutionFuture futureResults = getFutureResultsFromHandle(futureHandle);
 
-    return Futures.transform(futureResults, new Function<ResultIterator, Boolean>() {
+    return Futures.transform(futureResults, new Function<Iterator<Result>, Boolean>() {
       @Nullable
       @Override
-      public Boolean apply(@Nullable ResultIterator input) {
-        // TODO really wondering how to deal with exceptions here...
-        // We actually never return false - exceptions will be thrown in case of an error
+      public Boolean apply(@Nullable Iterator<Result> input) {
         return true;
       }
     });
@@ -84,12 +79,12 @@ public abstract class BaseExploreClient extends ExploreHttpClient implements Exp
         return doEnableExplore(datasetInstance);
       }
     });
-    StatementExecutionFuture<ResultIterator> futureResults = getFutureResultsFromHandle(futureHandle);
+    StatementExecutionFuture futureResults = getFutureResultsFromHandle(futureHandle);
 
-    return Futures.transform(futureResults, new Function<ResultIterator, Boolean>() {
+    return Futures.transform(futureResults, new Function<Iterator<Result>, Boolean>() {
       @Nullable
       @Override
-      public Boolean apply(@Nullable ResultIterator input) {
+      public Boolean apply(@Nullable Iterator<Result> input) {
         // We actually never return false - exceptions will be thrown in case of an error
         return true;
       }
@@ -97,14 +92,11 @@ public abstract class BaseExploreClient extends ExploreHttpClient implements Exp
   }
 
   @Override
-  public StatementExecutionFuture<ResultIterator> execute(final String statement) {
+  public StatementExecutionFuture submit(final String statement) {
     final ListenableFuture<Handle> futureHandle = executor.submit(new Callable<Handle>() {
       @Override
       public Handle call() throws Exception {
-        // TODO What do we do here with the exception, where is it handled then?
-        // The people who receive the listenable future can use CheckedFuture to handle it
-        // see https://code.google.com/p/guava-libraries/wiki/ListenableFutureExplained#CheckedFuture
-        return doExecute(statement);
+        return execute(statement);
       }
     });
     return getFutureResultsFromHandle(futureHandle);
@@ -114,25 +106,25 @@ public abstract class BaseExploreClient extends ExploreHttpClient implements Exp
    * Create a {@link StatementExecutionFuture} object by polling the Explore service using the
    * {@link ListenableFuture} containing a {@link Handle}.
    */
-  private StatementExecutionFuture<ResultIterator> getFutureResultsFromHandle(
+  private StatementExecutionFuture getFutureResultsFromHandle(
     final ListenableFuture<Handle> futureHandle) {
     final BaseExploreClient client = this;
-    StatementExecutionFuture<ResultIterator> future = executor.submit(new Callable<ResultIterator>() {
+    StatementExecutionFuture future = executor.submit(new Callable<Iterator<Result>>() {
       @Override
-      public ResultIterator call() throws Exception {
+      public Iterator<Result> call() throws Exception {
         Handle handle = futureHandle.get();
 
         Status status;
         do {
           TimeUnit.MILLISECONDS.sleep(300);
-          status = client.doGetStatus(handle);
+          status = client.getStatus(handle);
         } while (status.getStatus() == Status.OpStatus.RUNNING || status.getStatus() == Status.OpStatus.PENDING ||
           status.getStatus() == Status.OpStatus.INITIALIZED || status.getStatus() == Status.OpStatus.UNKNOWN);
 
         switch (status.getStatus()) {
           case FINISHED:
             if (!status.hasResults()) {
-              client.doClose(handle);
+              client.close(handle);
             }
             return new ResultIteratorClient(client, handle, status.hasResults());
           default:
@@ -148,18 +140,18 @@ public abstract class BaseExploreClient extends ExploreHttpClient implements Exp
    * Result iterator which polls Explore service using HTTP to get next results.
    * TODO maybe we should take this class out of here
    */
-  public static final class ResultIteratorClient implements ResultIterator {
+  public static final class ResultIteratorClient implements Iterator<Result> {
     private static final Logger LOG = LoggerFactory.getLogger(ResultIteratorClient.class);
     private static final int POLLING_SIZE = 100;
 
-    private ResultIterator delegate;  // TODO test if it goes, otherwise change to Iterator<Result>
+    private Iterator<Result> delegate;
     private boolean hasNext = true;
 
-    private final BaseExploreClient exploreClient;
+    private final ExploreHttpClient exploreClient;
     private final Handle handle;
     private final boolean mayHaveResults;
 
-    public ResultIteratorClient(BaseExploreClient exploreClient, Handle handle, boolean mayHaveResults) {
+    public ResultIteratorClient(ExploreHttpClient exploreClient, Handle handle, boolean mayHaveResults) {
       this.exploreClient = exploreClient;
       this.handle = handle;
       this.mayHaveResults = mayHaveResults;
@@ -174,14 +166,14 @@ public abstract class BaseExploreClient extends ExploreHttpClient implements Exp
       if (delegate == null || !delegate.hasNext()) {
         try {
           // call the endpoint 'next' to get more results and set delegate
-          List<Result> nextResults = exploreClient.doNextResults(handle, POLLING_SIZE);
-          delegate = (ResultIterator) nextResults.iterator();
+          List<Result> nextResults = exploreClient.nextResults(handle, POLLING_SIZE);
+          delegate = nextResults.iterator();
 
           // At this point, if delegate has no result, there are no more results at all
           hasNext = delegate.hasNext();
           if (!hasNext) {
             LOG.trace("Closing query {} after fetching last results.", handle.getHandle());
-            exploreClient.doClose(handle);
+            exploreClient.close(handle);
           }
           return hasNext;
         } catch (ExploreException e) {

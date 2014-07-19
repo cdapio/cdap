@@ -14,38 +14,40 @@
  * the License.
  */
 
-package com.continuuity.explore.service;
+package com.continuuity.explore.client;
+
+import com.continuuity.explore.service.ColumnDesc;
+import com.continuuity.explore.service.ExploreException;
+import com.continuuity.explore.service.Handle;
+import com.continuuity.explore.service.HandleNotFoundException;
+import com.continuuity.explore.service.Result;
 
 import com.google.common.util.concurrent.ForwardingListenableFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.util.Iterator;
 import java.util.List;
 
 /**
  * Future object that eventually contains the result of the execution of a statement by Explore.
- *
- * @param <T> Type of the result object.
  */
-// TODO can remove the parameter T now, right? Let's see if there are other types than ResultIterator first
-public abstract class StatementExecutionFuture<T>
-  extends ForwardingListenableFuture.SimpleForwardingListenableFuture<T> implements ListenableFuture<T> {
-
-  protected StatementExecutionFuture(ListenableFuture<T> delegate) {
-    super(delegate);
-  }
+public abstract class StatementExecutionFuture
+  extends ForwardingListenableFuture.SimpleForwardingListenableFuture<Iterator<Result>>
+  implements ListenableFuture<Iterator<Result>> {
 
   /**
    * Get the results' schema. This method is there so that we don't have to wait for the whole execution
    * of a query to have access to the schema.
    *
-   * @return a list of {@link ColumnDesc} representing the schema of the results. Empty list if there are no results.
-   * @throws ExploreException on any error fetching schema.
-   * @throws HandleNotFoundException when handle is not found.
+   * @return a list of {@link com.continuuity.explore.service.ColumnDesc} representing the schema of the results.
+   *         Empty list if there are no results.
+   * @throws com.continuuity.explore.service.ExploreException on any error fetching schema.
+   * @throws com.continuuity.explore.service.HandleNotFoundException when handle is not found.
    */
   public abstract List<ColumnDesc> getResultSchema() throws ExploreException, HandleNotFoundException;
 
   /**
-   * Get the handle used by the Explore service to represent the execution of the statement.
+   * Get the handle used by the Explore service to execute the statement.
    */
   public abstract ListenableFuture<Handle> getFutureStatementHandle();
 
@@ -55,7 +57,11 @@ public abstract class StatementExecutionFuture<T>
   public abstract void close() throws ExploreException, HandleNotFoundException;
 
   /**
-   * Cancel the query execution.
+   * Cancel the query execution. This method does not call cancel on the future object.
    */
   public abstract void cancel() throws ExploreException, HandleNotFoundException;
+
+  protected StatementExecutionFuture(ListenableFuture<Iterator<Result>> delegate) {
+    super(delegate);
+  }
 }

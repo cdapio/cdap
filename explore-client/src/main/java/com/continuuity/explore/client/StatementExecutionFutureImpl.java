@@ -20,35 +20,28 @@ import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.StatementExecutionFuture;
-import com.continuuity.explore.service.UnexpectedQueryStatusException;
+import com.continuuity.explore.service.Result;
 
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.SQLException;
+import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 
 /**
- * Implementation of {@link StatementExecutionFuture} used in Explore client.
  *
- * @param <T> Type of the result object.
  */
-public class StatementClientExecutionFuture<T> extends StatementExecutionFuture<T> {
-  private static final Logger LOG = LoggerFactory.getLogger(StatementClientExecutionFuture.class);
+class StatementExecutionFutureImpl extends StatementExecutionFuture {
+  private static final Logger LOG = LoggerFactory.getLogger(StatementExecutionFutureImpl.class);
 
-  private final BaseExploreClient exploreClient;
+  private final ExploreHttpClient exploreClient;
   private final ListenableFuture<Handle> futureHandle;
 
-  protected StatementClientExecutionFuture(ListenableFuture<T> delegate, BaseExploreClient exploreClient,
-                                           ListenableFuture<Handle> futureHandle) {
+  StatementExecutionFutureImpl(ListenableFuture<Iterator<Result>> delegate, ExploreHttpClient exploreClient,
+                               ListenableFuture<Handle> futureHandle) {
     super(delegate);
     this.exploreClient = exploreClient;
     this.futureHandle = futureHandle;
@@ -58,7 +51,7 @@ public class StatementClientExecutionFuture<T> extends StatementExecutionFuture<
   public List<ColumnDesc> getResultSchema() throws ExploreException, HandleNotFoundException {
     try {
       Handle handle = futureHandle.get();
-      return exploreClient.doGetResultSchema(handle);
+      return exploreClient.getResultSchema(handle);
     } catch (InterruptedException e) {
       LOG.error("Caught exception", e);
       Throwables.propagate(e);
@@ -86,7 +79,7 @@ public class StatementClientExecutionFuture<T> extends StatementExecutionFuture<
   public void close() throws ExploreException, HandleNotFoundException {
     try {
       Handle handle = futureHandle.get();
-      exploreClient.doCancel(handle);
+      exploreClient.close(handle);
     } catch (InterruptedException e) {
       LOG.error("Caught exception", e);
       Throwables.propagate(e);
@@ -94,7 +87,7 @@ public class StatementClientExecutionFuture<T> extends StatementExecutionFuture<
       LOG.error("Caught exception", e);
       Throwable t = e.getCause();
       if (t instanceof ExploreException) {
-        LOG.error("Error in operation execution", t);
+        LOG.error("Error when closing the execution", t);
         throw (ExploreException) t;
       } else if (t instanceof HandleNotFoundException) {
         LOG.error("Caught exception", e);
@@ -108,7 +101,7 @@ public class StatementClientExecutionFuture<T> extends StatementExecutionFuture<
   public void cancel() throws ExploreException, HandleNotFoundException {
     try {
       Handle handle = futureHandle.get();
-      exploreClient.doClose(handle);
+      exploreClient.cancel(handle);
     } catch (InterruptedException e) {
       LOG.error("Caught exception", e);
       Throwables.propagate(e);
@@ -116,7 +109,7 @@ public class StatementClientExecutionFuture<T> extends StatementExecutionFuture<
       LOG.error("Caught exception", e);
       Throwable t = e.getCause();
       if (t instanceof ExploreException) {
-        LOG.error("Error in operation execution", t);
+        LOG.error("Error when cancelling the execution", t);
         throw (ExploreException) t;
       } else if (t instanceof HandleNotFoundException) {
         LOG.error("Caught exception", e);
@@ -125,5 +118,4 @@ public class StatementClientExecutionFuture<T> extends StatementExecutionFuture<
       throw new ExploreException(t);
     }
   }
-
 }

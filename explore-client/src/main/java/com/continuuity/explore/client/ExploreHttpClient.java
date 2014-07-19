@@ -22,6 +22,7 @@ import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
 import com.continuuity.explore.service.ColumnDesc;
+import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
@@ -52,7 +53,7 @@ import javax.annotation.Nullable;
  * contained in their json responses. This class is only meant to be extended by classes
  * which implement ExploreClient.
  */
-abstract class ExploreHttpClient {
+abstract class ExploreHttpClient implements Explore {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreHttpClient.class);
   private static final Gson GSON = new Gson();
 
@@ -90,7 +91,8 @@ abstract class ExploreHttpClient {
                                  getDetails(response));
   }
 
-  protected Handle doExecute(String statement) throws ExploreException {
+  @Override
+  public Handle execute(String statement) throws ExploreException {
     HttpResponse response = doPost("data/queries", GSON.toJson(ImmutableMap.of("query", statement)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
@@ -98,7 +100,8 @@ abstract class ExploreHttpClient {
     throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
   }
 
-  protected Status doGetStatus(Handle handle) throws ExploreException, HandleNotFoundException {
+  @Override
+  public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException {
     HttpResponse response = doGet(String.format("data/queries/%s/%s", handle.getHandle(), "status"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, Status.class);
@@ -106,7 +109,8 @@ abstract class ExploreHttpClient {
     throw new ExploreException("Cannot get status. Reason: " + getDetails(response));
   }
 
-  protected List<ColumnDesc> doGetResultSchema(Handle handle) throws ExploreException, HandleNotFoundException {
+  @Override
+  public List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException, HandleNotFoundException {
     HttpResponse response = doGet(String.format("data/queries/%s/%s", handle.getHandle(), "schema"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, COL_DESC_LIST_TYPE);
@@ -114,7 +118,8 @@ abstract class ExploreHttpClient {
     throw new ExploreException("Cannot get result schema. Reason: " + getDetails(response));
   }
 
-  protected List<Result> doNextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
+  @Override
+  public List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
     HttpResponse response = doPost(String.format("data/queries/%s/%s", handle.getHandle(), "next"),
                                    GSON.toJson(ImmutableMap.of("size", size)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
@@ -123,7 +128,8 @@ abstract class ExploreHttpClient {
     throw new ExploreException("Cannot get next results. Reason: " + getDetails(response));
   }
 
-  protected void doCancel(Handle handle) throws ExploreException, HandleNotFoundException {
+  @Override
+  public void cancel(Handle handle) throws ExploreException, HandleNotFoundException {
     HttpResponse response = doPost(String.format("data/queries/%s/%s", handle.getHandle(), "cancel"), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return;
@@ -131,7 +137,8 @@ abstract class ExploreHttpClient {
     throw new ExploreException("Cannot cancel operation. Reason: " + getDetails(response));
   }
 
-  protected void doClose(Handle handle) throws ExploreException, HandleNotFoundException {
+  @Override
+  public void close(Handle handle) throws ExploreException, HandleNotFoundException {
     HttpResponse response = doDelete(String.format("data/queries/%s", handle.getHandle()));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return;

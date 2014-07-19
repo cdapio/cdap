@@ -36,11 +36,11 @@ public class ExploreStatementTest {
   @Test
   public void executeTest() throws Exception {
     ExploreClient exploreClient = new MockExploreClient(
-        ImmutableMap.of("foobar", (List<ColumnDesc>) Lists.newArrayList(
+        ImmutableMap.of("mock_query", (List<ColumnDesc>) Lists.newArrayList(
             new ColumnDesc("column1", "STRING", 1, ""),
             new ColumnDesc("column2", "int", 2, "")
         )),
-        ImmutableMap.of("foobar", (List<Result>) Lists.<Result>newArrayList())
+        ImmutableMap.of("mock_query", (List<Result>) Lists.<Result>newArrayList())
     );
 
     // Make sure an empty query still has a ResultSet associated to it

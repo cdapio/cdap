@@ -50,7 +50,7 @@ public class ExploreConnection implements Connection {
   private ExploreClient exploreClient;
   private boolean isClosed = false;
 
-  public ExploreConnection(ExploreClient exploreClient) {
+  ExploreConnection(ExploreClient exploreClient) {
     this.exploreClient = exploreClient;
   }
 

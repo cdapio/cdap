@@ -44,8 +44,10 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.sql.SQLException;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -340,5 +342,35 @@ public class ExploreServiceUtils {
     return jarFiles;
   }
 
+  /**
+   * Polls for state of the operation represented by the {@link Handle}, and returns when operation has completed
+   * execution.
+   *
+   * @param exploreService explore service used to poll status.
+   * @param handle handle representing the operation.
+   * @param sleepTime time to sleep between pooling.
+   * @param timeUnit unit of sleepTime.
+   * @param maxTries max number of times to poll.
+   * @return completion status of the operation, null on reaching maxTries.
+   * @throws ExploreException
+   * @throws HandleNotFoundException
+   * @throws InterruptedException
+   */
+  static Status waitForCompletionStatus(ExploreService exploreService, Handle handle,
+                                        long sleepTime, TimeUnit timeUnit, int maxTries)
+    throws ExploreException, HandleNotFoundException, InterruptedException, SQLException {
+    Status status;
+    int tries = 0;
+    do {
+      timeUnit.sleep(sleepTime);
+      status = exploreService.getStatus(handle);
+
+      if (++tries > maxTries) {
+        break;
+      }
+    } while (status.getStatus() == Status.OpStatus.RUNNING || status.getStatus() == Status.OpStatus.PENDING ||
+      status.getStatus() == Status.OpStatus.INITIALIZED || status.getStatus() == Status.OpStatus.UNKNOWN);
+    return status;
+  }
 
 }
