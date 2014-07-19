@@ -17,11 +17,11 @@
 package com.continuuity.data2.transaction.snapshot;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data2.transaction.TxConstants;
-import com.continuuity.data2.transaction.inmemory.ChangeId;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.persist.TransactionSnapshot;
+import com.continuuity.tephra.TxConstants;
+import com.continuuity.tephra.inmemory.ChangeId;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.persist.TransactionSnapshot;
+import com.continuuity.tephra.snapshot.SnapshotCodecProvider;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;

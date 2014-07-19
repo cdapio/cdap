@@ -24,7 +24,7 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.file.FileWriter;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetsModules;
-import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
+import com.continuuity.data.runtime.TransactionMetricsModule;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.inject.AbstractModule;

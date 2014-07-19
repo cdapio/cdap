@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.continuuity.data2.transaction.runtime;
+package com.continuuity.data.runtime;
 
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.NoOpMetricsCollectionService;

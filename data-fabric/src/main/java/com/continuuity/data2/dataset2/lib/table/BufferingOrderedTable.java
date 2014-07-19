@@ -22,8 +22,8 @@ import com.continuuity.api.dataset.metrics.MeteredDataset;
 import com.continuuity.api.dataset.table.ConflictDetection;
 import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.api.dataset.table.TableSplit;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionAware;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -39,7 +39,7 @@ import java.util.NavigableMap;
 import javax.annotation.Nullable;
 
 /**
- * An abstract {@link com.continuuity.data2.transaction.TransactionAware} implementation of
+ * An abstract {@link com.continuuity.tephra.TransactionAware} implementation of
  * {@link com.continuuity.api.dataset.table.OrderedTable}
  * which keeps data in memory buffer until transaction commits.
  * <p>

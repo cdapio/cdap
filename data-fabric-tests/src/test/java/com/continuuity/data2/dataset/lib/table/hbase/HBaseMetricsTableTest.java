@@ -26,9 +26,8 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.data.runtime.TransactionMetricsModule;
 import com.continuuity.data2.dataset.lib.table.MetricsTableTest;
-import com.continuuity.data2.transaction.TxConstants;
-import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.test.SlowTests;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -48,7 +47,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
     CConfiguration conf = CConfiguration.create();
-    conf.unset(Constants.CFG_HDFS_USER);
+    conf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     Injector injector = Guice.createInjector(new DataFabricDistributedModule(),
                                              new ConfigModule(conf, testHBase.getConfiguration()),
                                              new ZKClientModule(),
