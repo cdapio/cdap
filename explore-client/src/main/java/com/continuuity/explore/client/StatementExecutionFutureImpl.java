@@ -32,7 +32,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /**
- *
+ * Statement execution future implementation. The overridden methods use an {@link ExploreHttpClient}
+ * instance internally.
  */
 class StatementExecutionFutureImpl extends StatementExecutionFuture {
   private static final Logger LOG = LoggerFactory.getLogger(StatementExecutionFutureImpl.class);

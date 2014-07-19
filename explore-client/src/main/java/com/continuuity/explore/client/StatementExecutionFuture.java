@@ -29,7 +29,9 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Future object that eventually contains the result of the execution of a statement by Explore.
+ * Future object that eventually contains the results of the execution of a statement by Explore.
+ * The {@link #get()} method returns an {@link java.util.Iterator} on {@link com.continuuity.explore.service.Result}
+ * objects.
  */
 public abstract class StatementExecutionFuture
   extends ForwardingListenableFuture.SimpleForwardingListenableFuture<Iterator<Result>>
