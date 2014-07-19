@@ -3461,3 +3461,21 @@ div.tooltip {
   border-top: 0;
   border-bottom: 1px solid #EEE;
 }
+
+/**
+ *User Services stop-start
+ */
+.alianwarstart {
+  background: black;
+	background-image: url('/assets/img/v2/play_active_icon.png');
+	background-size: contain;
+	width: 20px;
+	height: 20px
+}
+.alianwarstop {
+  background: black;
+	background-image: url('/assets/img/v2/stop_active_icon.png');
+	background-size: contain;
+	width: 20px;
+	height: 20px
+}

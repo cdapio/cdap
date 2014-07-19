@@ -187,16 +187,17 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
     {"type":"App","id":"PurchaseHistory","name":"PurchaseHistory","description":"Purchase history app"}];
 
 // User Services:
-  nock(clientAddr, options)
-    .get('/v2/apps').times(1)
+/*  nock(clientAddr, options)
+    .get('/v2/apps').times(8)
     .reply(200, tmp);
-
+*/
+/*
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps')
-    .reply(200, [tmp[0]]);
-
-
+    .reply(200, [tmp[1]]);
+    */
+//END - TESTING removal from UI when removing an app.
 
   nock(clientAddr, options)
     .persist()
@@ -211,7 +212,7 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
 
   nock(clientAddr, options)
     .persist()
-    .get('/v2/apps/CountCounts/services/loadgen/runnables/runnableID/instances')
+    .get('/v2/apps/CountCounts/services/loadgen/runnables/streamEventGen/instances')
     .reply(200, apps.CountCounts.services.loadgen.instances);
 
   nock(clientAddr, options)
@@ -242,7 +243,7 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
 
   nock(clientAddr, options)
     .persist()
-    .get('/v2/apps/CountCounts/services/simpleName/runnables/runnableID/instances')
+    .get('/v2/apps/CountCounts/services/simpleName/runnables/streamEventGen/instances')
     .reply(200, apps.CountCounts.services.loadgen.instances);
 
   nock(clientAddr, options)
@@ -264,4 +265,6 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
     .persist()
     .get('/v2/apps/CountCounts/services/simpleName/live-info')
     .reply(200, apps.CountCounts.services.loadgen.liveinfo);
+
+
 };

@@ -274,11 +274,44 @@
               </td>
               <td class="center-align">
                   <div class="btn-group start-stop-btns">
-                      <button class="btn start" {{action start this.appID this.id}}><img src="/assets/img/v2/play_active_icon.png"></button>
-                      <button class="btn stop" {{action stop this.appID this.id}}><img src="/assets/img/v2/stop_active_icon.png"></button>
+                      <button class="alianwarstart" {{action start this.appID this.id}}></button>
+                      <button class="alianwarstop" {{action stop this.appID this.id}}></button>
                   </div>
               </td>
             </tr>
+            {{!--  RUNNABLES ROWS --}}
+              {{#each this.runnablesList}}
+              <tr>
+              <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
+                {{this.name}}
+              </a>
+                <br />
+                <span class="app-list-status">runnable</span>
+              </td>
+              <td style="max-width: 100px;" class="status-col center-align">
+                {{!-- removed status icon from here --}}
+              </td>
+              <td style="max-width: 200px;" class="instance-col">
+                <div class="instance-wrapper">
+                  <div class="instance-num"><span>{{this.requested}}</span></div>
+                  <div>
+                    <a class="cursor-pointer" {{action decreaseInstance this.name this.requested }}>
+                      <span class="minus-icon"></span>
+                    </a>
+                    <a class="cursor-pointer" {{action increaseInstance this.name this.requested }}>
+                      <span class="plus-icon"></span>
+                    </a>
+                  </div>
+                </div>
+              <td style="max-width: 350px;" class="instance-provisioned service-col">
+                  <div class="instance-num auto-margin"><span>{{this.provisioned}}</span></div>
+              </td>
+              <td class="center-align">
+                {{!-- removed start/stop buttons from here --}}
+              </td>
+            </tr>
+            {{/each}}
+            {{!--  RUNNABLES ROWS --}}
           {{/each}}
           </tbody>
         </table>
