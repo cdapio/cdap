@@ -16,7 +16,9 @@
 
 package com.continuuity.data2.transaction.snapshot;
 
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.snapshot.BinaryDecoder;
+import com.continuuity.tephra.snapshot.BinaryEncoder;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;
@@ -24,7 +26,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 
 /**
- * Handles serialization/deserialization of a {@link com.continuuity.data2.transaction.persist.TransactionSnapshot}
+ * Handles serialization/deserialization of a {@link com.continuuity.tephra.persist.TransactionSnapshot}
  * and its elements to {@code byte[]}.
  */
 public class SnapshotCodecV2 extends AbstractSnapshotCodec {

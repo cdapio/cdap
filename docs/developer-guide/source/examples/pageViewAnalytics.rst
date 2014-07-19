@@ -48,17 +48,26 @@ The PageViewAnalytics Application
 As in the other `examples <index.html>`__, the components
 of the Application are tied together by the class ``PageViewAnalyticsApp``::
 
-	public class PageViewAnalyticsApp extends AbstractApplication {
+  public class PageViewAnalyticsApp extends AbstractApplication {
+
     @Override
     public void configure() {
       setName("PageViewAnalytics");
       setDescription("Page view analysis");
+      
+      // Ingest data into the Application via Streams
       addStream(new Stream("logEventStream"));
+      
+      // Store processed data in Datasets
       createDataSet("pageViewCDS", PageViewStore.class);
+      
+      // Process log events in real-time using Flows
       addFlow(new LogAnalyticsFlow());
+      
+      // Query the processed data using a Procedure
       addProcedure(new PageViewProcedure());
     }
-
+    // ...
 
 ``PageViewStore``: Custom Data Storage
 --------------------------------------

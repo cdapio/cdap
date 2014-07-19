@@ -20,13 +20,14 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecV1;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecV2;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
+import com.continuuity.tephra.coprocessor.TransactionStateCache;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 
 import java.io.IOException;
 
 /**
- * Extends the {@link com.continuuity.data2.transaction.coprocessor.TransactionStateCache} implementation for
+ * Extends the {@link TransactionStateCache} implementation for
  * transaction coprocessors with a version that reads transaction configuration properties from
  * {@link ConfigurationTable}.  This allows the coprocessors to pick up configuration changes without requiring
  * a restart.

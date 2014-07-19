@@ -19,7 +19,7 @@ package com.continuuity.explore.service;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.tephra.Transaction;
 import com.continuuity.test.XSlowTests;
 
 import com.google.common.collect.ImmutableList;

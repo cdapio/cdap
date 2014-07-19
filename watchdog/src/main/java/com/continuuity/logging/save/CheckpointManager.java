@@ -18,10 +18,10 @@ package com.continuuity.logging.save;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.tephra.DefaultTransactionExecutor;
+import com.continuuity.tephra.TransactionAware;
+import com.continuuity.tephra.TransactionExecutor;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableList;
 
 import java.util.concurrent.Callable;

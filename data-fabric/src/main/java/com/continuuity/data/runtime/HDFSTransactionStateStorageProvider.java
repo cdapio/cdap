@@ -16,8 +16,8 @@
 
 package com.continuuity.data.runtime;
 
-import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
-import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
+import com.continuuity.tephra.persist.HDFSTransactionStateStorage;
+import com.continuuity.tephra.snapshot.SnapshotCodecProvider;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.hadoop.conf.Configuration;

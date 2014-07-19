@@ -18,7 +18,7 @@ package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.AbstractInMemoryReactorServiceManager;
-import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.google.inject.Inject;
 
 /**

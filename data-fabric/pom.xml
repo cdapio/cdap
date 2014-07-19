@@ -38,9 +38,8 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
-      <artifactId>tx-core</artifactId>
-      <version>${project.version}</version>
+      <groupId>com.continuuity.tephra</groupId>
+      <artifactId>tephra-core</artifactId>
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>

@@ -16,6 +16,8 @@
 
 package com.continuuity.data2.transaction.coprocessor;
 
+import com.continuuity.tephra.coprocessor.TransactionStateCache;
+import com.continuuity.tephra.coprocessor.TransactionStateCacheSupplier;
 import org.apache.hadoop.conf.Configuration;
 
 /**

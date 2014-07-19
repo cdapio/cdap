@@ -16,10 +16,9 @@
 
 package com.continuuity.data.runtime;
 
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.metrics.TxMetricsCollector;
-import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.metrics.TxMetricsCollector;
+import com.continuuity.tephra.persist.TransactionStateStorage;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.hadoop.conf.Configuration;

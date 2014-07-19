@@ -44,6 +44,14 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.continuuity.tephra</groupId>
+      <artifactId>tephra-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.continuuity.tephra</groupId>
+      <artifactId>tephra-core</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
     </dependency>

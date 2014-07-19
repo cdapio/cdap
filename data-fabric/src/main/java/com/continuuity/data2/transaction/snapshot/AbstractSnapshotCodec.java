@@ -16,9 +16,12 @@
 
 package com.continuuity.data2.transaction.snapshot;
 
-import com.continuuity.data2.transaction.inmemory.ChangeId;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.persist.TransactionSnapshot;
+import com.continuuity.tephra.inmemory.ChangeId;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.persist.TransactionSnapshot;
+import com.continuuity.tephra.snapshot.BinaryDecoder;
+import com.continuuity.tephra.snapshot.BinaryEncoder;
+import com.continuuity.tephra.snapshot.SnapshotCodec;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -36,7 +39,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * Handles serialization/deserialization of a {@link com.continuuity.data2.transaction.persist.TransactionSnapshot} and
+ * Handles serialization/deserialization of a {@link com.continuuity.tephra.persist.TransactionSnapshot} and
  * its elements to {@code byte[]}.
  */
 public abstract class AbstractSnapshotCodec implements SnapshotCodec {

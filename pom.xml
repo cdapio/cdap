@@ -36,6 +36,10 @@
       <id>apache.snapshots</id>
       <url>https://repository.apache.org/content/repositories/snapshots</url>
     </repository>
+    <repository>
+      <id>continuuity-public</id>
+      <url>https://repository.continuuity.com/content/repositories/public</url>
+    </repository>
   </repositories>
 
   <distributionManagement>
@@ -58,6 +62,7 @@
     <gson.version>2.2.4</gson.version>
     <guava.version>13.0.1</guava.version>
     <slf4j.version>1.7.5</slf4j.version>
+    <tephra.version>0.1.0</tephra.version>
     <twill.version>0.4.0-incubating-SNAPSHOT</twill.version>
   </properties>
 
@@ -84,10 +89,6 @@
     <module>continuuity-test</module>
     <module>reactor-master</module>
     <module>web-app</module>
-    <module>tx-api</module>
-    <module>tx-core</module>
-    <module>tx-hbase-compat-0.94</module>
-    <module>tx-hbase-compat-0.96</module>
     <module>singlenode</module>
     <module>distributions</module>
   </modules>
@@ -113,6 +114,11 @@
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.continuuity.tephra</groupId>
+        <artifactId>tephra-api</artifactId>
+        <version>${tephra.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.twill</groupId>

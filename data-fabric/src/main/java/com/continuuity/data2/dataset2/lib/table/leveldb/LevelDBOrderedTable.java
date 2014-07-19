@@ -20,7 +20,7 @@ import com.continuuity.api.dataset.table.ConflictDetection;
 import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.dataset2.lib.table.BackedByVersionedStoreOrderedTable;
-import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.tephra.Transaction;
 
 import java.io.IOException;
 import java.util.NavigableMap;

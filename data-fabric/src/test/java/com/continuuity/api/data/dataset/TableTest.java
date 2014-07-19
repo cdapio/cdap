@@ -28,7 +28,7 @@ import com.continuuity.data.dataset.DataSetTestBase;
 import com.continuuity.data.table.RuntimeTable;
 import com.continuuity.data2.dataset.lib.table.BufferingOcTableClient;
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
-import com.continuuity.data2.transaction.TransactionContext;
+import com.continuuity.tephra.TransactionContext;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
