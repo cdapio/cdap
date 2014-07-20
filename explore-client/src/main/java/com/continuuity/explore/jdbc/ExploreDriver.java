@@ -22,6 +22,7 @@ import com.continuuity.explore.client.FixedAddressExploreClient;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.annotation.meta.param;
 
 import java.net.URI;
 import java.sql.Connection;
@@ -33,8 +34,9 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 
 /**
- * Explore JDBC Driver. A proper URL is of the form: jdbc:reactor://<host>:<port>,
- * Where host and port point to Reactor http interface where Explore is enabled.
+ * Explore JDBC Driver. A proper URL is of the form: jdbc:reactor://<host>:<port>?<param1>=<value1>[;<param2>=<value2>],
+ * Where host and port point to Reactor http interface where Explore is enabled, and the additional parameters are from
+ * the {@link com.continuuity.explore.jdbc.ExploreJDBCUtils.ConnectionParams.Info} enum.
  */
 public class ExploreDriver implements Driver {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreDriver.class);
@@ -56,10 +58,12 @@ public class ExploreDriver implements Driver {
     if (!acceptsURL(url)) {
       return null;
     }
-    URI jdbcURI = URI.create(url.substring(ExploreJDBCUtils.URI_JDBC_PREFIX.length()));
-    String host = jdbcURI.getHost();
-    int port = jdbcURI.getPort();
-    ExploreClient exploreClient = new FixedAddressExploreClient(host, port);
+    ExploreJDBCUtils.ConnectionParams params = ExploreJDBCUtils.parseConnectionUrl(url);
+
+    ExploreClient exploreClient =
+      new FixedAddressExploreClient(params.getHost(), params.getPort(),
+                                    params.getExtraInfos().get(
+                                      ExploreJDBCUtils.ConnectionParams.Info.EXPLORE_AUTH_TOKEN));
     if (!exploreClient.isAvailable()) {
       throw new SQLException("Cannot connect to " + url + ", service unavailable");
     }
