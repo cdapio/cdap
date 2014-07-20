@@ -17,7 +17,7 @@
 package com.continuuity.api;
 
 import com.continuuity.jetstream.api.AbstractInputFlowlet;
-import com.continuuity.jetstream.api.PrimitiveType;
+import com.continuuity.jetstream.api.GDATFieldType;
 import com.continuuity.jetstream.api.StreamSchema;
 
 /**
@@ -28,9 +28,9 @@ public class InvalidInputFlowlet extends AbstractInputFlowlet {
   @Override
   public void create() {
     setName("invalidFlowlet");
-    StreamSchema schema = StreamSchema.Builder.with()
-      .field("abcd", PrimitiveType.UINT)
-      .field("abcd", PrimitiveType.LLONG)
+    StreamSchema schema = new StreamSchema.Builder()
+      .addField("abcd", GDATFieldType.UINT)
+      .addField("abcd", GDATFieldType.LLONG)
       .build();
     addGDATInput("invalidInput", schema);
     addGSQL("sql", "SELECT * FROM invalidInput");

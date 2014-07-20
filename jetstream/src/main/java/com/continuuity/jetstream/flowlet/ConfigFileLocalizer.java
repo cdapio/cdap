@@ -21,5 +21,5 @@ package com.continuuity.jetstream.flowlet;
  */
 public interface ConfigFileLocalizer {
 
-  public void localizeConfigFiles(InputFlowletSpecification spec);
+  void localizeConfigFiles(InputFlowletSpecification spec);
 }

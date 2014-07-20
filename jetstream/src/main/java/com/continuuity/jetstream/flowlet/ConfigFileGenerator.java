@@ -23,13 +23,13 @@ import java.util.Map;
  */
 public interface ConfigFileGenerator {
 
-  public String generatePacketSchema(InputFlowletSpecification spec);
+  String generatePacketSchema(InputFlowletSpecification spec);
 
-  public String generateOutputSpec(InputFlowletSpecification spec);
+  String generateOutputSpec(InputFlowletSpecification spec);
 
-  public Map<String, String> generateGSQLFiles(InputFlowletSpecification spec);
+  Map<String, String> generateGSQLFiles(InputFlowletSpecification spec);
 
-  public Map.Entry<String, String> generateHostIfq();
+  Map.Entry<String, String> generateHostIfq();
 
-  public String generateIfresXML();
+  String generateIfresXML();
 }

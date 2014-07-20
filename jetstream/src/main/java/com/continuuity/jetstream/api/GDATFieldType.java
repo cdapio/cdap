@@ -14,27 +14,28 @@
  * the License.
  */
 
-package com.continuuity.jetstream.internal;
-
-import com.continuuity.jetstream.api.GDATField;
-import com.continuuity.jetstream.api.StreamSchema;
-
-import java.util.List;
+package com.continuuity.jetstream.api;
 
 /**
- * Default StreamSchema.
+ * PrimitiveTypes used in the GDAT format.
  */
-public class DefaultStreamSchema implements StreamSchema {
+public enum GDATFieldType {
+  BOOL("bool"),
+  USHORT("ushort"),
+  UINT("uint"),
+  INT("int"),
+  ULLONG("ullong"),
+  LLONG("llong"),
+  FLOAT("float"),
+  STRING("string");
 
-  private List<GDATField> fields;
+  private String type;
 
-  public DefaultStreamSchema(List<GDATField> fields) {
-    this.fields = fields;
+  private GDATFieldType(String type) {
+    this.type = type;
   }
 
-  @Override
-  public List<GDATField> getFields() {
-    return fields;
+  public String getTypeName() {
+    return type;
   }
-
 }

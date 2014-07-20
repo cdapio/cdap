@@ -14,27 +14,23 @@
  * the License.
  */
 
-package com.continuuity.jetstream.internal;
-
-import com.continuuity.jetstream.api.GDATField;
-import com.continuuity.jetstream.api.StreamSchema;
-
-import java.util.List;
+package com.continuuity.jetstream.api;
 
 /**
- * Default StreamSchema.
+ * Sliding Window Attribute used in GDAT.
  */
-public class DefaultStreamSchema implements StreamSchema {
+public enum GDATSlidingWindowAttribute {
+  INCREASING(" (increasing) "),
+  DECREASING(" (decreasing) "),
+  NONE("");
 
-  private List<GDATField> fields;
+  private String attribute;
 
-  public DefaultStreamSchema(List<GDATField> fields) {
-    this.fields = fields;
+  private GDATSlidingWindowAttribute(String attribute) {
+    this.attribute = attribute;
   }
 
-  @Override
-  public List<GDATField> getFields() {
-    return fields;
+  public String getAttribute() {
+    return attribute;
   }
-
 }

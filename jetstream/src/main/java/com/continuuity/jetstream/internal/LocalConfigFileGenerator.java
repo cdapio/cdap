@@ -16,7 +16,7 @@
 
 package com.continuuity.jetstream.internal;
 
-import com.continuuity.jetstream.api.PrimitiveType;
+import com.continuuity.jetstream.api.GDATField;
 import com.continuuity.jetstream.api.StreamSchema;
 import com.continuuity.jetstream.flowlet.ConfigFileGenerator;
 import com.continuuity.jetstream.flowlet.InputFlowletSpecification;
@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Config File Content Generator.
@@ -125,17 +124,11 @@ public class LocalConfigFileGenerator implements ConfigFileGenerator {
   private String createProtocol(String name, StreamSchema schema) {
     StringBuilder stringBuilder = new StringBuilder();
     stringBuilder.append("PROTOCOL ").append(name).append(" {").append(NEWLINE);
-    Set<String> increasingFields = schema.getIncreasingFields();
-    Set<String> decreasingFields = schema.getDecreasingFields();
     int fieldCount = 1;
-    for (Map.Entry<String, PrimitiveType> entry : schema.getFieldNames().entrySet()) {
-      stringBuilder.append(entry.getValue().getType()).append(" ").append(entry.getKey()).append(" get_gdat_")
-        .append(entry.getValue().getType()).append("_pos").append(fieldCount);
-      if (increasingFields.contains(entry.getKey())) {
-        stringBuilder.append(" (increasing)");
-      } else if (decreasingFields.contains(entry.getKey())) {
-        stringBuilder.append(" (decreasing)");
-      }
+    for (GDATField field : schema.getFields()) {
+      stringBuilder.append(field.getType().getTypeName()).append(" ").append(field.getName()).append(" get_gdat_")
+        .append(field.getType().getTypeName()).append("_pos").append(fieldCount);
+      stringBuilder.append(field.getSlidingWindowType().getAttribute());
       stringBuilder.append(";").append(NEWLINE);
       fieldCount++;
     }

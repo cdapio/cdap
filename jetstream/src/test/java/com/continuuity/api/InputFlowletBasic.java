@@ -17,7 +17,8 @@
 package com.continuuity.api;
 
 import com.continuuity.jetstream.api.AbstractInputFlowlet;
-import com.continuuity.jetstream.api.PrimitiveType;
+import com.continuuity.jetstream.api.GDATFieldType;
+import com.continuuity.jetstream.api.GDATSlidingWindowAttribute;
 import com.continuuity.jetstream.api.StreamSchema;
 
 /**
@@ -29,9 +30,9 @@ public class InputFlowletBasic extends AbstractInputFlowlet {
   public void create() {
     setName("summation");
     setDescription("sums up the input value over a timewindow");
-    StreamSchema schema = StreamSchema.Builder.with()
-      .increasingField("timestamp", PrimitiveType.ULLONG)
-      .field("iStream", PrimitiveType.UINT)
+    StreamSchema schema = new StreamSchema.Builder()
+      .addField("timestamp", GDATFieldType.ULLONG, GDATSlidingWindowAttribute.INCREASING)
+      .addField("iStream", GDATFieldType.UINT)
       .build();
     addGDATInput("intInput", schema);
     addGSQL("sumOut", "SELECT timestamp, SUM(iStream) as summation FROM intInput GROUP BY timestamp");

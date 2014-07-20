@@ -17,15 +17,11 @@
 package com.continuuity.api;
 
 import com.continuuity.jetstream.api.AbstractInputFlowlet;
-import com.continuuity.jetstream.api.PrimitiveType;
 import com.continuuity.jetstream.api.StreamSchema;
 import com.continuuity.jetstream.flowlet.InputFlowletSpecification;
 import com.continuuity.jetstream.internal.DefaultInputFlowletConfigurer;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * Tests the InputFlowletSpecification.
@@ -43,18 +39,7 @@ public class InputFlowetSpecificationTest {
     Assert.assertEquals(spec.getGDATInputSchema().size(), 1);
     Assert.assertTrue(spec.getGDATInputSchema().containsKey("intInput"));
     StreamSchema schema = spec.getGDATInputSchema().get("intInput");
-    Assert.assertEquals(schema.getIncreasingFields().size(), 1);
-    Assert.assertTrue(schema.getIncreasingFields().contains("timestamp"));
-    Assert.assertEquals(schema.getDecreasingFields().size(), 0);
-    Assert.assertEquals(schema.getFieldNames().size(), 2);
-    Assert.assertEquals(schema.getFieldNames().get("timestamp"), PrimitiveType.ULLONG);
-    Assert.assertEquals(schema.getFieldNames().get("iStream"), PrimitiveType.UINT);
-    LinkedHashMap<String, PrimitiveType> fields = schema.getFieldNames();
-    //LinkedHashMap should preserve the order in which fields are inserted.
-    for (Map.Entry<String, PrimitiveType> field : fields.entrySet()) {
-      Assert.assertEquals(field.getKey(), "timestamp");
-      break;
-    }
+    Assert.assertEquals(schema.getFields().size(), 2);
     Assert.assertEquals(spec.getGSQL().size(), 1);
   }
 

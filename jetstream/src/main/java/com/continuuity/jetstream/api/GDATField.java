@@ -17,25 +17,24 @@
 package com.continuuity.jetstream.api;
 
 /**
- * PrimitiveTypes used in the GDAT format.
+ * Defines a GDAT Field.
  */
-public enum PrimitiveType {
-  BOOL("bool"),
-  USHORT("ushort"),
-  UINT("uint"),
-  INT("int"),
-  ULLONG("ullong"),
-  LLONG("llong"),
-  FLOAT("float"),
-  STRING("string");
+public interface GDATField {
+  /**
+   * Get the Field Name.
+   * @return Field Name.
+   */
+  String getName();
 
-  private String type;
+  /**
+   * Get the Field Type.
+   * @return Field Type.
+   */
+  GDATFieldType getType();
 
-  private PrimitiveType(String type) {
-    this.type = type;
-  }
-
-  public String getType() {
-    return type;
-  }
+  /**
+   * Sliding Window Type.
+   * @return the Sliding Window Type.
+   */
+  GDATSlidingWindowAttribute getSlidingWindowType();
 }
