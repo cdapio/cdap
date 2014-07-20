@@ -18,7 +18,6 @@ package com.continuuity.jetstream.internal;
 
 import com.continuuity.jetstream.api.GDATField;
 import com.continuuity.jetstream.api.StreamSchema;
-import com.continuuity.jetstream.flowlet.ConfigFileGenerator;
 import com.continuuity.jetstream.flowlet.InputFlowletSpecification;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
@@ -31,8 +30,8 @@ import java.util.Map;
 /**
  * Config File Content Generator.
  */
-public class LocalConfigFileGenerator implements ConfigFileGenerator {
-  private static final Logger LOG = LoggerFactory.getLogger(LocalConfigFileGenerator.class);
+public class StreamConfigGenerator {
+  private static final Logger LOG = LoggerFactory.getLogger(StreamConfigGenerator.class);
   private static final String OUTPUTSPEC_SUFFIX = ",stream,,,,,";
   private static final String NEWLINE = System.getProperty("line.separator");
   private final String hostname;
@@ -48,7 +47,10 @@ public class LocalConfigFileGenerator implements ConfigFileGenerator {
     "  </Host>\n" +
     "</Resources>\n";
 
-  public LocalConfigFileGenerator() {
+  private final InputFlowletSpecification spec;
+
+  public StreamConfigGenerator(InputFlowletSpecification spec) {
+    this.spec = spec;
     String host;
     try {
       host = InetAddress.getLocalHost().getHostName();
@@ -58,28 +60,23 @@ public class LocalConfigFileGenerator implements ConfigFileGenerator {
     this.hostname = host;
   }
 
-  @Override
-  public String generatePacketSchema(InputFlowletSpecification spec) {
+  public String generatePacketSchema() {
     return createPacketSchema(spec.getGDATInputSchema());
   }
 
-  @Override
-  public String generateOutputSpec(InputFlowletSpecification spec) {
+  public String generateOutputSpec() {
     return createOutputSpec(spec.getGSQL());
   }
 
-  @Override
-  public Map<String, String> generateGSQLFiles(InputFlowletSpecification spec) {
+  public Map<String, String> generateGSQLFiles() {
     return createGSQLFiles(spec.getGSQL());
   }
 
-  @Override
   public Map.Entry<String, String> generateHostIfq() {
     String contents = createLocalHostIfq(hostname);
     return Maps.immutableEntry(hostname, contents);
   }
 
-  @Override
   public String generateIfresXML() {
     return createIfresXML(hostname);
   }

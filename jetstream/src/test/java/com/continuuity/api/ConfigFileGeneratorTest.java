@@ -17,12 +17,10 @@
 package com.continuuity.api;
 
 import com.continuuity.jetstream.api.AbstractInputFlowlet;
-import com.continuuity.jetstream.flowlet.ConfigFileGenerator;
-import com.continuuity.jetstream.flowlet.ConfigFileLocalizer;
+import com.continuuity.jetstream.flowlet.InputFlowletConfiguration;
 import com.continuuity.jetstream.flowlet.InputFlowletSpecification;
 import com.continuuity.jetstream.internal.DefaultInputFlowletConfigurer;
-import com.continuuity.jetstream.internal.LocalConfigFileGenerator;
-import com.continuuity.jetstream.internal.LocalConfigFileLocalizer;
+import com.continuuity.jetstream.internal.LocalInputFlowletConfiguration;
 import com.continuuity.jetstream.util.Platform;
 import com.google.common.io.ByteStreams;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -63,7 +61,6 @@ public class ConfigFileGeneratorTest {
     DefaultInputFlowletConfigurer configurer = new DefaultInputFlowletConfigurer(flowlet);
     flowlet.create(configurer);
     InputFlowletSpecification spec = configurer.createInputFlowletSpec();
-    ConfigFileGenerator configFileGenerator = new LocalConfigFileGenerator();
 
     // Create base dir
     Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
@@ -84,8 +81,8 @@ public class ConfigFileGeneratorTest {
 
 
     //Create the GS config files
-    ConfigFileLocalizer configFileLocalizer = new LocalConfigFileLocalizer(queryDir, configFileGenerator);
-    configFileLocalizer.localizeConfigFiles(spec);
+    InputFlowletConfiguration inputFlowletConfiguration = new LocalInputFlowletConfiguration(queryDir);
+    inputFlowletConfiguration.createConfigFiles(spec);
 
     //Create GS binaries - and get the status of generation (if the generation was ok or not)
     StringBuilder errorMsg = new StringBuilder();

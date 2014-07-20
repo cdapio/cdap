@@ -17,9 +17,13 @@
 package com.continuuity.jetstream.flowlet;
 
 /**
- * Creates Config Files.
+ * Configures the InputFlowet Setup.
  */
-public interface ConfigFileLocalizer {
+public interface InputFlowletConfiguration {
 
-  void localizeConfigFiles(InputFlowletSpecification spec);
+  /**
+   * Creates the required configuration files.
+   * @param spec Input Flowlet Specification.
+   */
+  void createConfigFiles(InputFlowletSpecification spec);
 }

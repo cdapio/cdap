@@ -25,12 +25,28 @@ import java.util.Map;
  */
 public interface InputFlowletSpecification {
 
+  /**
+   * Get the Name of the Input Flowlet.
+   * @return Name of the Input Flowlet.
+   */
   String getName();
 
+  /**
+   * Get the Description of the Input Flowlet.
+   * @return Description of the Input Flowlet.
+   */
   String getDescription();
 
+  /**
+   * Get the GDATInput Schema.
+   * @return Map of Input Name and the associated {@link com.continuuity.jetstream.api.StreamSchema}.
+   */
   Map<String, StreamSchema> getGDATInputSchema();
 
+  /**
+   * Get the GSQL queries.
+   * @return Map of Name of Query Outputs and the corresponding GSQL queries.
+   */
   Map<String, String> getGSQL();
 
 }
