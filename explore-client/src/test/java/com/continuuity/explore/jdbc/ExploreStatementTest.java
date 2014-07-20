@@ -36,34 +36,41 @@ public class ExploreStatementTest {
   @Test
   public void executeTest() throws Exception {
     ExploreClient exploreClient = new MockExploreClient(
-        ImmutableMap.of("mock_query", (List<ColumnDesc>) Lists.newArrayList(
-            new ColumnDesc("column1", "STRING", 1, ""),
-            new ColumnDesc("column2", "int", 2, "")
-        )),
-        ImmutableMap.of("mock_query", (List<Result>) Lists.<Result>newArrayList())
+        ImmutableMap.of(
+          "mock_query_1", (List<ColumnDesc>) Lists.newArrayList(new ColumnDesc("column1", "STRING", 1, "")),
+          "mock_query_2", (List<ColumnDesc>) Lists.newArrayList(new ColumnDesc("column1", "STRING", 1, "")),
+          "mock_query_3", (List<ColumnDesc>) Lists.newArrayList(new ColumnDesc("column1", "STRING", 1, "")),
+          "mock_query_4", (List<ColumnDesc>) Lists.newArrayList(new ColumnDesc("column1", "STRING", 1, ""))
+        ),
+        ImmutableMap.of(
+          "mock_query_1", (List<Result>) Lists.<Result>newArrayList(),
+          "mock_query_2", (List<Result>) Lists.<Result>newArrayList(),
+          "mock_query_3", (List<Result>) Lists.<Result>newArrayList(),
+          "mock_query_4", (List<Result>) Lists.<Result>newArrayList()
+          )
     );
 
     // Make sure an empty query still has a ResultSet associated to it
     ExploreStatement statement = new ExploreStatement(null, exploreClient);
-    Assert.assertTrue(statement.execute("mock_query"));
+    Assert.assertTrue(statement.execute("mock_query_1"));
     ResultSet rs = statement.getResultSet();
     Assert.assertNotNull(rs);
     Assert.assertFalse(rs.isClosed());
     Assert.assertFalse(rs.next());
 
-    rs = statement.executeQuery("mock_query");
+    rs = statement.executeQuery("mock_query_2");
     Assert.assertNotNull(rs);
     Assert.assertFalse(rs.isClosed());
     Assert.assertFalse(rs.next());
 
     // Make sure subsequent calls to an execute method close the previous results
-    ResultSet rs2 = statement.executeQuery("mock_query");
+    ResultSet rs2 = statement.executeQuery("mock_query_3");
     Assert.assertTrue(rs.isClosed());
     Assert.assertNotNull(rs2);
     Assert.assertFalse(rs2.isClosed());
     Assert.assertFalse(rs2.next());
 
-    Assert.assertTrue(statement.execute("mock_query"));
+    Assert.assertTrue(statement.execute("mock_query_4"));
     Assert.assertTrue(rs2.isClosed());
   }
 }

@@ -171,10 +171,6 @@ public abstract class BaseExploreClient extends ExploreHttpClient implements Exp
 
           // At this point, if delegate has no result, there are no more results at all
           hasNext = delegate.hasNext();
-          if (!hasNext) {
-            LOG.trace("Closing query {} after fetching last results.", handle.getHandle());
-            exploreClient.close(handle);
-          }
           return hasNext;
         } catch (ExploreException e) {
           LOG.error("Exception while iterating through the results of query {}", handle.getHandle(), e);

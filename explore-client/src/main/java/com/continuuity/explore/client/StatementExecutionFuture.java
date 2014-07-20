@@ -54,7 +54,8 @@ public abstract class StatementExecutionFuture
   public abstract ListenableFuture<Handle> getFutureStatementHandle();
 
   /**
-   * Close the query.
+   * Close the query. Although internally, Explore service will close the query after the last results are
+   * fetched, we still make it available to close the query before it happens.
    */
   public abstract void close() throws ExploreException, HandleNotFoundException;
 
