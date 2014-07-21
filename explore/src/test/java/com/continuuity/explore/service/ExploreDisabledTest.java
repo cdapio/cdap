@@ -30,6 +30,7 @@ import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.client.DiscoveryExploreClient;
 import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -170,7 +171,8 @@ public class ExploreDisabledTest {
         new DataSetsModules().getInMemoryModule(),
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new AuthModule(),
-        new ExploreRuntimeModule().getInMemoryModules()
+        new ExploreRuntimeModule().getInMemoryModules(),
+        new ExploreClientModule()
     );
   }
 }
