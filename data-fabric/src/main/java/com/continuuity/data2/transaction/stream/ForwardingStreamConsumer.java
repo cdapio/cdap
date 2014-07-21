@@ -19,7 +19,7 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
-import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.tephra.Transaction;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -83,7 +83,7 @@ public abstract class ForwardingStreamConsumer implements StreamConsumer {
   }
 
   @Override
-  public String getName() {
-    return delegate.getName();
+  public String getTransactionAwareName() {
+    return delegate.getTransactionAwareName();
   }
 }

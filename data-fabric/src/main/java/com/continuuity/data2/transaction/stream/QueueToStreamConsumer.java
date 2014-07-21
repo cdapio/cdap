@@ -25,10 +25,10 @@ import com.continuuity.common.stream.StreamEventDataCodec;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.QueueConsumer;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.SchemaHash;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionAware;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -161,7 +161,7 @@ public final class QueueToStreamConsumer implements StreamConsumer {
   }
 
   @Override
-  public String getName() {
+  public String getTransactionAwareName() {
     return Objects.toStringHelper(this)
       .add("queue", streamName)
       .add("config", consumerConfig)

@@ -16,14 +16,14 @@
 
 package com.continuuity.data.operation.executor.remote;
 
-import com.continuuity.data2.transaction.distributed.ElasticPool;
+import com.continuuity.tephra.distributed.ElasticPool;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- *
+ * TODO: Move to Tephra
  */
 public class ElasticPoolTest {
 

@@ -18,8 +18,8 @@ package com.continuuity.data2.transaction.queue;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.QueueProducer;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -50,7 +50,7 @@ public abstract class AbstractQueueProducer implements QueueProducer, Transactio
   }
 
   @Override
-  public String getName() {
+  public String getTransactionAwareName() {
     return getClass().getSimpleName() + "(queue = " + queueName + ")";
   }
 

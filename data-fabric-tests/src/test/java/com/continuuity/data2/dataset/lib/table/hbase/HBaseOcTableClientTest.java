@@ -24,11 +24,11 @@ import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.BufferingOcTableClientTest;
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TxConstants;
-import com.continuuity.data2.transaction.inmemory.DetachedTxSystemClient;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TxConstants;
+import com.continuuity.tephra.inmemory.DetachedTxSystemClient;
 import com.continuuity.test.SlowTests;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.HDFSLocationFactory;
@@ -72,7 +72,7 @@ public class HBaseOcTableClientTest extends BufferingOcTableClientTest<HBaseOcTa
   protected DataSetManager getTableManager() throws Exception {
     Configuration hConf = testHBase.getConfiguration();
     CConfiguration conf = CConfiguration.create();
-    conf.unset(Constants.CFG_HDFS_USER);
+    conf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
     return new HBaseOcTableManager(conf, hConf, new HDFSLocationFactory(hConf), tableUtil);
   }
