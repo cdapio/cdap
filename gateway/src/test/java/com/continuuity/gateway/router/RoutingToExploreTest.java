@@ -109,14 +109,14 @@ public class RoutingToExploreTest {
 
   @Test
   public void testExploreMetadataHandlerRequests() throws Exception {
-    Assert.assertEquals("tables", doRequest("/data/metadata/tables", "POST"));
-    Assert.assertEquals("columns", doRequest("/data/metadata/columns", "POST"));
-    Assert.assertEquals("catalogs", doRequest("/data/metadata/catalogs", "POST"));
-    Assert.assertEquals("schemas", doRequest("/data/metadata/schemas", "POST"));
-    Assert.assertEquals("functions", doRequest("/data/metadata/functions", "POST"));
-    Assert.assertEquals("tableTypes", doRequest("/data/metadata/tableTypes", "POST"));
-    Assert.assertEquals("types", doRequest("/data/metadata/types", "POST"));
-    Assert.assertEquals("info:some_type", doRequest("/data/metadata/info/some_type", "GET"));
+    Assert.assertEquals("tables", doRequest("/data/explore/jdbc/tables", "POST"));
+    Assert.assertEquals("columns", doRequest("/data/explore/jdbc/columns", "POST"));
+    Assert.assertEquals("catalogs", doRequest("/data/explore/jdbc/catalogs", "POST"));
+    Assert.assertEquals("schemas", doRequest("/data/explore/jdbc/schemas", "POST"));
+    Assert.assertEquals("functions", doRequest("/data/explore/jdbc/functions", "POST"));
+    Assert.assertEquals("tableTypes", doRequest("/data/explore/jdbc/tableTypes", "POST"));
+    Assert.assertEquals("types", doRequest("/data/explore/jdbc/types", "POST"));
+    Assert.assertEquals("info:some_type", doRequest("/data/explore/jdbc/info/some_type", "GET"));
   }
 
   @Path(Constants.Gateway.GATEWAY_VERSION)
@@ -174,52 +174,50 @@ public class RoutingToExploreTest {
 
   @Path(Constants.Gateway.GATEWAY_VERSION)
   public static final class MockExploreMetadataHandler extends AbstractHttpHandler {
-    private static final String PATH = "data/metadata/";
-
     @POST
-    @Path(PATH + "tables")
+    @Path("/data/explore/jdbc/tables")
     public void getTables(HttpRequest request, HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "tables");
     }
 
     @POST
-    @Path(PATH + "columns")
+    @Path("/data/explore/jdbc/columns")
     public void getColumns(HttpRequest request, HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "columns");
     }
 
     @POST
-    @Path(PATH + "catalogs")
+    @Path("/data/explore/jdbc/catalogs")
     public void getCatalogs(HttpRequest request, HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "catalogs");
     }
 
     @POST
-    @Path(PATH + "schemas")
+    @Path("/data/explore/jdbc/schemas")
     public void getSchemas(HttpRequest request, HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "schemas");
     }
 
     @POST
-    @Path(PATH + "functions")
+    @Path("/data/explore/jdbc/functions")
     public void getFunctions(HttpRequest request, HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "functions");
     }
 
     @POST
-    @Path(PATH + "tableTypes")
+    @Path("/data/explore/jdbc/tableTypes")
     public void getTableTypes(HttpRequest request, HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "tableTypes");
     }
 
     @POST
-    @Path(PATH + "types")
+    @Path("/data/explore/jdbc/types")
     public void getTypeInfo(HttpRequest request, HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "types");
     }
 
     @GET
-    @Path(PATH + "info/{type}")
+    @Path("/data/explore/jdbc/info/{type}")
     public void getInfo(HttpRequest request, HttpResponder responder, @PathParam("type") final String type) {
       responder.sendString(HttpResponseStatus.OK, "info:" + type);
     }

@@ -39,11 +39,11 @@ public class FixedAddressExploreClient extends AbstractExploreClient {
 
   @Override
   public Handle enableExplore(String datasetInstance) throws ExploreException {
-    throw new ExploreException("This client does not allow to enable explore on datasets.");
+    throw new UnsupportedOperationException("This client does not allow to enable explore on datasets.");
   }
 
   @Override
   public Handle disableExplore(String datasetInstance) throws ExploreException {
-    throw new ExploreException("This client does not allow to disable explore on datasets");
+    throw new UnsupportedOperationException("This client does not allow to disable explore on datasets");
   }
 }

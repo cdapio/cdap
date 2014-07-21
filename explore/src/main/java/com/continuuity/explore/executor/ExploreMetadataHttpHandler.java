@@ -51,10 +51,7 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreMetadataHttpHandler.class);
-
   private static final Gson GSON = new Gson();
-
-  private static final String PATH = "data/metadata/";
 
   private final ExploreService exploreService;
 
@@ -64,7 +61,7 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path(PATH + "tables")
+  @Path("data/explore/jdbc/tables")
   public void getTables(HttpRequest request, HttpResponder responder) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
       @Override
@@ -80,7 +77,7 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path(PATH + "columns")
+  @Path("data/explore/jdbc/columns")
   public void getColumns(HttpRequest request, HttpResponder responder) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
       @Override
@@ -96,7 +93,7 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path(PATH + "catalogs")
+  @Path("data/explore/jdbc/catalogs")
   public void getCatalogs(HttpRequest request, HttpResponder responder) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
       @Override
@@ -109,14 +106,14 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path(PATH + "schemas")
+  @Path("data/explore/jdbc/schemas")
   public void getSchemas(HttpRequest request, HttpResponder responder) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
       @Override
       public Handle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
-        ExploreClientUtil.SchemaArgs args = decodeArguments(request, ExploreClientUtil.SchemaArgs.class,
-                                                            new ExploreClientUtil.SchemaArgs(null, null));
+        ExploreClientUtil.SchemasArgs args = decodeArguments(request, ExploreClientUtil.SchemasArgs.class,
+                                                            new ExploreClientUtil.SchemasArgs(null, null));
         LOG.trace("Received get schemas with params: {}", args.toString());
         return exploreService.getSchemas(args.getCatalog(), args.getSchemaPattern());
       }
@@ -124,7 +121,7 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path(PATH + "functions")
+  @Path("data/explore/jdbc/functions")
   public void getFunctions(HttpRequest request, HttpResponder responder) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
       @Override
@@ -140,7 +137,7 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path(PATH + "tableTypes")
+  @Path("data/explore/jdbc/tableTypes")
   public void getTableTypes(HttpRequest request, HttpResponder responder) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
       @Override
@@ -153,7 +150,7 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path(PATH + "types")
+  @Path("data/explore/jdbc/types")
   public void getTypes(HttpRequest request, HttpResponder responder) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
       @Override
@@ -166,7 +163,7 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path(PATH + "info/{type}")
+  @Path("data/explore/jdbc/info/{type}")
   public void getInfo(HttpRequest request, HttpResponder responder, @PathParam("type") final String type) {
     genericEndpointExecution(request, responder, new EndpointCoreExecution<Void>() {
       @Override

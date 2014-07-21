@@ -42,7 +42,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -61,9 +60,6 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type COL_DESC_LIST_TYPE = new TypeToken<List<ColumnDesc>>() { }.getType();
   private static final Type ROW_LIST_TYPE = new TypeToken<List<Result>>() { }.getType();
-
-  // TODO figure out if this is the right name
-  private static final String METADATA_PATH = "data/metadata/";
 
   protected abstract InetSocketAddress getExploreServiceAddress();
 
@@ -158,7 +154,7 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
     throws ExploreException, SQLException {
     String body = GSON.toJson(new ExploreClientUtil.ColumnsArgs(catalog, schemaPattern,
                                                                 tableNamePattern, columnNamePattern));
-    HttpResponse response = doPost(METADATA_PATH + "columns", body, null);
+    HttpResponse response = doPost("data/explore/jdbc/columns", body, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -167,7 +163,7 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
 
   @Override
   public Handle getCatalogs() throws ExploreException, SQLException {
-    HttpResponse response = doPost(METADATA_PATH + "catalogs", null, null);
+    HttpResponse response = doPost("data/explore/jdbc/catalogs", null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -176,8 +172,8 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
 
   @Override
   public Handle getSchemas(String catalog, String schemaPattern) throws ExploreException, SQLException {
-    String body = GSON.toJson(new ExploreClientUtil.SchemaArgs(catalog, schemaPattern));
-    HttpResponse response = doPost(METADATA_PATH + "schemas", body, null);
+    String body = GSON.toJson(new ExploreClientUtil.SchemasArgs(catalog, schemaPattern));
+    HttpResponse response = doPost("data/explore/jdbc/schemas", body, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -188,7 +184,7 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
   public Handle getFunctions(String catalog, String schemaPattern, String functionNamePattern)
     throws ExploreException, SQLException {
     String body = GSON.toJson(new ExploreClientUtil.FunctionsArgs(catalog, schemaPattern, functionNamePattern));
-    HttpResponse response = doPost(METADATA_PATH + "functions", body, null);
+    HttpResponse response = doPost("data/explore/jdbc/functions", body, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -197,7 +193,7 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
 
   @Override
   public MetaDataInfo getInfo(MetaDataInfo.InfoType infoType) throws ExploreException, SQLException {
-    HttpResponse response = doGet(METADATA_PATH + "info/" + infoType.name());
+    HttpResponse response = doGet(String.format("data/explore/jdbc/info/%s", infoType.name()));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, MetaDataInfo.class);
     }
@@ -209,7 +205,7 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
                           String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
     String body = GSON.toJson(new ExploreClientUtil.TablesArgs(catalog, schemaPattern,
                                                                tableNamePattern, tableTypes));
-    HttpResponse response = doPost(METADATA_PATH + "tables", body, null);
+    HttpResponse response = doPost("data/explore/jdbc/tables", body, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -218,7 +214,7 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
 
   @Override
   public Handle getTableTypes() throws ExploreException, SQLException {
-    HttpResponse response = doPost(METADATA_PATH + "tableTypes", null, null);
+    HttpResponse response = doPost("data/explore/jdbc/tableTypes", null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -227,7 +223,7 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
 
   @Override
   public Handle getTypeInfo() throws ExploreException, SQLException {
-    HttpResponse response = doPost(METADATA_PATH + "types", null, null);
+    HttpResponse response = doPost("data/explore/jdbc/types", null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
     }

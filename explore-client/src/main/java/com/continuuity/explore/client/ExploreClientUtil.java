@@ -114,16 +114,6 @@ public class ExploreClientUtil {
     private final String tableNamePattern;
     private final String columnNamePattern;
 
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("catalog", catalog)
-        .add("schemaPattern", schemaPattern)
-        .add("tableNamePattern", tableNamePattern)
-        .add("columnNamePattern", columnNamePattern)
-        .toString();
-    }
-
     public ColumnsArgs(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) {
       this.catalog = catalog;
       this.schemaPattern = schemaPattern;
@@ -146,24 +136,26 @@ public class ExploreClientUtil {
     public String getCatalog() {
       return catalog;
     }
-  }
-
-  /**
-   * Class to represent a JSON object passed as an argument to the getSchemas metadata HTTP endpoint.
-   */
-  public static final class SchemaArgs {
-    private final String catalog;
-    private final String schemaPattern;
 
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
         .add("catalog", catalog)
         .add("schemaPattern", schemaPattern)
+        .add("tableNamePattern", tableNamePattern)
+        .add("columnNamePattern", columnNamePattern)
         .toString();
     }
+  }
 
-    public SchemaArgs(String catalog, String schemaPattern) {
+  /**
+   * Class to represent a JSON object passed as an argument to the getSchemas metadata HTTP endpoint.
+   */
+  public static final class SchemasArgs {
+    private final String catalog;
+    private final String schemaPattern;
+
+    public SchemasArgs(String catalog, String schemaPattern) {
       this.catalog = catalog;
       this.schemaPattern = schemaPattern;
     }
@@ -175,6 +167,14 @@ public class ExploreClientUtil {
     public String getCatalog() {
       return catalog;
     }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("catalog", catalog)
+        .add("schemaPattern", schemaPattern)
+        .toString();
+    }
   }
 
   /**
@@ -184,15 +184,6 @@ public class ExploreClientUtil {
     private final String catalog;
     private final String schemaPattern;
     private final String functionNamePattern;
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("catalog", catalog)
-        .add("schemaPattern", schemaPattern)
-        .add("functionNamePattern", functionNamePattern)
-        .toString();
-    }
 
     public FunctionsArgs(String catalog, String schemaPattern, String functionNamePattern) {
       this.catalog = catalog;
@@ -210,6 +201,15 @@ public class ExploreClientUtil {
 
     public String getCatalog() {
       return catalog;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("catalog", catalog)
+        .add("schemaPattern", schemaPattern)
+        .add("functionNamePattern", functionNamePattern)
+        .toString();
     }
   }
 }
