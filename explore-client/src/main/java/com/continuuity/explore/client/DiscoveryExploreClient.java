@@ -16,6 +16,8 @@
 
 package com.continuuity.explore.client;
 
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
@@ -37,13 +39,15 @@ import static com.continuuity.common.conf.Constants.Service;
  * An Explore Client that talks to a server implementing {@link Explore} over HTTP,
  * and that uses discovery to find the endpoints.
  */
-public class DiscoveryExploreClient extends BaseExploreClient {
+public class DiscoveryExploreClient extends AbstractExploreClient {
   private static final Logger LOG = LoggerFactory.getLogger(DiscoveryExploreClient.class);
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
 
   @Inject
-  public DiscoveryExploreClient(final DiscoveryServiceClient discoveryClient) {
+  public DiscoveryExploreClient(final DiscoveryServiceClient discoveryClient, CConfiguration cConf) {
+    super(cConf.getInt(Constants.Explore.CFG_CLIENT_EXECUTION_THREADS,
+                       Constants.Explore.DEFAULT_CLIENT_EXECUTION_THREADS));
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {

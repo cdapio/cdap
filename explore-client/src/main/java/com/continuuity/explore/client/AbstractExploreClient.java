@@ -16,6 +16,8 @@
 
 package com.continuuity.explore.client;
 
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
@@ -24,11 +26,12 @@ import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
 import com.continuuity.explore.service.UnexpectedQueryStatusException;
 
-import com.google.common.base.Function;
+import com.google.common.base.Functions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,18 +41,29 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP.
  */
-public abstract class BaseExploreClient extends ExploreHttpClient implements ExploreClient {
-  private final StatementExecutor executor = new StatementExecutor(
-    MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(100)));
+public abstract class AbstractExploreClient extends ExploreHttpClient implements ExploreClient {
+  private StatementExecutor executor;
+  private final int executorThreads;
+
+  protected AbstractExploreClient(int executorThreads) {
+    this.executorThreads = executorThreads;
+  }
 
   @Override
-  public boolean isAvailable() {
-    return super.isAvailable();
+  protected void startUp() throws Exception {
+    executor = new StatementExecutor(MoreExecutors.listeningDecorator(
+      Executors.newFixedThreadPool(executorThreads, Threads.createDaemonThreadFactory("explore-client-executor"))));
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    if (executor != null) {
+      executor.shutdownNow();
+    }
   }
 
   @Override
@@ -62,13 +76,8 @@ public abstract class BaseExploreClient extends ExploreHttpClient implements Exp
     });
     StatementExecutionFuture futureResults = getFutureResultsFromHandle(futureHandle);
 
-    return Futures.transform(futureResults, new Function<Iterator<Result>, Boolean>() {
-      @Nullable
-      @Override
-      public Boolean apply(@Nullable Iterator<Result> input) {
-        return true;
-      }
-    });
+    // We actually never return false - exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.constant(true));
   }
 
   @Override
@@ -81,14 +90,8 @@ public abstract class BaseExploreClient extends ExploreHttpClient implements Exp
     });
     StatementExecutionFuture futureResults = getFutureResultsFromHandle(futureHandle);
 
-    return Futures.transform(futureResults, new Function<Iterator<Result>, Boolean>() {
-      @Nullable
-      @Override
-      public Boolean apply(@Nullable Iterator<Result> input) {
-        // We actually never return false - exceptions will be thrown in case of an error
-        return true;
-      }
-    });
+    // We actually never return false - exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.constant(true));
   }
 
   @Override
@@ -108,7 +111,7 @@ public abstract class BaseExploreClient extends ExploreHttpClient implements Exp
    */
   private StatementExecutionFuture getFutureResultsFromHandle(
     final ListenableFuture<Handle> futureHandle) {
-    final BaseExploreClient client = this;
+    final AbstractExploreClient client = this;
     StatementExecutionFuture future = executor.submit(new Callable<Iterator<Result>>() {
       @Override
       public Iterator<Result> call() throws Exception {
@@ -138,7 +141,6 @@ public abstract class BaseExploreClient extends ExploreHttpClient implements Exp
 
   /**
    * Result iterator which polls Explore service using HTTP to get next results.
-   * TODO maybe we should take this class out of here
    */
   public static final class ResultIteratorClient implements Iterator<Result> {
     private static final Logger LOG = LoggerFactory.getLogger(ResultIteratorClient.class);

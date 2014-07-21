@@ -38,6 +38,8 @@ import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
+import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.services.AppFabricServer;
@@ -118,6 +120,7 @@ public class ReactorServiceMain extends DaemonMain {
   private DatasetService dsService;
   private ServiceStore serviceStore;
   private HBaseSecureStoreUpdater secureStoreUpdater;
+  private ExploreClient exploreClient;
 
   private String serviceName;
   private TwillApplication twillApplication;
@@ -152,7 +155,8 @@ public class ReactorServiceMain extends DaemonMain {
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
-      new ServiceStoreModules().getDistributedModule()
+      new ServiceStoreModules().getDistributedModule(),
+      new ExploreClientModule()
     );
 
     // Initialize ZK client
@@ -161,6 +165,7 @@ public class ReactorServiceMain extends DaemonMain {
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
     dsService = baseInjector.getInstance(DatasetService.class);
     serviceStore = baseInjector.getInstance(ServiceStore.class);
+    exploreClient = baseInjector.getInstance(ExploreClient.class);
 
     secureStoreUpdater = baseInjector.getInstance(HBaseSecureStoreUpdater.class);
 
@@ -195,7 +200,7 @@ public class ReactorServiceMain extends DaemonMain {
 
   @Override
   public void start() {
-    Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService);
+    Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, exploreClient);
 
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
@@ -250,7 +255,7 @@ public class ReactorServiceMain extends DaemonMain {
     if (leaderElection != null) {
       leaderElection.stopAndWait();
     }
-    Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService);
+    Services.chainStop(exploreClient, metricsCollectionService, kafkaClientService, zkClientService);
   }
 
   @Override

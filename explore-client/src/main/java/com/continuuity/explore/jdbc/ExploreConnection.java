@@ -42,8 +42,8 @@ import java.util.concurrent.Executor;
 /**
  * Explore JDBC connection.
  *
- * A connection is made using a client that does not keep state. Therefore, closing a connection
- * will not affect executing statements, and results will not be lost.
+ * Closing a connection will affect executing statements, but the results of those already executed
+ * will still be available.
  */
 public class ExploreConnection implements Connection {
 
@@ -52,6 +52,7 @@ public class ExploreConnection implements Connection {
 
   ExploreConnection(ExploreClient exploreClient) {
     this.exploreClient = exploreClient;
+    exploreClient.startAndWait();
   }
 
   @Override
@@ -78,6 +79,8 @@ public class ExploreConnection implements Connection {
 
   @Override
   public void close() throws SQLException {
+    exploreClient.stopAndWait();
+
     // Free resources
     isClosed = true;
     exploreClient = null;

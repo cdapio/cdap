@@ -474,6 +474,10 @@ public final class Constants {
 
     public static final String SERVICE_DESCRIPTION = "Service to run Ad-hoc queries.";
 
+    /** Explore client configuration */
+    public static final String CFG_CLIENT_EXECUTION_THREADS = "explore.client.execution.threads";
+    public static final int DEFAULT_CLIENT_EXECUTION_THREADS = 50;
+
     /**
      * Explore JDBC constants.
      */

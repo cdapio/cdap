@@ -31,6 +31,7 @@ import com.continuuity.explore.client.DiscoveryExploreClient;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.executor.ExploreExecutorService;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -73,12 +74,14 @@ public class BaseHiveExploreServiceTest {
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
 
-    exploreClient = injector.getInstance(DiscoveryExploreClient.class);
+    exploreClient = injector.getInstance(ExploreClient.class);
+    exploreClient.startAndWait();
     Assert.assertTrue(exploreClient.isAvailable());
   }
 
   @AfterClass
   public static void stopServices() throws Exception {
+    exploreClient.stopAndWait();
     exploreExecutorService.stopAndWait();
     datasetService.stopAndWait();
     transactionManager.stopAndWait();
@@ -134,7 +137,8 @@ public class BaseHiveExploreServiceTest {
       new DataSetsModules().getInMemoryModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new AuthModule(),
-      new ExploreRuntimeModule().getInMemoryModules()
+      new ExploreRuntimeModule().getInMemoryModules(),
+      new ExploreClientModule()
     );
   }
 }

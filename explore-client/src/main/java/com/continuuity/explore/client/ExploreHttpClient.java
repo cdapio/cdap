@@ -32,6 +32,7 @@ import com.continuuity.explore.service.Status;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
@@ -53,7 +54,7 @@ import javax.annotation.Nullable;
  * contained in their json responses. This class is only meant to be extended by classes
  * which implement ExploreClient.
  */
-abstract class ExploreHttpClient implements Explore {
+abstract class ExploreHttpClient extends AbstractIdleService implements Explore {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreHttpClient.class);
   private static final Gson GSON = new Gson();
 
@@ -63,7 +64,7 @@ abstract class ExploreHttpClient implements Explore {
 
   protected abstract InetSocketAddress getExploreServiceAddress();
 
-  protected boolean isAvailable() {
+  public boolean isAvailable() {
     try {
       HttpResponse response = doGet(String.format("explore/status"));
       return HttpResponseStatus.OK.getCode() == response.getResponseCode();

@@ -25,6 +25,7 @@ import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Result;
 
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
@@ -35,7 +36,7 @@ import java.util.Map;
 /**
  * Mock Explore client to use in test cases.
  */
-public class MockExploreClient implements ExploreClient {
+public class MockExploreClient extends AbstractIdleService implements ExploreClient {
 
   private final Map<String, List<ColumnDesc>> statementsToMetadata;
   private final Map<String, List<Result>> statementsToResults;
@@ -89,5 +90,15 @@ public class MockExploreClient implements ExploreClient {
         // TODO remove results for given handle
       }
     };
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    // Do nothing
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    // Do nothing
   }
 }

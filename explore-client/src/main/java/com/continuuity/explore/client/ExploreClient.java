@@ -17,11 +17,12 @@
 package com.continuuity.explore.client;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service;
 
 /**
  * Explore client discovers explore service, and executes explore commands using the service.
  */
-public interface ExploreClient {
+public interface ExploreClient extends Service {
 
   /**
    * Returns true if the explore service is up and running.

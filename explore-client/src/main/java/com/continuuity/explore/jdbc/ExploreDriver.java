@@ -59,7 +59,8 @@ public class ExploreDriver implements Driver {
     URI jdbcURI = URI.create(url.substring(ExploreJDBCUtils.URI_JDBC_PREFIX.length()));
     String host = jdbcURI.getHost();
     int port = jdbcURI.getPort();
-    ExploreClient exploreClient = new FixedAddressExploreClient(host, port);
+    ExploreClient exploreClient = new FixedAddressExploreClient(host, port,
+                                                                Constants.Explore.DEFAULT_CLIENT_EXECUTION_THREADS);
     if (!exploreClient.isAvailable()) {
       throw new SQLException("Cannot connect to " + url + ", service unavailable");
     }

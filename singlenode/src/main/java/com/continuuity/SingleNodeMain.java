@@ -32,7 +32,9 @@ import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data.stream.service.StreamServiceRuntimeModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
+import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.executor.ExploreExecutorService;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.gateway.Gateway;
@@ -91,6 +93,7 @@ public class SingleNodeMain {
   private final DatasetService datasetService;
 
   private ExploreExecutorService exploreExecutorService;
+  private final ExploreClient exploreClient;
 
   public SingleNodeMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
     this.webCloudAppService = new WebCloudAppService(webAppPath);
@@ -119,6 +122,8 @@ public class SingleNodeMain {
       ExploreServiceUtils.checkHiveSupportWithoutSecurity(this.getClass().getClassLoader());
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     }
+
+    exploreClient = injector.getInstance(ExploreClient.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -166,6 +171,8 @@ public class SingleNodeMain {
       exploreExecutorService.startAndWait();
     }
 
+    exploreClient.startAndWait();
+
     String hostname = InetAddress.getLocalHost().getHostName();
     System.out.println("Continuuity Reactor started successfully");
     System.out.println("Connect to dashboard at http://" + hostname + ":9999");
@@ -189,6 +196,7 @@ public class SingleNodeMain {
       if (exploreExecutorService != null) {
         exploreExecutorService.stopAndWait();
       }
+      exploreClient.stopAndWait();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now
@@ -335,7 +343,8 @@ public class SingleNodeMain {
       new SecurityModules().getInMemoryModules(),
       new StreamServiceRuntimeModule().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules(),
-      new ServiceStoreModules().getInMemoryModule()
+      new ServiceStoreModules().getInMemoryModule(),
+      new ExploreClientModule()
     );
   }
 
@@ -384,7 +393,8 @@ public class SingleNodeMain {
       new SecurityModules().getSingleNodeModules(),
       new StreamServiceRuntimeModule().getSingleNodeModules(),
       new ExploreRuntimeModule().getSingleNodeModules(),
-      new ServiceStoreModules().getSingleNodeModule()
+      new ServiceStoreModules().getSingleNodeModule(),
+      new ExploreClientModule()
     );
   }
 }
