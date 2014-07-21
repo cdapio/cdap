@@ -66,9 +66,12 @@ public class ExploreDriver implements Driver {
     ConnectionParams params = parseConnectionUrl(url);
 
     List<String> tokenParams = params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_AUTH_TOKEN);
-    ExploreClient exploreClient =
-      new FixedAddressExploreClient(params.getHost(), params.getPort(),
-                                    (tokenParams == null) ? null : tokenParams.get(0));
+    String authToken = null;
+    if (tokenParams != null && !tokenParams.isEmpty() && !tokenParams.get(0).isEmpty()) {
+      authToken = tokenParams.get(0);
+    }
+
+    ExploreClient exploreClient = new FixedAddressExploreClient(params.getHost(), params.getPort(), authToken);
     if (!exploreClient.isAvailable()) {
       throw new SQLException("Cannot connect to " + url + ", service unavailable");
     }
@@ -112,6 +115,7 @@ public class ExploreDriver implements Driver {
    * Package visibility for testing.
    */
   ConnectionParams parseConnectionUrl(String url) {
+    // URI does not accept two semicolons in a URL string, hence the substring
     URI jdbcURI = URI.create(url.substring(ExploreJDBCUtils.URI_JDBC_PREFIX.length()));
     String host = jdbcURI.getHost();
     int port = jdbcURI.getPort();
