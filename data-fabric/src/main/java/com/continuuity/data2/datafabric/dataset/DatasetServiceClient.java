@@ -128,7 +128,7 @@ class DatasetServiceClient {
     throws DatasetManagementException {
 
     DatasetInstanceHandler.DatasetTypeAndProperties typeAndProps =
-      new DatasetInstanceHandler.DatasetTypeAndProperties(datasetType, props.getProperties());
+      new DatasetInstanceHandler.DatasetTypeAndProperties(datasetType, props.getProperties(), false);
     HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(typeAndProps));
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",

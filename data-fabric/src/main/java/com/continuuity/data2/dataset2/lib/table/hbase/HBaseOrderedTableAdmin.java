@@ -34,13 +34,13 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  *
  */
 public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
   public static final String PROPERTY_SPLITS = "hbase.splits";
-
   static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
   private static final Gson GSON = new Gson();
 
@@ -134,6 +134,16 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
     if (tableUtil.getBloomFilter(columnDescriptor) != HBaseTableUtil.BloomType.ROW) {
       tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
       needUpgrade = true;
+    }
+    // for properties in DatasetSpecification, if there is a property which exists and
+    // different from current value(expected) , then it is updated and needUpgrade is set to true
+    for (Map.Entry<String, String> prop : spec.getProperties().entrySet()) {
+      if (columnDescriptor.getValue(prop.getKey()) != null) {
+        if (columnDescriptor.getValue(prop.getKey()) != prop.getValue()) {
+          columnDescriptor.setValue(prop.getKey(), prop.getValue());
+          needUpgrade = true;
+        }
+      }
     }
     return needUpgrade;
   }

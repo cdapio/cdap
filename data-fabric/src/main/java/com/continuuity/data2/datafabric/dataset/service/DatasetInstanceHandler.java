@@ -129,60 +129,61 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
     DatasetTypeAndProperties typeAndProps = GSON.fromJson(reader, DatasetTypeAndProperties.class);
 
-    LOG.info("Creating dataset {}, type name: {}, typeAndProps: {}",
-             name, typeAndProps.getTypeName(), typeAndProps.getProperties());
+      LOG.info("Creating dataset {}, type name: {}, typeAndProps: {}",
+               name, typeAndProps.getTypeName(), typeAndProps.getProperties());
 
-    DatasetSpecification existing = instanceManager.get(name);
-    if (existing != null) {
-      String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
-                                     name, existing);
-      LOG.warn(message);
-      responder.sendError(HttpResponseStatus.CONFLICT, message);
-      return;
-    }
+      DatasetSpecification existing = instanceManager.get(name);
+      if (existing != null && !typeAndProps.isUpgrade()) {
+        String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
+                                       name, existing);
+        LOG.warn(message);
+        responder.sendError(HttpResponseStatus.CONFLICT, message);
+        return;
+      }
 
-    DatasetTypeMeta typeMeta = implManager.getTypeInfo(typeAndProps.getTypeName());
-    if (typeMeta == null) {
-      String message = String.format("Cannot create dataset %s: unknown type %s",
-                                     name, typeAndProps.getTypeName());
-      LOG.warn(message);
-      responder.sendError(HttpResponseStatus.NOT_FOUND, message);
-      return;
-    }
+      DatasetTypeMeta typeMeta = implManager.getTypeInfo(typeAndProps.getTypeName());
+      if (typeMeta == null) {
+        String message = String.format("Cannot create/update dataset %s: unknown type %s",
+                                       name, typeAndProps.getTypeName());
+        LOG.warn(message);
+        responder.sendError(HttpResponseStatus.NOT_FOUND, message);
+        return;
+      }
 
-    // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
-    DatasetSpecification spec;
-    try {
-      spec = opExecutorClient.create(name, typeMeta,
-                                     DatasetProperties.builder().addAll(typeAndProps.getProperties()).build());
-    } catch (Exception e) {
-      String msg = String.format("Cannot create dataset %s of type %s: executing create() failed, reason: %s",
-                                 name, typeAndProps.getTypeName(), e.getMessage());
-      LOG.error(msg, e);
-      throw new RuntimeException(msg, e);
-    }
-    instanceManager.add(spec);
+      // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
+      DatasetSpecification spec;
+      try {
+        spec = opExecutorClient.create(name, typeMeta,
+                                       DatasetProperties.builder().addAll(typeAndProps.getProperties()).build());
+      } catch (Exception e) {
+        String msg = String.format("Cannot create dataset %s of type %s: executing create() failed, reason: %s",
+                                   name, typeAndProps.getTypeName(), e.getMessage());
+        LOG.error(msg, e);
+        throw new RuntimeException(msg, e);
+      }
+      instanceManager.add(spec);
 
-    // Enable ad-hoc exploration of dataset
-    // Note: today explore enable is not transactional with dataset create - REACTOR-314
-    try {
-      datasetExploreFacade.enableExplore(name);
-    } catch (Exception e) {
-      String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
-                                 name, typeAndProps.getProperties(), e.getMessage());
-      LOG.error(msg, e);
-      // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
+      // Enable ad-hoc exploration of dataset
+      // Note: today explore enable is not transactional with dataset create - REACTOR-314
+      if (!typeAndProps.isUpgrade()) {
+        try {
+          datasetExploreFacade.enableExplore(name);
+        } catch (Exception e) {
+          String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
+                                     name, typeAndProps.getProperties(), e.getMessage());
+          LOG.error(msg, e);
+          // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
 //      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
 //      return;
-    }
-
+        }
+      }
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @DELETE
   @Path("/data/datasets/{name}")
   public void drop(HttpRequest request, final HttpResponder responder,
-                       @PathParam("name") String name) {
+                   @PathParam("name") String name) {
     LOG.info("Deleting dataset {}", name);
 
     DatasetSpecification spec = instanceManager.get(name);
@@ -242,8 +243,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @POST
   @Path("/data/datasets/{name}/data/{method}")
   public void executeDataOp(HttpRequest request, final HttpResponder responder,
-                           @PathParam("name") String instanceName,
-                           @PathParam("method") String method) {
+                            @PathParam("name") String instanceName,
+                            @PathParam("method") String method) {
     // todo: execute data operation
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
   }
@@ -254,10 +255,13 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public static final class DatasetTypeAndProperties {
     private final String typeName;
     private final Map<String, String> properties;
+    private final boolean upgrade;
 
-    public DatasetTypeAndProperties(String typeName, Map<String, String> properties) {
+    public DatasetTypeAndProperties(String typeName, Map<String, String> properties, boolean upgrade) {
       this.typeName = typeName;
       this.properties = properties;
+      this.upgrade = upgrade;
+
     }
 
     public String getTypeName() {
@@ -266,6 +270,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
     public Map<String, String> getProperties() {
       return properties;
+    }
+
+    public boolean isUpgrade() {
+      return upgrade;
     }
   }
 
