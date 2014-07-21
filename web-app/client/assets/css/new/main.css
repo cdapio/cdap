@@ -3465,14 +3465,14 @@ div.tooltip {
 /**
  *User Services stop-start
  */
-.alianwarstart {
+.userServices-start {
   background: black;
 	background-image: url('/assets/img/v2/play_active_icon.png');
 	background-size: contain;
 	width: 20px;
 	height: 20px
 }
-.alianwarstop {
+.userServices-stop {
   background: black;
 	background-image: url('/assets/img/v2/stop_active_icon.png');
 	background-size: contain;

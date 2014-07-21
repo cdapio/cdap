@@ -187,18 +187,18 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
     {"type":"App","id":"PurchaseHistory","name":"PurchaseHistory","description":"Purchase history app"}];
 
 // User Services:
-/*  nock(clientAddr, options)
+///*
+  nock(clientAddr, options)
     .get('/v2/apps').times(8)
     .reply(200, tmp);
-*/
-/*
+//*/
+
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps')
-    .reply(200, [tmp[1]]);
-    */
+    .reply(200, [tmp[0], tmp[0]]);
+// */
 //END - TESTING removal from UI when removing an app.
-
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps/CountCounts/services')
