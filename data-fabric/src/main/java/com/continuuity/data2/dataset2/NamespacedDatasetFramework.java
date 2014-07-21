@@ -64,6 +64,12 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public void updateInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
+    throws DatasetManagementException, IOException {
+    delegate.updateInstance(datasetType, namespace(datasetInstanceName), props);
+  }
+
+  @Override
   public Collection<DatasetSpecification> getInstances() throws DatasetManagementException {
     Collection<DatasetSpecification> specs = delegate.getInstances();
     // client may pass the name back e.g. do delete instance, so we need to un-namespace it

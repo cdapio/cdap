@@ -124,11 +124,11 @@ class DatasetServiceClient {
     return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), DatasetTypeMeta.class);
   }
 
-  public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
+  public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props, boolean isUpgrade)
     throws DatasetManagementException {
 
     DatasetInstanceHandler.DatasetTypeAndProperties typeAndProps =
-      new DatasetInstanceHandler.DatasetTypeAndProperties(datasetType, props.getProperties(), false);
+      new DatasetInstanceHandler.DatasetTypeAndProperties(datasetType, props.getProperties(), isUpgrade);
     HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(typeAndProps));
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",

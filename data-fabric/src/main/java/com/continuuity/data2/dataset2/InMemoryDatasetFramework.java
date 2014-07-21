@@ -95,6 +95,20 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public synchronized void updateInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
+    throws InstanceConflictException, IOException {
+    if (instances.get(datasetInstanceName) == null) {
+      throw new InstanceConflictException("Dataset instance with name does not exist: " + datasetInstanceName);
+    }
+
+    DatasetDefinition def = registry.get(datasetType);
+    Preconditions.checkNotNull(def, "Dataset type '%s' is not registered", datasetType);
+    DatasetSpecification spec = def.configure(datasetInstanceName, props);
+    instances.put(datasetInstanceName, spec);
+    def.getAdmin(spec, null).upgrade();
+  }
+
+  @Override
   public Collection<DatasetSpecification> getInstances() {
     return Collections.unmodifiableCollection(instances.values());
   }
