@@ -259,17 +259,6 @@
                 <span {{ bindAttr class=":service-icon this.imgClass" }} ></span>
               </td>
               <td style="max-width: 200px;" class="instance-col">
-                <div class="instance-wrapper">
-                  <div class="instance-num"><span>{{this.requested}}</span></div>
-                  <div>
-                    <a class="cursor-pointer" {{action decreaseInstance this.name this.requested }}>
-                      <span class="minus-icon"></span>
-                    </a>
-                    <a class="cursor-pointer" {{action increaseInstance this.name this.requested }}>
-                      <span class="plus-icon"></span>
-                    </a>
-                  </div>
-                </div>
               <td style="max-width: 350px;" class="instance-provisioned service-col">
                   <div class="instance-num auto-margin"><span>{{this.provisioned}}</span></div>
               </td>

@@ -189,14 +189,16 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
 // User Services:
 ///*
   nock(clientAddr, options)
-    .get('/v2/apps').times(8)
+    .persist()
+    .get('/v2/apps')
     .reply(200, tmp);
 //*/
 
+/*
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps')
-    .reply(200, [tmp[0], tmp[0]]);
+    .reply(200, [tmp[1]]);
 // */
 //END - TESTING removal from UI when removing an app.
   nock(clientAddr, options)
