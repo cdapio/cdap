@@ -83,6 +83,40 @@ public class ExploreDriverTest {
   }
 
   @Test
+  public void parseConnectionUrlTest() throws Exception {
+    ExploreDriver driver = new ExploreDriver();
+
+    String baseUrl = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, "foobar", 10000);
+    ExploreDriver.ConnectionParams connectionParams;
+
+    connectionParams = driver.parseConnectionUrl(baseUrl);
+    Assert.assertEquals("foobar", connectionParams.getHost());
+    Assert.assertEquals(10000, connectionParams.getPort());
+    Assert.assertEquals(ImmutableMap.of(), connectionParams.getExtraInfos());
+
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?reactor.auth.token=foo");
+    Assert.assertEquals("foobar", connectionParams.getHost());
+    Assert.assertEquals(10000, connectionParams.getPort());
+    Assert.assertEquals(
+      ImmutableMap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, ImmutableList.of("foo")),
+      connectionParams.getExtraInfos());
+
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?reactor.auth.token=foo&foo2=bar2");
+    Assert.assertEquals("foobar", connectionParams.getHost());
+    Assert.assertEquals(10000, connectionParams.getPort());
+    Assert.assertEquals(
+      ImmutableMap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, ImmutableList.of("foo")),
+      connectionParams.getExtraInfos());
+
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&reactor.auth.token=foo");
+    Assert.assertEquals("foobar", connectionParams.getHost());
+    Assert.assertEquals(10000, connectionParams.getPort());
+    Assert.assertEquals(
+      ImmutableMap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, ImmutableList.of("foo")),
+      connectionParams.getExtraInfos());
+  }
+
+  @Test
   public void testDriverConnection() throws Exception {
     ExploreDriver driver = new ExploreDriver();
 

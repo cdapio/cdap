@@ -39,7 +39,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Explore JDBC Driver. A proper URL is of the form: jdbc:reactor://<host>:<port>?<param1>=<value1>[;<param2>=<value2>],
+ * Explore JDBC Driver. A proper URL is of the form: jdbc:reactor://<host>:<port>?<param1>=<value1>[&<param2>=<value2>],
  * Where host and port point to Reactor http interface where Explore is enabled, and the additional parameters are from
  * the {@link com.continuuity.explore.jdbc.ExploreDriver.ConnectionParams.Info} enum.
  */
@@ -65,9 +65,10 @@ public class ExploreDriver implements Driver {
     }
     ConnectionParams params = parseConnectionUrl(url);
 
+    List<String> tokenParams = params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_AUTH_TOKEN);
     ExploreClient exploreClient =
       new FixedAddressExploreClient(params.getHost(), params.getPort(),
-                                    params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_AUTH_TOKEN));
+                                    (tokenParams == null) ? null : tokenParams.get(0));
     if (!exploreClient.isAvailable()) {
       throw new SQLException("Cannot connect to " + url + ", service unavailable");
     }
@@ -108,20 +109,21 @@ public class ExploreDriver implements Driver {
 
   /**
    * Parse Explore connection url string to retrieve the necessary parameters to connect to Reactor.
+   * Package visibility for testing.
    */
-  private ConnectionParams parseConnectionUrl(String url) {
+  ConnectionParams parseConnectionUrl(String url) {
     URI jdbcURI = URI.create(url.substring(ExploreJDBCUtils.URI_JDBC_PREFIX.length()));
     String host = jdbcURI.getHost();
     int port = jdbcURI.getPort();
 
     QueryStringDecoder decoder = new QueryStringDecoder(jdbcURI);
     Map<String, List<String>> parameters = decoder.getParameters();
-    ImmutableMap.Builder<ConnectionParams.Info, String> builder = ImmutableMap.builder();
+    ImmutableMap.Builder<ConnectionParams.Info, List<String>> builder = ImmutableMap.builder();
     if (parameters != null) {
       for (Map.Entry<String, List<String>> param : parameters.entrySet()) {
         ConnectionParams.Info info = ConnectionParams.Info.fromStr(param.getKey());
         if (info != null) {
-          builder.put(info, param.getValue().get(0));
+          builder.put(info, param.getValue());
         }
       }
     }
@@ -161,15 +163,15 @@ public class ExploreDriver implements Driver {
 
     private final String host;
     private final int port;
-    private final Map<Info, String> extraInfos;
+    private final Map<Info, List<String>> extraInfos;
 
-    private ConnectionParams(String host, int port, Map<Info, String> extraInfos) {
+    private ConnectionParams(String host, int port, Map<Info, List<String>> extraInfos) {
       this.host = host;
       this.port = port;
       this.extraInfos = extraInfos;
     }
 
-    public Map<Info, String> getExtraInfos() {
+    public Map<Info, List<String>> getExtraInfos() {
       return extraInfos;
     }
 
