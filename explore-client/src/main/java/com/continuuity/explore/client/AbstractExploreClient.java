@@ -43,7 +43,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -195,8 +194,8 @@ public abstract class AbstractExploreClient implements Explore, ExploreClient {
                                  @Nullable Map<String, String> headers,
                                  @Nullable String body) throws ExploreException {
     Map<String, String> newHeaders = headers;
-    if (getAuthorizationToken() != null) {
-      newHeaders = Objects.firstNonNull(headers, Maps.<String, String>newHashMap());
+    if (getAuthorizationToken() != null && !getAuthorizationToken().isEmpty()) {
+      newHeaders = (headers != null) ? Maps.newHashMap(headers) : Maps.<String, String>newHashMap();
       newHeaders.put("Authorization", "Bearer " + getAuthorizationToken());
     }
     String resolvedUrl = resolve(resource);

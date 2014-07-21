@@ -98,6 +98,9 @@ public class ExploreDriverTest {
 
     // Correct host
     Assert.assertNotNull(driver.connect(exploreServiceUrl, null));
+
+    // Correct host and extra parameter
+    Assert.assertNotNull(driver.connect(exploreServiceUrl + "?reactor.auth.token=bar", null));
   }
 
   @Test
