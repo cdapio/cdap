@@ -40,6 +40,10 @@
       <id>continuuity-public</id>
       <url>https://repository.continuuity.com/content/repositories/public</url>
     </repository>
+    <repository>
+      <id>sonatype</id>
+      <url>https://oss.sonatype.org/content/groups/public/</url>
+    </repository>
   </repositories>
 
   <distributionManagement>
@@ -62,7 +66,7 @@
     <gson.version>2.2.4</gson.version>
     <guava.version>13.0.1</guava.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.1.0</tephra.version>
+    <tephra.version>0.2.0-SNAPSHOT</tephra.version>
     <twill.version>0.4.0-incubating-SNAPSHOT</twill.version>
   </properties>
 
