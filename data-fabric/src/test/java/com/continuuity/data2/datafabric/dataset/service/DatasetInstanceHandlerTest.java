@@ -65,14 +65,14 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
     // create dataset instance with type that is not yet known to the system should fail
     DatasetProperties props = DatasetProperties.builder().add("prop1", "val1").build();
-    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, createInstance("dataset1", "datasetType2", props, false));
+    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, createInstance("dataset1", "datasetType2", props));
 
     // deploy modules
     deployModule("module1", TestModule1.class);
     deployModule("module2", TestModule2.class);
 
     // create dataset instance
-    Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", props, false));
+    Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", props));
 
     // verify module cannot be deleted which type is used for the dataset
     int modulesBeforeDelete = getModules().getResponseObject().size();
@@ -103,7 +103,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getInstance("non-existing-dataset").getResponseCode());
 
     // cannot create instance with same name again
-    Assert.assertEquals(HttpStatus.SC_CONFLICT, createInstance("dataset1", "datasetType2", props, false));
+    Assert.assertEquals(HttpStatus.SC_CONFLICT, createInstance("dataset1", "datasetType2", props));
     Assert.assertEquals(1, getInstances().getResponseObject().size());
 
     // cannot delete non-existing dataset instance
@@ -130,14 +130,14 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
     // create dataset instance with type that is not yet known to the system should fail
     DatasetProperties props = DatasetProperties.builder().add("prop1", "val1").build();
-    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, createInstance("dataset1", "datasetType2", props, false));
+    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, createInstance("dataset1", "datasetType2", props));
 
     // deploy modules
     deployModule("module1", TestModule1.class);
     deployModule("module2", TestModule2.class);
 
     // create dataset instance
-    Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", props, false));
+    Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", props));
 
     // verify instance was created
     instances = getInstances().getResponseObject();
@@ -149,13 +149,13 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
 
     // cannot create instance with same name again
-    Assert.assertEquals(HttpStatus.SC_CONFLICT, createInstance("dataset1", "datasetType2", props, false));
+    Assert.assertEquals(HttpStatus.SC_CONFLICT, createInstance("dataset1", "datasetType2", props));
     Assert.assertEquals(1, getInstances().getResponseObject().size());
 
     DatasetProperties newProps = DatasetProperties.builder().add("prop1", "val2").build();
 
     // update dataset instance
-    Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", newProps, true));
+    Assert.assertEquals(HttpStatus.SC_OK, updateInstance("dataset1", "datasetType2", newProps));
     Assert.assertEquals("val2", getInstance("dataset1").getResponseObject().getSpec().getProperty("prop1"));
 
     // delete dataset instance
@@ -173,8 +173,8 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     deployModule("default-core", CoreDatasetsModule.class);
 
     // cannot create instance with same name again
-    Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable1", "table", DatasetProperties.EMPTY, false));
-    Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable2", "table", DatasetProperties.EMPTY, false));
+    Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable1", "table", DatasetProperties.EMPTY));
+    Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable2", "table", DatasetProperties.EMPTY));
     Assert.assertEquals(2, getInstances().getResponseObject().size());
 
     // we want to verify that data is also gone, so we write smth to tables first
@@ -206,7 +206,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     ObjectResponse<List<DatasetSpecification>> instances = getInstances();
     Assert.assertEquals(1, instances.getResponseObject().size());
     Assert.assertEquals("myTable2", instances.getResponseObject().get(0).getName());
-    Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable1", "table", DatasetProperties.EMPTY, false));
+    Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable1", "table", DatasetProperties.EMPTY));
     Assert.assertEquals(2, getInstances().getResponseObject().size());
 
     // verify that table1 is empty. Note: it is ok for test purpose to re-use the table clients
@@ -223,8 +223,8 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     // delete all tables, check that they deleted, create again and verify that they are empty
     Assert.assertEquals(HttpStatus.SC_OK, deleteInstances());
     Assert.assertEquals(0, getInstances().getResponseObject().size());
-    Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable1", "table", DatasetProperties.EMPTY, false));
-    Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable2", "table", DatasetProperties.EMPTY, false));
+    Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable1", "table", DatasetProperties.EMPTY));
+    Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable2", "table", DatasetProperties.EMPTY));
     Assert.assertEquals(2, getInstances().getResponseObject().size());
 
     // verify that tables are empty. Note: it is ok for test purpose to re-use the table clients
@@ -242,9 +242,18 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   }
 
   private int createInstance(String instanceName, String typeName,
-                             DatasetProperties props, boolean isUpdate) throws IOException {
+                             DatasetProperties props) throws IOException {
     DatasetInstanceHandler.DatasetTypeAndProperties typeAndProps =
-      new DatasetInstanceHandler.DatasetTypeAndProperties(typeName, props.getProperties(), isUpdate);
+      new DatasetInstanceHandler.DatasetTypeAndProperties(typeName, props.getProperties());
+    HttpRequest request = HttpRequest.put(getUrl("/data/datasets/" + instanceName))
+      .withBody(new Gson().toJson(typeAndProps)).build();
+    return HttpRequests.execute(request).getResponseCode();
+  }
+
+  private int updateInstance(String instanceName, String typeName,
+                             DatasetProperties props) throws IOException {
+    DatasetInstanceHandler.DatasetTypeAndProperties typeAndProps =
+      new DatasetInstanceHandler.DatasetTypeAndProperties(typeName, props.getProperties(), true);
     HttpRequest request = HttpRequest.put(getUrl("/data/datasets/" + instanceName))
       .withBody(new Gson().toJson(typeAndProps)).build();
     return HttpRequests.execute(request).getResponseCode();

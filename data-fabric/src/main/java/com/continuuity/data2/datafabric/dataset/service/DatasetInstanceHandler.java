@@ -257,6 +257,9 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     private final Map<String, String> properties;
     private final boolean upgrade;
 
+    public DatasetTypeAndProperties(String typeName, Map<String, String> properties) {
+      this(typeName, properties, false);
+    }
     public DatasetTypeAndProperties(String typeName, Map<String, String> properties, boolean upgrade) {
       this.typeName = typeName;
       this.properties = properties;
