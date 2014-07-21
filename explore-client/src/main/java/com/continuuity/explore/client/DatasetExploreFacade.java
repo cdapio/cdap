@@ -20,9 +20,7 @@ import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Status;
 import com.continuuity.explore.service.UnexpectedQueryStatusException;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
@@ -53,7 +51,7 @@ public class DatasetExploreFacade {
   @Inject
   public DatasetExploreFacade(ExploreClient exploreClient, CConfiguration cConf) {
     this.exploreClient = exploreClient;
-    this.exploreEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
+    this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     if (!exploreEnabled) {
       LOG.warn("Explore functionality for datasets is disabled. All calls to enable explore will be no-ops");
     }

@@ -911,6 +911,11 @@
         <value>60</value>
         <description>Time in secs to schedule clean up job to timeout operations</description>
     </property>
+    <property>
+        <name>explore.client.execution.threads</name>
+        <value>50</value>
+        <description>Number of threads allocated to execute queries in Explore client.</description>
+    </property>
 
     <!--
         External Authentication Settings

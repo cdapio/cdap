@@ -197,8 +197,8 @@ public class ReactorTestBase {
     configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    configuration.setBoolean(Constants.Explore.CFG_EXPLORE_ENABLED, true);
-    configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
+    configuration.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
+    configuration.set(Constants.Explore.LOCAL_DATA_DIR,
                       tmpFolder.newFolder("hive").getAbsolutePath());
 
     // Windows specific requirements

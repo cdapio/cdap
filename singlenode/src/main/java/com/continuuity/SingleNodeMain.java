@@ -117,7 +117,7 @@ public class SingleNodeMain {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
     }
 
-    boolean exploreEnabled = configuration.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
+    boolean exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     if (exploreEnabled) {
       ExploreServiceUtils.checkHiveSupportWithoutSecurity(this.getClass().getClassLoader());
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);

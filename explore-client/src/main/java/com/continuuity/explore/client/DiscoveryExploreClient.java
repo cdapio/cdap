@@ -46,8 +46,7 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
 
   @Inject
   public DiscoveryExploreClient(final DiscoveryServiceClient discoveryClient, CConfiguration cConf) {
-    super(cConf.getInt(Constants.Explore.CFG_CLIENT_EXECUTION_THREADS,
-                       Constants.Explore.DEFAULT_CLIENT_EXECUTION_THREADS));
+    super(cConf.getInt(Constants.Explore.CLIENT_EXECUTION_THREADS));
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
