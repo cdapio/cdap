@@ -58,6 +58,7 @@ import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamConsumerSta
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import com.continuuity.explore.executor.ExploreExecutorService;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
@@ -238,6 +239,7 @@ public class ReactorTestBase {
       new MetricsHandlerModule(),
       new LoggingModules().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules(),
+      new ExploreClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
