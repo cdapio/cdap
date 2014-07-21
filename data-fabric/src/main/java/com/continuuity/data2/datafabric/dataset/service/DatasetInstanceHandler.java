@@ -85,7 +85,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/unrecoverable/datasets/")
   public void deleteAll(HttpRequest request, final HttpResponder responder) throws Exception {
     if (!conf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
-                                  Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
+                         Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
       return;
     }
@@ -129,54 +129,54 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
     DatasetTypeAndProperties typeAndProps = GSON.fromJson(reader, DatasetTypeAndProperties.class);
 
-      LOG.info("Creating dataset {}, type name: {}, typeAndProps: {}",
-               name, typeAndProps.getTypeName(), typeAndProps.getProperties());
+    LOG.info("Creating dataset {}, type name: {}, typeAndProps: {}",
+             name, typeAndProps.getTypeName(), typeAndProps.getProperties());
 
-      DatasetSpecification existing = instanceManager.get(name);
-      if (existing != null && !typeAndProps.isUpgrade()) {
-        String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
-                                       name, existing);
-        LOG.warn(message);
-        responder.sendError(HttpResponseStatus.CONFLICT, message);
-        return;
-      }
+    DatasetSpecification existing = instanceManager.get(name);
+    if (existing != null && !typeAndProps.isUpgrade()) {
+      String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
+                                     name, existing);
+      LOG.warn(message);
+      responder.sendError(HttpResponseStatus.CONFLICT, message);
+      return;
+    }
 
-      DatasetTypeMeta typeMeta = implManager.getTypeInfo(typeAndProps.getTypeName());
-      if (typeMeta == null) {
-        String message = String.format("Cannot create/update dataset %s: unknown type %s",
-                                       name, typeAndProps.getTypeName());
-        LOG.warn(message);
-        responder.sendError(HttpResponseStatus.NOT_FOUND, message);
-        return;
-      }
+    DatasetTypeMeta typeMeta = implManager.getTypeInfo(typeAndProps.getTypeName());
+    if (typeMeta == null) {
+      String message = String.format("Cannot create/update dataset %s: unknown type %s",
+                                     name, typeAndProps.getTypeName());
+      LOG.warn(message);
+      responder.sendError(HttpResponseStatus.NOT_FOUND, message);
+      return;
+    }
 
-      // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
-      DatasetSpecification spec;
+    // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
+    DatasetSpecification spec;
+    try {
+      spec = opExecutorClient.create(name, typeMeta,
+                                     DatasetProperties.builder().addAll(typeAndProps.getProperties()).build());
+    } catch (Exception e) {
+      String msg = String.format("Cannot create dataset %s of type %s: executing create() failed, reason: %s",
+                                 name, typeAndProps.getTypeName(), e.getMessage());
+      LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
+    }
+    instanceManager.add(spec);
+
+    // Enable ad-hoc exploration of dataset
+    // Note: today explore enable is not transactional with dataset create - REACTOR-314
+    if (!typeAndProps.isUpgrade()) {
       try {
-        spec = opExecutorClient.create(name, typeMeta,
-                                       DatasetProperties.builder().addAll(typeAndProps.getProperties()).build());
+        datasetExploreFacade.enableExplore(name);
       } catch (Exception e) {
-        String msg = String.format("Cannot create dataset %s of type %s: executing create() failed, reason: %s",
-                                   name, typeAndProps.getTypeName(), e.getMessage());
+        String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
+                                   name, typeAndProps.getProperties(), e.getMessage());
         LOG.error(msg, e);
-        throw new RuntimeException(msg, e);
-      }
-      instanceManager.add(spec);
-
-      // Enable ad-hoc exploration of dataset
-      // Note: today explore enable is not transactional with dataset create - REACTOR-314
-      if (!typeAndProps.isUpgrade()) {
-        try {
-          datasetExploreFacade.enableExplore(name);
-        } catch (Exception e) {
-          String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
-                                     name, typeAndProps.getProperties(), e.getMessage());
-          LOG.error(msg, e);
-          // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
+        // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
 //      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
 //      return;
-        }
       }
+    }
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
