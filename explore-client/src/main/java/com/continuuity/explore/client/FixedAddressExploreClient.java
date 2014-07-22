@@ -20,6 +20,7 @@ import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 
 import java.net.InetSocketAddress;
+import javax.annotation.Nullable;
 
 /**
  * An Explore Client that uses the provided host and port to talk to a server
@@ -27,9 +28,15 @@ import java.net.InetSocketAddress;
  */
 public class FixedAddressExploreClient extends AbstractExploreClient {
   private final InetSocketAddress addr;
+  private final String authToken;
 
   public FixedAddressExploreClient(String host, int port) {
+    this(host, port, null);
+  }
+
+  public FixedAddressExploreClient(String host, int port, @Nullable String authToken) {
     addr = InetSocketAddress.createUnresolved(host, port);
+    this.authToken = authToken;
   }
 
   @Override
@@ -45,5 +52,10 @@ public class FixedAddressExploreClient extends AbstractExploreClient {
   @Override
   public Handle disableExplore(String datasetInstance) throws ExploreException {
     throw new UnsupportedOperationException("This client does not allow to disable explore on datasets");
+  }
+
+  @Override
+  protected String getAuthorizationToken() {
+    return authToken;
   }
 }
