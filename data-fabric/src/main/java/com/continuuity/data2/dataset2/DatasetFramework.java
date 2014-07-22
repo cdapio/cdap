@@ -99,8 +99,8 @@ public interface DatasetFramework {
    * This uses
    * {@link com.continuuity.api.dataset.DatasetDefinition#configure(String, DatasetProperties)}
    * method to build {@link com.continuuity.api.dataset.DatasetSpecification} with new properties,
-   * which describes dataset instance and later is used to upgrade {@link DatasetAdmin}
-   * and {@link Dataset} for the dataset instance.
+   * which describes dataset instance and {@link DatasetAdmin} is used to upgrade
+   * {@link Dataset} for the dataset instance.
    * @param datasetInstanceName dataset instance name
    * @param props dataset instance properties
    * @throws IOException when creation of dataset instance using its admin fails
