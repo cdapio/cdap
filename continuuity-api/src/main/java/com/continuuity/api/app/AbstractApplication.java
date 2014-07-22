@@ -26,7 +26,11 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.workflow.Workflow;
+import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillRunnable;
+
+import javax.annotation.Nullable;
 
 /**
  * A support class for {@link Application Applications} which reduces repetition and results in
@@ -198,5 +202,16 @@ public abstract class AbstractApplication implements Application {
    */
   protected void addService(TwillApplication application) {
     configurer.addService(application);
+  }
+
+  /**
+   * @see ApplicationConfigurer#addService(TwillRunnable, org.apache.twill.api.ResourceSpecification)
+   * Null {@link org.apache.twill.api.ResourceSpecification} is defaulted to ResourceSpecification.BASIC.
+   */
+  protected void addService(TwillRunnable runnable, @Nullable ResourceSpecification specification) {
+    if (specification == null) {
+      specification = ResourceSpecification.BASIC;
+    }
+    configurer.addService(runnable, specification);
   }
 }
