@@ -18,11 +18,8 @@ package com.continuuity.explore.client;
 
 import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
 
-import com.google.common.util.concurrent.ForwardingListenableFuture;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 
 import java.util.List;
 
@@ -30,9 +27,7 @@ import java.util.List;
  * Future object that eventually contains the results of the execution of a statement by Explore.
  * The {@link #get()} method returns an {@link ExploreExecutionResult} object.
  */
-public abstract class StatementExecutionFuture
-  extends ForwardingListenableFuture.SimpleForwardingListenableFuture<ExploreExecutionResult>
-  implements ListenableFuture<ExploreExecutionResult> {
+public interface StatementExecutionFuture extends ListenableFuture<ExploreExecutionResult> {
 
   /**
    * Get the results' schema. This method is there so that we don't have to wait for the whole execution
@@ -43,34 +38,4 @@ public abstract class StatementExecutionFuture
    * @throws com.continuuity.explore.service.ExploreException on any error fetching schema.
    */
   public abstract List<ColumnDesc> getResultSchema() throws ExploreException;
-
-  /**
-   * Get the handle used by the Explore service to execute the statement.
-   */
-  public abstract ListenableFuture<Handle> getStatementHandleFuture();
-
-  /**
-   * Close the query executed by this Future object, making the results no more available.
-   *
-   * @throws com.continuuity.explore.service.ExploreException on any error closing the query.
-   */
-  public abstract void close() throws ExploreException;
-
-  @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    boolean ret = super.cancel(mayInterruptIfRunning);
-    if (mayInterruptIfRunning) {
-      ret = ret && doCancel();
-    }
-    return ret;
-  }
-
-  /**
-   * Cancel the query execution.
-   */
-  protected abstract boolean doCancel();
-
-  protected StatementExecutionFuture(ListenableFuture<ExploreExecutionResult> delegate) {
-    super(delegate);
-  }
 }

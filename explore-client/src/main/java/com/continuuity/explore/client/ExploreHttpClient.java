@@ -55,7 +55,7 @@ import javax.annotation.Nullable;
  * contained in their json responses. This class is only meant to be extended by classes
  * which implement ExploreClient.
  */
-abstract class ExploreHttpClient extends AbstractIdleService implements Explore {
+abstract class ExploreHttpClient implements Explore {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreHttpClient.class);
   private static final Gson GSON = new Gson();
 

@@ -16,8 +16,6 @@
 
 package com.continuuity.explore.client;
 
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
@@ -30,6 +28,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
@@ -45,8 +44,7 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
 
   @Inject
-  public DiscoveryExploreClient(final DiscoveryServiceClient discoveryClient, CConfiguration cConf) {
-    super(cConf.getInt(Constants.Explore.CLIENT_EXECUTION_THREADS));
+  public DiscoveryExploreClient(final DiscoveryServiceClient discoveryClient) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {

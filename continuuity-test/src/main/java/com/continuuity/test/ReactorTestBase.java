@@ -278,7 +278,6 @@ public class ReactorTestBase {
     exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     exploreExecutorService.startAndWait();
     exploreClient = injector.getInstance(ExploreClient.class);
-    exploreClient.startAndWait();
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
@@ -325,7 +324,11 @@ public class ReactorTestBase {
     metricsCollectionService.startAndWait();
     datasetService.stopAndWait();
     schedulerService.stopAndWait();
-    exploreClient.stopAndWait();
+    try {
+      exploreClient.close();
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
     exploreExecutorService.stopAndWait();
     logAppenderInitializer.close();
     cleanDir(testAppDir);

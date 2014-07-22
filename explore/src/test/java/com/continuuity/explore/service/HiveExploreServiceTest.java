@@ -39,7 +39,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 
 import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyValue;
 
@@ -307,6 +306,5 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     } catch (CancellationException e) {
       // Expected
     }
-    future.close();
   }
 }

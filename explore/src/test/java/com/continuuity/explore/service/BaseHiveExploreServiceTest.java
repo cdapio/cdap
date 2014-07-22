@@ -28,6 +28,7 @@ import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreClientModule;
@@ -74,13 +75,12 @@ public class BaseHiveExploreServiceTest {
     datasetFramework = injector.getInstance(DatasetFramework.class);
 
     exploreClient = injector.getInstance(ExploreClient.class);
-    exploreClient.startAndWait();
-    Assert.assertTrue(exploreClient.isRunning());
+    Assert.assertTrue(exploreClient.isServiceAvailable());
   }
 
   @AfterClass
   public static void stopServices() throws Exception {
-    exploreClient.stopAndWait();
+    exploreClient.close();
     exploreExecutorService.stopAndWait();
     datasetService.stopAndWait();
     transactionManager.stopAndWait();
@@ -89,14 +89,14 @@ public class BaseHiveExploreServiceTest {
   protected static void runCommand(String command, boolean expectedHasResult,
                                  List<ColumnDesc> expectedColumnDescs, List<Result> expectedResults) throws Exception {
     StatementExecutionFuture future = exploreClient.submit(command);
-    Iterator<Result> resultsItr = future.get();
+    ExploreExecutionResult results = future.get();
 
-    Assert.assertEquals(expectedHasResult, resultsItr.hasNext());
+    Assert.assertEquals(expectedHasResult, results.hasNext());
 
     Assert.assertEquals(expectedColumnDescs, future.getResultSchema());
-    Assert.assertEquals(expectedResults, trimColumnValues(resultsItr));
+    Assert.assertEquals(expectedResults, trimColumnValues(results));
 
-    future.close();
+    results.close();
   }
 
   protected static List<Result> trimColumnValues(Iterator<Result> results) {

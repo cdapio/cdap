@@ -16,15 +16,16 @@
 
 package com.continuuity.explore.jdbc;
 
+import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Result;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -48,12 +49,12 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Calendar;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Result set created by an {@link ExploreStatement}, containing the resultsItr of a query made to the Explore service.
+ * Result set created by an {@link ExploreStatement}, containing the {@link ExploreExecutionResult} of a query
+ * made to the Explore service.
  */
 public class ExploreQueryResultSet implements ResultSet {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreQueryResultSet.class);
@@ -68,7 +69,7 @@ public class ExploreQueryResultSet implements ResultSet {
   private ExploreStatement statement;
 
   private StatementExecutionFuture futureResults;
-  private Iterator<Result> resultsItr;
+  private ExploreExecutionResult executionResult;
 
   ExploreQueryResultSet(StatementExecutionFuture futureResults, ExploreStatement statement)
       throws SQLException {
@@ -76,7 +77,7 @@ public class ExploreQueryResultSet implements ResultSet {
     this.statement = statement;
     this.fetchSize = statement.getFetchSize();
     try {
-      this.resultsItr = futureResults.get();
+      this.executionResult = futureResults.get();
     } catch (Exception e) {
       // This should not happen, as ExploreStatement created this object after calling the get method on the future
       LOG.error("Exception when retrieving result iterator from future object", e);
@@ -89,9 +90,9 @@ public class ExploreQueryResultSet implements ResultSet {
     if (isClosed) {
       throw new SQLException("ResultSet is closed");
     }
-    boolean res = resultsItr.hasNext();
+    boolean res = executionResult.hasNext();
     if (res) {
-      currentRow = resultsItr.next();
+      currentRow = executionResult.next();
     }
     return res;
   }
@@ -103,10 +104,14 @@ public class ExploreQueryResultSet implements ResultSet {
       return;
     }
     try {
+      executionResult.close();
       statement.closeClientOperation();
+    } catch (IOException e) {
+      LOG.error("Could not close the query results", e);
+      throw new SQLException(e);
     } finally {
       futureResults = null;
-      resultsItr = null;
+      executionResult = null;
       statement = null;
       isClosed = true;
     }

@@ -200,7 +200,7 @@ public class ReactorServiceMain extends DaemonMain {
 
   @Override
   public void start() {
-    Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, exploreClient);
+    Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService);
 
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
@@ -255,7 +255,14 @@ public class ReactorServiceMain extends DaemonMain {
     if (leaderElection != null) {
       leaderElection.stopAndWait();
     }
-    Services.chainStop(exploreClient, metricsCollectionService, kafkaClientService, zkClientService);
+    Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService);
+
+    try {
+      exploreClient.close();
+    } catch (IOException e) {
+      LOG.error("Could not close Explore client", e);
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override

@@ -17,12 +17,18 @@
 package com.continuuity.explore.client;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Service;
+
+import java.io.Closeable;
 
 /**
  * Explore client discovers explore service, and executes explore commands using the service.
  */
-public interface ExploreClient extends Service {
+public interface ExploreClient extends Closeable {
+
+  /**
+   * Returns true if the explore service is up and running.
+   */
+  boolean isServiceAvailable();
 
   /**
    * Enables ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.

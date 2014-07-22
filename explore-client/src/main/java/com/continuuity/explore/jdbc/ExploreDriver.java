@@ -70,16 +70,8 @@ public class ExploreDriver implements Driver {
       authToken = tokenParams.get(0);
     }
 
-    int executorThreads = 50;
-    List<String> executorThreadsParams = params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_CLIENT_THREADS);
-    if (executorThreadsParams != null && !executorThreadsParams.isEmpty() && !executorThreadsParams.get(0).isEmpty()) {
-      executorThreads = Integer.valueOf(executorThreadsParams.get(0));
-    }
-
-    ExploreClient exploreClient = new FixedAddressExploreClient(params.getHost(), params.getPort(),
-                                                                authToken, executorThreads);
-    exploreClient.startAndWait();
-    if (!exploreClient.isRunning()) {
+    ExploreClient exploreClient = new FixedAddressExploreClient(params.getHost(), params.getPort(), authToken);
+    if (!exploreClient.isServiceAvailable()) {
       throw new SQLException("Cannot connect to " + url + ", service unavailable");
     }
     return new ExploreConnection(exploreClient);
@@ -150,8 +142,7 @@ public class ExploreDriver implements Driver {
      * Extra Explore connection parameter.
      */
     public enum Info {
-      EXPLORE_AUTH_TOKEN("reactor.auth.token"),
-      EXPLORE_CLIENT_THREADS("client.threads");
+      EXPLORE_AUTH_TOKEN("reactor.auth.token");
 
       private String name;
 

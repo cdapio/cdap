@@ -116,7 +116,7 @@ public abstract class DatasetServiceTestBase {
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  mdsDatasetsRegistry,
-                                 new DatasetExploreFacade(new DiscoveryExploreClient(discoveryService, cConf), cConf));
+                                 new DatasetExploreFacade(new DiscoveryExploreClient(discoveryService), cConf));
     service.startAndWait();
     port = discoveryService.discover(Constants.Service.DATASET_MANAGER).iterator().next().getSocketAddress().getPort();
   }

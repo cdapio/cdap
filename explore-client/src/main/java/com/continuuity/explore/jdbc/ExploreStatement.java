@@ -18,7 +18,6 @@ package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.StatementExecutionFuture;
-import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Status;
 import com.continuuity.explore.service.UnexpectedQueryStatusException;
@@ -54,7 +53,6 @@ public class ExploreStatement implements Statement {
    */
   private volatile ResultSet resultSet = null;
   private volatile boolean isClosed = false;
-  private volatile boolean stmtCompleted;
   private volatile StatementExecutionFuture futureResults = null;
 
   private Connection connection;
@@ -84,7 +82,6 @@ public class ExploreStatement implements Statement {
     if (isClosed) {
       throw new SQLException("Can't execute after statement has been closed");
     }
-    stmtCompleted = false;
     if (resultSet != null) {
       // As requested by the Statement interface javadoc, "All execution methods in the Statement interface
       // implicitly close a statement's current ResultSet object if an open one exists"
@@ -147,10 +144,7 @@ public class ExploreStatement implements Statement {
   void closeClientOperation() throws SQLException {
     if (futureResults != null) {
       try {
-        futureResults.close();
-      } catch (ExploreException e) {
-        LOG.error("Caught exception when closing statement", e);
-        throw new SQLException(e.toString(), e);
+        futureResults.cancel(true);
       } finally {
         futureResults = null;
       }

@@ -57,6 +57,7 @@ public class ExploreDisabledTest {
   private static InMemoryTransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
   private static DatasetService datasetService;
+  private static ExploreClient exploreClient;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -67,14 +68,15 @@ public class ExploreDisabledTest {
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
 
-    ExploreClient exploreClient = injector.getInstance(DiscoveryExploreClient.class);
-    Assert.assertFalse(exploreClient.isRunning());
+    exploreClient = injector.getInstance(DiscoveryExploreClient.class);
+    Assert.assertFalse(exploreClient.isServiceAvailable());
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
   }
 
   @AfterClass
   public static void stop() throws Exception {
+    exploreClient.close();
     datasetService.stopAndWait();
     transactionManager.stopAndWait();
   }

@@ -171,8 +171,6 @@ public class SingleNodeMain {
       exploreExecutorService.startAndWait();
     }
 
-    exploreClient.startAndWait();
-
     String hostname = InetAddress.getLocalHost().getHostName();
     System.out.println("Continuuity Reactor started successfully");
     System.out.println("Connect to dashboard at http://" + hostname + ":9999");
@@ -196,7 +194,7 @@ public class SingleNodeMain {
       if (exploreExecutorService != null) {
         exploreExecutorService.stopAndWait();
       }
-      exploreClient.stopAndWait();
+      exploreClient.close();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now

@@ -22,20 +22,22 @@ import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
-import com.continuuity.explore.service.UnexpectedQueryStatusException;
 
 import com.google.common.base.Functions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.AbstractIterator;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -44,32 +46,32 @@ import java.util.concurrent.TimeUnit;
  * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP.
  */
 public abstract class AbstractExploreClient extends ExploreHttpClient implements ExploreClient {
-  private StatementExecutor executor;
-  private final int executorThreads;
+  private ListeningScheduledExecutorService executor;
 
-  protected AbstractExploreClient(int executorThreads) {
-    this.executorThreads = executorThreads;
+  protected AbstractExploreClient() {
+    executor = MoreExecutors.listeningDecorator(
+      Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("explore-client-executor")));
   }
 
   @Override
-  protected void startUp() throws Exception {
-    if (!isAvailable()) {
-      // If Explore service is not available, then we don't start the Explore client as well
-      this.stopAndWait();
-    }
-    executor = new StatementExecutor(MoreExecutors.listeningDecorator(
-      Executors.newFixedThreadPool(executorThreads, Threads.createDaemonThreadFactory("explore-client-executor-%d"))));
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
+  public void close() throws IOException {
     if (executor != null) {
+      // This will cancel all the running tasks, with interruption - that means that all
+      // queries submitted by this executor will be closed
       executor.shutdownNow();
     }
   }
 
   @Override
+  public boolean isServiceAvailable() {
+    return isAvailable();
+  }
+
+  @Override
   public ListenableFuture<Void> disableExplore(final String datasetInstance) {
+    // NOTE: here we have two levels of Future because we want to return the future that actually
+    // finishes the execution of the disable operation - it is not enough that the future handle
+    // be available
     final ListenableFuture<Handle> futureHandle = executor.submit(new Callable<Handle>() {
       @Override
       public Handle call() throws Exception {
@@ -84,6 +86,9 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
   @Override
   public ListenableFuture<Void> enableExplore(final String datasetInstance) {
+    // NOTE: here we have two levels of Future because we want to return the future that actually
+    // finishes the execution of the enable operation - it is not enough that the future handle
+    // be available
     final ListenableFuture<Handle> futureHandle = executor.submit(new Callable<Handle>() {
       @Override
       public Handle call() throws Exception {
@@ -113,96 +118,98 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
    */
   private StatementExecutionFuture getFutureResultsFromHandle(
     final ListenableFuture<Handle> futureHandle) {
-
-//    new StatementExecutionFuture()
-    final AbstractExploreClient client = this;
-    StatementExecutionFuture future = executor.submit(new Callable<ExploreExecutionResult>() {
+    final StatementExecutionFutureImpl resultFuture = new StatementExecutionFutureImpl(this, futureHandle);
+    Futures.addCallback(futureHandle, new FutureCallback<Handle>() {
       @Override
-      public ExploreExecutionResult call() throws Exception {
-        Handle handle = futureHandle.get();
-
-        Status status;
-        do {
-          TimeUnit.MILLISECONDS.sleep(300);
-          status = client.getStatus(handle);
-        } while (status.getStatus() == Status.OpStatus.RUNNING || status.getStatus() == Status.OpStatus.PENDING ||
-          status.getStatus() == Status.OpStatus.INITIALIZED || status.getStatus() == Status.OpStatus.UNKNOWN);
-
-        switch (status.getStatus()) {
-          case FINISHED:
+      public void onSuccess(final Handle handle) {
+        try {
+          Status status = getStatus(handle);
+          if (!status.getStatus().isFinished()) {
+            executor.schedule(new Runnable() {
+              @Override
+              public void run() {
+                onSuccess(handle);
+              }
+            }, 300, TimeUnit.MILLISECONDS);
+          } else {
             if (!status.hasResults()) {
-              client.close(handle);
+              close(handle);
             }
-            return new ClientExploreExecutionResult(client, handle, status.hasResults());
-          default:
-            throw new UnexpectedQueryStatusException("Error while running query.", status.getStatus());
+            resultFuture.set(new ClientExploreExecutionResult(AbstractExploreClient.this, handle, status.hasResults()));
+          }
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
         }
       }
-    }, this, futureHandle);
 
-    return future;
+      @Override
+      public void onFailure(Throwable t) {
+        resultFuture.setException(t);
+      }
+    }, executor);
+    return resultFuture;
   }
 
   /**
    * Result iterator which polls Explore service using HTTP to get next results.
    */
-  private static final class ClientExploreExecutionResult implements ExploreExecutionResult {
+  private static final class ClientExploreExecutionResult extends AbstractIterator<Result>
+    implements ExploreExecutionResult {
     private static final Logger LOG = LoggerFactory.getLogger(ClientExploreExecutionResult.class);
     private static final int POLLING_SIZE = 100;
 
     private Iterator<Result> delegate;
-    private boolean hasNext = true;
 
     private final ExploreHttpClient exploreClient;
     private final Handle handle;
-    private final boolean mayHaveResults;
+    private final boolean hasResults;
 
-    public ClientExploreExecutionResult(ExploreHttpClient exploreClient, Handle handle, boolean mayHaveResults) {
+    public ClientExploreExecutionResult(ExploreHttpClient exploreClient, Handle handle, boolean hasResults) {
       this.exploreClient = exploreClient;
       this.handle = handle;
-      this.mayHaveResults = mayHaveResults;
+      this.hasResults = hasResults;
     }
 
     @Override
-    public boolean hasNext() {
-      if (!hasNext || !mayHaveResults) {
-        return false;
+    protected Result computeNext() {
+      if (!hasResults) {
+        return endOfData();
       }
 
-      if (delegate == null || !delegate.hasNext()) {
-        try {
-          // call the endpoint 'next' to get more results and set delegate
-          List<Result> nextResults = exploreClient.nextResults(handle, POLLING_SIZE);
-          delegate = nextResults.iterator();
-
-          // At this point, if delegate has no result, there are no more results at all
-          hasNext = delegate.hasNext();
-          return hasNext;
-        } catch (ExploreException e) {
-          LOG.error("Exception while iterating through the results of query {}", handle.getHandle(), e);
-          Throwables.propagate(e);
-        } catch (HandleNotFoundException e) {
-          // Handle may have timed out, or the handle given is just unknown
-          LOG.debug("Received exception", e);
-          hasNext = false;
-          return false;
-        }
-      }
-      // At this point we know that delegate.hasNext() is true
-      return true;
-    }
-
-    @Override
-    public Result next() {
-      if (hasNext()) {
+      if (delegate != null && delegate.hasNext()) {
         return delegate.next();
       }
-      throw new NoSuchElementException();
+      try {
+        // call the endpoint 'next' to get more results and set delegate
+        List<Result> nextResults = exploreClient.nextResults(handle, POLLING_SIZE);
+        delegate = nextResults.iterator();
+
+        // At this point, if delegate has no result, there are no more results at all
+        if (!delegate.hasNext()) {
+          return endOfData();
+        }
+        return delegate.next();
+      } catch (ExploreException e) {
+        LOG.error("Exception while iterating through the results of query {}", handle.getHandle(), e);
+        throw Throwables.propagate(e);
+      } catch (HandleNotFoundException e) {
+        // Handle may have timed out, or the handle given is just unknown
+        LOG.debug("Received exception", e);
+        return endOfData();
+      }
     }
 
     @Override
-    public void remove() {
-      throw new UnsupportedOperationException();
+    public void close() throws IOException {
+      try {
+        exploreClient.close(handle);
+      } catch (HandleNotFoundException e) {
+        // Don't need to throw an exception in that case - if the handle is not found, the query is already closed
+        LOG.warn("Caught exception when closing the results", e);
+      } catch (ExploreException e) {
+        LOG.error("Caught exception during close operation", e);
+        throw Throwables.propagate(e);
+      }
     }
   }
 }

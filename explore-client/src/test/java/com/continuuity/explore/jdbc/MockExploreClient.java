@@ -16,19 +16,20 @@
 
 package com.continuuity.explore.jdbc;
 
-import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.Result;
 
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ForwardingListenableFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,11 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
+  public boolean isServiceAvailable() {
+    return true;
+  }
+
+  @Override
   public ListenableFuture<Void> enableExplore(String datasetInstance) {
     return null;
   }
@@ -61,31 +67,7 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   public StatementExecutionFuture submit(final String statement) {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
     futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get(statement).iterator()));
-    return new StatementExecutionFuture(futureDelegate) {
-      @Override
-      public List<ColumnDesc> getResultSchema() throws ExploreException {
-        return statementsToMetadata.get(statement);
-      }
-
-      @Override
-      public ListenableFuture<Handle> getStatementHandleFuture() {
-        SettableFuture<Handle> future = SettableFuture.create();
-        future.set(Handle.fromId("foobar"));
-        return future;
-      }
-
-      @Override
-      public void close() throws ExploreException {
-        statementsToMetadata.remove(statement);
-        statementsToResults.remove(statement);
-      }
-
-      @Override
-      protected boolean doCancel() {
-        // TODO remove results for given handle
-        return true;
-      }
-    };
+    return new MockStatementExecutionFuture(futureDelegate, statement, statementsToMetadata, statementsToResults);
   }
 
   @Override
@@ -95,6 +77,11 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
 
   @Override
   protected void shutDown() throws Exception {
+    // Do nothing
+  }
+
+  @Override
+  public void close() throws IOException {
     // Do nothing
   }
 
@@ -119,6 +106,41 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
     @Override
     public void remove() {
       delegate.remove();
+    }
+
+    @Override
+    public void close() throws IOException {
+      // TODO should close the query here
+    }
+  }
+
+  private static final class MockStatementExecutionFuture
+    extends ForwardingListenableFuture.SimpleForwardingListenableFuture<ExploreExecutionResult>
+    implements StatementExecutionFuture {
+
+    private final Map<String, List<ColumnDesc>> statementsToMetadata;
+    private final Map<String, List<Result>> statementsToResults;
+    private final String statement;
+
+    MockStatementExecutionFuture(ListenableFuture<ExploreExecutionResult> delegate, String statement,
+                                 Map<String, List<ColumnDesc>> statementsToMetadata,
+                                 Map<String, List<Result>> statementsToResults) {
+      super(delegate);
+      this.statement = statement;
+      this.statementsToMetadata = statementsToMetadata;
+      this.statementsToResults = statementsToResults;
+    }
+
+    @Override
+    public List<ColumnDesc> getResultSchema() throws ExploreException {
+      return statementsToMetadata.get(statement);
+    }
+
+    @Override
+    public boolean cancel(boolean interrupt) {
+      statementsToMetadata.remove(statement);
+      statementsToResults.remove(statement);
+      return true;
     }
   }
 }

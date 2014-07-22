@@ -871,19 +871,15 @@
     </property>
 
     <!---
-         Hive Server Settings
+         Explore Server Settings
      -->
-    <property>
-        <name>hive.server.bind.address</name>
-        <value>localhost</value>
-    </property>
     <property>
         <name>reactor.explore.enabled</name>
         <value>false</value>
     </property>
     <property>
-        <name>hive.local.data.dir</name>
-        <value>${local.data.dir}/hive</value>
+        <name>explore.local.data.dir</name>
+        <value>${local.data.dir}/explore</value>
     </property>
     <property>
         <name>explore.executor.container.instances</name>
@@ -910,11 +906,6 @@
         <name>explore.cleanup.job.schedule.secs</name>
         <value>60</value>
         <description>Time in secs to schedule clean up job to timeout operations</description>
-    </property>
-    <property>
-        <name>explore.client.execution.threads</name>
-        <value>50</value>
-        <description>Number of threads allocated to execute queries in Explore client.</description>
     </property>
 
     <!--
