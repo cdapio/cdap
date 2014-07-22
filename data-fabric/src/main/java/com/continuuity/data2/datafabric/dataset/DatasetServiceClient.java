@@ -124,19 +124,39 @@ class DatasetServiceClient {
     return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), DatasetTypeMeta.class);
   }
 
-  public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props, boolean isUpgrade)
+  public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
     throws DatasetManagementException {
 
-    DatasetInstanceHandler.DatasetTypeAndProperties typeAndProps =
-      new DatasetInstanceHandler.DatasetTypeAndProperties(datasetType, props.getProperties(), isUpgrade);
+    DatasetInstanceHandler.CreateDatasetParams typeAndProps =
+      new DatasetInstanceHandler.CreateDatasetParams(datasetType, props.getProperties());
+    createUpdateInstance(datasetInstanceName, typeAndProps, "add");
+  }
+
+  private void createUpdateInstance(String datasetInstanceName,
+                                    DatasetInstanceHandler.CreateDatasetParams typeAndProps, String op)
+    throws DatasetManagementException {
     HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(typeAndProps));
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
-      throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
-                                                        datasetInstanceName, getDetails(response)));
+      throw new InstanceConflictException(String.format("Failed to %s instance %s due to conflict, details: %s",
+                                                        op, datasetInstanceName, getDetails(response)));
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
-                                                         datasetInstanceName, getDetails(response)));
+      throw new DatasetManagementException(String.format("Failed to %s instance %s, details: %s",
+                                                         op, datasetInstanceName, getDetails(response)));
+    }
+  }
+
+  public void updateInstance(String datasetInstanceName, DatasetProperties props)
+    throws DatasetManagementException {
+    DatasetInstanceMeta meta = getInstance(datasetInstanceName);
+    DatasetInstanceHandler.CreateDatasetParams typeAndProps =
+      new DatasetInstanceHandler.CreateDatasetParams(meta.getSpec().getType(), props.getProperties(), true);
+    createUpdateInstance(datasetInstanceName, typeAndProps, "update");
+    // after creating dataset instance with new spec, we call upgrade admin op
+    HttpResponse response = doPost("datasets/" + datasetInstanceName + "/admin/upgrade");
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Failed to upgrade instance %s, details: %s",
+                                                          datasetInstanceName, getDetails(response)));
     }
   }
 
@@ -166,13 +186,13 @@ class DatasetServiceClient {
     try {
       final InputStream inputStream = is;
       response = doRequest(HttpMethod.PUT, "modules/" + moduleName,
-                       ImmutableMap.of("X-Continuuity-Class-Name", className),
-                       new InputSupplier<InputStream>() {
-                         @Override
-                         public InputStream getInput() throws IOException {
-                           return inputStream;
-                         }
-                       });
+                           ImmutableMap.of("X-Continuuity-Class-Name", className),
+                           new InputSupplier<InputStream>() {
+                             @Override
+                             public InputStream getInput() throws IOException {
+                               return inputStream;
+                             }
+                           });
     } finally {
       Closeables.closeQuietly(is);
     }
@@ -183,7 +203,7 @@ class DatasetServiceClient {
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to add module %s, details: %s",
-                                                      moduleName, getDetails(response)));
+                                                         moduleName, getDetails(response)));
     }
   }
 
@@ -229,13 +249,18 @@ class DatasetServiceClient {
     return doRequest(HttpMethod.PUT, resource, null, body);
   }
 
+  private HttpResponse doPost(String resource)
+    throws DatasetManagementException {
+    return doRequest(HttpMethod.POST, resource);
+  }
+
   private HttpResponse doDelete(String resource) throws DatasetManagementException {
     return doRequest(HttpMethod.DELETE, resource);
   }
 
   private HttpResponse doRequest(HttpMethod method, String resource,
-                               @Nullable Map<String, String> headers,
-                               @Nullable String body) throws DatasetManagementException {
+                                 @Nullable Map<String, String> headers,
+                                 @Nullable String body) throws DatasetManagementException {
 
     String url = resolve(resource);
     try {

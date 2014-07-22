@@ -109,13 +109,13 @@ public class RemoteDatasetFramework implements DatasetFramework {
   public void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException {
 
-    client.addInstance(datasetInstanceName, datasetType, props, false);
+    client.addInstance(datasetInstanceName, datasetType, props);
   }
 
   @Override
-  public void updateInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
+  public void updateInstance(String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException {
-    client.addInstance(datasetInstanceName, datasetType, props, true);
+    client.updateInstance(datasetInstanceName, props);
   }
 
   @Override

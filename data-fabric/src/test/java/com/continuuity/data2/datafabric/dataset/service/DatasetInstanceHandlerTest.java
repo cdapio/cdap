@@ -130,7 +130,6 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
     // create dataset instance with type that is not yet known to the system should fail
     DatasetProperties props = DatasetProperties.builder().add("prop1", "val1").build();
-    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, createInstance("dataset1", "datasetType2", props));
 
     // deploy modules
     deployModule("module1", TestModule1.class);
@@ -142,21 +141,13 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     // verify instance was created
     instances = getInstances().getResponseObject();
     Assert.assertEquals(1, instances.size());
-    // verifying spec is same as expected
-    DatasetSpecification dataset1Spec = createSpec("dataset1", "datasetType2", props);
-    Assert.assertEquals(dataset1Spec, instances.get(0));
-    Assert.assertEquals("val1", getInstance("dataset1").getResponseObject().getSpec().getProperty("prop1"));
 
-
-    // cannot create instance with same name again
-    Assert.assertEquals(HttpStatus.SC_CONFLICT, createInstance("dataset1", "datasetType2", props));
-    Assert.assertEquals(1, getInstances().getResponseObject().size());
-
-    DatasetProperties newProps = DatasetProperties.builder().add("prop1", "val2").build();
+    DatasetProperties newProps = DatasetProperties.builder().add("prop2", "val2").build();
 
     // update dataset instance
     Assert.assertEquals(HttpStatus.SC_OK, updateInstance("dataset1", "datasetType2", newProps));
-    Assert.assertEquals("val2", getInstance("dataset1").getResponseObject().getSpec().getProperty("prop1"));
+    Assert.assertEquals("val2", getInstance("dataset1").getResponseObject().getSpec().getProperty("prop2"));
+    Assert.assertNull(getInstance("dataset1").getResponseObject().getSpec().getProperty("prop1"));
 
     // delete dataset instance
     Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1"));
@@ -243,8 +234,13 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   private int createInstance(String instanceName, String typeName,
                              DatasetProperties props) throws IOException {
-    DatasetInstanceHandler.DatasetTypeAndProperties typeAndProps =
-      new DatasetInstanceHandler.DatasetTypeAndProperties(typeName, props.getProperties());
+    return createUpdateInstance(instanceName, typeName, props, false);
+  }
+
+  private int createUpdateInstance(String instanceName, String typeName,
+                                   DatasetProperties props, boolean isUpgrade) throws IOException {
+    DatasetInstanceHandler.CreateDatasetParams typeAndProps =
+      new DatasetInstanceHandler.CreateDatasetParams(typeName, props.getProperties(), isUpgrade);
     HttpRequest request = HttpRequest.put(getUrl("/data/datasets/" + instanceName))
       .withBody(new Gson().toJson(typeAndProps)).build();
     return HttpRequests.execute(request).getResponseCode();
@@ -252,11 +248,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   private int updateInstance(String instanceName, String typeName,
                              DatasetProperties props) throws IOException {
-    DatasetInstanceHandler.DatasetTypeAndProperties typeAndProps =
-      new DatasetInstanceHandler.DatasetTypeAndProperties(typeName, props.getProperties(), true);
-    HttpRequest request = HttpRequest.put(getUrl("/data/datasets/" + instanceName))
-      .withBody(new Gson().toJson(typeAndProps)).build();
-    return HttpRequests.execute(request).getResponseCode();
+    return createUpdateInstance(instanceName, typeName, props, true);
   }
 
   private ObjectResponse<List<DatasetSpecification>> getInstances() throws IOException {
@@ -317,7 +309,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   }
 
   private static DatasetSpecification createSpec(String instanceName, String typeName,
-                                                DatasetProperties properties) {
+                                                 DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, typeName).properties(properties.getProperties()).build();
   }
 }
