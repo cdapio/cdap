@@ -2,9 +2,9 @@
  * Service Model
  */
 
-define(['core/models/element'], function (Element) {
+define(['core/models/program'], function (Program) {
 
-  var Model = Element.extend({
+  var Model = Program.extend({
     type: 'Service',
     plural: 'Services',
 
@@ -19,6 +19,10 @@ define(['core/models/element'], function (Element) {
 
     interpolate: function (path) {
       return path.replace(/\{id\}/, this.get('id'));
+    },
+
+    startWithConfig: function (http, config) {
+      console.log('called');
     }
 
   });

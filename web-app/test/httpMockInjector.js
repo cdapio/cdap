@@ -187,10 +187,10 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
     {"type":"App","id":"PurchaseHistory","name":"PurchaseHistory","description":"Purchase history app"}];
 
 // User Services:
-///*
+///*/
   nock(clientAddr, options)
     .persist()
-    .get('/v2/apps')
+    .get('/v2/apps').times(6)
     .reply(200, tmp);
 //*/
 

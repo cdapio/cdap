@@ -65,6 +65,7 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		this.resource('Services', { path: '/services' } );
     this.resource('Service', { path: '/services/:service_id' }, function() {
       this.route('Log', { path: '/log' });
+      this.route('Config', { path: '/config' });
     });
 
 		this.resource('Login', { path: '/login' } );
@@ -280,6 +281,15 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
         this.render('Runnable/Log');
       }
     }),
+
+		ServiceConfigRoute: basicRouter.extend({
+		  model: function () {
+		    return this.modelFor('Service');
+		  },
+			renderTemplate: function () {
+				this.render('Runnable/Config');
+			}
+		}),
 
     LoginRoute: basicRouter.extend(),
 

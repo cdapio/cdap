@@ -20,6 +20,13 @@ define([], function () {
 
     },
 
+    config: function(appID, serviceID) {
+			var self = this;
+			var model = this.servicesMap[[appID, serviceID]];
+
+			this.transitionToRoute('Service.Config', model);
+    },
+
     servicesExist: function () {
       return true;
     }.property('userServices'),
@@ -35,6 +42,7 @@ define([], function () {
         var obj = input[key];
         returnArray.pushObject(obj);
       }
+      console.log('Updated View');
       return returnArray;
     }.property('userServices'),
 
@@ -44,102 +52,66 @@ define([], function () {
 
       var runnableStatusURL = 'apps/' + app.name + '/services' + '/' + service.name + '/runnables' + '/' + runnable + '/instances';
       self.HTTP.rest(runnableStatusURL, function(f) {
-
-        var list = sMap[[app.name,service.name]].runnablesList;
-        var map2 = sMap[[app.name,service.name]].runnablesMap;
+        var map2 = sMap[[app.name,service.name]].get('runnablesMap');
         if(map2[runnable] == undefined) {
-          map2[runnable] = {};
+          map2[runnable] = Ember.Object.create();
         }
 
-        map2[runnable].name = runnable;
-        map2[runnable].requested = f.requested;
-        map2[runnable].provisioned = f.provisioned;
+        map2[runnable].set('name', runnable);
+        map2[runnable].set('requested', f.requested);
+        map2[runnable].set('provisioned', f.provisioned);
 
-        list.clear();
+        var list = [];
         var keys = Object.keys(map2);
         for (var m=0; m < keys.length; m++) {
           var val = map2[keys[m]];
-          list.pushObject(val);
+          list.push(val);
         }
+        sMap[[app.name,service.name]].set('runnablesList', list);
       });
     },
 
+
     updateService: function (app, service) {
       var self = this;
-      var userServices = self.get('userServices');
       var sMap = self.servicesMap;
 
       var runnableNameURL = 'apps/' + app.name + '/services' + '/' + service.name;
-      self.HTTP.rest(runnableNameURL, function(f) {
-        f.runnables.forEach( function(runnable) {
+      self.HTTP.rest(runnableNameURL, function(response) {
+        response.runnables.forEach( function(runnable) {
           self.updateRunnable(app, service, runnable);
         });
       });
 
       var statusCheckURL = 'apps/' + app.name + '/services' + '/' + service.name + '/status';
-      self.HTTP.rest(statusCheckURL, function(f) {
-        var status = f.status;
-
+      self.HTTP.rest(statusCheckURL, function(response) {
+        var status = response.status;
         var sMap = self.servicesMap;
-        sMap[[app.name,service.name]].status = status;
-        sMap[[app.name,service.name]].imgClass = status === 'RUNNING' ? 'complete' : 'loading';
+        sMap[[app.name,service.name]].set('status', status);
+        sMap[[app.name,service.name]].set('imgClass', status === 'RUNNING' ? 'complete' : 'loading');
 
       });
 
-      var modified = false;
       if (sMap[[app.name,service.name]] == undefined) {
         sMap[[app.name,service.name]] = C.Service.create({
           metricEndpoint: C.Util.getMetricEndpoint(service.name),
           metricName: C.Util.getMetricName(service.name),
           runnablesList: [],
           runnablesMap: {},
-          deleted: false,
           isValid: true,
+          deleted: false,
         });
       }
-      sMap[[app.name,service.name]].modelID = service.name;
-      sMap[[app.name,service.name]].description = service.description;
-      sMap[[app.name,service.name]].id = service.name;
-      sMap[[app.name,service.name]].name = service.name;
-      sMap[[app.name,service.name]].description = service.description;
-      sMap[[app.name,service.name]].appID = service.app;
-      sMap[[app.name,service.name]].isValid = true;
-      sMap[[app.name,service.name]].deleted = false;
+      sMap[[app.name,service.name]].set('modelID', service.name);
+      sMap[[app.name,service.name]].set('description', service.description);
+      sMap[[app.name,service.name]].set('id', service.name);
+      sMap[[app.name,service.name]].set('name', service.name);
+      sMap[[app.name,service.name]].set('description', service.description);
+      sMap[[app.name,service.name]].set('appID', service.app);
+      sMap[[app.name,service.name]].set('app', service.app);
+      sMap[[app.name,service.name]].set('isValid', true);
+      sMap[[app.name,service.name]].set('deleted', false);
 
-      for (var i=0; i < userServices.length; i++) {
-        if (userServices[i].get('name') === service.name && userServices[i].get('appID') === app.name) {
-          userServices[i].set('modelID', service.name);
-          userServices[i].set('description', service.description);
-          userServices[i].set('id', service.name);
-          userServices[i].set('name', service.name);
-          userServices[i].set('description', service.description);
-          userServices[i].set('metricEndpoint', C.Util.getMetricEndpoint(service.name));
-          userServices[i].set('metricName', C.Util.getMetricName(service.name));
-          userServices[i].set('appID', service.app);
-          userServices[i].set('isValid', true);
-          userServices[i].set('deleted', false);
-          modified = true;
-        }
-      }
-
-      if (!modified) {
-        userServices.push(C.Service.create({
-          modelId: service.name,
-          description: service.description,
-          id: service.name,
-          name: service.name,
-          description: service.description,
-          metricEndpoint: C.Util.getMetricEndpoint(service.name),
-          metricName: C.Util.getMetricName(service.name),
-          appID: service.app,
-          runnablesList: [],
-          runnablesMap: {},
-          status: 'STOPPED', //default status and imgClass values:
-          imgClass: 'loading',
-          isValid: true,
-        }));
-      }
-      userServices.arrayContentDidChange();
     },
 
     updateApp: function (app) {
@@ -147,6 +119,8 @@ define([], function () {
       var appUrl = 'apps/' + app.name + '/services';
       self.HTTP.rest(appUrl, function (services) {
         services.forEach(function(service) {
+          self.set('userServices', []);
+          self.get('userServices').pushObject(1); //This is needed, for some reason... I don't yet know why.
           self.updateService(app, service);
         });
       });
@@ -154,22 +128,19 @@ define([], function () {
 
     resetUserServices: function () {
       var self = this;
-      /*
-      var userServices = self.get('userServices');
 
-      for (var i=0; i < userServices.length; i++) {
-        if(userServices[i].get('isValid') == false && userServices[i].deleted == false) {
-          userServices[i].set('deleted', true);
-//          userServices.splice(i, 1);
-//          userServices.arrayContentDidChange();
-          continue;
+      var sMap = self.servicesMap;
+      var keys = Object.keys(sMap);
+      for (var m=0; m < keys.length; m++) {
+        var obj = sMap[keys[m]];
+        if (obj.isValid==false && obj.deleted==false) {
+          obj.set('deleted', true);
+          console.log('deleted: ' + obj.name);
         }
-        userServices[i].set('isValid', false);
+        obj.set('isValid', false);
       }
-*/
 
       self.HTTP.rest('apps', function (apps) {
-//        console.log("numapps: " + apps.length);
         apps.forEach(function(app) {
           self.updateApp(app);
         });
@@ -247,13 +218,79 @@ define([], function () {
       );
     },
 
-    //TODO:
     getRuntimeArgs: function (appID, serviceID) {
-      self.HTTP.rest('/apps/' + appID + '/services/' + serviceID + '/runtimeargs');
+      var payload = {};
+      self.HTTP.rest('apps/' + appID + '/services/' + serviceID + '/runtimeargs');
+      self.HTTP.put('rest/apps/' + appID + '/services/' + serviceID + '/runtimeargs', payload);
       return;
     },
 
-    //TODO: create increase/decrease-Instance functions for runnables. The following are for system services.
+    history: function (appID, serviceID) {
+      var url = '/apps/{app-id}/services/{service-id}/history'
+      self.HTTP.rest(url, callBackFunction);
+    },
+
+    liveinfo: function (appID, serviceID) {
+      var url = '/apps/{app-id}/services/{service-id}/live-info'
+      self.HTTP.rest(url, callBackFunction);
+    },
+
+    userService_increaseInstance: function (appID, serviceID, runnableID, instanceCount) {
+      var self = this;
+      console.log('appID: ' + appID);
+      console.log('serviceID: ' + serviceID);
+      console.log('runnableID: ' + runnableID);
+      console.log('instanceCount: ' + instanceCount);
+      C.Modal.show(
+        "Increase instances",
+        "Increase instances for " + appID + ":" + serviceID + ":" + runnableID + "?",
+        function () {
+
+          var payload = {data: {instances: ++instanceCount}};
+          var sMap = self.servicesMap;
+          var service = sMap[[appID,serviceID]];
+//          if (instanceCount > service.max || instanceCount < service.min) {
+//            C.Util.showWarning(ERROR_TXT);
+//            return;
+//          }
+          self.userService_executeInstanceCall(appID, serviceID, runnableID, payload);
+        });
+    },
+    userService_decreaseInstance: function (appID, serviceID, runnableID, instanceCount) {
+      var self = this;
+      console.log('appID: ' + appID);
+      console.log('serviceID: ' + serviceID);
+      console.log('runnableID: ' + runnableID);
+      console.log('instanceCount: ' + instanceCount);
+      C.Modal.show(
+        "Increase instances",
+        "Increase instances for " + appID + ":" + serviceID + ":" + runnableID + "?",
+        function () {
+
+          var payload = {data: {instances: --instanceCount}};
+          var sMap = self.servicesMap;
+          var service = sMap[[appID,serviceID]];
+          console.log(instanceCount);
+          if (instanceCount <= 0) {
+            C.Util.showWarning(ERROR_TXT);
+            return;
+          }
+          self.userService_executeInstanceCall(appID, serviceID, runnableID, payload);
+        });
+    },
+    userService_executeInstanceCall: function(appID, serviceID, runnableID, payload) {
+      var self = this;
+      var url = 'rest/apps/' + appID + '/services/' + serviceID + '/runnables/' + runnableID + '/instances';
+      this.HTTP.put(url, payload,
+        function(resp, status) {
+        if (status === 'error') {
+          C.Util.showWarning(resp);
+        } else {
+          self.resetServices();
+        }
+      });
+    },
+
     increaseInstance: function (serviceName, instanceCount) {
       var self = this;
       C.Modal.show(
@@ -261,7 +298,7 @@ define([], function () {
         "Increase instances for " + serviceName + "?",
         function () {
 
-          var payload = {data: {instances: ++instanceCount}};
+          var payload = {data: {instances: --instanceCount}};
           var services = self.get('systemServices');
           for (var i = 0; i < services.length; i++) {
             var service = services[i];

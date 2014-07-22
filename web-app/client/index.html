@@ -246,34 +246,37 @@
             <th style="min-width: 200px;" class="instance-col center-align"> Start/Stop </th>
           </thead>
           <tbody>
-          {{#each servicesArray}}
-          {{#unless this.deleted}}
+          {{#each service in servicesArray}}
+          {{#unless service.deleted}}
             <tr>
               <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
-                {{this.name}}
+                {{service.name}}
               </a>
                 <br />
-                <span class="app-list-status">{{this.description}}</span>
+                <span class="app-list-status">{{service.description}}</span>
               </td>
               <td style="max-width: 100px;" class="status-col center-align">
-                <span {{ bindAttr class=":service-icon this.imgClass" }} ></span>
+                <span {{ bindAttr class=":service-icon service.imgClass" }} ></span>
               </td>
               <td style="max-width: 200px;" class="instance-col">
+              </td>
               <td style="max-width: 350px;" class="instance-provisioned service-col">
-                  <div class="instance-num auto-margin"><span>{{this.provisioned}}</span></div>
+                  <div id="action-buttons" class="btn-group pull-right">
+                  <button class="btn btn-icon" {{action config service.appID service.id}}><span class="btn-config"></span></button>
+                  </div>
               </td>
               <td class="center-align">
                   <div class="btn-group start-stop-btns">
-                      <button class="userServices-start" {{action start this.appID this.id}}></button>
-                      <button class="userServices-stop" {{action stop this.appID this.id}}></button>
+                      <button class="userServices-start" {{action start service.appID service.id}}></button>
+                      <button class="userServices-stop" {{action stop service.appID service.id}}></button>
                   </div>
               </td>
             </tr>
             {{!--  RUNNABLES ROWS --}}
-              {{#each this.runnablesList}}
+              {{#each runnable in service.runnablesList}}
               <tr>
               <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
-                {{this.name}}
+                {{runnable.name}}
               </a>
                 <br />
                 <span class="app-list-status">runnable</span>
@@ -283,18 +286,18 @@
               </td>
               <td style="max-width: 200px;" class="instance-col">
                 <div class="instance-wrapper">
-                  <div class="instance-num"><span>{{this.requested}}</span></div>
+                  <div class="instance-num"><span>{{runnable.requested}}</span></div>
                   <div>
-                    <a class="cursor-pointer" {{action decreaseInstance this.name this.requested }}>
+                    <a class="cursor-pointer" {{action userService_decreaseInstance service.appID service.name runnable.name runnable.requested }}>
                       <span class="minus-icon"></span>
                     </a>
-                    <a class="cursor-pointer" {{action increaseInstance this.name this.requested }}>
+                    <a class="cursor-pointer" {{action userService_increaseInstance service.appID service.name runnable.name runnable.requested }}>
                       <span class="plus-icon"></span>
                     </a>
                   </div>
                 </div>
               <td style="max-width: 350px;" class="instance-provisioned service-col">
-                  <div class="instance-num auto-margin"><span>{{this.provisioned}}</span></div>
+                  <div class="instance-num auto-margin"><span>{{runnable.provisioned}}</span></div>
               </td>
               <td class="center-align">
                 {{!-- removed start/stop buttons from here --}}

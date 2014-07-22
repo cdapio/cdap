@@ -1,6 +1,6 @@
 /*
  * Runnable Config Controller
- * Runnables (Flow, Mapreduce, Procedure) extend this for Config functionality.
+ * Runnables (Services, Flow, Mapreduce, Procedure) extend this for Config functionality.
  */
 
 define([], function () {
@@ -8,7 +8,6 @@ define([], function () {
 	var Controller = Em.Controller.extend({
 
 		load: function () {
-
 			var parent = this.get('needs')[0];
 			var model = this.get('controllers').get(parent).get('model');
 			var list = Em.ArrayProxy.create({ content: [] });
@@ -21,7 +20,7 @@ define([], function () {
 			this.HTTP.get('rest', 'apps', model.get('app'),
 				model.get('plural').toLowerCase(),
 				model.get('name'), 'runtimeargs', function (args) {
-
+          console.log(args);
 					var config = [];
 					for (var key in args) {
 						config.push({
