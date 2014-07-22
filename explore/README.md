@@ -15,7 +15,7 @@ To modify the hive-exec jar again, follow these steps:
 3. Make your changes in the ``ql`` module (it will be packaged as hive-exec.jar)
 4. You can modify ``pom.xml`` in module ``ql`` to change the version number of the generated jar, according
 to what version of Reactor you are modifying.
-5. Deploy your jar to Nexus using the following command in the ``ql`` directory:
+5. Deploy your jar to Nexus using this command in the ``ql`` directory:
   ``mvn clean deploy -DskipTests -P hadoop-2 -P sources``
 6. Change your dependencies in Reactor to point to the same version number you specified in step 4. for
 hive-exec.
