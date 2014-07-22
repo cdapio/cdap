@@ -45,9 +45,9 @@ public class StatementExecutor extends ForwardingListeningExecutorService {
    * Submit a callable to the executor. The execution will be delegated to another executor. The return
    * {@link com.google.common.util.concurrent.ListenableFuture} is of type {@link StatementExecutionFuture}.
    */
-  public StatementExecutionFuture submit(Callable<ExecutionResults> callable, ExploreHttpClient exploreClient,
+  public StatementExecutionFuture submit(Callable<ExploreExecutionResult> callable, ExploreHttpClient exploreClient,
                                          ListenableFuture<Handle> futureHandle) {
-    ListenableFuture<ExecutionResults> delegateFuture = super.submit(callable);
+    ListenableFuture<ExploreExecutionResult> delegateFuture = super.submit(callable);
     return new StatementExecutionFutureImpl(delegateFuture, exploreClient, futureHandle);
   }
 }

@@ -39,7 +39,7 @@ class StatementExecutionFutureImpl extends StatementExecutionFuture {
   private final ExploreHttpClient exploreClient;
   private final ListenableFuture<Handle> futureHandle;
 
-  StatementExecutionFutureImpl(ListenableFuture<ExecutionResults> delegate, ExploreHttpClient exploreClient,
+  StatementExecutionFutureImpl(ListenableFuture<ExploreExecutionResult> delegate, ExploreHttpClient exploreClient,
                                ListenableFuture<Handle> futureHandle) {
     super(delegate);
     this.exploreClient = exploreClient;

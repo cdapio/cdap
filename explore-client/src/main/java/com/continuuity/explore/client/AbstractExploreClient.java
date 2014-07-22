@@ -58,7 +58,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
       this.stopAndWait();
     }
     executor = new StatementExecutor(MoreExecutors.listeningDecorator(
-      Executors.newFixedThreadPool(executorThreads, Threads.createDaemonThreadFactory("explore-client-executor"))));
+      Executors.newFixedThreadPool(executorThreads, Threads.createDaemonThreadFactory("explore-client-executor-%d"))));
   }
 
   @Override
@@ -113,10 +113,12 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
    */
   private StatementExecutionFuture getFutureResultsFromHandle(
     final ListenableFuture<Handle> futureHandle) {
+
+//    new StatementExecutionFuture()
     final AbstractExploreClient client = this;
-    StatementExecutionFuture future = executor.submit(new Callable<ExecutionResults>() {
+    StatementExecutionFuture future = executor.submit(new Callable<ExploreExecutionResult>() {
       @Override
-      public ExecutionResults call() throws Exception {
+      public ExploreExecutionResult call() throws Exception {
         Handle handle = futureHandle.get();
 
         Status status;
@@ -131,7 +133,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
             if (!status.hasResults()) {
               client.close(handle);
             }
-            return new ClientExecutionResults(client, handle, status.hasResults());
+            return new ClientExploreExecutionResult(client, handle, status.hasResults());
           default:
             throw new UnexpectedQueryStatusException("Error while running query.", status.getStatus());
         }
@@ -144,8 +146,8 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   /**
    * Result iterator which polls Explore service using HTTP to get next results.
    */
-  private static final class ClientExecutionResults implements ExecutionResults {
-    private static final Logger LOG = LoggerFactory.getLogger(ClientExecutionResults.class);
+  private static final class ClientExploreExecutionResult implements ExploreExecutionResult {
+    private static final Logger LOG = LoggerFactory.getLogger(ClientExploreExecutionResult.class);
     private static final int POLLING_SIZE = 100;
 
     private Iterator<Result> delegate;
@@ -155,7 +157,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     private final Handle handle;
     private final boolean mayHaveResults;
 
-    public ClientExecutionResults(ExploreHttpClient exploreClient, Handle handle, boolean mayHaveResults) {
+    public ClientExploreExecutionResult(ExploreHttpClient exploreClient, Handle handle, boolean mayHaveResults) {
       this.exploreClient = exploreClient;
       this.handle = handle;
       this.mayHaveResults = mayHaveResults;

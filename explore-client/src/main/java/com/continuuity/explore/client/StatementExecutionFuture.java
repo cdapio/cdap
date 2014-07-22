@@ -19,20 +19,20 @@ package com.continuuity.explore.client;
 import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
-import com.continuuity.explore.service.HandleNotFoundException;
 
 import com.google.common.util.concurrent.ForwardingListenableFuture;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
 import java.util.List;
 
 /**
  * Future object that eventually contains the results of the execution of a statement by Explore.
- * The {@link #get()} method returns an {@link ExecutionResults} object.
+ * The {@link #get()} method returns an {@link ExploreExecutionResult} object.
  */
 public abstract class StatementExecutionFuture
-  extends ForwardingListenableFuture.SimpleForwardingListenableFuture<ExecutionResults>
-  implements ListenableFuture<ExecutionResults> {
+  extends ForwardingListenableFuture.SimpleForwardingListenableFuture<ExploreExecutionResult>
+  implements ListenableFuture<ExploreExecutionResult> {
 
   /**
    * Get the results' schema. This method is there so that we don't have to wait for the whole execution
@@ -70,7 +70,7 @@ public abstract class StatementExecutionFuture
    */
   protected abstract boolean doCancel();
 
-  protected StatementExecutionFuture(ListenableFuture<ExecutionResults> delegate) {
+  protected StatementExecutionFuture(ListenableFuture<ExploreExecutionResult> delegate) {
     super(delegate);
   }
 }

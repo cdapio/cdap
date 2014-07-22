@@ -16,13 +16,12 @@
 
 package com.continuuity.explore.jdbc;
 
-import com.continuuity.explore.client.ExecutionResults;
+import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
-import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Result;
 
 import com.google.common.collect.Maps;
@@ -60,8 +59,8 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
 
   @Override
   public StatementExecutionFuture submit(final String statement) {
-    SettableFuture<ExecutionResults> futureDelegate = SettableFuture.create();
-    futureDelegate.set(new MockExecutionResults(statementsToResults.get(statement).iterator()));
+    SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get(statement).iterator()));
     return new StatementExecutionFuture(futureDelegate) {
       @Override
       public List<ColumnDesc> getResultSchema() throws ExploreException {
@@ -99,11 +98,11 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
     // Do nothing
   }
 
-  private static final class MockExecutionResults implements ExecutionResults {
+  private static final class MockExploreExecutionResult implements ExploreExecutionResult {
 
     private final Iterator<Result> delegate;
 
-    MockExecutionResults(Iterator<Result> delegate) {
+    MockExploreExecutionResult(Iterator<Result> delegate) {
       this.delegate = delegate;
     }
 

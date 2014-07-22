@@ -23,5 +23,5 @@ import java.util.Iterator;
 /**
  * Results of an Explore statement execution.
  */
-public interface ExecutionResults extends Iterator<Result> {
+public interface ExploreExecutionResult extends Iterator<Result> {
 }
