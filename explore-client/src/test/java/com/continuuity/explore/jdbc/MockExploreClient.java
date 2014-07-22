@@ -16,6 +16,7 @@
 
 package com.continuuity.explore.jdbc;
 
+import com.continuuity.explore.client.ExecutionResults;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.service.ColumnDesc;
@@ -48,46 +49,42 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
-  public boolean isAvailable() {
-    return true;
-  }
-
-  @Override
-  public ListenableFuture<Boolean> enableExplore(String datasetInstance) {
+  public ListenableFuture<Void> enableExplore(String datasetInstance) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Boolean> disableExplore(String datasetInstance) {
+  public ListenableFuture<Void> disableExplore(String datasetInstance) {
     return null;
   }
 
   @Override
   public StatementExecutionFuture submit(final String statement) {
-    SettableFuture<Iterator<Result>> futureDelegate = SettableFuture.create();
-    futureDelegate.set(statementsToResults.get(statement).iterator());
+    SettableFuture<ExecutionResults> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExecutionResults(statementsToResults.get(statement).iterator()));
     return new StatementExecutionFuture(futureDelegate) {
       @Override
-      public List<ColumnDesc> getResultSchema() throws ExploreException, HandleNotFoundException {
+      public List<ColumnDesc> getResultSchema() throws ExploreException {
         return statementsToMetadata.get(statement);
       }
 
       @Override
-      public ListenableFuture<Handle> getFutureStatementHandle() {
+      public ListenableFuture<Handle> getStatementHandleFuture() {
         SettableFuture<Handle> future = SettableFuture.create();
         future.set(Handle.fromId("foobar"));
         return future;
       }
 
       @Override
-      public void close() throws ExploreException, HandleNotFoundException {
+      public void close() throws ExploreException {
         statementsToMetadata.remove(statement);
         statementsToResults.remove(statement);
       }
 
       @Override
-      public void cancel() throws ExploreException, HandleNotFoundException {
+      protected boolean doCancel() {
         // TODO remove results for given handle
+        return true;
       }
     };
   }
@@ -100,5 +97,29 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   @Override
   protected void shutDown() throws Exception {
     // Do nothing
+  }
+
+  private static final class MockExecutionResults implements ExecutionResults {
+
+    private final Iterator<Result> delegate;
+
+    MockExecutionResults(Iterator<Result> delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return delegate.hasNext();
+    }
+
+    @Override
+    public Result next() {
+      return delegate.next();
+    }
+
+    @Override
+    public void remove() {
+      delegate.remove();
+    }
   }
 }

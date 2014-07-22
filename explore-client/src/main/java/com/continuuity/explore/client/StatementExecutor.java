@@ -17,13 +17,11 @@
 package com.continuuity.explore.client;
 
 import com.continuuity.explore.service.Handle;
-import com.continuuity.explore.service.Result;
 
 import com.google.common.util.concurrent.ForwardingListeningExecutorService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 
-import java.util.Iterator;
 import java.util.concurrent.Callable;
 
 /**
@@ -47,9 +45,9 @@ public class StatementExecutor extends ForwardingListeningExecutorService {
    * Submit a callable to the executor. The execution will be delegated to another executor. The return
    * {@link com.google.common.util.concurrent.ListenableFuture} is of type {@link StatementExecutionFuture}.
    */
-  public StatementExecutionFuture submit(Callable<Iterator<Result>> callable, ExploreHttpClient exploreClient,
+  public StatementExecutionFuture submit(Callable<ExecutionResults> callable, ExploreHttpClient exploreClient,
                                          ListenableFuture<Handle> futureHandle) {
-    ListenableFuture<Iterator<Result>> delegateFuture = super.submit(callable);
+    ListenableFuture<ExecutionResults> delegateFuture = super.submit(callable);
     return new StatementExecutionFutureImpl(delegateFuture, exploreClient, futureHandle);
   }
 }

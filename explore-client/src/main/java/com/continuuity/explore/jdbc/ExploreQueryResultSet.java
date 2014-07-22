@@ -231,9 +231,6 @@ public class ExploreQueryResultSet implements ResultSet {
       } catch (ExploreException e) {
         LOG.error("Caught exception", e);
         throw new SQLException(e);
-      } catch (HandleNotFoundException e) {
-        LOG.error("Handle not found when retrieving result set meta data", e);
-        throw new SQLException("Handle not found when retrieving result set meta data", e);
       }
     }
     return metaData;

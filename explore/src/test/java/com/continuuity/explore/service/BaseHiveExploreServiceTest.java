@@ -75,7 +75,7 @@ public class BaseHiveExploreServiceTest {
 
     exploreClient = injector.getInstance(ExploreClient.class);
     exploreClient.startAndWait();
-    Assert.assertTrue(exploreClient.isAvailable());
+    Assert.assertTrue(exploreClient.isRunning());
   }
 
   @AfterClass
@@ -88,7 +88,6 @@ public class BaseHiveExploreServiceTest {
 
   protected static void runCommand(String command, boolean expectedHasResult,
                                  List<ColumnDesc> expectedColumnDescs, List<Result> expectedResults) throws Exception {
-    exploreClient.submit(command);
     StatementExecutionFuture future = exploreClient.submit(command);
     Iterator<Result> resultsItr = future.get();
 

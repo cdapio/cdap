@@ -64,15 +64,22 @@ public class ExploreDriver implements Driver {
 
     ConnectionParams params = parseConnectionUrl(url);
 
-    List<String> tokenParams = params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_AUTH_TOKEN);
     String authToken = null;
+    List<String> tokenParams = params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_AUTH_TOKEN);
     if (tokenParams != null && !tokenParams.isEmpty() && !tokenParams.get(0).isEmpty()) {
       authToken = tokenParams.get(0);
     }
 
-    // TODO once feature/explore-secure-client is merged, create a new extra conf to specify number of threads
-    ExploreClient exploreClient = new FixedAddressExploreClient(params.getHost(), params.getPort(), authToken, 50);
-    if (!exploreClient.isAvailable()) {
+    int executorThreads = 50;
+    List<String> executorThreadsParams = params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_CLIENT_THREADS);
+    if (executorThreadsParams != null && !executorThreadsParams.isEmpty() && !executorThreadsParams.get(0).isEmpty()) {
+      executorThreads = Integer.valueOf(executorThreadsParams.get(0));
+    }
+
+    ExploreClient exploreClient = new FixedAddressExploreClient(params.getHost(), params.getPort(),
+                                                                authToken, executorThreads);
+    exploreClient.startAndWait();
+    if (!exploreClient.isRunning()) {
       throw new SQLException("Cannot connect to " + url + ", service unavailable");
     }
     return new ExploreConnection(exploreClient);
@@ -143,7 +150,8 @@ public class ExploreDriver implements Driver {
      * Extra Explore connection parameter.
      */
     public enum Info {
-      EXPLORE_AUTH_TOKEN("reactor.auth.token");
+      EXPLORE_AUTH_TOKEN("reactor.auth.token"),
+      EXPLORE_CLIENT_THREADS("client.threads");
 
       private String name;
 

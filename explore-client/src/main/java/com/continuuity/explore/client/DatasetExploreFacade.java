@@ -66,14 +66,14 @@ public class DatasetExploreFacade {
       return;
     }
 
-    ListenableFuture<Boolean> futureSuccess = exploreClient.enableExplore(datasetInstance);
+    ListenableFuture<Void> futureSuccess = exploreClient.enableExplore(datasetInstance);
     try {
       futureSuccess.get(20, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       LOG.error("Caught exception", e);
       Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
-      Throwable t = e.getCause();
+      Throwable t = Throwables.getRootCause(e);
       if (t instanceof ExploreException) {
         LOG.error("Enable explore did not finish successfully for dataset instance {}.",
                   datasetInstance);
@@ -104,14 +104,14 @@ public class DatasetExploreFacade {
       return;
     }
 
-    ListenableFuture<Boolean> futureSuccess = exploreClient.disableExplore(datasetInstance);
+    ListenableFuture<Void> futureSuccess = exploreClient.disableExplore(datasetInstance);
     try {
       futureSuccess.get(20, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       LOG.error("Caught exception", e);
       Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
-      Throwable t = e.getCause();
+      Throwable t = Throwables.getRootCause(e);
       if (t instanceof ExploreException) {
         LOG.error("Disable explore did not finish successfully for dataset instance {}.",
                   datasetInstance);

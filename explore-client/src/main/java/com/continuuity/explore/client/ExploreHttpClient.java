@@ -67,9 +67,9 @@ abstract class ExploreHttpClient extends AbstractIdleService implements Explore 
 
   protected abstract String getAuthorizationToken();
 
-  public boolean isAvailable() {
+  protected boolean isAvailable() {
     try {
-      HttpResponse response = doGet(String.format("explore/status"));
+      HttpResponse response = doGet("explore/status");
       return HttpResponseStatus.OK.getCode() == response.getResponseCode();
     } catch (Exception e) {
       LOG.info("Caught exception when checking Explore availability", e);

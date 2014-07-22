@@ -191,6 +191,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
+  @Override
   public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException, SQLException {
     InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
     if (inactiveOperationInfo != null) {
@@ -215,6 +216,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
+  @Override
   public List<Result> nextResults(Handle handle, int size)
     throws ExploreException, HandleNotFoundException, SQLException {
     InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
@@ -274,6 +276,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
+  @Override
   public List<ColumnDesc> getResultSchema(Handle handle)
     throws ExploreException, HandleNotFoundException, SQLException {
     try {
@@ -301,6 +304,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
+  @Override
   public void cancel(Handle handle) throws ExploreException, HandleNotFoundException, SQLException {
     try {
       InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
@@ -320,6 +324,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
+  @Override
   public void close(Handle handle) throws ExploreException, HandleNotFoundException {
     activeHandleCache.invalidate(handle);
   }

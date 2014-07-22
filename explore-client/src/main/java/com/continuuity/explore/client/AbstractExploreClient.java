@@ -53,6 +53,10 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
   @Override
   protected void startUp() throws Exception {
+    if (!isAvailable()) {
+      // If Explore service is not available, then we don't start the Explore client as well
+      this.stopAndWait();
+    }
     executor = new StatementExecutor(MoreExecutors.listeningDecorator(
       Executors.newFixedThreadPool(executorThreads, Threads.createDaemonThreadFactory("explore-client-executor"))));
   }
@@ -65,7 +69,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<Boolean> disableExplore(final String datasetInstance) {
+  public ListenableFuture<Void> disableExplore(final String datasetInstance) {
     final ListenableFuture<Handle> futureHandle = executor.submit(new Callable<Handle>() {
       @Override
       public Handle call() throws Exception {
@@ -74,12 +78,12 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     });
     StatementExecutionFuture futureResults = getFutureResultsFromHandle(futureHandle);
 
-    // We actually never return false - exceptions will be thrown in case of an error in the futureHandle
-    return Futures.transform(futureResults, Functions.constant(true));
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
   }
 
   @Override
-  public ListenableFuture<Boolean> enableExplore(final String datasetInstance) {
+  public ListenableFuture<Void> enableExplore(final String datasetInstance) {
     final ListenableFuture<Handle> futureHandle = executor.submit(new Callable<Handle>() {
       @Override
       public Handle call() throws Exception {
@@ -88,8 +92,8 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     });
     StatementExecutionFuture futureResults = getFutureResultsFromHandle(futureHandle);
 
-    // We actually never return false - exceptions will be thrown in case of an error in the futureHandle
-    return Futures.transform(futureResults, Functions.constant(true));
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
   }
 
   @Override
@@ -110,9 +114,9 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   private StatementExecutionFuture getFutureResultsFromHandle(
     final ListenableFuture<Handle> futureHandle) {
     final AbstractExploreClient client = this;
-    StatementExecutionFuture future = executor.submit(new Callable<Iterator<Result>>() {
+    StatementExecutionFuture future = executor.submit(new Callable<ExecutionResults>() {
       @Override
-      public Iterator<Result> call() throws Exception {
+      public ExecutionResults call() throws Exception {
         Handle handle = futureHandle.get();
 
         Status status;
@@ -127,7 +131,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
             if (!status.hasResults()) {
               client.close(handle);
             }
-            return new ResultIteratorClient(client, handle, status.hasResults());
+            return new ClientExecutionResults(client, handle, status.hasResults());
           default:
             throw new UnexpectedQueryStatusException("Error while running query.", status.getStatus());
         }
@@ -140,8 +144,8 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   /**
    * Result iterator which polls Explore service using HTTP to get next results.
    */
-  public static final class ResultIteratorClient implements Iterator<Result> {
-    private static final Logger LOG = LoggerFactory.getLogger(ResultIteratorClient.class);
+  private static final class ClientExecutionResults implements ExecutionResults {
+    private static final Logger LOG = LoggerFactory.getLogger(ClientExecutionResults.class);
     private static final int POLLING_SIZE = 100;
 
     private Iterator<Result> delegate;
@@ -151,7 +155,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     private final Handle handle;
     private final boolean mayHaveResults;
 
-    public ResultIteratorClient(ExploreHttpClient exploreClient, Handle handle, boolean mayHaveResults) {
+    public ClientExecutionResults(ExploreHttpClient exploreClient, Handle handle, boolean mayHaveResults) {
       this.exploreClient = exploreClient;
       this.handle = handle;
       this.mayHaveResults = mayHaveResults;

@@ -38,6 +38,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyValue;
@@ -299,14 +300,12 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
   @Test
   public void testCancel() throws Exception {
     StatementExecutionFuture future = exploreClient.submit("select key, value from my_table");
-    future.cancel();
+    future.cancel(true);
     try {
       future.get();
       Assert.fail();
-    } catch (ExecutionException e) {
-      Throwable t = e.getCause();
-      Assert.assertTrue(t instanceof UnexpectedQueryStatusException);
-      Assert.assertTrue(((UnexpectedQueryStatusException) t).getStatus().equals(Status.OpStatus.CANCELED));
+    } catch (CancellationException e) {
+      // Expected
     }
     future.close();
   }

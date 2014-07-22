@@ -20,14 +20,12 @@ import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Result;
 
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -41,7 +39,7 @@ class StatementExecutionFutureImpl extends StatementExecutionFuture {
   private final ExploreHttpClient exploreClient;
   private final ListenableFuture<Handle> futureHandle;
 
-  StatementExecutionFutureImpl(ListenableFuture<Iterator<Result>> delegate, ExploreHttpClient exploreClient,
+  StatementExecutionFutureImpl(ListenableFuture<ExecutionResults> delegate, ExploreHttpClient exploreClient,
                                ListenableFuture<Handle> futureHandle) {
     super(delegate);
     this.exploreClient = exploreClient;
@@ -49,7 +47,7 @@ class StatementExecutionFutureImpl extends StatementExecutionFuture {
   }
 
   @Override
-  public List<ColumnDesc> getResultSchema() throws ExploreException, HandleNotFoundException {
+  public List<ColumnDesc> getResultSchema() throws ExploreException {
     try {
       Handle handle = futureHandle.get();
       return exploreClient.getResultSchema(handle);
@@ -58,26 +56,26 @@ class StatementExecutionFutureImpl extends StatementExecutionFuture {
       Throwables.propagate(e);
       return null;
     } catch (ExecutionException e) {
-      LOG.error("Caught exception", e);
-      Throwable t = e.getCause();
+      Throwable t = Throwables.getRootCause(e);
+      LOG.error("Caught exception when retrieving results schema", t);
       if (t instanceof ExploreException) {
         LOG.error("Error in operation execution", t);
         throw (ExploreException) t;
-      } else if (t instanceof HandleNotFoundException) {
-        LOG.error("Caught exception", e);
-        throw (HandleNotFoundException) t;
       }
       throw new ExploreException(t);
+    } catch (HandleNotFoundException e) {
+      LOG.error("Caught exception when retrieving results schema", e);
+      throw new ExploreException(e);
     }
   }
 
   @Override
-  public ListenableFuture<Handle> getFutureStatementHandle() {
+  public ListenableFuture<Handle> getStatementHandleFuture() {
     return futureHandle;
   }
 
   @Override
-  public void close() throws ExploreException, HandleNotFoundException {
+  public void close() throws ExploreException {
     try {
       Handle handle = futureHandle.get();
       exploreClient.close(handle);
@@ -85,38 +83,39 @@ class StatementExecutionFutureImpl extends StatementExecutionFuture {
       LOG.error("Caught exception", e);
       Throwables.propagate(e);
     } catch (ExecutionException e) {
-      LOG.error("Caught exception", e);
-      Throwable t = e.getCause();
+      LOG.error("Caught exception when closing execution", e);
+      Throwable t = Throwables.getRootCause(e);
       if (t instanceof ExploreException) {
-        LOG.error("Error when closing the execution", t);
         throw (ExploreException) t;
-      } else if (t instanceof HandleNotFoundException) {
-        LOG.error("Caught exception", e);
-        throw (HandleNotFoundException) t;
       }
       throw new ExploreException(t);
+    } catch (HandleNotFoundException e) {
+      LOG.error("Caught exception when closing execution", e);
+      throw new ExploreException(e);
     }
   }
 
   @Override
-  public void cancel() throws ExploreException, HandleNotFoundException {
+  protected boolean doCancel() {
+    Handle handle = null;
     try {
-      Handle handle = futureHandle.get();
+      handle = futureHandle.get();
       exploreClient.cancel(handle);
+      return true;
     } catch (InterruptedException e) {
       LOG.error("Caught exception", e);
       Throwables.propagate(e);
+      return false;
     } catch (ExecutionException e) {
+      Throwable t = Throwables.getRootCause(e);
+      LOG.error("Caught exception", t);
+      return false;
+    } catch (ExploreException e) {
       LOG.error("Caught exception", e);
-      Throwable t = e.getCause();
-      if (t instanceof ExploreException) {
-        LOG.error("Error when cancelling the execution", t);
-        throw (ExploreException) t;
-      } else if (t instanceof HandleNotFoundException) {
-        LOG.error("Caught exception", e);
-        throw (HandleNotFoundException) t;
-      }
-      throw new ExploreException(t);
+      return false;
+    } catch (HandleNotFoundException e) {
+      LOG.warn("Handle not found - no need to cancel query with handle {}", handle.getHandle(), e);
+      return true;
     }
   }
 }

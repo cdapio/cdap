@@ -23,6 +23,7 @@ import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Status;
 import com.continuuity.explore.service.UnexpectedQueryStatusException;
 
+import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +33,7 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -102,20 +104,25 @@ public class ExploreStatement implements Statement {
       Thread.currentThread().interrupt();
       return false;
     } catch (ExecutionException e) {
-      Throwable t = e.getCause();
+      Throwable t = Throwables.getRootCause(e);
       if (t instanceof HandleNotFoundException) {
         LOG.error("Error executing query", e);
         throw new SQLException("Unknown state");
       } else if (t instanceof UnexpectedQueryStatusException) {
         UnexpectedQueryStatusException sE = (UnexpectedQueryStatusException) t;
         if (Status.OpStatus.CANCELED.equals(sE.getStatus())) {
+          // The query execution may have been canceled without calling futureResults.cancel(), using the right
+          // REST endpoint with the handle for eg.
           return false;
         }
         throw new SQLException(String.format("Statement '%s' execution did not finish successfully. " +
                                              "Got final state - %s", sql, sE.getStatus().toString()));
       }
       LOG.error("Caught exception", e);
-      throw new SQLException(e.getCause());
+      throw new SQLException(Throwables.getRootCause(e));
+    } catch (CancellationException e) {
+      // If futureResults has been cancelled
+      return false;
     }
   }
 
@@ -141,8 +148,6 @@ public class ExploreStatement implements Statement {
     if (futureResults != null) {
       try {
         futureResults.close();
-      } catch (HandleNotFoundException e) {
-        LOG.error("Ignoring cannot find handle during close.");
       } catch (ExploreException e) {
         LOG.error("Caught exception when closing statement", e);
         throw new SQLException(e.toString(), e);
@@ -187,13 +192,9 @@ public class ExploreStatement implements Statement {
       LOG.info("Trying to cancel with no query.");
       return;
     }
-    try {
-      futureResults.cancel();
-    } catch (HandleNotFoundException e) {
-      LOG.error("Ignoring cannot find handle during cancel.");
-    } catch (ExploreException e) {
-      LOG.error("Caught exception when closing statement", e);
-      throw new SQLException(e.toString(), e);
+    boolean success = futureResults.cancel(true);
+    if (!success) {
+      throw new SQLException("Could not cancel query - query is cancelled: " + futureResults.isCancelled());
     }
   }
 

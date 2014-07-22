@@ -121,6 +121,14 @@ public class ExploreDriverTest {
     Assert.assertEquals(
       ImmutableMap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, ImmutableList.of("")),
       connectionParams.getExtraInfos());
+
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&reactor.auth.token=foo&client.threads=10");
+    Assert.assertEquals("foobar", connectionParams.getHost());
+    Assert.assertEquals(10000, connectionParams.getPort());
+    Assert.assertEquals(
+      ImmutableMap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, ImmutableList.of("foo"),
+                      ExploreDriver.ConnectionParams.Info.EXPLORE_CLIENT_THREADS, ImmutableList.of("10")),
+      connectionParams.getExtraInfos());
   }
 
   @Test
@@ -133,6 +141,7 @@ public class ExploreDriverTest {
     // Correct format but wrong host
     try {
       driver.connect(Constants.Explore.Jdbc.URL_PREFIX + "foo:10000", null);
+      Assert.fail();
     } catch (SQLException e) {
       // Expected, host is not available (random host)
     }

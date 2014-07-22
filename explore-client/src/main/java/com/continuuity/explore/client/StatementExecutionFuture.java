@@ -20,22 +20,19 @@ import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Result;
 
 import com.google.common.util.concurrent.ForwardingListenableFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**
  * Future object that eventually contains the results of the execution of a statement by Explore.
- * The {@link #get()} method returns an {@link java.util.Iterator} on {@link com.continuuity.explore.service.Result}
- * objects.
+ * The {@link #get()} method returns an {@link ExecutionResults} object.
  */
 public abstract class StatementExecutionFuture
-  extends ForwardingListenableFuture.SimpleForwardingListenableFuture<Iterator<Result>>
-  implements ListenableFuture<Iterator<Result>> {
+  extends ForwardingListenableFuture.SimpleForwardingListenableFuture<ExecutionResults>
+  implements ListenableFuture<ExecutionResults> {
 
   /**
    * Get the results' schema. This method is there so that we don't have to wait for the whole execution
@@ -44,27 +41,36 @@ public abstract class StatementExecutionFuture
    * @return a list of {@link com.continuuity.explore.service.ColumnDesc} representing the schema of the results.
    *         Empty list if there are no results.
    * @throws com.continuuity.explore.service.ExploreException on any error fetching schema.
-   * @throws com.continuuity.explore.service.HandleNotFoundException when handle is not found.
    */
-  public abstract List<ColumnDesc> getResultSchema() throws ExploreException, HandleNotFoundException;
+  public abstract List<ColumnDesc> getResultSchema() throws ExploreException;
 
   /**
    * Get the handle used by the Explore service to execute the statement.
    */
-  public abstract ListenableFuture<Handle> getFutureStatementHandle();
+  public abstract ListenableFuture<Handle> getStatementHandleFuture();
 
   /**
-   * Close the query. Although internally, Explore service will close the query after the last results are
-   * fetched, we still make it available to close the query before it happens.
+   * Close the query executed by this Future object, making the results no more available.
+   *
+   * @throws com.continuuity.explore.service.ExploreException on any error closing the query.
    */
-  public abstract void close() throws ExploreException, HandleNotFoundException;
+  public abstract void close() throws ExploreException;
+
+  @Override
+  public boolean cancel(boolean mayInterruptIfRunning) {
+    boolean ret = super.cancel(mayInterruptIfRunning);
+    if (mayInterruptIfRunning) {
+      ret = ret && doCancel();
+    }
+    return ret;
+  }
 
   /**
-   * Cancel the query execution. This method does not call cancel on the future object.
+   * Cancel the query execution.
    */
-  public abstract void cancel() throws ExploreException, HandleNotFoundException;
+  protected abstract boolean doCancel();
 
-  protected StatementExecutionFuture(ListenableFuture<Iterator<Result>> delegate) {
+  protected StatementExecutionFuture(ListenableFuture<ExecutionResults> delegate) {
     super(delegate);
   }
 }

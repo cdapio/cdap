@@ -25,25 +25,22 @@ import com.google.common.util.concurrent.Service;
 public interface ExploreClient extends Service {
 
   /**
-   * Returns true if the explore service is up and running.
-   */
-  boolean isAvailable();
-
-  /**
    * Enables ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.
    *
    * @param datasetInstance dataset instance name.
-   * @return a {@code Future} object containing a boolean set to true if successful, false otherwise.
+   * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
+   *         the success of the enable operation.
    */
-  ListenableFuture<Boolean> enableExplore(String datasetInstance);
+  ListenableFuture<Void> enableExplore(String datasetInstance);
 
   /**
    * Disable ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.
    *
    * @param datasetInstance dataset instance name.
-   * @return a {@code Future} object containing a boolean set to true if successful, false otherwise.
+   * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
+   *         the success of the disable operation.
    */
-  ListenableFuture<Boolean> disableExplore(String datasetInstance);
+  ListenableFuture<Void> disableExplore(String datasetInstance);
 
   /**
    * Execute a Hive SQL statement asynchronously. The returned

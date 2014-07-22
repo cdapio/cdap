@@ -16,8 +16,6 @@
 
 package com.continuuity.explore.service;
 
-import com.continuuity.explore.client.StatementExecutionFuture;
-
 import java.sql.SQLException;
 import java.util.List;
 

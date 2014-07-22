@@ -68,7 +68,7 @@ public class ExploreDisabledTest {
     datasetService.startAndWait();
 
     ExploreClient exploreClient = injector.getInstance(DiscoveryExploreClient.class);
-    Assert.assertFalse(exploreClient.isAvailable());
+    Assert.assertFalse(exploreClient.isRunning());
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
   }

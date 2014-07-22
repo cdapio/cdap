@@ -17,6 +17,7 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.service.ExploreException;
 
 import java.sql.Array;
 import java.sql.Blob;
@@ -50,9 +51,8 @@ public class ExploreConnection implements Connection {
   private ExploreClient exploreClient;
   private boolean isClosed = false;
 
-  ExploreConnection(ExploreClient exploreClient) {
+  ExploreConnection(ExploreClient exploreClient) throws SQLException {
     this.exploreClient = exploreClient;
-    exploreClient.startAndWait();
   }
 
   @Override

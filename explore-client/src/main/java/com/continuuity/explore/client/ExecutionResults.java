@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Continuuity, Inc.
+ * Copyright 2014 Continuuity, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,14 @@
  * the License.
  */
 
-package com.continuuity.explore.service;
+package com.continuuity.explore.client;
 
-import com.google.common.util.concurrent.Service;
+import com.continuuity.explore.service.Result;
+
+import java.util.Iterator;
 
 /**
- * Interface for service exploring datasets.
+ * Results of an Explore statement execution.
  */
-public interface ExploreService extends Service, Explore {
+public interface ExecutionResults extends Iterator<Result> {
 }
