@@ -127,24 +127,33 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                   @PathParam("name") String name) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
 
-    CreateDatasetParams typeAndProps = GSON.fromJson(reader, CreateDatasetParams.class);
-    String operation = (typeAndProps.isUpgrade() == true) ? "update" : "create";
+    CreateDatasetParams dsCreateParams = GSON.fromJson(reader, CreateDatasetParams.class);
+    String operation = (dsCreateParams.isUpgrade() == true) ? "update" : "create";
 
     LOG.info("{} dataset {}, type name: {}, typeAndProps: {}",
-             operation, name, typeAndProps.getTypeName(), typeAndProps.getProperties());
+             operation, name, dsCreateParams.getTypeName(), dsCreateParams.getProperties());
     DatasetSpecification existing = instanceManager.get(name);
-    if (existing != null && !typeAndProps.isUpgrade()) {
-      String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
-                                     name, existing);
-      LOG.warn(message);
-      responder.sendError(HttpResponseStatus.CONFLICT, message);
-      return;
-    }
 
-    DatasetTypeMeta typeMeta = implManager.getTypeInfo(typeAndProps.getTypeName());
+    if (existing != null) {
+      String message = null;
+      if (!dsCreateParams.isUpgrade()) {
+        message = String.format("Cannot create dataset %s: instance with same name already exists %s",
+                                name, existing);
+
+      } else if (!existing.getType().equals(dsCreateParams.getTypeName())) {
+        message = String.format("Cannot update dataset %s instance with a different type, old type is %s",
+                                name, existing.getType());
+      }
+      if (message != null) {
+        LOG.warn(message);
+        responder.sendError(HttpResponseStatus.CONFLICT, message);
+        return;
+      }
+    }
+    DatasetTypeMeta typeMeta = implManager.getTypeInfo(dsCreateParams.getTypeName());
     if (typeMeta == null) {
       String message = String.format("Cannot %s dataset %s: unknown type %s",
-                                     operation, name, typeAndProps.getTypeName());
+                                     operation, name, dsCreateParams.getTypeName());
       LOG.warn(message);
       responder.sendError(HttpResponseStatus.NOT_FOUND, message);
       return;
@@ -154,10 +163,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     DatasetSpecification spec;
     try {
       spec = opExecutorClient.create(name, typeMeta,
-                                     DatasetProperties.builder().addAll(typeAndProps.getProperties()).build());
+                                     DatasetProperties.builder().addAll(dsCreateParams.getProperties()).build());
     } catch (Exception e) {
       String msg = String.format("Cannot %s dataset %s of type %s: executing create() failed, reason: %s",
-                                 operation, name, typeAndProps.getTypeName(), e.getMessage());
+                                 operation, name, dsCreateParams.getTypeName(), e.getMessage());
       LOG.error(msg, e);
       throw new RuntimeException(msg, e);
     }
@@ -167,13 +176,13 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Note: today explore enable is not transactional with dataset create - REACTOR-314
 
     try {
-      if (typeAndProps.isUpgrade()) {
+      if (dsCreateParams.isUpgrade()) {
         datasetExploreFacade.disableExplore(name);
       }
       datasetExploreFacade.enableExplore(name);
     } catch (Exception e) {
       String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
-                                 name, typeAndProps.getProperties(), e.getMessage());
+                                 name, dsCreateParams.getProperties(), e.getMessage());
       LOG.error(msg, e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
 //      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
