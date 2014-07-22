@@ -16,8 +16,6 @@
 
 package com.continuuity.explore.client;
 
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;

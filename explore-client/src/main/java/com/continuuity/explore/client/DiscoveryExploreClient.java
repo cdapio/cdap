@@ -68,4 +68,9 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
 
     return endpointStrategy.pick().getSocketAddress();
   }
+
+  @Override
+  protected String getAuthorizationToken() {
+    return null;
+  }
 }

@@ -17,6 +17,7 @@
 package com.continuuity.explore.client;
 
 import java.net.InetSocketAddress;
+import javax.annotation.Nullable;
 
 /**
  * An Explore Client that uses the provided host and port to talk to a server
@@ -25,14 +26,21 @@ import java.net.InetSocketAddress;
 public class FixedAddressExploreClient extends AbstractExploreClient {
 
   private final InetSocketAddress addr;
+  private final String authToken;
 
-  public FixedAddressExploreClient(String host, int port, int executorThreads) {
+  public FixedAddressExploreClient(String host, int port, @Nullable String authToken, int executorThreads) {
     super(executorThreads);
-    addr = InetSocketAddress.createUnresolved(host, port);
+    this.addr = InetSocketAddress.createUnresolved(host, port);
+    this.authToken = authToken;
   }
 
   @Override
   protected InetSocketAddress getExploreServiceAddress() {
     return addr;
+  }
+
+  @Override
+  protected String getAuthorizationToken() {
+    return authToken;
   }
 }

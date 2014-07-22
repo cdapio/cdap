@@ -32,6 +32,7 @@ import com.continuuity.explore.service.Status;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
@@ -63,6 +64,8 @@ abstract class ExploreHttpClient extends AbstractIdleService implements Explore 
   private static final Type ROW_LIST_TYPE = new TypeToken<List<Result>>() { }.getType();
 
   protected abstract InetSocketAddress getExploreServiceAddress();
+
+  protected abstract String getAuthorizationToken();
 
   public boolean isAvailable() {
     try {
@@ -189,21 +192,26 @@ abstract class ExploreHttpClient extends AbstractIdleService implements Explore 
   private HttpResponse doRequest(String resource, String requestMethod,
                                  @Nullable Map<String, String> headers,
                                  @Nullable String body) throws ExploreException {
+    Map<String, String> newHeaders = headers;
+    if (getAuthorizationToken() != null && !getAuthorizationToken().isEmpty()) {
+      newHeaders = (headers != null) ? Maps.newHashMap(headers) : Maps.<String, String>newHashMap();
+      newHeaders.put("Authorization", "Bearer " + getAuthorizationToken());
+    }
     String resolvedUrl = resolve(resource);
     try {
       URL url = new URL(resolvedUrl);
       if (body != null) {
         return HttpRequests.execute(HttpRequest.builder(HttpMethod.valueOf(requestMethod), url)
-                                      .addHeaders(headers).withBody(body).build());
+                                      .addHeaders(newHeaders).withBody(body).build());
       } else {
         return HttpRequests.execute(HttpRequest.builder(HttpMethod.valueOf(requestMethod), url)
-                                      .addHeaders(headers).build());
+                                      .addHeaders(newHeaders).build());
       }
     } catch (IOException e) {
       throw new ExploreException(
         String.format("Error connecting to Explore Service at %s while doing %s with headers %s and body %s",
                       resolvedUrl, requestMethod,
-                      headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers),
+                      newHeaders == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(newHeaders),
                       body == null ? "null" : body), e);
     }
   }
