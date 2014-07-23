@@ -16,7 +16,8 @@ Release 2.3.1
 
 Bug Fixes
 ---------
-• Fixed a problem with _
+- Fixed a class loading error that occurs during application deployment when the Reactor 
+  Master has incorrect classpath entries 
 
 
 Release 2.3.0
