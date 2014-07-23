@@ -30,8 +30,6 @@ import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillRunnable;
 
-import javax.annotation.Nullable;
-
 /**
  * A support class for {@link Application Applications} which reduces repetition and results in
  * a more readable configuration.
@@ -206,12 +204,16 @@ public abstract class AbstractApplication implements Application {
 
   /**
    * @see ApplicationConfigurer#addService(TwillRunnable, org.apache.twill.api.ResourceSpecification)
-   * Null {@link org.apache.twill.api.ResourceSpecification} is defaulted to ResourceSpecification.BASIC.
    */
-  protected void addService(TwillRunnable runnable, @Nullable ResourceSpecification specification) {
-    if (specification == null) {
-      specification = ResourceSpecification.BASIC;
-    }
+  protected void addService(TwillRunnable runnable, ResourceSpecification specification) {
     configurer.addService(runnable, specification);
+  }
+
+  /**
+   * @see ApplicationConfigurer#addService(TwillRunnable, org.apache.twill.api.ResourceSpecification)
+   * ResourceSpecification is defaulted to ResourceSpecification.BASIC
+   */
+  protected void addService(TwillRunnable runnable) {
+    configurer.addService(runnable, ResourceSpecification.BASIC);
   }
 }
