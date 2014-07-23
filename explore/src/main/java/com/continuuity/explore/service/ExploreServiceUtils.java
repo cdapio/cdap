@@ -88,14 +88,22 @@ public class ExploreServiceUtils {
       throw new RuntimeException("System property " + Constants.Explore.HIVE_CLASSPATH + " is not set.");
     }
 
+    // HIVE_CONF_FILES will be defined in startup scripts if Hive is installed.
+    String exploreConfPathStr = System.getProperty(Constants.Explore.HIVE_CONF_FILES);
+    LOG.debug("Explore classpath = {}", exploreConfPathStr);
+    if (exploreConfPathStr == null) {
+      throw new RuntimeException("System property " + Constants.Explore.HIVE_CONF_FILES + " is not set.");
+    }
+
     Iterable<File> hiveClassPath = getClassPathJarsFiles(exploreClassPathStr);
+    Iterable<File> hiveConfFiles = getClassPathJarsFiles(exploreConfPathStr);
     ImmutableList.Builder<URL> builder = ImmutableList.builder();
-    for (File jar : hiveClassPath) {
+    for (File jar : Iterables.concat(hiveClassPath, hiveConfFiles)) {
       try {
         builder.add(jar.toURI().toURL());
       } catch (MalformedURLException e) {
         LOG.error("Jar URL is malformed", e);
-        Throwables.propagate(e);
+        throw Throwables.propagate(e);
       }
     }
     exploreClassLoader = new URLClassLoader(Iterables.toArray(builder.build(), URL.class),
@@ -105,8 +113,7 @@ public class ExploreServiceUtils {
 
   public static Class getHiveService() {
     HiveSupport hiveVersion = checkHiveSupport(null);
-    Class hiveServiceCl = hiveVersion.getHiveExploreServiceClass();
-    return hiveServiceCl;
+    return hiveVersion.getHiveExploreServiceClass();
   }
 
   /**
@@ -135,6 +142,7 @@ public class ExploreServiceUtils {
       // In Hive 13, CLIService.getOperationStatus returns OperationStatus.
       Class cliServiceClass = usingCL.loadClass("org.apache.hive.service.cli.CLIService");
       Class operationHandleCl = usingCL.loadClass("org.apache.hive.service.cli.OperationHandle");
+      @SuppressWarnings("unchecked")
       Method getStatusMethod = cliServiceClass.getDeclaredMethod("getOperationStatus", operationHandleCl);
 
       // Rowset is an interface in Hive 13, but a class in Hive 12

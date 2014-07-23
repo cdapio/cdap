@@ -171,6 +171,12 @@ public class ExploreRuntimeModule extends RuntimeModule {
                            new File(HiveConf.ConfVars.LOCALSCRATCHDIR.defaultVal).getAbsolutePath());
         LOG.info("Setting {} to {}", HiveConf.ConfVars.LOCALSCRATCHDIR.toString(),
                  System.getProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString()));
+
+        // Disable Hive Server2 Security, since we run in Yarn container and should get delegation token in HiveConf
+        // to talk to MetaStore.
+        LOG.info("Disabling Hive Server2 security.");
+        System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NOSASL");
+        System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.toString(), "false");
       } catch (Throwable e) {
         throw Throwables.propagate(e);
       }

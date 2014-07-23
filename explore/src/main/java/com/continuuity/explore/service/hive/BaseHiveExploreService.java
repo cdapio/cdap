@@ -25,6 +25,12 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.security.token.TokenIdentifier;
+import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
 import org.apache.hive.service.cli.HiveSQLException;
@@ -49,6 +55,7 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class BaseHiveExploreService extends AbstractIdleService implements ExploreService {
   private static final Logger LOG = LoggerFactory.getLogger(BaseHiveExploreService.class);
+  public static final String HIVE_METASTORE_TOKEN_KEY = "hive.metastore.token.signature";
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -152,9 +159,31 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   @Override
   public Handle execute(String statement) throws ExploreException, SQLException {
     try {
+      // Read delegation token if security is enabled.
+      if (getHiveConf().getBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL)) {
+        Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
+        if (credentials == null) {
+          String message = "Cannot get credentials to get Hive MetaStore delegation token";
+          LOG.error(message);
+          throw new ExploreException(message);
+        }
+
+        Token<? extends TokenIdentifier> delegationToken =
+          credentials.getToken(new Text(HiveAuthFactory.HS2_CLIENT_TOKEN));
+        if (delegationToken == null) {
+          String message =
+            String.format("Cannot get delegation token for Hive MetaStore from credentials for service %s",
+                          HiveAuthFactory.HS2_CLIENT_TOKEN);
+          LOG.error(message);
+          throw new ExploreException(message);
+        }
+
+        System.setProperty(HIVE_METASTORE_TOKEN_KEY, delegationToken.encodeToUrlString());
+      }
+
       Map<String, String> sessionConf = startSession();
       // TODO: allow changing of hive user and password - REACTOR-271
-      SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
+      SessionHandle sessionHandle = cliService.openSession("kjadyikwjeo", "lkdfhuil", sessionConf);
       OperationHandle operationHandle = cliService.executeStatementAsync(sessionHandle, statement,
                                                                          ImmutableMap.<String, String>of());
       Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
