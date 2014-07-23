@@ -1,5 +1,5 @@
 .. :author: Continuuity, Inc.
-   :version: 2.3.0
+   :version: 2.3.1
    :description: HTTP Interface to the Continuuity Reactor
 
 =================================
