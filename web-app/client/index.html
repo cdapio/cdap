@@ -246,8 +246,7 @@
             <th style="min-width: 200px;" class="instance-col center-align"> Start/Stop </th>
           </thead>
           <tbody>
-          {{#each service in servicesArray}}
-          {{#unless service.deleted}}
+          {{#each service in userServices}}
             <tr>
               <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
                 {{service.name}}
@@ -262,13 +261,13 @@
               </td>
               <td style="max-width: 350px;" class="instance-provisioned service-col">
                   <div id="action-buttons" class="btn-group pull-right">
-                  <button class="btn btn-icon" {{action config service.appID service.id}}><span class="btn-config"></span></button>
+                  <button class="btn btn-icon" {{action config service.app service.name}}><span class="btn-config"></span></button>
                   </div>
               </td>
               <td class="center-align">
                   <div class="btn-group start-stop-btns">
-                      <button class="userServices-start" {{action start service.appID service.id}}></button>
-                      <button class="userServices-stop" {{action stop service.appID service.id}}></button>
+                      <button class="userServices-start" {{action start service.app service.name}}></button>
+                      <button class="userServices-stop" {{action stop service.app service.name}}></button>
                   </div>
               </td>
             </tr>
@@ -288,10 +287,10 @@
                 <div class="instance-wrapper">
                   <div class="instance-num"><span>{{runnable.requested}}</span></div>
                   <div>
-                    <a class="cursor-pointer" {{action userService_decreaseInstance service.appID service.name runnable.name runnable.requested }}>
+                    <a class="cursor-pointer" {{action userService_decreaseInstance service.app service.name runnable.name runnable.requested }}>
                       <span class="minus-icon"></span>
                     </a>
-                    <a class="cursor-pointer" {{action userService_increaseInstance service.appID service.name runnable.name runnable.requested }}>
+                    <a class="cursor-pointer" {{action userService_increaseInstance service.app service.name runnable.name runnable.requested }}>
                       <span class="plus-icon"></span>
                     </a>
                   </div>
@@ -305,7 +304,6 @@
             </tr>
             {{/each}}
             {{!--  RUNNABLES ROWS --}}
-          {{/unless}}
           {{/each}}
           </tbody>
         </table>
@@ -315,6 +313,9 @@
 
     </div>
   </div>
+
+
+  
   </script>
 
   <script type="text/x-handlebars" data-template-name="Service">

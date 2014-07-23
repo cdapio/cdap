@@ -29,6 +29,8 @@ apps.CountCounts.services.loadgen.runtimeargs        = require('./fixtures/user/
 apps.CountCounts.services.loadgen.history             = require('./fixtures/user/services/history.json');
 apps.CountCounts.services.loadgen.liveinfo           = require('./fixtures/user/services/live-info.json');
 
+var userServicesBatchEndpointComplete = require('./fixtures/user/user-services-batch-complete.json');
+var userServicesBatchEndpointIncomplete = require('./fixtures/user/user-services-batch-incomplete.json');
 
 // Appfabric service endpoints.
 system.services.appfabric.status = require('./fixtures/system/services/appfabric/status.json');
@@ -201,6 +203,21 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
     .reply(200, [tmp[1]]);
 // */
 //END - TESTING removal from UI when removing an app.
+
+//for(var i=0;i<100;i++){
+  nock(clientAddr, options)
+    .persist()
+      .get('/v2/userServices')
+      .reply(200, userServicesBatchEndpointComplete);
+
+  nock(clientAddr, options)
+      .get('/v2/userServices')
+      .reply(200, userServicesBatchEndpointIncomplete);
+//}
+//  nock(clientAddr, options)
+//    .get('/v2/userServices').times(100)
+//    .reply(200, []);
+
   nock(clientAddr, options)
     .persist()
     .get('/v2/apps/CountCounts/services')

@@ -12,144 +12,57 @@ define([], function () {
       var self = this;
       self.set('systemServices', []);
       self.set('userServices', []);
-      self.servicesMap = {};
       self.resetServices();
+      self.resetUserServices();
       this.interval = setInterval(function () {
         self.resetServices();
+        self.resetUserServices();
       }, C.POLLING_INTERVAL)
 
     },
 
     config: function(appID, serviceID) {
 			var self = this;
-			var model = this.servicesMap[[appID, serviceID]];
+			var model = -1;
+			var userServices = self.get('userServices');
+			for (var i=0; i<userServices.length; i++) {
+        var service = userServices[i];
+        if(service.name == serviceID && service.app == appID){
+          console.log(service);
+          model = service;
+        }
+			}
+      if(model == -1) {
+        return;
+      }
 
 			this.transitionToRoute('Service.Config', model);
     },
 
-    servicesExist: function () {
-      return true;
-    }.property('userServices'),
-
-    servicesArray:  function () {
-      var self = this;
-      var returnArray = [];
-      var input = self.servicesMap;
-
-      var keys = Object.keys(input);
-      for (var i=0; i < keys.length; i++) {
-        var key = keys[i];
-        var obj = input[key];
-        returnArray.pushObject(obj);
-      }
-      console.log('Updated View');
-      return returnArray;
-    }.property('userServices'),
-
-    updateRunnable: function (app, service, runnable) {
-      var self = this;
-      var sMap = self.servicesMap;
-
-      var runnableStatusURL = 'apps/' + app.name + '/services' + '/' + service.name + '/runnables' + '/' + runnable + '/instances';
-      self.HTTP.rest(runnableStatusURL, function(f) {
-        var map2 = sMap[[app.name,service.name]].get('runnablesMap');
-        if(map2[runnable] == undefined) {
-          map2[runnable] = Ember.Object.create();
-        }
-
-        map2[runnable].set('name', runnable);
-        map2[runnable].set('requested', f.requested);
-        map2[runnable].set('provisioned', f.provisioned);
-
-        var list = [];
-        var keys = Object.keys(map2);
-        for (var m=0; m < keys.length; m++) {
-          var val = map2[keys[m]];
-          list.push(val);
-        }
-        sMap[[app.name,service.name]].set('runnablesList', list);
-      });
-    },
-
-
-    updateService: function (app, service) {
-      var self = this;
-      var sMap = self.servicesMap;
-
-      var runnableNameURL = 'apps/' + app.name + '/services' + '/' + service.name;
-      self.HTTP.rest(runnableNameURL, function(response) {
-        response.runnables.forEach( function(runnable) {
-          self.updateRunnable(app, service, runnable);
-        });
-      });
-
-      var statusCheckURL = 'apps/' + app.name + '/services' + '/' + service.name + '/status';
-      self.HTTP.rest(statusCheckURL, function(response) {
-        var status = response.status;
-        var sMap = self.servicesMap;
-        sMap[[app.name,service.name]].set('status', status);
-        sMap[[app.name,service.name]].set('imgClass', status === 'RUNNING' ? 'complete' : 'loading');
-
-      });
-
-      if (sMap[[app.name,service.name]] == undefined) {
-        sMap[[app.name,service.name]] = C.Service.create({
-          metricEndpoint: C.Util.getMetricEndpoint(service.name),
-          metricName: C.Util.getMetricName(service.name),
-          runnablesList: [],
-          runnablesMap: {},
-          isValid: true,
-          deleted: false,
-        });
-      }
-      sMap[[app.name,service.name]].set('modelID', service.name);
-      sMap[[app.name,service.name]].set('description', service.description);
-      sMap[[app.name,service.name]].set('id', service.name);
-      sMap[[app.name,service.name]].set('name', service.name);
-      sMap[[app.name,service.name]].set('description', service.description);
-      sMap[[app.name,service.name]].set('appID', service.app);
-      sMap[[app.name,service.name]].set('app', service.app);
-      sMap[[app.name,service.name]].set('isValid', true);
-      sMap[[app.name,service.name]].set('deleted', false);
-
-    },
-
-    updateApp: function (app) {
-      var self = this;
-      var appUrl = 'apps/' + app.name + '/services';
-      self.HTTP.rest(appUrl, function (services) {
-        services.forEach(function(service) {
-          self.set('userServices', []);
-          self.get('userServices').pushObject(1); //This is needed, for some reason... I don't yet know why.
-          self.updateService(app, service);
-        });
-      });
-    },
-
     resetUserServices: function () {
       var self = this;
-
-      var sMap = self.servicesMap;
-      var keys = Object.keys(sMap);
-      for (var m=0; m < keys.length; m++) {
-        var obj = sMap[keys[m]];
-        if (obj.isValid==false && obj.deleted==false) {
-          obj.set('deleted', true);
-          console.log('deleted: ' + obj.name);
-        }
-        obj.set('isValid', false);
-      }
-
-      self.HTTP.rest('apps', function (apps) {
-        apps.forEach(function(app) {
-          self.updateApp(app);
+      var userServices = [];
+      self.HTTP.rest('userServices', function(services) {
+        services.map(function(service) {
+          var runnablesList = [];
+          service.runnables.forEach(function(runnable){
+            runnablesList.push({
+              "name":runnable.id,
+              "requested":runnable.requested,
+              "provisioned":runnable.provisioned
+            });
+          });
+          userServices.push(C.Service.create({
+            status: service.status,
+            imgClass: status === 'RUNNING' ? 'complete' : 'loading',
+            modelID: service.name,
+            description: service.description,
+            name: service.name,
+            app: service.app,
+            runnablesList: runnablesList,
+          }));
         });
-
-        // Bind all the tooltips after UI has rendered after call has returned.
-        setTimeout(function () {
-          $("[data-toggle='tooltip']").off()
-          $("[data-toggle='tooltip']").tooltip();
-        }, 1000);
+        self.set('userServices', userServices);
       });
     },
 
@@ -190,15 +103,13 @@ define([], function () {
           $("[data-toggle='tooltip']").tooltip();
         }, 1000);
       });
-
-      self.resetUserServices();
     },
 
     start: function (appID, serviceID) {
       var self = this;
       C.Modal.show(
         "Start Service",
-        "Start Service: " + appID + "?",
+        "Start Service: " + appID + ":" + serviceID + "?",
         function () {
           var startURL = 'rest/apps/' + appID + '/services/' + serviceID + '/start';
           self.HTTP.post(startURL);
@@ -210,7 +121,7 @@ define([], function () {
       var self = this;
       C.Modal.show(
         "Stop Service",
-        "Stop Service: " + appID + "?",
+        "Stop Service: " + appID + ":" + serviceID + "?",
         function () {
           var stopURL = 'rest/apps/' + appID + '/services/' + serviceID + '/stop';
           self.HTTP.post(stopURL);
