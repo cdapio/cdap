@@ -127,15 +127,15 @@ class DatasetServiceClient {
   public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
     throws DatasetManagementException {
 
-    DatasetInstanceHandler.CreateDatasetParams typeAndProps =
+    DatasetInstanceHandler.CreateDatasetParams dsCreateParams =
       new DatasetInstanceHandler.CreateDatasetParams(datasetType, props.getProperties());
-    createUpdateInstance(datasetInstanceName, typeAndProps, "add");
+    createUpdateInstance(datasetInstanceName, dsCreateParams, "add");
   }
 
   private void createUpdateInstance(String datasetInstanceName,
-                                    DatasetInstanceHandler.CreateDatasetParams typeAndProps, String op)
+                                    DatasetInstanceHandler.CreateDatasetParams dsCreateParams, String op)
     throws DatasetManagementException {
-    HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(typeAndProps));
+    HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(dsCreateParams));
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to %s instance %s due to conflict, details: %s",
                                                         op, datasetInstanceName, getDetails(response)));
@@ -149,9 +149,9 @@ class DatasetServiceClient {
   public void updateInstance(String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException {
     DatasetInstanceMeta meta = getInstance(datasetInstanceName);
-    DatasetInstanceHandler.CreateDatasetParams typeAndProps =
+    DatasetInstanceHandler.CreateDatasetParams dsCreateParams =
       new DatasetInstanceHandler.CreateDatasetParams(meta.getSpec().getType(), props.getProperties(), true);
-    createUpdateInstance(datasetInstanceName, typeAndProps, "update");
+    createUpdateInstance(datasetInstanceName, dsCreateParams, "update");
     // after creating dataset instance with new spec, we call upgrade admin op
     HttpResponse response = doPost("datasets/" + datasetInstanceName + "/admin/upgrade");
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
