@@ -4,17 +4,14 @@
 
 |(Cask)|
 
-The Cask Data Application Platform is an application server for modern data architecture that provides a robust platform for development, deployment and management of data applications and management of data.
+The Cask Data Application Platform is an application server for modern data architecture. It provides a robust platform for the development, deployment and management of data applications and the management of data.
 
-Running deployed within either the enterprise or the cloud, its key features include standard services such as transaction management, datasets, naming, messaging (data availability notification, data modification, service communication), QoS, performance, scalability, security and integration.
+Running either standalone, deployed within the enterprise or pushed to the cloud, DAP comes with numerous standard services.  Out-of-the-box, these include transaction management, datasets, naming, messaging (data availability notification, data modification, service communication), QoS, performance, scalability, security and integration [DOCNOTE: FIXME! What's this? Check entire list].
 
-Its container model allows for the easy integration of varied processing paradigms with standard services to provide a common environment, integration and programming model for data applications and their data.
+DAP's container model allows for the integration of a variety of processing paradigms with these standard services. It provides a common environment, the abstraction of a unified API, lifecycle management of applications and a programming model for data applications and their data. 
 
-You can run simple Map-reduce applications; complete an ETL (extract, transform, load) pipeline; or build complex, enterprise-scale data-intensive applications; all the while enabling developers to build and test applications end-to-end.
+You can run simple Map-reduce applications; complete an ETL (extract, transform, load) pipeline; build complex, enterprise-scale data-intensive applications. Developers can build and test their applications end-to-end using the exact same code.
 
-- Abstraction Unified API
-- Lifecycle Management
-- Security
 
 How It Works
 --------------------------------
@@ -27,6 +24,8 @@ How It Works
 - Stored Procedures
 - Different Runtimes: Single-node, Sandbox and Enterprise
 - Management Dashboard
+
+[insert architecture diagram]
 
 
 Getting Started
@@ -51,11 +50,9 @@ Step 1: Installation and Startup
 ................................
 Start the Cask DAP from a command line in the SDK directory:
 
-
 Step 2: The Dashboard
 ......................
 When you first open the Dashboard, you'll be greeted by:
-
 
 Step 3: Inject Data
 ...................
@@ -88,7 +85,8 @@ Where to Go Next
 Now that you've had a look at Cask DAP, take a look at:
 
 - Examples, located in the ``/examples`` directory of the Cask DAP SDK;
-- Selected Examples are located on-line, at <http://cask.com/developers/docs/dap/current/en/examples.html
+- Selected Examples (demonstrating basic features of the Cask DAP) are located on-line, at
+  <http://cask.com/developers/docs/dap/current/en/examples.html
 - Developer Guides, located in the source distribution in ``/docs/developer-guide/source``
   or online at `<http://cask.com/developers/docs/dap/current/en/index.html>`__;
   
@@ -119,7 +117,7 @@ assisting others on the mailing list.
 Bug Reports & Feature Requests
 ..............................
 
-Bugs and tasks are tracked in a public JIRA issue tracker.  Details on access will be forthcoming.
+Bugs and tasks are tracked in a public JIRA issue tracker. |br| Details on access will be forthcoming.
 
 Pull Requests
 .............
@@ -168,6 +166,8 @@ No endorsement by The Apache Software Foundation is implied by the use of these 
 .. |(TM)| unicode:: U+2122 .. trademark sign
    :trim:
 
-.. |(Cask)| image:: docs/_images/cask_dap_logo_light_bknd.png
+.. |(Cask)| image:: docs/_images/Cask_DAP.png
 
+.. |br| raw:: rst2pdf
 
+   <br/>
