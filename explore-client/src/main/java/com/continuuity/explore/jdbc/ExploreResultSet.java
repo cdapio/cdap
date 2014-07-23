@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -171,5 +172,10 @@ public class ExploreResultSet extends BaseExploreResultSet {
     }
     // Column names are case insensitive, as per the ResultSet interface javadoc
     return metaData.getColumnPosition(name.toLowerCase());
+  }
+
+  @Override
+  public boolean isBeforeFirst() throws SQLException {
+    throw new SQLFeatureNotSupportedException();
   }
 }

@@ -16,6 +16,7 @@
 
 package com.continuuity.explore.jdbc;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.ColumnDesc;
 import com.google.common.base.Preconditions;
 
@@ -151,8 +152,9 @@ public class ExploreResultSetMetaData implements ResultSetMetaData {
   }
 
   @Override
-  public boolean isSigned(int i) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+  public boolean isSigned(int column) throws SQLException {
+    int columnType = getColumnType(column);
+    return JdbcColumn.isNumber(columnType);
   }
 
   @Override

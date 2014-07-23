@@ -72,21 +72,27 @@ public class ExploreConnection implements Connection {
 
   @Override
   public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-    if (resultSetType == ResultSet.TYPE_FORWARD_ONLY && resultSetConcurrency == ResultSet.CONCUR_READ_ONLY) {
+    // TODO handle TYPE_SCROLL_INSENSITIVE properly
+    if ((resultSetType == ResultSet.TYPE_FORWARD_ONLY || resultSetType == ResultSet.TYPE_SCROLL_INSENSITIVE) &&
+      resultSetConcurrency == ResultSet.CONCUR_READ_ONLY) {
       return createStatement();
     }
-    throw new SQLFeatureNotSupportedException(
-      "The resultSetType can only be TYPE_FORWARD_ONLY and the concurrency CONCUR_READ_ONLY");
+    throw new SQLFeatureNotSupportedException("Statement with result set type " + resultSetType +
+                                                " and resultset concurrency " + resultSetConcurrency +
+                                                " is not supported");
   }
 
   @Override
   public PreparedStatement prepareStatement(String s, int resultSetType, int resultSetConcurrency)
     throws SQLException {
-    if (resultSetType == ResultSet.TYPE_FORWARD_ONLY && resultSetConcurrency == ResultSet.CONCUR_READ_ONLY) {
+    // TODO handle TYPE_SCROLL_INSENSITIVE properly
+    if ((resultSetType == ResultSet.TYPE_FORWARD_ONLY || resultSetType == ResultSet.TYPE_SCROLL_INSENSITIVE) &&
+      resultSetConcurrency == ResultSet.CONCUR_READ_ONLY) {
       return prepareStatement(s);
     }
-    throw new SQLFeatureNotSupportedException(
-      "The resultSetType can only be TYPE_FORWARD_ONLY and the concurrency CONCUR_READ_ONLY");
+    throw new SQLFeatureNotSupportedException("Statement with result set type " + resultSetType +
+                                                " and resultset concurrency " + resultSetConcurrency +
+                                                " is not supported");
   }
 
   @Override

@@ -205,7 +205,13 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
 
   @Override
   public ResultSetMetaData getMetaData() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    ResultSet resultSet = getResultSet();
+    if (resultSet != null) {
+      // If the query has already been run, we return the metadata of the existing result set
+      return resultSet.getMetaData();
+    }
+    // Otherwise we first run the query and return the metadata, making it expensive to call this method
+    return executeQuery().getMetaData();
   }
 
   @Override
