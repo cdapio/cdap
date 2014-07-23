@@ -16,6 +16,8 @@
 
 package com.continuuity.internal.app.services.http.handlers;
 
+import com.continuuity.AppWithDataset;
+import com.continuuity.AppWithDatasetDuplicate;
 import com.continuuity.AppWithSchedule;
 import com.continuuity.AppWithWorkflow;
 import com.continuuity.DummyAppWithTrackingTable;
@@ -893,6 +895,20 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
     Assert.assertTrue(response.getEntity().getContentLength() > 0);
+  }
+
+  /**
+   * Tests deploying an application with dataset same name as existing dataset but a different type
+   */
+  @Test
+  public void testDeployFailue() throws Exception {
+    HttpResponse response = deploy(AppWithDataset.class);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertNotNull(response.getEntity());
+
+    response = deploy(AppWithDatasetDuplicate.class);
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+    Assert.assertNotNull(response.getEntity());
   }
 
   /**
