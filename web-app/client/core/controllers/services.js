@@ -21,24 +21,6 @@ define([], function () {
 
     },
 
-    config: function(appID, serviceID) {
-			var self = this;
-			var model = -1;
-			var userServices = self.get('userServices');
-			for (var i=0; i<userServices.length; i++) {
-        var service = userServices[i];
-        if(service.name == serviceID && service.app == appID){
-          console.log(service);
-          model = service;
-        }
-			}
-      if(model == -1) {
-        return;
-      }
-
-			this.transitionToRoute('Service.Config', model);
-    },
-
     resetUserServices: function () {
       var self = this;
       var userServices = [];
@@ -52,14 +34,14 @@ define([], function () {
               "provisioned":runnable.provisioned
             });
           });
-          userServices.push(C.Service.create({
+          userServices.push(C.Userservice.create({
             status: service.status,
             imgClass: status === 'RUNNING' ? 'complete' : 'loading',
-            modelID: service.name,
+            modelId: service.name,
             description: service.description,
             name: service.name,
             app: service.app,
-            runnablesList: runnablesList,
+            runnablesList: runnablesList
           }));
         });
         self.set('userServices', userServices);
@@ -93,7 +75,7 @@ define([], function () {
             metricEndpoint: C.Util.getMetricEndpoint(service.name),
             metricName: C.Util.getMetricName(service.name),
             imgClass: imgSrc,
-            logClass: logSrc,
+            logClass: logSrc
           }));
         });
         self.set('systemServices', systemServices);

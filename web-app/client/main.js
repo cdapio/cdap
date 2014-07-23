@@ -62,11 +62,21 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 
 		this.resource('Loading', { path: '/loading' } );
     this.resource('ConnectionError', { path: '/connectionerror' } );
-		this.resource('Services', { path: '/services' } );
-    this.resource('Service', { path: '/services/:service_id' }, function() {
+
+    /**
+     * Services routes.
+     */
+		this.resource('Services', { path: '/services' });
+
+    this.resource('Service', { path: '/services/system/:service_id' }, function() {
       this.route('Log', { path: '/log' });
       this.route('Config', { path: '/config' });
     });
+
+    this.resource('UserService', { path: '/services/user/:userservice_id' }, function() {
+      this.route('Config', { path: '/config' });
+    });
+
 
 		this.resource('Login', { path: '/login' } );
 		this.resource('AccessToken', { path: '/accesstoken' } );
@@ -267,9 +277,11 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
       }
     }),
 
-    ServicesRoute: basicRouter.extend(),
+    ServicesRoute: basicRouter.extend({
+      model: modelFinder
+    }),
 
-    ServiceRoute: Ember.Route.extend({
+    ServiceRoute: basicRouter.extend({
       model: modelFinder
     }),
 
@@ -282,9 +294,13 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
       }
     }),
 
-		ServiceConfigRoute: basicRouter.extend({
+    UserServiceRoute: basicRouter.extend({
+      model: modelFinder
+    }),
+
+		UserServiceConfigRoute: basicRouter.extend({
 		  model: function () {
-		    return this.modelFor('Service');
+		    return this.modelFor('UserService');
 		  },
 			renderTemplate: function () {
 				this.render('Runnable/Config');
