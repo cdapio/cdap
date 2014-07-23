@@ -17,13 +17,12 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.explore.service.ColumnDesc;
-import com.continuuity.explore.service.Handle;
-import com.continuuity.explore.service.Result;
-import com.continuuity.explore.service.Status;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
-
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryResult;
+import com.continuuity.proto.QueryStatus;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -238,7 +237,7 @@ public class ExploreDriverTest {
     @Path("v2/data/queries")
     public void query(HttpRequest request, HttpResponder responder) {
       try {
-        Handle handle = Handle.generate();
+        QueryHandle handle = QueryHandle.generate();
         Map<String, String> args = decodeArguments(request);
         if (LONG_RUNNING_QUERY.equals(args.get("query"))) {
           longRunningQueries.add(handle.getHandle());
@@ -277,16 +276,16 @@ public class ExploreDriverTest {
     @Path("v2/data/queries/{id}/status")
     public void getQueryStatus(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                                @PathParam("id") final String id) {
-      Status status = null;
+      QueryStatus status = null;
       if (closedHandles.contains(id)) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       } else if (canceledHandles.contains(id)) {
-        status = new Status(Status.OpStatus.CANCELED, false);
+        status = new QueryStatus(QueryStatus.OpStatus.CANCELED, false);
       } else if (longRunningQueries.contains(id)) {
-        status = new Status(Status.OpStatus.RUNNING, false);
+        status = new QueryStatus(QueryStatus.OpStatus.RUNNING, false);
       } else {
-        status = new Status(Status.OpStatus.FINISHED, true);
+        status = new QueryStatus(QueryStatus.OpStatus.FINISHED, true);
       }
       responder.sendJson(HttpResponseStatus.OK, status);
     }
@@ -314,10 +313,10 @@ public class ExploreDriverTest {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       }
-      List<Result> rows = Lists.newArrayList();
+      List<QueryResult> rows = Lists.newArrayList();
       if (!canceledHandles.contains(id) && !handleWithFetchedResutls.contains(id)) {
-        rows.add(new Result(ImmutableList.<Object>of("1", "one")));
-        rows.add(new Result(ImmutableList.<Object>of("2", "two")));
+        rows.add(new QueryResult(ImmutableList.<Object>of("1", "one")));
+        rows.add(new QueryResult(ImmutableList.<Object>of("2", "two")));
         handleWithFetchedResutls.add(id);
       }
       responder.sendJson(HttpResponseStatus.OK, rows);

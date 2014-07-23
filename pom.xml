@@ -93,6 +93,7 @@
     <module>continuuity-test</module>
     <module>reactor-master</module>
     <module>web-app</module>
+    <module>proto</module>
     <module>singlenode</module>
     <module>distributions</module>
   </modules>

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.continuuity.internal.app.runtime.distributed;
+package com.continuuity.proto;
 
 import java.util.List;
 
@@ -43,7 +43,7 @@ public interface Containers {
   /**
    * POJO holding information about container running in YARN.
    */
-  class ContainerInfo {
+  public static final class ContainerInfo {
     private final String type;
     private final String name;
     private final int instance;
@@ -53,7 +53,7 @@ public interface Containers {
     private final int virtualCores;
     private final Integer debugPort;
 
-    ContainerInfo(ContainerType type, String name, int instance, String container,
+    public ContainerInfo(ContainerType type, String name, int instance, String container,
                   String host, int memory, int virtualCores, Integer debugPort) {
       this.type = type.name().toLowerCase();
       this.name = name;

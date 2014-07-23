@@ -20,7 +20,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
-import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.proto.DatasetSpecification;
 import org.junit.Assert;
 import org.junit.Test;
 

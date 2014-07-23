@@ -34,6 +34,10 @@ import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryResult;
+import com.continuuity.proto.QueryStatus;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -84,11 +88,13 @@ public class BaseHiveExploreServiceTest {
   }
 
   protected static void runCommand(String command, boolean expectedHasResult,
-                                 List<ColumnDesc> expectedColumnDescs, List<Result> expectedResults) throws Exception {
-    Handle handle = exploreClient.execute(command);
+                                 List<ColumnDesc> expectedColumnDescs,
+                                 List<QueryResult> expectedResults) throws Exception {
+    QueryHandle handle = exploreClient.execute(command);
 
-    Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 20);
-    Assert.assertEquals(Status.OpStatus.FINISHED, status.getStatus());
+    QueryStatus status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200,
+                                                                   TimeUnit.MILLISECONDS, 20);
+    Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
     Assert.assertEquals(expectedHasResult, status.hasResults());
 
     Assert.assertEquals(expectedColumnDescs, exploreClient.getResultSchema(handle));
@@ -97,9 +103,9 @@ public class BaseHiveExploreServiceTest {
     exploreClient.close(handle);
   }
 
-  protected static List<Result> trimColumnValues(List<Result> results) {
-    List<Result> newResults = Lists.newArrayList();
-    for (Result result : results) {
+  protected static List<QueryResult> trimColumnValues(List<QueryResult> results) {
+    List<QueryResult> newResults = Lists.newArrayList();
+    for (QueryResult result : results) {
       List<Object> newCols = Lists.newArrayList();
       for (Object obj : result.getColumns()) {
         if (obj instanceof String) {
@@ -111,7 +117,7 @@ public class BaseHiveExploreServiceTest {
           newCols.add(obj);
         }
       }
-      newResults.add(new Result(newCols));
+      newResults.add(new QueryResult(newCols));
     }
     return newResults;
   }

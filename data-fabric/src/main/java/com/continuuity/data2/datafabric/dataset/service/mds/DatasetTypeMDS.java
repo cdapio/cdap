@@ -17,11 +17,11 @@
 package com.continuuity.data2.datafabric.dataset.service.mds;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.module.EmbeddedDataset;
 import com.continuuity.api.dataset.table.OrderedTable;
-import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
-import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
+import com.continuuity.proto.DatasetModuleMeta;
+import com.continuuity.proto.DatasetSpecification;
+import com.continuuity.proto.DatasetTypeMeta;
 import com.google.common.collect.Lists;
 
 import java.util.Collection;

@@ -16,13 +16,11 @@
 
 package com.continuuity.test.internal;
 
-import com.continuuity.app.Id;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
-import com.continuuity.app.program.RunRecord;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.jar.JarFinder;
@@ -34,6 +32,9 @@ import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.logging.appender.LogAppenderInitializer;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
+import com.continuuity.proto.RunRecord;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.base.Charsets;
@@ -43,7 +44,6 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
@@ -74,7 +74,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-
 
 /**
  * This is helper class to make calls to AppFabricHttpHandler methods directly.
@@ -185,13 +184,7 @@ public class AppFabricTestHelper {
     httpHandler.runnableHistory(request, responder, appId, "workflows", wflowId);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
 
-    List<Map<String, String>> runList = responder.decodeResponseContent(new TypeToken<List<Map<String, String>>>() { });
-    List<RunRecord> runRecords = Lists.newArrayList();
-    for (Map<String, String> run : runList) {
-      runRecords.add(new RunRecord(run.get("runid"), Long.parseLong(run.get("start")),
-                                       Long.parseLong(run.get("end")), run.get("status")));
-    }
-    return runRecords;
+    return responder.decodeResponseContent(new TypeToken<List<RunRecord>>() { });
   }
 
   public static void suspend(AppFabricHttpHandler httpHandler, String appId, String wflowId,
@@ -245,7 +238,7 @@ public class AppFabricTestHelper {
 
     return factory.create(new ProgramTerminator() {
       @Override
-      public void stop(Id.Account id, Id.Program programId, com.continuuity.app.program.Type type) throws Exception {
+      public void stop(Id.Account id, Id.Program programId, ProgramType type) throws Exception {
         //No-op
       }
     });

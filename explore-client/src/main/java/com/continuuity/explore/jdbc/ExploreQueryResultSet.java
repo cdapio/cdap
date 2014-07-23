@@ -16,14 +16,12 @@
 
 package com.continuuity.explore.jdbc;
 
-import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Result;
-
-import com.google.common.base.Charsets;
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,16 +62,16 @@ public class ExploreQueryResultSet implements ResultSet {
   private int fetchSize;
 
   private boolean hasMoreResults = true;
-  private Iterator<Result> rowsItr;
-  private Result currentRow;
+  private Iterator<QueryResult> rowsItr;
+  private QueryResult currentRow;
   private ExploreResultSetMetaData metaData;
 
   private boolean wasNull = false;
   private ExploreStatement statement;
-  private Handle stmtHandle;
+  private QueryHandle stmtHandle;
   private Explore exploreClient;
 
-  public ExploreQueryResultSet(Explore exploreClient, ExploreStatement statement, Handle stmtHandle)
+  public ExploreQueryResultSet(Explore exploreClient, ExploreStatement statement, QueryHandle stmtHandle)
       throws SQLException {
     this.exploreClient = exploreClient;
     this.statement = statement;
@@ -100,7 +98,7 @@ public class ExploreQueryResultSet implements ResultSet {
       if (stmtHandle == null) {
         throw new SQLException("Handle is null.");
       }
-      List<Result> fetchedRows;
+      List<QueryResult> fetchedRows;
       fetchedRows = exploreClient.nextResults(stmtHandle, fetchSize);
       rowsItr = fetchedRows.iterator();
       if (!rowsItr.hasNext()) {

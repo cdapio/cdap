@@ -14,17 +14,14 @@
  * the License.
  */
 
-package com.continuuity.internal.app.runtime.service;
-
-import com.continuuity.app.Id;
-import com.continuuity.app.program.Type;
+package com.continuuity.proto;
 
 /**
- *
+ * A live info for in-memory runtime envirnment.
  */
-public class NotRunningLiveInfo extends LiveInfo {
+public class InMemoryProgramLiveInfo extends ProgramLiveInfo {
 
-  public NotRunningLiveInfo(Id.Program programId, Type type) {
-    super(programId, type, null);
+  public InMemoryProgramLiveInfo(Id.Program programId, ProgramType type) {
+    super(programId, type, "in-memory");
   }
 }

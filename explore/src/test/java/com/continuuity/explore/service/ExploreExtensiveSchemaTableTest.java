@@ -18,6 +18,8 @@ package com.continuuity.explore.service;
 
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryResult;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.test.SlowTests;
 import com.google.common.collect.ImmutableList;
@@ -90,7 +92,7 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
     runCommand("show tables",
                true,
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-               Lists.newArrayList(new Result(Lists.<Object>newArrayList("my_table"))));
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("my_table"))));
 
     runCommand("describe my_table",
                true,
@@ -100,44 +102,46 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
                  new ColumnDesc("comment", "STRING", 3, "from deserializer")
                ),
                Lists.newArrayList(
-                 new Result(Lists.<Object>newArrayList("s", "string", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("i", "int", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("f", "float", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("d", "double", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("l", "bigint", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("b", "tinyint", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("bo", "boolean", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("sh", "smallint", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("s", "string", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("i", "int", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("f", "float", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("d", "double", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("l", "bigint", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("b", "tinyint", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("bo", "boolean", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("sh", "smallint", "from deserializer")),
                  // note: hive removes upper cases
                  // Arrays
-                 new Result(Lists.<Object>newArrayList("iarr", "array<int>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("farr", "array<float>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("darr", "array<double>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("larr", "array<bigint>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("barr", "binary", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("boarr", "array<boolean>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("sharr", "array<smallint>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("sarr", "array<string>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("iarr", "array<int>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("farr", "array<float>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("darr", "array<double>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("larr", "array<bigint>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("barr", "binary", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("boarr", "array<boolean>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("sharr", "array<smallint>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("sarr", "array<string>", "from deserializer")),
                  // Lists
-                 new Result(Lists.<Object>newArrayList("ilist", "array<int>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("flist", "array<float>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("dlist", "array<double>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("llist", "array<bigint>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("ilist", "array<int>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("flist", "array<float>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("dlist", "array<double>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("llist", "array<bigint>", "from deserializer")),
                  // Note: list<byte> becomes array<tinyint>, whereas byte[] becomes binary...
-                 new Result(Lists.<Object>newArrayList("blist", "array<tinyint>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("bolist", "array<boolean>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("shlist", "array<smallint>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("slist", "array<string>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("blist", "array<tinyint>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("bolist", "array<boolean>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("shlist", "array<smallint>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("slist", "array<string>", "from deserializer")),
                  // Maps
-                 new Result(Lists.<Object>newArrayList("stoimap", "map<string,int>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("ftodmap", "map<float,double>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("ltobmap", "map<bigint,tinyint>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("botoshmap", "map<boolean,smallint>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("stoimap", "map<string,int>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("ftodmap", "map<float,double>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("ltobmap", "map<bigint,tinyint>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("botoshmap", "map<boolean,smallint>", "from deserializer")),
                  // Custom type
-                 new Result(Lists.<Object>newArrayList("v", "struct<s:string,i:int>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("varr", "array<struct<s:string,i:int>>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("vlist", "array<struct<s:string,i:int>>", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("stovmap", "map<string,struct<s:string,i:int>>",
+                 new QueryResult(Lists.<Object>newArrayList("v", "struct<s:string,i:int>", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("varr", "array<struct<s:string,i:int>>",
+                                                            "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("vlist", "array<struct<s:string,i:int>>",
+                                                            "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("stovmap", "map<string,struct<s:string,i:int>>",
                                                        "from deserializer"))
                )
     );
@@ -186,7 +190,7 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
                                                  "map<string,struct<s:string,i:int>>", 32, null)
                ),
                Lists.newArrayList(
-                 new Result(Lists.<Object>newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList(
                    "foo", 1.0, 1.23, 2.45, 1000.0, 100.0, true, 8.0, "[10,11]", "[1.67,2.89]", "[10.56,8.78]",
                    "[101,201]", Lists.newArrayList(106.0, 110.0), "[true,false]", "[50,51]", "[\"foo\",\"bar\"]",
                    "[10,20]", "[10.45,20.98]", "[10.99,20.9]", "[654,2897]", "[22,23]", "[true,true]", "[76,39]",

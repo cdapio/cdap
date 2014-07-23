@@ -18,7 +18,7 @@ package com.continuuity.explore.client;
 
 import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
+import com.continuuity.proto.QueryHandle;
 
 /**
  * Explore client discovers explore service, and executes explore commands using the service.
@@ -34,11 +34,11 @@ public interface ExploreClient extends Explore {
    * Enables ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.
    * @param datasetInstance dataset instance name.
    */
-  Handle enableExplore(String datasetInstance) throws ExploreException;
+  QueryHandle enableExplore(String datasetInstance) throws ExploreException;
 
   /**
    * Disable ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.
    * @param datasetInstance dataset instance name.
    */
-  Handle disableExplore(String datasetInstance) throws ExploreException;
+  QueryHandle disableExplore(String datasetInstance) throws ExploreException;
 }

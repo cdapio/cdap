@@ -14,17 +14,27 @@
  * the License.
  */
 
-package com.continuuity.internal.app.runtime.service;
-
-import com.continuuity.app.Id;
-import com.continuuity.app.program.Type;
+package com.continuuity.proto;
 
 /**
- * A live info for in-memory runtime envirnment.
+ * Dataset instance metadata.
  */
-public class InMemoryLiveInfo extends LiveInfo {
+public class DatasetMeta {
+  private final DatasetSpecification spec;
 
-  public InMemoryLiveInfo(Id.Program programId, Type type) {
-    super(programId, type, "in-memory");
+  // todo: meta of modules inside will have list of all types in the module that is redundant here
+  private final DatasetTypeMeta type;
+
+  public DatasetMeta(DatasetSpecification spec, DatasetTypeMeta type) {
+    this.spec = spec;
+    this.type = type;
+  }
+
+  public DatasetSpecification getSpec() {
+    return spec;
+  }
+
+  public DatasetTypeMeta getType() {
+    return type;
   }
 }

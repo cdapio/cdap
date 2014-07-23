@@ -17,13 +17,12 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
-import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Result;
-import com.continuuity.explore.service.Status;
-
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryResult;
+import com.continuuity.proto.QueryStatus;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -38,11 +37,11 @@ import java.util.Set;
 public class MockExploreClient implements ExploreClient {
 
   private final Map<String, List<ColumnDesc>> handlesToMetadata;
-  private final Map<String, List<Result>> handlesToResults;
+  private final Map<String, List<QueryResult>> handlesToResults;
   private final Set<String> fetchedResults;
 
   public MockExploreClient(Map<String, List<ColumnDesc>> handlesToMetadata,
-                           Map<String, List<Result>> handlesToResults) {
+                           Map<String, List<QueryResult>> handlesToResults) {
     this.handlesToMetadata = Maps.newHashMap(handlesToMetadata);
     this.handlesToResults = Maps.newHashMap(handlesToResults);
     this.fetchedResults = Sets.newHashSet();
@@ -54,27 +53,27 @@ public class MockExploreClient implements ExploreClient {
   }
 
   @Override
-  public Handle enableExplore(String datasetInstance) throws ExploreException {
+  public QueryHandle enableExplore(String datasetInstance) throws ExploreException {
     return null;
   }
 
   @Override
-  public Handle disableExplore(String datasetInstance) throws ExploreException {
+  public QueryHandle disableExplore(String datasetInstance) throws ExploreException {
     return null;
   }
 
   @Override
-  public Handle execute(String statement) throws ExploreException {
-    return Handle.fromId("foobar");
+  public QueryHandle execute(String statement) throws ExploreException {
+    return QueryHandle.fromId("foobar");
   }
 
   @Override
-  public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException {
-    return new Status(Status.OpStatus.FINISHED, true);
+  public QueryStatus getStatus(QueryHandle handle) throws ExploreException, HandleNotFoundException {
+    return new QueryStatus(QueryStatus.OpStatus.FINISHED, true);
   }
 
   @Override
-  public List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException, HandleNotFoundException {
+  public List<ColumnDesc> getResultSchema(QueryHandle handle) throws ExploreException, HandleNotFoundException {
     if (!handlesToMetadata.containsKey(handle.getHandle())) {
       throw new HandleNotFoundException("Handle not found");
     }
@@ -82,7 +81,7 @@ public class MockExploreClient implements ExploreClient {
   }
 
   @Override
-  public List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
+  public List<QueryResult> nextResults(QueryHandle handle, int size) throws ExploreException, HandleNotFoundException {
     // For now we don't consider the size - until needed by other tests
 
     if (fetchedResults.contains(handle.getHandle())) {
@@ -96,12 +95,12 @@ public class MockExploreClient implements ExploreClient {
   }
 
   @Override
-  public void cancel(Handle handle) throws ExploreException, HandleNotFoundException {
+  public void cancel(QueryHandle handle) throws ExploreException, HandleNotFoundException {
     // TODO remove results for given handle
   }
 
   @Override
-  public void close(Handle handle) throws ExploreException, HandleNotFoundException {
+  public void close(QueryHandle handle) throws ExploreException, HandleNotFoundException {
     handlesToMetadata.remove(handle.getHandle());
     handlesToResults.remove(handle.getHandle());
   }

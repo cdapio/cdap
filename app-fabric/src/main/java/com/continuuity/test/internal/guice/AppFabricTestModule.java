@@ -16,11 +16,9 @@
 package com.continuuity.test.internal.guice;
 
 import com.continuuity.api.schedule.Schedule;
-import com.continuuity.app.Id;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.guice.ServiceStoreModules;
-import com.continuuity.app.program.Type;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
@@ -35,6 +33,8 @@ import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.PrivateModule;
@@ -85,16 +85,16 @@ public final class AppFabricTestModule extends AbstractModule {
   private Scheduler createNoopScheduler() {
     return new Scheduler() {
       @Override
-      public void schedule(Id.Program program, Type programType, Iterable<Schedule> schedules) {
+      public void schedule(Id.Program program, ProgramType programType, Iterable<Schedule> schedules) {
       }
 
       @Override
-      public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, Type programType) {
+      public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, ProgramType programType) {
         return ImmutableList.of();
       }
 
       @Override
-      public List<String> getScheduleIds(Id.Program program, Type programType) {
+      public List<String> getScheduleIds(Id.Program program, ProgramType programType) {
         return ImmutableList.of();
       }
 
@@ -107,7 +107,7 @@ public final class AppFabricTestModule extends AbstractModule {
       }
 
       @Override
-      public void deleteSchedules(Id.Program programId, Type programType, List<String> scheduleIds) {
+      public void deleteSchedules(Id.Program programId, ProgramType programType, List<String> scheduleIds) {
       }
 
       @Override

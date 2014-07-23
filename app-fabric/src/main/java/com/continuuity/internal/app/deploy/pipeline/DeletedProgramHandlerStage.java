@@ -17,10 +17,9 @@
 package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.api.ProgramSpecification;
+import com.continuuity.api.ProgramTypes;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
-import com.continuuity.app.Id;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.store.Store;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
@@ -32,6 +31,8 @@ import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
 import com.continuuity.pipeline.AbstractStage;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
@@ -90,14 +91,14 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationSpecLoc
     List<String> deletedFlows = Lists.newArrayList();
     for (ProgramSpecification spec : deletedSpecs) {
       //call the deleted spec
-      Type type = Type.typeOfSpecification(spec);
+      ProgramType type = ProgramTypes.fromSpecification(spec);
       Id.Program programId = Id.Program.from(appSpec.getApplicationId(), spec.getName());
       programTerminator.stop(Id.Account.from(appSpec.getApplicationId().getAccountId()),
                                    programId, type);
 
       // TODO: Unify with AppFabricHttpHandler.removeApplication
       // drop all queues and stream states of a deleted flow
-      if (Type.FLOW.equals(type)) {
+      if (ProgramType.FLOW.equals(type)) {
         FlowSpecification flowSpecification = (FlowSpecification) spec;
 
         // Collects stream name to all group ids consuming that stream

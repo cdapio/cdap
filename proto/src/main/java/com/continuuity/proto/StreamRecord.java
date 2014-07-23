@@ -14,37 +14,39 @@
  * the License.
  */
 
-package com.continuuity.app.program;
+package com.continuuity.proto;
 
 /**
- * This class record information for a particular run.
+ * Represents a stream in an HTTP response.
  */
-public final class RunRecord {
-  private String pid;
-  private long startTs;
-  private long stopTs;
-  private String endStatus;
+public class StreamRecord {
 
-  public RunRecord(final String pid, final long startTs, final long stopTs, final String endStatus) {
-    this.pid = pid;
-    this.startTs = startTs;
-    this.stopTs = stopTs;
-    this.endStatus = endStatus;
+  private String type;
+  private String id;
+  private String name;
+  private String specification;
+
+  public StreamRecord(String type, String id, String name, String specification) {
+    this.type = type;
+    this.id = id;
+    this.name = name;
+    this.specification = specification;
   }
 
-  public String getPid() {
-    return pid;
+  public String getType() {
+    return type;
   }
 
-  public long getStartTs() {
-    return startTs;
+  public String getId() {
+    return id;
   }
 
-  public long getStopTs() {
-    return stopTs;
+  public String getName() {
+    return name;
   }
 
-  public String getEndStatus() {
-    return endStatus;
+  public String getSpecification() {
+    return specification;
   }
+
 }

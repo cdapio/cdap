@@ -21,7 +21,7 @@ import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
-import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.proto.DatasetSpecification;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;

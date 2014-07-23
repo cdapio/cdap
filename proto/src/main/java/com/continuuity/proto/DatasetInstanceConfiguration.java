@@ -14,23 +14,27 @@
  * the License.
  */
 
-package com.continuuity.app;
+package com.continuuity.proto;
+
+import java.util.Map;
 
 /**
- * Class containing a program status.
+ * POJO that carries dataset type and properties information for create dataset request
  */
-public class ProgramStatus {
-  private String applicationId;
-  private String runnableId;
-  private String status;
+public final class DatasetInstanceConfiguration {
+  private final String typeName;
+  private final Map<String, String> properties;
 
-  public ProgramStatus(String applicationId, String runnableId, String status) {
-    this.applicationId = applicationId;
-    this.runnableId = runnableId;
-    this.status = status;
+  public DatasetInstanceConfiguration(String typeName, Map<String, String> properties) {
+    this.typeName = typeName;
+    this.properties = properties;
   }
 
-  public String getStatus() {
-    return this.status;
+  public String getTypeName() {
+    return typeName;
+  }
+
+  public Map<String, String> getProperties() {
+    return properties;
   }
 }

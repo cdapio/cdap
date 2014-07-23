@@ -17,7 +17,6 @@
 package com.continuuity.data2.datafabric.dataset.type;
 
 import com.continuuity.api.dataset.DatasetDefinition;
-import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.lang.ClassLoaders;
@@ -27,6 +26,9 @@ import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.module.lib.DatasetModules;
 import com.continuuity.data2.dataset2.tx.TxCallable;
+import com.continuuity.proto.DatasetModuleMeta;
+import com.continuuity.proto.DatasetSpecification;
+import com.continuuity.proto.DatasetTypeMeta;
 import com.continuuity.tephra.TransactionFailureException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
@@ -175,7 +177,7 @@ public class DatasetTypeManager extends AbstractIdleService {
   /**
    * Get dataset type information
    * @param typeName name of the type to get info for
-   * @return instance of {@link com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta} or {@code null} if type
+   * @return instance of {@link DatasetTypeMeta} or {@code null} if type
    *         does NOT exist
    */
   @Nullable

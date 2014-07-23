@@ -14,13 +14,20 @@
  * the License.
  */
 
-package com.continuuity.internal.app.runtime.webapp;
-
-import com.continuuity.api.ProgramSpecification;
+package com.continuuity.proto;
 
 /**
- * Specification for webapp.
+ * Represents the number of instances a program currently is running with.
  */
-public interface WebappSpecification extends ProgramSpecification {
+public class Instances {
 
+  private final int instances;
+
+  public Instances(int instances) {
+    this.instances = instances;
+  }
+
+  public int getInstances() {
+    return instances;
+  }
 }

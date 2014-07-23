@@ -19,8 +19,8 @@ package com.continuuity.data2.dataset2;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetProperties;
-import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.module.DatasetModule;
+import com.continuuity.proto.DatasetSpecification;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -80,7 +80,7 @@ public interface DatasetFramework {
    *
    * This uses
    * {@link com.continuuity.api.dataset.DatasetDefinition#configure(String, DatasetProperties)}
-   * method to build {@link com.continuuity.api.dataset.DatasetSpecification} which describes dataset instance
+   * method to build {@link com.continuuity.proto.DatasetSpecification} which describes dataset instance
    * and later used to initialize {@link DatasetAdmin} and {@link Dataset} for the dataset instance.
    *
    * @param datasetTypeName dataset instance type name
@@ -94,13 +94,12 @@ public interface DatasetFramework {
     throws DatasetManagementException, IOException;
 
   /**
-   * @return a collection of {@link com.continuuity.api.dataset.DatasetSpecification}s for all datasets
+   * @return a collection of {@link com.continuuity.proto.DatasetSpecification}s for all datasets
    */
   Collection<DatasetSpecification> getInstances() throws DatasetManagementException;
 
   /**
-   * @return {@link com.continuuity.api.dataset.DatasetSpecification} of the dataset or {@code null} if dataset does
-   *         not exist
+   * @return {@link DatasetSpecification} of the dataset or {@code null} if dataset not not exist
    */
   @Nullable
   DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException;

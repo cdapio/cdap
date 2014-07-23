@@ -20,12 +20,12 @@ import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Status;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.UnsupportedTypeException;
+import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryStatus;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -64,11 +64,12 @@ public class DatasetExploreFacade {
       return;
     }
 
-    Handle handle = exploreClient.enableExplore(datasetInstance);
+    QueryHandle handle = exploreClient.enableExplore(datasetInstance);
     try {
-      Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 50);
+      QueryStatus status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200,
+                                                                     TimeUnit.MILLISECONDS, 50);
 
-      if (status.getStatus() != Status.OpStatus.FINISHED) {
+      if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
         LOG.error("Enable explore did not finish successfully for dataset instance {}. Got final state - {}",
                   datasetInstance, status.getStatus());
         throw new ExploreException("Cannot enable explore for dataset instance " + datasetInstance);
@@ -99,11 +100,12 @@ public class DatasetExploreFacade {
       return;
     }
 
-    Handle handle = exploreClient.disableExplore(datasetInstance);
+    QueryHandle handle = exploreClient.disableExplore(datasetInstance);
     try {
-      Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 50);
+      QueryStatus status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200,
+                                                                     TimeUnit.MILLISECONDS, 50);
 
-      if (status.getStatus() != Status.OpStatus.FINISHED) {
+      if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
         LOG.error("Disable explore did not finish successfully for dataset instance {}. Got final state - {}",
                   datasetInstance, status.getStatus());
         throw new ExploreException("Cannot disable explore for dataset instance " + datasetInstance);

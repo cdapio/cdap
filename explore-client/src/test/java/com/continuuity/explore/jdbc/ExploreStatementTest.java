@@ -17,9 +17,8 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
-import com.continuuity.explore.service.ColumnDesc;
-import com.continuuity.explore.service.Result;
-
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryResult;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
@@ -40,7 +39,7 @@ public class ExploreStatementTest {
             new ColumnDesc("column1", "STRING", 1, ""),
             new ColumnDesc("column2", "int", 2, "")
         )),
-        ImmutableMap.of("foobar", (List<Result>) Lists.<Result>newArrayList())
+        ImmutableMap.of("foobar", (List<QueryResult>) Lists.<QueryResult>newArrayList())
     );
 
     // Make sure an empty query still has a ResultSet associated to it

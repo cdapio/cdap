@@ -16,10 +16,10 @@
 
 package com.continuuity.data2.datafabric.dataset.instance;
 
-import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasets;
 import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import com.continuuity.data2.dataset2.tx.TxCallable;
+import com.continuuity.proto.DatasetSpecification;
 import com.google.inject.Inject;
 
 import java.util.Collection;
@@ -38,7 +38,7 @@ public class DatasetInstanceManager {
 
   /**
    * Adds dataset instance metadata
-   * @param spec {@link com.continuuity.api.dataset.DatasetSpecification} of the dataset instance to be added
+   * @param spec {@link com.continuuity.proto.DatasetSpecification} of the dataset instance to be added
    */
   public void add(final DatasetSpecification spec) {
     mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, Void>() {
@@ -52,7 +52,7 @@ public class DatasetInstanceManager {
 
   /**
    * @param instanceName name of the dataset instance
-   * @return dataset instance's {@link com.continuuity.api.dataset.DatasetSpecification}
+   * @return dataset instance's {@link com.continuuity.proto.DatasetSpecification}
    */
   public DatasetSpecification get(final String instanceName) {
     return mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, DatasetSpecification>() {
@@ -64,7 +64,7 @@ public class DatasetInstanceManager {
   }
 
   /**
-   * @return collection of {@link com.continuuity.api.dataset.DatasetSpecification} of all dataset instances
+   * @return collection of {@link com.continuuity.proto.DatasetSpecification} of all dataset instances
    */
   public Collection<DatasetSpecification> getAll() {
     return mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, Collection<DatasetSpecification>>() {

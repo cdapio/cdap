@@ -19,9 +19,9 @@ package com.continuuity.explore.jdbc;
 import com.continuuity.explore.client.ExploreClientUtil;
 import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Status;
+import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +52,7 @@ public class ExploreStatement implements Statement {
    */
   private volatile ResultSet resultSet = null;
   private volatile boolean isClosed = false;
-  private volatile Handle stmtHandle = null;
+  private volatile QueryHandle stmtHandle = null;
   private volatile boolean stmtCompleted;
 
   private Connection connection;
@@ -93,7 +93,7 @@ public class ExploreStatement implements Statement {
     // TODO in future, the polling logic should be in another SyncExploreClient
     try {
       stmtHandle = exploreClient.execute(sql);
-      Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, stmtHandle, 200,
+      QueryStatus status = ExploreClientUtil.waitForCompletionStatus(exploreClient, stmtHandle, 200,
                                                                 TimeUnit.MILLISECONDS, MAX_POLL_TRIES);
       stmtCompleted = true;
       switch (status.getStatus()) {
