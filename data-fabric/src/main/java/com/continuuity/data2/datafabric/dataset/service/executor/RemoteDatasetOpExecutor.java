@@ -16,6 +16,7 @@
 
 package com.continuuity.data2.datafabric.dataset.service.executor;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
@@ -26,7 +27,6 @@ import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
 import com.continuuity.common.http.ObjectResponse;
-import com.continuuity.proto.DatasetSpecification;
 import com.continuuity.proto.DatasetTypeMeta;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;

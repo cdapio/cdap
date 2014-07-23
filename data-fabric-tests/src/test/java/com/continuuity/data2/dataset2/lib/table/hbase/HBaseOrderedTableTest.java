@@ -16,6 +16,7 @@
 
 package com.continuuity.data2.dataset2.lib.table.hbase;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.table.ConflictDetection;
@@ -25,7 +26,6 @@ import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data2.dataset2.lib.table.BufferingOrederedTableTest;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
-import com.continuuity.proto.DatasetSpecification;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TxConstants;
 import com.continuuity.tephra.inmemory.DetachedTxSystemClient;

@@ -16,6 +16,7 @@
 
 package com.continuuity.data2.dataset2.lib.table.leveldb;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.table.ConflictDetection;
 import com.continuuity.common.conf.CConfiguration;
@@ -26,7 +27,6 @@ import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data.runtime.TransactionMetricsModule;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.dataset2.lib.table.BufferingOrederedTableTest;
-import com.continuuity.proto.DatasetSpecification;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;

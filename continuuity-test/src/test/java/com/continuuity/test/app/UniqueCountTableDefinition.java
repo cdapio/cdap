@@ -16,6 +16,7 @@
 
 package com.continuuity.test.app;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.lib.AbstractDataset;
@@ -25,7 +26,6 @@ import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Increment;
 import com.continuuity.api.dataset.table.Table;
-import com.continuuity.proto.DatasetSpecification;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;

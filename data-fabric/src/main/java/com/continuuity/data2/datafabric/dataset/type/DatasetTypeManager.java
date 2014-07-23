@@ -16,6 +16,7 @@
 
 package com.continuuity.data2.datafabric.dataset.type;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
@@ -27,7 +28,6 @@ import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.module.lib.DatasetModules;
 import com.continuuity.data2.dataset2.tx.TxCallable;
 import com.continuuity.proto.DatasetModuleMeta;
-import com.continuuity.proto.DatasetSpecification;
 import com.continuuity.proto.DatasetTypeMeta;
 import com.continuuity.tephra.TransactionFailureException;
 import com.google.common.base.Joiner;

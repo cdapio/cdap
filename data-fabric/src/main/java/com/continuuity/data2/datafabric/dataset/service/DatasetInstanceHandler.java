@@ -16,6 +16,7 @@
 
 package com.continuuity.data2.datafabric.dataset.service;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -30,7 +31,6 @@ import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.proto.DatasetInstanceConfiguration;
 import com.continuuity.proto.DatasetMeta;
-import com.continuuity.proto.DatasetSpecification;
 import com.continuuity.proto.DatasetTypeMeta;
 import com.google.gson.Gson;
 import com.google.inject.Inject;

@@ -16,12 +16,12 @@
 
 package com.continuuity.api.dataset.lib;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.table.Table;
-import com.continuuity.proto.DatasetSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 

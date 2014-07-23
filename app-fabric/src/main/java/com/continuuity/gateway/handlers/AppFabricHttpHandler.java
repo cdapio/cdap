@@ -16,6 +16,7 @@
 
 package com.continuuity.gateway.handlers;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.ProgramTypes;
 import com.continuuity.api.common.Bytes;
@@ -84,7 +85,6 @@ import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.proto.ApplicationRecord;
 import com.continuuity.proto.DatasetRecord;
-import com.continuuity.proto.DatasetSpecification;
 import com.continuuity.proto.Id;
 import com.continuuity.proto.Instances;
 import com.continuuity.proto.ProgramRecord;

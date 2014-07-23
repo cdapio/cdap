@@ -16,13 +16,13 @@
 
 package com.continuuity.data2.dataset2.lib.kv;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
-import com.continuuity.proto.DatasetSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 

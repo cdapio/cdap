@@ -16,6 +16,7 @@
 
 package com.continuuity.data2.dataset2.lib.table;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
@@ -25,7 +26,6 @@ import com.continuuity.api.dataset.table.Table;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaTypeAdapter;
 import com.continuuity.internal.io.TypeRepresentation;
-import com.continuuity.proto.DatasetSpecification;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

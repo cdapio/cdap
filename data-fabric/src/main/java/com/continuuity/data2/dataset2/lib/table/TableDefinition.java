@@ -16,13 +16,13 @@
 
 package com.continuuity.data2.dataset2.lib.table;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
 import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.api.dataset.table.Table;
-import com.continuuity.proto.DatasetSpecification;
 
 import java.io.IOException;
 

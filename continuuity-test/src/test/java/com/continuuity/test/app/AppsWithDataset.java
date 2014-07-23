@@ -16,6 +16,7 @@
 
 package com.continuuity.test.app;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.app.AbstractApplication;
@@ -40,7 +41,6 @@ import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.proto.DatasetSpecification;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.hbase.util.Bytes;

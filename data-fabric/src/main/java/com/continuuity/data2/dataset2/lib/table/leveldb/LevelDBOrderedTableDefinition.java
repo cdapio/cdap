@@ -16,11 +16,11 @@
 
 package com.continuuity.data2.dataset2.lib.table.leveldb;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
 import com.continuuity.api.dataset.table.ConflictDetection;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
-import com.continuuity.proto.DatasetSpecification;
 import com.google.inject.Inject;
 
 import java.io.IOException;

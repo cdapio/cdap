@@ -16,6 +16,7 @@
 
 package com.continuuity.data2.datafabric.dataset.service;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
@@ -27,7 +28,6 @@ import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.ObjectResponse;
 import com.continuuity.proto.DatasetModuleMeta;
-import com.continuuity.proto.DatasetSpecification;
 import com.continuuity.proto.DatasetTypeMeta;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;

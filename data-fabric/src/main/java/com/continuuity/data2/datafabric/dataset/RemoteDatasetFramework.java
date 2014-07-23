@@ -16,6 +16,7 @@
 
 package com.continuuity.data2.datafabric.dataset;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetProperties;
@@ -32,7 +33,6 @@ import com.continuuity.data2.dataset2.SingleTypeModule;
 import com.continuuity.data2.dataset2.module.lib.DatasetModules;
 import com.continuuity.proto.DatasetMeta;
 import com.continuuity.proto.DatasetModuleMeta;
-import com.continuuity.proto.DatasetSpecification;
 import com.continuuity.proto.DatasetTypeMeta;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;

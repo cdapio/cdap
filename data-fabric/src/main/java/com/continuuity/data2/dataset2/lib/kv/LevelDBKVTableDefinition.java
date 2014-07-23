@@ -16,6 +16,7 @@
 
 package com.continuuity.data2.dataset2.lib.kv;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetProperties;
@@ -24,7 +25,6 @@ import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.data2.dataset.lib.table.leveldb.KeyValue;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
-import com.continuuity.proto.DatasetSpecification;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.iq80.leveldb.DB;

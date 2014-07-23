@@ -16,6 +16,7 @@
 
 package com.continuuity.explore.service;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.data.batch.Scannables;
@@ -29,7 +30,6 @@ import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
-import com.continuuity.proto.DatasetSpecification;
 import com.google.gson.Gson;
 import org.apache.hadoop.hbase.util.Bytes;
 

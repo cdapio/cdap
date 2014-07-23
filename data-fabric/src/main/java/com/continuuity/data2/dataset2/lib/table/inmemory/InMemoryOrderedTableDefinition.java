@@ -16,10 +16,10 @@
 
 package com.continuuity.data2.dataset2.lib.table.inmemory;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
 import com.continuuity.api.dataset.table.ConflictDetection;
-import com.continuuity.proto.DatasetSpecification;
 
 import java.io.IOException;
 

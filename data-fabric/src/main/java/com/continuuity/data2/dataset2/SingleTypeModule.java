@@ -16,6 +16,7 @@
 
 package com.continuuity.data2.dataset2;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.lib.CompositeDatasetDefinition;
@@ -23,7 +24,6 @@ import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.module.DatasetType;
 import com.continuuity.api.dataset.module.EmbeddedDataset;
-import com.continuuity.proto.DatasetSpecification;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;

@@ -16,11 +16,11 @@
 
 package com.continuuity.data2.dataset2.lib.kv;
 
+import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
-import com.continuuity.proto.DatasetSpecification;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.continuuity.proto;
+package com.continuuity.api;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
