@@ -43,7 +43,10 @@ import com.continuuity.internal.service.DefaultServiceSpecification;
 import com.continuuity.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillRunnable;
+import org.apache.twill.internal.SingleRunnableApplication;
 
 import java.util.Map;
 
@@ -175,6 +178,11 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     DefaultServiceSpecification spec = new DefaultServiceSpecification(application.getClass().getName(),
                                                                        application.configure());
     services.put(spec.getName(), spec);
+  }
+
+  @Override
+  public void addService(TwillRunnable runnable, ResourceSpecification specification) {
+    addService(new SingleRunnableApplication(runnable, specification));
   }
 
   public ApplicationSpecification createApplicationSpec() {
