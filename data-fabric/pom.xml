@@ -39,7 +39,7 @@
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
-      <artifactId>reactor-metadata</artifactId>
+      <artifactId>proto</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
