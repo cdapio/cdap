@@ -138,6 +138,16 @@ public class ExploreRuntimeModule extends RuntimeModule {
       private static final long seed = System.currentTimeMillis();
       @Override
       public ExploreService get() {
+
+        File hiveDataDir = new File(cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR));
+        System.setProperty(HiveConf.ConfVars.SCRATCHDIR.toString(),
+                           new File(hiveDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
+
+        // Reset hadoop tmp dir because Hive does not pick it up from hConf
+        File localDataDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
+        System.setProperty("hadoop.tmp.dir",
+                           new File(localDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
+
         File warehouseDir = new File(cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR), "warehouse");
         File databaseDir = new File(cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR), "database");
 
