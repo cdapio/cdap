@@ -884,6 +884,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   public void testResetTxManagerState() throws Exception {
     HttpResponse response = doPost("/v2/transactions/state");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    // todo: first transaction after reset will fail, goGet is a placeholder, can remove after tephra tx-fix
+    doGet("/v2/apps");
   }
 
   /**
@@ -901,7 +903,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
    * Tests deploying an application with dataset same name as existing dataset but a different type
    */
   @Test
-  public void testDeployFailue() throws Exception {
+  public void testDeployFailure() throws Exception {
     HttpResponse response = deploy(AppWithDataset.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
