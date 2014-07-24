@@ -18,14 +18,10 @@ package com.continuuity.explore.jdbc;
 
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.explore.client.ExploreClient;
-import com.continuuity.explore.client.ExploreClientUtil;
 import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
-import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.MetaDataInfo;
-import com.continuuity.explore.service.Status;
-import com.continuuity.explore.service.UnexpectedQueryStatusException;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -41,7 +37,6 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Arrays;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Explore database meta data, informing of the capabilities of Explore as a DBMS.
