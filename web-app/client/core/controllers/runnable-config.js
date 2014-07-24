@@ -8,6 +8,7 @@ define([], function () {
 	var Controller = Em.Controller.extend({
 
 		load: function () {
+
 			var parent = this.get('needs')[0];
 			var model = this.get('controllers').get(parent).get('model');
 			var list = Em.ArrayProxy.create({ content: [] });

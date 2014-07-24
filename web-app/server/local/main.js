@@ -93,7 +93,6 @@ DevServer.prototype.start = function() {
        * If mocks are enabled, use mock injector to simulate some responses.
        */
       var enableMocks = !!(argv.enableMocks === 'true');
-//      if(!enableMocks){ enableMocks = true; }
       if (enableMocks) {
         this.logger.info('Webapp running with mocks enabled.');
         HttpMockInjector = require('../../test/httpMockInjector.js');

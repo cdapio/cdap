@@ -198,7 +198,7 @@
               <tr>
                 <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
                   {{this.name}}
-                </a>
+                  </a>
                   <br />
                   <span class="app-list-status">{{this.description}}</span>
                 </td>
@@ -207,7 +207,7 @@
                 </td>
                 <td style="max-width: 100px;" class="status-col center-align">
                   {{#if this.logsStatusOk}}
-                  {{#linkTo 'Service.Log' this}}<span {{ bindAttr class=":log-icon this.logClass" }} ></span>{{/linkTo}}
+                    {{#linkTo 'Service.Log' this}}<span {{ bindAttr class=":log-icon this.logClass" }} ></span>{{/linkTo}}
                   {{ else }}
                     <span data-toggle="tooltip" data-placement="right" title="Please contact your system admistrator for logs.">NA</span>
                   {{/if}}
@@ -231,95 +231,88 @@
             {{/each}}
             </tbody>
           </table>
-          </div>
-          {{/if}}
-
-    </div>
-  </div>
-{{!--
-   <div id="title">
-      <h1><span>System Services</span></h1>
-    </div>
---}}
-  <div id="reactor-services-REMOVED-CLASS">
-    <div id="panels">
-
-          {{#if userServices}}
-          <div class="panel">
-          <table class="table">
-            <thead>
-              <th style="padding-left: 14px; min-width: 350px" class="service-col">Name</th>
-              <th style="min-width: 100px;" class="status-col center-align">Status
-              </th>
-              <th style="min-width: 200px;" class="instance-col center-align">Instances Requested</th>
-              <th style="min-width: 200px;" class="instance-col center-align">Provisioned</th>
-              <th style="min-width: 200px;" class="instance-col center-align"> Start/Stop </th>
-            </thead>
-            <tbody>
-            {{#each service in userServices}}
-              <tr>
-                <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
-                  <a {{bindAttr href="service.href"}}>{{service.app}}:{{service.name}}</a><br /><span class="app-list-status app-status">{{service.status}}</span>
-                </a>
-                  <br />
-                  <span class="app-list-status">{{service.description}}</span>
-                </td>
-                <td style="max-width: 100px;" class="status-col center-align">
-                  <span {{ bindAttr class=":service-icon service.imgClass" }} ></span>
-                </td>
-                <td style="max-width: 200px;" class="instance-col">
-                </td>
-                <td style="max-width: 350px;" class="instance-provisioned service-col">
-                </td>
-                <td class="center-align">
-                    <div class="btn-group start-stop-btns">
-                        <button class="userServices-start" {{action start service}}></button>
-                        <button class="userServices-stop" {{action stop service}}></button>
-                    </div>
-                </td>
-              </tr>
-              {{!--  RUNNABLES ROWS --}}
-                {{#each runnable in service.runnablesList}}
-                <tr>
-                <td style="max-width: 350px;" class="app-list-name service-col pull-right center-align"><a class="none-text-decoration">
-                  {{runnable.id}}
-                </a>
-                  <br />
-                  <span class="app-list-status pull-left">runnable</span>
-                </td>
-                <td style="max-width: 100px;" class="status-col center-align">
-                  {{!-- removed status icon from here --}}
-                </td>
-                <td style="max-width: 200px;" class="instance-col">
-                  <div class="instance-wrapper">
-                    <div class="instance-num"><span>{{runnable.requested}}</span></div>
-                    <div>
-                      <a class="cursor-pointer" {{action userService_decreaseInstance service runnable.id runnable.requested }}>
-                        <span class="minus-icon"></span>
-                      </a>
-                      <a class="cursor-pointer" {{action userService_increaseInstance service runnable.id runnable.requested }}>
-                        <span class="plus-icon"></span>
-                      </a>
-                    </div>
-                  </div>
-                <td style="max-width: 350px;" class="instance-provisioned service-col">
-                    <div class="instance-num auto-margin"><span>{{runnable.provisioned}}</span></div>
-                </td>
-                <td class="center-align">
-                  {{!-- removed start/stop buttons from here --}}
-                </td>
-              </tr>
-              {{/each}}
-              {{!--  RUNNABLES ROWS --}}
-            {{/each}}
-            </tbody>
-          </table>
-          </div>
-          {{/if}}
-
+        </div>
+      {{/if}}
 
       </div>
     </div>
+    <div id="panels">
+
+      {{#if userServices}}
+      <div class="panel">
+      <table class="table">
+        <thead>
+          <th style="padding-left: 14px; min-width: 350px" class="service-col">Name</th>
+          <th style="min-width: 100px;" class="status-col center-align">Status
+          </th>
+          <th style="min-width: 200px;" class="instance-col center-align">Instances Requested</th>
+          <th style="min-width: 200px;" class="instance-col center-align">Provisioned</th>
+          <th style="min-width: 200px;" class="instance-col center-align"> Start/Stop </th>
+        </thead>
+        <tbody>
+        {{#each service in userServices}}
+          <tr>
+            <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
+              <a {{bindAttr href="service.href"}}>{{service.app}}:{{service.name}}</a><br /><span class="app-list-status app-status">{{service.status}}</span>
+            </a>
+              <br />
+              <span class="app-list-status">{{service.description}}</span>
+            </td>
+            <td style="max-width: 100px;" class="status-col center-align">
+              <span {{ bindAttr class=":service-icon service.imgClass" }} ></span>
+            </td>
+            <td style="max-width: 200px;" class="instance-col">
+            </td>
+            <td style="max-width: 350px;" class="instance-provisioned service-col">
+            </td>
+            <td class="center-align">
+                <div class="btn-group start-stop-btns">
+                    <button class="userServices-start" {{action start service}}></button>
+                    <button class="userServices-stop" {{action stop service}}></button>
+                </div>
+            </td>
+          </tr>
+          {{!--  RUNNABLES ROWS --}}
+            {{#each runnable in service.runnablesList}}
+            <tr>
+            <td style="max-width: 350px;" class="app-list-name service-col pull-right center-align"><a class="none-text-decoration">
+              {{runnable.id}}
+            </a>
+              <br />
+              <span class="app-list-status pull-left">runnable</span>
+            </td>
+            <td style="max-width: 100px;" class="status-col center-align">
+              {{!-- removed status icon from here --}}
+            </td>
+            <td style="max-width: 200px;" class="instance-col">
+              <div class="instance-wrapper">
+                <div class="instance-num"><span>{{runnable.requested}}</span></div>
+                <div>
+                  <a class="cursor-pointer" {{action userService_decreaseInstance service runnable.id runnable.requested }}>
+                    <span class="minus-icon"></span>
+                  </a>
+                  <a class="cursor-pointer" {{action userService_increaseInstance service runnable.id runnable.requested }}>
+                    <span class="plus-icon"></span>
+                  </a>
+                </div>
+              </div>
+            <td style="max-width: 350px;" class="instance-provisioned service-col">
+                <div class="instance-num auto-margin"><span>{{runnable.provisioned}}</span></div>
+            </td>
+            <td class="center-align">
+              {{!-- removed start/stop buttons from here --}}
+            </td>
+          </tr>
+          {{/each}}
+          {{!--  RUNNABLES ROWS --}}
+        {{/each}}
+        </tbody>
+      </table>
+      </div>
+      {{/if}}
+
+
+      </div>
     {{outlet}}
   </script>
 
@@ -333,14 +326,12 @@
     </div>
 
 
-
     {{outlet}}
 
   </script>
 
   <script type="text/x-handlebars" data-template-name="UserserviceStatus">
 {{#if model}}
-  <div id="reactor-services-REMOVED-CLASS">
     <div id="panels">
           <div class="panel">
           <table class="table">
@@ -419,7 +410,6 @@
           </div>
 
       </div>
-    </div>
 
   {{outlet config}}
 

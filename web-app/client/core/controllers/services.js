@@ -224,7 +224,7 @@ define([], function () {
         "Increase instances for " + serviceName + "?",
         function () {
 
-          var payload = {data: {instances: --instanceCount}};
+          var payload = {data: {instances: ++instanceCount}};
           var services = self.get('systemServices');
           for (var i = 0; i < services.length; i++) {
             var service = services[i];

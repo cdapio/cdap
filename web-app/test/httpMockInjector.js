@@ -183,26 +183,7 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
     .get('/v2/system/services/metrics.processor/instances')
     .reply(200, system.services['metrics.processor'].instances);
 
-//TESTING removal from UI when removing an app.
-  var tmp = [
-    {"type":"App","id":"CountCounts","name":"CountCounts","description":"Application for counting counts of words"},
-    {"type":"App","id":"PurchaseHistory","name":"PurchaseHistory","description":"Purchase history app"}];
 
-// User Services:
-///*/
-  nock(clientAddr, options)
-    .persist()
-    .get('/v2/apps').times(6)
-    .reply(200, tmp);
-//*/
-
-/*
-  nock(clientAddr, options)
-    .persist()
-    .get('/v2/apps')
-    .reply(200, [tmp[1]]);
-// */
-//END - TESTING removal from UI when removing an app.
 
   nock(clientAddr, options)
     .persist()
