@@ -91,7 +91,8 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   public StatementExecutionFuture schemas(@Nullable String catalog, @Nullable String schemaPattern) {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
     futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("schemas_stmt").iterator()));
-    return new MockStatementExecutionFuture(futureDelegate, "schemas_stmt", statementsToMetadata, statementsToResults);
+    return new MockStatementExecutionFuture(futureDelegate, "schemas_stmt",
+                                            statementsToMetadata, statementsToResults);
   }
 
   @Override
@@ -99,7 +100,8 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
                                             String functionNamePattern) {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
     futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("functions_stmt").iterator()));
-    return new MockStatementExecutionFuture(futureDelegate, "functions_stmt", statementsToMetadata, statementsToResults);
+    return new MockStatementExecutionFuture(futureDelegate, "functions_stmt",
+                                            statementsToMetadata, statementsToResults);
   }
 
   @Override
@@ -112,21 +114,24 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
                                          String tableNamePattern, @Nullable List<String> tableTypes) {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
     futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("tables_stmt").iterator()));
-    return new MockStatementExecutionFuture(futureDelegate, "tables_stmt", statementsToMetadata, statementsToResults);
+    return new MockStatementExecutionFuture(futureDelegate, "tables_stmt",
+                                            statementsToMetadata, statementsToResults);
   }
 
   @Override
   public StatementExecutionFuture tableTypes() {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
     futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("tableTypes_stmt").iterator()));
-    return new MockStatementExecutionFuture(futureDelegate, "tableTypes_stmt", statementsToMetadata, statementsToResults);
+    return new MockStatementExecutionFuture(futureDelegate, "tableTypes_stmt",
+                                            statementsToMetadata, statementsToResults);
   }
 
   @Override
   public StatementExecutionFuture dataTypes() {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
     futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("dataTypes_stmt").iterator()));
-    return new MockStatementExecutionFuture(futureDelegate, "dataTypes_stmt", statementsToMetadata, statementsToResults);
+    return new MockStatementExecutionFuture(futureDelegate, "dataTypes_stmt",
+                                            statementsToMetadata, statementsToResults);
   }
 
   @Override

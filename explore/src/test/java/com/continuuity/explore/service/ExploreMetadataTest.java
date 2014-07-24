@@ -63,7 +63,8 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
                             new ColumnDesc("TABLE_CAT", "STRING", 1, "Catalog name. NULL if not applicable."),
                             new ColumnDesc("TABLE_SCHEM", "STRING", 2, "Schema name."),
                             new ColumnDesc("TABLE_NAME", "STRING", 3, "Table name."),
-                            new ColumnDesc("TABLE_TYPE", "STRING", 4, "The table type, e.g. \"TABLE\", \"VIEW\", etc."),
+                            new ColumnDesc("TABLE_TYPE", "STRING", 4,
+                                           "The table type, e.g. \"TABLE\", \"VIEW\", etc."),
                             new ColumnDesc("REMARKS", "STRING", 5, "Comments about the table.")
                           ),
                           Lists.newArrayList(
@@ -134,7 +135,8 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
                             new ColumnDesc("SEARCHABLE", "SMALLINT", 9, "Can you use \"WHERE\" based on this type"),
                             new ColumnDesc("UNSIGNED_ATTRIBUTE", "BOOLEAN", 10, "Is it unsigned"),
                             new ColumnDesc("FIXED_PREC_SCALE", "BOOLEAN", 11, "Can it be a money value"),
-                            new ColumnDesc("AUTO_INCREMENT", "BOOLEAN", 12, "Can it be used for an auto-increment value"),
+                            new ColumnDesc("AUTO_INCREMENT", "BOOLEAN", 12,
+                                           "Can it be used for an auto-increment value"),
                             new ColumnDesc("LOCAL_TYPE_NAME", "STRING", 13,
                                            "Localized version of type name (may be null)"),
                             new ColumnDesc("MINIMUM_SCALE", "SMALLINT", 14, "Minimum scale supported"),

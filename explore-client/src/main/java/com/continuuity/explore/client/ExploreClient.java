@@ -121,7 +121,8 @@ public interface ExploreClient extends Closeable {
    * @param functionNamePattern a function name pattern; must match the function name as it is stored in the database
    * @return {@link StatementExecutionFuture} eventually containing the functions of interest.
    */
-  StatementExecutionFuture functions(@Nullable String catalog, @Nullable String schemaPattern, String functionNamePattern);
+  StatementExecutionFuture functions(@Nullable String catalog, @Nullable String schemaPattern,
+                                     String functionNamePattern);
 
 
   /**
