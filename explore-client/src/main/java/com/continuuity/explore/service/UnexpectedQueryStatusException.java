@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Continuuity, Inc.
+ * Copyright 2014 Continuuity, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,21 @@
  * the License.
  */
 
-package com.continuuity.explore.jdbc;
+package com.continuuity.explore.service;
 
 /**
- * Utility methods and constants to use in Explore JDBC driver.
+ * Exception thrown in case a query execution ends in an unexpected state.
  */
-public class ExploreJDBCUtils {
-  public static final String URI_JDBC_PREFIX = "jdbc:";
+public class UnexpectedQueryStatusException extends Exception {
+
+  private final Status.OpStatus status;
+
+  public UnexpectedQueryStatusException(String s, Status.OpStatus status) {
+    super(s);
+    this.status = status;
+  }
+
+  public Status.OpStatus getStatus() {
+    return status;
+  }
 }

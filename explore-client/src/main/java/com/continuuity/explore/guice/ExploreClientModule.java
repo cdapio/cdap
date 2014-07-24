@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Continuuity, Inc.
+ * Copyright 2014 Continuuity, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,22 @@
  * the License.
  */
 
-package com.continuuity.explore.jdbc;
+package com.continuuity.explore.guice;
+
+import com.continuuity.explore.client.DiscoveryExploreClient;
+import com.continuuity.explore.client.ExploreClient;
+
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 
 /**
- * Utility methods and constants to use in Explore JDBC driver.
+ * Explore client Guice module.
  */
-public class ExploreJDBCUtils {
-  public static final String URI_JDBC_PREFIX = "jdbc:";
+public class ExploreClientModule extends PrivateModule {
+
+  @Override
+  protected void configure() {
+    bind(ExploreClient.class).to(DiscoveryExploreClient.class).in(Scopes.SINGLETON);
+    expose(ExploreClient.class);
+  }
 }

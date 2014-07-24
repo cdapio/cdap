@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Continuuity, Inc.
+ * Copyright 2014 Continuuity, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,15 @@
  * the License.
  */
 
-package com.continuuity.explore.jdbc;
+package com.continuuity.explore.client;
+
+import com.continuuity.explore.service.Result;
+
+import java.io.Closeable;
+import java.util.Iterator;
 
 /**
- * Utility methods and constants to use in Explore JDBC driver.
+ * Results of an Explore statement execution.
  */
-public class ExploreJDBCUtils {
-  public static final String URI_JDBC_PREFIX = "jdbc:";
+public interface ExploreExecutionResult extends Iterator<Result>, Closeable {
 }

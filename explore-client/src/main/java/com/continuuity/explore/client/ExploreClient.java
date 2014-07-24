@@ -16,29 +16,46 @@
 
 package com.continuuity.explore.client;
 
-import com.continuuity.explore.service.Explore;
-import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
+import com.google.common.util.concurrent.ListenableFuture;
+
+import java.io.Closeable;
 
 /**
  * Explore client discovers explore service, and executes explore commands using the service.
  */
-public interface ExploreClient extends Explore {
+public interface ExploreClient extends Closeable {
 
   /**
    * Returns true if the explore service is up and running.
    */
-  boolean isAvailable();
+  boolean isServiceAvailable();
 
   /**
    * Enables ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.
+   *
    * @param datasetInstance dataset instance name.
+   * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
+   *         the success of the enable operation.
    */
-  Handle enableExplore(String datasetInstance) throws ExploreException;
+  ListenableFuture<Void> enableExplore(String datasetInstance);
 
   /**
    * Disable ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.
+   *
    * @param datasetInstance dataset instance name.
+   * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
+   *         the success of the disable operation.
    */
-  Handle disableExplore(String datasetInstance) throws ExploreException;
+  ListenableFuture<Void> disableExplore(String datasetInstance);
+
+  /**
+   * Execute a Hive SQL statement asynchronously. The returned
+   * {@link com.continuuity.explore.client.StatementExecutionFuture} can be used to get the
+   * schema of the operation, and it contains an iterator on the results of the statement.
+
+   * @param statement SQL statement.
+   * @return {@link com.continuuity.explore.client.StatementExecutionFuture} eventually containing
+   * the results of the statement execution.
+   */
+  StatementExecutionFuture submit(String statement);
 }

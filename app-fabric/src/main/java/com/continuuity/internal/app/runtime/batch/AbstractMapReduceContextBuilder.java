@@ -169,11 +169,6 @@ public abstract class AbstractMapReduceContextBuilder {
     return context;
   }
 
-  protected Program loadProgram(URI programLocation, LocationFactory locationFactory,
-                                File destinationUnpackedJarDir, ClassLoader classLoader) throws IOException {
-    return Programs.createWithUnpack(locationFactory.create(programLocation), destinationUnpackedJarDir, classLoader);
-  }
-
   /**
    * Refer to {@link AbstractMapReduceContextBuilder} for usage details
    * @return instance of {@link Injector} with bindings for current runtime environment
