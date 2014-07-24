@@ -133,7 +133,10 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
             if (!status.hasResults()) {
               close(handle);
             }
-            resultFuture.set(new ClientExploreExecutionResult(AbstractExploreClient.this, handle, status.hasResults()));
+            if (!resultFuture.set(new ClientExploreExecutionResult(AbstractExploreClient.this,
+                                                                   handle, status.hasResults()))) {
+              close(handle);
+            }
           }
         } catch (Exception e) {
           throw Throwables.propagate(e);
