@@ -81,6 +81,10 @@ public class Status {
     CLOSED,
     ERROR,
     UNKNOWN,
-    PENDING
+    PENDING;
+
+    public boolean isFinished() {
+      return this.equals(FINISHED) || this.equals(CANCELED) || this.equals(CLOSED) || this.equals(ERROR);
+    }
   }
 }
