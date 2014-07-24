@@ -16,6 +16,7 @@
 
 package com.continuuity.app;
 
+import com.continuuity.api.SingleRunnableApplication;
 import com.continuuity.api.app.Application;
 import com.continuuity.api.app.ApplicationConfigurer;
 import com.continuuity.api.data.DataSet;
@@ -46,7 +47,6 @@ import com.google.common.collect.Maps;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillRunnable;
-import org.apache.twill.internal.SingleRunnableApplication;
 
 import java.util.Map;
 
