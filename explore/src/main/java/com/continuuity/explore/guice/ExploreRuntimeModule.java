@@ -140,16 +140,15 @@ public class ExploreRuntimeModule extends RuntimeModule {
       private static final long seed = System.currentTimeMillis();
       @Override
       public ExploreService get() {
-
-        File hiveDataDir = new File(cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR));
+        File hiveDataDir = new File(cConf.get(Constants.Explore.LOCAL_DATA_DIR));
         System.setProperty(HiveConf.ConfVars.SCRATCHDIR.toString(),
                            new File(hiveDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
 
         // Reset hadoop tmp dir because Hive does not pick it up from hConf
         System.setProperty("hadoop.tmp.dir", hConf.get("hadoop.tmp.dir"));
 
-        File warehouseDir = new File(cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR), "warehouse");
-        File databaseDir = new File(cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR), "database");
+        File warehouseDir = new File(cConf.get(Constants.Explore.LOCAL_DATA_DIR), "warehouse");
+        File databaseDir = new File(cConf.get(Constants.Explore.LOCAL_DATA_DIR), "database");
 
         if (isInMemory) {
           // This seed is required to make all tests pass when launched together, and when several of them
@@ -165,7 +164,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
         // Set derby log location
         System.setProperty("derby.stream.error.file",
-                           cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR) + File.separator + "derby.log");
+                           cConf.get(Constants.Explore.LOCAL_DATA_DIR) + File.separator + "derby.log");
 
         String connectUrl = String.format("jdbc:derby:;databaseName=%s;create=true", databaseDir.getAbsoluteFile());
         LOG.debug("Setting {} to {}", HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);

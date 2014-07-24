@@ -462,8 +462,8 @@ public final class Constants {
     public static final String CONTAINER_MEMORY_MB = "explore.executor.container.memory.mb";
     public static final String CONTAINER_INSTANCES = "explore.executor.container.instances";
 
-    public static final String CFG_LOCAL_DATA_DIR = "hive.local.data.dir";
-    public static final String CFG_EXPLORE_ENABLED = "reactor.explore.enabled";
+    public static final String LOCAL_DATA_DIR = "explore.local.data.dir";
+    public static final String EXPLORE_ENABLED = "reactor.explore.enabled";
 
     //max-instances of explore HTTP service
     public static final String MAX_INSTANCES = "explore.executor.max.instances";
