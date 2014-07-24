@@ -19,6 +19,7 @@ package com.continuuity.test;
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.app.Application;
 import com.continuuity.api.app.ApplicationContext;
+import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.module.DatasetModule;
@@ -375,6 +376,19 @@ public class ReactorTestBase {
 
     datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
     return datasetFramework.getAdmin(datasetInstanceName, null);
+  }
+
+
+  /**
+   * Gets instance of data set.
+   * @param datasetInstanceName instance name
+   * @return <T> type of the Dataset
+   * @throws Exception
+   */
+  @Beta
+  protected final <T extends Dataset> T getDataset(String datasetInstanceName)
+    throws Exception {
+    return datasetFramework.getDataset(datasetInstanceName, null);
   }
 
   /**
