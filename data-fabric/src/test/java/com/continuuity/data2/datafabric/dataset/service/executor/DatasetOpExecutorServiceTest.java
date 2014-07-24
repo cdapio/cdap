@@ -40,6 +40,7 @@ import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.runtime.TransactionMetricsModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
@@ -127,7 +128,8 @@ public class DatasetOpExecutorServiceTest {
         }
       }),
       new AuthModule(),
-      new TransactionMetricsModule());
+      new TransactionMetricsModule(),
+      new ExploreClientModule());
 
     txManager = injector.getInstance(InMemoryTransactionManager.class);
     txManager.startAndWait();

@@ -16,7 +16,7 @@
 
 package com.continuuity.explore.jdbc;
 
-import com.continuuity.explore.service.Explore;
+import com.continuuity.explore.client.ExploreClient;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -48,7 +48,7 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
 
   private final String sql;
 
-  public ExplorePreparedStatement(Connection connection, Explore exploreClient, String sql) {
+  ExplorePreparedStatement(Connection connection, ExploreClient exploreClient, String sql) {
     super(connection, exploreClient);
 
     // Although a PreparedStatement is meant to precompile sql statement, our Explore client

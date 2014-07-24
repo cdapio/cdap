@@ -20,11 +20,9 @@ import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.explore.client.ExploreClientUtil;
+import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.proto.ColumnDesc;
-import com.continuuity.proto.QueryHandle;
 import com.continuuity.proto.QueryResult;
-import com.continuuity.proto.QueryStatus;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.test.SlowTests;
 import com.google.common.collect.Lists;
@@ -41,7 +39,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CancellationException;
 
 import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyValue;
 
@@ -301,12 +299,13 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testCancel() throws Exception {
-    QueryHandle handle = exploreClient.execute("select key, value from my_table");
-    exploreClient.cancel(handle);
-    Assert.assertEquals(
-      QueryStatus.OpStatus.CANCELED,
-      ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 100).getStatus()
-    );
-    exploreClient.close(handle);
+    StatementExecutionFuture future = exploreClient.submit("select key, value from my_table");
+    future.cancel(true);
+    try {
+      future.get();
+      Assert.fail();
+    } catch (CancellationException e) {
+      // Expected
+    }
   }
 }

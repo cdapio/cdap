@@ -18,7 +18,6 @@ package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.proto.ColumnDesc;
-import com.continuuity.proto.QueryHandle;
 import com.continuuity.proto.QueryResult;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -40,7 +39,7 @@ public class ExploreQueryResultSetTest {
   @Test
   public void testResultSet() throws Exception {
     ExploreClient exploreClient = new MockExploreClient(
-        ImmutableMap.of("foobar", (List<ColumnDesc>) Lists.newArrayList(
+        ImmutableMap.of("mock_query", (List<ColumnDesc>) Lists.newArrayList(
             new ColumnDesc("column1", "STRING", 1, ""),
             new ColumnDesc("column2", "int", 2, ""),
             new ColumnDesc("column3", "char", 3, ""),
@@ -57,7 +56,7 @@ public class ExploreQueryResultSetTest {
             new ColumnDesc("column15", "array<string>", 14, ""),
             new ColumnDesc("column16", "struct<name:string,attr:string>", 15, "")
         )),
-        ImmutableMap.of("foobar", (List<QueryResult>) Lists.newArrayList(
+        ImmutableMap.of("mock_query", (List<QueryResult>) Lists.newArrayList(
             new QueryResult(ImmutableList.<Object>of(
                 "value1",
                 1,
@@ -78,9 +77,8 @@ public class ExploreQueryResultSetTest {
         ))
     );
 
-    ResultSet resultSet = new ExploreQueryResultSet(exploreClient,
-                                                    new ExploreStatement(null, exploreClient),
-                                                    QueryHandle.fromId("foobar"));
+    ResultSet resultSet = new ExploreQueryResultSet(exploreClient.submit("mock_query"),
+                                                    new ExploreStatement(null, exploreClient));
     Assert.assertTrue(resultSet.next());
     Assert.assertEquals(resultSet.getObject(1), resultSet.getObject("column1"));
     Assert.assertEquals("value1", resultSet.getString(1));
@@ -111,18 +109,17 @@ public class ExploreQueryResultSetTest {
   @Test
   public void sameNamedColumns() throws Exception {
     ExploreClient exploreClient = new MockExploreClient(
-        ImmutableMap.of("foobar", (List<ColumnDesc>) Lists.newArrayList(
+        ImmutableMap.of("mock_query", (List<ColumnDesc>) Lists.newArrayList(
             new ColumnDesc("column1", "STRING", 2, ""),
             new ColumnDesc("column1", "int", 1, "")
         )),
-        ImmutableMap.of("foobar", (List<QueryResult>) Lists.newArrayList(
+        ImmutableMap.of("mock_query", (List<QueryResult>) Lists.newArrayList(
             new QueryResult(ImmutableList.<Object>of(1, "value1"))
         ))
     );
 
-    ResultSet resultSet = new ExploreQueryResultSet(exploreClient,
-                                                    new ExploreStatement(null, exploreClient),
-                                                    QueryHandle.fromId("foobar"));
+    ResultSet resultSet = new ExploreQueryResultSet(exploreClient.submit("mock_query"),
+                                                    new ExploreStatement(null, exploreClient));
     Assert.assertTrue(resultSet.next());
     Assert.assertEquals(1, resultSet.findColumn("column1"));
     Assert.assertEquals(1, resultSet.getObject("column1"));

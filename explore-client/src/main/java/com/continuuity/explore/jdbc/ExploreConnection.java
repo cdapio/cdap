@@ -17,7 +17,12 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.service.ExploreException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -42,15 +47,16 @@ import java.util.concurrent.Executor;
 /**
  * Explore JDBC connection.
  *
- * A connection is made using a client that does not keep state. Therefore, closing a connection
- * will not affect executing statements, and results will not be lost.
+ * Closing a connection will affect executing statements, but the results of those already executed
+ * will still be available.
  */
 public class ExploreConnection implements Connection {
+  private static final Logger LOG = LoggerFactory.getLogger(ExploreConnection.class);
 
   private ExploreClient exploreClient;
   private boolean isClosed = false;
 
-  public ExploreConnection(ExploreClient exploreClient) {
+  ExploreConnection(ExploreClient exploreClient) {
     this.exploreClient = exploreClient;
   }
 
@@ -78,9 +84,16 @@ public class ExploreConnection implements Connection {
 
   @Override
   public void close() throws SQLException {
-    // Free resources
-    isClosed = true;
-    exploreClient = null;
+    try {
+      exploreClient.close();
+    } catch (IOException e) {
+      LOG.error("Could not close explore client", e);
+      throw new SQLException(e);
+    } finally {
+      // Free resources
+      isClosed = true;
+      exploreClient = null;
+    }
   }
 
   @Override

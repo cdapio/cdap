@@ -132,6 +132,7 @@ public class ExploreDriverTest {
     // Correct format but wrong host
     try {
       driver.connect(Constants.Explore.Jdbc.URL_PREFIX + "foo:10000", null);
+      Assert.fail();
     } catch (SQLException e) {
       // Expected, host is not available (random host)
     }
