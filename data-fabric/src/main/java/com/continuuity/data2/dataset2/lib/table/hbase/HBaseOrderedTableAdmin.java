@@ -16,8 +16,8 @@
 
 package com.continuuity.data2.dataset2.lib.table.hbase;
 
-import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;

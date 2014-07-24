@@ -16,8 +16,8 @@
 
 package com.continuuity.data2.datafabric.dataset.service.mds;
 
-import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.module.EmbeddedDataset;
 import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.proto.DatasetModuleMeta;

@@ -16,8 +16,8 @@
 
 package com.continuuity.data2.dataset2.lib.table.leveldb;
 
-import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 
 import java.io.IOException;

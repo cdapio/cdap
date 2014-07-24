@@ -16,9 +16,9 @@
 
 package com.continuuity.data2.dataset2;
 
-import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetDefinition;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.CompositeDatasetDefinition;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;

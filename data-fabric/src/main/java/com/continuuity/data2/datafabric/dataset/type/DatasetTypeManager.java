@@ -16,8 +16,8 @@
 
 package com.continuuity.data2.datafabric.dataset.type;
 
-import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.DatasetDefinition;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.lang.ClassLoaders;

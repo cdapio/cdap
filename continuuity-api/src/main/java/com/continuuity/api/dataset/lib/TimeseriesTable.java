@@ -16,7 +16,6 @@
 
 package com.continuuity.api.dataset.lib;
 
-import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.annotation.Property;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.BatchReadable;
@@ -24,6 +23,7 @@ import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.IteratorBasedSplitReader;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.table.Put;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;

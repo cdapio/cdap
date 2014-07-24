@@ -16,7 +16,6 @@
 
 package com.continuuity.gateway.handlers;
 
-import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
@@ -25,6 +24,7 @@ import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.stream.StreamSpecification;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;

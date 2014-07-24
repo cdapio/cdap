@@ -16,8 +16,8 @@
 
 package com.continuuity.data2.datafabric.dataset.service;
 
-import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.exception.HandlerException;

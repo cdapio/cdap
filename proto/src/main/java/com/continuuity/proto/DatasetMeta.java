@@ -16,7 +16,7 @@
 
 package com.continuuity.proto;
 
-import com.continuuity.api.DatasetSpecification;
+import com.continuuity.api.dataset.DatasetSpecification;
 
 /**
  * Dataset instance metadata.

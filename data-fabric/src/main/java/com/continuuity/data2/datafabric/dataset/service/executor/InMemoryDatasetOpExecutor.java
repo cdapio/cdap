@@ -16,9 +16,9 @@
 
 package com.continuuity.data2.datafabric.dataset.service.executor;
 
-import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.data2.datafabric.dataset.DatasetType;
 import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
 import com.continuuity.data2.dataset2.DatasetManagementException;

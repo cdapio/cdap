@@ -16,7 +16,6 @@
 
 package com.continuuity.api.dataset;
 
-import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.annotation.Beta;
 
 import java.io.IOException;

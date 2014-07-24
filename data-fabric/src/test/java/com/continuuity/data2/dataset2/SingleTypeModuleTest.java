@@ -16,8 +16,8 @@
 
 package com.continuuity.data2.dataset2;
 
-import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.module.EmbeddedDataset;
 import org.junit.Assert;
 import org.junit.Test;

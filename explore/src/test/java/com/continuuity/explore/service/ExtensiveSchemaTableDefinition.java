@@ -16,7 +16,6 @@
 
 package com.continuuity.explore.service;
 
-import com.continuuity.api.DatasetSpecification;
 import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.data.batch.Scannables;
@@ -24,6 +23,7 @@ import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDataset;
 import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
