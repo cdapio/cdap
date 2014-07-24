@@ -33,20 +33,5 @@
         }
       ],
       "status":"RUNNING"
-  },
-  {
-      "type":"Service",
-      "app":"CountCounts",
-      "id":"randomID",
-      "name":"randomName",
-      "description":"randomDescription",
-      "runnables":[
-        {
-            "id":"randomRunnable",
-            "requested":2,
-            "provisioned":2
-        }
-      ],
-      "status":"RUNNING"
   }
 ]

@@ -12,40 +12,70 @@ define([], function () {
       var self = this;
       self.set('systemServices', []);
       self.set('userServices', []);
+
+      self.HTTP.rest('apps', function (apps) {
+        apps.forEach(function(app){
+          self.initApp(app);
+        });
+      });
+
       self.resetServices();
-      self.resetUserServices();
+
       this.interval = setInterval(function () {
         self.resetServices();
         self.resetUserServices();
       }, C.POLLING_INTERVAL)
+    },
 
+
+    initService: function (service) {
+      var self = this;
+
+      var newModel = C.Userservice.create({
+                       status: service.status,
+                       imgClass: service.status === 'RUNNING' ? 'complete' : 'loading',
+                       modelId: service.name,
+                       description: service.description,
+                       name: service.name,
+                       app: service.app
+                     });
+
+      //The following function also inserts the model into self.get('userServices')
+      newModel.populateRunnablesAndUpdate(self.HTTP, self.get('userServices'));
+    },
+
+    initApp: function (app) {
+      var self = this;
+      self.HTTP.rest('apps/' + app.name + '/services', function (services) {
+        services.forEach(function (service) {
+          self.initService(service);
+        });
+      });
+    },
+
+
+    config: function(service) {
+      this.transitionToRoute('Userservice.Config', service);
+    },
+
+    find: function(appID, serviceName) {
+      var self = this;
+      var userServices = self.get('userServices');
+      for (var i=0; i<userServices.length; i++){
+        var service = userServices[i];
+        if(service.name == serviceName && service.app == appID) {
+          return service;
+        }
+      }
+      return false;
     },
 
     resetUserServices: function () {
       var self = this;
-      var userServices = [];
-      self.HTTP.rest('userServices', function(services) {
-        services.map(function(service) {
-          var runnablesList = [];
-          service.runnables.forEach(function(runnable){
-            runnablesList.push({
-              "name":runnable.id,
-              "requested":runnable.requested,
-              "provisioned":runnable.provisioned
-            });
-          });
-          userServices.push(C.Userservice.create({
-            status: service.status,
-            imgClass: status === 'RUNNING' ? 'complete' : 'loading',
-            modelId: service.name,
-            description: service.description,
-            name: service.name,
-            app: service.app,
-            runnablesList: runnablesList
-          }));
-        });
-        self.set('userServices', userServices);
-      });
+      var arr = self.get('userServices');
+      for (var i=0; i<arr.length; i++){
+        arr[i].update(self.HTTP);
+      }
     },
 
     resetServices: function () {
@@ -87,26 +117,42 @@ define([], function () {
       });
     },
 
-    start: function (appID, serviceID) {
+    start: function (service) {
       var self = this;
+      var appID = service.app;
+      var serviceID = service.name;
       C.Modal.show(
         "Start Service",
         "Start Service: " + appID + ":" + serviceID + "?",
         function () {
+          if (service.status == "RUNNING") {
+            C.Util.showWarning("Program is already running.");
+            return;
+          }
           var startURL = 'rest/apps/' + appID + '/services/' + serviceID + '/start';
-          self.HTTP.post(startURL);
+          self.HTTP.post(startURL, function() {
+            service.update(self.HTTP);
+          });
         }
       );
     },
 
-    stop: function (appID, serviceID) {
+    stop: function (service) {
       var self = this;
+      var appID = service.app;
+      var serviceID = service.name;
       C.Modal.show(
         "Stop Service",
         "Stop Service: " + appID + ":" + serviceID + "?",
         function () {
+          if (service.status == "STOPPED") {
+            C.Util.showWarning("Program is already stopped.");
+            return;
+          }
           var stopURL = 'rest/apps/' + appID + '/services/' + serviceID + '/stop';
-          self.HTTP.post(stopURL);
+          self.HTTP.post(stopURL, function() {
+            service.update(self.HTTP);
+          });
         }
       );
     },
@@ -128,58 +174,45 @@ define([], function () {
       self.HTTP.rest(url, callBackFunction);
     },
 
-    userService_increaseInstance: function (appID, serviceID, runnableID, instanceCount) {
+    userService_increaseInstance: function (service, runnableID, instanceCount) {
       var self = this;
-      console.log('appID: ' + appID);
-      console.log('serviceID: ' + serviceID);
-      console.log('runnableID: ' + runnableID);
-      console.log('instanceCount: ' + instanceCount);
+      var appID = service.app;
+      var serviceID = service.name;
       C.Modal.show(
         "Increase instances",
         "Increase instances for " + appID + ":" + serviceID + ":" + runnableID + "?",
         function () {
-
           var payload = {data: {instances: ++instanceCount}};
-          var sMap = self.servicesMap;
-          var service = sMap[[appID,serviceID]];
-//          if (instanceCount > service.max || instanceCount < service.min) {
-//            C.Util.showWarning(ERROR_TXT);
-//            return;
-//          }
-          self.userService_executeInstanceCall(appID, serviceID, runnableID, payload);
+          self.userService_executeInstanceCall(service, runnableID, payload);
         });
     },
-    userService_decreaseInstance: function (appID, serviceID, runnableID, instanceCount) {
+    userService_decreaseInstance: function (service, runnableID, instanceCount) {
       var self = this;
-      console.log('appID: ' + appID);
-      console.log('serviceID: ' + serviceID);
-      console.log('runnableID: ' + runnableID);
-      console.log('instanceCount: ' + instanceCount);
+      var appID = service.app;
+      var serviceID = service.name;
       C.Modal.show(
         "Increase instances",
         "Increase instances for " + appID + ":" + serviceID + ":" + runnableID + "?",
         function () {
-
           var payload = {data: {instances: --instanceCount}};
-          var sMap = self.servicesMap;
-          var service = sMap[[appID,serviceID]];
-          console.log(instanceCount);
           if (instanceCount <= 0) {
             C.Util.showWarning(ERROR_TXT);
             return;
           }
-          self.userService_executeInstanceCall(appID, serviceID, runnableID, payload);
+          self.userService_executeInstanceCall(service, runnableID, payload);
         });
     },
-    userService_executeInstanceCall: function(appID, serviceID, runnableID, payload) {
+    userService_executeInstanceCall: function(service, runnableID, payload) {
       var self = this;
+      var appID = service.app;
+      var serviceID = service.name;
       var url = 'rest/apps/' + appID + '/services/' + serviceID + '/runnables/' + runnableID + '/instances';
       this.HTTP.put(url, payload,
         function(resp, status) {
         if (status === 'error') {
           C.Util.showWarning(resp);
         } else {
-          self.resetServices();
+          service.update(self.HTTP);
         }
       });
     },

@@ -73,8 +73,11 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
       this.route('Config', { path: '/config' });
     });
 
-    this.resource('UserService', { path: '/services/user/:userservice_id' }, function() {
-      this.route('Config', { path: '/config' });
+    this.resource('Userservice', { path: '/services/user/:userservice_id' }, function () {
+      this.resource('UserserviceStatus', { path: '/' } , function () {
+        this.route('Config', { path: '/config' } );
+      });
+      this.route('History', { path: '/history' });
     });
 
 
@@ -294,16 +297,34 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
       }
     }),
 
-    UserServiceRoute: basicRouter.extend({
+    UserserviceRoute: basicRouter.extend({
       model: modelFinder
     }),
 
-		UserServiceConfigRoute: basicRouter.extend({
-		  model: function () {
-		    return this.modelFor('UserService');
-		  },
-			renderTemplate: function () {
-				this.render('Runnable/Config');
+    UserserviceStatusRoute: basicRouter.extend({
+      model: function () {
+        return this.modelFor('Userservice');
+      },
+      setupController: function(controller, model) {
+        this.controllerFor('Userservice').setProperties({isNew:true,content:model});
+      },
+      renderTemplate: function () {
+        this.render({controller: 'Userservice'});
+      },
+      unload: function() {
+
+      }
+    }),
+
+    UserserviceStatusConfigRoute: basicRouter.extend({
+      renderTemplate: function () {
+        this.render('Runnable/Config', {outlet: "config"});
+      }
+    }),
+
+		UserserviceHistoryRoute: basicRouter.extend({
+			model: function () {
+				return this.modelFor('Userservice');
 			}
 		}),
 
@@ -454,8 +475,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		}),
 
 		/*
-		 * This will use the FlowStatusConfigController with the RunnableConfig template.
-		 * FlowStatusConfigController extends RunnableConfigController.
+		 * This will use the ProcedureStatusConfigController with the RunnableConfig template.
+		 * ProcedureStatusConfigController extends RunnableConfigController.
 		 */
 		ProcedureStatusConfigRoute: basicRouter.extend({
 			renderTemplate: function () {

@@ -14,7 +14,7 @@ define(['core/controllers/app', 'core/controllers/mapreduce-config', 'core/contr
   'core/controllers/workflow-config', 'core/controllers/login', 'core/controllers/loading',
   'core/controllers/services', 'core/controllers/service-log', 'core/controllers/service-config',
   'core/controllers/connection-error', 'core/controllers/accesstoken', 'core/controllers/userservice',
-  'core/controllers/userservice-config'],
+  'core/controllers/userservice-config', 'core/controllers/userservice-history', 'core/controllers/userservice-status'],
 	function () {
 
 		return Array.prototype.slice.call(arguments, 0);

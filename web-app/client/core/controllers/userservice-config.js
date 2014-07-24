@@ -13,16 +13,52 @@ define(['core/controllers/runnable-config'], function (RunnableConfigController)
      * RunnableConfigController uses this value to do its work. Take a look there.
      *
      */
-    needs: ['UserService'],
+    needs: ['Userservice'],
     init: function () {
-      this.set('expectedPath', 'UserService.Config');
+      this.set('expectedPath', 'Userservice.Config');
+    },
+
+
+    load: function () {
+      console.log('loaded');
+      var parent = this.get('needs')[0];
+      var model = this.get('controllers').get(parent).get('model');
+      var list = Em.ArrayProxy.create({ content: [] });
+
+      this.set('config', list);
+      this.set('model', model);
+
+      var self = this;
+
+      this.HTTP.get('rest', 'apps', model.get('app'),
+        'services', model.get('name'), 'runtimeargs', function (args) {
+          var config = [];
+          for (var key in args) {
+            config.push({
+              key: key,
+              value: args[key]
+            });
+          }
+
+          self.get('config').pushObjects(config);
+
+      });
+
+      Em.run.next(function () {
+        $('.config-editor-new .config-editor-key input').select();
+      });
+    },
+
+    close: function () {
+      this.transitionToRoute("UserserviceStatus", this.get('model'));
     }
+
 
   });
 
   Controller.reopenClass({
 
-    type: 'UserserviceConfig',
+    type: 'UserserviceStatusConfig',
     kind: 'Controller'
 
   });

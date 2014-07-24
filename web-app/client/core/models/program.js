@@ -83,7 +83,6 @@ define(['core/models/element'], function (Element) {
 
       var model = this;
       model.set('currentState', 'STARTING');
-
       http.rpc(model.get('context'), 'start', {
         data: config
       }, function (response) {
