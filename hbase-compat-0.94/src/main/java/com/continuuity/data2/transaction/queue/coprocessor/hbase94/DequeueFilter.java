@@ -17,11 +17,10 @@
 package com.continuuity.data2.transaction.queue.coprocessor.hbase94;
 
 import com.continuuity.data2.queue.ConsumerConfig;
-import com.continuuity.data2.queue.QueueEntry;
-import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.hbase.DequeueScanAttributes;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
+import com.continuuity.tephra.Transaction;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import org.apache.hadoop.hbase.KeyValue;

@@ -18,12 +18,12 @@ package com.continuuity.explore.jdbc;
 
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.explore.client.ExploreClient;
-import com.continuuity.explore.client.ExploreClientUtil;
+import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
-import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.MetaDataInfo;
-import com.continuuity.explore.service.Status;
+
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +35,8 @@ import java.sql.RowIdLifetime;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Explore database meta data, informing of the capabilities of Explore as a DBMS.
@@ -43,7 +44,6 @@ import java.util.concurrent.TimeUnit;
 public class ExploreDatabaseMetaData implements DatabaseMetaData {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreDatabaseMetaData.class);
 
-  private static final int MAX_POLL_TRIES = 1000000;
   private static final int RESULT_FETCH_SIZE = 100;
   private static final String CATALOG_SEPARATOR = ".";
   private static final char SEARCH_STRING_ESCAPE = '\\';
@@ -61,27 +61,20 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
     this.exploreClient = exploreClient;
   }
 
-  private ResultSet getMetadataResultSet(HandleProducer call) throws SQLException {
-    // TODO in future, the polling logic should be in another SyncExploreClient
+  private ResultSet getMetadataResultSet(StatementExecutionFuture future) throws SQLException {
     try {
-      Handle stmtHandle = call.getHandle();
-      Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, stmtHandle, 200, TimeUnit.MILLISECONDS,
-                                                                MAX_POLL_TRIES);
-      if (status.getStatus().equals(Status.OpStatus.FINISHED)) {
-        return new ExploreResultSet(exploreClient, stmtHandle, RESULT_FETCH_SIZE);
-      }
-      throw new SQLException(String.format("Meta data call execution did not finish successfully. " +
-                                             "Got final state - %s", status.getStatus().toString()));
-    } catch (HandleNotFoundException e) {
-      // Cannot happen unless explore server restarted.
-      LOG.error("Error executing query", e);
-      throw new SQLException("Unknown state");
+      future.get();
+      return new ExploreResultSet(future, RESULT_FETCH_SIZE);
     } catch (InterruptedException e) {
       LOG.error("Caught exception", e);
       Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
+    } catch (ExecutionException e) {
+      LOG.error("Error executing query", e);
       throw new SQLException(e);
-    } catch (ExploreException e) {
-      LOG.error("Caught exception", e);
+    } catch (CancellationException e) {
+      // If futureResults has been cancelled
+      LOG.error("Execution has been cancelled.", e);
       throw new SQLException(e);
     }
   }
@@ -93,56 +86,31 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public ResultSet getTableTypes() throws SQLException {
-    return getMetadataResultSet(new HandleProducer() {
-      @Override
-      public Handle getHandle() throws ExploreException, SQLException {
-        return exploreClient.getTableTypes();
-      }
-    });
+    return getMetadataResultSet(exploreClient.tableTypes());
   }
 
   @Override
   public ResultSet getColumns(final String catalog, final String schemaPattern, final String tableNamePattern,
                               final String columnNamePattern) throws SQLException {
-    return getMetadataResultSet(new HandleProducer() {
-      @Override
-      public Handle getHandle() throws ExploreException, SQLException {
-        return exploreClient.getColumns(catalog, schemaPattern, tableNamePattern, columnNamePattern);
-      }
-    });
+    return getMetadataResultSet(exploreClient.columns(catalog, schemaPattern, tableNamePattern, columnNamePattern));
   }
 
   @Override
   public ResultSet getTypeInfo() throws SQLException {
-    return getMetadataResultSet(new HandleProducer() {
-      @Override
-      public Handle getHandle() throws ExploreException, SQLException {
-        return exploreClient.getTypeInfo();
-      }
-    });
+    return getMetadataResultSet(exploreClient.dataTypes());
   }
 
   @Override
   public ResultSet getTables(final String catalog, final String schemaPattern, final String tableNamePattern,
                              final String[] types) throws SQLException {
-    return getMetadataResultSet(new HandleProducer() {
-      @Override
-      public Handle getHandle() throws ExploreException, SQLException {
-        return exploreClient.getTables(catalog, schemaPattern, tableNamePattern,
-                                       (types == null) ? null : Arrays.asList(types));
-      }
-    });
+    return getMetadataResultSet(exploreClient.tables(catalog, schemaPattern, tableNamePattern,
+                                                     (types == null) ? null : Arrays.asList(types)));
   }
 
   @Override
   public ResultSet getFunctions(final String catalog, final String schemaPattern,
                                 final String functionNamePattern) throws SQLException {
-    return getMetadataResultSet(new HandleProducer() {
-      @Override
-      public Handle getHandle() throws ExploreException, SQLException {
-        return exploreClient.getFunctions(catalog, schemaPattern, functionNamePattern);
-      }
-    });
+    return getMetadataResultSet(exploreClient.functions(catalog, schemaPattern, functionNamePattern));
   }
 
   @Override
@@ -152,22 +120,12 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public ResultSet getSchemas(final String catalog, final String schemaPattern) throws SQLException {
-    return getMetadataResultSet(new HandleProducer() {
-      @Override
-      public Handle getHandle() throws ExploreException, SQLException {
-        return exploreClient.getSchemas(catalog, schemaPattern);
-      }
-    });
+    return getMetadataResultSet(exploreClient.schemas(catalog, schemaPattern));
   }
 
   @Override
   public ResultSet getCatalogs() throws SQLException {
-    return getMetadataResultSet(new HandleProducer() {
-      @Override
-      public Handle getHandle() throws ExploreException, SQLException {
-        return exploreClient.getCatalogs();
-      }
-    });
+    return getMetadataResultSet(exploreClient.catalogs());
   }
 
   @Override
@@ -193,7 +151,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   @Override
   public String getDatabaseProductVersion() throws SQLException {
     if (dbVersion == null) {
-      // TODO Here we return database version that Hive returns, is that what we want?
       dbVersion = getInfo(MetaDataInfo.InfoType.DBMS_VER).getStringValue();
     }
     return dbVersion;
@@ -221,8 +178,8 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   private MetaDataInfo getInfo(MetaDataInfo.InfoType infoType) throws SQLException {
     try {
-      return exploreClient.getInfo(infoType);
-    } catch (ExploreException e) {
+      return exploreClient.info(infoType).get();
+    } catch (Exception e) {
       LOG.error("Error while retrieving information {}.", infoType.name(), e);
       throw new SQLException(e);
     }
@@ -230,7 +187,7 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
-    // NOTE: This static bloc is copied from Hive JDBC Driver
+    // NOTE: This static block is copied from Hive JDBC Driver
     return new StaticEmptyExploreResultSet(
       ImmutableList.of(
         ImmutablePair.of("PKTABLE_CAT", "STRING"),
@@ -253,7 +210,7 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public ResultSet getPrimaryKeys(String s, String s2, String s3) throws SQLException {
-    // NOTE: This static bloc is copied from Hive JDBC Driver
+    // NOTE: This static block is copied from Hive JDBC Driver
     return new StaticEmptyExploreResultSet(
       ImmutableList.of(
         ImmutablePair.of("TABLE_CAT", "STRING"),
@@ -268,7 +225,7 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public ResultSet getProcedureColumns(String s, String s2, String s3, String s4) throws SQLException {
-    // NOTE: This static bloc is copied from Hive JDBC Driver
+    // NOTE: This static block is copied from Hive JDBC Driver
     return new StaticEmptyExploreResultSet(
       ImmutableList.of(
         ImmutablePair.of("PROCEDURE_CAT", "STRING"),
@@ -297,7 +254,7 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public ResultSet getProcedures(String s, String s2, String s3) throws SQLException {
-    // NOTE: This static bloc is copied from Hive JDBC Driver
+    // NOTE: This static block is copied from Hive JDBC Driver
     return new StaticEmptyExploreResultSet(
       ImmutableList.of(
         ImmutablePair.of("PROCEDURE_CAT", "STRING"),
@@ -355,7 +312,7 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public ResultSet getUDTs(String s, String s2, String s3, int[] ints) throws SQLException {
-    // NOTE: This static bloc is copied from Hive JDBC Driver
+    // NOTE: This static block is copied from Hive JDBC Driver
     return new StaticEmptyExploreResultSet(
       ImmutableList.of(
         ImmutablePair.of("TYPE_CAT", "STRING"),

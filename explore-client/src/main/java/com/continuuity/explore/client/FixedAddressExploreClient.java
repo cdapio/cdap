@@ -16,10 +16,10 @@
 
 package com.continuuity.explore.client;
 
-import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import java.net.InetSocketAddress;
+import javax.annotation.Nullable;
 
 /**
  * An Explore Client that uses the provided host and port to talk to a server
@@ -27,9 +27,11 @@ import java.net.InetSocketAddress;
  */
 public class FixedAddressExploreClient extends AbstractExploreClient {
   private final InetSocketAddress addr;
+  private final String authToken;
 
-  public FixedAddressExploreClient(String host, int port) {
-    addr = InetSocketAddress.createUnresolved(host, port);
+  public FixedAddressExploreClient(String host, int port, @Nullable String authToken) {
+    this.addr = InetSocketAddress.createUnresolved(host, port);
+    this.authToken = authToken;
   }
 
   @Override
@@ -38,12 +40,17 @@ public class FixedAddressExploreClient extends AbstractExploreClient {
   }
 
   @Override
-  public Handle enableExplore(String datasetInstance) throws ExploreException {
-    throw new ExploreException("This client does not allow to enable explore on datasets.");
+  public ListenableFuture<Void> enableExplore(String datasetInstance) {
+    throw new UnsupportedOperationException("This client does not allow to enable explore on datasets.");
   }
 
   @Override
-  public Handle disableExplore(String datasetInstance) throws ExploreException {
-    throw new ExploreException("This client does not allow to disable explore on datasets");
+  public ListenableFuture<Void> disableExplore(String datasetInstance) {
+    throw new UnsupportedOperationException("This client does not allow to disable explore on datasets");
+  }
+
+  @Override
+  protected String getAuthorizationToken() {
+    return authToken;
   }
 }

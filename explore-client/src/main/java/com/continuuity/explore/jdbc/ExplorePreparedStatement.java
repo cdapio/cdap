@@ -16,10 +16,9 @@
 
 package com.continuuity.explore.jdbc;
 
-import com.continuuity.explore.service.Explore;
+import com.continuuity.explore.client.ExploreClient;
 
 import com.google.common.collect.Maps;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -44,8 +43,6 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Explore JDBC prepared statement.
@@ -57,7 +54,7 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
   // Save the SQL parameters {paramLoc:paramValue}
   private final Map<Integer, String> parameters = Maps.newHashMap();
 
-  public ExplorePreparedStatement(Connection connection, Explore exploreClient, String sql) {
+  ExplorePreparedStatement(Connection connection, ExploreClient exploreClient, String sql) {
     super(connection, exploreClient);
 
     // Although a PreparedStatement is meant to precompile sql statement, our Explore client

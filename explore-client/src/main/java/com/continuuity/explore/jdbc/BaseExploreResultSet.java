@@ -47,7 +47,6 @@ import java.util.Map;
 abstract class BaseExploreResultSet implements ResultSet {
   private boolean isClosed = false;
   private int fetchSize;
-
   private boolean wasNull = false;
 
   @Override

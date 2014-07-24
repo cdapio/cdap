@@ -18,7 +18,6 @@ package com.continuuity.logging.save;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
-import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.kafka.KafkaTopic;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
@@ -27,6 +26,7 @@ import com.continuuity.logging.write.AvroFileWriter;
 import com.continuuity.logging.write.FileMetaDataManager;
 import com.continuuity.logging.write.LogCleanup;
 import com.continuuity.logging.write.LogFileWriter;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.continuuity.watchdog.election.PartitionChangeHandler;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;

@@ -18,30 +18,18 @@ package com.continuuity.explore.service.hive;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationStatus;
 import org.apache.hive.service.cli.SessionHandle;
-import org.apache.hive.service.cli.thrift.TColumnValue;
-import org.apache.hive.service.cli.thrift.TRow;
-import org.apache.hive.service.cli.thrift.TRowSet;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Hive 13 patched for CDH5 implementation of {@link com.continuuity.explore.service.ExploreService}.

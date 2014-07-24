@@ -26,7 +26,9 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.workflow.Workflow;
+import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillRunnable;
 
 /**
  * Configures a Reactor Application.
@@ -148,4 +150,11 @@ public interface ApplicationConfigurer {
    * @param application Custom Service {@link TwillApplication} to include in the Application
    */
   void addService(TwillApplication application);
+
+  /**
+   * Adds {@link TwillRunnable} TwillRunnable as a Custom Service {@link TwillApplication} to the Application.
+   * @param runnable
+   * @param specification
+   */
+  void addService(TwillRunnable runnable, ResourceSpecification specification);
 }

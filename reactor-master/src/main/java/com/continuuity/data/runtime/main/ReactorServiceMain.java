@@ -38,6 +38,8 @@ import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
+import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.services.AppFabricServer;
@@ -118,6 +120,7 @@ public class ReactorServiceMain extends DaemonMain {
   private DatasetService dsService;
   private ServiceStore serviceStore;
   private HBaseSecureStoreUpdater secureStoreUpdater;
+  private ExploreClient exploreClient;
 
   private String serviceName;
   private TwillApplication twillApplication;
@@ -132,7 +135,7 @@ public class ReactorServiceMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
-    isExploreEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
+    isExploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     serviceName = Constants.Service.REACTOR_SERVICES;
     cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
 
@@ -152,7 +155,8 @@ public class ReactorServiceMain extends DaemonMain {
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
-      new ServiceStoreModules().getDistributedModule()
+      new ServiceStoreModules().getDistributedModule(),
+      new ExploreClientModule()
     );
 
     // Initialize ZK client
@@ -161,6 +165,7 @@ public class ReactorServiceMain extends DaemonMain {
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
     dsService = baseInjector.getInstance(DatasetService.class);
     serviceStore = baseInjector.getInstance(ServiceStore.class);
+    exploreClient = baseInjector.getInstance(ExploreClient.class);
 
     secureStoreUpdater = baseInjector.getInstance(HBaseSecureStoreUpdater.class);
 
@@ -251,6 +256,13 @@ public class ReactorServiceMain extends DaemonMain {
       leaderElection.stopAndWait();
     }
     Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService);
+
+    try {
+      exploreClient.close();
+    } catch (IOException e) {
+      LOG.error("Could not close Explore client", e);
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override

@@ -19,7 +19,6 @@ package com.continuuity.data2.datafabric.dataset.service;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.HttpMethod;
 import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.ObjectResponse;
@@ -36,13 +35,15 @@ import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFactory;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.explore.client.DatasetExploreFacade;
 import com.continuuity.explore.client.DiscoveryExploreClient;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.InputSupplier;
 import com.google.gson.reflect.TypeToken;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
@@ -88,7 +89,9 @@ public abstract class DatasetServiceTestBase {
     MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
 
     // Tx Manager to support working with datasets
-    txManager = new InMemoryTransactionManager();
+    Configuration txConf = HBaseConfiguration.create();
+    cConf.copyTxProperties(txConf);
+    txManager = new InMemoryTransactionManager(txConf);
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 

@@ -16,16 +16,7 @@
 
 package com.continuuity.runtime;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.annotation.Output;
-import com.continuuity.api.annotation.ProcessInput;
-import com.continuuity.api.annotation.Tick;
-import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.flow.Flow;
-import com.continuuity.api.flow.FlowSpecification;
-import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
@@ -35,13 +26,14 @@ import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.TransactionExecutorFactory;
-import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.runtime.app.MultiApp;
+import com.continuuity.tephra.TransactionExecutor;
+import com.continuuity.tephra.TransactionExecutorFactory;
+import com.continuuity.tephra.TransactionFailureException;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -77,97 +69,6 @@ public class MultiConsumerTest {
       }
     }
   };
-
-  /**
-   *
-   */
-  public static final class MultiApp implements Application {
-
-    @Override
-    public com.continuuity.api.ApplicationSpecification configure() {
-      return com.continuuity.api.ApplicationSpecification.Builder.with()
-        .setName("MultiApp")
-        .setDescription("MultiApp")
-        .noStream()
-        .withDataSets().add(new KeyValueTable("accumulated"))
-        .withFlows().add(new MultiFlow())
-        .noProcedure()
-        .noMapReduce()
-        .noWorkflow()
-        .build();
-    }
-  }
-
-  /**
-   *
-   */
-  public static final class MultiFlow implements Flow {
-
-    @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("MultiFlow")
-        .setDescription("MultiFlow")
-        .withFlowlets()
-          .add("gen", new Generator())
-          .add("c1", new Consumer(), 2)
-          .add("c2", new Consumer(), 2)
-          .add("c3", new ConsumerStr(), 2)
-        .connect()
-          .from("gen").to("c1")
-          .from("gen").to("c2")
-          .from("gen").to("c3")
-        .build();
-    }
-  }
-
-  /**
-   *
-   */
-  public static final class Generator extends AbstractFlowlet {
-
-    private OutputEmitter<Integer> output;
-    @Output("str")
-    private OutputEmitter<String> outString;
-    private int i;
-
-    @Tick(delay = 1L, unit = TimeUnit.NANOSECONDS)
-    public void generate() throws Exception {
-      if (i < 100) {
-        output.emit(i);
-        outString.emit(Integer.toString(i));
-        i++;
-      }
-    }
-  }
-
-  private static final byte[] KEY = new byte[] {'k', 'e', 'y'};
-
-  /**
-   *
-   */
-  public static final class Consumer extends AbstractFlowlet {
-    @UseDataSet("accumulated")
-    private KeyValueTable accumulated;
-
-    @ProcessInput(maxRetries = Integer.MAX_VALUE)
-    public void process(long l) {
-      accumulated.increment(KEY, l);
-    }
-  }
-
-  /**
-   *
-   */
-  public static final class ConsumerStr extends AbstractFlowlet {
-    @UseDataSet("accumulated")
-    private KeyValueTable accumulated;
-
-    @ProcessInput(value = "str", maxRetries = Integer.MAX_VALUE)
-    public void process(String str) {
-      accumulated.increment(KEY, Long.valueOf(str));
-    }
-  }
 
   @Test
   public void testMulti() throws Exception {
@@ -205,7 +106,7 @@ public class MultiConsumerTest {
           .execute(new TransactionExecutor.Subroutine() {
             @Override
             public void apply() throws Exception {
-              byte[] value = accumulated.read(KEY);
+              byte[] value = accumulated.read(MultiApp.KEY);
               // Sum(1..100) * 3
               Assert.assertEquals(((1 + 99) * 99 / 2) * 3, Longs.fromByteArray(value));
             }

@@ -360,6 +360,12 @@
     </property>
 
     <property>
+        <name>data.tx.discovery.service.name</name>
+        <value>transaction</value>
+        <description>Name in discovery service for the transaction service</description>
+    </property>
+
+    <property>
         <name>data.tx.client.count</name>
         <value>5</value>
         <description>The number of pooled instanced of the transaction
@@ -371,6 +377,22 @@
         <value>thread-local</value>
         <description>The provider strategy for transaction clients;
             valid values are "pool" and "thread-local"</description>
+    </property>
+
+    <property>
+        <name>data.tx.thrift.max.read.buffer</name>
+        <value>${thrift.max.read.buffer}</value>
+        <description>
+          Specifies the max read buffer size used by
+          transaction server. Value should be set to something greater
+          than max frame that is sent on RPC channel.
+        </description>
+    </property>
+
+    <property>
+        <name>data.tx.hdfs.user</name>
+        <value>${hdfs.user}</value>
+        <description>User name for accessing HDFS if not running in secure HDFS</description>
     </property>
 
     <property>
@@ -849,19 +871,15 @@
     </property>
 
     <!---
-         Hive Server Settings
+         Explore Server Settings
      -->
-    <property>
-        <name>hive.server.bind.address</name>
-        <value>localhost</value>
-    </property>
     <property>
         <name>reactor.explore.enabled</name>
         <value>false</value>
     </property>
     <property>
-        <name>hive.local.data.dir</name>
-        <value>${local.data.dir}/hive</value>
+        <name>explore.local.data.dir</name>
+        <value>${local.data.dir}/explore</value>
     </property>
     <property>
         <name>explore.executor.container.instances</name>

@@ -21,7 +21,7 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.data.dataset.DataSetTestBase;
-import com.continuuity.data2.transaction.TransactionContext;
+import com.continuuity.tephra.TransactionContext;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.junit.Assert;

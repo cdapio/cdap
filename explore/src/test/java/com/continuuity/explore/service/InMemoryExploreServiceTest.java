@@ -24,10 +24,10 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetsModules;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -58,7 +58,7 @@ public class InMemoryExploreServiceTest {
     CConfiguration configuration = CConfiguration.create();
     Configuration hConf = new Configuration();
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
-    configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
+    configuration.set(Constants.Explore.LOCAL_DATA_DIR,
                       new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
 
     Injector injector = Guice.createInjector(

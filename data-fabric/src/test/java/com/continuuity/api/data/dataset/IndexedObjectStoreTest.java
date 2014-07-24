@@ -19,7 +19,7 @@ package com.continuuity.api.data.dataset;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.data.dataset.DataSetTestBase;
-import com.continuuity.data2.transaction.TransactionContext;
+import com.continuuity.tephra.TransactionContext;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.junit.Assert;

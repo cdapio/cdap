@@ -62,8 +62,6 @@ import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
-import com.continuuity.data2.transaction.TransactionContext;
-import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
@@ -88,6 +86,8 @@ import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.metrics.MetricsConstants;
+import com.continuuity.tephra.TransactionContext;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -351,6 +351,15 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                      new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER));
     this.datasetInstantiator = datasetInstantiator;
     this.dataSetAccessor = dataSetAccessor;
+  }
+
+  /**
+   * Ping to check handler status.
+   */
+  @Path("/ping")
+  @GET
+  public void ping(HttpRequest request, HttpResponder responder) {
+      responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**

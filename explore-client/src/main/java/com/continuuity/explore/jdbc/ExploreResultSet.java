@@ -16,18 +16,18 @@
 
 package com.continuuity.explore.jdbc;
 
+import com.continuuity.explore.client.ExploreExecutionResult;
+import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.service.ColumnDesc;
-import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
-import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Result;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -36,25 +36,33 @@ import java.util.List;
 public class ExploreResultSet extends BaseExploreResultSet {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreResultSet.class);
 
-  private boolean hasMoreResults = true;
-  private Iterator<Result> rowsItr;
   private Result currentRow;
+  private int nextRowNb = 1;
   private ExploreResultSetMetaData metaData;
 
   private ExploreStatement statement;
-  private Handle stmtHandle;
-  private Explore exploreClient;
+  private int maxRows = 0;
 
-  public ExploreResultSet(Explore exploreClient, ExploreStatement statement, Handle stmtHandle) throws SQLException {
-    this(exploreClient, stmtHandle, statement.getFetchSize());
+  private StatementExecutionFuture futureResults;
+  private ExploreExecutionResult executionResult;
+
+  ExploreResultSet(StatementExecutionFuture futureResults, ExploreStatement statement, int maxRows)
+    throws SQLException {
+    this(futureResults, statement.getFetchSize());
     this.statement = statement;
+    this.maxRows = maxRows;
   }
 
-  public ExploreResultSet(Explore exploreClient, Handle stmtHandle, int fetchSize) throws SQLException {
-    this.exploreClient = exploreClient;
-    this.statement = null;
-    this.stmtHandle = stmtHandle;
-    setFetchSize(fetchSize);
+  public ExploreResultSet(StatementExecutionFuture futureResults, int fetchSize) throws SQLException {
+    this.futureResults = futureResults;
+    try {
+      this.executionResult = futureResults.get();
+      setFetchSize(fetchSize);
+    } catch (Throwable e) {
+      // This should not happen, as ExploreStatement created this object after calling the get method on the future
+      LOG.error("Exception when retrieving result iterator from future object", e);
+      throw new SQLException(e);
+    }
   }
 
   @Override
@@ -62,37 +70,12 @@ public class ExploreResultSet extends BaseExploreResultSet {
     if (isClosed()) {
       throw new SQLException("ResultSet is closed");
     }
-
-    if (!hasMoreResults) {
-      return false;
+    boolean res = (maxRows <= 0 || nextRowNb <= maxRows) && executionResult.hasNext();
+    if (res) {
+      nextRowNb++;
+      currentRow = executionResult.next();
     }
-
-    if (rowsItr != null && rowsItr.hasNext()) {
-      currentRow = rowsItr.next();
-      return true;
-    }
-
-    try {
-      if (stmtHandle == null) {
-        throw new SQLException("Handle is null.");
-      }
-      List<Result> fetchedRows;
-      fetchedRows = exploreClient.nextResults(stmtHandle, getFetchSize());
-      rowsItr = fetchedRows.iterator();
-      if (!rowsItr.hasNext()) {
-        hasMoreResults = false;
-        currentRow = null;
-        return false;
-      }
-      currentRow = rowsItr.next();
-      return true;
-    } catch (HandleNotFoundException e) {
-      LOG.error("Could not fetch results with handle {}", stmtHandle);
-      throw new SQLException("Could not fetch results with handle " + stmtHandle, e);
-    } catch (ExploreException e) {
-      LOG.error("Caught exception", e);
-      throw new SQLException(e);
-    }
+    return res;
   }
 
   @Override
@@ -102,12 +85,16 @@ public class ExploreResultSet extends BaseExploreResultSet {
       return;
     }
     try {
+      executionResult.close();
       if (statement != null) {
         statement.closeClientOperation();
       }
+    } catch (IOException e) {
+      LOG.error("Could not close the query results", e);
+      throw new SQLException(e);
     } finally {
-      exploreClient = null;
-      stmtHandle = null;
+      futureResults = null;
+      executionResult = null;
       statement = null;
       setIsClosed(true);
     }
@@ -120,19 +107,15 @@ public class ExploreResultSet extends BaseExploreResultSet {
     }
     if (metaData == null) {
       try {
-        List<ColumnDesc> columnDescs = exploreClient.getResultSchema(stmtHandle);
+        List<ColumnDesc> columnDescs = futureResults.getResultSchema();
         metaData = new ExploreResultSetMetaData(columnDescs);
       } catch (ExploreException e) {
         LOG.error("Caught exception", e);
         throw new SQLException(e);
-      } catch (HandleNotFoundException e) {
-        LOG.error("Handle not found when retrieving result set meta data", e);
-        throw new SQLException("Handle not found when retrieving result set meta data", e);
       }
     }
     return metaData;
   }
-
 
   @Override
   public Object getObject(int columnIndex) throws SQLException {
@@ -171,5 +154,21 @@ public class ExploreResultSet extends BaseExploreResultSet {
     }
     // Column names are case insensitive, as per the ResultSet interface javadoc
     return metaData.getColumnPosition(name.toLowerCase());
+  }
+
+  @Override
+  public void setFetchSize(int rows) throws SQLException {
+    if (isClosed()) {
+      throw new SQLException("Resultset is closed");
+    }
+    executionResult.setFetchSize(rows);
+  }
+
+  @Override
+  public int getFetchSize() throws SQLException {
+    if (isClosed()) {
+      throw new SQLException("Resultset is closed");
+    }
+    return executionResult.getFetchSize();
   }
 }

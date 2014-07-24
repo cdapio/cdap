@@ -18,9 +18,9 @@ package com.continuuity.api.dataset.lib;
 
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.metrics.MeteredDataset;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionAwares;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionAware;
+import com.continuuity.tephra.TransactionAwares;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -95,7 +95,7 @@ public abstract class AbstractDataset implements Dataset, MeteredDataset, Transa
   }
 
   @Override
-  public String getName() {
+  public String getTransactionAwareName() {
     return instanceName;
   }
 
