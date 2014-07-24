@@ -17,11 +17,14 @@
 package com.continuuity.explore.executor;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.explore.client.ExploreClientUtil;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.MetaDataInfo;
+import com.continuuity.explore.utils.ColumnsArgs;
+import com.continuuity.explore.utils.FunctionsArgs;
+import com.continuuity.explore.utils.SchemasArgs;
+import com.continuuity.explore.utils.TablesArgs;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -67,8 +70,8 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
       @Override
       public Handle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
-        ExploreClientUtil.TablesArgs args = decodeArguments(request, ExploreClientUtil.TablesArgs.class,
-                                                            new ExploreClientUtil.TablesArgs(null, null, "%", null));
+        TablesArgs args = decodeArguments(request, TablesArgs.class,
+                                                            new TablesArgs(null, null, "%", null));
         LOG.trace("Received get tables with params: {}", args.toString());
         return exploreService.getTables(args.getCatalog(), args.getSchemaPattern(),
                                         args.getTableNamePattern(), args.getTableTypes());
@@ -83,8 +86,8 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
       @Override
       public Handle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
-        ExploreClientUtil.ColumnsArgs args = decodeArguments(request, ExploreClientUtil.ColumnsArgs.class,
-                                                             new ExploreClientUtil.ColumnsArgs(null, null, "%", "%"));
+        ColumnsArgs args = decodeArguments(request, ColumnsArgs.class,
+                                                             new ColumnsArgs(null, null, "%", "%"));
         LOG.trace("Received get columns with params: {}", args.toString());
         return exploreService.getColumns(args.getCatalog(), args.getSchemaPattern(),
                                          args.getTableNamePattern(), args.getColumnNamePattern());
@@ -112,8 +115,8 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
       @Override
       public Handle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
-        ExploreClientUtil.SchemasArgs args = decodeArguments(request, ExploreClientUtil.SchemasArgs.class,
-                                                            new ExploreClientUtil.SchemasArgs(null, null));
+        SchemasArgs args = decodeArguments(request, SchemasArgs.class,
+                                                            new SchemasArgs(null, null));
         LOG.trace("Received get schemas with params: {}", args.toString());
         return exploreService.getSchemas(args.getCatalog(), args.getSchemaPattern());
       }
@@ -127,8 +130,8 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
       @Override
       public Handle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
-        ExploreClientUtil.FunctionsArgs args = decodeArguments(request, ExploreClientUtil.FunctionsArgs.class,
-                                                               new ExploreClientUtil.FunctionsArgs(null, null, "%"));
+        FunctionsArgs args = decodeArguments(request, FunctionsArgs.class,
+                                                               new FunctionsArgs(null, null, "%"));
         LOG.trace("Received get functions with params: {}", args.toString());
         return exploreService.getFunctions(args.getCatalog(), args.getSchemaPattern(),
                                            args.getFunctionNamePattern());

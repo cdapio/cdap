@@ -29,12 +29,15 @@ import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.MetaDataInfo;
 import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
+import com.continuuity.explore.utils.ColumnsArgs;
+import com.continuuity.explore.utils.FunctionsArgs;
+import com.continuuity.explore.utils.SchemasArgs;
+import com.continuuity.explore.utils.TablesArgs;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
@@ -155,7 +158,7 @@ abstract class ExploreHttpClient implements Explore {
   @Override
   public Handle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
     throws ExploreException, SQLException {
-    String body = GSON.toJson(new ExploreClientUtil.ColumnsArgs(catalog, schemaPattern,
+    String body = GSON.toJson(new ColumnsArgs(catalog, schemaPattern,
                                                                 tableNamePattern, columnNamePattern));
     HttpResponse response = doPost("data/explore/jdbc/columns", body, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
@@ -175,7 +178,7 @@ abstract class ExploreHttpClient implements Explore {
 
   @Override
   public Handle getSchemas(String catalog, String schemaPattern) throws ExploreException, SQLException {
-    String body = GSON.toJson(new ExploreClientUtil.SchemasArgs(catalog, schemaPattern));
+    String body = GSON.toJson(new SchemasArgs(catalog, schemaPattern));
     HttpResponse response = doPost("data/explore/jdbc/schemas", body, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
@@ -186,7 +189,7 @@ abstract class ExploreHttpClient implements Explore {
   @Override
   public Handle getFunctions(String catalog, String schemaPattern, String functionNamePattern)
     throws ExploreException, SQLException {
-    String body = GSON.toJson(new ExploreClientUtil.FunctionsArgs(catalog, schemaPattern, functionNamePattern));
+    String body = GSON.toJson(new FunctionsArgs(catalog, schemaPattern, functionNamePattern));
     HttpResponse response = doPost("data/explore/jdbc/functions", body, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
@@ -206,7 +209,7 @@ abstract class ExploreHttpClient implements Explore {
   @Override
   public Handle getTables(String catalog, String schemaPattern,
                           String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
-    String body = GSON.toJson(new ExploreClientUtil.TablesArgs(catalog, schemaPattern,
+    String body = GSON.toJson(new TablesArgs(catalog, schemaPattern,
                                                                tableNamePattern, tableTypes));
     HttpResponse response = doPost("data/explore/jdbc/tables", body, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {

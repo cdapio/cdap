@@ -70,16 +70,12 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
   @Override
   public ListenableFuture<Void> disableExplore(final String datasetInstance) {
-    // NOTE: here we have two levels of Future because we want to return the future that actually
-    // finishes the execution of the disable operation - it is not enough that the future handle
-    // be available
-    ListenableFuture<Handle> futureHandle = executor.submit(new Callable<Handle>() {
+    StatementExecutionFuture futureResults = getResultsFuture(new HandleProducer() {
       @Override
-      public Handle call() throws Exception {
+      public Handle getHandle() throws ExploreException, SQLException {
         return doDisableExplore(datasetInstance);
       }
     });
-    StatementExecutionFuture futureResults = getFutureResultsFromHandle(futureHandle);
 
     // Exceptions will be thrown in case of an error in the futureHandle
     return Futures.transform(futureResults, Functions.<Void>constant(null));
@@ -87,16 +83,12 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
   @Override
   public ListenableFuture<Void> enableExplore(final String datasetInstance) {
-    // NOTE: here we have two levels of Future because we want to return the future that actually
-    // finishes the execution of the enable operation - it is not enough that the future handle
-    // be available
-    ListenableFuture<Handle> futureHandle = executor.submit(new Callable<Handle>() {
+    StatementExecutionFuture futureResults = getResultsFuture(new HandleProducer() {
       @Override
-      public Handle call() throws Exception {
+      public Handle getHandle() throws ExploreException, SQLException {
         return doEnableExplore(datasetInstance);
       }
     });
-    StatementExecutionFuture futureResults = getFutureResultsFromHandle(futureHandle);
 
     // Exceptions will be thrown in case of an error in the futureHandle
     return Futures.transform(futureResults, Functions.<Void>constant(null));
@@ -196,6 +188,9 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   private StatementExecutionFuture getResultsFuture(final HandleProducer handleProducer) {
+    // NOTE: here we have two levels of Future because we want to return the future that actually
+    // finishes the execution of the operation - it is not enough that the future handle
+    // be available
     ListenableFuture<Handle> futureHandle = executor.submit(new Callable<Handle>() {
       @Override
       public Handle call() throws Exception {

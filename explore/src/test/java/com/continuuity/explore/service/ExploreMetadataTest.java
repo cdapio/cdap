@@ -94,7 +94,7 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
   public void testGetCatalogs() throws Exception {
     StatementExecutionFuture future;
     future = getExploreClient().catalogs();
-    assertStatementResult(future, true,
+    assertStatementResult(future, false,
                           Lists.newArrayList(
                             new ColumnDesc("TABLE_CAT", "STRING", 1, "Catalog name. NULL if not applicable.")
                           ),
