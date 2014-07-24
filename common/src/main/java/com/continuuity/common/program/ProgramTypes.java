@@ -14,8 +14,9 @@
  * the License.
  */
 
-package com.continuuity.api;
+package com.continuuity.common.program;
 
+import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
@@ -28,7 +29,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
- * Provides mapping from {@link ProgramSpecification} to {@link ProgramType}.
+ * Provides mapping from {@link com.continuuity.api.ProgramSpecification} to {@link ProgramType}.
  */
 public class ProgramTypes {
 

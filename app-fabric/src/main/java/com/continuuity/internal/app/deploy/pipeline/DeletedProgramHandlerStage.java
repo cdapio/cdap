@@ -17,7 +17,6 @@
 package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.api.ProgramSpecification;
-import com.continuuity.api.ProgramTypes;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.app.store.Store;
@@ -25,6 +24,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.common.program.ProgramTypes;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
