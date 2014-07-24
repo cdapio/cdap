@@ -37,7 +37,7 @@ public class ExploreServiceManager extends AbstractDistributedReactorServiceMana
 
   @Override
   public boolean isServiceEnabled() {
-    return cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
+    return cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
   }
 
   @Override

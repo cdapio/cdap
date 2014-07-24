@@ -138,8 +138,8 @@ public class ExploreRuntimeModule extends RuntimeModule {
       private static final long seed = System.currentTimeMillis();
       @Override
       public ExploreService get() {
-        File warehouseDir = new File(cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR), "warehouse");
-        File databaseDir = new File(cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR), "database");
+        File warehouseDir = new File(cConf.get(Constants.Explore.LOCAL_DATA_DIR), "warehouse");
+        File databaseDir = new File(cConf.get(Constants.Explore.LOCAL_DATA_DIR), "database");
 
         if (isInMemory) {
           // This seed is required to make all tests pass when launched together, and when several of them
@@ -155,7 +155,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
         // Set derby log location
         System.setProperty("derby.stream.error.file",
-                           cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR) + File.separator + "derby.log");
+                           cConf.get(Constants.Explore.LOCAL_DATA_DIR) + File.separator + "derby.log");
 
         String connectUrl = String.format("jdbc:derby:;databaseName=%s;create=true", databaseDir.getAbsoluteFile());
         LOG.debug("Setting {} to {}", HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);
