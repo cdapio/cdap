@@ -79,7 +79,8 @@ public class ExploreResultSetTest {
     );
 
     ResultSet resultSet = new ExploreResultSet(exploreClient.submit("mock_query"),
-                                               new ExploreStatement(null, exploreClient));
+                                               new ExploreStatement(null, exploreClient),
+                                               0);
     Assert.assertTrue(resultSet.next());
     Assert.assertEquals(resultSet.getObject(1), resultSet.getObject("column1"));
     Assert.assertEquals("value1", resultSet.getString(1));
@@ -120,7 +121,8 @@ public class ExploreResultSetTest {
     );
 
     ResultSet resultSet = new ExploreResultSet(exploreClient.submit("mock_query"),
-                                               new ExploreStatement(null, exploreClient));
+                                               new ExploreStatement(null, exploreClient),
+                                               0);
     Assert.assertTrue(resultSet.next());
     Assert.assertEquals(1, resultSet.findColumn("column1"));
     Assert.assertEquals(1, resultSet.getObject("column1"));

@@ -256,8 +256,9 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   private static final class ClientExploreExecutionResult extends AbstractIterator<Result>
     implements ExploreExecutionResult {
     private static final Logger LOG = LoggerFactory.getLogger(ClientExploreExecutionResult.class);
-    private static final int POLLING_SIZE = 100;
+    private static final int DEFAUL_FETCH_SIZE = 100;
 
+    private int fetchSize = DEFAUL_FETCH_SIZE;
     private Iterator<Result> delegate;
 
     private final ExploreHttpClient exploreClient;
@@ -281,7 +282,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
       }
       try {
         // call the endpoint 'next' to get more results and set delegate
-        List<Result> nextResults = exploreClient.nextResults(handle, POLLING_SIZE);
+        List<Result> nextResults = exploreClient.nextResults(handle, fetchSize);
         delegate = nextResults.iterator();
 
         // At this point, if delegate has no result, there are no more results at all
@@ -310,6 +311,16 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
         LOG.error("Caught exception during close operation", e);
         throw Throwables.propagate(e);
       }
+    }
+
+    @Override
+    public int getFetchSize() {
+      return fetchSize;
+    }
+
+    @Override
+    public void setFetchSize(int fetchSize) {
+      this.fetchSize = (fetchSize <= 0) ? DEFAUL_FETCH_SIZE : fetchSize;
     }
   }
 }

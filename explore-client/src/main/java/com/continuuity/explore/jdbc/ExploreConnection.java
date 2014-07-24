@@ -136,6 +136,7 @@ public class ExploreConnection implements Connection {
 
   @Override
   public String getCatalog() throws SQLException {
+    // Hive does not have a notion of catalog - it only knows "schemas", ie databases
     return "";
   }
 

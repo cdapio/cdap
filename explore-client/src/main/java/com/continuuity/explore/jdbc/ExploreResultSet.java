@@ -37,25 +37,28 @@ public class ExploreResultSet extends BaseExploreResultSet {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreResultSet.class);
 
   private Result currentRow;
+  private int nextRowNb = 1;
   private ExploreResultSetMetaData metaData;
 
   private ExploreStatement statement;
+  private int maxRows = 0;
 
   private StatementExecutionFuture futureResults;
   private ExploreExecutionResult executionResult;
 
-  ExploreResultSet(StatementExecutionFuture futureResults, ExploreStatement statement)
+  ExploreResultSet(StatementExecutionFuture futureResults, ExploreStatement statement, int maxRows)
     throws SQLException {
     this(futureResults, statement.getFetchSize());
     this.statement = statement;
+    this.maxRows = maxRows;
   }
 
   public ExploreResultSet(StatementExecutionFuture futureResults, int fetchSize) throws SQLException {
     this.futureResults = futureResults;
-    setFetchSize(fetchSize);
     try {
       this.executionResult = futureResults.get();
-    } catch (Exception e) {
+      setFetchSize(fetchSize);
+    } catch (Throwable e) {
       // This should not happen, as ExploreStatement created this object after calling the get method on the future
       LOG.error("Exception when retrieving result iterator from future object", e);
       throw new SQLException(e);
@@ -67,8 +70,9 @@ public class ExploreResultSet extends BaseExploreResultSet {
     if (isClosed()) {
       throw new SQLException("ResultSet is closed");
     }
-    boolean res = executionResult.hasNext();
+    boolean res = (maxRows <= 0 || nextRowNb <= maxRows) && executionResult.hasNext();
     if (res) {
+      nextRowNb++;
       currentRow = executionResult.next();
     }
     return res;
@@ -150,5 +154,21 @@ public class ExploreResultSet extends BaseExploreResultSet {
     }
     // Column names are case insensitive, as per the ResultSet interface javadoc
     return metaData.getColumnPosition(name.toLowerCase());
+  }
+
+  @Override
+  public void setFetchSize(int rows) throws SQLException {
+    if (isClosed()) {
+      throw new SQLException("Resultset is closed");
+    }
+    executionResult.setFetchSize(rows);
+  }
+
+  @Override
+  public int getFetchSize() throws SQLException {
+    if (isClosed()) {
+      throw new SQLException("Resultset is closed");
+    }
+    return executionResult.getFetchSize();
   }
 }

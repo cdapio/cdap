@@ -58,7 +58,6 @@ public class ExploreStatement implements Statement {
    * Statement can contain to the given number. If the limit is exceeded, the excess rows
    * are silently dropped. The value must be >= 0, and 0 means there is not limit.
    */
-  // TODO pass it to the result set
   private int maxRows = 0;
 
   /**
@@ -106,7 +105,7 @@ public class ExploreStatement implements Statement {
     futureResults = exploreClient.submit(sql);
     try {
       futureResults.get();
-      resultSet = new ExploreResultSet(futureResults, this);
+      resultSet = new ExploreResultSet(futureResults, this, maxRows);
       // NOTE: Javadoc states: "returns false if the first result is an update count or there is no result"
       // Here we have a result, it may contain rows or may be empty, but it exists.
       return true;

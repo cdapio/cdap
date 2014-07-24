@@ -49,7 +49,6 @@ import java.util.concurrent.TimeUnit;
 public class ExploreDatabaseMetaData implements DatabaseMetaData {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreDatabaseMetaData.class);
 
-  private static final int MAX_POLL_TRIES = 1000000;
   private static final int RESULT_FETCH_SIZE = 100;
   private static final String CATALOG_SEPARATOR = ".";
   private static final char SEARCH_STRING_ESCAPE = '\\';
@@ -193,7 +192,7 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
-    // NOTE: This static bloc is copied from Hive JDBC Driver
+    // NOTE: This static block is copied from Hive JDBC Driver
     return new StaticEmptyExploreResultSet(
       ImmutableList.of(
         ImmutablePair.of("PKTABLE_CAT", "STRING"),
@@ -216,7 +215,7 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public ResultSet getPrimaryKeys(String s, String s2, String s3) throws SQLException {
-    // NOTE: This static bloc is copied from Hive JDBC Driver
+    // NOTE: This static block is copied from Hive JDBC Driver
     return new StaticEmptyExploreResultSet(
       ImmutableList.of(
         ImmutablePair.of("TABLE_CAT", "STRING"),
@@ -231,7 +230,7 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public ResultSet getProcedureColumns(String s, String s2, String s3, String s4) throws SQLException {
-    // NOTE: This static bloc is copied from Hive JDBC Driver
+    // NOTE: This static block is copied from Hive JDBC Driver
     return new StaticEmptyExploreResultSet(
       ImmutableList.of(
         ImmutablePair.of("PROCEDURE_CAT", "STRING"),
@@ -260,7 +259,7 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public ResultSet getProcedures(String s, String s2, String s3) throws SQLException {
-    // NOTE: This static bloc is copied from Hive JDBC Driver
+    // NOTE: This static block is copied from Hive JDBC Driver
     return new StaticEmptyExploreResultSet(
       ImmutableList.of(
         ImmutablePair.of("PROCEDURE_CAT", "STRING"),
@@ -318,7 +317,7 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public ResultSet getUDTs(String s, String s2, String s3, int[] ints) throws SQLException {
-    // NOTE: This static bloc is copied from Hive JDBC Driver
+    // NOTE: This static block is copied from Hive JDBC Driver
     return new StaticEmptyExploreResultSet(
       ImmutableList.of(
         ImmutablePair.of("TYPE_CAT", "STRING"),

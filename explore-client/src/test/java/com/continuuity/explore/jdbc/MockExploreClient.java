@@ -171,6 +171,16 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
     public void close() throws IOException {
       // TODO should close the query here
     }
+
+    @Override
+    public int getFetchSize() {
+      return 100;
+    }
+
+    @Override
+    public void setFetchSize(int fetchSize) {
+      // Do nothing
+    }
   }
 
   private static final class MockStatementExecutionFuture
