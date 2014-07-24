@@ -96,16 +96,34 @@
         <groupId>com.continuuity.tephra</groupId>
         <artifactId>tephra-core</artifactId>
         <version>${tephra.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.continuuity.tephra</groupId>
         <artifactId>tephra-hbase-compat-0.94</artifactId>
         <version>${tephra.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.continuuity.tephra</groupId>
         <artifactId>tephra-hbase-compat-0.96</artifactId>
         <version>${tephra.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>

@@ -65,6 +65,7 @@ import org.apache.hadoop.mapreduce.counters.Limits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.util.List;
@@ -256,7 +257,7 @@ public class SingleNodeMain {
    * @param args Our cmdline arguments
    */
   public static void main(String[] args) {
-    CConfiguration configuration = CConfiguration.create();
+    CConfiguration cConf = CConfiguration.create();
 
     // Single node use persistent data fabric by default
     boolean inMemory = false;
@@ -286,27 +287,27 @@ public class SingleNodeMain {
     // someone else initializes it.
     Limits.init(hConf);
 
-    String localDataDir = configuration.get(Constants.CFG_LOCAL_DATA_DIR);
-    hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir);
-    hConf.set(Constants.AppFabric.OUTPUT_DIR, configuration.get(Constants.AppFabric.OUTPUT_DIR));
+    File localDataDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
+    hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
+    hConf.set(Constants.AppFabric.OUTPUT_DIR, cConf.get(Constants.AppFabric.OUTPUT_DIR));
+    hConf.set("hadoop.tmp.dir", new File(localDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
 
     // Windows specific requirements
     if (OSDetector.isWindows()) {
       String userDir = System.getProperty("user.dir");
       System.load(userDir + "/lib/native/hadoop.dll");
-      hConf.set("hadoop.tmp.dir", userDir + "/" + localDataDir + "/temp");
     }
 
     //Run gateway on random port and forward using router.
-    configuration.setInt(Constants.Gateway.PORT, 0);
+    cConf.setInt(Constants.Gateway.PORT, 0);
 
     //Run dataset service on random port
-    List<Module> modules = inMemory ? createInMemoryModules(configuration, hConf)
-                                    : createPersistentModules(configuration, hConf);
+    List<Module> modules = inMemory ? createInMemoryModules(cConf, hConf)
+                                    : createPersistentModules(cConf, hConf);
 
     SingleNodeMain main = null;
     try {
-      main = new SingleNodeMain(modules, configuration, webAppPath);
+      main = new SingleNodeMain(modules, cConf, webAppPath);
       main.startUp(args);
     } catch (Throwable e) {
       System.err.println("Failed to start server. " + e.getMessage());

@@ -91,6 +91,7 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
@@ -116,7 +117,6 @@ public class ReactorTestBase {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static File testAppDir;
   private static LocationFactory locationFactory;
   private static Injector injector;
   private static MetricsQueryService metricsQueryService;
@@ -181,32 +181,28 @@ public class ReactorTestBase {
 
   @BeforeClass
   public static void init() throws Exception {
-    testAppDir = tmpFolder.newFolder();
+    File localDataDir = tmpFolder.newFolder();
+    CConfiguration cConf = CConfiguration.create();
 
-    File appDir = new File(testAppDir, "app");
-    File datasetDir = new File(testAppDir, "dataset");
-    File tmpDir = new File(testAppDir, "tmp");
+    cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
+    cConf.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
 
-    appDir.mkdirs();
-    datasetDir.mkdirs();
-    tmpDir.mkdirs();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
+    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+    cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
+    cConf.set(Constants.Explore.LOCAL_DATA_DIR,
+              tmpFolder.newFolder("hive").getAbsolutePath());
 
-    CConfiguration configuration = CConfiguration.create();
-
-    configuration.set(Constants.AppFabric.OUTPUT_DIR, appDir.getAbsolutePath());
-    configuration.set(Constants.AppFabric.TEMP_DIR, tmpDir.getAbsolutePath());
-    configuration.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
-    configuration.set(Constants.Dataset.Manager.ADDRESS, "localhost");
-    configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
-    configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
-    configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    configuration.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
-    configuration.set(Constants.Explore.LOCAL_DATA_DIR,
-                      tmpFolder.newFolder("hive").getAbsolutePath());
+    Configuration hConf = new Configuration();
+    hConf.addResource("mapred-site-local.xml");
+    hConf.reloadConfiguration();
+    hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
+    hConf.set(Constants.AppFabric.OUTPUT_DIR, cConf.get(Constants.AppFabric.OUTPUT_DIR));
+    hConf.set("hadoop.tmp.dir", new File(localDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
 
     // Windows specific requirements
     if (OSDetector.isWindows()) {
-
+      File tmpDir = tmpFolder.newFolder();
       File binDir = new File(tmpDir, "bin");
       binDir.mkdir();
 
@@ -217,10 +213,10 @@ public class ReactorTestBase {
     }
 
     injector = Guice.createInjector(
-      createDataFabricModule(configuration),
+      createDataFabricModule(cConf),
       new DataSetsModules().getInMemoryModule(),
       new DataSetServiceModules().getInMemoryModule(),
-      new ConfigModule(configuration),
+      new ConfigModule(cConf, hConf),
       new IOModule(),
       new AuthModule(),
       new LocationRuntimeModule().getInMemoryModules(),
@@ -271,7 +267,7 @@ public class ReactorTestBase {
     DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
     datasetFramework =
       new NamespacedDatasetFramework(dsFramework,
-                                     new ReactorDatasetNamespace(configuration,  DataSetAccessor.Namespace.USER));
+                                     new ReactorDatasetNamespace(cConf,  DataSetAccessor.Namespace.USER));
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
     discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -331,7 +327,6 @@ public class ReactorTestBase {
     }
     exploreExecutorService.stopAndWait();
     logAppenderInitializer.close();
-    cleanDir(testAppDir);
   }
 
   private static void cleanDir(File dir) {
