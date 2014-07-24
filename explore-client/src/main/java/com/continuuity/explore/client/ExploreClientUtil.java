@@ -71,16 +71,6 @@ public class ExploreClientUtil {
     private final String tableNamePattern;
     private final List<String> tableTypes;
 
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("catalog", catalog)
-        .add("schemaPattern", schemaPattern)
-        .add("tableNamePattern", tableNamePattern)
-        .add("tableTypes", tableTypes)
-        .toString();
-    }
-
     public TablesArgs(String catalog, String schemaNamePattern, String tableNamePattern, List<String> tableTypes) {
       this.catalog = catalog;
       this.schemaPattern = schemaNamePattern;
@@ -102,6 +92,16 @@ public class ExploreClientUtil {
 
     public String getCatalog() {
       return catalog;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("catalog", catalog)
+        .add("schemaPattern", schemaPattern)
+        .add("tableNamePattern", tableNamePattern)
+        .add("tableTypes", tableTypes)
+        .toString();
     }
   }
 

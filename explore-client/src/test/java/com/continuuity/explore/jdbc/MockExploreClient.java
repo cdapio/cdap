@@ -17,137 +17,189 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.client.ExploreExecutionResult;
+import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
-import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.MetaDataInfo;
 import com.continuuity.explore.service.Result;
-import com.continuuity.explore.service.Status;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ForwardingListenableFuture;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
-import java.sql.SQLException;
+import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Mock Explore client to use in test cases.
  */
-public class MockExploreClient implements ExploreClient {
+public class MockExploreClient extends AbstractIdleService implements ExploreClient {
 
-  private final Map<String, List<ColumnDesc>> handlesToMetadata;
-  private final Map<String, List<Result>> handlesToResults;
-  private final Set<String> fetchedResults;
+  private final Map<String, List<ColumnDesc>> statementsToMetadata;
+  private final Map<String, List<Result>> statementsToResults;
 
-  public MockExploreClient(Map<String, List<ColumnDesc>> handlesToMetadata,
-                           Map<String, List<Result>> handlesToResults) {
-    this.handlesToMetadata = Maps.newHashMap(handlesToMetadata);
-    this.handlesToResults = Maps.newHashMap(handlesToResults);
-    this.fetchedResults = Sets.newHashSet();
+  public MockExploreClient(Map<String, List<ColumnDesc>> statementsToMetadata,
+                           Map<String, List<Result>> statementsToResults) {
+    this.statementsToMetadata = Maps.newHashMap(statementsToMetadata);
+    this.statementsToResults = Maps.newHashMap(statementsToResults);
   }
 
   @Override
-  public boolean isAvailable() {
+  public boolean isServiceAvailable() {
     return true;
   }
 
   @Override
-  public Handle enableExplore(String datasetInstance) throws ExploreException {
+  public ListenableFuture<Void> enableExplore(String datasetInstance) {
     return null;
   }
 
   @Override
-  public Handle disableExplore(String datasetInstance) throws ExploreException {
+  public ListenableFuture<Void> disableExplore(String datasetInstance) {
     return null;
   }
 
   @Override
-  public Handle execute(String statement) throws ExploreException {
-    return Handle.fromId("foobar");
+  public StatementExecutionFuture submit(final String statement) {
+    SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get(statement).iterator()));
+    return new MockStatementExecutionFuture(futureDelegate, statement, statementsToMetadata, statementsToResults);
   }
 
   @Override
-  public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException {
-    return new Status(Status.OpStatus.FINISHED, true);
+  public StatementExecutionFuture columns(@Nullable String catalog, @Nullable String schemaPattern,
+                                          String tableNamePattern, String columnNamePattern) {
+    SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("columns_stmt").iterator()));
+    return new MockStatementExecutionFuture(futureDelegate, "columns_stmt", statementsToMetadata, statementsToResults);
   }
 
   @Override
-  public List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException, HandleNotFoundException {
-    if (!handlesToMetadata.containsKey(handle.getHandle())) {
-      throw new HandleNotFoundException("Handle not found");
+  public StatementExecutionFuture catalogs() {
+    SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("catalogs_stmt").iterator()));
+    return new MockStatementExecutionFuture(futureDelegate, "catalogs_stmt", statementsToMetadata, statementsToResults);
+  }
+
+  @Override
+  public StatementExecutionFuture schemas(@Nullable String catalog, @Nullable String schemaPattern) {
+    SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("schemas_stmt").iterator()));
+    return new MockStatementExecutionFuture(futureDelegate, "schemas_stmt", statementsToMetadata, statementsToResults);
+  }
+
+  @Override
+  public StatementExecutionFuture functions(@Nullable String catalog, @Nullable String schemaPattern,
+                                            String functionNamePattern) {
+    SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("functions_stmt").iterator()));
+    return new MockStatementExecutionFuture(futureDelegate, "functions_stmt", statementsToMetadata, statementsToResults);
+  }
+
+  @Override
+  public ListenableFuture<MetaDataInfo> info(MetaDataInfo.InfoType infoType) {
+    return null;
+  }
+
+  @Override
+  public StatementExecutionFuture tables(@Nullable String catalog, @Nullable String schemaPattern,
+                                         String tableNamePattern, @Nullable List<String> tableTypes) {
+    SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("tables_stmt").iterator()));
+    return new MockStatementExecutionFuture(futureDelegate, "tables_stmt", statementsToMetadata, statementsToResults);
+  }
+
+  @Override
+  public StatementExecutionFuture tableTypes() {
+    SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("tableTypes_stmt").iterator()));
+    return new MockStatementExecutionFuture(futureDelegate, "tableTypes_stmt", statementsToMetadata, statementsToResults);
+  }
+
+  @Override
+  public StatementExecutionFuture dataTypes() {
+    SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("dataTypes_stmt").iterator()));
+    return new MockStatementExecutionFuture(futureDelegate, "dataTypes_stmt", statementsToMetadata, statementsToResults);
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    // Do nothing
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    // Do nothing
+  }
+
+  @Override
+  public void close() throws IOException {
+    // Do nothing
+  }
+
+  private static final class MockExploreExecutionResult implements ExploreExecutionResult {
+
+    private final Iterator<Result> delegate;
+
+    MockExploreExecutionResult(Iterator<Result> delegate) {
+      this.delegate = delegate;
     }
-    return handlesToMetadata.get(handle.getHandle());
-  }
 
-  @Override
-  public List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
-    // For now we don't consider the size - until needed by other tests
-
-    if (fetchedResults.contains(handle.getHandle())) {
-      return Lists.newArrayList();
+    @Override
+    public boolean hasNext() {
+      return delegate.hasNext();
     }
-    if (!handlesToResults.containsKey(handle.getHandle())) {
-      throw new HandleNotFoundException("Handle not found");
+
+    @Override
+    public Result next() {
+      return delegate.next();
     }
-    fetchedResults.add(handle.getHandle());
-    return handlesToResults.get(handle.getHandle());
+
+    @Override
+    public void remove() {
+      delegate.remove();
+    }
+
+    @Override
+    public void close() throws IOException {
+      // TODO should close the query here
+    }
   }
 
-  @Override
-  public void cancel(Handle handle) throws ExploreException, HandleNotFoundException {
-    // TODO remove results for given handle
-  }
+  private static final class MockStatementExecutionFuture
+    extends ForwardingListenableFuture.SimpleForwardingListenableFuture<ExploreExecutionResult>
+    implements StatementExecutionFuture {
 
-  @Override
-  public void close(Handle handle) throws ExploreException, HandleNotFoundException {
-    handlesToMetadata.remove(handle.getHandle());
-    handlesToResults.remove(handle.getHandle());
-  }
+    private final Map<String, List<ColumnDesc>> statementsToMetadata;
+    private final Map<String, List<Result>> statementsToResults;
+    private final String statement;
 
-  @Override
-  public Handle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
-    throws ExploreException, SQLException {
-    return Handle.fromId("columns_handle");
-  }
+    MockStatementExecutionFuture(ListenableFuture<ExploreExecutionResult> delegate, String statement,
+                                 Map<String, List<ColumnDesc>> statementsToMetadata,
+                                 Map<String, List<Result>> statementsToResults) {
+      super(delegate);
+      this.statement = statement;
+      this.statementsToMetadata = statementsToMetadata;
+      this.statementsToResults = statementsToResults;
+    }
 
-  @Override
-  public Handle getCatalogs() throws ExploreException, SQLException {
-    return Handle.fromId("catalogs_handle");
-  }
+    @Override
+    public List<ColumnDesc> getResultSchema() throws ExploreException {
+      return statementsToMetadata.get(statement);
+    }
 
-  @Override
-  public Handle getSchemas(String catalog, String schemaPattern) throws ExploreException, SQLException {
-    return Handle.fromId("schemas_handle");
-  }
-
-  @Override
-  public Handle getFunctions(String catalog, String schemaPattern, String functionNamePattern)
-    throws ExploreException, SQLException {
-    return Handle.fromId("functions_handle");
-  }
-
-  @Override
-  public MetaDataInfo getInfo(MetaDataInfo.InfoType infoType) throws ExploreException, SQLException {
-    return new MetaDataInfo("foobar", (short) 0, 1, (long) 2);
-  }
-
-  @Override
-  public Handle getTables(String catalog, String schemaPattern, String tableNamePattern, List<String> tableTypes)
-    throws ExploreException, SQLException {
-    return Handle.fromId("tables_handle");
-  }
-
-  @Override
-  public Handle getTableTypes() throws ExploreException, SQLException {
-    return Handle.fromId("tableTypes_handle");
-  }
-
-  @Override
-  public Handle getTypeInfo() throws ExploreException, SQLException {
-    return Handle.fromId("typeInfo_handle");
+    @Override
+    public boolean cancel(boolean interrupt) {
+      statementsToMetadata.remove(statement);
+      statementsToResults.remove(statement);
+      return true;
+    }
   }
 }

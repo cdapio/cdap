@@ -30,7 +30,7 @@ import java.util.List;
 public class ExploreResultSetMetaData implements ResultSetMetaData {
   private final List<ColumnDesc> columnDescs;
 
-  public ExploreResultSetMetaData(List<ColumnDesc> columnDescs) {
+  ExploreResultSetMetaData(List<ColumnDesc> columnDescs) {
     Preconditions.checkNotNull(columnDescs, "Column metadata list cannot be null.");
     this.columnDescs = columnDescs;
   }

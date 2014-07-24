@@ -179,56 +179,65 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   @Override
   public Handle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
     throws ExploreException, SQLException {
-    SessionHandle sessionHandle = null;
     try {
       Map<String, String> sessionConf = startSession();
-      sessionHandle = cliService.openSession("", "", sessionConf);
-      OperationHandle operationHandle = cliService.getColumns(sessionHandle, catalog,
-                                                              schemaPattern, tableNamePattern, columnNamePattern);
-      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
-      LOG.trace("Retrieving columns: catalog {}, schemaPattern {}, tableNamePattern {}, columnNamePattern {}",
-                catalog, schemaPattern, tableNamePattern, columnNamePattern);
-      return handle;
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
+      try {
+        OperationHandle operationHandle = cliService.getColumns(sessionHandle, catalog, schemaPattern,
+                                                                tableNamePattern, columnNamePattern);
+        Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+        LOG.trace("Retrieving columns: catalog {}, schemaPattern {}, tableNamePattern {}, columnNamePattern {}",
+                  catalog, schemaPattern, tableNamePattern, columnNamePattern);
+        return handle;
+      } catch (Throwable e) {
+        closeSession(sessionHandle);
+        throw e;
+      }
     } catch (HiveSQLException e) {
-      closeSession(sessionHandle);
       throw getSqlException(e);
-    } catch (IOException e) {
+    } catch (Throwable e) {
       throw new ExploreException(e);
     }
   }
 
   @Override
   public Handle getCatalogs() throws ExploreException, SQLException {
-    SessionHandle sessionHandle = null;
     try {
       Map<String, String> sessionConf = startSession();
-      sessionHandle = cliService.openSession("", "", sessionConf);
-      OperationHandle operationHandle = cliService.getCatalogs(sessionHandle);
-      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
-      LOG.trace("Retrieving catalogs");
-      return handle;
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
+      try {
+        OperationHandle operationHandle = cliService.getCatalogs(sessionHandle);
+        Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+        LOG.trace("Retrieving catalogs");
+        return handle;
+      } catch (Throwable e) {
+        closeSession(sessionHandle);
+        throw e;
+      }
     } catch (HiveSQLException e) {
-      closeSession(sessionHandle);
       throw getSqlException(e);
-    } catch (IOException e) {
+    } catch (Throwable e) {
       throw new ExploreException(e);
     }
   }
 
   @Override
   public Handle getSchemas(String catalog, String schemaPattern) throws ExploreException, SQLException {
-    SessionHandle sessionHandle = null;
     try {
       Map<String, String> sessionConf = startSession();
-      sessionHandle = cliService.openSession("", "", sessionConf);
-      OperationHandle operationHandle = cliService.getSchemas(sessionHandle, catalog, schemaPattern);
-      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
-      LOG.trace("Retrieving schemas: catalog {}, schema {}", catalog, schemaPattern);
-      return handle;
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
+      try {
+        OperationHandle operationHandle = cliService.getSchemas(sessionHandle, catalog, schemaPattern);
+        Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+        LOG.trace("Retrieving schemas: catalog {}, schema {}", catalog, schemaPattern);
+        return handle;
+      } catch (Throwable e) {
+        closeSession(sessionHandle);
+        throw e;
+      }
     } catch (HiveSQLException e) {
-      closeSession(sessionHandle);
       throw getSqlException(e);
-    } catch (IOException e) {
+    } catch (Throwable e) {
       throw new ExploreException(e);
     }
   }
@@ -236,27 +245,29 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   @Override
   public Handle getFunctions(String catalog, String schemaPattern, String functionNamePattern)
     throws ExploreException, SQLException {
-    SessionHandle sessionHandle = null;
     try {
       Map<String, String> sessionConf = startSession();
-      sessionHandle = cliService.openSession("", "", sessionConf);
-      OperationHandle operationHandle = cliService.getFunctions(sessionHandle, catalog,
-                                                                schemaPattern, functionNamePattern);
-      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
-      LOG.trace("Retrieving functions: catalog {}, schema {}, function {}",
-                catalog, schemaPattern, functionNamePattern);
-      return handle;
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
+      try {
+        OperationHandle operationHandle = cliService.getFunctions(sessionHandle, catalog,
+                                                                  schemaPattern, functionNamePattern);
+        Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+        LOG.trace("Retrieving functions: catalog {}, schema {}, function {}",
+                  catalog, schemaPattern, functionNamePattern);
+        return handle;
+      } catch (Throwable e) {
+        closeSession(sessionHandle);
+        throw e;
+      }
     } catch (HiveSQLException e) {
-      closeSession(sessionHandle);
       throw getSqlException(e);
-    } catch (IOException e) {
+    } catch (Throwable e) {
       throw new ExploreException(e);
     }
   }
 
   @Override
   public MetaDataInfo getInfo(MetaDataInfo.InfoType infoType) throws ExploreException, SQLException {
-    SessionHandle sessionHandle = null;
     try {
       MetaDataInfo ret = infoType.getDefaultValue();
       if (ret != null) {
@@ -264,107 +275,119 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       }
 
       Map<String, String> sessionConf = startSession();
-      sessionHandle = cliService.openSession("", "", sessionConf);
-      // Convert to GetInfoType
-      GetInfoType hiveInfoType = null;
-      for (GetInfoType t : GetInfoType.values()) {
-        if (t.name().equals("CLI_" + infoType.name())) {
-          hiveInfoType = t;
-          break;
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
+      try {
+        // Convert to GetInfoType
+        GetInfoType hiveInfoType = null;
+        for (GetInfoType t : GetInfoType.values()) {
+          if (t.name().equals("CLI_" + infoType.name())) {
+            hiveInfoType = t;
+            break;
+          }
         }
+        if (hiveInfoType == null) {
+          // Should not come here, unless there is a mismatch between Explore and Hive info types.
+          LOG.warn("Could not find Hive info type %s", infoType);
+          return null;
+        }
+        GetInfoValue val = cliService.getInfo(sessionHandle, hiveInfoType);
+        LOG.trace("Retrieving info: {}, got value {}", infoType, val);
+        return new MetaDataInfo(val.getStringValue(), val.getShortValue(), val.getIntValue(), val.getLongValue());
+      } finally {
+        closeSession(sessionHandle);
       }
-      if (hiveInfoType == null) {
-        // Should not come here, unless there is a mismatch between Explore and Hive info types.
-        LOG.warn("Could not find Hive info type %s", infoType);
-        return null;
-      }
-      GetInfoValue val = cliService.getInfo(sessionHandle, hiveInfoType);
-      LOG.trace("Retrieving info: {}, got value {}", infoType, val);
-      return new MetaDataInfo(val.getStringValue(), val.getShortValue(), val.getIntValue(), val.getLongValue());
     } catch (HiveSQLException e) {
       throw getSqlException(e);
     } catch (IOException e) {
       throw new ExploreException(e);
-    } finally {
-      if (sessionHandle != null) {
-        closeSession(sessionHandle);
-      }
     }
   }
 
   @Override
   public Handle getTables(String catalog, String schemaPattern,
                           String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
-    SessionHandle sessionHandle = null;
     try {
       Map<String, String> sessionConf = startSession();
-      sessionHandle = cliService.openSession("", "", sessionConf);
-      OperationHandle operationHandle = cliService.getTables(sessionHandle, catalog,
-                                                             schemaPattern, tableNamePattern, tableTypes);
-      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
-      LOG.trace("Retrieving tables: catalog {}, schemaNamePattern {}, tableNamePattern {}, tableTypes {}",
-                catalog, schemaPattern, tableNamePattern, tableTypes);
-      return handle;
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
+      try {
+        OperationHandle operationHandle = cliService.getTables(sessionHandle, catalog, schemaPattern,
+                                                               tableNamePattern, tableTypes);
+        Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+        LOG.trace("Retrieving tables: catalog {}, schemaNamePattern {}, tableNamePattern {}, tableTypes {}",
+                  catalog, schemaPattern, tableNamePattern, tableTypes);
+        return handle;
+      } catch (Throwable e) {
+        closeSession(sessionHandle);
+        throw e;
+      }
     } catch (HiveSQLException e) {
-      closeSession(sessionHandle);
       throw getSqlException(e);
-    } catch (IOException e) {
+    } catch (Throwable e) {
       throw new ExploreException(e);
     }
   }
 
   @Override
   public Handle getTableTypes() throws ExploreException, SQLException {
-    SessionHandle sessionHandle = null;
     try {
       Map<String, String> sessionConf = startSession();
-      sessionHandle = cliService.openSession("", "", sessionConf);
-      OperationHandle operationHandle = cliService.getTableTypes(sessionHandle);
-      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
-      LOG.trace("Retrieving table types");
-      return handle;
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
+      try {
+        OperationHandle operationHandle = cliService.getTableTypes(sessionHandle);
+        Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+        LOG.trace("Retrieving table types");
+        return handle;
+      } catch (Throwable e) {
+        closeSession(sessionHandle);
+        throw e;
+      }
     } catch (HiveSQLException e) {
-      closeSession(sessionHandle);
       throw getSqlException(e);
-    } catch (IOException e) {
+    } catch (Throwable e) {
       throw new ExploreException(e);
     }
   }
 
   @Override
   public Handle getTypeInfo() throws ExploreException, SQLException {
-    SessionHandle sessionHandle = null;
     try {
       Map<String, String> sessionConf = startSession();
-      sessionHandle = cliService.openSession("", "", sessionConf);
-      OperationHandle operationHandle = cliService.getTypeInfo(sessionHandle);
-      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
-      LOG.trace("Retrieving type info");
-      return handle;
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
+      try {
+        OperationHandle operationHandle = cliService.getTypeInfo(sessionHandle);
+        Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+        LOG.trace("Retrieving type info");
+        return handle;
+      } catch (Throwable e) {
+        closeSession(sessionHandle);
+        throw e;
+      }
     } catch (HiveSQLException e) {
-      closeSession(sessionHandle);
       throw getSqlException(e);
-    } catch (IOException e) {
+    } catch (Throwable e) {
       throw new ExploreException(e);
     }
   }
 
   @Override
   public Handle execute(String statement) throws ExploreException, SQLException {
-    SessionHandle sessionHandle = null;
     try {
       Map<String, String> sessionConf = startSession();
       // TODO: allow changing of hive user and password - REACTOR-271
       // It looks like the username and password below is not used when security is disabled in Hive Server2.
-      sessionHandle = cliService.openSession("", "", sessionConf);
-      OperationHandle operationHandle = doExecute(sessionHandle, statement);
-      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
-      LOG.trace("Executing statement: {} with handle {}", statement, handle);
-      return handle;
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
+      try {
+        OperationHandle operationHandle = doExecute(sessionHandle, statement);
+        Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+        LOG.trace("Executing statement: {} with handle {}", statement, handle);
+        return handle;
+      } catch (Throwable e) {
+        closeSession(sessionHandle);
+        throw e;
+      }
     } catch (HiveSQLException e) {
-      closeSession(sessionHandle);
       throw getSqlException(e);
-    } catch (IOException e) {
+    } catch (Throwable e) {
       throw new ExploreException(e);
     }
   }

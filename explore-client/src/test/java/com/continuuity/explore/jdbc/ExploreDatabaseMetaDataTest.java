@@ -36,18 +36,18 @@ import java.util.List;
 public class ExploreDatabaseMetaDataTest {
 
   @Test
-  public void getTableTypesTest() throws Exception {
-    MetadataInfoCalls.assertResultSet(new MetadataInfoCalls("tableTypes_handle").getMetadata().getTableTypes());
-    MetadataInfoCalls.assertResultSet(new MetadataInfoCalls("columns_handle").getMetadata()
+  public void getMetadataEndpointsTest() throws Exception {
+    MetadataInfoCalls.assertResultSet(new MetadataInfoCalls("tableTypes_stmt").getMetadata().getTableTypes());
+    MetadataInfoCalls.assertResultSet(new MetadataInfoCalls("columns_stmt").getMetadata()
                                         .getColumns(null, null, "%", "%"));
-    MetadataInfoCalls.assertResultSet(new MetadataInfoCalls("typeInfo_handle").getMetadata().getTypeInfo());
-    MetadataInfoCalls.assertResultSet(new MetadataInfoCalls("tables_handle").getMetadata()
+    MetadataInfoCalls.assertResultSet(new MetadataInfoCalls("dataTypes_stmt").getMetadata().getTypeInfo());
+    MetadataInfoCalls.assertResultSet(new MetadataInfoCalls("tables_stmt").getMetadata()
                                         .getTables(null, null, "%", null));
-    MetadataInfoCalls.assertResultSet(new MetadataInfoCalls("functions_handle").getMetadata()
+    MetadataInfoCalls.assertResultSet(new MetadataInfoCalls("functions_stmt").getMetadata()
                                         .getFunctions(null, null, "%"));
-    MetadataInfoCalls.assertResultSet(new MetadataInfoCalls("schemas_handle").getMetadata().getSchemas());
-    MetadataInfoCalls.assertResultSet(new MetadataInfoCalls("schemas_handle").getMetadata().getSchemas(null, null));
-    MetadataInfoCalls.assertResultSet(new MetadataInfoCalls("catalogs_handle").getMetadata().getCatalogs());
+    MetadataInfoCalls.assertResultSet(new MetadataInfoCalls("schemas_stmt").getMetadata().getSchemas());
+    MetadataInfoCalls.assertResultSet(new MetadataInfoCalls("schemas_stmt").getMetadata().getSchemas(null, null));
+    MetadataInfoCalls.assertResultSet(new MetadataInfoCalls("catalogs_stmt").getMetadata().getCatalogs());
   }
 
   @Test
@@ -121,13 +121,13 @@ public class ExploreDatabaseMetaDataTest {
       init(handle);
     }
 
-    private void init(String handle) {
+    private void init(String statement) {
       ExploreClient exploreClient = new MockExploreClient(
-        ImmutableMap.of(handle, (List<ColumnDesc>) Lists.newArrayList(
+        ImmutableMap.of(statement, (List<ColumnDesc>) Lists.newArrayList(
                           new ColumnDesc("column1", "STRING", 1, ""),
                           new ColumnDesc("column2", "INT", 2, ""))
         ),
-        ImmutableMap.of(handle, (List<Result>) Lists.newArrayList(
+        ImmutableMap.of(statement, (List<Result>) Lists.newArrayList(
           new Result(ImmutableList.<Object>of("some value", 10))
         ))
       );

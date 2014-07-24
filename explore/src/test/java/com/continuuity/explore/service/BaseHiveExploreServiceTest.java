@@ -27,13 +27,15 @@ import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.explore.client.DiscoveryExploreClient;
 import com.continuuity.explore.client.ExploreClient;
-import com.continuuity.explore.client.ExploreClientUtil;
+import com.continuuity.explore.client.ExploreExecutionResult;
+import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.executor.ExploreExecutorService;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -45,8 +47,8 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 
 import java.io.File;
+import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Base class for tests that need explore service to be running.
@@ -73,12 +75,13 @@ public class BaseHiveExploreServiceTest {
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
 
-    exploreClient = injector.getInstance(DiscoveryExploreClient.class);
-    Assert.assertTrue(exploreClient.isAvailable());
+    exploreClient = injector.getInstance(ExploreClient.class);
+    Assert.assertTrue(exploreClient.isServiceAvailable());
   }
 
   @AfterClass
   public static void stopServices() throws Exception {
+    exploreClient.close();
     exploreExecutorService.stopAndWait();
     datasetService.stopAndWait();
     transactionManager.stopAndWait();
@@ -91,26 +94,31 @@ public class BaseHiveExploreServiceTest {
   protected static void runCommand(String command, boolean expectedHasResult,
                                    List<ColumnDesc> expectedColumnDescs, List<Result> expectedResults)
     throws Exception {
-    Handle handle = exploreClient.execute(command);
-    expectOnHandle(handle, expectedHasResult, expectedColumnDescs, expectedResults);
+
+    StatementExecutionFuture future = exploreClient.submit(command);
+    assertStatementResult(future, expectedHasResult, expectedColumnDescs, expectedResults);
   }
 
-  protected static void expectOnHandle(Handle handle, boolean expectedHasResult,
-                                       List<ColumnDesc> expectedColumnDescs, List<Result> expectedResults)
+  protected static void assertStatementResult(StatementExecutionFuture future, boolean expectedHasResult,
+                                              List<ColumnDesc> expectedColumnDescs, List<Result> expectedResults)
     throws Exception {
-    Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 20);
-    Assert.assertEquals(Status.OpStatus.FINISHED, status.getStatus());
-    Assert.assertEquals(expectedHasResult, status.hasResults());
+    ExploreExecutionResult results = future.get();
 
-    Assert.assertEquals(expectedColumnDescs, exploreClient.getResultSchema(handle));
-    Assert.assertEquals(expectedResults, trimColumnValues(exploreClient.nextResults(handle, 100)));
+    Assert.assertEquals(expectedHasResult, results.hasNext());
 
-    exploreClient.close(handle);
+    Assert.assertEquals(expectedColumnDescs, future.getResultSchema());
+    Assert.assertEquals(expectedResults, trimColumnValues(results));
+
+    results.close();
   }
 
-  protected static List<Result> trimColumnValues(List<Result> results) {
+  protected static List<Result> trimColumnValues(Iterator<Result> results) {
+    int i = 0;
     List<Result> newResults = Lists.newArrayList();
-    for (Result result : results) {
+    // Max 100 results
+    while (results.hasNext() && i < 100) {
+      i++;
+      Result result = results.next();
       List<Object> newCols = Lists.newArrayList();
       for (Object obj : result.getColumns()) {
         if (obj instanceof String) {
@@ -129,8 +137,8 @@ public class BaseHiveExploreServiceTest {
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
-    configuration.setBoolean(Constants.Explore.CFG_EXPLORE_ENABLED, true);
-    configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
+    configuration.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
+    configuration.set(Constants.Explore.LOCAL_DATA_DIR,
                       new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
 
     return ImmutableList.of(
@@ -143,7 +151,8 @@ public class BaseHiveExploreServiceTest {
       new DataSetsModules().getInMemoryModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new AuthModule(),
-      new ExploreRuntimeModule().getInMemoryModules()
+      new ExploreRuntimeModule().getInMemoryModules(),
+      new ExploreClientModule()
     );
   }
 }
