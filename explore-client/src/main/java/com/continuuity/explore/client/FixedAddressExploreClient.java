@@ -28,12 +28,8 @@ public class FixedAddressExploreClient extends AbstractExploreClient {
   private final InetSocketAddress addr;
   private final String authToken;
 
-  public FixedAddressExploreClient(String host, int port) {
-    this(host, port, null);
-  }
-
   public FixedAddressExploreClient(String host, int port, @Nullable String authToken) {
-    addr = InetSocketAddress.createUnresolved(host, port);
+    this.addr = InetSocketAddress.createUnresolved(host, port);
     this.authToken = authToken;
   }
 

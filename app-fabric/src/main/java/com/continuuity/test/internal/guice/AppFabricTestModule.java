@@ -30,6 +30,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.runtime.DataSetsModules;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
@@ -88,6 +89,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new LocationRuntimeModule().getInMemoryModules());
     install(new LoggingModules().getInMemoryModules());
     install(new MetricsHandlerModule());
+    install(new ExploreClientModule());
   }
 
   private Scheduler createNoopScheduler() {

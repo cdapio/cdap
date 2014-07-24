@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableMap;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.annotation.meta.param;
 
 import java.net.URI;
 import java.sql.Connection;
@@ -35,7 +34,6 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -63,16 +61,17 @@ public class ExploreDriver implements Driver {
     if (!acceptsURL(url)) {
       return null;
     }
+
     ConnectionParams params = parseConnectionUrl(url);
 
-    List<String> tokenParams = params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_AUTH_TOKEN);
     String authToken = null;
+    List<String> tokenParams = params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_AUTH_TOKEN);
     if (tokenParams != null && !tokenParams.isEmpty() && !tokenParams.get(0).isEmpty()) {
       authToken = tokenParams.get(0);
     }
 
     ExploreClient exploreClient = new FixedAddressExploreClient(params.getHost(), params.getPort(), authToken);
-    if (!exploreClient.isAvailable()) {
+    if (!exploreClient.isServiceAvailable()) {
       throw new SQLException("Cannot connect to " + url + ", service unavailable");
     }
     return new ExploreConnection(exploreClient);

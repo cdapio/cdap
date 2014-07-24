@@ -16,17 +16,16 @@
 
 package com.continuuity.explore.jdbc;
 
+import com.continuuity.explore.client.ExploreExecutionResult;
+import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.service.ColumnDesc;
-import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
-import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Result;
 
-import com.google.common.base.Charsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -50,12 +49,12 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Calendar;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Result set created by an {@link ExploreStatement}, containing the results of a query made to the Explore service.
+ * Result set created by an {@link ExploreStatement}, containing the {@link ExploreExecutionResult} of a query
+ * made to the Explore service.
  */
 public class ExploreQueryResultSet implements ResultSet {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreQueryResultSet.class);
@@ -63,22 +62,27 @@ public class ExploreQueryResultSet implements ResultSet {
   private boolean isClosed = false;
   private int fetchSize;
 
-  private boolean hasMoreResults = true;
-  private Iterator<Result> rowsItr;
   private Result currentRow;
   private ExploreResultSetMetaData metaData;
 
   private boolean wasNull = false;
   private ExploreStatement statement;
-  private Handle stmtHandle;
-  private Explore exploreClient;
 
-  public ExploreQueryResultSet(Explore exploreClient, ExploreStatement statement, Handle stmtHandle)
+  private StatementExecutionFuture futureResults;
+  private ExploreExecutionResult executionResult;
+
+  ExploreQueryResultSet(StatementExecutionFuture futureResults, ExploreStatement statement)
       throws SQLException {
-    this.exploreClient = exploreClient;
+    this.futureResults = futureResults;
     this.statement = statement;
-    this.stmtHandle = stmtHandle;
     this.fetchSize = statement.getFetchSize();
+    try {
+      this.executionResult = futureResults.get();
+    } catch (Exception e) {
+      // This should not happen, as ExploreStatement created this object after calling the get method on the future
+      LOG.error("Exception when retrieving result iterator from future object", e);
+      throw new SQLException(e);
+    }
   }
 
   @Override
@@ -86,37 +90,11 @@ public class ExploreQueryResultSet implements ResultSet {
     if (isClosed) {
       throw new SQLException("ResultSet is closed");
     }
-
-    if (!hasMoreResults) {
-      return false;
+    boolean res = executionResult.hasNext();
+    if (res) {
+      currentRow = executionResult.next();
     }
-
-    if (rowsItr != null && rowsItr.hasNext()) {
-      currentRow = rowsItr.next();
-      return true;
-    }
-
-    try {
-      if (stmtHandle == null) {
-        throw new SQLException("Handle is null.");
-      }
-      List<Result> fetchedRows;
-      fetchedRows = exploreClient.nextResults(stmtHandle, fetchSize);
-      rowsItr = fetchedRows.iterator();
-      if (!rowsItr.hasNext()) {
-        hasMoreResults = false;
-        currentRow = null;
-        return false;
-      }
-      currentRow = rowsItr.next();
-      return true;
-    } catch (HandleNotFoundException e) {
-      LOG.error("Could not fetch results with handle {}", stmtHandle);
-      throw new SQLException("Could not fetch results with handle " + stmtHandle, e);
-    } catch (ExploreException e) {
-      LOG.error("Caught exception", e);
-      throw new SQLException(e);
-    }
+    return res;
   }
 
   @Override
@@ -126,10 +104,14 @@ public class ExploreQueryResultSet implements ResultSet {
       return;
     }
     try {
+      executionResult.close();
       statement.closeClientOperation();
+    } catch (IOException e) {
+      LOG.error("Could not close the query results", e);
+      throw new SQLException(e);
     } finally {
-      exploreClient = null;
-      stmtHandle = null;
+      futureResults = null;
+      executionResult = null;
       statement = null;
       isClosed = true;
     }
@@ -249,14 +231,11 @@ public class ExploreQueryResultSet implements ResultSet {
     }
     if (metaData == null) {
       try {
-        List<ColumnDesc> columnDescs = exploreClient.getResultSchema(stmtHandle);
+        List<ColumnDesc> columnDescs = futureResults.getResultSchema();
         metaData = new ExploreResultSetMetaData(columnDescs);
       } catch (ExploreException e) {
         LOG.error("Caught exception", e);
         throw new SQLException(e);
-      } catch (HandleNotFoundException e) {
-        LOG.error("Handle not found when retrieving result set meta data", e);
-        throw new SQLException("Handle not found when retrieving result set meta data", e);
       }
     }
     return metaData;

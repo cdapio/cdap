@@ -30,6 +30,7 @@ import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.client.DiscoveryExploreClient;
 import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -56,6 +57,7 @@ public class ExploreDisabledTest {
   private static InMemoryTransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
   private static DatasetService datasetService;
+  private static ExploreClient exploreClient;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -66,14 +68,15 @@ public class ExploreDisabledTest {
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
 
-    ExploreClient exploreClient = injector.getInstance(DiscoveryExploreClient.class);
-    Assert.assertFalse(exploreClient.isAvailable());
+    exploreClient = injector.getInstance(DiscoveryExploreClient.class);
+    Assert.assertFalse(exploreClient.isServiceAvailable());
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
   }
 
   @AfterClass
   public static void stop() throws Exception {
+    exploreClient.close();
     datasetService.stopAndWait();
     transactionManager.stopAndWait();
   }
@@ -156,8 +159,8 @@ public class ExploreDisabledTest {
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
-    configuration.setBoolean(Constants.Explore.CFG_EXPLORE_ENABLED, false);
-    configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
+    configuration.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
+    configuration.set(Constants.Explore.LOCAL_DATA_DIR,
                       new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
 
     return ImmutableList.of(
@@ -170,7 +173,8 @@ public class ExploreDisabledTest {
         new DataSetsModules().getInMemoryModule(),
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new AuthModule(),
-        new ExploreRuntimeModule().getInMemoryModules()
+        new ExploreRuntimeModule().getInMemoryModules(),
+        new ExploreClientModule()
     );
   }
 }

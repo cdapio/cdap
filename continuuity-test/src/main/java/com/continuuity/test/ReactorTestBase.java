@@ -57,7 +57,9 @@ import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
+import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.executor.ExploreExecutorService;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
@@ -126,6 +128,7 @@ public class ReactorTestBase {
   private static DatasetFramework datasetFramework;
   private static DiscoveryServiceClient discoveryClient;
   private static ExploreExecutorService exploreExecutorService;
+  private static ExploreClient exploreClient;
 
   /**
    * Deploys an {@link com.continuuity.api.Application}. The {@link com.continuuity.api.flow.Flow Flows} and
@@ -186,9 +189,9 @@ public class ReactorTestBase {
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    cConf.setBoolean(Constants.Explore.CFG_EXPLORE_ENABLED, true);
-    cConf.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
-                      tmpFolder.newFolder("hive").getAbsolutePath());
+    cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
+    cConf.set(Constants.Explore.LOCAL_DATA_DIR,
+              tmpFolder.newFolder("hive").getAbsolutePath());
 
     Configuration hConf = new Configuration();
     hConf.addResource("mapred-site-local.xml");
@@ -234,6 +237,7 @@ public class ReactorTestBase {
       new MetricsHandlerModule(),
       new LoggingModules().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules(),
+      new ExploreClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -269,6 +273,7 @@ public class ReactorTestBase {
     discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     exploreExecutorService.startAndWait();
+    exploreClient = injector.getInstance(ExploreClient.class);
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
@@ -315,6 +320,11 @@ public class ReactorTestBase {
     metricsCollectionService.startAndWait();
     datasetService.stopAndWait();
     schedulerService.stopAndWait();
+    try {
+      exploreClient.close();
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
     exploreExecutorService.stopAndWait();
     logAppenderInitializer.close();
   }
