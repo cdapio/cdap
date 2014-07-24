@@ -87,16 +87,30 @@ public class ExploreDriver implements Driver {
     throw new SQLFeatureNotSupportedException();
   }
 
-  @Override
-  public int getMajorVersion() {
+  /**
+   * Get the major version number of the Explore driver.
+   */
+  static int getMajorDriverVersion() {
     // TODO make it dynamic [REACTOR-319]
     return 2;
   }
 
+  /**
+   * Get the minor version number of the Explore driver.
+   */
+  static int getMinorDriverVersion() {
+    // TODO make it dynamic [REACTOR-319]
+    return 4;
+  }
+
+  @Override
+  public int getMajorVersion() {
+    return getMajorDriverVersion();
+  }
+
   @Override
   public int getMinorVersion() {
-    // TODO make it dynamic [REACTOR-319]
-    return 3;
+    return getMinorDriverVersion();
   }
 
   @Override

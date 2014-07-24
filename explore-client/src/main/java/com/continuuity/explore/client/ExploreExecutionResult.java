@@ -25,4 +25,18 @@ import java.util.Iterator;
  * Results of an Explore statement execution.
  */
 public interface ExploreExecutionResult extends Iterator<Result>, Closeable {
+
+  /**
+   * @return the current fetch size for this object
+   */
+  int getFetchSize();
+
+  /**
+   * Gives this object a hint as to the number of rows that should be fetched from the server when more rows are needed
+   * for this object. If the fetch size specified is zero, this object ignores the value and is free to make its own
+   * best guess as to what the fetch size should be. The fetch size may be changed at any time.
+   *
+   * @param fetchSize the number of rows to fetch
+   */
+  void setFetchSize(int fetchSize);
 }
