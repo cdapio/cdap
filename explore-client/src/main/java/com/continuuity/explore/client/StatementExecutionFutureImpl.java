@@ -19,7 +19,6 @@ package com.continuuity.explore.client;
 import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.HandleNotFoundException;
-
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryHandle;
 import com.google.common.base.Throwables;
@@ -94,7 +93,6 @@ class StatementExecutionFutureImpl extends AbstractFuture<ExploreExecutionResult
     }
   }
 
-  @Override
   public boolean setException(Throwable throwable) {
     return super.setException(throwable);
   }
