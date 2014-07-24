@@ -123,15 +123,17 @@ public class ExploreRuntimeModule extends RuntimeModule {
     private static final class ExploreServiceProvider implements Provider<ExploreService> {
 
       private final CConfiguration cConf;
+      private final Configuration hConf;
       private final ExploreService exploreService;
       private final boolean isInMemory;
 
       @Inject
-      public ExploreServiceProvider(CConfiguration cConf,
+      public ExploreServiceProvider(CConfiguration cConf, Configuration hConf,
                                     @Named("explore.service.impl") ExploreService exploreService,
                                     @Named("explore.inmemory") boolean isInMemory) {
         this.exploreService = exploreService;
         this.cConf = cConf;
+        this.hConf = hConf;
         this.isInMemory = isInMemory;
       }
 
@@ -144,9 +146,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
                            new File(hiveDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
 
         // Reset hadoop tmp dir because Hive does not pick it up from hConf
-        File localDataDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
-        System.setProperty("hadoop.tmp.dir",
-                           new File(localDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
+        System.setProperty("hadoop.tmp.dir", hConf.get("hadoop.tmp.dir"));
 
         File warehouseDir = new File(cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR), "warehouse");
         File databaseDir = new File(cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR), "database");
