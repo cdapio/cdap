@@ -32,6 +32,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +47,24 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   private static final long CLEANUP_JOB_SCHEDULE_SECS = 1;
 
   private static ExploreService exploreService;
+
+
+  private static Status waitForCompletionStatus(ExploreService exploreService, Handle handle,
+                                                long sleepTime, TimeUnit timeUnit, int maxTries)
+    throws ExploreException, HandleNotFoundException, InterruptedException, SQLException {
+    Status status;
+    int tries = 0;
+    do {
+      timeUnit.sleep(sleepTime);
+      status = exploreService.getStatus(handle);
+
+      if (++tries > maxTries) {
+        break;
+      }
+    } while (status.getStatus() == Status.OpStatus.RUNNING || status.getStatus() == Status.OpStatus.PENDING ||
+      status.getStatus() == Status.OpStatus.INITIALIZED || status.getStatus() == Status.OpStatus.UNKNOWN);
+    return status;
+  }
 
   @BeforeClass
   public static void start() throws Exception {
@@ -134,7 +153,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
 
-    Status status = ExploreServiceUtils.waitForCompletionStatus(exploreService, handle, 200, TimeUnit.MILLISECONDS, 20);
+    Status status = waitForCompletionStatus(exploreService, handle, 200, TimeUnit.MILLISECONDS, 20);
     Assert.assertEquals(Status.OpStatus.FINISHED, status.getStatus());
     Assert.assertTrue(status.hasResults());
 
@@ -218,7 +237,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
 
-    Status status = ExploreServiceUtils.waitForCompletionStatus(exploreService, handle, 200, TimeUnit.MILLISECONDS, 20);
+    Status status = waitForCompletionStatus(exploreService, handle, 200, TimeUnit.MILLISECONDS, 20);
     Assert.assertEquals(Status.OpStatus.FINISHED, status.getStatus());
     Assert.assertFalse(status.hasResults());
 

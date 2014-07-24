@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP.
  */
 public abstract class AbstractExploreClient extends ExploreHttpClient implements ExploreClient {
-  private ListeningScheduledExecutorService executor;
+  private final ListeningScheduledExecutorService executor;
 
   protected AbstractExploreClient() {
     executor = MoreExecutors.listeningDecorator(
@@ -55,11 +55,9 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
   @Override
   public void close() throws IOException {
-    if (executor != null) {
-      // This will cancel all the running tasks, with interruption - that means that all
-      // queries submitted by this executor will be closed
-      executor.shutdownNow();
-    }
+    // This will cancel all the running tasks, with interruption - that means that all
+    // queries submitted by this executor will be closed
+    executor.shutdownNow();
   }
 
   @Override
@@ -72,7 +70,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     // NOTE: here we have two levels of Future because we want to return the future that actually
     // finishes the execution of the disable operation - it is not enough that the future handle
     // be available
-    final ListenableFuture<Handle> futureHandle = executor.submit(new Callable<Handle>() {
+    ListenableFuture<Handle> futureHandle = executor.submit(new Callable<Handle>() {
       @Override
       public Handle call() throws Exception {
         return doDisableExplore(datasetInstance);
@@ -89,7 +87,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     // NOTE: here we have two levels of Future because we want to return the future that actually
     // finishes the execution of the enable operation - it is not enough that the future handle
     // be available
-    final ListenableFuture<Handle> futureHandle = executor.submit(new Callable<Handle>() {
+    ListenableFuture<Handle> futureHandle = executor.submit(new Callable<Handle>() {
       @Override
       public Handle call() throws Exception {
         return doEnableExplore(datasetInstance);
@@ -103,7 +101,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
   @Override
   public StatementExecutionFuture submit(final String statement) {
-    final ListenableFuture<Handle> futureHandle = executor.submit(new Callable<Handle>() {
+    ListenableFuture<Handle> futureHandle = executor.submit(new Callable<Handle>() {
       @Override
       public Handle call() throws Exception {
         return execute(statement);
