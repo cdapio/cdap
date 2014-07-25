@@ -486,7 +486,6 @@ public class TestFrameworkTest extends ReactorTestBase {
     testAppWithDataset(AppsWithDataset.AppWithAutoDeployType.class, "MyProcedure");
   }
 
-
   @Test(timeout = 60000L)
   public void testAppWithAutoDeployDatasetTypeShortcut() throws Exception {
     testAppWithDataset(AppsWithDataset.AppWithAutoDeployTypeShortcut.class, "MyProcedure");

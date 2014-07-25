@@ -395,10 +395,9 @@ public class ReactorTestBase {
     return datasetFramework.getAdmin(datasetInstanceName, null);
   }
 
-
   /**
    * Gets Dataset manager of Dataset instance of type <T>
-   * @param datasetInstanceName instance name of dataset
+   * @param datasetInstanceName - instance name of dataset
    * @return Dataset Manager of Dataset instance of type <T>
    * @throws Exception
    */
