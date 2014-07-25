@@ -89,6 +89,7 @@
     <module>security</module>
     <module>gateway</module>
     <module>explore-client</module>
+    <module>explore-jdbc</module>
     <module>explore</module>
     <module>continuuity-test</module>
     <module>reactor-master</module>
