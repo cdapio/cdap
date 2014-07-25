@@ -26,7 +26,7 @@ import com.continuuity.api.procedure.ProcedureResponder;
 import java.io.IOException;
 
 /**
- *
+ * App which creates a dataset using the new Datasets API used for testing
  */
 public class AppWithDatasetDuplicate extends AbstractApplication {
 
