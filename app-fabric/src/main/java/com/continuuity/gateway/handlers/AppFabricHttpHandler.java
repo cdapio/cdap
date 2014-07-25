@@ -30,6 +30,7 @@ import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
@@ -80,9 +81,12 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.internal.app.runtime.distributed.Containers;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
+import com.continuuity.internal.app.runtime.service.LiveInfo;
+import com.continuuity.internal.app.runtime.service.NotRunningLiveInfo;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.metrics.MetricsConstants;
@@ -119,6 +123,7 @@ import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.twill.api.RunId;
+import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -183,6 +188,26 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
 
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
+
+  /**
+   * Used for getting the app id in batch endpoints
+   */
+  private static final String APP_ID_ARG = "appid";
+
+  /**
+   * Used for getting the program type in batch endpoints
+   */
+  private static final String PROGRAM_TYPE_ARG = "programType";
+
+  /**
+   * Used for getting the program id in batch endpoints
+   */
+  private static final String PROGRAM_ID_ARG = "programId";
+
+  /**
+   * Used for getting the runnable id in batch endpoints
+   */
+  private static final String RUNNABLE_ID_ARG = "runnableId";
 
   /**
    * Timeout to upload to remote app fabric.
@@ -441,34 +466,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       final Id.Program id = Id.Program.from(accountId, appId, runnableId);
       final Type type = RUNNABLE_TYPE_MAP.get(runnableType);
-
-      if (type == Type.MAPREDUCE) {
-        String workflowName = getWorkflowName(id.getId());
-        if (workflowName != null) {
-          //mapreduce is part of a workflow
-          workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(),
-                                           workflowName, new WorkflowClient.Callback() {
-              @Override
-              public void handle(WorkflowClient.Status status) {
-                JsonObject reply = new JsonObject();
-                if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
-                  reply.addProperty("status", "RUNNING");
-                  responder.sendJson(HttpResponseStatus.OK, reply);
-                } else {
-                  //mapreduce name might follow the same format even when its not part of the workflow.
-                  runnableStatus(responder, id, type);
-                }
-              }
-            }
-          );
-        } else {
-          //mapreduce is not part of a workflow
-          runnableStatus(responder, id, type);
-        }
-      } else if (type == null) {
+      String status = getStatus(id, type);
+      if (status.equals("NOT_FOUND")) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
-        runnableStatus(responder, id, type);
+        JsonObject reply = new JsonObject();
+        reply.addProperty("status", status);
+        responder.sendJson(HttpResponseStatus.OK, reply);
       }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -476,6 +480,53 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private String getStatus(final Id.Program id, final Type type) throws Throwable {
+    // must do it this way to allow anon function in workflow to modify status
+    final String[] statusStr = { null };
+    LOG.error(type.prettyName());
+    if (type == Type.MAPREDUCE) {
+      String workflowName = getWorkflowName(id.getId());
+      LOG.error(workflowName);
+      if (workflowName != null) {
+        LOG.error("SOMETHING");
+        //mapreduce is part of a workflow
+        workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(),
+                                         workflowName, new WorkflowClient.Callback() {
+            @Override
+            public void handle(WorkflowClient.Status status) {
+              LOG.error("WTF is going on?");
+              if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
+                LOG.error("YO");
+                statusStr[0] = "RUNNING";
+              } else {
+                LOG.error("YOYO");
+                //mapreduce name might follow the same format even when its not part of the workflow.
+                try {
+                  statusStr[0] = getProgramStatus(id, type).getStatus();
+                } catch (Exception e) {
+                  LOG.error("Got exception: ", e);
+                  statusStr[0] = null;
+                }
+              }
+            }
+          }
+        );
+      } else {
+        LOG.error("YOyoyo");
+        //mapreduce is not part of a workflow
+        statusStr[0] = getProgramStatus(id, type).getStatus();
+      }
+    } else if (type == null) {
+      return "NOT_FOUND";
+    } else {
+      statusStr[0] = getProgramStatus(id, type).getStatus();
+    }
+    if (statusStr[0] == null) {
+      throw new Throwable("Could not get program status");
+    }
+    return statusStr[0];
   }
 
   /**
@@ -946,6 +997,196 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @POST
+  @Path("/instances")
+  public void getInstances(HttpRequest request, HttpResponder responder) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      List<JsonObject> args = decodeArrayArguments(request);
+      if (args == null || args.isEmpty()) {
+        respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, "No data provided");
+        return;
+      }
+      for (int i = 0; i < args.size(); ++i) {
+        JsonObject requestedObj = args.get(i);
+        String appId, programTypeStr, programId, runnableId;
+        try {
+          appId = requestedObj.getAsJsonPrimitive(APP_ID_ARG).getAsString();
+          programTypeStr = requestedObj.getAsJsonPrimitive(PROGRAM_TYPE_ARG).getAsString();
+          programId = requestedObj.getAsJsonPrimitive(PROGRAM_ID_ARG).getAsString();
+        } catch (NullPointerException e) {
+          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, "Must provide App Id, Program Type, and Program Id");
+          return;
+        }
+        Type programType = Type.valueOfPrettyName(programTypeStr);
+        if (programType == null) {
+          respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Program type: " + programTypeStr + " not found");
+          return;
+        }
+        // these values will be overwritten later
+        int requested, provisioned;
+        ApplicationSpecification spec = store.getApplication(Id.Application.from(accountId, appId));
+        if (spec == null) {
+          respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "App " + appId + " not found");
+          return;
+        }
+        if (programType == Type.PROCEDURE) {
+          // the "runnable" for procedures has the same id as the procedure name
+          runnableId = programId;
+          if (spec.getProcedures().containsKey(programId)) {
+            requested = store.getProcedureInstances(Id.Program.from(accountId, appId, programId));
+          } else {
+            respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Procedure: " + programId + " not found");
+            return;
+          }
+        } else {
+          // services and flows must have runnable id
+          try {
+            runnableId = requestedObj.getAsJsonPrimitive(RUNNABLE_ID_ARG).getAsString();
+          } catch (NullPointerException e) {
+            respondAndLog(responder, HttpResponseStatus.BAD_REQUEST,
+                          "Must provide Runnable/Flowlet Id for flows/services");
+            return;
+          }
+          if (programType == Type.FLOW) {
+            FlowSpecification flowSpec = spec.getFlows().get(programId);
+            if (flowSpec != null) {
+              Map<String, FlowletDefinition> flowletSpecs = flowSpec.getFlowlets();
+              if (flowletSpecs != null && flowletSpecs.containsKey(runnableId)) {
+                requested = flowletSpecs.get(runnableId).getInstances();
+              } else {
+                respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Flowlet: " + runnableId + " not found");
+                return;
+              }
+            } else {
+              respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Flow: " + programId + " not found");
+              return;
+            }
+
+          } else if (programType == Type.SERVICE) {
+            ServiceSpecification serviceSpec = spec.getServices().get(programId);
+            if (serviceSpec != null) {
+              Map<String, RuntimeSpecification> runtimeSpecs = serviceSpec.getRunnables();
+              if (runtimeSpecs != null && runtimeSpecs.containsKey(runnableId)) {
+                requested = runtimeSpecs.get(runnableId).getResourceSpecification().getInstances();
+              } else {
+                respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Runnable: " + runnableId + " not found");
+                return;
+              }
+            } else {
+              respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Service: " + programId + " not found");
+              return;
+            }
+          } else {
+            respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Program type: " + programTypeStr + " not found");
+            return;
+          }
+        }
+        provisioned = getRunnableCount(accountId, appId, programType, programId, runnableId);
+        requestedObj.addProperty("requested", requested);
+        requestedObj.addProperty("provisioned", provisioned);
+        args.set(i, requestedObj);
+      }
+      responder.sendJson(HttpResponseStatus.OK, args);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @POST
+  @Path("/status")
+  public void getStatuses(HttpRequest request, HttpResponder responder) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      List<JsonObject> args = decodeArrayArguments(request);
+      if (args == null || args.isEmpty()) {
+        respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, "No data provided");
+        return;
+      }
+      for (int i = 0; i < args.size(); ++i) {
+        JsonObject requestedObj = args.get(i);
+        String appId, programType, programId;
+        try {
+          appId = requestedObj.getAsJsonPrimitive(APP_ID_ARG).getAsString();
+          programType = requestedObj.getAsJsonPrimitive(PROGRAM_TYPE_ARG).getAsString();
+          programId = requestedObj.getAsJsonPrimitive(PROGRAM_ID_ARG).getAsString();
+        } catch (NullPointerException e) {
+          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, "Must provide App Id, Program Type, and Program Id");
+          return;
+        }
+        String status = getStatus(Id.Program.from(accountId, appId, programId),
+                                         Type.valueOfPrettyName(programType));
+        // either app id, program type, or program id cannot be found
+        if (status.equals("NOT_FOUND")) {
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+          return;
+        } else {
+          requestedObj.addProperty("status", status);
+        }
+        args.set(i, requestedObj);
+      }
+      responder.sendJson(HttpResponseStatus.OK, args);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Convenience method for logging errors and sending the same error message with the corresponding status
+   * @param responder The HttpResponder
+   * @param status The status of the Http response
+   * @param message The error message to log and send
+   */
+  private void respondAndLog(HttpResponder responder, HttpResponseStatus status, String message) {
+    LOG.error(message);
+    responder.sendJson(status, message);
+  }
+
+  private int getRunnableCount(String accountId, String appId, Type programType, String programId, String runnableId) {
+    LiveInfo info = runtimeService.getLiveInfo(Id.Program.from(accountId, appId, programId), programType);
+    int count = 0;
+    if (info instanceof NotRunningLiveInfo) {
+      return count;
+    } else if (info instanceof Containers) {
+      Containers containers = (Containers) info;
+      for (Containers.ContainerInfo container : containers.getContainers()) {
+        System.err.println(container.getName());
+        if (container.getName().equals(runnableId)) {
+          count++;
+        }
+      }
+      return count;
+    } else {
+      // Not running on YARN default 1
+      return 1;
+    }
+  }
+
+  @Nullable
+  protected List<JsonObject> decodeArrayArguments(HttpRequest request) throws IOException {
+    ChannelBuffer content = request.getContent();
+    if (!content.readable()) {
+      return new ArrayList<JsonObject>();
+    }
+    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
+    try {
+      List<JsonObject> args = GSON.fromJson(reader, new TypeToken<List<JsonObject>>() { }.getType());
+      System.err.println(args);
+      return args == null ? new ArrayList<JsonObject>() : args;
+    } catch (JsonSyntaxException e) {
+      LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
+      throw e;
+    } finally {
+      reader.close();
     }
   }
 
