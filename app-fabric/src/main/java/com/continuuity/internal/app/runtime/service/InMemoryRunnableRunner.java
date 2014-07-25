@@ -154,7 +154,7 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       TwillRunnable runnable = null;
 
       // Special case for running Guava services since we need to instantiate the Guava service
-      // using the program classloader. 
+      // using the program classloader.
       if (runnableClass.isAssignableFrom(GuavaServiceTwillRunnable.class)) {
         runnable = new GuavaServiceTwillRunnable(program.getClassLoader());
       } else {

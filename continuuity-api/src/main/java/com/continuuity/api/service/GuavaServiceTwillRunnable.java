@@ -98,7 +98,7 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void stop() {
-    LOG.info("Instantiated service " + name);
+    LOG.info("Stopping service " + name);
     service.stopAndWait();
   }
 
