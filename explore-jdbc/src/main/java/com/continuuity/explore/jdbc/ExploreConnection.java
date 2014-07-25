@@ -78,7 +78,8 @@ public class ExploreConnection implements Connection {
 
   @Override
   public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-    // TODO handle TYPE_SCROLL_INSENSITIVE properly
+    // TYPE_SCROLL_INSENSITIVE is accepted here for integration purposes,
+    // but the result set type will still be TYPE_FORWARD_ONLY
     if ((resultSetType == ResultSet.TYPE_FORWARD_ONLY || resultSetType == ResultSet.TYPE_SCROLL_INSENSITIVE) &&
       resultSetConcurrency == ResultSet.CONCUR_READ_ONLY) {
       return createStatement();
@@ -91,7 +92,8 @@ public class ExploreConnection implements Connection {
   @Override
   public PreparedStatement prepareStatement(String s, int resultSetType, int resultSetConcurrency)
     throws SQLException {
-    // TODO handle TYPE_SCROLL_INSENSITIVE properly
+    // TYPE_SCROLL_INSENSITIVE is accepted here for integration purposes,
+    // but the result set type will still be TYPE_FORWARD_ONLY
     if ((resultSetType == ResultSet.TYPE_FORWARD_ONLY || resultSetType == ResultSet.TYPE_SCROLL_INSENSITIVE) &&
       resultSetConcurrency == ResultSet.CONCUR_READ_ONLY) {
       return prepareStatement(s);
