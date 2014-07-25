@@ -342,7 +342,7 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
    * Package visibility is for testing.
    */
   String updateSql() throws SQLException {
-    StringBuffer newSql = new StringBuffer(sql);
+    StringBuilder newSql = new StringBuilder(sql);
 
     int paramLoc = 1;
     while (true) {
@@ -364,7 +364,7 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
    * Get the index of the paramLoc-th given cchar from the SQL string.
    * -1 will be return, if nothing found
    */
-  private int getCharIndexFromSqlByParamLocation(StringBuffer sql, char cchar, int paramLoc) {
+  private int getCharIndexFromSqlByParamLocation(StringBuilder sql, char cchar, int paramLoc) {
     boolean singleQuoteStr = false;
     boolean doubleQuoteStr = false;
     boolean escapeActive = false;
