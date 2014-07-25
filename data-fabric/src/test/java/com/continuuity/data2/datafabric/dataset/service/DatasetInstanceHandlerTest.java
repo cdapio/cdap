@@ -128,7 +128,6 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     // nothing in the beginning
     Assert.assertEquals(0, instances.size());
 
-    // create dataset instance with type that is not yet known to the system should fail
     DatasetProperties props = DatasetProperties.builder().add("prop1", "val1").build();
 
     // deploy modules
