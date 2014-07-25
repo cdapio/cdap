@@ -151,6 +151,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -466,12 +467,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       final Id.Program id = Id.Program.from(accountId, appId, runnableId);
       final Type type = RUNNABLE_TYPE_MAP.get(runnableType);
-      String status = getStatus(id, type);
-      if (status.equals("NOT_FOUND")) {
+      final Map<Id.Program, String> statusMap = new HashMap<Id.Program, String>();
+      // getStatus has a callback for mapreduce jobs that run in workflows
+      getStatus(id, type, statusMap);
+      // wait for statuses to come back in case we are polling mapreduce status in workflow
+      while (statusMap.isEmpty()) { }
+      if (statusMap.get(id).equals("NOT_FOUND")) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
         JsonObject reply = new JsonObject();
-        reply.addProperty("status", status);
+        reply.addProperty("status", statusMap.get(id));
         responder.sendJson(HttpResponseStatus.OK, reply);
       }
     } catch (SecurityException e) {
@@ -482,51 +487,48 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private String getStatus(final Id.Program id, final Type type) throws Throwable {
+  private void getStatus(final Id.Program id, final Type type, final Map<Id.Program, String> statusMap)
+    throws Throwable {
     // must do it this way to allow anon function in workflow to modify status
-    final String[] statusStr = { null };
-    LOG.error(type.prettyName());
     if (type == Type.MAPREDUCE) {
       String workflowName = getWorkflowName(id.getId());
-      LOG.error(workflowName);
       if (workflowName != null) {
-        LOG.error("SOMETHING");
+        // check that mapreduce exists
+        ApplicationSpecification appSpec = store.getApplication(id.getApplication());
+        if (appSpec == null || !appSpec.getMapReduce().containsKey(id.getId())) {
+          statusMap.put(id, "NOT_FOUND");
+        }
+
         //mapreduce is part of a workflow
         workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(),
                                          workflowName, new WorkflowClient.Callback() {
             @Override
             public void handle(WorkflowClient.Status status) {
-              LOG.error("WTF is going on?");
               if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
-                LOG.error("YO");
-                statusStr[0] = "RUNNING";
+                statusMap.put(id, "RUNNING");
               } else {
-                LOG.error("YOYO");
                 //mapreduce name might follow the same format even when its not part of the workflow.
                 try {
-                  statusStr[0] = getProgramStatus(id, type).getStatus();
+                  statusMap.put(id, getProgramStatus(id, type).getStatus());
                 } catch (Exception e) {
                   LOG.error("Got exception: ", e);
-                  statusStr[0] = null;
+                  // null means that there was an error getting the status code
+                  statusMap.put(id, null);
                 }
               }
             }
           }
         );
       } else {
-        LOG.error("YOyoyo");
         //mapreduce is not part of a workflow
-        statusStr[0] = getProgramStatus(id, type).getStatus();
+        statusMap.put(id, getProgramStatus(id, type).getStatus());
       }
     } else if (type == null) {
-      return "NOT_FOUND";
+      // invalid type does not exist
+      statusMap.put(id, "NOT_FOUND");
     } else {
-      statusStr[0] = getProgramStatus(id, type).getStatus();
+      statusMap.put(id, getProgramStatus(id, type).getStatus());
     }
-    if (statusStr[0] == null) {
-      throw new Throwable("Could not get program status");
-    }
-    return statusStr[0];
   }
 
   /**
@@ -1021,7 +1023,14 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, "Must provide App Id, Program Type, and Program Id");
           return;
         }
-        Type programType = Type.valueOfPrettyName(programTypeStr);
+        Type programType;
+        try {
+          programType = Type.valueOfPrettyName(programTypeStr);
+        } catch (IllegalArgumentException e) {
+          // invalid type
+          respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Could not find type: " + programTypeStr);
+          return;
+        }
         if (programType == null) {
           respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Program type: " + programTypeStr + " not found");
           return;
@@ -1043,6 +1052,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             return;
           }
         } else {
+          // cant get instances for things that are not flows, services, or procedures
+          if (programType != Type.FLOW && programType != Type.SERVICE) {
+            respondAndLog(responder, HttpResponseStatus.BAD_REQUEST,
+                          "Cannot get instances for Program type: " + programTypeStr);
+            return;
+          }
           // services and flows must have runnable id
           try {
             runnableId = requestedObj.getAsJsonPrimitive(RUNNABLE_ID_ARG).getAsString();
@@ -1066,7 +1081,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
               return;
             }
 
-          } else if (programType == Type.SERVICE) {
+          } else {
+            // Service
             ServiceSpecification serviceSpec = spec.getServices().get(programId);
             if (serviceSpec != null) {
               Map<String, RuntimeSpecification> runtimeSpecs = serviceSpec.getRunnables();
@@ -1080,9 +1096,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
               respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Service: " + programId + " not found");
               return;
             }
-          } else {
-            respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Program type: " + programTypeStr + " not found");
-            return;
           }
         }
         provisioned = getRunnableCount(accountId, appId, programType, programId, runnableId);
@@ -1109,27 +1122,52 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, "No data provided");
         return;
       }
+      final Map<Id.Program, String> statusMap = new HashMap<Id.Program, String>();
       for (int i = 0; i < args.size(); ++i) {
         JsonObject requestedObj = args.get(i);
-        String appId, programType, programId;
+        String appId, programTypeStr, programId;
         try {
           appId = requestedObj.getAsJsonPrimitive(APP_ID_ARG).getAsString();
-          programType = requestedObj.getAsJsonPrimitive(PROGRAM_TYPE_ARG).getAsString();
+          programTypeStr = requestedObj.getAsJsonPrimitive(PROGRAM_TYPE_ARG).getAsString();
           programId = requestedObj.getAsJsonPrimitive(PROGRAM_ID_ARG).getAsString();
         } catch (NullPointerException e) {
           respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, "Must provide App Id, Program Type, and Program Id");
           return;
         }
-        String status = getStatus(Id.Program.from(accountId, appId, programId),
-                                         Type.valueOfPrettyName(programType));
-        // either app id, program type, or program id cannot be found
-        if (status.equals("NOT_FOUND")) {
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        Id.Program progId = Id.Program.from(accountId, appId, programId);
+        Type programType;
+        try {
+          programType = Type.valueOfPrettyName(programTypeStr);
+        } catch (IllegalArgumentException e) {
+          // invalid type
+          respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Could not find type: " + programTypeStr);
           return;
-        } else {
-          requestedObj.addProperty("status", status);
         }
-        args.set(i, requestedObj);
+        if (programType == null) {
+          respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Program type: " + programTypeStr + " not found");
+          return;
+        }
+        // getStatus has a callback for mapreduce jobs that run in workflows
+        getStatus(progId, programType, statusMap);
+      }
+      // wait for statuses to come back in case we are polling mapreduce status in workflow
+      while (statusMap.size() != args.size()) { }
+      for (int i = 0; i < args.size(); ++i) {
+        JsonObject requestedObj = args.get(i);
+        for (Id.Program id : statusMap.keySet()) {
+          String status = statusMap.get(id);
+          if (status == null) {
+            // could not get status
+            throw new Throwable("Could not retrieve status of " + id.getId());
+          } else if (status.equals("NOT_FOUND")) {
+            respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Could not find app, program type or program");
+            return;
+          }
+          if (id.getId().equals(requestedObj.getAsJsonPrimitive(PROGRAM_ID_ARG).getAsString()) &&
+            id.getApplicationId().equals(requestedObj.getAsJsonPrimitive(APP_ID_ARG).getAsString())) {
+            requestedObj.addProperty("status", status);
+          }
+        }
       }
       responder.sendJson(HttpResponseStatus.OK, args);
     } catch (SecurityException e) {
@@ -1180,7 +1218,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
     try {
       List<JsonObject> args = GSON.fromJson(reader, new TypeToken<List<JsonObject>>() { }.getType());
-      System.err.println(args);
       return args == null ? new ArrayList<JsonObject>() : args;
     } catch (JsonSyntaxException e) {
       LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
