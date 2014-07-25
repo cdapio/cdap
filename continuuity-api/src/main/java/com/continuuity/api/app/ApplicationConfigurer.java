@@ -164,9 +164,10 @@ public interface ApplicationConfigurer {
   /**
    * Adds {@link com.google.common.util.concurrent.Service} as a Custom Service {@link TwillApplication}
    * to the Application.
-   * @param service Guava service to be added
-   * @param args Service arguments
+   * @param name Name of runnable.
+   * @param service Guava service to be added.
+   * @param runnableArgs Runnable arguments.
    * @param specification ResourceSpecification for Twill container.
    */
-  void addService(Service service, Map<String, String> args, ResourceSpecification specification);
+  void addService(String name, Service service, Map<String, String> runnableArgs, ResourceSpecification specification);
 }

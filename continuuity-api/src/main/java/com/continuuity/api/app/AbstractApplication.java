@@ -222,29 +222,29 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @see ApplicationConfigurer#addService(com.google.common.util.concurrent.Service, java.util.Map,
+   * @see ApplicationConfigurer#addService(String name, com.google.common.util.concurrent.Service, java.util.Map,
    *                                        org.apache.twill.api.ResourceSpecification)
    */
-  protected void addService(Service service, Map<String, String> args, ResourceSpecification specification) {
-    configurer.addService(service, args, specification);
+  protected void addService(String name, Service service, Map<String, String> args, ResourceSpecification specification) {
+    configurer.addService(name, service, args, specification);
   }
 
   /**
-   * @see ApplicationConfigurer#addService(com.google.common.util.concurrent.Service, java.util.Map,
+   * @see ApplicationConfigurer#addService(String name, com.google.common.util.concurrent.Service, java.util.Map,
    *                                        org.apache.twill.api.ResourceSpecification)
    * ResourceSpecification is defaulted to ResourceSpecification.BASIC
    */
-  protected void addService(Service service, Map<String, String> args) {
-    addService(service, args, ResourceSpecification.BASIC);
+  protected void addService(String name, Service service, Map<String, String> args) {
+    addService(name, service, args, ResourceSpecification.BASIC);
   }
 
   /**
-   * @see ApplicationConfigurer#addService(com.google.common.util.concurrent.Service, java.util.Map,
+   * @see ApplicationConfigurer#addService(String name, com.google.common.util.concurrent.Service, java.util.Map,
    *                                        org.apache.twill.api.ResourceSpecification)
    * ResourceSpecification is defaulted to ResourceSpecification.BASIC
    * Args is defaulted to an empty Map.
    */
-  protected void addService(Service service) {
-    addService(service, Collections.<String, String>emptyMap(), ResourceSpecification.BASIC);
+  protected void addService(String name, Service service) {
+    addService(name, service, Collections.<String, String>emptyMap(), ResourceSpecification.BASIC);
   }
 }

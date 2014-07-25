@@ -188,8 +188,9 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void addService(Service service, Map<String, String> args, ResourceSpecification specification) {
-    addService(new GuavaServiceTwillRunnable(service, args), specification);
+  public void addService(String name, Service service, Map<String, String> runnableArgs,
+                         ResourceSpecification specification) {
+    addService(new GuavaServiceTwillRunnable(name, service, runnableArgs), specification);
   }
 
   public ApplicationSpecification createApplicationSpec() {

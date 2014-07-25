@@ -188,6 +188,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
       Class<?> clz = Class.forName(className, true, program.getClassLoader());
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
 
+      // Special case for running Guava services since we need to instantiate the Guava service
+      // using the program classloader.
       if (clz.isAssignableFrom(GuavaServiceTwillRunnable.class)) {
         delegate = new GuavaServiceTwillRunnable(program.getClassLoader());
       } else {

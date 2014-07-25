@@ -32,47 +32,62 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- *
+ * {@link org.apache.twill.api.TwillRunnable} that accepts a {@link com.google.common.util.concurrent.Service} and
+ * runs it as a Twill application.
  */
 public class GuavaServiceTwillRunnable implements TwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(GuavaServiceTwillRunnable.class);
   private Service service;
-  private ConcurrentHashMap<String, String> args;
-  private ClassLoader classLoader;
+  private String name;
+  private ConcurrentHashMap<String, String> runnableArgs;
+  private ClassLoader programClassLoader;
 
-  public GuavaServiceTwillRunnable(Service service, Map<String, String> args) {
+  /**
+   * Create an {@link com.continuuity.api.service.GuavaServiceTwillRunnable} from a {@link com.google.common.util.concurrent.Service}
+   * @param name Name of runnable.
+   * @param service Guava service to be run.
+   * @param runnableArgs Arguments for the runnable.
+   */
+  public GuavaServiceTwillRunnable(String name, Service service, Map<String, String> runnableArgs) {
     this.service = service;
-    this.args = new ConcurrentHashMap<String, String>(args);
+    this.runnableArgs = new ConcurrentHashMap<String, String>(runnableArgs);
+    this.name = name;
   }
 
-  public GuavaServiceTwillRunnable(ClassLoader classLoader) {
-    this.classLoader = classLoader;
+  /**
+   * Utility constructor used to instantiate the service from the program classloader.
+   * @param programClassLoader classloader to instantiate the service with.
+   */
+  public GuavaServiceTwillRunnable(ClassLoader programClassLoader) {
+    this.programClassLoader = programClassLoader;
   }
 
   @Override
   public TwillRunnableSpecification configure() {
-    args.put("service.class.name", service.getClass().getName());
+    runnableArgs.put("service.class.name", service.getClass().getName());
+    runnableArgs.put("service.runnable.name", name);
     return TwillRunnableSpecification.Builder.with()
-      .setName(service.getClass().getSimpleName())
-      .withConfigs(ImmutableMap.copyOf(args))
+      .setName(name)
+      .withConfigs(ImmutableMap.copyOf(runnableArgs))
       .build();
   }
 
   @Override
   public void initialize(TwillContext context) {
-    args = new ConcurrentHashMap<String, String>(context.getSpecification().getConfigs());
-    String serviceClassName = args.remove("service.class.name");
-    LOG.info("XXXX" + serviceClassName);
+    runnableArgs = new ConcurrentHashMap<String, String>(context.getSpecification().getConfigs());
+    String serviceClassName = runnableArgs.remove("service.class.name");
+    name = runnableArgs.remove("service.runnable.name");
+
     try {
-      Class<?> serviceClass = classLoader.loadClass(serviceClassName);
+      Class<?> serviceClass = programClassLoader.loadClass(serviceClassName);
       service = (Service) serviceClass.newInstance();
     } catch (Exception e) {
-      LOG.error("XXXX Could not instantiate service " + serviceClassName);
+      LOG.error("Could not instantiate service " + name);
       Throwables.propagate(e);
     }
 
-    LOG.info("XXXX Instantiated " + serviceClassName);
     service.startAndWait();
+    LOG.info("Instantiated service " + name);
     context.announce(service.getClass().getName(), getRandomPort());
   }
 
@@ -83,17 +98,18 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void stop() {
+    LOG.info("Instantiated service " + name);
     service.stopAndWait();
   }
 
   @Override
   public void destroy() {
-
+    // no-op
   }
 
   @Override
   public void run() {
-
+    // no-op
   }
 
   private int getRandomPort() {
