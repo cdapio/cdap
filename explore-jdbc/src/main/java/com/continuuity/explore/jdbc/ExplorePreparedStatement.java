@@ -345,17 +345,18 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
     StringBuffer newSql = new StringBuffer(sql);
 
     int paramLoc = 1;
-    while (getCharIndexFromSqlByParamLocation(sql, '?', paramLoc) > 0) {
+    while (true) {
+      int nextParamIndex = getCharIndexFromSqlByParamLocation(newSql, '?', 1);
+      if (nextParamIndex < 0) {
+        break;
+      }
       String tmp = parameters.get(paramLoc);
       if (tmp == null) {
         throw new SQLException("Parameter in position " + paramLoc + " has not been set.");
       }
-      int tt = getCharIndexFromSqlByParamLocation(newSql.toString(), '?', 1);
-      newSql.deleteCharAt(tt);
-      newSql.insert(tt, tmp);
+      newSql.replace(nextParamIndex, nextParamIndex + 1, tmp);
       paramLoc++;
     }
-
     return newSql.toString();
   }
 
@@ -363,7 +364,7 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
    * Get the index of the paramLoc-th given cchar from the SQL string.
    * -1 will be return, if nothing found
    */
-  private int getCharIndexFromSqlByParamLocation(String sql, char cchar, int paramLoc) {
+  private int getCharIndexFromSqlByParamLocation(StringBuffer sql, char cchar, int paramLoc) {
     boolean singleQuoteStr = false;
     boolean doubleQuoteStr = false;
     boolean escapeActive = false;
