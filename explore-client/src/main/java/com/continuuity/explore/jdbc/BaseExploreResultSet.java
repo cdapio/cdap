@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Continuuity, Inc.
+ * Copyright 2014 Continuuity, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,15 +16,6 @@
 
 package com.continuuity.explore.jdbc;
 
-import com.continuuity.explore.client.ExploreExecutionResult;
-import com.continuuity.explore.client.StatementExecutionFuture;
-import com.continuuity.explore.service.ExploreException;
-import com.continuuity.proto.ColumnDesc;
-import com.continuuity.proto.QueryResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -37,7 +28,6 @@ import java.sql.Date;
 import java.sql.NClob;
 import java.sql.Ref;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -48,104 +38,24 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Map;
 
 /**
- * Result set created by an {@link ExploreStatement}, containing the {@link ExploreExecutionResult} of a query
- * made to the Explore service.
+ * Base result set created by an {@link ExploreStatement}, containing the results
+ * of a query made to the Explore service.
  */
-public class ExploreQueryResultSet implements ResultSet {
-  private static final Logger LOG = LoggerFactory.getLogger(ExploreQueryResultSet.class);
-
+abstract class BaseExploreResultSet implements ResultSet {
   private boolean isClosed = false;
   private int fetchSize;
-
-  private QueryResult currentRow;
-  private ExploreResultSetMetaData metaData;
-
   private boolean wasNull = false;
-  private ExploreStatement statement;
-
-  private StatementExecutionFuture futureResults;
-  private ExploreExecutionResult executionResult;
-
-  ExploreQueryResultSet(StatementExecutionFuture futureResults, ExploreStatement statement)
-      throws SQLException {
-    this.futureResults = futureResults;
-    this.statement = statement;
-    this.fetchSize = statement.getFetchSize();
-    try {
-      this.executionResult = futureResults.get();
-    } catch (Exception e) {
-      // This should not happen, as ExploreStatement created this object after calling the get method on the future
-      LOG.error("Exception when retrieving result iterator from future object", e);
-      throw new SQLException(e);
-    }
-  }
-
-  @Override
-  public boolean next() throws SQLException {
-    if (isClosed) {
-      throw new SQLException("ResultSet is closed");
-    }
-    boolean res = executionResult.hasNext();
-    if (res) {
-      currentRow = executionResult.next();
-    }
-    return res;
-  }
-
-  @Override
-  public void close() throws SQLException {
-    if (isClosed) {
-      // No-op
-      return;
-    }
-    try {
-      executionResult.close();
-      statement.closeClientOperation();
-    } catch (IOException e) {
-      LOG.error("Could not close the query results", e);
-      throw new SQLException(e);
-    } finally {
-      futureResults = null;
-      executionResult = null;
-      statement = null;
-      isClosed = true;
-    }
-  }
 
   @Override
   public boolean isClosed() throws SQLException {
     return isClosed;
   }
 
-  @Override
-  public Object getObject(int columnIndex) throws SQLException {
-    if (isClosed) {
-      throw new SQLException("ResultSet is closed");
-    }
-    if (currentRow == null) {
-      throw new SQLException("No row found.");
-    }
-    List<Object> columns = currentRow.getColumns();
-    if (columns.isEmpty()) {
-      throw new SQLException("RowSet does not contain any columns!");
-    }
-    if (columnIndex < 1 || columnIndex > columns.size()) {
-      throw new SQLException("Invalid columnIndex: " + columnIndex);
-    }
-
-    int columnType = getMetaData().getColumnType(columnIndex);
-    try {
-      Object evaluated = evaluate(columnType, columns.get(columnIndex - 1));
-      wasNull = (evaluated == null);
-      return evaluated;
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new SQLException("Unrecognized column type:" + columnType, e);
-    }
+  protected void setIsClosed(boolean isClosed) {
+    this.isClosed = isClosed;
   }
 
   @Override
@@ -153,7 +63,7 @@ public class ExploreQueryResultSet implements ResultSet {
     return getObject(findColumn(s));
   }
 
-  private Object evaluate(int sqlType, Object value) {
+  protected Object evaluate(int sqlType, Object value) {
     if (value == null) {
       return null;
     }
@@ -179,6 +89,10 @@ public class ExploreQueryResultSet implements ResultSet {
       default:
         return value;
     }
+  }
+
+  protected void setWasNull(boolean wasNull) {
+    this.wasNull = wasNull;
   }
 
   @Override
@@ -221,35 +135,6 @@ public class ExploreQueryResultSet implements ResultSet {
     }
     // We cannot update a ExploreResultSet object
     return CONCUR_READ_ONLY;
-  }
-
-  @Override
-  public ResultSetMetaData getMetaData() throws SQLException {
-    if (isClosed) {
-      throw new SQLException("Resultset is closed");
-    }
-    if (metaData == null) {
-      try {
-        List<ColumnDesc> columnDescs = futureResults.getResultSchema();
-        metaData = new ExploreResultSetMetaData(columnDescs);
-      } catch (ExploreException e) {
-        LOG.error("Caught exception", e);
-        throw new SQLException(e);
-      }
-    }
-    return metaData;
-  }
-
-  @Override
-  public int findColumn(String name) throws SQLException {
-    if (isClosed) {
-      throw new SQLException("Resultset is closed");
-    }
-    if (metaData == null) {
-      getMetaData();
-    }
-    // Column names are case insensitive, as per the ResultSet interface javadoc
-    return metaData.getColumnPosition(name.toLowerCase());
   }
 
   @Override
