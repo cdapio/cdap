@@ -193,7 +193,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       }
 
       Class<?> clz = Class.forName(flowletDef.getFlowletSpec().getClassName(), true,
-                                   program.getMainClass().getClassLoader());
+                                   program.getClassLoader());
       Preconditions.checkArgument(Flowlet.class.isAssignableFrom(clz), "%s is not a Flowlet.", clz);
 
       Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>) clz;
@@ -616,7 +616,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     schemas.add(schemaGenerator.generate(StreamEventData.class));
 
 
-    return new SchemaCache(schemas.build(), program.getMainClass().getClassLoader());
+    return new SchemaCache(schemas.build(), program.getClassLoader());
   }
 
   /**
