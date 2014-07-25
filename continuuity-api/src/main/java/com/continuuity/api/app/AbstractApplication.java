@@ -26,9 +26,13 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.workflow.Workflow;
+import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillRunnable;
+
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * A support class for {@link Application Applications} which reduces repetition and results in
@@ -215,5 +219,32 @@ public abstract class AbstractApplication implements Application {
    */
   protected void addService(TwillRunnable runnable) {
     configurer.addService(runnable, ResourceSpecification.BASIC);
+  }
+
+  /**
+   * @see ApplicationConfigurer#addService(com.google.common.util.concurrent.Service, java.util.Map,
+   *                                        org.apache.twill.api.ResourceSpecification)
+   */
+  protected void addService(Service service, Map<String, String> args, ResourceSpecification specification) {
+    configurer.addService(service, args, specification);
+  }
+
+  /**
+   * @see ApplicationConfigurer#addService(com.google.common.util.concurrent.Service, java.util.Map,
+   *                                        org.apache.twill.api.ResourceSpecification)
+   * ResourceSpecification is defaulted to ResourceSpecification.BASIC
+   */
+  protected void addService(Service service, Map<String, String> args) {
+    addService(service, args, ResourceSpecification.BASIC);
+  }
+
+  /**
+   * @see ApplicationConfigurer#addService(com.google.common.util.concurrent.Service, java.util.Map,
+   *                                        org.apache.twill.api.ResourceSpecification)
+   * ResourceSpecification is defaulted to ResourceSpecification.BASIC
+   * Args is defaulted to an empty Map.
+   */
+  protected void addService(Service service) {
+    addService(service, Collections.<String, String>emptyMap(), ResourceSpecification.BASIC);
   }
 }

@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
@@ -36,30 +37,34 @@ import java.util.Map;
 public class GuavaServiceTwillRunnable implements TwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(GuavaServiceTwillRunnable.class);
   private Service service;
-  private Map<String, String> args;
+  private ConcurrentHashMap<String, String> args;
+  private ClassLoader classLoader;
 
   public GuavaServiceTwillRunnable(Service service, Map<String, String> args) {
     this.service = service;
-    this.args = args;
+    this.args = new ConcurrentHashMap<String, String>(args);
+  }
+
+  public GuavaServiceTwillRunnable(ClassLoader classLoader) {
+    this.classLoader = classLoader;
   }
 
   @Override
   public TwillRunnableSpecification configure() {
-    args.put("service.class.name", service.getClass().getCanonicalName());
-
+    args.put("service.class.name", service.getClass().getName());
     return TwillRunnableSpecification.Builder.with()
-      .setName(service.getClass().getCanonicalName())
+      .setName(service.getClass().getSimpleName())
       .withConfigs(ImmutableMap.copyOf(args))
       .build();
   }
 
   @Override
   public void initialize(TwillContext context) {
-    args = context.getSpecification().getConfigs();
+    args = new ConcurrentHashMap<String, String>(context.getSpecification().getConfigs());
     String serviceClassName = args.remove("service.class.name");
     LOG.info(serviceClassName);
     try {
-      Class<?> serviceClass = Class.forName(serviceClassName);
+      Class<?> serviceClass = classLoader.loadClass(serviceClassName);
       service = (Service) serviceClass.newInstance();
     } catch (Exception e) {
       LOG.error("Could not instantiate service " + serviceClassName);
@@ -68,7 +73,7 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
 
     LOG.info("Instantiated " + serviceClassName);
     service.startAndWait();
-    context.announce(service.getClass().getCanonicalName(), getRandomPort());
+    context.announce(service.getClass().getName(), getRandomPort());
   }
 
   @Override

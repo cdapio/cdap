@@ -17,6 +17,7 @@
 package com.continuuity.internal.app.runtime.service;
 
 import com.continuuity.api.common.RuntimeArguments;
+import com.continuuity.api.service.GuavaServiceTwillRunnable;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.metrics.ServiceRunnableMetrics;
@@ -150,7 +151,14 @@ public class InMemoryRunnableRunner implements ProgramRunner {
                                               dClient, dService, instanceCount, electionRegistry);
 
       TypeToken<? extends  TwillRunnable> runnableType = TypeToken.of(runnableClass);
-      TwillRunnable runnable = new InstantiatorFactory(false).get(runnableType).create();
+      TwillRunnable runnable = null;
+
+      if (runnableClass.isAssignableFrom(GuavaServiceTwillRunnable.class)) {
+        runnable = new GuavaServiceTwillRunnable(program.getClassLoader());
+      } else{
+        runnable = new InstantiatorFactory(false).get(runnableType).create();
+      }
+
       InMemoryRunnableDriver driver = new
         InMemoryRunnableDriver(runnable, twillContext, new UserServiceLoggingContext(program.getAccountId(),
                                                                                      program.getApplicationId(),

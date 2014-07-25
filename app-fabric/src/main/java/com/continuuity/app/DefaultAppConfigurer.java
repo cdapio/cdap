@@ -32,6 +32,7 @@ import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.service.GuavaServiceTwillRunnable;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
@@ -44,6 +45,7 @@ import com.continuuity.internal.service.DefaultServiceSpecification;
 import com.continuuity.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillRunnable;
@@ -183,6 +185,11 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addService(TwillRunnable runnable, ResourceSpecification specification) {
     addService(new SingleRunnableApplication(runnable, specification));
+  }
+
+  @Override
+  public void addService(Service service, Map<String, String> args, ResourceSpecification specification) {
+    addService(new GuavaServiceTwillRunnable(service, args), specification);
   }
 
   public ApplicationSpecification createApplicationSpec() {

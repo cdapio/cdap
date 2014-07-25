@@ -26,9 +26,12 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.workflow.Workflow;
+import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillRunnable;
+
+import java.util.Map;
 
 /**
  * Configures a Reactor Application.
@@ -153,8 +156,17 @@ public interface ApplicationConfigurer {
 
   /**
    * Adds {@link TwillRunnable} TwillRunnable as a Custom Service {@link TwillApplication} to the Application.
-   * @param runnable
-   * @param specification
+   * @param runnable TwillRunnable to run as service
+   * @param specification ResourceSpecification for Twill container.
    */
   void addService(TwillRunnable runnable, ResourceSpecification specification);
+
+  /**
+   * Adds {@link com.google.common.util.concurrent.Service} as a Custom Service {@link TwillApplication}
+   * to the Application.
+   * @param service Guava service to be added
+   * @param args Service arguments
+   * @param specification ResourceSpecification for Twill container.
+   */
+  void addService(Service service, Map<String, String> args, ResourceSpecification specification);
 }
