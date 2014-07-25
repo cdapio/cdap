@@ -16,11 +16,12 @@
 
 package com.continuuity.internal.app.scheduler;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
-import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetsModules;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
 import com.continuuity.internal.app.runtime.schedule.ScheduleStoreTableUtil;
 import com.continuuity.internal.io.UnsupportedTypeException;
@@ -59,7 +60,7 @@ public class SchedulerTest {
   private static Injector injector;
   private static Scheduler scheduler;
   private static TransactionExecutorFactory factory;
-  private static DataSetAccessor accessor;
+  private static DatasetFramework dsFramework;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -69,7 +70,7 @@ public class SchedulerTest {
                                      new DataFabricModules().getInMemoryModules(),
                                      new DataSetsModules().getInMemoryModule());
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
-    accessor = injector.getInstance(DataSetAccessor.class);
+    dsFramework = injector.getInstance(DatasetFramework.class);
     factory = injector.getInstance(TransactionExecutorFactory.class);
   }
 
@@ -77,7 +78,8 @@ public class SchedulerTest {
     throws SchedulerException, UnsupportedTypeException {
     JobStore js;
     if (enablePersistence) {
-      js = new DataSetBasedScheduleStore(factory, new ScheduleStoreTableUtil(accessor));
+      CConfiguration conf = injector.getInstance(CConfiguration.class);
+      js = new DataSetBasedScheduleStore(factory, new ScheduleStoreTableUtil(dsFramework, conf));
     } else {
       js = new RAMJobStore();
     }

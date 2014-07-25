@@ -17,7 +17,7 @@
 package com.continuuity.logging.save;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.tephra.DefaultTransactionExecutor;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
@@ -35,10 +35,10 @@ public final class CheckpointManager {
   private static final byte [] OFFSET_COLNAME = Bytes.toBytes("nextOffset");
 
   private final TransactionExecutor txExecutor;
-  private final OrderedColumnarTable metaTable;
+  private final OrderedTable metaTable;
   private final byte [] rowKeyPrefix;
 
-  public CheckpointManager(OrderedColumnarTable metaTable,
+  public CheckpointManager(OrderedTable metaTable,
                            TransactionSystemClient txClient,
                            String topic) {
     this.metaTable = metaTable;
