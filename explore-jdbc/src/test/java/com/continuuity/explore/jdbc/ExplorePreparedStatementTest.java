@@ -36,11 +36,11 @@ public class ExplorePreparedStatementTest {
   @Test
   public void executeTest() throws Exception {
     ExploreClient exploreClient = new MockExploreClient(
-      ImmutableMap.of("foobar", (List<ColumnDesc>) Lists.newArrayList(
+      ImmutableMap.of("SELECT * FROM table WHERE id=100, name='foo'", (List<ColumnDesc>) Lists.newArrayList(
         new ColumnDesc("column1", "STRING", 1, ""),
         new ColumnDesc("column2", "int", 2, ""))
       ),
-      ImmutableMap.of("foobar", (List<Result>) Lists.<Result>newArrayList())
+      ImmutableMap.of("SELECT * FROM table WHERE id=100, name='foo'", (List<Result>) Lists.<Result>newArrayList())
     );
 
 
@@ -63,11 +63,6 @@ public class ExplorePreparedStatementTest {
     Assert.assertFalse(rs.isClosed());
     Assert.assertFalse(rs.next());
 
-    rs = statement.executeQuery();
-    Assert.assertNotNull(rs);
-    Assert.assertFalse(rs.isClosed());
-    Assert.assertFalse(rs.next());
-
     statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name='?'");
     Assert.assertEquals("SELECT * FROM table WHERE name='?'", statement.updateSql());
 
@@ -79,5 +74,16 @@ public class ExplorePreparedStatementTest {
     statement.setInt(1, 100);
     Assert.assertEquals("SELECT * FROM table WHERE name=\"?\", id=100", statement.updateSql());
 
+    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name=\"'?'\", id=?");
+    statement.setInt(1, 100);
+    Assert.assertEquals("SELECT * FROM table WHERE name=\"'?'\", id=100", statement.updateSql());
+
+    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name=\"'?\", id=?");
+    statement.setInt(1, 100);
+    Assert.assertEquals("SELECT * FROM table WHERE name=\"'?\", id=100", statement.updateSql());
+
+    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name=\"\\\"?\\\"\", id=?");
+    statement.setInt(1, 100);
+    Assert.assertEquals("SELECT * FROM table WHERE name=\"\\\"?\\\"\", id=100", statement.updateSql());
   }
 }

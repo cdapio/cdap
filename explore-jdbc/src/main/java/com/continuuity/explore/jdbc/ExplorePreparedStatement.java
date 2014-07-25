@@ -364,15 +364,26 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
    * -1 will be return, if nothing found
    */
   private int getCharIndexFromSqlByParamLocation(String sql, char cchar, int paramLoc) {
-    int signalCount = 0;
+    boolean singleQuoteStr = false;
+    boolean doubleQuoteStr = false;
+    boolean escapeActive = false;
     int charIndex = -1;
     int num = 0;
     for (int i = 0; i < sql.length(); i++) {
       char c = sql.charAt(i);
-      if (c == '\'' || c == '\"') {
-        // record the count of char "'" and char "\""
-        signalCount++;
-      } else if (c == cchar && signalCount % 2 == 0) {
+      if (escapeActive) {
+        escapeActive = false;
+      } else if (!singleQuoteStr && !doubleQuoteStr && c == '"') {
+        doubleQuoteStr = true;
+      } else if (!singleQuoteStr && !doubleQuoteStr && c == '\'') {
+        singleQuoteStr = true;
+      } else if ((singleQuoteStr || doubleQuoteStr) && !escapeActive && c == '\\') {
+        escapeActive = true;
+      } else if (singleQuoteStr && c == '\'') {
+        singleQuoteStr = false;
+      } else if (doubleQuoteStr && c == '"') {
+        doubleQuoteStr = false;
+      } else if (c == cchar && !singleQuoteStr && !doubleQuoteStr) {
         num++;
         if (num == paramLoc) {
           charIndex = i;
