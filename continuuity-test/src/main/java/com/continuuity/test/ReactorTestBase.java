@@ -19,7 +19,6 @@ package com.continuuity.test;
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.app.Application;
 import com.continuuity.api.app.ApplicationContext;
-import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.module.DatasetModule;
@@ -38,7 +37,10 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.common.utils.OSDetector;
+import com.continuuity.data.DataFabric;
+import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.runtime.DataSetsModules;
@@ -72,6 +74,9 @@ import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.metrics.query.MetricsQueryService;
+import com.continuuity.tephra.TransactionContext;
+import com.continuuity.tephra.TransactionFailureException;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.ApplicationManagerFactory;
@@ -128,6 +133,8 @@ public class ReactorTestBase {
   private static SchedulerService schedulerService;
   private static DatasetService datasetService;
   private static DatasetFramework datasetFramework;
+  private static DataSetInstantiator dataSetInstantiator;
+  private static TransactionSystemClient txSystemClient;
   private static DiscoveryServiceClient discoveryClient;
   private static ExploreExecutorService exploreExecutorService;
   private static ExploreClient exploreClient;
@@ -276,6 +283,10 @@ public class ReactorTestBase {
     exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     exploreExecutorService.startAndWait();
     exploreClient = injector.getInstance(ExploreClient.class);
+    DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
+    DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
+    txSystemClient = injector.getInstance(TransactionSystemClient.class);
+    dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework, cConf, null);
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
@@ -386,15 +397,39 @@ public class ReactorTestBase {
 
 
   /**
-   * Gets instance of data set.
-   * @param datasetInstanceName instance name
-   * @return <T> type of the Dataset
+   * Gets Dataset manager of Dataset instance of type <T>
+   * @param datasetInstanceName instance name of dataset
+   * @return Dataset Manager of Dataset instance of type <T>
    * @throws Exception
    */
   @Beta
-  protected final <T extends Dataset> T getDataset(String datasetInstanceName)
+  protected final <T> DataSetManager<T> getDataset(String datasetInstanceName)
     throws Exception {
-    return datasetFramework.getDataset(datasetInstanceName, null);
+    @SuppressWarnings("unchecked")
+    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, null);
+    try {
+      final TransactionContext txContext =
+        new TransactionContext(txSystemClient, dataSetInstantiator.getTransactionAware());
+      txContext.start();
+      return new DataSetManager<T>() {
+        @Override
+        public T get() {
+          return dataSet;
+        }
+
+        @Override
+        public void flush() {
+          try {
+            txContext.finish();
+            txContext.start();
+          } catch (TransactionFailureException e) {
+            throw Throwables.propagate(e);
+          }
+        }
+      };
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
