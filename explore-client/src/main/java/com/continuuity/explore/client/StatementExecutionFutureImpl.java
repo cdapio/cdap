@@ -73,28 +73,6 @@ class StatementExecutionFutureImpl extends AbstractFuture<ExploreExecutionResult
   }
 
   @Override
-  protected void interruptTask() {
-    // Cancelling the future object means cancelling the query, as well as closing it
-    // Since closing the query also cancels it, we only need to close
-    try {
-      Handle handle = futureHandle.get();
-      exploreClient.close(handle);
-    } catch (InterruptedException e) {
-      LOG.error("Caught exception", e);
-      throw Throwables.propagate(e);
-    } catch (ExecutionException e) {
-      LOG.error("Caught exception when retrieving statement handle", e);
-      throw Throwables.propagate(e);
-    } catch (HandleNotFoundException e) {
-      // Don't need to throw an exception in that case - if the handle is not found, the query is already closed
-      LOG.warn("Caught exception when closing execution", e);
-    } catch (ExploreException e) {
-      LOG.error("Caught exception during cancel operation", e);
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
   public boolean setException(Throwable throwable) {
     return super.setException(throwable);
   }

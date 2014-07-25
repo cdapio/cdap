@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Continuuity, Inc.
+ * Copyright 2014 Continuuity, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
+import com.continuuity.explore.service.MetaDataInfo;
 import com.continuuity.explore.service.Result;
 
 import com.google.common.collect.Maps;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Mock Explore client to use in test cases.
@@ -68,6 +70,68 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
     futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get(statement).iterator()));
     return new MockStatementExecutionFuture(futureDelegate, statement, statementsToMetadata, statementsToResults);
+  }
+
+  @Override
+  public StatementExecutionFuture columns(@Nullable String catalog, @Nullable String schemaPattern,
+                                          String tableNamePattern, String columnNamePattern) {
+    SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("columns_stmt").iterator()));
+    return new MockStatementExecutionFuture(futureDelegate, "columns_stmt", statementsToMetadata, statementsToResults);
+  }
+
+  @Override
+  public StatementExecutionFuture catalogs() {
+    SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("catalogs_stmt").iterator()));
+    return new MockStatementExecutionFuture(futureDelegate, "catalogs_stmt", statementsToMetadata, statementsToResults);
+  }
+
+  @Override
+  public StatementExecutionFuture schemas(@Nullable String catalog, @Nullable String schemaPattern) {
+    SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("schemas_stmt").iterator()));
+    return new MockStatementExecutionFuture(futureDelegate, "schemas_stmt",
+                                            statementsToMetadata, statementsToResults);
+  }
+
+  @Override
+  public StatementExecutionFuture functions(@Nullable String catalog, @Nullable String schemaPattern,
+                                            String functionNamePattern) {
+    SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("functions_stmt").iterator()));
+    return new MockStatementExecutionFuture(futureDelegate, "functions_stmt",
+                                            statementsToMetadata, statementsToResults);
+  }
+
+  @Override
+  public ListenableFuture<MetaDataInfo> info(MetaDataInfo.InfoType infoType) {
+    return null;
+  }
+
+  @Override
+  public StatementExecutionFuture tables(@Nullable String catalog, @Nullable String schemaPattern,
+                                         String tableNamePattern, @Nullable List<String> tableTypes) {
+    SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("tables_stmt").iterator()));
+    return new MockStatementExecutionFuture(futureDelegate, "tables_stmt",
+                                            statementsToMetadata, statementsToResults);
+  }
+
+  @Override
+  public StatementExecutionFuture tableTypes() {
+    SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("tableTypes_stmt").iterator()));
+    return new MockStatementExecutionFuture(futureDelegate, "tableTypes_stmt",
+                                            statementsToMetadata, statementsToResults);
+  }
+
+  @Override
+  public StatementExecutionFuture dataTypes() {
+    SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("dataTypes_stmt").iterator()));
+    return new MockStatementExecutionFuture(futureDelegate, "dataTypes_stmt",
+                                            statementsToMetadata, statementsToResults);
   }
 
   @Override
@@ -111,6 +175,16 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
     @Override
     public void close() throws IOException {
       // TODO should close the query here
+    }
+
+    @Override
+    public int getFetchSize() {
+      return 100;
+    }
+
+    @Override
+    public void setFetchSize(int fetchSize) {
+      // Do nothing
     }
   }
 

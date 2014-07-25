@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Continuuity, Inc.
+ * Copyright 2014 Continuuity, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,7 +36,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 /**
- * Reactor JDBC Statement. At most one {@link ExploreQueryResultSet} object can be produced by instances
+ * Reactor JDBC Statement. At most one {@link ExploreResultSet} object can be produced by instances
  * of this class.
  */
 public class ExploreStatement implements Statement {
@@ -51,7 +51,20 @@ public class ExploreStatement implements Statement {
    *  statement.getResultSet();
    * </code>.
    */
-  private volatile ResultSet resultSet = null;
+  private ResultSet resultSet = null;
+
+  /**
+   * Sets the limit for the maximum number of rows that any ResultSet object produced by this
+   * Statement can contain to the given number. If the limit is exceeded, the excess rows
+   * are silently dropped. The value must be >= 0, and 0 means there is not limit.
+   */
+  private int maxRows = 0;
+
+  /**
+   * Add SQLWarnings to the warningChain if needed.
+   */
+  private SQLWarning warningChain = null;
+
   private volatile boolean isClosed = false;
   private volatile StatementExecutionFuture futureResults = null;
 
@@ -92,7 +105,7 @@ public class ExploreStatement implements Statement {
     futureResults = exploreClient.submit(sql);
     try {
       futureResults.get();
-      resultSet = new ExploreQueryResultSet(futureResults, this);
+      resultSet = new ExploreResultSet(futureResults, this, maxRows);
       // NOTE: Javadoc states: "returns false if the first result is an update count or there is no result"
       // Here we have a result, it may contain rows or may be empty, but it exists.
       return true;
@@ -129,6 +142,24 @@ public class ExploreStatement implements Statement {
   }
 
   @Override
+  public int getMaxRows() throws SQLException {
+    return maxRows;
+  }
+
+  @Override
+  public void setMaxRows(int max) throws SQLException {
+    if (max < 0) {
+      throw new SQLException("max rows must be >= 0");
+    }
+    maxRows = max;
+  }
+
+  @Override
+  public int getUpdateCount() throws SQLException {
+    return -1;
+  }
+
+  @Override
   public void setFetchSize(int i) throws SQLException {
     fetchSize = i;
   }
@@ -139,7 +170,7 @@ public class ExploreStatement implements Statement {
   }
 
   /**
-   * This method is not private to let {@link ExploreQueryResultSet} access it when closing its results.
+   * This method is not private to let {@link ExploreResultSet} access it when closing its results.
    */
   void closeClientOperation() throws SQLException {
     if (futureResults != null) {
@@ -217,16 +248,6 @@ public class ExploreStatement implements Statement {
   }
 
   @Override
-  public int getMaxRows() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setMaxRows(int i) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public void setEscapeProcessing(boolean b) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
@@ -243,21 +264,16 @@ public class ExploreStatement implements Statement {
 
   @Override
   public SQLWarning getWarnings() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    return warningChain;
   }
 
   @Override
   public void clearWarnings() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    warningChain = null;
   }
 
   @Override
   public void setCursorName(String s) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public int getUpdateCount() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 

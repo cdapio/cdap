@@ -16,9 +16,13 @@
 
 package com.continuuity.explore.client;
 
+import com.continuuity.explore.service.MetaDataInfo;
+
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.Closeable;
+import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Explore client discovers explore service, and executes explore commands using the service.
@@ -50,12 +54,121 @@ public interface ExploreClient extends Closeable {
 
   /**
    * Execute a Hive SQL statement asynchronously. The returned
-   * {@link com.continuuity.explore.client.StatementExecutionFuture} can be used to get the
+   * {@link StatementExecutionFuture} can be used to get the
    * schema of the operation, and it contains an iterator on the results of the statement.
 
    * @param statement SQL statement.
-   * @return {@link com.continuuity.explore.client.StatementExecutionFuture} eventually containing
-   * the results of the statement execution.
+   * @return {@link StatementExecutionFuture} eventually containing the results of the statement execution.
    */
   StatementExecutionFuture submit(String statement);
+
+
+  ///// METADATA
+
+  /**
+   * Retrieves a description of table columns available in the specified catalog.
+   * Only column descriptions matching the catalog, schema, table and column name criteria are returned.
+   *
+   * See {@link java.sql.DatabaseMetaData#getColumns(String, String, String, String)}.
+   *
+   * @param catalog a catalog name; must match the catalog name as it is stored in the database;
+   *                "" retrieves those without a catalog;
+   *                null means that the catalog name should not be used to narrow the search.
+   * @param schemaPattern a schema name pattern; must match the schema name as it is stored in the database;
+   *                      "" retrieves those without a schema;
+   *                      null means that the schema name should not be used to narrow the search.
+   * @param tableNamePattern a table name pattern; must match the table name as it is stored in the database.
+   * @param columnNamePattern a column name pattern; must match the column name as it is stored in the database.
+   * @return {@link StatementExecutionFuture} eventually containing the columns of interest.
+   */
+  StatementExecutionFuture columns(@Nullable String catalog, @Nullable String schemaPattern,
+                                   String tableNamePattern, String columnNamePattern);
+
+  /**
+   * Retrieves the catalog names available in this database.
+   *
+   * @return {@link StatementExecutionFuture} eventually containing the catalogs.
+   */
+  StatementExecutionFuture catalogs();
+
+  /**
+   * Retrieves the schema names available in this database.
+   *
+   * See {@link java.sql.DatabaseMetaData#getSchemas(String, String)}.
+   *
+   * @param catalog a catalog name; must match the catalog name as it is stored in the database;
+   *                "" retrieves those without a catalog;
+   *                null means that the catalog name should not be used to narrow the search.
+   * @param schemaPattern a schema name pattern; must match the schema name as it is stored in the database;
+   *                      "" retrieves those without a schema;
+   *                      null means that the schema name should not be used to narrow the search.
+   * @return {@link StatementExecutionFuture} eventually containing the schemas of interest.
+   */
+  StatementExecutionFuture schemas(@Nullable String catalog, @Nullable String schemaPattern);
+
+  /**
+   * Retrieves a description of the system and user functions available in the given catalog.
+   * Only system and user function descriptions matching the schema and function name criteria are returned.
+   *
+   * See {@link java.sql.DatabaseMetaData#getFunctions(String, String, String)}.
+   *
+   * @param catalog a catalog name; must match the catalog name as it is stored in the database;
+   *                "" retrieves those without a catalog;
+   *                null means that the catalog name should not be used to narrow the search.
+   * @param schemaPattern a schema name pattern; must match the schema name as it is stored in the database;
+   *                      "" retrieves those without a schema;
+   *                      null means that the schema name should not be used to narrow the search.
+   * @param functionNamePattern a function name pattern; must match the function name as it is stored in the database
+   * @return {@link StatementExecutionFuture} eventually containing the functions of interest.
+   */
+  StatementExecutionFuture functions(@Nullable String catalog, @Nullable String schemaPattern,
+                                     String functionNamePattern);
+
+
+  /**
+   * Get information about Reactor as a database.
+   *
+   * @param infoType information type we are interested about.
+   * @return a {@link ListenableFuture} object eventually containing the information requested.
+   */
+  ListenableFuture<MetaDataInfo> info(MetaDataInfo.InfoType infoType);
+
+  /**
+   * Retrieves a description of the tables available in the given catalog. Only table descriptions
+   * matching the catalog, schema, table name and type criteria are returned.
+   *
+   * See {@link java.sql.DatabaseMetaData#getTables(String, String, String, String[])}.
+   *
+   * @param catalog a catalog name; must match the catalog name as it is stored in the database;
+   *                "" retrieves those without a catalog;
+   *                null means that the catalog name should not be used to narrow the search.
+   * @param schemaPattern a schema name pattern; must match the schema name as it is stored in the database;
+   *                      "" retrieves those without a schema;
+   *                      null means that the schema name should not be used to narrow the search.
+   * @param tableNamePattern a table name pattern; must match the table name as it is stored in the database.
+   * @param tableTypes a list of table types, which must come from
+   *                   "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM";
+   *                   null returns all types.
+   * @return {@link StatementExecutionFuture} eventually containing the tables of interest.
+   */
+  StatementExecutionFuture tables(@Nullable String catalog, @Nullable String schemaPattern, String tableNamePattern,
+                                  @Nullable List<String> tableTypes);
+
+  /**
+   * Retrieves the table types available in this database.
+   *
+   * See {@link java.sql.DatabaseMetaData#getTableTypes()}.
+   *
+   * @return {@link StatementExecutionFuture} eventually containing the different table types available in Explore.
+   */
+  StatementExecutionFuture tableTypes();
+
+  /**
+   * Retrieves a description of all the data types supported by this database.
+   *
+   * See {@link java.sql.DatabaseMetaData#getTypeInfo()}.
+   *
+   * @return {@link StatementExecutionFuture} eventually containing the different data types available in Explore.
+   */
+  StatementExecutionFuture dataTypes();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Continuuity, Inc.
+ * Copyright 2014 Continuuity, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -87,16 +87,30 @@ public class ExploreDriver implements Driver {
     throw new SQLFeatureNotSupportedException();
   }
 
-  @Override
-  public int getMajorVersion() {
+  /**
+   * Get the major version number of the Explore driver.
+   */
+  static int getMajorDriverVersion() {
     // TODO make it dynamic [REACTOR-319]
     return 2;
   }
 
+  /**
+   * Get the minor version number of the Explore driver.
+   */
+  static int getMinorDriverVersion() {
+    // TODO make it dynamic [REACTOR-319]
+    return 4;
+  }
+
+  @Override
+  public int getMajorVersion() {
+    return getMajorDriverVersion();
+  }
+
   @Override
   public int getMinorVersion() {
-    // TODO make it dynamic [REACTOR-319]
-    return 3;
+    return getMinorDriverVersion();
   }
 
   @Override
