@@ -43,7 +43,8 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
   private ClassLoader programClassLoader;
 
   /**
-   * Create an {@link com.continuuity.api.service.GuavaServiceTwillRunnable} from a {@link com.google.common.util.concurrent.Service}
+   * Create an {@link com.continuuity.api.service.GuavaServiceTwillRunnable} from
+   * a {@link com.google.common.util.concurrent.Service}
    * @param name Name of runnable.
    * @param service Guava service to be run.
    * @param runnableArgs Arguments for the runnable.

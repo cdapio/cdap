@@ -225,8 +225,9 @@ public abstract class AbstractApplication implements Application {
    * @see ApplicationConfigurer#addService(String name, com.google.common.util.concurrent.Service, java.util.Map,
    *                                        org.apache.twill.api.ResourceSpecification)
    */
-  protected void addService(String name, Service service, Map<String, String> args, ResourceSpecification specification) {
-    configurer.addService(name, service, args, specification);
+  protected void addService(String name, Service service, Map<String, String> runnableArgs,
+                            ResourceSpecification specification) {
+    configurer.addService(name, service, runnableArgs, specification);
   }
 
   /**
@@ -234,8 +235,8 @@ public abstract class AbstractApplication implements Application {
    *                                        org.apache.twill.api.ResourceSpecification)
    * ResourceSpecification is defaulted to ResourceSpecification.BASIC
    */
-  protected void addService(String name, Service service, Map<String, String> args) {
-    addService(name, service, args, ResourceSpecification.BASIC);
+  protected void addService(String name, Service service, Map<String, String> runnableArgs) {
+    addService(name, service, runnableArgs, ResourceSpecification.BASIC);
   }
 
   /**
