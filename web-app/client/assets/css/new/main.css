@@ -463,7 +463,7 @@ a, a:visited {
 }
 
 #content {
-	min-width: 1056px;
+	min-width: 1280px;
 	background-color: #E0E1E6;
 	position: relative;
 	min-height: 100%;
@@ -482,6 +482,7 @@ a, a:visited {
 	background-color: #ffffff;
 	color: #0A234B;
 	position: fixed;
+	min-width: 600px;
 	width: 100%;
 	z-index: 50;
 	border-bottom: 1px solid #CECED0;
