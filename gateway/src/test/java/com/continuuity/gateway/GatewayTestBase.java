@@ -25,6 +25,7 @@ import com.continuuity.data.runtime.LocationStreamFileWriterFactory;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data.stream.service.StreamServiceRuntimeModule;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
@@ -72,6 +73,7 @@ import java.util.Set;
 /**
  *
  */
+// TODO: refactor this test. It is complete mess
 public abstract class GatewayTestBase {
 
   private static final String API_KEY = "SampleTestApiKey";
@@ -86,6 +88,7 @@ public abstract class GatewayTestBase {
 
   private static Injector injector;
   private static AppFabricServer appFabricServer;
+  private static DatasetService dsService;
   private static NettyRouter router;
   private static EndpointStrategy endpointStrategy;
   private static MetricsQueryService metrics;
@@ -181,6 +184,8 @@ public abstract class GatewayTestBase {
     metrics.startAndWait();
     streamHttpService.startAndWait();
     gateway.startAndWait();
+    dsService = injector.getInstance(DatasetService.class);
+    dsService.startAndWait();
 
     // Restart handlers to check if they are resilient across restarts.
     gateway.stopAndWait();
@@ -203,6 +208,7 @@ public abstract class GatewayTestBase {
     metrics.stopAndWait();
     streamHttpService.stopAndWait();
     router.stopAndWait();
+    dsService.stopAndWait();
     conf.clear();
   }
 

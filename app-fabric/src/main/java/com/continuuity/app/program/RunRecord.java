@@ -16,18 +16,34 @@
 
 package com.continuuity.app.program;
 
+import javax.annotation.Nullable;
+
 /**
  * This class record information for a particular run.
  */
 public final class RunRecord {
-  private String pid;
-  private long startTs;
-  private long stopTs;
-  private String endStatus;
+  private final String pid;
+  private final long startTs;
+  private final long stopTs;
+  private final String endStatus;
 
-  public RunRecord(final String pid, final long startTs, final long stopTs, final String endStatus) {
+  public RunRecord(String pid, long startTs) {
     this.pid = pid;
     this.startTs = startTs;
+    this.stopTs = -1;
+    this.endStatus = null;
+  }
+
+  public RunRecord(String pid, long startTs, long stopTs, String endStatus) {
+    this.pid = pid;
+    this.startTs = startTs;
+    this.stopTs = stopTs;
+    this.endStatus = endStatus;
+  }
+
+  public RunRecord(RunRecord started, long stopTs, String endStatus) {
+    this.pid = started.pid;
+    this.startTs = started.startTs;
     this.stopTs = stopTs;
     this.endStatus = endStatus;
   }
@@ -44,6 +60,7 @@ public final class RunRecord {
     return stopTs;
   }
 
+  @Nullable
   public String getEndStatus() {
     return endStatus;
   }

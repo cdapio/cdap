@@ -19,29 +19,33 @@ package com.continuuity.internal.app.store;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.metadata.MetaDataTable;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 
 /**
- *
+ * Builds {@link DefaultStore}
  */
-public class MDTBasedStoreFactory implements StoreFactory {
-  private final MetaDataTable table;
+public class DefaultStoreFactory implements StoreFactory {
   private final CConfiguration configuration;
   private final LocationFactory lFactory;
+  private final TransactionSystemClient txClient;
+  private final DatasetFramework dsFramework;
 
   @Inject
-  public MDTBasedStoreFactory(CConfiguration configuration,
-                              MetaDataTable table,
-                              LocationFactory lFactory) {
+  public DefaultStoreFactory(CConfiguration configuration,
+                             TransactionSystemClient txClient,
+                             LocationFactory lFactory,
+                             DatasetFramework dsFramework) {
     this.configuration = configuration;
-    this.table = table;
     this.lFactory = lFactory;
+    this.txClient = txClient;
+    this.dsFramework = dsFramework;
   }
 
   @Override
   public Store create() {
-    return new MDTBasedStore(configuration, table, lFactory);
+    return new DefaultStore(configuration, lFactory, txClient, dsFramework);
   }
 }
