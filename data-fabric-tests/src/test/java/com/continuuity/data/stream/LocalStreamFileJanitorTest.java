@@ -23,7 +23,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.file.FileWriter;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
-import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
+import com.continuuity.data.runtime.TransactionMetricsModule;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.inject.AbstractModule;

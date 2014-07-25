@@ -17,12 +17,13 @@
 package com.continuuity.data2.transaction.coprocessor.hbase96;
 
 import com.continuuity.data2.transaction.coprocessor.ReactorTransactionStateCacheSupplier;
-import com.continuuity.data2.transaction.coprocessor.TransactionStateCache;
+import com.continuuity.tephra.coprocessor.TransactionStateCache;
+import com.continuuity.tephra.coprocessor.hbase96.TransactionDataJanitor;
 import com.google.common.base.Supplier;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 
 /**
- * Implementation of the {@link com.continuuity.data2.transaction.coprocessor.hbase96.TransactionDataJanitor}
+ * Implementation of the {@link com.continuuity.tephra.coprocessor.hbase96.TransactionDataJanitor}
  * coprocessor that uses {@link com.continuuity.data2.transaction.coprocessor.ReactorTransactionStateCache}
  * to automatically refresh transaction state.
  */

@@ -23,11 +23,11 @@ import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.QueueProducer;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.TransactionExecutorFactory;
-import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.stream.StreamConfig;
+import com.continuuity.tephra.TransactionAware;
+import com.continuuity.tephra.TransactionExecutor;
+import com.continuuity.tephra.TransactionExecutorFactory;
+import com.continuuity.tephra.TransactionFailureException;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 

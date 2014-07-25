@@ -101,10 +101,7 @@ class LocalDistributedCacheManagerWithFix {
    */
   public void setup(JobConf conf) throws IOException {
 
-    String dir = String.format("%s/%s/%s", System.getProperty("user.dir"),
-                                           conf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                           conf.get(Constants.AppFabric.OUTPUT_DIR));
-    File workDir = new File(dir);
+    File workDir = new File(new File(conf.get(Constants.CFG_LOCAL_DATA_DIR)), conf.get(Constants.AppFabric.OUTPUT_DIR));
 
     // Generate YARN local resources objects corresponding to the distributed
     // cache configuration

@@ -26,9 +26,8 @@ import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.data.runtime.TransactionMetricsModule;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.transaction.TxConstants;
-import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.metrics.data.AggregatesScanResult;
 import com.continuuity.metrics.data.AggregatesScanner;
 import com.continuuity.metrics.data.AggregatesTable;
@@ -169,7 +168,7 @@ public class MetricsTableMigrator20to21Test {
     testHBase.startHBase();
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
-    cConf.unset(Constants.CFG_HDFS_USER);
+    cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, testHBase.getConfiguration()),
       new DiscoveryRuntimeModule().getDistributedModules(),

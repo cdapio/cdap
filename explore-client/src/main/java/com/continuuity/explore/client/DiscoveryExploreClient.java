@@ -28,6 +28,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
@@ -64,5 +65,10 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
     }
 
     return endpointStrategy.pick().getSocketAddress();
+  }
+
+  @Override
+  protected String getAuthorizationToken() {
+    return null;
   }
 }

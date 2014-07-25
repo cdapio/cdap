@@ -26,11 +26,11 @@ import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.leveldb.KeyValue;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
 import com.continuuity.data2.queue.ConsumerConfig;
-import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.stream.AbstractStreamFileConsumer;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumerState;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
+import com.continuuity.tephra.Transaction;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;

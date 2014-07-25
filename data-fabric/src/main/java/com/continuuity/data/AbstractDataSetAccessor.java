@@ -23,7 +23,7 @@ import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableClient;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableManager;
-import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.tephra.TxConstants;
 
 import java.util.Properties;
 import javax.annotation.Nullable;

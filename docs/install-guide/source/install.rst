@@ -344,7 +344,7 @@ Create a file ``continuuity.list`` at the location::
 
 	/etc/apt/sources.list.d/continuuity.list
 
-Use this authenticated URL (one line)::
+Use this authenticated URL (on one line)::
 
 	deb [ arch=amd64 ] https://<username>:<password>@repository.continuuity.com/content/sites/apt
             precise release
@@ -363,12 +363,12 @@ Install the Continuuity Reactor packages by using either of these methods:
 Using Yum (on one line)::
 
 	sudo yum install continuuity-gateway continuuity-kafka continuuity-reactor-master 
-	                  continuuity-security continuuity-web-app
+	                   continuuity-security continuuity-web-app
 
 Using APT (on one line)::
 
 	sudo apt-get install continuuity-gateway continuuity-kafka continuuity-reactor-master 
-	                      continuuity-security continuuity-web-app
+	                       continuuity-security continuuity-web-app
 
 Do this on each of the boxes that are being used for the Reactor components; our 
 recommended installation is a minimum of two boxes.
@@ -387,22 +387,36 @@ and started the services.
 Upgrading From a Previous Version
 =================================
 When upgrade an existing Continuuity Reactor installation from a previous version, you will need
-to make sure the Reactor table definitions in HBase are up-to-date.  
+to make sure the Reactor table definitions in HBase are up-to-date.
 
-First, proceed with the normal package installation, as described in `Installation`_.
+These steps will stop Reactor, update the installation, run an upgrade tool for the table definitions,
+and then restart Reactor.
 
-Then, run the upgrade utility:
-
-- Stop all Continuuity Reactor processes::
+1. Stop all Continuuity Reactor processes::
 
 	for i in `ls /etc/init.d/ | grep continuuity` ; do service $i stop ; done
 
-- Run the upgrade tool (on a single line)::
+#. Update the Continuuity Reactor packages by running either of these methods:
+
+   - Using Yum (on one line)::
+
+	sudo yum install continuuity continuuity-gateway 	                       continuuity-hbase-compat-0.94 continuuity-hbase-compat-0.96 
+	                       continuuity-kafka continuuity-reactor-master 
+	                       continuuity-security continuuity-web-app
+
+   - Using APT (on one line)::
+
+	sudo apt-get install continuuity continuuity-gateway 
+	                       continuuity-hbase-compat-0.94 continuuity-hbase-compat-0.96 
+	                       continuuity-kafka continuuity-reactor-master 
+	                       continuuity-security continuuity-web-app
+
+#. Run the upgrade tool (on one line)::
 
 	/opt/continuuity/reactor-master/bin/svc-reactor-master run 
 	   com.continuuity.data.tools.ReactorTool upgrade
 
-- Restart the Continuuity Reactor processes::
+#. Restart the Continuuity Reactor processes::
 
 	for i in `ls /etc/init.d/ | grep continuuity` ; do service $i start ; done
 
@@ -882,6 +896,8 @@ see the online document `Reactor Security Guide
    * - ``zookeeper.session.timeout.millis``
      - ``40000``
      - Zookeeper session time out in milliseconds
+
+.. rst2pdf: PageBreak
 
 .. _note 1:
 

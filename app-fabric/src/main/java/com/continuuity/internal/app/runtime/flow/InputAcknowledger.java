@@ -15,7 +15,7 @@
  */
 package com.continuuity.internal.app.runtime.flow;
 
-import com.continuuity.data2.transaction.TransactionFailureException;
+import com.continuuity.tephra.TransactionFailureException;
 
 /**
  * Interface to represent sending an ack on a input.

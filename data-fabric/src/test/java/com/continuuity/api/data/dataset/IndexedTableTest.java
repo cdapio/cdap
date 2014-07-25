@@ -21,7 +21,7 @@ import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.data.dataset.DataSetTestBase;
-import com.continuuity.data2.transaction.TransactionContext;
+import com.continuuity.tephra.TransactionContext;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;

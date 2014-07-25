@@ -18,8 +18,8 @@ package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
-import com.continuuity.data2.transaction.TransactionContext;
-import com.continuuity.data2.transaction.TransactionFailureException;
+import com.continuuity.tephra.TransactionContext;
+import com.continuuity.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

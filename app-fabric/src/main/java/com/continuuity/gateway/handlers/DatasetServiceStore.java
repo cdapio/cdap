@@ -32,7 +32,7 @@ import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 import com.continuuity.data2.dataset2.lib.kv.NoTxKeyValueTable;
-import com.continuuity.data2.transaction.TransactionFailureException;
+import com.continuuity.tephra.TransactionFailureException;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 

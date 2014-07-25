@@ -21,7 +21,7 @@ import com.continuuity.api.data.dataset.Feed;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
-import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.tephra.TransactionExecutor;
 import com.google.common.collect.ImmutableList;
 import org.junit.After;
 import org.junit.Assert;
