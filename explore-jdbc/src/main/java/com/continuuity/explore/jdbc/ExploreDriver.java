@@ -62,8 +62,6 @@ public class ExploreDriver implements Driver {
       return null;
     }
 
-
-
     ConnectionParams params = parseConnectionUrl(url);
 
     String authToken = null;
@@ -72,8 +70,6 @@ public class ExploreDriver implements Driver {
       authToken = tokenParams.get(0);
     }
 
-    // Create custom classloader for FixedAddressExploreClient and ExploreConnection -
-    // extend the bootstrap class loader but not the system one
     ExploreClient exploreClient = new FixedAddressExploreClient(params.getHost(), params.getPort(), authToken);
     if (!exploreClient.isServiceAvailable()) {
       throw new SQLException("Cannot connect to " + url + ", service unavailable");
