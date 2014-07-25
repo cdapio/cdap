@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Continuuity, Inc.
+ * Copyright 2014 Continuuity, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableMap;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.annotation.meta.param;
 
 import java.net.URI;
 import java.sql.Connection;
@@ -35,7 +34,6 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -63,16 +61,17 @@ public class ExploreDriver implements Driver {
     if (!acceptsURL(url)) {
       return null;
     }
+
     ConnectionParams params = parseConnectionUrl(url);
 
-    List<String> tokenParams = params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_AUTH_TOKEN);
     String authToken = null;
+    List<String> tokenParams = params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_AUTH_TOKEN);
     if (tokenParams != null && !tokenParams.isEmpty() && !tokenParams.get(0).isEmpty()) {
       authToken = tokenParams.get(0);
     }
 
     ExploreClient exploreClient = new FixedAddressExploreClient(params.getHost(), params.getPort(), authToken);
-    if (!exploreClient.isAvailable()) {
+    if (!exploreClient.isServiceAvailable()) {
       throw new SQLException("Cannot connect to " + url + ", service unavailable");
     }
     return new ExploreConnection(exploreClient);
@@ -88,16 +87,30 @@ public class ExploreDriver implements Driver {
     throw new SQLFeatureNotSupportedException();
   }
 
-  @Override
-  public int getMajorVersion() {
+  /**
+   * Get the major version number of the Explore driver.
+   */
+  static int getMajorDriverVersion() {
     // TODO make it dynamic [REACTOR-319]
     return 2;
   }
 
+  /**
+   * Get the minor version number of the Explore driver.
+   */
+  static int getMinorDriverVersion() {
+    // TODO make it dynamic [REACTOR-319]
+    return 4;
+  }
+
+  @Override
+  public int getMajorVersion() {
+    return getMajorDriverVersion();
+  }
+
   @Override
   public int getMinorVersion() {
-    // TODO make it dynamic [REACTOR-319]
-    return 3;
+    return getMinorDriverVersion();
   }
 
   @Override

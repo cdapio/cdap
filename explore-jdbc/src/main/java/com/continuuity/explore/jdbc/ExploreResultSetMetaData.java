@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Continuuity, Inc.
+ * Copyright 2014 Continuuity, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,10 +28,9 @@ import java.util.List;
  * Result Set returned when executing a query using Explore JDBC {@link ExploreStatement}.
  */
 public class ExploreResultSetMetaData implements ResultSetMetaData {
-
   private final List<ColumnDesc> columnDescs;
 
-  public ExploreResultSetMetaData(List<ColumnDesc> columnDescs) {
+  ExploreResultSetMetaData(List<ColumnDesc> columnDescs) {
     Preconditions.checkNotNull(columnDescs, "Column metadata list cannot be null.");
     this.columnDescs = columnDescs;
   }
@@ -123,12 +122,31 @@ public class ExploreResultSetMetaData implements ResultSetMetaData {
   }
 
   @Override
-  public boolean isSearchable(int i) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+  public int getColumnDisplaySize(int column) throws SQLException {
+    int columnType = getColumnType(column);
+    return JdbcColumn.columnDisplaySize(columnType);
+  }
+
+  @Override
+  public int getPrecision(int column) throws SQLException {
+    int columnType = getColumnType(column);
+    return JdbcColumn.columnPrecision(columnType);
+  }
+
+  @Override
+  public int getScale(int column) throws SQLException {
+    int columnType = getColumnType(column);
+    return JdbcColumn.columnScale(columnType);
   }
 
   @Override
   public boolean isCurrency(int i) throws SQLException {
+    // Hive doesn't support a currency type
+    return false;
+  }
+
+  @Override
+  public boolean isSearchable(int i) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -138,22 +156,7 @@ public class ExploreResultSetMetaData implements ResultSetMetaData {
   }
 
   @Override
-  public int getColumnDisplaySize(int i) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public String getSchemaName(int i) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public int getPrecision(int i) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public int getScale(int i) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 

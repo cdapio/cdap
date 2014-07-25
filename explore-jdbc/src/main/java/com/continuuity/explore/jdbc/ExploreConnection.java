@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Continuuity, Inc.
+ * Copyright 2014 Continuuity, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,12 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.service.ExploreException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -42,15 +47,16 @@ import java.util.concurrent.Executor;
 /**
  * Explore JDBC connection.
  *
- * A connection is made using a client that does not keep state. Therefore, closing a connection
- * will not affect executing statements, and results will not be lost.
+ * Closing a connection will affect executing statements, but the results of those already executed
+ * will still be available.
  */
 public class ExploreConnection implements Connection {
+  private static final Logger LOG = LoggerFactory.getLogger(ExploreConnection.class);
 
   private ExploreClient exploreClient;
   private boolean isClosed = false;
 
-  public ExploreConnection(ExploreClient exploreClient) {
+  ExploreConnection(ExploreClient exploreClient) {
     this.exploreClient = exploreClient;
   }
 
@@ -71,16 +77,44 @@ public class ExploreConnection implements Connection {
   }
 
   @Override
+  public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
+    if (resultSetType == ResultSet.TYPE_FORWARD_ONLY && resultSetConcurrency == ResultSet.CONCUR_READ_ONLY) {
+      return createStatement();
+    }
+    throw new SQLFeatureNotSupportedException(
+      "The resultSetType can only be TYPE_FORWARD_ONLY and the concurrency CONCUR_READ_ONLY");
+  }
+
+  @Override
+  public PreparedStatement prepareStatement(String s, int resultSetType, int resultSetConcurrency)
+    throws SQLException {
+    if (resultSetType == ResultSet.TYPE_FORWARD_ONLY && resultSetConcurrency == ResultSet.CONCUR_READ_ONLY) {
+      return prepareStatement(s);
+    }
+    throw new SQLFeatureNotSupportedException(
+      "The resultSetType can only be TYPE_FORWARD_ONLY and the concurrency CONCUR_READ_ONLY");
+  }
+
+  @Override
   public DatabaseMetaData getMetaData() throws SQLException {
-    // TODO Hive jdbc driver supports that
-    throw new SQLException("Method not supported");
+    if (isClosed) {
+      throw new SQLException("Connection is closed");
+    }
+    return new ExploreDatabaseMetaData(this, exploreClient);
   }
 
   @Override
   public void close() throws SQLException {
-    // Free resources
-    isClosed = true;
-    exploreClient = null;
+    try {
+      exploreClient.close();
+    } catch (IOException e) {
+      LOG.error("Could not close explore client", e);
+      throw new SQLException(e);
+    } finally {
+      // Free resources
+      isClosed = true;
+      exploreClient = null;
+    }
   }
 
   @Override
@@ -89,9 +123,26 @@ public class ExploreConnection implements Connection {
   }
 
   @Override
+  public boolean isReadOnly() throws SQLException {
+    // Explore does not support writing to datasets using SQL queries
+    return true;
+  }
+
+  @Override
   public boolean getAutoCommit() throws SQLException {
     // We don't (yet) support write, but with Hive, every statement is auto commit.
     return true;
+  }
+
+  @Override
+  public String getCatalog() throws SQLException {
+    // Hive does not have a notion of catalog - it only knows "schemas", ie databases
+    return "";
+  }
+
+  @Override
+  public int getTransactionIsolation() throws SQLException {
+    return Connection.TRANSACTION_NONE;
   }
 
   @Override
@@ -125,27 +176,12 @@ public class ExploreConnection implements Connection {
   }
 
   @Override
-  public boolean isReadOnly() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public void setCatalog(String s) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
   @Override
-  public String getCatalog() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
   public void setTransactionIsolation(int i) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public int getTransactionIsolation() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -157,25 +193,6 @@ public class ExploreConnection implements Connection {
   @Override
   public void clearWarnings() throws SQLException {
     throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-    if (resultSetType == ResultSet.TYPE_FORWARD_ONLY && resultSetConcurrency == ResultSet.CONCUR_READ_ONLY) {
-      return createStatement();
-    }
-    throw new SQLFeatureNotSupportedException(
-      "The resultSetType can only be TYPE_FORWARD_ONLY and the concurrency CONCUR_READ_ONLY");
-  }
-
-  @Override
-  public PreparedStatement prepareStatement(String s, int resultSetType, int resultSetConcurrency)
-      throws SQLException {
-    if (resultSetType == ResultSet.TYPE_FORWARD_ONLY && resultSetConcurrency == ResultSet.CONCUR_READ_ONLY) {
-      return prepareStatement(s);
-    }
-    throw new SQLFeatureNotSupportedException(
-      "The resultSetType can only be TYPE_FORWARD_ONLY and the concurrency CONCUR_READ_ONLY");
   }
 
   @Override
