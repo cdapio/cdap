@@ -2,9 +2,9 @@
  * Service Status Controller
  */
 
-define(['core/controllers/runnable-config'], function (RunnableConfigController) {
+define(['core/controllers/userservice'], function (Userservice) {
 
-  var Controller = RunnableConfigController.extend({
+  var Controller = Userservice.extend({
 
     /*
      * This syntax makes the Service controller available to this controller.
@@ -24,7 +24,6 @@ define(['core/controllers/runnable-config'], function (RunnableConfigController)
 
     unload: function () {
     }
-
 
   });
 

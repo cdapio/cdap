@@ -11,71 +11,15 @@ define([], function () {
     load: function () {
       var self = this;
       self.set('systemServices', []);
-      self.set('userServices', []);
-
-      self.HTTP.rest('apps', function (apps) {
-        apps.forEach(function(app){
-          self.initApp(app);
-        });
-      });
 
       self.resetServices();
 
       this.interval = setInterval(function () {
         self.resetServices();
-        self.resetUserServices();
       }, C.POLLING_INTERVAL)
     },
-
-
-    initService: function (service) {
-      var self = this;
-
-      var newModel = C.Userservice.create({
-                       status: service.status,
-                       imgClass: service.status === 'RUNNING' ? 'complete' : 'loading',
-                       modelId: service.name,
-                       description: service.description,
-                       name: service.name,
-                       app: service.app
-                     });
-
-      //The following function also inserts the model into self.get('userServices')
-      newModel.populateRunnablesAndUpdate(self.HTTP, self.get('userServices'));
-    },
-
-    initApp: function (app) {
-      var self = this;
-      self.HTTP.rest('apps/' + app.name + '/services', function (services) {
-        services.forEach(function (service) {
-          self.initService(service);
-        });
-      });
-    },
-
-
     config: function(service) {
       this.transitionToRoute('Userservice.Config', service);
-    },
-
-    find: function(appID, serviceName) {
-      var self = this;
-      var userServices = self.get('userServices');
-      for (var i=0; i<userServices.length; i++){
-        var service = userServices[i];
-        if(service.name == serviceName && service.app == appID) {
-          return service;
-        }
-      }
-      return false;
-    },
-
-    resetUserServices: function () {
-      var self = this;
-      var arr = self.get('userServices');
-      for (var i=0; i<arr.length; i++){
-        arr[i].update(self.HTTP);
-      }
     },
 
     resetServices: function () {
@@ -153,28 +97,6 @@ define([], function () {
       );
     },
 
-    runnableIncreaseInstance: function (service, runnableID, instanceCount) {
-      this.runnableVerifyInstanceBounds(service, runnableID, ++instanceCount, "Increase");
-    },
-    runnableDecreaseInstance: function (service, runnableID, instanceCount) {
-      this.runnableVerifyInstanceBounds(service, runnableID, --instanceCount, "Decrease");
-    },
-
-    runnableVerifyInstanceBounds: function (service, runnableID, numRequested, direction) {
-      var self = this;
-      if (numRequested <= 0) {
-        C.Modal.show("Instances Error", ERROR_TXT);
-        return;
-      }
-      C.Modal.show(
-        direction + " instances",
-        direction + " instances for runnable: " + runnableID + "?",
-        function () {
-          var url = 'rest/apps/' + service.app + '/services/' + service.name + '/runnables/' + runnableID + '/instances';
-          self.executeInstanceCall(url, numRequested);
-        }
-      );
-    },
 
     increaseInstance: function (service, instanceCount) {
       this.verifyInstanceBounds(service, ++instanceCount, "Increase");
@@ -208,7 +130,6 @@ define([], function () {
           C.Util.showWarning(resp);
         } else {
           self.resetServices();
-          self.resetUserServices();
         }
       });
     },

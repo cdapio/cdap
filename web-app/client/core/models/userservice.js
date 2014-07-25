@@ -41,6 +41,7 @@ define(['core/models/program'], function (Program) {
           runnables.push(Ember.Object.create({id : runnable}));
         });
         self.set('runnablesList', runnables);
+        self.set('numRunnables', runnables.length);
         if(userServicesArray != undefined) {
           userServicesArray.pushObject(self);
         }

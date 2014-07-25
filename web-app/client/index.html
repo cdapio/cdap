@@ -236,83 +236,7 @@
 
       </div>
     </div>
-    <div id="panels">
 
-      {{#if userServices}}
-      <div class="panel">
-      <table class="table">
-        <thead>
-          <th style="padding-left: 14px; min-width: 350px" class="service-col">Name</th>
-          <th style="min-width: 100px;" class="status-col center-align">Status
-          </th>
-          <th style="min-width: 200px;" class="instance-col center-align">Instances Requested</th>
-          <th style="min-width: 200px;" class="instance-col center-align">Provisioned</th>
-          <th style="min-width: 200px;" class="instance-col center-align"> Start/Stop </th>
-        </thead>
-        <tbody>
-        {{#each service in userServices}}
-          <tr>
-            <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
-              <a {{bindAttr href="service.href"}}>{{service.app}}:{{service.name}}</a><br /><span class="app-list-status app-status">{{service.status}}</span>
-            </a>
-              <br />
-              <span class="app-list-status">{{service.description}}</span>
-            </td>
-            <td style="max-width: 100px;" class="status-col center-align">
-              <span {{ bindAttr class=":service-icon service.imgClass" }} ></span>
-            </td>
-            <td style="max-width: 200px;" class="instance-col">
-            </td>
-            <td style="max-width: 350px;" class="instance-provisioned service-col">
-            </td>
-            <td class="center-align">
-                <div class="btn-group start-stop-btns">
-                    <button class="userServices-start" {{action start service}}></button>
-                    <button class="userServices-stop" {{action stop service}}></button>
-                </div>
-            </td>
-          </tr>
-          {{!--  RUNNABLES ROWS --}}
-            {{#each runnable in service.runnablesList}}
-            <tr>
-            <td style="max-width: 350px;" class="app-list-name service-col pull-right center-align"><a class="none-text-decoration">
-              {{runnable.id}}
-            </a>
-              <br />
-              <span class="app-list-status pull-left">runnable</span>
-            </td>
-            <td style="max-width: 100px;" class="status-col center-align">
-              {{!-- removed status icon from here --}}
-            </td>
-            <td style="max-width: 200px;" class="instance-col">
-              <div class="instance-wrapper">
-                <div class="instance-num"><span>{{runnable.requested}}</span></div>
-                <div>
-                  <a class="cursor-pointer" {{action runnableDecreaseInstance service runnable.id runnable.requested }}>
-                    <span class="minus-icon"></span>
-                  </a>
-                  <a class="cursor-pointer" {{action runnableIncreaseInstance service runnable.id runnable.requested }}>
-                    <span class="plus-icon"></span>
-                  </a>
-                </div>
-              </div>
-            <td style="max-width: 350px;" class="instance-provisioned service-col">
-                <div class="instance-num auto-margin"><span>{{runnable.provisioned}}</span></div>
-            </td>
-            <td class="center-align">
-              {{!-- removed start/stop buttons from here --}}
-            </td>
-          </tr>
-          {{/each}}
-          {{!--  RUNNABLES ROWS --}}
-        {{/each}}
-        </tbody>
-      </table>
-      </div>
-      {{/if}}
-
-
-      </div>
     {{outlet}}
   </script>
 
@@ -1823,7 +1747,7 @@
         {{#each elements.Dataset }}
           <tr>
             <td class="app-list-name">
-            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{classname}}</span>
+              <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{classname}}</span>
             </td>
             <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
             <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Dataset" mode="singular" metrics="/reactor/datasets/{id}/dataset.store.bytes"}}</td>
@@ -1876,8 +1800,7 @@
       <table class="table">
       <thead>
         <th style="padding-left: 14px;">Userservice</th>
-        <th style="width: 262px;">Some column</th>
-        <th style="width: 262px;">Some other column</th>
+        <th style="width: 262px;">Number of Runnables</th>
       </thead>
       <tbody>
         {{#each elements.Userservice}}
@@ -1885,8 +1808,7 @@
             <td class="app-list-name">
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
             </td>
-            <td style="max-width:262px;"></td>
-            <td style="max-width:262px;"></td>
+            <td class="app-list-count">{{numRunnables}}</td>
           </tr>
         {{/each}}
       </tbody>

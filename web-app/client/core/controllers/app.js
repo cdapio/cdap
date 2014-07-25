@@ -125,10 +125,10 @@ define([], function () {
 				var i = objects.length;
 				while (i--) {
 					objects[i] = C.Userservice.create(objects[i]);
+					objects[i].populateRunnablesAndUpdate(self.HTTP);
 				}
 				self.get('elements.Userservice').pushObjects(objects);
 				self.__loaded();
-
 			});
 
 		},
