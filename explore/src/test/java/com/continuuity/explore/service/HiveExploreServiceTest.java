@@ -21,6 +21,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.explore.client.StatementExecutionFuture;
+import com.continuuity.explore.jdbc.ExploreDriver;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.test.SlowTests;
 
@@ -171,7 +172,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
   @Test
   public void exploreDriverTest() throws Exception {
     // Register explore jdbc driver
-    Class.forName("com.continuuity.explore.jdbc.ExploreDriver");
+    Class.forName(ExploreDriver.class.getName());
 
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     Discoverable discoverable = new RandomEndpointStrategy(discoveryServiceClient.discover(
