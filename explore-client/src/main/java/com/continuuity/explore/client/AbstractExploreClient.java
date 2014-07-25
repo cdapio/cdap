@@ -20,9 +20,9 @@ import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.MetaDataInfo;
-import com.continuuity.explore.service.Result;
-import com.continuuity.explore.service.Status;
-
+import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryResult;
+import com.continuuity.proto.QueryStatus;
 import com.google.common.base.Functions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
@@ -71,7 +71,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   public ListenableFuture<Void> disableExplore(final String datasetInstance) {
     StatementExecutionFuture futureResults = getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return doDisableExplore(datasetInstance);
       }
     });
@@ -84,7 +84,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   public ListenableFuture<Void> enableExplore(final String datasetInstance) {
     StatementExecutionFuture futureResults = getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return doEnableExplore(datasetInstance);
       }
     });
@@ -97,7 +97,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   public StatementExecutionFuture submit(final String statement) {
     return getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return execute(statement);
       }
     });
@@ -108,7 +108,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
                                           final String tableNamePattern, final String columnNamePattern) {
     return getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return getColumns(catalog, schemaPattern, tableNamePattern, columnNamePattern);
       }
     });
@@ -118,7 +118,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   public StatementExecutionFuture catalogs() {
     return getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return getCatalogs();
       }
     });
@@ -128,7 +128,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   public StatementExecutionFuture schemas(@Nullable final String catalog, @Nullable final String schemaPattern) {
     return getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return getSchemas(catalog, schemaPattern);
       }
     });
@@ -139,7 +139,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
                                             final String functionNamePattern) {
     return getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return getFunctions(catalog, schemaPattern, functionNamePattern);
       }
     });
@@ -160,7 +160,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
                                          final String tableNamePattern, @Nullable final List<String> tableTypes) {
     return getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return getTables(catalog, schemaPattern, tableNamePattern, tableTypes);
       }
     });
@@ -170,7 +170,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   public StatementExecutionFuture tableTypes() {
     return getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return getTableTypes();
       }
     });
@@ -180,7 +180,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   public StatementExecutionFuture dataTypes() {
     return getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return getTypeInfo();
       }
     });
@@ -190,9 +190,9 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     // NOTE: here we have two levels of Future because we want to return the future that actually
     // finishes the execution of the operation - it is not enough that the future handle
     // be available
-    ListenableFuture<Handle> futureHandle = executor.submit(new Callable<Handle>() {
+    ListenableFuture<QueryHandle> futureHandle = executor.submit(new Callable<QueryHandle>() {
       @Override
-      public Handle call() throws Exception {
+      public QueryHandle call() throws Exception {
         return handleProducer.getHandle();
       }
     });
@@ -244,7 +244,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
    * Interface that produces a handle.
    */
   private static interface HandleProducer {
-    Handle getHandle() throws ExploreException, SQLException;
+    QueryHandle getHandle() throws ExploreException, SQLException;
   }
 
   /**
@@ -256,7 +256,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     private static final int DEFAUL_FETCH_SIZE = 100;
 
     private int fetchSize = DEFAUL_FETCH_SIZE;
-    private Iterator<Result> delegate;
+    private Iterator<QueryResult> delegate;
 
     private final ExploreHttpClient exploreClient;
     private final QueryHandle handle;
@@ -279,7 +279,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
       }
       try {
         // call the endpoint 'next' to get more results and set delegate
-        List<Result> nextResults = exploreClient.nextResults(handle, fetchSize);
+        List<QueryResult> nextResults = exploreClient.nextResults(handle, fetchSize);
         delegate = nextResults.iterator();
 
         // At this point, if delegate has no result, there are no more results at all

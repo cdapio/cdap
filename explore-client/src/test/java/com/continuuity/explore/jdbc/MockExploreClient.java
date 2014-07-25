@@ -21,8 +21,8 @@ import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.MetaDataInfo;
-import com.continuuity.explore.service.Result;
-
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryResult;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ForwardingListenableFuture;

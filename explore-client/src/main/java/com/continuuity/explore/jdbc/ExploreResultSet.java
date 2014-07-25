@@ -18,10 +18,9 @@ package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.client.StatementExecutionFuture;
-import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Result;
-
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +35,7 @@ import java.util.List;
 public class ExploreResultSet extends BaseExploreResultSet {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreResultSet.class);
 
-  private Result currentRow;
+  private QueryResult currentRow;
   private int nextRowNb = 1;
   private ExploreResultSetMetaData metaData;
 

@@ -23,8 +23,6 @@ import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.MetaDataInfo;
-import com.continuuity.explore.service.Result;
-import com.continuuity.explore.service.Status;
 import com.continuuity.hive.context.CConfCodec;
 import com.continuuity.hive.context.ConfigurationUtil;
 import com.continuuity.hive.context.ContextManager;
@@ -179,7 +177,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public Handle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
+  public QueryHandle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
     throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
@@ -187,7 +185,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       try {
         OperationHandle operationHandle = cliService.getColumns(sessionHandle, catalog, schemaPattern,
                                                                 tableNamePattern, columnNamePattern);
-        Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+        QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
         LOG.trace("Retrieving columns: catalog {}, schemaPattern {}, tableNamePattern {}, columnNamePattern {}",
                   catalog, schemaPattern, tableNamePattern, columnNamePattern);
         return handle;
@@ -203,13 +201,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public Handle getCatalogs() throws ExploreException, SQLException {
+  public QueryHandle getCatalogs() throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       try {
         OperationHandle operationHandle = cliService.getCatalogs(sessionHandle);
-        Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+        QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
         LOG.trace("Retrieving catalogs");
         return handle;
       } catch (Throwable e) {
@@ -224,13 +222,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public Handle getSchemas(String catalog, String schemaPattern) throws ExploreException, SQLException {
+  public QueryHandle getSchemas(String catalog, String schemaPattern) throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       try {
         OperationHandle operationHandle = cliService.getSchemas(sessionHandle, catalog, schemaPattern);
-        Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+        QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
         LOG.trace("Retrieving schemas: catalog {}, schema {}", catalog, schemaPattern);
         return handle;
       } catch (Throwable e) {
@@ -245,7 +243,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public Handle getFunctions(String catalog, String schemaPattern, String functionNamePattern)
+  public QueryHandle getFunctions(String catalog, String schemaPattern, String functionNamePattern)
     throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
@@ -253,7 +251,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       try {
         OperationHandle operationHandle = cliService.getFunctions(sessionHandle, catalog,
                                                                   schemaPattern, functionNamePattern);
-        Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+        QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
         LOG.trace("Retrieving functions: catalog {}, schema {}, function {}",
                   catalog, schemaPattern, functionNamePattern);
         return handle;
@@ -306,7 +304,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public Handle getTables(String catalog, String schemaPattern,
+  public QueryHandle getTables(String catalog, String schemaPattern,
                           String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
@@ -314,7 +312,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       try {
         OperationHandle operationHandle = cliService.getTables(sessionHandle, catalog, schemaPattern,
                                                                tableNamePattern, tableTypes);
-        Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+        QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
         LOG.trace("Retrieving tables: catalog {}, schemaNamePattern {}, tableNamePattern {}, tableTypes {}",
                   catalog, schemaPattern, tableNamePattern, tableTypes);
         return handle;
@@ -330,13 +328,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public Handle getTableTypes() throws ExploreException, SQLException {
+  public QueryHandle getTableTypes() throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       try {
         OperationHandle operationHandle = cliService.getTableTypes(sessionHandle);
-        Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+        QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
         LOG.trace("Retrieving table types");
         return handle;
       } catch (Throwable e) {
@@ -351,13 +349,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public Handle getTypeInfo() throws ExploreException, SQLException {
+  public QueryHandle getTypeInfo() throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       try {
         OperationHandle operationHandle = cliService.getTypeInfo(sessionHandle);
-        Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+        QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
         LOG.trace("Retrieving type info");
         return handle;
       } catch (Throwable e) {
@@ -372,7 +370,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public Handle execute(String statement) throws ExploreException, SQLException {
+  public QueryHandle execute(String statement) throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
       // TODO: allow changing of hive user and password - REACTOR-271
@@ -380,7 +378,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       try {
         OperationHandle operationHandle = doExecute(sessionHandle, statement);
-        Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+        QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
         LOG.trace("Executing statement: {} with handle {}", statement, handle);
         return handle;
       } catch (Throwable e) {

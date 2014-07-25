@@ -31,8 +31,8 @@ import javax.annotation.Nullable;
 public interface Explore {
 
   /**
-   * Execute a Hive SQL statement asynchronously. The returned {@link Handle} can be used to get the status/result of
-   * the operation.
+   * Execute a Hive SQL statement asynchronously. The returned {@link QueryHandle} can be used to get the
+   * status/result of the operation.
    *
    * @param statement SQL statement.
    * @return {@link QueryHandle} representing the operation.
@@ -97,7 +97,7 @@ public interface Explore {
    * @throws ExploreException on any error closing operation.
    * @throws HandleNotFoundException when handle is not found.
    */
-  void close(Handle handle) throws ExploreException, HandleNotFoundException;
+  void close(QueryHandle handle) throws ExploreException, HandleNotFoundException;
 
 
   ////// Metadata methods
@@ -116,22 +116,22 @@ public interface Explore {
    *                      null means that the schema name should not be used to narrow the search.
    * @param tableNamePattern a table name pattern; must match the table name as it is stored in the database.
    * @param columnNamePattern a column name pattern; must match the column name as it is stored in the database.
-   * @return {@link Handle} representing the operation.
+   * @return {@link QueryHandle} representing the operation.
    * @throws ExploreException on any error getting the columns.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public Handle getColumns(@Nullable String catalog, @Nullable String schemaPattern,
+  public QueryHandle getColumns(@Nullable String catalog, @Nullable String schemaPattern,
                            String tableNamePattern, String columnNamePattern)
     throws ExploreException, SQLException;
 
   /**
    * Retrieves the catalog names available in this database.
    *
-   * @return {@link Handle} representing the operation.
+   * @return {@link QueryHandle} representing the operation.
    * @throws ExploreException on any error getting the columns.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public Handle getCatalogs() throws ExploreException, SQLException;
+  public QueryHandle getCatalogs() throws ExploreException, SQLException;
 
   /**
    * Retrieves the schema names available in this database.
@@ -144,11 +144,11 @@ public interface Explore {
    * @param schemaPattern a schema name pattern; must match the schema name as it is stored in the database;
    *                      "" retrieves those without a schema;
    *                      null means that the schema name should not be used to narrow the search.
-   * @return {@link Handle} representing the operation.
+   * @return {@link QueryHandle} representing the operation.
    * @throws ExploreException on any error getting the schemas.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public Handle getSchemas(@Nullable String catalog, @Nullable String schemaPattern)
+  public QueryHandle getSchemas(@Nullable String catalog, @Nullable String schemaPattern)
     throws ExploreException, SQLException;
 
   /**
@@ -164,11 +164,11 @@ public interface Explore {
    *                      "" retrieves those without a schema;
    *                      null means that the schema name should not be used to narrow the search.
    * @param functionNamePattern a function name pattern; must match the function name as it is stored in the database
-   * @return {@link Handle} representing the operation.
+   * @return {@link QueryHandle} representing the operation.
    * @throws ExploreException on any error getting the functions.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public Handle getFunctions(@Nullable String catalog, @Nullable String schemaPattern, String functionNamePattern)
+  public QueryHandle getFunctions(@Nullable String catalog, @Nullable String schemaPattern, String functionNamePattern)
     throws ExploreException, SQLException;
 
 
@@ -176,7 +176,7 @@ public interface Explore {
    * Get information about Reactor as a database.
    *
    * @param infoType information type we are interested about.
-   * @return {@link Handle} representing the operation.
+   * @return {@link QueryHandle} representing the operation.
    * @throws ExploreException on any error getting the information.
    * @throws SQLException if there are errors in the SQL statement.
    */
@@ -198,32 +198,32 @@ public interface Explore {
    * @param tableTypes a list of table types, which must come from
    *                   "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM";
    *                   null returns all types.
-   * @return {@link Handle} representing the operation.
+   * @return {@link QueryHandle} representing the operation.
    * @throws ExploreException on any error getting the tables.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public Handle getTables(@Nullable String catalog, @Nullable String schemaPattern, String tableNamePattern,
-                          @Nullable List<String> tableTypes) throws ExploreException, SQLException;
+  public QueryHandle getTables(@Nullable String catalog, @Nullable String schemaPattern, String tableNamePattern,
+                               @Nullable List<String> tableTypes) throws ExploreException, SQLException;
 
   /**
    * Retrieves the table types available in this database.
    *
    * See {@link java.sql.DatabaseMetaData#getTableTypes()}.
    *
-   * @return {@link Handle} representing the operation.
+   * @return {@link QueryHandle} representing the operation.
    * @throws ExploreException on any error getting the table types.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public Handle getTableTypes() throws ExploreException, SQLException;
+  public QueryHandle getTableTypes() throws ExploreException, SQLException;
 
   /**
    * Retrieves a description of all the data types supported by this database.
    *
    * See {@link java.sql.DatabaseMetaData#getTypeInfo()}.
    *
-   * @return {@link Handle} representing the operation.
+   * @return {@link QueryHandle} representing the operation.
    * @throws ExploreException on any error getting the types info.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public Handle getTypeInfo() throws ExploreException, SQLException;
+  public QueryHandle getTypeInfo() throws ExploreException, SQLException;
 }

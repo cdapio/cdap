@@ -24,7 +24,7 @@ import java.util.Iterator;
 /**
  * Results of an Explore statement execution.
  */
-public interface ExploreExecutionResult extends Iterator<Result>, Closeable {
+public interface ExploreExecutionResult extends Iterator<QueryResult>, Closeable {
 
   /**
    * @return the current fetch size for this object
