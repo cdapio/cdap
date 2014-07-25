@@ -121,9 +121,14 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     }
   }
 
+  /**
+   * Creates a new Dataset or updates existing Dataset specification's
+   * properties if an optional upgrade parameter in the body is set to true, {@link CreateDatasetParams}
+   * is constructed based on request and appropriate action is performed
+   */
   @PUT
   @Path("/data/datasets/{name}")
-  public void add(HttpRequest request, final HttpResponder responder,
+  public void createOrUpdate(HttpRequest request, final HttpResponder responder,
                   @PathParam("name") String name) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
 

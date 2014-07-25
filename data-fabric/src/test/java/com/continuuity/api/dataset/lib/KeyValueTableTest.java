@@ -52,7 +52,6 @@ public class KeyValueTableTest extends AbstractDatasetTest {
   public void setUp() throws Exception {
     super.setUp();
     addModule("core", new CoreDatasetsModule());
-    addModule("core", new CoreDatasetsModule());
     createInstance("keyValueTable", "test", DatasetProperties.EMPTY);
     kvTable = getInstance("test");
   }
