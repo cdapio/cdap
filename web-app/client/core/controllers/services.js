@@ -4,7 +4,7 @@
 
 define([], function () {
 
-  var ERROR_TXT = 'Instance count out of bounds.';
+  var ERROR_TXT = 'Requested Instance count out of bounds.';
 
   var Controller = Em.Controller.extend({
 
@@ -119,17 +119,15 @@ define([], function () {
 
     start: function (service) {
       var self = this;
-      var appID = service.app;
-      var serviceID = service.name;
+      if (service.status == "RUNNING") {
+        C.Util.showWarning("Program is already running.");
+        return;
+      }
       C.Modal.show(
         "Start Service",
-        "Start Service: " + appID + ":" + serviceID + "?",
+        "Start Service: " + service.app + ":" + service.name + "?",
         function () {
-          if (service.status == "RUNNING") {
-            C.Util.showWarning("Program is already running.");
-            return;
-          }
-          var startURL = 'rest/apps/' + appID + '/services/' + serviceID + '/start';
+          var startURL = 'rest/apps/' + service.app + '/services/' + service.name + '/start';
           self.HTTP.post(startURL, function() {
             service.update(self.HTTP);
           });
@@ -139,17 +137,15 @@ define([], function () {
 
     stop: function (service) {
       var self = this;
-      var appID = service.app;
-      var serviceID = service.name;
+      if (service.status == "STOPPED") {
+        C.Util.showWarning("Program is already stopped.");
+        return;
+      }
       C.Modal.show(
         "Stop Service",
-        "Stop Service: " + appID + ":" + serviceID + "?",
+        "Stop Service: " + service.app + ":" + service.name + "?",
         function () {
-          if (service.status == "STOPPED") {
-            C.Util.showWarning("Program is already stopped.");
-            return;
-          }
-          var stopURL = 'rest/apps/' + appID + '/services/' + serviceID + '/stop';
+          var stopURL = 'rest/apps/' + service.app + '/services/' + service.name + '/stop';
           self.HTTP.post(stopURL, function() {
             service.update(self.HTTP);
           });
@@ -157,118 +153,62 @@ define([], function () {
       );
     },
 
-    getRuntimeArgs: function (appID, serviceID) {
-      var payload = {};
-      self.HTTP.rest('apps/' + appID + '/services/' + serviceID + '/runtimeargs');
-      self.HTTP.put('rest/apps/' + appID + '/services/' + serviceID + '/runtimeargs', payload);
-      return;
+    runnableIncreaseInstance: function (service, runnableID, instanceCount) {
+      this.runnableVerifyInstanceBounds(service, runnableID, ++instanceCount, "Increase");
+    },
+    runnableDecreaseInstance: function (service, runnableID, instanceCount) {
+      this.runnableVerifyInstanceBounds(service, runnableID, --instanceCount, "Decrease");
     },
 
-    history: function (appID, serviceID) {
-      var url = '/apps/{app-id}/services/{service-id}/history'
-      self.HTTP.rest(url, callBackFunction);
-    },
-
-    liveinfo: function (appID, serviceID) {
-      var url = '/apps/{app-id}/services/{service-id}/live-info'
-      self.HTTP.rest(url, callBackFunction);
-    },
-
-    userService_increaseInstance: function (service, runnableID, instanceCount) {
+    runnableVerifyInstanceBounds: function (service, runnableID, numRequested, direction) {
       var self = this;
-      var appID = service.app;
-      var serviceID = service.name;
+      if (numRequested <= 0) {
+        C.Modal.show("Instances Error", ERROR_TXT);
+        return;
+      }
       C.Modal.show(
-        "Increase instances",
-        "Increase instances for " + appID + ":" + serviceID + ":" + runnableID + "?",
+        direction + " instances",
+        direction + " instances for runnable: " + runnableID + "?",
         function () {
-          var payload = {data: {instances: ++instanceCount}};
-          self.userService_executeInstanceCall(service, runnableID, payload);
-        });
+          var url = 'rest/apps/' + service.app + '/services/' + service.name + '/runnables/' + runnableID + '/instances';
+          self.executeInstanceCall(url, numRequested);
+        }
+      );
     },
-    userService_decreaseInstance: function (service, runnableID, instanceCount) {
+
+    increaseInstance: function (service, instanceCount) {
+      this.verifyInstanceBounds(service, ++instanceCount, "Increase");
+    },
+
+    decreaseInstance: function (service, instanceCount) {
+      this.verifyInstanceBounds(service, --instanceCount, "Decrease");
+    },
+
+    verifyInstanceBounds: function(service, numRequested, direction) {
       var self = this;
-      var appID = service.app;
-      var serviceID = service.name;
+      if (numRequested > service.max || numRequested < service.min) {
+        C.Modal.show("Instances Error", ERROR_TXT);
+        return;
+      }
       C.Modal.show(
-        "Increase instances",
-        "Increase instances for " + appID + ":" + serviceID + ":" + runnableID + "?",
+        direction + " instances",
+        direction + " instances for " + service.name + "?",
         function () {
-          var payload = {data: {instances: --instanceCount}};
-          if (instanceCount <= 0) {
-            C.Util.showWarning(ERROR_TXT);
-            return;
-          }
-          self.userService_executeInstanceCall(service, runnableID, payload);
-        });
+          self.executeInstanceCall('rest/system/services/' + service.name + '/instances', numRequested);
+        }
+      );
     },
-    userService_executeInstanceCall: function(service, runnableID, payload) {
+
+    executeInstanceCall: function (url, numRequested) {
       var self = this;
-      var appID = service.app;
-      var serviceID = service.name;
-      var url = 'rest/apps/' + appID + '/services/' + serviceID + '/runnables/' + runnableID + '/instances';
+      var payload = {data: {instances: numRequested}};
       this.HTTP.put(url, payload,
         function(resp, status) {
         if (status === 'error') {
           C.Util.showWarning(resp);
         } else {
-          service.update(self.HTTP);
-        }
-      });
-    },
-
-    increaseInstance: function (serviceName, instanceCount) {
-      var self = this;
-      C.Modal.show(
-        "Increase instances",
-        "Increase instances for " + serviceName + "?",
-        function () {
-
-          var payload = {data: {instances: ++instanceCount}};
-          var services = self.get('systemServices');
-          for (var i = 0; i < services.length; i++) {
-            var service = services[i];
-            if (service.name === serviceName) {
-              if (instanceCount > service.max || instanceCount < service.min) {
-                C.Util.showWarning(ERROR_TXT);
-                return;
-              }
-            }
-          }
-          self.executeInstanceCall(serviceName, payload);
-        });
-    },
-
-    decreaseInstance: function (serviceName, instanceCount) {
-      var self = this;
-      C.Modal.show(
-        "Decrease instances",
-        "Decrease instances for " + serviceName + "?",
-        function () {
-
-          var payload = {data: {instances: --instanceCount}};
-          var services = self.get('systemServices');
-          for (var i = 0; i < services.length; i++) {
-            var service = services[i];
-            if (service.name === serviceName) {
-              if (instanceCount > service.max || instanceCount < service.min) {
-                C.Util.showWarning(ERROR_TXT);
-                return;
-              }
-            }
-          }
-          self.executeInstanceCall(serviceName, payload);
-        });  
-    },
-
-    executeInstanceCall: function(serviceName, payload) {
-      var self = this;
-      this.HTTP.put('rest/system/services/' + serviceName + '/instances', payload,
-        function(resp, status) {
-        if (status === 'error') {
-          C.Util.showWarning(resp);
-        } else {
           self.resetServices();
+          self.resetUserServices();
         }
       });
     },

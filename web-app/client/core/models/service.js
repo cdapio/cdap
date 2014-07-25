@@ -19,10 +19,6 @@ define(['core/models/program'], function (Program) {
 
     interpolate: function (path) {
       return path.replace(/\{id\}/, this.get('id'));
-    },
-
-    startWithConfig: function (http, config) {
-      console.log('called');
     }
 
   });

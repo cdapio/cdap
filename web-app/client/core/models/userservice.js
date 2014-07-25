@@ -22,7 +22,7 @@ define(['core/models/program'], function (Program) {
     }.property('id'),
 
     interpolate: function (path) {
-      return path.replace(/\{id\}/, this.get('id'));
+      return path.replace(/\{id\}/, this.get('id')).replace(/\{app\}/, this.get('app'));
     },
 
     updateRunnable: function (runnable, index, http) {
