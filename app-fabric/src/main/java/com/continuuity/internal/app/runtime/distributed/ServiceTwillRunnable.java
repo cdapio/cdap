@@ -17,6 +17,7 @@
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.api.common.RuntimeArguments;
+import com.continuuity.api.service.GuavaServiceTwillRunnable;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.metrics.ServiceRunnableMetrics;
@@ -186,7 +187,13 @@ public class ServiceTwillRunnable implements TwillRunnable {
       LOG.info("Getting class : {}", program.getMainClass().getName());
       Class<?> clz = Class.forName(className, true, program.getClassLoader());
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
-      delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
+
+      if (clz.isAssignableFrom(GuavaServiceTwillRunnable.class)) {
+        delegate = new GuavaServiceTwillRunnable(program.getClassLoader());
+      } else {
+        delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
+      }
+
       Reflections.visit(delegate, TypeToken.of(delegate.getClass()),
                         new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
                                                                           program.getApplicationId(),

@@ -62,16 +62,16 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
   public void initialize(TwillContext context) {
     args = new ConcurrentHashMap<String, String>(context.getSpecification().getConfigs());
     String serviceClassName = args.remove("service.class.name");
-    LOG.info(serviceClassName);
+    LOG.info("XXXX" + serviceClassName);
     try {
       Class<?> serviceClass = classLoader.loadClass(serviceClassName);
       service = (Service) serviceClass.newInstance();
     } catch (Exception e) {
-      LOG.error("Could not instantiate service " + serviceClassName);
+      LOG.error("XXXX Could not instantiate service " + serviceClassName);
       Throwables.propagate(e);
     }
 
-    LOG.info("Instantiated " + serviceClassName);
+    LOG.info("XXXX Instantiated " + serviceClassName);
     service.startAndWait();
     context.announce(service.getClass().getName(), getRandomPort());
   }
@@ -96,7 +96,7 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
 
   }
 
-  public int getRandomPort() {
+  private int getRandomPort() {
     try {
       ServerSocket socket = new ServerSocket(0);
       try {

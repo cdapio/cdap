@@ -155,7 +155,7 @@ public class InMemoryRunnableRunner implements ProgramRunner {
 
       if (runnableClass.isAssignableFrom(GuavaServiceTwillRunnable.class)) {
         runnable = new GuavaServiceTwillRunnable(program.getClassLoader());
-      } else{
+      } else {
         runnable = new InstantiatorFactory(false).get(runnableType).create();
       }
 
