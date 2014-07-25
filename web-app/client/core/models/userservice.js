@@ -13,13 +13,12 @@ define(['core/models/program'], function (Program) {
 
     init: function() {
       this._super();
-      this.set('id', this.get('app') +  ":" + this.get('modelId'));
+      this.set('id', this.get('app') +  ":" + this.get('name'));
     },
 
-    context: function () {
-      // Check this.
-      return 'user/services/' + this.get('id');
-    }.property('id'),
+		context: function () {
+			return '/apps/' + this.app + '/services/' + this.name;
+		}.property('app', 'name'),
 
     interpolate: function (path) {
       return path.replace(/\{id\}/, this.get('id')).replace(/\{app\}/, this.get('app'));
@@ -79,16 +78,14 @@ define(['core/models/program'], function (Program) {
 
       var mid = model_id.split(':');
       var app_id = mid[0];
-      var flow_id = mid[1];
+      var service_id = mid[1];
 
-      http.rest('apps', app_id, 'services', flow_id, function (model, error) {
+      http.rest('apps', app_id, 'services', service_id, function (model, error) {
         if (error !== 200) {
           promise.resolve(null);
         }
+        model.app = app_id;
         model = C.Userservice.create(model);
-        model.set('modelId', mid);
-        model.set('id', model_id);
-        model.set('app', app_id);
         model.populateRunnablesAndUpdate(http);
         promise.resolve(model);
       });

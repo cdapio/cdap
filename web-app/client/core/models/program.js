@@ -114,7 +114,6 @@ define(['core/models/element'], function (Element) {
     },
 
     updateState: function (http, done) {
-
       if (!this.get('context')) {
         if (typeof done === 'function') {
           done(null);

@@ -712,12 +712,13 @@
     </div>
 
     <div id="panels">
+
       <div class="panel" id="collect-panel">
         <div class="panel-head"><div class="panel-title">Collect</div></div>
         {{partial "streams-list"}}
       </div>
-      <div class="panel" id="process-panel">
 
+      <div class="panel" id="process-panel">
         <div class="panel-head">
           {{#if elements.Flow.length}}
             <div class="btn-group pull-right start-stop-btns" style="margin-top:2px;text-align:center;">
@@ -729,12 +730,13 @@
           <div class="panel-title">Process</div>
         </div>
         {{partial "flows-list"}}
-
       </div>
+
       <div class="panel" id="store-panel">
         <div class="panel-head"><div class="panel-title">Store</div></div>
         {{partial "datasets-list"}}
       </div>
+
       <div class="panel" id ="query-panel">
         <div class="panel-head">
           {{#if elements.Procedure.length}}
@@ -747,6 +749,20 @@
           <div class="panel-title">Query</div>
         </div>
         {{partial "procedures-list"}}
+      </div>
+
+      <div class="panel" id="userservice-panel">
+        <div class="panel-head">
+          {{#if elements.Userservice.length}}
+            <div class="btn-group pull-right start-stop-btns" style="margin-top:2px;text-align:center;">
+              <button {{action startAll "Userservice" on="click"}} class="btn start"><img src="/assets/img/v2/play_icon.png" /></button>
+              <img style="display: none;margin-top: 3px;" src="/assets/img/start-all-load-white.gif" />
+              <button {{action stopAll "Userservice" on="click"}} class="btn stop"><img src="/assets/img/v2/stop_active_icon.png" /></button>
+            </div>
+          {{/if}}
+          <div class="panel-title">User Services</div>
+        </div>
+        {{partial "userservices-list"}}
       </div>
     </div>
 
@@ -1850,6 +1866,36 @@
     <div class="object-list-empty-content">
     <div>No Procedures.</div>
     <span>Add Procedures by uploading an Application JAR.</span>
+    </div>
+    </div>
+    {{/if}}
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="_userservices-list">
+    {{#if elements.Userservice.length}}
+      <table class="table">
+      <thead>
+        <th style="padding-left: 14px;">Userservice</th>
+        <th style="width: 262px;">Some column</th>
+        <th style="width: 262px;">Some other column</th>
+      </thead>
+      <tbody>
+        {{#each elements.Userservice}}
+          <tr>
+            <td class="app-list-name">
+            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
+            </td>
+            <td style="max-width:262px;"></td>
+            <td style="max-width:262px;"></td>
+          </tr>
+        {{/each}}
+      </tbody>
+      </table>
+    {{else}}
+    <div class="object-list-empty">
+    <div class="object-list-empty-content">
+    <div>No Userservices.</div>
+    <span>Add Userservices by uploading an Application JAR.</span>
     </div>
     </div>
     {{/if}}
