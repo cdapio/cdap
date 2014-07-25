@@ -20,9 +20,11 @@ import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.explore.client.ExploreClientUtil;
+import com.continuuity.explore.client.StatementExecutionFuture;
+import com.continuuity.explore.jdbc.ExploreDriver;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.test.SlowTests;
+
 import com.google.common.collect.Lists;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -37,7 +39,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CancellationException;
 
 import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyValue;
 
@@ -170,7 +172,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
   @Test
   public void exploreDriverTest() throws Exception {
     // Register explore jdbc driver
-    Class.forName("com.continuuity.explore.jdbc.ExploreDriver");
+    Class.forName(ExploreDriver.class.getName());
 
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     Discoverable discoverable = new RandomEndpointStrategy(discoveryServiceClient.discover(
@@ -297,12 +299,13 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testCancel() throws Exception {
-    Handle handle = exploreClient.execute("select key, value from my_table");
-    exploreClient.cancel(handle);
-    Assert.assertEquals(
-      Status.OpStatus.CANCELED,
-      ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 100).getStatus()
-    );
-    exploreClient.close(handle);
+    StatementExecutionFuture future = exploreClient.submit("select key, value from my_table");
+    future.cancel(true);
+    try {
+      future.get();
+      Assert.fail();
+    } catch (CancellationException e) {
+      // Expected
+    }
   }
 }

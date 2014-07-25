@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Continuuity, Inc.
+ * Copyright 2014 Continuuity, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,16 +61,17 @@ public class ExploreDriver implements Driver {
     if (!acceptsURL(url)) {
       return null;
     }
+
     ConnectionParams params = parseConnectionUrl(url);
 
-    List<String> tokenParams = params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_AUTH_TOKEN);
     String authToken = null;
+    List<String> tokenParams = params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_AUTH_TOKEN);
     if (tokenParams != null && !tokenParams.isEmpty() && !tokenParams.get(0).isEmpty()) {
       authToken = tokenParams.get(0);
     }
 
     ExploreClient exploreClient = new FixedAddressExploreClient(params.getHost(), params.getPort(), authToken);
-    if (!exploreClient.isAvailable()) {
+    if (!exploreClient.isServiceAvailable()) {
       throw new SQLException("Cannot connect to " + url + ", service unavailable");
     }
     return new ExploreConnection(exploreClient);
@@ -104,12 +105,12 @@ public class ExploreDriver implements Driver {
 
   @Override
   public int getMajorVersion() {
-    return ExploreDriver.getMajorDriverVersion();
+    return getMajorDriverVersion();
   }
 
   @Override
   public int getMinorVersion() {
-    return ExploreDriver.getMinorDriverVersion();
+    return getMinorDriverVersion();
   }
 
   @Override

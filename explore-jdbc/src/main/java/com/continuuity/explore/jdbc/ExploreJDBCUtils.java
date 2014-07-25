@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Continuuity, Inc.
+ * Copyright 2014 Continuuity, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,11 +36,12 @@ public class ExploreJDBCUtils {
    */
   static int getVersionPart(String fullVersion, int position) {
     try {
-      String[] tokens = fullVersion.split("[\\.-]"); //$NON-NLS-1$
-      if (tokens != null && tokens.length > 1 && tokens[position] != null) {
+      String[] tokens = fullVersion.split("[\\.-]");
+      if (tokens != null && tokens.length > 1 && position >= 0 && tokens.length > position
+        && tokens[position] != null) {
         return Integer.parseInt(tokens[position]);
       }
-    } catch (Exception e) {
+    } catch (Throwable e) {
       // Do nothing
     }
     return -1;
