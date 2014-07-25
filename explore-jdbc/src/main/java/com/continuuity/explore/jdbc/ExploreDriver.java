@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Continuuity, Inc.
+ * Copyright 2014 Continuuity, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -62,6 +62,8 @@ public class ExploreDriver implements Driver {
       return null;
     }
 
+
+
     ConnectionParams params = parseConnectionUrl(url);
 
     String authToken = null;
@@ -70,6 +72,8 @@ public class ExploreDriver implements Driver {
       authToken = tokenParams.get(0);
     }
 
+    // Create custom classloader for FixedAddressExploreClient and ExploreConnection -
+    // extend the bootstrap class loader but not the system one
     ExploreClient exploreClient = new FixedAddressExploreClient(params.getHost(), params.getPort(), authToken);
     if (!exploreClient.isServiceAvailable()) {
       throw new SQLException("Cannot connect to " + url + ", service unavailable");
