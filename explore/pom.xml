@@ -91,12 +91,12 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
-      <dependency>
-        <groupId>com.continuuity</groupId>
-        <artifactId>explore-jdbc</artifactId>
-        <version>${project.version}</version>
-        <scope>test</scope>
-      </dependency>
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>explore-jdbc</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-minicluster</artifactId>
