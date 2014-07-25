@@ -109,7 +109,7 @@ public class InMemoryRunnableRunner implements ProgramRunner {
 
       Class<?> clz = null;
       clz = Class.forName(runnableSpec.getRunnableSpecification().getClassName(),
-                          true, program.getMainClass().getClassLoader());
+                          true, program.getClassLoader());
 
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
 
