@@ -23,6 +23,7 @@ import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.explore.executor.ExploreExecutorHttpHandler;
 import com.continuuity.explore.executor.ExploreExecutorService;
+import com.continuuity.explore.executor.ExploreMetadataHttpHandler;
 import com.continuuity.explore.executor.ExplorePingHandler;
 import com.continuuity.explore.executor.QueryExecutorHttpHandler;
 import com.continuuity.explore.service.ExploreService;
@@ -95,6 +96,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(QueryExecutorHttpHandler.class);
       handlerBinder.addBinding().to(ExploreExecutorHttpHandler.class);
       handlerBinder.addBinding().to(ExplorePingHandler.class);
+      handlerBinder.addBinding().to(ExploreMetadataHttpHandler.class);
       handlerBinder.addBinding().to(PingHandler.class);
 
       bind(ExploreExecutorService.class).in(Scopes.SINGLETON);
@@ -123,21 +125,30 @@ public class ExploreRuntimeModule extends RuntimeModule {
     private static final class ExploreServiceProvider implements Provider<ExploreService> {
 
       private final CConfiguration cConf;
+      private final Configuration hConf;
       private final ExploreService exploreService;
       private final boolean isInMemory;
 
       @Inject
-      public ExploreServiceProvider(CConfiguration cConf,
+      public ExploreServiceProvider(CConfiguration cConf, Configuration hConf,
                                     @Named("explore.service.impl") ExploreService exploreService,
                                     @Named("explore.inmemory") boolean isInMemory) {
         this.exploreService = exploreService;
         this.cConf = cConf;
+        this.hConf = hConf;
         this.isInMemory = isInMemory;
       }
 
       private static final long seed = System.currentTimeMillis();
       @Override
       public ExploreService get() {
+        File hiveDataDir = new File(cConf.get(Constants.Explore.LOCAL_DATA_DIR));
+        System.setProperty(HiveConf.ConfVars.SCRATCHDIR.toString(),
+                           new File(hiveDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
+
+        // Reset hadoop tmp dir because Hive does not pick it up from hConf
+        System.setProperty("hadoop.tmp.dir", hConf.get("hadoop.tmp.dir"));
+
         File warehouseDir = new File(cConf.get(Constants.Explore.LOCAL_DATA_DIR), "warehouse");
         File databaseDir = new File(cConf.get(Constants.Explore.LOCAL_DATA_DIR), "database");
 
