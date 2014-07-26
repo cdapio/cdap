@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.continuuity.common.program;
+package com.continuuity.proto;
 
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.flow.FlowSpecification;
@@ -23,7 +23,6 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.api.webapp.WebappSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
-import com.continuuity.proto.ProgramType;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -33,7 +32,7 @@ import java.util.Map;
  */
 public class ProgramTypes {
 
-  private static final ImmutableMap<Class<? extends ProgramSpecification>, ProgramType> specClassToProgramType =
+  private static final Map<Class<? extends ProgramSpecification>, ProgramType> specClassToProgramType =
     ImmutableMap.<Class<? extends ProgramSpecification>, ProgramType>builder()
     .put(FlowSpecification.class, ProgramType.FLOW)
     .put(ProcedureSpecification.class, ProgramType.PROCEDURE)

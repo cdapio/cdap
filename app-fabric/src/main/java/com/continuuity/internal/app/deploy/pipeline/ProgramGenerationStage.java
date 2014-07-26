@@ -24,7 +24,7 @@ import com.continuuity.app.program.Programs;
 import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.common.conf.Configuration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.program.ProgramTypes;
+import com.continuuity.proto.ProgramTypes;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
 import com.continuuity.pipeline.AbstractStage;

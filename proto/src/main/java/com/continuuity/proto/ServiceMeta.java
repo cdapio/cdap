@@ -16,6 +16,8 @@
 
 package com.continuuity.proto;
 
+import com.google.common.collect.ImmutableSet;
+
 import java.util.Set;
 
 /**
@@ -32,7 +34,7 @@ public class ServiceMeta {
     this.id = id;
     this.name = name;
     this.description = description;
-    this.runnables = runnables;
+    this.runnables = ImmutableSet.copyOf(runnables);
   }
 
   public String getId() {
