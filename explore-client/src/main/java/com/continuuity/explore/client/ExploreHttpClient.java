@@ -28,6 +28,7 @@ import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.MetaDataInfo;
 import com.continuuity.explore.service.Result;
+import com.continuuity.explore.service.ResultWithSchema;
 import com.continuuity.explore.service.Status;
 import com.continuuity.explore.utils.ColumnsArgs;
 import com.continuuity.explore.utils.FunctionsArgs;
@@ -98,6 +99,15 @@ abstract class ExploreHttpClient implements Explore {
     }
     throw new ExploreException("Cannot disable explore on dataset " + datasetInstance + ". Reason: " +
                                  getDetails(response));
+  }
+
+  @Override
+  public ResultWithSchema getDatasetSchema(String datasetName) throws ExploreException, SQLException {
+    HttpResponse response = doGet(String.format("data/explore/datasets/%s/schema", datasetName));
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return parseJson(response, ResultWithSchema.class);
+    }
+    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
   }
 
   @Override

@@ -23,6 +23,7 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.client.DatasetExploreFacade;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.Handle;
+import com.continuuity.explore.service.ResultWithSchema;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.io.UnsupportedTypeException;
@@ -33,6 +34,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -57,6 +59,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    * Enable ad-hoc exploration of a dataset instance.
    */
   @POST
+  // TODO rename to datasets instead of instances. Also, path should be v2/data/explore/datasets/<name>/enable
   @Path("/explore/instances/{instance}/enable")
   public void enableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("instance") final String instance) {
@@ -132,6 +135,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    * Disable ad-hoc exploration of a dataset instance.
    */
   @POST
+  // TODO rename to datasets instead of instances. Also, path should be v2/data/explore/datasets/<name>/disable
   @Path("/explore/instances/{instance}/disable")
   public void disableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                              @PathParam("instance") final String instance) {
@@ -169,4 +173,36 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
+  /**
+    * Get the schema of a dataset.
+    */
+  @GET
+  @Path("/data/explore/datasets/{dataset}/schema")
+  public void getDatasetSchema(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+                               @PathParam("dataset") final String datasetName) {
+    try {
+      LOG.debug("Disabling explore for dataset {}", datasetName);
+
+      Dataset dataset = datasetFramework.getDataset("continuuity.user." + datasetName, null);
+      if (dataset == null) {
+        responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot find dataset " + datasetName);
+        return;
+      }
+
+      if (!(dataset instanceof RecordScannable)) {
+        LOG.debug("Dataset {} does not implement {}", datasetName, RecordScannable.class.getName());
+        responder.sendError(HttpResponseStatus.NOT_FOUND, String.format("Dataset %s does not implement %s",
+                                                                        datasetName, RecordScannable.class.getName()));
+        return;
+      }
+
+      // NOTE: here we add continuuity_user prefix to be consistent with other datasets endpoints where the
+      // name given in the URL does not contain a prefix
+      ResultWithSchema datasetSchema = exploreService.getDatasetSchema("continuuity_user_" + datasetName);
+      responder.sendJson(HttpResponseStatus.OK, datasetSchema);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
 }

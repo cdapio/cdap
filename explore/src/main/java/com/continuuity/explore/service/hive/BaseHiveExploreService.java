@@ -26,6 +26,7 @@ import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.MetaDataInfo;
 import com.continuuity.explore.service.Result;
+import com.continuuity.explore.service.ResultWithSchema;
 import com.continuuity.explore.service.Status;
 import com.continuuity.hive.context.CConfCodec;
 import com.continuuity.hive.context.ConfigurationUtil;
@@ -370,6 +371,35 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
+  public ResultWithSchema getDatasetSchema(String datasetName) throws ExploreException, SQLException {
+    try {
+      Map<String, String> sessionConf = startSession();
+      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
+      try {
+        OperationHandle operationHandle = doExecute(sessionHandle, String.format("describe %s", datasetName));
+        Status status;
+        do {
+          TimeUnit.MILLISECONDS.sleep(300);
+          cliService.getOperationStatus(operationHandle);
+          status = fetchStatus(operationHandle);
+        } while (!status.getStatus().isFinished());
+
+        List<Result> results = fetchNextResults(operationHandle, 1000000);
+        List<ColumnDesc> schema = fetchResultSchema(operationHandle);
+
+        LOG.trace("Getting schema for dataset", datasetName);
+        return new ResultWithSchema(results, schema);
+      } finally {
+        closeSession(sessionHandle);
+      }
+    } catch (HiveSQLException e) {
+      throw getSqlException(e);
+    } catch (Throwable e) {
+      throw new ExploreException(e);
+    }
+  }
+
+  @Override
   public Handle execute(String statement) throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
@@ -490,19 +520,22 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
       // Fetch schema from hive
       LOG.trace("Getting schema for handle {}", handle);
-      ImmutableList.Builder<ColumnDesc> listBuilder = ImmutableList.builder();
-      OperationHandle operationHandle = getOperationHandle(handle);
-      if (operationHandle.hasResultSet()) {
-        TableSchema tableSchema = cliService.getResultSetMetadata(operationHandle);
-        for (ColumnDescriptor colDesc : tableSchema.getColumnDescriptors()) {
-          listBuilder.add(new ColumnDesc(colDesc.getName(), colDesc.getTypeName(),
-                                         colDesc.getOrdinalPosition(), colDesc.getComment()));
-        }
-      }
-      return listBuilder.build();
+      return fetchResultSchema(getOperationHandle(handle));
     } catch (HiveSQLException e) {
       throw getSqlException(e);
     }
+  }
+
+  private List<ColumnDesc> fetchResultSchema(OperationHandle operationHandle) throws SQLException {
+    ImmutableList.Builder<ColumnDesc> listBuilder = ImmutableList.builder();
+    if (operationHandle.hasResultSet()) {
+      TableSchema tableSchema = cliService.getResultSetMetadata(operationHandle);
+      for (ColumnDescriptor colDesc : tableSchema.getColumnDescriptors()) {
+        listBuilder.add(new ColumnDesc(colDesc.getName(), colDesc.getTypeName(),
+                                       colDesc.getOrdinalPosition(), colDesc.getComment()));
+      }
+    }
+    return listBuilder.build();
   }
 
   @Override
