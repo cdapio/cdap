@@ -193,7 +193,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Used for getting the app id in batch endpoints
    */
-  private static final String APP_ID_ARG = "appid";
+  private static final String APP_ID_ARG = "appId";
 
   /**
    * Used for getting the program type in batch endpoints
@@ -454,7 +454,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns status of a runnable specified by the type{flows,workflows,mapreduce,procedures}.
+   * Returns status of a runnable specified by the type{flows,workflows,mapreduce,procedures,services}.
    */
   @GET
   @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/status")
@@ -471,7 +471,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       // getStatus has a callback for mapreduce jobs that run in workflows
       getStatus(id, type, statusMap);
       // wait for statuses to come back in case we are polling mapreduce status in workflow
-      while (statusMap.isEmpty()) { }
+      while (statusMap.isEmpty()) {
+        Thread.sleep(1);
+      }
+      // this is null only when mapreduce status cannot be retrieved
+      if (statusMap.get(id) == null) {
+        throw new Throwable("Exception occurred while retrieving status of " + runnableId);
+      }
       if (statusMap.get(id).equals("NOT_FOUND")) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
@@ -1002,6 +1008,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * Returns the instances for all programs that are passed into the data. The data is an array of Json objects
+   * where each object must contain the following three elements: appId, programType, and programId
+   * (flow name/service name/etc.) Furthermore, If one of these object's programType parameter is flow or service,
+   * the object must also have another paramter, runnableId (flowlet name/twill runnable name). The runnableId
+   * parameter does not apply to Procedures.
+   *
+   * @param request
+   * @param responder
+   */
   @POST
   @Path("/instances")
   public void getInstances(HttpRequest request, HttpResponder responder) {
@@ -1020,7 +1036,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           programTypeStr = requestedObj.getAsJsonPrimitive(PROGRAM_TYPE_ARG).getAsString();
           programId = requestedObj.getAsJsonPrimitive(PROGRAM_ID_ARG).getAsString();
         } catch (NullPointerException e) {
-          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, "Must provide App Id, Program Type, and Program Id");
+          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST,
+                        "Must provide App Id, Program Type, and Program Id");
+          return;
+        } catch (ClassCastException e) {
+          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST,
+                        "App Id, Program Type, and Program Id must be strings");
           return;
         }
         Type programType;
@@ -1028,11 +1049,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           programType = Type.valueOfPrettyName(programTypeStr);
         } catch (IllegalArgumentException e) {
           // invalid type
-          respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Could not find type: " + programTypeStr);
+          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, programTypeStr + " is not a valid program type");
           return;
         }
         if (programType == null) {
-          respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Program type: " + programTypeStr + " not found");
+          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, programTypeStr + " is not a valid program type");
           return;
         }
         // these values will be overwritten later
@@ -1106,12 +1127,22 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, args);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (JsonSyntaxException e) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
+  /**
+   * Returns the status for all programs that are passed into the data. The data is an array of Json objects
+   * where each object must contain the following three elements: appId, programType, and programId
+   * (flow name, service name, etc.).
+   *
+   * @param request
+   * @param responder
+   */
   @POST
   @Path("/status")
   public void getStatuses(HttpRequest request, HttpResponder responder) {
@@ -1151,7 +1182,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         getStatus(progId, programType, statusMap);
       }
       // wait for statuses to come back in case we are polling mapreduce status in workflow
-      while (statusMap.size() != args.size()) { }
+      while (statusMap.size() != args.size()) {
+        Thread.sleep(1);
+      }
       for (int i = 0; i < args.size(); ++i) {
         JsonObject requestedObj = args.get(i);
         for (Id.Program id : statusMap.keySet()) {
@@ -1172,6 +1205,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, args);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (JsonSyntaxException e) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -1209,8 +1244,17 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * Deserializes the HttpRequest data into a list of JsonObjects. Throws a JsonSyntaxException if the data is
+   * malformed JSON.
+   *
+   * @param request
+   * @return List of JsonObjects from the request data
+   * @throws IOException Thrown in case of Exceptions when reading the http request data
+   * @throws JsonSyntaxException Thrown in case of Malformed JSON
+   */
   @Nullable
-  protected List<JsonObject> decodeArrayArguments(HttpRequest request) throws IOException {
+  protected List<JsonObject> decodeArrayArguments(HttpRequest request) throws IOException, JsonSyntaxException {
     ChannelBuffer content = request.getContent();
     if (!content.readable()) {
       return new ArrayList<JsonObject>();
@@ -1220,7 +1264,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       List<JsonObject> args = GSON.fromJson(reader, new TypeToken<List<JsonObject>>() { }.getType());
       return args == null ? new ArrayList<JsonObject>() : args;
     } catch (JsonSyntaxException e) {
-      LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
+      LOG.info("Failed to parse arguments on {}", request.getUri(), e);
       throw e;
     } finally {
       reader.close();
