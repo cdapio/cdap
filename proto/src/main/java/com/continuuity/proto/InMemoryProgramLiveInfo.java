@@ -14,23 +14,14 @@
  * the License.
  */
 
-package com.continuuity.app;
+package com.continuuity.proto;
 
 /**
- * Class containing a program status.
+ * A live info for in-memory runtime envirnment.
  */
-public class ProgramStatus {
-  private String applicationId;
-  private String runnableId;
-  private String status;
+public class InMemoryProgramLiveInfo extends ProgramLiveInfo {
 
-  public ProgramStatus(String applicationId, String runnableId, String status) {
-    this.applicationId = applicationId;
-    this.runnableId = runnableId;
-    this.status = status;
-  }
-
-  public String getStatus() {
-    return this.status;
+  public InMemoryProgramLiveInfo(Id.Program programId, ProgramType type) {
+    super(programId, type, "in-memory");
   }
 }

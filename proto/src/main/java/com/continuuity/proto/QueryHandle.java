@@ -14,36 +14,35 @@
  * the License.
  */
 
-package com.continuuity.explore.service;
+package com.continuuity.proto;
 
 import com.google.common.base.Objects;
-import com.sun.org.apache.bcel.internal.generic.RETURN;
 
 import java.util.UUID;
 
 /**
  * Represents an operation that is submitted for execution to {@link Explore}.
  */
-public class Handle {
+public class QueryHandle {
 
   private static final String NO_OP_ID = "NO_OP";
-  public static final Handle NO_OP = new Handle(NO_OP_ID);
+  public static final QueryHandle NO_OP = new QueryHandle(NO_OP_ID);
 
   private final String handle;
 
-  public static Handle generate() {
+  public static QueryHandle generate() {
     // TODO: make sure handles are unique across multiple instances. - REACTOR-272
-    return new Handle(UUID.randomUUID().toString());
+    return new QueryHandle(UUID.randomUUID().toString());
   }
 
-  public static Handle fromId(String id) {
+  public static QueryHandle fromId(String id) {
     if (id.equals(NO_OP_ID)) {
       return NO_OP;
     }
-    return new Handle(id);
+    return new QueryHandle(id);
   }
 
-  private Handle(String handle) {
+  private QueryHandle(String handle) {
     this.handle = handle;
   }
 
@@ -67,7 +66,7 @@ public class Handle {
       return false;
     }
 
-    Handle that = (Handle) o;
+    QueryHandle that = (QueryHandle) o;
 
     return Objects.equal(this.handle, that.handle);
   }

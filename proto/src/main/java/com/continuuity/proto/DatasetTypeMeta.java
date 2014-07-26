@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.continuuity.data2.datafabric.dataset.type;
+package com.continuuity.proto;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;

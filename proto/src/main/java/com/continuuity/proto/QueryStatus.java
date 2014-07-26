@@ -14,21 +14,21 @@
  * the License.
  */
 
-package com.continuuity.explore.service;
+package com.continuuity.proto;
 
 import com.google.common.base.Objects;
 
 /**
  * Represents the status of an operation submitted to {@link Explore}.
  */
-public class Status {
+public class QueryStatus {
 
-  public static final Status NO_OP = new Status(OpStatus.FINISHED, false);
+  public static final QueryStatus NO_OP = new QueryStatus(OpStatus.FINISHED, false);
 
   private final OpStatus status;
   private final boolean hasResults;
 
-  public Status(OpStatus status, boolean hasResults) {
+  public QueryStatus(OpStatus status, boolean hasResults) {
     this.status = status;
     this.hasResults = hasResults;
   }
@@ -58,7 +58,7 @@ public class Status {
       return false;
     }
 
-    Status that = (Status) o;
+    QueryStatus that = (QueryStatus) o;
 
     return Objects.equal(this.status, that.status) &&
       Objects.equal(this.hasResults, that.hasResults);

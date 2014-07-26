@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.continuuity.explore.service;
+package com.continuuity.proto;
 
 import com.google.common.base.Objects;
 
@@ -23,10 +23,10 @@ import java.util.List;
 /**
  * Defines the rows returned by {@link Explore}.
  */
-public class Result {
+public class QueryResult {
   private final List<Object> columns;
 
-  public Result(List<Object> columns) {
+  public QueryResult(List<Object> columns) {
     this.columns = columns;
   }
 
@@ -43,7 +43,7 @@ public class Result {
       return false;
     }
 
-    Result that = (Result) o;
+    QueryResult that = (QueryResult) o;
 
     return Objects.equal(this.columns, that.columns);
   }

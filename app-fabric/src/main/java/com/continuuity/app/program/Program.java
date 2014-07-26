@@ -16,7 +16,8 @@
 package com.continuuity.app.program;
 
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.Id;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
 import org.apache.twill.filesystem.Location;
 
 /**
@@ -38,7 +39,7 @@ public interface Program {
   /**
    * Returns the program type.
    */
-  Type getType();
+  ProgramType getType();
 
   /**
    * Returns the program ID.

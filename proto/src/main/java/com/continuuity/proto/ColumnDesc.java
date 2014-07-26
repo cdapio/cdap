@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.continuuity.explore.service;
+package com.continuuity.proto;
 
 import com.google.common.base.Objects;
 

@@ -17,9 +17,8 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
-import com.continuuity.explore.service.ColumnDesc;
-import com.continuuity.explore.service.Result;
-
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryResult;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -57,8 +56,8 @@ public class ExploreResultSetTest {
             new ColumnDesc("column15", "array<string>", 14, ""),
             new ColumnDesc("column16", "struct<name:string,attr:string>", 15, "")
         )),
-        ImmutableMap.of("mock_query", (List<Result>) Lists.newArrayList(
-            new Result(ImmutableList.<Object>of(
+        ImmutableMap.of("mock_query", (List<QueryResult>) Lists.newArrayList(
+            new QueryResult(ImmutableList.<Object>of(
                 "value1",
                 1,
                 "c",
@@ -115,8 +114,8 @@ public class ExploreResultSetTest {
             new ColumnDesc("column1", "STRING", 2, ""),
             new ColumnDesc("column1", "int", 1, "")
         )),
-        ImmutableMap.of("mock_query", (List<Result>) Lists.newArrayList(
-            new Result(ImmutableList.<Object>of(1, "value1"))
+        ImmutableMap.of("mock_query", (List<QueryResult>) Lists.newArrayList(
+            new QueryResult(ImmutableList.<Object>of(1, "value1"))
         ))
     );
 

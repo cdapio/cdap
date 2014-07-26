@@ -14,11 +14,8 @@
  * the License.
  */
 
-package com.continuuity.internal.app.runtime.distributed;
+package com.continuuity.proto;
 
-import com.continuuity.app.Id;
-import com.continuuity.app.program.Type;
-import com.continuuity.internal.app.runtime.service.LiveInfo;
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -26,12 +23,12 @@ import java.util.List;
 /**
 * Live info for distributed mode, adds yarn app id and container information.
 */
-public class DistributedLiveInfo extends LiveInfo implements Containers {
+public class DistributedProgramLiveInfo extends ProgramLiveInfo implements Containers {
 
   private final String yarnAppId;
   private final List<Containers.ContainerInfo> containers = Lists.newArrayList();
 
-  DistributedLiveInfo(Id.Program program, Type type, String yarnAppId) {
+  public DistributedProgramLiveInfo(Id.Program program, ProgramType type, String yarnAppId) {
     super(program, type, "distributed");
     this.yarnAppId = yarnAppId;
   }

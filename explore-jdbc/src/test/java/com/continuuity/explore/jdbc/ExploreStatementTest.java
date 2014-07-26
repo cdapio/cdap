@@ -17,9 +17,8 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
-import com.continuuity.explore.service.ColumnDesc;
-import com.continuuity.explore.service.Result;
-
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryResult;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
@@ -43,10 +42,10 @@ public class ExploreStatementTest {
           "mock_query_4", (List<ColumnDesc>) Lists.newArrayList(new ColumnDesc("column1", "STRING", 1, ""))
         ),
         ImmutableMap.of(
-          "mock_query_1", (List<Result>) Lists.<Result>newArrayList(),
-          "mock_query_2", (List<Result>) Lists.<Result>newArrayList(),
-          "mock_query_3", (List<Result>) Lists.<Result>newArrayList(),
-          "mock_query_4", (List<Result>) Lists.<Result>newArrayList()
+          "mock_query_1", (List<QueryResult>) Lists.<QueryResult>newArrayList(),
+          "mock_query_2", (List<QueryResult>) Lists.<QueryResult>newArrayList(),
+          "mock_query_3", (List<QueryResult>) Lists.<QueryResult>newArrayList(),
+          "mock_query_4", (List<QueryResult>) Lists.<QueryResult>newArrayList()
           )
     );
 

@@ -22,19 +22,18 @@ import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.lang.ClassLoaders;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.lang.jar.JarFinder;
-import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
-import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
-import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.SingleTypeModule;
 import com.continuuity.data2.dataset2.module.lib.DatasetModules;
+import com.continuuity.proto.DatasetMeta;
+import com.continuuity.proto.DatasetModuleMeta;
+import com.continuuity.proto.DatasetTypeMeta;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
@@ -120,7 +119,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   @Nullable
   @Override
   public DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException {
-    DatasetInstanceMeta meta = client.getInstance(name);
+    DatasetMeta meta = client.getInstance(name);
     return meta == null ? null : meta.getSpec();
   }
 
@@ -148,7 +147,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   public <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, ClassLoader classLoader)
     throws DatasetManagementException, IOException {
 
-    DatasetInstanceMeta instanceInfo = client.getInstance(datasetInstanceName);
+    DatasetMeta instanceInfo = client.getInstance(datasetInstanceName);
     if (instanceInfo == null) {
       return null;
     }
@@ -161,7 +160,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   public <T extends Dataset> T getDataset(String datasetInstanceName, ClassLoader classLoader)
     throws DatasetManagementException, IOException {
 
-    DatasetInstanceMeta instanceInfo = client.getInstance(datasetInstanceName);
+    DatasetMeta instanceInfo = client.getInstance(datasetInstanceName);
     if (instanceInfo == null) {
       return null;
     }
