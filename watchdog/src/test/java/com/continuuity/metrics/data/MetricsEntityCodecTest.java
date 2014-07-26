@@ -18,7 +18,7 @@ package com.continuuity.metrics.data;
 
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
-import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryMetricsTableClient;
+import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryMetricsTable;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableService;
 import org.junit.Assert;
 import org.junit.Test;
@@ -31,7 +31,7 @@ public class MetricsEntityCodecTest {
   @Test
   public void testCodec() throws OperationException {
     InMemoryOcTableService.create("MetricEntityCodecTest");
-    MetricsTable table = new InMemoryMetricsTableClient("MetricEntityCodecTest");
+    MetricsTable table = new InMemoryMetricsTable("MetricEntityCodecTest");
     MetricsEntityCodec codec = new MetricsEntityCodec(new EntityTable(table), 4, 2, 2);
 
     Assert.assertEquals("app.f.flow.flowlet", codec.decode(MetricsEntityType.CONTEXT,

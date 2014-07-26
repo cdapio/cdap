@@ -23,9 +23,11 @@ import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.OperationResult;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
+import com.continuuity.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableService;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -34,17 +36,17 @@ import javax.annotation.Nullable;
 /**
  * Implements the metrics table API in-memory.
  */
-public class InMemoryMetricsTableClient implements MetricsTable {
+public class InMemoryMetricsTable implements MetricsTable {
 
   private final String tableName;
 
-  public InMemoryMetricsTableClient(String name) {
+  public InMemoryMetricsTable(String name) {
     tableName = name;
   }
 
   @Override
   public OperationResult<byte[]> get(byte[] row, byte[] column) throws Exception {
-    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = InMemoryOcTableService.get(tableName, row, null);
+    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = InMemoryOrderedTableService.get(tableName, row, null);
     if (rowMap != null) {
       NavigableMap<Long, byte[]> valueMap = rowMap.get(column);
       if (valueMap != null && !valueMap.isEmpty()) {
@@ -56,32 +58,32 @@ public class InMemoryMetricsTableClient implements MetricsTable {
 
   @Override
   public void put(Map<byte[], Map<byte[], byte[]>> updates) throws Exception {
-    InMemoryOcTableService.merge(tableName, updates, System.currentTimeMillis());
+    InMemoryOrderedTableService.merge(tableName, updates, System.currentTimeMillis());
   }
 
   @Override
   public boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) throws Exception {
-    return InMemoryOcTableService.swap(tableName, row, column, oldValue, newValue);
+    return InMemoryOrderedTableService.swap(tableName, row, column, oldValue, newValue);
   }
 
   @Override
   public void increment(byte[] row, Map<byte[], Long> increments) throws Exception {
-    InMemoryOcTableService.increment(tableName, row, increments);
+    InMemoryOrderedTableService.increment(tableName, row, increments);
   }
 
   @Override
   public long incrementAndGet(byte[] row, byte[] column, long delta) throws Exception {
-    return InMemoryOcTableService.increment(tableName, row, ImmutableMap.of(column, delta)).get(column);
+    return InMemoryOrderedTableService.increment(tableName, row, ImmutableMap.of(column, delta)).get(column);
   }
 
   @Override
   public void deleteAll(byte[] prefix) throws Exception {
-    InMemoryOcTableService.delete(tableName, prefix);
+    InMemoryOrderedTableService.delete(tableName, prefix);
   }
 
   @Override
   public void delete(Collection<byte[]> rows) throws Exception {
-    InMemoryOcTableService.delete(tableName, rows);
+    InMemoryOrderedTableService.delete(tableName, rows);
   }
 
   @Override
@@ -94,7 +96,7 @@ public class InMemoryMetricsTableClient implements MetricsTable {
       while ((rowValues = scanner.next()) != null) {
         byte[] row = rowValues.getFirst();
         for (byte[] column : rowValues.getSecond().keySet()) {
-          InMemoryOcTableService.deleteColumns(tableName, row, column);
+          InMemoryOrderedTableService.deleteColumns(tableName, row, column);
         }
       }
     } finally {
@@ -108,7 +110,7 @@ public class InMemoryMetricsTableClient implements MetricsTable {
 
     // todo: a lot of inefficient copying from one map to another
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowRange =
-      InMemoryOcTableService.getRowRange(tableName, start, stop, null);
+      InMemoryOrderedTableService.getRowRange(tableName, start, stop, null);
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows = getLatest(rowRange);
 
     return new InMemoryScanner(rows.entrySet().iterator(), filter, columns);
@@ -127,4 +129,8 @@ public class InMemoryMetricsTableClient implements MetricsTable {
     return rows;
   }
 
+  @Override
+  public void close() throws IOException {
+    // Do nothing
+  }
 }

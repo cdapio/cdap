@@ -48,12 +48,11 @@ import javax.annotation.Nullable;
 /**
  * An HBase metrics table client.
  */
-public class HBaseMetricsTableClient implements MetricsTable {
+public class HBaseMetricsTable implements MetricsTable {
 
   private final HTable hTable;
 
-  public HBaseMetricsTableClient(String name, Configuration hConf)
-    throws IOException {
+  public HBaseMetricsTable(String name, Configuration hConf) throws IOException {
     String hTableName = HBaseTableUtil.getHBaseTableName(name);
     HTable hTable = new HTable(hConf, hTableName);
     // todo: make configurable
@@ -259,5 +258,10 @@ public class HBaseMetricsTableClient implements MetricsTable {
       scan.setFilter(new org.apache.hadoop.hbase.filter.FuzzyRowFilter(fuzzyPairs));
     }
     return scan;
+  }
+
+  @Override
+  public void close() throws IOException {
+    hTable.close();
   }
 }

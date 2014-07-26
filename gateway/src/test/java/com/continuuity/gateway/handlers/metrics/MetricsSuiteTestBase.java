@@ -32,6 +32,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.gateway.MockMetricsCollectionService;
 import com.continuuity.gateway.MockedPassportClient;
 import com.continuuity.gateway.apps.wordcount.WCount;
@@ -96,6 +97,7 @@ public abstract class MetricsSuiteTestBase {
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
 
   private static MetricsQueryService metrics;
+  private static DatasetService dsService;
   private static final String hostname = "127.0.0.1";
   private static int port;
 
@@ -129,6 +131,10 @@ public abstract class MetricsSuiteTestBase {
     conf.set(Constants.Metrics.CLUSTER_NAME, CLUSTER);
 
     injector = startMetricsService(conf);
+
+    dsService = injector.getInstance(DatasetService.class);
+    dsService.startAndWait();
+
     StoreFactory storeFactory = injector.getInstance(StoreFactory.class);
     store = storeFactory.create();
     locationFactory = injector.getInstance(LocationFactory.class);
@@ -178,6 +184,7 @@ public abstract class MetricsSuiteTestBase {
   }
 
   public static void stop() throws OperationException {
+    dsService.startAndWait();
     collectionService.stopAndWait();
     store.removeApplication(wordCountAppId);
     store.removeApplication(wCountAppId);
