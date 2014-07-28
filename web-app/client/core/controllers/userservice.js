@@ -15,7 +15,6 @@ define(['core/controllers/services'], function (servicesController) {
     },
 
     load: function () {
-      //pass
       var self = this;
       var parent = this.get('needs')[0];
       var model = this.get('controllers').get(parent).get('model');
@@ -53,46 +52,12 @@ define(['core/controllers/services'], function (servicesController) {
         function () {
           var url = 'rest/apps/' + service.app + '/services/' + service.name 
               + '/runnables/' + runnableID + '/instances';
-          self.executeInstanceCall(url, numRequested);
+          var callback =  function(){service.update(self.HTTP)};
+          self.executeInstanceCall(url, numRequested, callback);
         }
       );
     },
 
-    start: function (service) {
-      var self = this;
-      if (service.status == "RUNNING") {
-        C.Util.showWarning("Program is already running.");
-        return;
-      }
-      C.Modal.show(
-        "Start Service",
-        "Start Service: " + service.app + ":" + service.name + "?",
-        function () {
-          var startURL = 'rest/apps/' + service.app + '/services/' + service.name + '/start';
-          self.HTTP.post(startURL, function() {
-            service.update(self.HTTP);
-          });
-        }
-      );
-    },
-
-    stop: function (service) {
-      var self = this;
-      if (service.status == "STOPPED") {
-        C.Util.showWarning("Program is already stopped.");
-        return;
-      }
-      C.Modal.show(
-        "Stop Service",
-        "Stop Service: " + service.app + ":" + service.name + "?",
-        function () {
-          var stopURL = 'rest/apps/' + service.app + '/services/' + service.name + '/stop';
-          self.HTTP.post(stopURL, function() {
-            service.update(self.HTTP);
-          });
-        }
-      );
-    },
 
     exec: function () {
 

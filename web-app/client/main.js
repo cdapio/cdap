@@ -70,7 +70,6 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 
     this.resource('Service', { path: '/services/system/:service_id' }, function() {
       this.route('Log', { path: '/log' });
-      this.route('Config', { path: '/config' });
     });
 
     this.resource('Userservice', { path: '/services/user/:userservice_id' }, function () {
@@ -197,7 +196,6 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 				}
 			}
 
-			window.scrollTo(0, 0);
 		},
 		/*
 		 * Override to unload the Controller once the Route has been deactivated.
@@ -225,6 +223,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
        */
       activate: function() {
         var routeHandler = this;
+        window.scrollTo(0, 0);
+
         if (C.Env.security_enabled) {
           C.setupAuth(routeHandler)
         }
@@ -284,7 +284,7 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
       model: modelFinder
     }),
 
-    ServiceRoute: basicRouter.extend({
+    ServiceRoute: Ember.Route.extend({
       model: modelFinder
     }),
 

@@ -77,12 +77,13 @@ define([], function () {
         direction + " instances",
         direction + " instances for " + service.name + "?",
         function () {
-          self.executeInstanceCall('rest/system/services/' + service.name + '/instances', numRequested);
+          var callback = function(){ self.resetServices() };
+          self.executeInstanceCall('rest/system/services/' + service.name + '/instances', numRequested, callback);
         }
       );
     },
 
-    executeInstanceCall: function (url, numRequested) {
+    executeInstanceCall: function (url, numRequested, callback) {
       var self = this;
       var payload = {data: {instances: numRequested}};
       this.HTTP.put(url, payload,
@@ -90,7 +91,9 @@ define([], function () {
         if (status === 'error') {
           C.Util.showWarning(resp);
         } else {
-          self.resetServices();
+          if (typeof(callback) == "function") {
+            callback();
+          }
         }
       });
     },

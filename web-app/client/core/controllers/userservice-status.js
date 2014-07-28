@@ -1,5 +1,5 @@
 /*
- * Service Status Controller
+ * Userservice Status Controller
  */
 
 define(['core/controllers/userservice'], function (Userservice) {
@@ -7,10 +7,8 @@ define(['core/controllers/userservice'], function (Userservice) {
   var Controller = Userservice.extend({
 
     /*
-     * This syntax makes the Service controller available to this controller.
+     * This syntax makes the Userservice controller available to this controller.
      * This allows us to access the service model that has already been loaded.
-     *
-     * RunnableConfigController uses this value to do its work. Take a look there.
      *
      */
     needs: ['Userservice'],

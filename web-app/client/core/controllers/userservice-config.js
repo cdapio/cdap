@@ -48,6 +48,29 @@ define(['core/controllers/runnable-config'], function (RunnableConfigController)
       });
     },
 
+
+    save: function () {
+
+      var config = {};
+      var model = this.get('model');
+
+      this.get('config').forEach(function (item) {
+        config[item.key] = item.value;
+      });
+
+      config = JSON.stringify(config);
+
+      this.HTTP.put('rest', 'apps', model.get('app'),
+        'services',
+        model.get('name'), 'runtimeargs', {
+          data: config
+        }, function () {} //noop
+      );
+
+      this.close();
+
+    },
+
     close: function () {
       this.transitionToRoute("UserserviceStatus", this.get('model'));
     }
