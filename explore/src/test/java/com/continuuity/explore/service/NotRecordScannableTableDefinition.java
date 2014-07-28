@@ -30,7 +30,6 @@ import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
-
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;

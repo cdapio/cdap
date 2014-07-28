@@ -18,7 +18,6 @@ package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
@@ -26,6 +25,7 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
+import com.continuuity.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableSetMultimap;

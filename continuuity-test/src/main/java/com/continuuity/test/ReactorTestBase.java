@@ -61,6 +61,7 @@ import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
+import com.continuuity.explore.jdbc.ExploreDriver;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.internal.app.Specifications;
@@ -389,7 +390,7 @@ public class ReactorTestBase {
   protected final Connection getQueryClient() throws Exception {
 
     // this makes sure the Explore JDBC driver is loaded
-    Class.forName("com.continuuity.explore.jdbc.ExploreDriver");
+    Class.forName(ExploreDriver.class.getName());
 
     Discoverable discoverable = new StickyEndpointStrategy(
       discoveryClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();

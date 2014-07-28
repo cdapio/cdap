@@ -184,7 +184,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
       String className = runtimeSpec.getRunnableSpecification().getClassName();
       LOG.info("Getting class : {}", program.getMainClass().getName());
-      Class<?> clz = Class.forName(className, true, program.getMainClass().getClassLoader());
+      Class<?> clz = Class.forName(className, true, program.getClassLoader());
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
       delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
       Reflections.visit(delegate, TypeToken.of(delegate.getClass()),
