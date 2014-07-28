@@ -16,13 +16,13 @@
 
 package com.continuuity.internal.app.runtime.schedule;
 
-import com.continuuity.app.Id;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.app.store.Store;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import org.quartz.Job;
@@ -59,7 +59,7 @@ public class DefaultSchedulerService {
       String[] parts = key.split(":");
       Preconditions.checkArgument(parts.length == 4);
 
-      Type programType = Type.valueOf(parts[0]);
+      ProgramType programType = ProgramType.valueOf(parts[0]);
       String accountId = parts[1];
       String applicationId = parts[2];
       String programId = parts[3];

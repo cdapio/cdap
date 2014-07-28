@@ -16,9 +16,9 @@
 package com.continuuity.internal.app.program;
 
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
 import org.apache.twill.filesystem.Location;
 
 /**
@@ -43,7 +43,7 @@ public abstract class ForwardingProgram implements Program {
   }
 
   @Override
-  public Type getType() {
+  public ProgramType getType() {
     return delegate.getType();
   }
 

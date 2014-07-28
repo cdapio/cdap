@@ -16,9 +16,7 @@
 
 package com.continuuity.internal.app.runtime.schedule;
 
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
@@ -29,6 +27,8 @@ import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import org.apache.twill.common.Threads;
 import org.quartz.JobExecutionException;
@@ -63,7 +63,7 @@ public final class ScheduleTaskRunner {
    * @param arguments Arguments that would be supplied as system runtime arguments for the program.
    * @throws JobExecutionException If fails to execute the program.
    */
-  public void run(Id.Program programId, Type programType, Arguments arguments) throws JobExecutionException {
+  public void run(Id.Program programId, ProgramType programType, Arguments arguments) throws JobExecutionException {
     ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(programId, programType);
     if (existingRuntimeInfo != null) {
       throw new JobExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);
@@ -71,7 +71,7 @@ public final class ScheduleTaskRunner {
     Map<String, String> userArgs;
     Program program;
     try {
-      program =  store.loadProgram(programId, Type.WORKFLOW);
+      program =  store.loadProgram(programId, ProgramType.WORKFLOW);
       Preconditions.checkNotNull(program, "Program not found");
 
       userArgs = store.getRunArguments(programId);
@@ -87,7 +87,7 @@ public final class ScheduleTaskRunner {
    * Returns runtime information for the given program if it is running,
    * or {@code null} if no instance of it is running.
    */
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program programId, Type programType) {
+  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program programId, ProgramType programType) {
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programType).values();
 
     for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {

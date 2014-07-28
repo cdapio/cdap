@@ -16,6 +16,8 @@
 
 package com.continuuity.explore.client;
 
+import com.google.common.util.concurrent.ListenableFuture;
+
 import java.net.InetSocketAddress;
 import javax.annotation.Nullable;
 
@@ -24,22 +26,27 @@ import javax.annotation.Nullable;
  * implementing {@link com.continuuity.explore.service.Explore} over HTTP.
  */
 public class FixedAddressExploreClient extends AbstractExploreClient {
-
   private final InetSocketAddress addr;
   private final String authToken;
 
-  public FixedAddressExploreClient(String host, int port) {
-    this(host, port, null);
-  }
-
   public FixedAddressExploreClient(String host, int port, @Nullable String authToken) {
-    addr = InetSocketAddress.createUnresolved(host, port);
+    this.addr = InetSocketAddress.createUnresolved(host, port);
     this.authToken = authToken;
   }
 
   @Override
   protected InetSocketAddress getExploreServiceAddress() {
     return addr;
+  }
+
+  @Override
+  public ListenableFuture<Void> enableExplore(String datasetInstance) {
+    throw new UnsupportedOperationException("This client does not allow to enable explore on datasets.");
+  }
+
+  @Override
+  public ListenableFuture<Void> disableExplore(String datasetInstance) {
+    throw new UnsupportedOperationException("This client does not allow to disable explore on datasets");
   }
 
   @Override

@@ -32,6 +32,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -83,7 +84,8 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractReactorTwillRu
       new DataSetsModules().getDistributedModule(),
       new DataSetServiceModules().getDistributedModule(),
       new LoggingModules().getDistributedModules(),
-      new AuthModule());
+      new AuthModule(),
+      new ExploreClientModule());
 
     injector.getInstance(LogAppenderInitializer.class).initialize();
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,

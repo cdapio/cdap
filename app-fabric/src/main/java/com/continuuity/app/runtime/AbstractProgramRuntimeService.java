@@ -15,12 +15,12 @@
  */
 package com.continuuity.app.runtime;
 
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.service.SimpleRuntimeInfo;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
@@ -40,7 +40,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramRuntimeService.class);
 
-  private final Table<Type, RunId, RuntimeInfo> runtimeInfos;
+  private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
 
   protected AbstractProgramRuntimeService(ProgramRunnerFactory programRunnerFactory) {
@@ -60,7 +60,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   @Override
   public synchronized RuntimeInfo lookup(RunId runId) {
-    Map<Type, RuntimeInfo> column = runtimeInfos.column(runId);
+    Map<ProgramType, RuntimeInfo> column = runtimeInfos.column(runId);
     if (column.size() != 1) {
       // It should be exactly one if the the program is running.
       return null;
@@ -69,7 +69,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   @Override
-  public synchronized Map<RunId, RuntimeInfo> list(Type type) {
+  public synchronized Map<RunId, RuntimeInfo> list(ProgramType type) {
     return ImmutableMap.copyOf(runtimeInfos.row(type));
   }
 
@@ -83,7 +83,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     // No-op
   }
 
-  protected synchronized void updateRuntimeInfo(Type type, RunId runId, RuntimeInfo runtimeInfo) {
+  protected synchronized void updateRuntimeInfo(ProgramType type, RunId runId, RuntimeInfo runtimeInfo) {
     if (!runtimeInfos.contains(type, runId)) {
       runtimeInfos.put(type, runId, addRemover(runtimeInfo));
     }
@@ -111,7 +111,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     LOG.debug("RuntimeInfo removed: {}", removed);
   }
 
-  protected boolean isRunning(Id.Program programId, Type type) {
+  protected boolean isRunning(Id.Program programId, ProgramType type) {
     for (Map.Entry<RunId, RuntimeInfo> entry : list(type).entrySet()) {
       if (entry.getValue().getProgramId().equals(programId)) {
         return true;

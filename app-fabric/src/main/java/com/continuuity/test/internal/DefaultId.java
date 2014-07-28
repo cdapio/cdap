@@ -16,7 +16,7 @@
 
 package com.continuuity.test.internal;
 
-import com.continuuity.app.Id;
+import com.continuuity.proto.Id;
 
 /**
  * Default Ids to use in test if you do not want to construct your own.
