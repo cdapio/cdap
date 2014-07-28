@@ -27,6 +27,7 @@ import com.continuuity.proto.QueryResult;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.test.SlowTests;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -41,6 +42,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 
 import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyValue;
@@ -173,8 +175,9 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void getDatasetSchemaTest() throws Exception {
-    String datasetSchema = exploreClient.datasetSchema("my_table");
-    Assert.assertEquals("struct<key:string,value:struct<name:string,ints:array<int>>>", datasetSchema);
+    Map<String, String> datasetSchema = exploreClient.datasetSchema("my_table");
+    Assert.assertEquals(ImmutableMap.of("key", "string", "value", "struct<name:string,ints:array<int>>"),
+                        datasetSchema);
   }
 
   @Test

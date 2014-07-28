@@ -23,14 +23,17 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.client.DatasetExploreFacade;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.hive.objectinspector.ObjectInspectorFactory;
+import com.continuuity.hive.objectinspector.ReflectionStructObjectInspector;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.proto.QueryHandle;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -199,11 +202,26 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       }
 
       RecordScannable recordScannable = (RecordScannable) dataset;
+
       ObjectInspector oi = ObjectInspectorFactory.getReflectionObjectInspector(recordScannable.getRecordType());
+      if (!(oi instanceof ReflectionStructObjectInspector)) {
+        LOG.debug("Record type {} for dataset {} is not a RECORD.",
+                  recordScannable.getRecordType().getClass().getName(), datasetName);
+        responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                            String.format("Record type %s for dataset %s is not a RECORD.",
+                                          recordScannable.getRecordType().getClass().getName(), datasetName));
+        return;
+      }
+
+      ImmutableMap.Builder builder = ImmutableMap.builder();
+      for (StructField structField : ((ReflectionStructObjectInspector) oi).getAllStructFieldRefs()) {
+        ObjectInspector tmp = structField.getFieldObjectInspector();
+        builder.put(structField.getFieldName(), tmp.getTypeName());
+      }
 
       JsonObject json = new JsonObject();
       json.addProperty("schema", oi.getTypeName());
-      responder.sendJson(HttpResponseStatus.OK, json);
+      responder.sendJson(HttpResponseStatus.OK, builder.build());
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());

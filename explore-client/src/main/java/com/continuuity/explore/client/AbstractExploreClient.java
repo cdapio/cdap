@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -104,7 +105,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public String datasetSchema(String datasetName) throws ExploreException {
+  public Map<String, String> datasetSchema(String datasetName) throws ExploreException {
     return getDatasetSchema(datasetName);
   }
 

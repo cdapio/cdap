@@ -72,7 +72,7 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
-  public String datasetSchema(String datasetName) throws ExploreException {
+  public Map<String, String> datasetSchema(String datasetName) throws ExploreException {
     throw new ExploreException("Not implemented");
   }
 

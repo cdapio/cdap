@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -68,10 +69,10 @@ public interface ExploreClient extends Closeable {
    *
    * @param datasetName dataset name for which to retrieve the schema. This name should be understood by the
    *                    underlying SQL engine.
-   * @return a string describing the Explore schema of the dataset.
+   * @return a map of <field_name: field_data_type>.
    * @throws ExploreException on any error getting the table types.
    */
-  String datasetSchema(String datasetName) throws ExploreException;
+  Map<String, String> datasetSchema(String datasetName) throws ExploreException;
 
 
   ///// METADATA
