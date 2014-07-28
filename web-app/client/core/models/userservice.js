@@ -6,10 +6,14 @@ define(['core/models/program'], function (Program) {
 
   var Model = Program.extend({
     type: 'Userservice',
-    plural: 'services',
+    plural: 'Userservices',
     href: function () {
       return '#/services/user/' + this.get('id');
     }.property('id'),
+
+    appHref: function () {
+      return '#/apps/' + this.get('app');
+    }.observes('app').property('app'),
 
     init: function() {
       this._super();

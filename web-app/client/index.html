@@ -262,7 +262,7 @@
           <tbody>
             <tr>
               <td style="max-width: 350px;" class="app-list-name service-col">
-                <a class="none-text-decoration">{{model.app}}:{{model.name}}</a>
+                <a class="none-text-decoration">{{model.name}}</a>
                 <br />
                 <span class="app-list-status">{{model.description}}</span>
               </td>
@@ -336,7 +336,7 @@
         <li>{{#linkTo UserserviceStatus model}}Status{{/linkTo }}</li>
         <li>{{#linkTo Userservice.History model}}History{{/linkTo}}</li>        
       </ul>
-      <h1><span>Service</span> {{model.name}}</h1>
+      <h1><span>Service</span> <a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}</h1>
     </div>
 
     {{outlet}}
@@ -723,7 +723,7 @@
         <li>{{#linkTo WorkflowStatus model}}Status{{/linkTo}}</li>
         <li>{{#linkTo Workflow.History model}}History{{/linkTo}}</li>
       </ul>
-      <h1><span>Workflow</span> {{model.name}}</h1>
+      <h1><span>Workflow</span> <a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}</h1>
     </div>
 
     {{outlet}}
@@ -859,7 +859,11 @@
         <li>{{#linkTo Mapreduce.Log model}}Log{{/linkTo}}</li>
         <li>{{#linkTo Mapreduce.History model}}History{{/linkTo}}</li>
       </ul>
-      <h1><span>Mapreduce</span> {{model.name}}</h1>
+      <h1>
+        <span>Mapreduce</span> 
+        <span class="breadcrumb-app-name"><a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}
+        </span>
+      </h1>
     </div>
 
     {{outlet}}
@@ -968,7 +972,7 @@
         <li>{{#linkTo Flow.Log model}}Log{{/linkTo}}</li>
         <li>{{#linkTo Flow.History model}}History{{/linkTo}}</li>
       </ul>
-      <h1><span>Flow</span> {{model.meta.name}}</h1>
+      <h1><span>Flow</span> <a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.meta.name}}</h1>
     </div>
 
     {{outlet}}
@@ -1279,7 +1283,7 @@
         <li>{{#linkTo ProcedureStatus model}}Status{{/linkTo}}</li>
         <li>{{#linkTo Procedure.Log model}}Log{{/linkTo}}</li>
       </ul>
-      <h1><span>Procedure</span> {{model.name}}</h1>
+      <h1><span>Procedure</span> <a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}</h1>
     </div>
 
     {{outlet}}

@@ -705,16 +705,16 @@ ul.top-dropdown-listholder li {
 
 h1 {
 	margin: 0;
-	font-size: 22px;
+	font-size: 20px;
 	font-weight: lighter;
 	color: #4D5268;
 	line-height: 32px;
 	padding-bottom: 4px;
 	height: 36px;
-	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-h1 span {
+h1 span:first-child {
 	color: #aaa;
 	margin-left: 4px;
 }

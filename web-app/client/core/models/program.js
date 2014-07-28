@@ -6,6 +6,10 @@ define(['core/models/element'], function (Element) {
 
   var Program = Element.extend({
 
+    appHref: function () {
+      return '#/apps/' + this.get('app');
+    }.observes('app').property('app'),
+
     running: function () {
 
       return this.get('currentState') === 'RUNNING' ? true : false;

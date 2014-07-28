@@ -225,6 +225,8 @@ define(['core/lib/date', 'core/models/program'],
         var model = self.transformModel(model);
         model.app = app_id;
         model = C.Mapreduce.create(model);
+        model.id = mapreduce_id;
+        model. = mapreduce_id;
 
         http.rest('apps', app_id, 'mapreduce', mapreduce_id, 'status', function (response) {
 
