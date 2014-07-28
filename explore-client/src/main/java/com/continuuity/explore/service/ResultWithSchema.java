@@ -16,22 +16,25 @@
 
 package com.continuuity.explore.service;
 
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryResult;
+
 import java.util.List;
 
 /**
  * Hold the results of a statement execution as well as the schema of the results.
  */
 public class ResultWithSchema {
-  private final List<Result> results;
+  private final List<QueryResult> results;
   private final List<ColumnDesc> schema;
 
-  public ResultWithSchema(List<Result> results, List<ColumnDesc> schema) {
+  public ResultWithSchema(List<QueryResult> results, List<ColumnDesc> schema) {
     this.results = results;
     this.schema = schema;
   }
 
 
-  public List<Result> getResults() {
+  public List<QueryResult> getResults() {
     return results;
   }
 

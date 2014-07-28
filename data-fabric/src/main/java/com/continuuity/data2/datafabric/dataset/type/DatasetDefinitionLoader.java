@@ -23,6 +23,8 @@ import com.continuuity.common.lang.ClassLoaders;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.module.lib.DatasetModules;
+import com.continuuity.proto.DatasetModuleMeta;
+import com.continuuity.proto.DatasetTypeMeta;
 import com.google.common.base.Throwables;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -51,7 +53,7 @@ public class DatasetDefinitionLoader {
   }
 
   /**
-   * Loads {@link com.continuuity.api.dataset.DatasetDefinition} using {@link DatasetTypeMeta} info. It will use given
+   * Loads {@link DatasetDefinition} using {@link DatasetTypeMeta} info. It will use given
    * {@link DatasetDefinitionRegistry} to load all required modules and types. If registry is missing some of them,
    * it will load respective jars and add them to the registry (thus, modifying the given registry).
    * @param meta info of type to load

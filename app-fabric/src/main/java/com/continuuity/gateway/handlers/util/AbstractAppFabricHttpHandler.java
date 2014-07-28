@@ -18,6 +18,7 @@ package com.continuuity.gateway.handlers.util;
 
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
+import com.continuuity.proto.Instances;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Abstract Class that contains commonly used methods for parsing Http Requests.
@@ -55,12 +57,24 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
   }
 
   protected int getInstances(HttpRequest request) throws IOException, NumberFormatException {
-    String instanceCount = "";
-    Map<String, String> arguments = decodeArguments(request);
-    if (!arguments.isEmpty()) {
-      instanceCount = arguments.get("instances");
+    return parseBody(request, Instances.class).getInstances();
+  }
+
+  @Nullable
+  protected <T> T parseBody(HttpRequest request, Class<T> type) throws IOException {
+    ChannelBuffer content = request.getContent();
+    if (!content.readable()) {
+      return null;
     }
-    return Integer.parseInt(instanceCount);
+    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
+    try {
+      return GSON.fromJson(reader, type);
+    } catch (JsonSyntaxException e) {
+      LOG.info("Failed to parse body on {} as {}", request.getUri(), type, e);
+      throw e;
+    } finally {
+      reader.close();
+    }
   }
 
   protected Map<String, String> decodeArguments(HttpRequest request) throws IOException {

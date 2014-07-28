@@ -22,9 +22,10 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.jdbc.ExploreDriver;
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryResult;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.test.SlowTests;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.twill.discovery.Discoverable;
@@ -117,7 +118,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     runCommand("show tables",
                true,
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-               Lists.newArrayList(new Result(Lists.<Object>newArrayList("my_table"))));
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("my_table"))));
 
     runCommand("describe my_table",
                true,
@@ -127,8 +128,8 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                  new ColumnDesc("comment", "STRING", 3, "from deserializer")
                ),
                Lists.newArrayList(
-                 new Result(Lists.<Object>newArrayList("key", "string", "from deserializer")),
-                 new Result(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
+                 new QueryResult(Lists.<Object>newArrayList("key", "string", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
                                                        "from deserializer"))
                )
     );
@@ -138,8 +139,8 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
                                   new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
                Lists.newArrayList(
-                 new Result(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-                 new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+                 new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
+                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
     runCommand("select key, value from my_table where key = '1'",
@@ -147,7 +148,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
                                   new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
                Lists.newArrayList(
-                 new Result(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")))
+                 new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")))
     );
 
     runCommand("select * from my_table",
@@ -156,8 +157,8 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                                   new ColumnDesc("my_table.value",
                                                  "struct<name:string,ints:array<int>>", 2, null)),
                Lists.newArrayList(
-                 new Result(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-                 new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+                 new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
+                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
     runCommand("select * from my_table where key = '2'",
@@ -166,7 +167,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                                   new ColumnDesc("my_table.value",
                                                  "struct<name:string,ints:array<int>>", 2, null)),
                Lists.newArrayList(
-                 new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
   }
 
@@ -174,9 +175,9 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
   public void getDatasetSchemaTest() throws Exception {
     ResultWithSchema datasetSchema = exploreService.getDatasetSchema("my_table");
     Assert.assertEquals(ImmutableList.of(
-                          new Result(ImmutableList.<Object>of("key", "string", "from deserializer")),
-                          new Result(ImmutableList.<Object>of("value", "struct<name:string,ints:array<int>>",
-                                                              "from deserializer"))
+                          new QueryResult(ImmutableList.<Object>of("key", "string", "from deserializer")),
+                          new QueryResult(ImmutableList.<Object>of("value", "struct<name:string,ints:array<int>>",
+                                                                   "from deserializer"))
                         ),
                         datasetSchema.getResults());
 
@@ -259,7 +260,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                                     new ColumnDesc("my_table.value",
                                                    "struct<name:string,ints:array<int>>", 2, null)),
                  Lists.newArrayList(
-                   new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+                   new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
       );
 
       runCommand("select my_table.key, my_table.value, my_table_1.key, my_table_1.value from " +
@@ -272,9 +273,9 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                                     new ColumnDesc("my_table_1.value",
                                                    "struct<name:string,ints:array<int>>", 4, null)),
                  Lists.newArrayList(
-                   new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
+                   new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
                                                          "2", "{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")),
-                   new Result(Lists.<Object>newArrayList(null, null, "3",
+                   new QueryResult(Lists.<Object>newArrayList(null, null, "3",
                                                          "{\"name\":\"third\",\"ints\":[30,31,32,33,34]}")))
       );
 
@@ -288,9 +289,9 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                                     new ColumnDesc("my_table_1.value",
                                                    "struct<name:string,ints:array<int>>", 4, null)),
                  Lists.newArrayList(
-                   new Result(Lists.<Object>newArrayList("1",
+                   new QueryResult(Lists.<Object>newArrayList("1",
                                                          "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}", null, null)),
-                   new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
+                   new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
                                                          "2", "{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")))
       );
 
@@ -304,11 +305,11 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                                     new ColumnDesc("my_table_1.value",
                                                    "struct<name:string,ints:array<int>>", 4, null)),
                  Lists.newArrayList(
-                   new Result(Lists.<Object>newArrayList("1",
+                   new QueryResult(Lists.<Object>newArrayList("1",
                                                          "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}", null, null)),
-                   new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
+                   new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
                                                          "2", "{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")),
-                   new Result(Lists.<Object>newArrayList(null, null, "3",
+                   new QueryResult(Lists.<Object>newArrayList(null, null, "3",
                                                          "{\"name\":\"third\",\"ints\":[30,31,32,33,34]}")))
       );
     } finally {
