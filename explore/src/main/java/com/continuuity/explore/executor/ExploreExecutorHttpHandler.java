@@ -186,7 +186,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public void getDatasetSchema(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                                @PathParam("dataset") final String datasetName) {
     try {
-      LOG.debug("Disabling explore for dataset {}", datasetName);
+      LOG.trace("Retrieving Explore schema for dataset {}", datasetName);
 
       Dataset dataset = datasetFramework.getDataset(datasetName, null);
       if (dataset == null) {
