@@ -420,7 +420,13 @@ define([], function () {
 							checkDeployStatus();
 
 						} else {
-							C.Modal.show("Deployment Error", xhr.responseText);
+							C.EventModal.show({
+								title: 'Deployment Error',
+								body: xhr.responseText,
+								onHideCallback: function () {
+									window.location.reload();
+								}
+							});
 							$('#drop-hover').fadeOut(function () {
 								$('#drop-label').show();
 								$('#drop-loading').hide();
@@ -956,6 +962,21 @@ define([], function () {
 
     capitaliseFirstLetter: function (string) {
       return string.charAt(0).toUpperCase() + string.slice(1);
+    },
+
+    /**
+     * Gets the function name by calling toString.
+     */
+    getFnName: function(fn) {
+    	if (typeof fn === 'function') {
+    		var ret = fn.toString();
+			  ret = ret.substr('function '.length);
+			  ret = ret.substr(0, ret.indexOf('('));
+			  return ret;	
+    	} else {
+    		throw 'Invalid call getFnName.';
+    	}
+    	
     },
 
 		reset: function () {
