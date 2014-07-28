@@ -19,7 +19,7 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
+import com.continuuity.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.ResourceSpecification;
@@ -54,7 +54,7 @@ public final class FlowTwillApplication implements TwillApplication {
   public TwillSpecification configure() {
     TwillSpecification.Builder.MoreRunnable moreRunnable = TwillSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",
-                             Type.FLOW.name().toLowerCase(),
+                             ProgramType.FLOW.name().toLowerCase(),
                              program.getAccountId(), program.getApplicationId(), spec.getName()))
       .withRunnable();
 
