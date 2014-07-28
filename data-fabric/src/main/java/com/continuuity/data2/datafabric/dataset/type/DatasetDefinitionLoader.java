@@ -20,15 +20,12 @@ import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.lang.ClassLoaders;
-import com.continuuity.common.lang.jar.BundleJarUtil;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.module.lib.DatasetModules;
 import com.google.common.base.Throwables;
-import com.google.common.io.Files;
 import org.apache.twill.filesystem.LocationFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -71,9 +68,7 @@ public class DatasetDefinitionLoader {
     for (DatasetModuleMeta moduleMeta : modulesToLoad) {
       // for default "system" modules it can be null, see getJarLocation() javadoc
       if (moduleMeta.getJarLocation() != null) {
-        File unpackedJarDir = Files.createTempDir();
-        BundleJarUtil.unpackProgramJar(moduleMeta.getJarLocation(), unpackedJarDir);
-        classLoader = ClassLoaders.newProgramClassLoaderWithoutFilter(unpackedJarDir, classLoader);
+        classLoader = new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation()), classLoader);
       }
       DatasetModule module;
       try {

@@ -32,6 +32,6 @@ public class LocalDatasetTypeClassLoaderFactory implements DatasetTypeClassLoade
       return parentClassLoader;
     }
 
-    return new URLClassLoader(new URL[]{moduleMeta.getJarLocation().toURI().toURL()}, parentClassLoader);
+    return new URLClassLoader(new URL[]{moduleMeta.getJarLocation().toURL()}, parentClassLoader);
   }
 }

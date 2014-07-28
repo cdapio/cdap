@@ -141,7 +141,7 @@ public class DatasetTypeManager extends AbstractIdleService {
           }
 
           DatasetModuleMeta moduleMeta = new DatasetModuleMeta(name, className,
-                                                               jarLocation == null ? null : jarLocation,
+                                                               jarLocation == null ? null : jarLocation.toURI(),
                                                                reg.getTypes(), moduleDependencies);
           datasets.getTypeMDS().write(moduleMeta);
 
