@@ -17,8 +17,8 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
-import com.continuuity.explore.service.ColumnDesc;
-import com.continuuity.explore.service.Result;
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryResult;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -127,8 +127,8 @@ public class ExploreDatabaseMetaDataTest {
                           new ColumnDesc("column1", "STRING", 1, ""),
                           new ColumnDesc("column2", "INT", 2, ""))
         ),
-        ImmutableMap.of(statement, (List<Result>) Lists.newArrayList(
-          new Result(ImmutableList.<Object>of("some value", 10))
+        ImmutableMap.of(statement, (List<QueryResult>) Lists.newArrayList(
+          new QueryResult(ImmutableList.<Object>of("some value", 10))
         ))
       );
 

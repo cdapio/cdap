@@ -22,7 +22,6 @@ import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.metrics.ServiceRunnableMetrics;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
@@ -34,6 +33,7 @@ import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.lang.Reflections;
 import com.continuuity.logging.context.UserServiceLoggingContext;
+import com.continuuity.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
@@ -97,9 +97,9 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       ApplicationSpecification appSpec = program.getSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-      Type processorType = program.getType();
+      ProgramType processorType = program.getType();
       Preconditions.checkNotNull(processorType, "Missing processor type.");
-      Preconditions.checkArgument(processorType == Type.SERVICE, "Only Service process type is supported.");
+      Preconditions.checkArgument(processorType == ProgramType.SERVICE, "Only Service process type is supported.");
 
       String processorName = program.getName();
       Preconditions.checkNotNull(processorName, "Missing processor name.");
