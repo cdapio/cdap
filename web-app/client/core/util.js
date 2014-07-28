@@ -596,7 +596,7 @@ define([], function () {
 						path = metric.path + '?start=' + start + '&end=' + end + '&count=' + count;
 
 						if (metric.interpolate) {
-							path += '&interpolate=step';
+							path += '&interpolate=' + metric.interpolate;
 						}
 
 						queries.push(path);
