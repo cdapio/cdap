@@ -107,6 +107,13 @@ public class ObjectInspectorFactoryTest {
                         "employee:struct<address:struct<street:string>>,ints:array<int>>",
                         getObjectName(DummyStruct.class));
 
+    // Make sure we don't have infinite loop with nested classes
+    Assert.assertEquals("struct<i:int>",
+                        getObjectName(DummyParentStruct.DummyInnerClass.class));
+    Assert.assertEquals("struct<innerclass:struct<i:int>>",
+                        getObjectName(DummyParentStruct.class));
+
+
     DummyStruct a = new DummyStruct();
     a.myInt = 1;
     a.myInteger = 2;
@@ -156,5 +163,12 @@ public class ObjectInspectorFactoryTest {
     public int[] ints;
     // Test transient field
     public transient int t;
+  }
+
+  public class DummyParentStruct {
+    public DummyInnerClass innerClass;
+    public class DummyInnerClass {
+      public int i;
+    }
   }
 }
