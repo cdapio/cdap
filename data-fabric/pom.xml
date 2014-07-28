@@ -39,8 +39,12 @@
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
-      <artifactId>tx-core</artifactId>
+      <artifactId>proto</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.continuuity.tephra</groupId>
+      <artifactId>tephra-core</artifactId>
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
@@ -79,11 +83,6 @@
       <groupId>org.iq80.leveldb</groupId>
       <artifactId>leveldb</artifactId>
     </dependency>
-    <dependency>
-      <groupId>it.unimi.dsi</groupId>
-      <artifactId>fastutil</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-minicluster</artifactId>

@@ -17,7 +17,7 @@
 package com.continuuity.hive.context;
 
 import com.continuuity.common.io.Codec;
-import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.tephra.Transaction;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;

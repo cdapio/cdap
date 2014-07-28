@@ -28,11 +28,13 @@ import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceHandler;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
-import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
-import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.InstanceConflictException;
 import com.continuuity.data2.dataset2.ModuleConflictException;
+import com.continuuity.proto.DatasetInstanceConfiguration;
+import com.continuuity.proto.DatasetMeta;
+import com.continuuity.proto.DatasetModuleMeta;
+import com.continuuity.proto.DatasetTypeMeta;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
@@ -77,7 +79,7 @@ class DatasetServiceClient {
   }
 
   @Nullable
-  public DatasetInstanceMeta getInstance(String instanceName) throws DatasetManagementException {
+  public DatasetMeta getInstance(String instanceName) throws DatasetManagementException {
     HttpResponse response = doGet("datasets/" + instanceName);
     if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
       return null;
@@ -87,7 +89,7 @@ class DatasetServiceClient {
                                                          instanceName, getDetails(response)));
     }
 
-    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), DatasetInstanceMeta.class);
+    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), DatasetMeta.class);
   }
 
   public Collection<DatasetSpecification> getAllInstances() throws DatasetManagementException {
@@ -126,16 +128,17 @@ class DatasetServiceClient {
 
   public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
     throws DatasetManagementException {
+    DatasetInstanceConfiguration creationProperties = new DatasetInstanceConfiguration(datasetType,
+                                                                                       props.getProperties());
 
-    DatasetInstanceHandler.CreateDatasetParams dsCreateParams =
-      new DatasetInstanceHandler.CreateDatasetParams(datasetType, props.getProperties());
-    createUpdateInstance(datasetInstanceName, dsCreateParams, "add");
+    createUpdateInstance(datasetInstanceName, creationProperties, "add");
   }
 
   private void createUpdateInstance(String datasetInstanceName,
-                                    DatasetInstanceHandler.CreateDatasetParams dsCreateParams, String op)
+                                    DatasetInstanceConfiguration creationProperties, String op)
     throws DatasetManagementException {
-    HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(dsCreateParams));
+    HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(creationProperties));
+
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to %s instance %s due to conflict, details: %s",
                                                         op, datasetInstanceName, getDetails(response)));
@@ -148,10 +151,10 @@ class DatasetServiceClient {
 
   public void updateInstance(String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException {
-    DatasetInstanceMeta meta = getInstance(datasetInstanceName);
-    DatasetInstanceHandler.CreateDatasetParams dsCreateParams =
-      new DatasetInstanceHandler.CreateDatasetParams(meta.getSpec().getType(), props.getProperties(), true);
-    createUpdateInstance(datasetInstanceName, dsCreateParams, "update");
+    DatasetMeta meta = getInstance(datasetInstanceName);
+    DatasetInstanceConfiguration creationProperties =
+      new DatasetInstanceConfiguration(meta.getSpec().getType(), props.getProperties(), true);
+    createUpdateInstance(datasetInstanceName, creationProperties, "update");
     // after creating dataset instance with new spec, we call upgrade admin op
     HttpResponse response = doPost("datasets/" + datasetInstanceName + "/admin/upgrade");
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {

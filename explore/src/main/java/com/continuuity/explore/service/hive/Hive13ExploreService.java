@@ -18,11 +18,11 @@ package com.continuuity.explore.service.hive;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Result;
-import com.continuuity.explore.service.Status;
+import com.continuuity.proto.QueryResult;
+import com.continuuity.proto.QueryStatus;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -51,22 +51,22 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  protected Status fetchStatus(OperationHandle operationHandle)
+  protected QueryStatus fetchStatus(OperationHandle operationHandle)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     OperationStatus operationStatus = getCliService().getOperationStatus(operationHandle);
-    return new Status(Status.OpStatus.valueOf(operationStatus.getState().toString()),
+    return new QueryStatus(QueryStatus.OpStatus.valueOf(operationStatus.getState().toString()),
                                operationHandle.hasResultSet());
   }
 
   @Override
-  protected List<Result> fetchNextResults(OperationHandle operationHandle, int size)
+  protected List<QueryResult> fetchNextResults(OperationHandle operationHandle, int size)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
 
     if (operationHandle.hasResultSet()) {
       RowSet rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
-      ImmutableList.Builder<Result> rowsBuilder = ImmutableList.builder();
+      ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
       for (Object[] objects : rowSet) {
-        rowsBuilder.add(new Result(Lists.newArrayList(objects)));
+        rowsBuilder.add(new QueryResult(Lists.newArrayList(objects)));
       }
       return rowsBuilder.build();
     } else {

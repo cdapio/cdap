@@ -22,8 +22,8 @@ import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.queue.QueueConsumer;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionAware;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
@@ -60,7 +60,7 @@ public class InMemoryQueueConsumer implements QueueConsumer, TransactionAware {
   }
 
   @Override
-  public String getName() {
+  public String getTransactionAwareName() {
     return getClass().getSimpleName() + "(queue = " + queueName + ")";
   }
 

@@ -51,15 +51,17 @@ import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
+import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.executor.ExploreExecutorService;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
+import com.continuuity.explore.jdbc.ExploreDriver;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.internal.app.Specifications;
@@ -69,6 +71,7 @@ import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.metrics.query.MetricsQueryService;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.ApplicationManagerFactory;
 import com.continuuity.test.internal.DefaultApplicationManager;
@@ -89,6 +92,7 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
@@ -114,7 +118,6 @@ public class ReactorTestBase {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static File testAppDir;
   private static LocationFactory locationFactory;
   private static Injector injector;
   private static MetricsQueryService metricsQueryService;
@@ -126,6 +129,7 @@ public class ReactorTestBase {
   private static DatasetFramework datasetFramework;
   private static DiscoveryServiceClient discoveryClient;
   private static ExploreExecutorService exploreExecutorService;
+  private static ExploreClient exploreClient;
 
   /**
    * Deploys an {@link com.continuuity.api.Application}. The {@link com.continuuity.api.flow.Flow Flows} and
@@ -178,32 +182,28 @@ public class ReactorTestBase {
 
   @BeforeClass
   public static void init() throws Exception {
-    testAppDir = tmpFolder.newFolder();
+    File localDataDir = tmpFolder.newFolder();
+    CConfiguration cConf = CConfiguration.create();
 
-    File appDir = new File(testAppDir, "app");
-    File datasetDir = new File(testAppDir, "dataset");
-    File tmpDir = new File(testAppDir, "tmp");
+    cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
+    cConf.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
 
-    appDir.mkdirs();
-    datasetDir.mkdirs();
-    tmpDir.mkdirs();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
+    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+    cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
+    cConf.set(Constants.Explore.LOCAL_DATA_DIR,
+              tmpFolder.newFolder("hive").getAbsolutePath());
 
-    CConfiguration configuration = CConfiguration.create();
-
-    configuration.set(Constants.AppFabric.OUTPUT_DIR, appDir.getAbsolutePath());
-    configuration.set(Constants.AppFabric.TEMP_DIR, tmpDir.getAbsolutePath());
-    configuration.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
-    configuration.set(Constants.Dataset.Manager.ADDRESS, "localhost");
-    configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
-    configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
-    configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    configuration.setBoolean(Constants.Explore.CFG_EXPLORE_ENABLED, true);
-    configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
-                      tmpFolder.newFolder("hive").getAbsolutePath());
+    Configuration hConf = new Configuration();
+    hConf.addResource("mapred-site-local.xml");
+    hConf.reloadConfiguration();
+    hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
+    hConf.set(Constants.AppFabric.OUTPUT_DIR, cConf.get(Constants.AppFabric.OUTPUT_DIR));
+    hConf.set("hadoop.tmp.dir", new File(localDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
 
     // Windows specific requirements
     if (OSDetector.isWindows()) {
-
+      File tmpDir = tmpFolder.newFolder();
       File binDir = new File(tmpDir, "bin");
       binDir.mkdir();
 
@@ -214,10 +214,10 @@ public class ReactorTestBase {
     }
 
     injector = Guice.createInjector(
-      createDataFabricModule(configuration),
+      createDataFabricModule(cConf),
       new DataSetsModules().getInMemoryModule(),
       new DataSetServiceModules().getInMemoryModule(),
-      new ConfigModule(configuration),
+      new ConfigModule(cConf, hConf),
       new IOModule(),
       new AuthModule(),
       new LocationRuntimeModule().getInMemoryModules(),
@@ -238,6 +238,7 @@ public class ReactorTestBase {
       new MetricsHandlerModule(),
       new LoggingModules().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules(),
+      new ExploreClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -267,12 +268,13 @@ public class ReactorTestBase {
     DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
     datasetFramework =
       new NamespacedDatasetFramework(dsFramework,
-                                     new ReactorDatasetNamespace(configuration,  DataSetAccessor.Namespace.USER));
+                                     new ReactorDatasetNamespace(cConf,  DataSetAccessor.Namespace.USER));
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
     discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     exploreExecutorService.startAndWait();
+    exploreClient = injector.getInstance(ExploreClient.class);
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
@@ -319,9 +321,13 @@ public class ReactorTestBase {
     metricsCollectionService.startAndWait();
     datasetService.stopAndWait();
     schedulerService.stopAndWait();
+    try {
+      exploreClient.close();
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
     exploreExecutorService.stopAndWait();
     logAppenderInitializer.close();
-    cleanDir(testAppDir);
   }
 
   private static void cleanDir(File dir) {
@@ -384,7 +390,7 @@ public class ReactorTestBase {
   protected final Connection getQueryClient() throws Exception {
 
     // this makes sure the Explore JDBC driver is loaded
-    Class.forName("com.continuuity.explore.jdbc.ExploreDriver");
+    Class.forName(ExploreDriver.class.getName());
 
     Discoverable discoverable = new StickyEndpointStrategy(
       discoveryClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();

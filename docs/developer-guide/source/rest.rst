@@ -1537,30 +1537,6 @@ The response is formatted in JSON; an example of this is shown in:
 
 	`Continuuity Reactor Testing and Debugging Guide <http://continuuity.com/docs/reactor/current/en/debugging.html#debugging-reactor-applications>`__
 
-To find out the address of a Service's container host and the container's debug port, you 
-can query the Reactor for the live info of a Service's Twill Runnable via an HTTP GET method::
-
-  GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/live-info
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<app-id>``
-     - Name of the Application being called
-   * - ``<service-id>``
-     - Name of the Custom Service being called
-   * - ``<runnable-id>``
-     - Name of the Twill Runnable being called
-
-Example::
-
-	GET <base-url>/apps/WordCount/services/CounterService/runnables/CountRunnable/live-info
-
-The response is formatted in JSON.
-
 .. rst2pdf: PageBreak
 
 Scale
@@ -1807,8 +1783,8 @@ Logging HTTP API
 
 Downloading Logs
 ----------------
-You can download the logs that are emitted by any of the *Flows*, *Procedures*, or *MapReduce* jobs
-running in the Continuuity Reactor. To do that, send an HTTP GET request::
+You can download the logs that are emitted by any of the *Flows*, *Procedures*, *MapReduce* jobs,
+or *Services* running in the Continuuity Reactor. To do that, send an HTTP GET request::
 
 	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
 
@@ -1821,9 +1797,9 @@ running in the Continuuity Reactor. To do that, send an HTTP GET request::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<element-type>``
-     - One of ``flows``, ``procedures``, or ``mapreduce``
+     - One of ``flows``, ``procedures``, ``mapreduce``, or ``services``
    * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce* job) being called
+     - Name of the element (*Flow*, *Procedure*, *MapReduce* job, *Service*) being called
    * - ``<ts>``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
@@ -1839,42 +1815,6 @@ Example
    * - Description
      - Return the logs for all the events from the Flow *CountTokensFlow* of the *CountTokens*
        Application,
-       beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
-       ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
-
-You can download the logs that are emitted by the Twill Runnable of a Service in a Reactor Application by
-sending an HTTP GET request::
-
-	GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/logs?start=<ts>&stop=<ts>
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<app-id>``
-     - Name of the Application being called
-   * - ``<service-id>``
-     - Name of the Service being called
-   * - ``<runnable-id>``
-     - Name of the Twill Runnable being called
-   * - ``<ts>``
-     - *Start* and *stop* times, given as seconds since the start of the Epoch.
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/apps/CountTokens/services/CountTokensService/runnables/CountTokensRunnable/``
-       ``logs?start=1382576400&stop=1382576700``
-   * - Description
-     - Return the logs for all the events of the Runnable CountTokensRunnable from the Service
-       *CountTokensService*
-       of the *CountTokens* Application,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 

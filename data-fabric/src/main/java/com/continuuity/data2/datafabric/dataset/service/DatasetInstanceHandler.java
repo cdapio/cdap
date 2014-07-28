@@ -25,11 +25,13 @@ import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import com.continuuity.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
-import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.explore.client.DatasetExploreFacade;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
+import com.continuuity.proto.DatasetInstanceConfiguration;
+import com.continuuity.proto.DatasetMeta;
+import com.continuuity.proto.DatasetTypeMeta;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
@@ -40,7 +42,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -116,14 +117,14 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      DatasetInstanceMeta info = new DatasetInstanceMeta(spec, implManager.getTypeInfo(spec.getType()));
+      DatasetMeta info = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()));
       responder.sendJson(HttpResponseStatus.OK, info);
     }
   }
 
   /**
    * Creates a new Dataset or updates existing Dataset specification's
-   * properties if an optional upgrade parameter in the body is set to true, {@link CreateDatasetParams}
+   * properties if an optional upgrade parameter in the body is set to true, {@link DatasetInstanceConfiguration}
    * is constructed based on request and appropriate action is performed
    */
   @PUT
@@ -132,20 +133,19 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                   @PathParam("name") String name) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
 
-    CreateDatasetParams dsCreateParams = GSON.fromJson(reader, CreateDatasetParams.class);
-    String operation = (dsCreateParams.isUpgrade() == true) ? "update" : "create";
+    DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
+    String operation = (creationProperties.isUpgrade() == true) ? "update" : "create";
 
     LOG.info("{} dataset {}, type name: {}, typeAndProps: {}",
-             operation, name, dsCreateParams.getTypeName(), dsCreateParams.getProperties());
+             operation, name, creationProperties.getTypeName(), creationProperties.getProperties());
     DatasetSpecification existing = instanceManager.get(name);
 
     if (existing != null) {
       String message = null;
-      if (!dsCreateParams.isUpgrade()) {
+      if (!creationProperties.isUpgrade()) {
         message = String.format("Cannot create dataset %s: instance with same name already exists %s",
                                 name, existing);
-
-      } else if (!existing.getType().equals(dsCreateParams.getTypeName())) {
+      } else if (!existing.getType().equals(creationProperties.getTypeName())) {
         message = String.format("Cannot update dataset %s instance with a different type, old type is %s",
                                 name, existing.getType());
       }
@@ -155,10 +155,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
         return;
       }
     }
-    DatasetTypeMeta typeMeta = implManager.getTypeInfo(dsCreateParams.getTypeName());
+    DatasetTypeMeta typeMeta = implManager.getTypeInfo(creationProperties.getTypeName());
     if (typeMeta == null) {
       String message = String.format("Cannot %s dataset %s: unknown type %s",
-                                     operation, name, dsCreateParams.getTypeName());
+                                     operation, name, creationProperties.getTypeName());
       LOG.warn(message);
       responder.sendError(HttpResponseStatus.NOT_FOUND, message);
       return;
@@ -168,10 +168,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     DatasetSpecification spec;
     try {
       spec = opExecutorClient.create(name, typeMeta,
-                                     DatasetProperties.builder().addAll(dsCreateParams.getProperties()).build());
+                                     DatasetProperties.builder().addAll(creationProperties.getProperties()).build());
     } catch (Exception e) {
       String msg = String.format("Cannot %s dataset %s of type %s: executing create() failed, reason: %s",
-                                 operation, name, dsCreateParams.getTypeName(), e.getMessage());
+                                 operation, name, creationProperties.getTypeName(), e.getMessage());
       LOG.error(msg, e);
       throw new RuntimeException(msg, e);
     }
@@ -181,13 +181,13 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Note: today explore enable is not transactional with dataset create - REACTOR-314
 
     try {
-      if (dsCreateParams.isUpgrade()) {
+      if (creationProperties.isUpgrade()) {
         datasetExploreFacade.disableExplore(name);
       }
       datasetExploreFacade.enableExplore(name);
     } catch (Exception e) {
       String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
-                                 name, dsCreateParams.getProperties(), e.getMessage());
+                                 name, creationProperties.getProperties(), e.getMessage());
       LOG.error(msg, e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
 //      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
@@ -263,37 +263,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                             @PathParam("method") String method) {
     // todo: execute data operation
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
-  }
-
-  /**
-   * POJO that carries dataset type and properties information for create dataset request
-   */
-  public static final class CreateDatasetParams {
-    private final String typeName;
-    private final Map<String, String> properties;
-    private final boolean upgrade;
-
-    public CreateDatasetParams(String typeName, Map<String, String> properties) {
-      this(typeName, properties, false);
-    }
-    public CreateDatasetParams(String typeName, Map<String, String> properties, boolean upgrade) {
-      this.typeName = typeName;
-      this.properties = properties;
-      this.upgrade = upgrade;
-
-    }
-
-    public String getTypeName() {
-      return typeName;
-    }
-
-    public Map<String, String> getProperties() {
-      return properties;
-    }
-
-    public boolean isUpgrade() {
-      return upgrade;
-    }
   }
 
   /**

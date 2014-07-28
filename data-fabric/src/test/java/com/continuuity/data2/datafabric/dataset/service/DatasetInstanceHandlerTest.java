@@ -31,13 +31,14 @@ import com.continuuity.api.dataset.table.Table;
 import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.ObjectResponse;
-import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.proto.DatasetInstanceConfiguration;
+import com.continuuity.proto.DatasetModuleMeta;
+import com.continuuity.tephra.DefaultTransactionExecutor;
+import com.continuuity.tephra.TransactionAware;
+import com.continuuity.tephra.TransactionExecutor;
+import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -231,6 +232,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
   }
 
+
   private int createInstance(String instanceName, String typeName,
                              DatasetProperties props) throws IOException {
     return createUpdateInstance(instanceName, typeName, props, false);
@@ -238,10 +240,11 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   private int createUpdateInstance(String instanceName, String typeName,
                                    DatasetProperties props, boolean isUpgrade) throws IOException {
-    DatasetInstanceHandler.CreateDatasetParams typeAndProps =
-      new DatasetInstanceHandler.CreateDatasetParams(typeName, props.getProperties(), isUpgrade);
+    DatasetInstanceConfiguration creationProperties =
+      new DatasetInstanceConfiguration(typeName, props.getProperties(), isUpgrade);
+
     HttpRequest request = HttpRequest.put(getUrl("/data/datasets/" + instanceName))
-      .withBody(new Gson().toJson(typeAndProps)).build();
+      .withBody(new Gson().toJson(creationProperties)).build();
     return HttpRequests.execute(request).getResponseCode();
   }
 

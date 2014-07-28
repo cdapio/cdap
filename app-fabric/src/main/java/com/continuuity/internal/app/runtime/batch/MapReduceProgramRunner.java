@@ -22,14 +22,10 @@ import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.stream.StreamBatchReadable;
-import com.continuuity.api.dataset.Dataset;
-import com.continuuity.api.dataset.lib.AbstractDataset;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
@@ -49,11 +45,6 @@ import com.continuuity.data.dataset.DatasetCreationSpec;
 import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data.stream.TextStreamInputFormat;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.TransactionExecutorFactory;
-import com.continuuity.data2.transaction.TransactionFailureException;
-import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
@@ -65,6 +56,13 @@ import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.continuuity.internal.lang.Reflections;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionExecutor;
+import com.continuuity.tephra.TransactionExecutorFactory;
+import com.continuuity.tephra.TransactionFailureException;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -160,9 +158,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
     ApplicationSpecification appSpec = program.getSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-    Type processorType = program.getType();
+    ProgramType processorType = program.getType();
     Preconditions.checkNotNull(processorType, "Missing processor type.");
-    Preconditions.checkArgument(processorType == Type.MAPREDUCE, "Only MAPREDUCE process type is supported.");
+    Preconditions.checkArgument(processorType == ProgramType.MAPREDUCE, "Only MAPREDUCE process type is supported.");
 
     MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
@@ -415,7 +413,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     Id.Program programId = context.getProgram().getId();
     Location programJarCopy = locationFactory.create(String.format("%s.%s.%s.%s.%s.program.jar",
-                                         Type.MAPREDUCE.name().toLowerCase(),
+                                         ProgramType.MAPREDUCE.name().toLowerCase(),
                                          programId.getAccountId(), programId.getApplicationId(),
                                          programId.getId(), context.getRunId().getId()));
     InputStream src = jobJarLocation.getInputStream();
@@ -578,7 +576,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     Location appFabricDependenciesJarLocation =
       locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
-                                           Type.MAPREDUCE.name().toLowerCase(),
+                                           ProgramType.MAPREDUCE.name().toLowerCase(),
                                            programId.getAccountId(), programId.getApplicationId(),
                                            programId.getId(), context.getRunId().getId()));
 

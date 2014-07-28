@@ -31,11 +31,11 @@
   <packaging>jar</packaging>
 
   <dependencies>
-    <dependency>
-      <groupId>com.continuuity</groupId>
-      <artifactId>tx-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>com.continuuity</groupId>-->
+      <!--<artifactId>proto</artifactId>-->
+      <!--<version>${project.version}</version>-->
+    <!--</dependency>-->
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
@@ -51,6 +51,10 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.continuuity.tephra</groupId>
+      <artifactId>tephra-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.twill</groupId>

@@ -24,10 +24,10 @@ import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.api.dataset.table.Table;
 import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.inmemory.MinimalTxSystemClient;
+import com.continuuity.tephra.DefaultTransactionExecutor;
+import com.continuuity.tephra.TransactionAware;
+import com.continuuity.tephra.TransactionExecutor;
+import com.continuuity.tephra.inmemory.MinimalTxSystemClient;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -15,7 +15,7 @@
  */
 package com.continuuity.data2.transaction.queue;
 
-import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.tephra.Transaction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 

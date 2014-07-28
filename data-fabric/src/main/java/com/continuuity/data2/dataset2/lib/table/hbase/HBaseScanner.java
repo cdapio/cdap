@@ -18,7 +18,7 @@ package com.continuuity.data2.dataset2.lib.table.hbase;
 
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Scanner;
-import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.tephra.Transaction;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;

@@ -16,7 +16,7 @@
 
 package com.continuuity.app.deploy;
 
-import com.continuuity.app.Id;
+import com.continuuity.proto.Id;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import javax.annotation.Nullable;

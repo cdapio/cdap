@@ -19,10 +19,9 @@ package com.continuuity.data2.dataset2.lib.table.hbase;
 import com.continuuity.api.dataset.table.ConflictDetection;
 import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.data2.dataset2.lib.table.BackedByVersionedStoreOrderedTable;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionCodec;
-import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionCodec;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
@@ -56,7 +55,7 @@ public class HBaseOrderedTable extends BackedByVersionedStoreOrderedTable {
 
   protected HBaseOrderedTable(String name, Configuration hConf, ConflictDetection level, int ttl) throws IOException {
     super(name, level);
-    HTable hTable = new HTable(hConf, getName());
+    HTable hTable = new HTable(hConf, getTransactionAwareName());
     this.ttl = ttl;
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
@@ -69,7 +68,7 @@ public class HBaseOrderedTable extends BackedByVersionedStoreOrderedTable {
   public String toString() {
     return Objects.toStringHelper(this)
                   .add("hTable", hTable)
-                  .add("hTableName", getName())
+                  .add("hTableName", getTransactionAwareName())
                   .toString();
   }
 

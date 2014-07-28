@@ -21,7 +21,7 @@ import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.dataset.DatasetProperties;
-import com.continuuity.app.program.RunRecord;
+import com.continuuity.proto.RunRecord;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
 import com.continuuity.test.FlowManager;
@@ -324,7 +324,7 @@ public class TestFrameworkTest extends ReactorTestBase {
 
       // Run mapreduce job
       MapReduceManager mrManager = applicationManager.startMapReduce("countTotal");
-      mrManager.waitForFinish(180L, TimeUnit.SECONDS);
+      mrManager.waitForFinish(1800L, TimeUnit.SECONDS);
 
       long totalCount = Long.valueOf(procedureClient.query("total", Collections.<String, String>emptyMap()));
       // every event has 5 tokens

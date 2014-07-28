@@ -20,9 +20,9 @@ import com.continuuity.api.data.DataSetContext;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.QueueClientFactory;
-import com.continuuity.data2.transaction.TransactionContext;
-import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
+import com.continuuity.tephra.TransactionContext;
+import com.continuuity.tephra.TransactionExecutor;
 
 import java.io.IOException;
 

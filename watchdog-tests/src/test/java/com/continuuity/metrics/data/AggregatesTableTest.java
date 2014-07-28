@@ -25,9 +25,8 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.data.runtime.TransactionMetricsModule;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.transaction.TxConstants;
-import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
@@ -449,7 +448,7 @@ public class AggregatesTableTest {
     testHBase.startHBase();
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
-    cConf.unset(Constants.CFG_HDFS_USER);
+    cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     Injector injector = Guice.createInjector(new ConfigModule(cConf, testHBase.getConfiguration()),
                                              new DiscoveryRuntimeModule().getDistributedModules(),
                                              new ZKClientModule(),

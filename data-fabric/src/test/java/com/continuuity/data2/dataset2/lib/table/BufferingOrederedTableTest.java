@@ -20,8 +20,8 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.api.dataset.table.Scanner;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionAware;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
@@ -88,7 +88,7 @@ public abstract class BufferingOrederedTableTest<T extends BufferingOrderedTable
     private BufferingOrderedTable delegate;
 
     private BufferingOrderedTableWithPersistingFailure(BufferingOrderedTable delegate) {
-      super(delegate.getName(), delegate.getConflictLevel());
+      super(delegate.getTransactionAwareName(), delegate.getConflictLevel());
       this.delegate = delegate;
     }
 

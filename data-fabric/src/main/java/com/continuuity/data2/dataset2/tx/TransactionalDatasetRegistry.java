@@ -18,11 +18,11 @@ package com.continuuity.data2.dataset2.tx;
 
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.data2.dataset2.DatasetManagementException;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.TransactionFailureException;
-import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.tephra.DefaultTransactionExecutor;
+import com.continuuity.tephra.TransactionAware;
+import com.continuuity.tephra.TransactionExecutor;
+import com.continuuity.tephra.TransactionFailureException;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
