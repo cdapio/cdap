@@ -16,10 +16,8 @@
 
 package com.continuuity.internal.app.runtime.service;
 
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.AbstractProgramRuntimeService;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
@@ -28,6 +26,11 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.InMemoryProgramLiveInfo;
+import com.continuuity.proto.NotRunningProgramLiveInfo;
+import com.continuuity.proto.ProgramLiveInfo;
+import com.continuuity.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -102,10 +105,10 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
   }
 
   @Override
-  public LiveInfo getLiveInfo(Id.Program programId, Type type) {
+  public ProgramLiveInfo getLiveInfo(Id.Program programId, ProgramType type) {
     return isRunning(programId, type)
-      ? new InMemoryLiveInfo(programId, type)
-      : new NotRunningLiveInfo(programId, type);
+      ? new InMemoryProgramLiveInfo(programId, type)
+      : new NotRunningProgramLiveInfo(programId, type);
   }
 
   @Override
@@ -118,7 +121,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
     LOG.info("Stopping all running programs.");
 
     List<ListenableFuture<ProgramController>> futures = Lists.newLinkedList();
-    for (Type type : Type.values()) {
+    for (ProgramType type : ProgramType.values()) {
       for (Map.Entry<RunId, RuntimeInfo> entry : list(type).entrySet()) {
         RuntimeInfo runtimeInfo = entry.getValue();
         if (isRunning(runtimeInfo.getProgramId(), type)) {

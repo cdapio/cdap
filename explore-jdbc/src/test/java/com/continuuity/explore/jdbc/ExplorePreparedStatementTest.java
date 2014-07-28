@@ -17,8 +17,8 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
-import com.continuuity.explore.service.ColumnDesc;
-import com.continuuity.explore.service.Result;
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryResult;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
@@ -40,7 +40,8 @@ public class ExplorePreparedStatementTest {
         new ColumnDesc("column1", "STRING", 1, ""),
         new ColumnDesc("column2", "int", 2, ""))
       ),
-      ImmutableMap.of("SELECT * FROM table WHERE id=100, name='foo'", (List<Result>) Lists.<Result>newArrayList())
+      ImmutableMap.of("SELECT * FROM table WHERE id=100, name='foo'",
+                      (List<QueryResult>) Lists.<QueryResult>newArrayList())
     );
 
 

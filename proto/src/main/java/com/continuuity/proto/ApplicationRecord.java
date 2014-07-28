@@ -14,41 +14,37 @@
  * the License.
  */
 
-package com.continuuity.internal.app.runtime.service;
-
-import com.continuuity.app.Id;
-import com.continuuity.app.program.Type;
+package com.continuuity.proto;
 
 /**
- * Represents information about running programs. This class can be extended to add information for specific runtime
- * environments.
+ * Represents item in the list from /apps
  */
-public abstract class LiveInfo {
-  private final String app;
+public class ApplicationRecord {
   private final String type;
   private final String id;
-  private final String runtime;
+  private final String name;
+  private final String description;
 
-  public LiveInfo(Id.Program programId, Type type, String runtime) {
-    this.app = programId.getApplicationId();
-    this.type = type.prettyName();
-    this.id = programId.getId();
-    this.runtime = runtime;
+  public ApplicationRecord(String type, String id, String name, String description) {
+    this.type = type;
+    this.id = id;
+    this.name = name;
+    this.description = description;
   }
 
-  public String getApp() {
-    return app;
-  }
-
-  public Type getType() {
-    return Type.valueOfPrettyName(type);
+  public String getType() {
+    return type;
   }
 
   public String getId() {
     return id;
   }
 
-  public String getRuntime() {
-    return runtime;
+  public String getName() {
+    return name;
+  }
+
+  public String getDescription() {
+    return description;
   }
 }

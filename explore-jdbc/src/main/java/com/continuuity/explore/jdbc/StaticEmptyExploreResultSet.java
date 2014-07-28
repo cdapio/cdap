@@ -17,7 +17,7 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.explore.service.ColumnDesc;
+import com.continuuity.proto.ColumnDesc;
 import com.google.common.collect.ImmutableList;
 
 import java.sql.ResultSetMetaData;

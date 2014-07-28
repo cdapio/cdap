@@ -20,9 +20,8 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.MetaDataInfo;
-
+import com.continuuity.proto.QueryHandle;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
@@ -1064,6 +1063,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
    * Produces an explore handle.
    */
   private interface HandleProducer {
-    Handle getHandle() throws ExploreException, SQLException;
+    QueryHandle getHandle() throws ExploreException, SQLException;
   }
 }

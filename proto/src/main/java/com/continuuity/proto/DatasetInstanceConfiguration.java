@@ -14,17 +14,27 @@
  * the License.
  */
 
-package com.continuuity.internal.app.runtime.service;
+package com.continuuity.proto;
 
-import com.continuuity.app.Id;
-import com.continuuity.app.program.Type;
+import java.util.Map;
 
 /**
- * A live info for in-memory runtime envirnment.
+ * POJO that carries dataset type and properties information for create dataset request
  */
-public class InMemoryLiveInfo extends LiveInfo {
+public final class DatasetInstanceConfiguration {
+  private final String typeName;
+  private final Map<String, String> properties;
 
-  public InMemoryLiveInfo(Id.Program programId, Type type) {
-    super(programId, type, "in-memory");
+  public DatasetInstanceConfiguration(String typeName, Map<String, String> properties) {
+    this.typeName = typeName;
+    this.properties = properties;
+  }
+
+  public String getTypeName() {
+    return typeName;
+  }
+
+  public Map<String, String> getProperties() {
+    return properties;
   }
 }

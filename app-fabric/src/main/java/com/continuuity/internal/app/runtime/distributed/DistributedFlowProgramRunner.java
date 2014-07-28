@@ -18,7 +18,6 @@ package com.continuuity.internal.app.runtime.distributed;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.conf.CConfiguration;
@@ -28,6 +27,7 @@ import com.continuuity.common.twill.AbortOnTimeoutEventHandler;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
+import com.continuuity.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Multimap;
@@ -66,9 +66,9 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
     ApplicationSpecification appSpec = program.getSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-    Type processorType = program.getType();
+    ProgramType processorType = program.getType();
     Preconditions.checkNotNull(processorType, "Missing processor type.");
-    Preconditions.checkArgument(processorType == Type.FLOW, "Only FLOW process type is supported.");
+    Preconditions.checkArgument(processorType == ProgramType.FLOW, "Only FLOW process type is supported.");
 
     try {
       FlowSpecification flowSpec = appSpec.getFlows().get(program.getName());
