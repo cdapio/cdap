@@ -16,12 +16,11 @@
 
 package com.continuuity.explore.client;
 
-import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryHandle;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -41,9 +40,9 @@ class StatementExecutionFutureImpl extends AbstractFuture<ExploreExecutionResult
   private static final Logger LOG = LoggerFactory.getLogger(StatementExecutionFutureImpl.class);
 
   private final Explore exploreClient;
-  private final ListenableFuture<Handle> futureHandle;
+  private final ListenableFuture<QueryHandle> futureHandle;
 
-  StatementExecutionFutureImpl(Explore exploreClient, ListenableFuture<Handle> futureHandle) {
+  StatementExecutionFutureImpl(Explore exploreClient, ListenableFuture<QueryHandle> futureHandle) {
     this.exploreClient = exploreClient;
     this.futureHandle = futureHandle;
   }
@@ -51,7 +50,7 @@ class StatementExecutionFutureImpl extends AbstractFuture<ExploreExecutionResult
   @Override
   public List<ColumnDesc> getResultSchema() throws ExploreException {
     try {
-      Handle handle = futureHandle.get();
+      QueryHandle handle = futureHandle.get();
       return exploreClient.getResultSchema(handle);
     } catch (InterruptedException e) {
       LOG.error("Caught exception", e);
@@ -77,7 +76,7 @@ class StatementExecutionFutureImpl extends AbstractFuture<ExploreExecutionResult
     // Cancelling the future object means cancelling the query, as well as closing it
     // Since closing the query also cancels it, we only need to close
     try {
-      Handle handle = futureHandle.get();
+      QueryHandle handle = futureHandle.get();
       exploreClient.close(handle);
     } catch (InterruptedException e) {
       LOG.error("Caught exception", e);
@@ -94,7 +93,6 @@ class StatementExecutionFutureImpl extends AbstractFuture<ExploreExecutionResult
     }
   }
 
-  @Override
   public boolean setException(Throwable throwable) {
     return super.setException(throwable);
   }

@@ -20,7 +20,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Status;
+import com.continuuity.proto.QueryStatus;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -55,7 +55,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  protected Status fetchStatus(OperationHandle operationHandle)
+  protected QueryStatus fetchStatus(OperationHandle operationHandle)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     try {
       // In Hive 12, CLIService.getOperationStatus returns OperationState.
@@ -65,7 +65,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
       Class cliServiceClass = getCliService().getClass();
       Method m = cliServiceClass.getMethod("getOperationStatus", OperationHandle.class);
       OperationState operationState = (OperationState) m.invoke(getCliService(), operationHandle);
-      return new Status(Status.OpStatus.valueOf(operationState.toString()), operationHandle.hasResultSet());
+      return new QueryStatus(QueryStatus.OpStatus.valueOf(operationState.toString()), operationHandle.hasResultSet());
     } catch (InvocationTargetException e) {
       throw Throwables.propagate(e);
     } catch (NoSuchMethodException e) {

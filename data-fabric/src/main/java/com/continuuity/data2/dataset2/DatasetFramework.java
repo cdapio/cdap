@@ -99,8 +99,7 @@ public interface DatasetFramework {
   Collection<DatasetSpecification> getInstances() throws DatasetManagementException;
 
   /**
-   * @return {@link com.continuuity.api.dataset.DatasetSpecification} of the dataset or {@code null} if dataset does
-   *         not exist
+   * @return {@link DatasetSpecification} of the dataset or {@code null} if dataset not not exist
    */
   @Nullable
   DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException;
