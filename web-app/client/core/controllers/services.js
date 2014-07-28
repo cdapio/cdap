@@ -18,9 +18,6 @@ define([], function () {
         self.resetServices();
       }, C.POLLING_INTERVAL)
     },
-    config: function(service) {
-      this.transitionToRoute('Userservice.Config', service);
-    },
 
     resetServices: function () {
       var self = this;
@@ -59,42 +56,6 @@ define([], function () {
           $("[data-toggle='tooltip']").tooltip();
         }, 1000);
       });
-    },
-
-    start: function (service) {
-      var self = this;
-      if (service.status == "RUNNING") {
-        C.Util.showWarning("Program is already running.");
-        return;
-      }
-      C.Modal.show(
-        "Start Service",
-        "Start Service: " + service.app + ":" + service.name + "?",
-        function () {
-          var startURL = 'rest/apps/' + service.app + '/services/' + service.name + '/start';
-          self.HTTP.post(startURL, function() {
-            service.update(self.HTTP);
-          });
-        }
-      );
-    },
-
-    stop: function (service) {
-      var self = this;
-      if (service.status == "STOPPED") {
-        C.Util.showWarning("Program is already stopped.");
-        return;
-      }
-      C.Modal.show(
-        "Stop Service",
-        "Stop Service: " + service.app + ":" + service.name + "?",
-        function () {
-          var stopURL = 'rest/apps/' + service.app + '/services/' + service.name + '/stop';
-          self.HTTP.post(stopURL, function() {
-            service.update(self.HTTP);
-          });
-        }
-      );
     },
 
 

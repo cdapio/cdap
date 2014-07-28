@@ -95,7 +95,7 @@ define(['core/lib/date', 'core/models/program'],
      */
     context: function () {
 
-      return this.interpolate('/apps/{parent}/mapreduce/{id}');
+      return this.interpolate('apps/{parent}/mapreduce/{id}');
 
     }.property('app', 'name'),
 

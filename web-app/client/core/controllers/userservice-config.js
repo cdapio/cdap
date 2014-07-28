@@ -20,7 +20,6 @@ define(['core/controllers/runnable-config'], function (RunnableConfigController)
 
 
     load: function () {
-      console.log('loaded');
       var parent = this.get('needs')[0];
       var model = this.get('controllers').get(parent).get('model');
       var list = Em.ArrayProxy.create({ content: [] });

@@ -17,7 +17,7 @@ define(['core/models/program'], function (Program) {
     },
 
 		context: function () {
-			return '/apps/' + this.app + '/services/' + this.name;
+			return 'apps/' + this.app + '/services/' + this.name;
 		}.property('app', 'name'),
 
     interpolate: function (path) {
@@ -26,7 +26,8 @@ define(['core/models/program'], function (Program) {
 
     updateRunnable: function (runnable, index, http) {
       var self = this;
-      var url = '/apps/' + self.app + '/services/' + self.name + '/runnables/' + runnable.id + '/instances';
+      var url = 'apps/' + self.app + '/services/' + self.name 
+          + '/runnables/' + runnable.id + '/instances';
       http.rest(url, function (runnablesResponse) {
         self.runnablesList[index].set('requested', runnablesResponse.requested);
         self.runnablesList[index].set('provisioned', runnablesResponse.provisioned);
@@ -57,16 +58,13 @@ define(['core/models/program'], function (Program) {
         self.updateRunnable(runnable, index, http);
       });
 
-      var url = '/apps/' + self.app + '/services/' + self.name + '/status';
+      var url = 'apps/' + self.app + '/services/' + self.name + '/status';
       http.rest(url, function (statusResponse) {
+        self.set('currentState', statusResponse.status);
         self.set('status', statusResponse.status);
         self.set('imgClass', statusResponse.status === 'RUNNING' ? 'complete' : 'loading');
       });
     },
-
-    running: function () {
-      return this.status === "RUNNING";
-    }.property('status')
 
   });
 

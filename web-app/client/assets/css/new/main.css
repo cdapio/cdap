@@ -471,10 +471,8 @@ a, a:visited {
 
 #content-body {
 	padding: 16px 0 0;
-	float: left;
 	padding-left: 120px;
 	padding-top: 80px;
-	width: 100%;
 	background: #E0E1E6;
 }
 
@@ -485,7 +483,7 @@ a, a:visited {
 	position: fixed;
 	min-width: 600px;
 	width: 100%;
-	z-index: 50;
+	z-index: 51;
 	border-bottom: 1px solid #CECED0;
 }
 

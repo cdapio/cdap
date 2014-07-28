@@ -257,83 +257,72 @@
   <script type="text/x-handlebars" data-template-name="UserserviceStatus">
 {{#if model}}
     <div id="panels">
-          <div class="panel">
-          <table class="table">
-            <thead>
-              <th style="padding-left: 14px; min-width: 350px" class="service-col">Name</th>
-              <th style="min-width: 100px;" class="status-col center-align">Status
-              </th>
+      <div class="panel">
+        <table class="table">
+          <tbody>
+            <tr>
+              <td style="max-width: 350px;" class="app-list-name service-col">
+                <a class="none-text-decoration">{{model.app}}:{{model.name}}</a>
+                <br />
+                <span class="app-list-status">{{model.description}}</span>
+              </td>
+              <td>
+                <div class="info-box" style="float: right; border: 0;padding-right: 14px;padding-left: 0px;">
+                  <div id="action-buttons" class="btn-group pull-right">
+
+                    <button class="btn btn-blank start-stop" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+                    <button class="btn btn-blank btn-icon" {{action "config"}}><span class="btn-config"></span></button>
+                  </div>
+                  <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h2>Runnables</h2>
+      <br />
+      <div class="panel">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="padding-left: 14px; min-width: 200px" class="service-col">Name</th>
               <th style="min-width: 200px;" class="center-align">Instances Requested</th>
               <th style="min-width: 200px;" class="center-align">Provisioned</th>
-              <th style="min-width: 200px;" class="center-align"> Start/Stop </th>
-            </thead>
-            <tbody>
+            </tr>
+          </thead>
+          <tbody>
+            {{!--  RUNNABLES ROWS --}}
+              {{#each runnable in model.runnablesList}}
               <tr>
-                <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
-                  <a {{bindAttr href="model.href"}}>{{model.app}}:{{model.name}}</a><br /><span class="app-list-status app-status">{{model.status}}</span>
+              <td class="app-list-name service-col"><a class="none-text-decoration">
+                {{runnable.id}}
                 </a>
-                  <br />
-                  <span class="app-list-status">{{model.description}}</span>
-                </td>
-                <td style="max-width: 100px;" class="status-col center-align">
-                  <span {{ bindAttr class=":service-icon model.imgClass" }} ></span>
-                </td>
-                <td style="max-width: 200px;" class="instance-col">
-                </td>
-                <td style="max-width: 350px;" class="instance-provisioned service-col">
-
-                </td>
-                <td class="center-align">
-                    <div class="btn-group start-stop-btns">
-                        <button class="userServices-start" {{action start model}}></button>
-                        <button class="userServices-stop" {{action stop model}}></button>
-                    </div>
-
-                    <ul class="nav nav-pills center-align" style="margin: 2px 14px;">
-                      <div id="action-buttons" class="btn-group pull-right">
-                      <button {{action config}} class="btn btn-icon"><span class="btn-config"></span></button>
-                      </div>
-                    </ul>
-                </td>
-              </tr>
-              {{!--  RUNNABLES ROWS --}}
-                {{#each runnable in model.runnablesList}}
-                <tr>
-                <td style="max-width: 350px;" class="app-list-name service-col pull-right center-align"><a class="none-text-decoration">
-                  {{runnable.id}}
-                </a>
-                  <br />
-                  <span class="app-list-status pull-left">runnable</span>
-                </td>
-                <td style="max-width: 100px;" class="status-col center-align">
-                  {{!-- removed status icon from here --}}
-                </td>
-                <td style="max-width: 200px;" class="instance-col">
-                  <div class="instance-wrapper">
-                    <div class="instance-num"><span>{{runnable.requested}}</span></div>
-                    <div>
-                      <a class="cursor-pointer" {{action runnableDecreaseInstance model runnable.id runnable.requested }}>
-                        <span class="minus-icon"></span>
-                      </a>
-                      <a class="cursor-pointer" {{action runnableIncreaseInstance model runnable.id runnable.requested }}>
-                        <span class="plus-icon"></span>
-                      </a>
-                    </div>
+                <br />
+                <span class="app-list-status pull-left">runnable</span>
+              </td>
+              <td style="max-width: 200px;" class="instance-col">
+                <div class="instance-wrapper">
+                  <div class="instance-num left-float"><span>{{runnable.requested}}</span></div>
+                  <div>
+                    <a class="cursor-pointer" {{action runnableDecreaseInstance model runnable.id runnable.requested }}>
+                      <span class="minus-icon"></span>
+                    </a>
+                    <a class="cursor-pointer" {{action runnableIncreaseInstance model runnable.id runnable.requested }}>
+                      <span class="plus-icon"></span>
+                    </a>
                   </div>
-                <td style="max-width: 350px;" class="instance-provisioned service-col">
-                    <div class="instance-num auto-margin"><span>{{runnable.provisioned}}</span></div>
-                </td>
-                <td class="center-align">
-                  {{!-- removed start/stop buttons from here --}}
-                </td>
-              </tr>
-              {{/each}}
-              {{!--  RUNNABLES ROWS --}}
-            </tbody>
-          </table>
-          </div>
-
+                </div>
+              <td class="instance-provisioned service-col">
+                  <div class="instance-num auto-margin"><span>{{runnable.provisioned}}</span></div>
+              </td>
+            </tr>
+            {{/each}}
+            {{!--  RUNNABLES ROWS --}}
+          </tbody>
+        </table>
       </div>
+    </div>
 
   {{outlet config}}
 
@@ -343,11 +332,9 @@
   <script type="text/x-handlebars" data-template-name="Userservice">
 
     <div id="title">
-      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
-        <li>{{#linkTo Userservice.History model}}History{{/linkTo}}</li>
-      </ul>
-      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;"> 
         <li>{{#linkTo UserserviceStatus model}}Status{{/linkTo }}</li>
+        <li>{{#linkTo Userservice.History model}}History{{/linkTo}}</li>        
       </ul>
       <h1><span>Service</span> {{model.name}}</h1>
     </div>
