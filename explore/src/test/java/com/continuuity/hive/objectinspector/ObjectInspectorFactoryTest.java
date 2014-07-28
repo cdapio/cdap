@@ -17,6 +17,7 @@
 package com.continuuity.hive.objectinspector;
 
 import com.continuuity.common.utils.ImmutablePair;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -25,7 +26,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.junit.Assert;
 import org.junit.Test;
-import scala.reflect.internal.Trees;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -60,7 +60,7 @@ public class ObjectInspectorFactoryTest {
     }
     ImmutableList.Builder builder = ImmutableList.builder();
     for (Field f : tmpFields) {
-      if (!Modifier.isTransient(f.getModifiers())) {
+      if (!Modifier.isTransient(f.getModifiers()) && !f.isSynthetic()) {
         builder.add(f);
       }
     }
@@ -93,21 +93,18 @@ public class ObjectInspectorFactoryTest {
 
   @Test
   public void reflectionObjectInspectorTest() throws Exception {
-    // The "this$0" field comes from the fact that some classes are
-    // nested classes - 'this' refers to this test class
     Assert.assertEquals("array<string>", getObjectName(new TypeToken<List<String>>() { }.getType()));
-    Assert.assertEquals("array<struct<address:struct<street:string,this$0:struct<>>,this$0:struct<>>>",
+    Assert.assertEquals("array<struct<address:struct<street:string>>>",
                         getObjectName(new TypeToken<List<DummyEmployee<DummyAddress<String>>>>() { }.getType()));
     Assert.assertEquals("array<string>",
                         getObjectName(new TypeToken<ArrayList<String>>() { }.getType()));
     Assert.assertEquals("struct<first:array<string>,second:int>",
                         getObjectName(new TypeToken<ImmutablePair<ImmutableList<String>, Integer>>() { }.getType()));
-    Assert.assertEquals("struct<address:struct<street:string,this$0:struct<>>,this$0:struct<>>",
+    Assert.assertEquals("struct<address:struct<street:string>>",
                         getObjectName(new TypeToken<DummyEmployee<DummyAddress<String>>>() { }.getType()));
     Assert.assertEquals("struct<myint:int,myinteger:int,mystring:string,dummystruct:this," +
                         "myliststring:array<string>,mymapstringstring:map<string,string>," +
-                        "employee:struct<address:struct<street:string,this$0:struct<>>,this$0:struct<>>," +
-                        "ints:array<int>,this$0:struct<>>",
+                        "employee:struct<address:struct<street:string>>,ints:array<int>>",
                         getObjectName(DummyStruct.class));
 
     DummyStruct a = new DummyStruct();
