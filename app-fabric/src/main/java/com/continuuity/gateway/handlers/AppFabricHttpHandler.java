@@ -1024,7 +1024,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<JsonObject> args = decodeArrayArguments(request);
-      if (args == null || args.isEmpty()) {
+      if (args == null) {
         respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, "No data provided");
         return;
       }
@@ -1149,7 +1149,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       List<JsonObject> args = decodeArrayArguments(request);
-      if (args == null || args.isEmpty()) {
+      // empty args is okay. it will return a 200 with no data
+      if (args == null) {
         respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, "No data provided");
         return;
       }
@@ -1171,11 +1172,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           programType = Type.valueOfPrettyName(programTypeStr);
         } catch (IllegalArgumentException e) {
           // invalid type
-          respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Could not find type: " + programTypeStr);
+          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, programTypeStr + " is not a valid program type");
           return;
         }
         if (programType == null) {
-          respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Program type: " + programTypeStr + " not found");
+          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, programTypeStr + " is not a valid program type");
           return;
         }
         // getStatus has a callback for mapreduce jobs that run in workflows
@@ -1257,12 +1258,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   protected List<JsonObject> decodeArrayArguments(HttpRequest request) throws IOException, JsonSyntaxException {
     ChannelBuffer content = request.getContent();
     if (!content.readable()) {
-      return new ArrayList<JsonObject>();
+      return null;
     }
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
     try {
-      List<JsonObject> args = GSON.fromJson(reader, new TypeToken<List<JsonObject>>() { }.getType());
-      return args == null ? new ArrayList<JsonObject>() : args;
+      return  GSON.fromJson(reader, new TypeToken<List<JsonObject>>() { }.getType());
     } catch (JsonSyntaxException e) {
       LOG.info("Failed to parse arguments on {}", request.getUri(), e);
       throw e;
