@@ -39,6 +39,11 @@
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
+      <artifactId>proto</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.continuuity</groupId>
       <artifactId>data-fabric</artifactId>
       <version>${project.version}</version>
     </dependency>

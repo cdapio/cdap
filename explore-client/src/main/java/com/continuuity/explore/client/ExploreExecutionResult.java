@@ -16,7 +16,7 @@
 
 package com.continuuity.explore.client;
 
-import com.continuuity.explore.service.Result;
+import com.continuuity.proto.QueryResult;
 
 import java.io.Closeable;
 import java.util.Iterator;
@@ -24,7 +24,7 @@ import java.util.Iterator;
 /**
  * Results of an Explore statement execution.
  */
-public interface ExploreExecutionResult extends Iterator<Result>, Closeable {
+public interface ExploreExecutionResult extends Iterator<QueryResult>, Closeable {
 
   /**
    * @return the current fetch size for this object

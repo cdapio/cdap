@@ -16,9 +16,9 @@
 
 package com.continuuity.explore.client;
 
-import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
 
+import com.continuuity.proto.ColumnDesc;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public interface StatementExecutionFuture extends ListenableFuture<ExploreExecut
    * Get the results' schema. This method is there so that we don't have to wait for the whole execution
    * of a query to have access to the schema.
    *
-   * @return a list of {@link com.continuuity.explore.service.ColumnDesc} representing the schema of the results.
+   * @return a list of {@link ColumnDesc} representing the schema of the results.
    *         Empty list if there are no results.
    * @throws com.continuuity.explore.service.ExploreException on any error fetching schema.
    */
