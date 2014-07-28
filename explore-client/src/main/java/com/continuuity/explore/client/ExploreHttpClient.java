@@ -25,7 +25,6 @@ import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.MetaDataInfo;
-import com.continuuity.explore.service.ResultWithSchema;
 import com.continuuity.explore.utils.ColumnsArgs;
 import com.continuuity.explore.utils.FunctionsArgs;
 import com.continuuity.explore.utils.SchemasArgs;
@@ -100,11 +99,10 @@ abstract class ExploreHttpClient implements Explore {
                                  getDetails(response));
   }
 
-  @Override
-  public ResultWithSchema getDatasetSchema(String datasetName) throws ExploreException, SQLException {
+  public String getDatasetSchema(String datasetName) throws ExploreException {
     HttpResponse response = doGet(String.format("data/explore/datasets/%s/schema", datasetName));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return parseJson(response, ResultWithSchema.class);
+      return parseResponseAsMap(response, "schema");
     }
     throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
   }

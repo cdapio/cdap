@@ -23,7 +23,6 @@ import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.MetaDataInfo;
-import com.continuuity.explore.service.ResultWithSchema;
 import com.continuuity.hive.context.CConfCodec;
 import com.continuuity.hive.context.ConfigurationUtil;
 import com.continuuity.hive.context.ContextManager;
@@ -362,35 +361,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       } catch (Throwable e) {
         closeSession(sessionHandle);
         throw e;
-      }
-    } catch (HiveSQLException e) {
-      throw getSqlException(e);
-    } catch (Throwable e) {
-      throw new ExploreException(e);
-    }
-  }
-
-  @Override
-  public ResultWithSchema getDatasetSchema(String datasetName) throws ExploreException, SQLException {
-    try {
-      Map<String, String> sessionConf = startSession();
-      SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
-      try {
-        OperationHandle operationHandle = doExecute(sessionHandle, String.format("describe %s", datasetName));
-        QueryStatus status;
-        do {
-          TimeUnit.MILLISECONDS.sleep(300);
-          cliService.getOperationStatus(operationHandle);
-          status = fetchStatus(operationHandle);
-        } while (!status.getStatus().isFinished());
-
-        List<QueryResult> results = fetchNextResults(operationHandle, 1000000);
-        List<ColumnDesc> schema = fetchResultSchema(operationHandle);
-
-        LOG.trace("Getting schema for dataset", datasetName);
-        return new ResultWithSchema(results, schema);
-      } finally {
-        closeSession(sessionHandle);
       }
     } catch (HiveSQLException e) {
       throw getSqlException(e);

@@ -72,6 +72,11 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
+  public String datasetSchema(String datasetName) throws ExploreException {
+    throw new ExploreException("Not implemented");
+  }
+
+  @Override
   public StatementExecutionFuture columns(@Nullable String catalog, @Nullable String schemaPattern,
                                           String tableNamePattern, String columnNamePattern) {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();

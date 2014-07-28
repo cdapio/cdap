@@ -26,7 +26,7 @@ import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.test.SlowTests;
-import com.google.common.collect.ImmutableList;
+
 import com.google.common.collect.Lists;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -173,20 +173,8 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void getDatasetSchemaTest() throws Exception {
-    ResultWithSchema datasetSchema = exploreService.getDatasetSchema("my_table");
-    Assert.assertEquals(ImmutableList.of(
-                          new QueryResult(ImmutableList.<Object>of("key", "string", "from deserializer")),
-                          new QueryResult(ImmutableList.<Object>of("value", "struct<name:string,ints:array<int>>",
-                                                                   "from deserializer"))
-                        ),
-                        datasetSchema.getResults());
-
-    Assert.assertEquals(ImmutableList.of(
-                          new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
-                          new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
-                          new ColumnDesc("comment", "STRING", 3, "from deserializer")
-                        ),
-                        datasetSchema.getSchema());
+    String datasetSchema = exploreClient.datasetSchema("my_table");
+    Assert.assertEquals("struct<key:string,value:struct<name:string,ints:array<int>>>", datasetSchema);
   }
 
   @Test

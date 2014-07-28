@@ -226,15 +226,4 @@ public interface Explore {
    * @throws SQLException if there are errors in the SQL statement.
    */
   public QueryHandle getTypeInfo() throws ExploreException, SQLException;
-
-  /**
-   * Return a schema for the specified dataset.
-   *
-   * @param datasetName dataset name for which to retrieve the schema. This name should be understood by the
-   *                    underlying SQL engine.
-   * @return a result object containing the schema of the dataset.
-   * @throws ExploreException on any error getting the table types.
-   * @throws SQLException
-   */
-  ResultWithSchema getDatasetSchema(String datasetName) throws ExploreException, SQLException;
 }

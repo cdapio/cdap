@@ -16,6 +16,7 @@
 
 package com.continuuity.explore.client;
 
+import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.MetaDataInfo;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -61,6 +62,16 @@ public interface ExploreClient extends Closeable {
    * @return {@link StatementExecutionFuture} eventually containing the results of the statement execution.
    */
   StatementExecutionFuture submit(String statement);
+
+  /**
+   * Return a schema for the specified dataset.
+   *
+   * @param datasetName dataset name for which to retrieve the schema. This name should be understood by the
+   *                    underlying SQL engine.
+   * @return a string describing the Explore schema of the dataset.
+   * @throws ExploreException on any error getting the table types.
+   */
+  String datasetSchema(String datasetName) throws ExploreException;
 
 
   ///// METADATA

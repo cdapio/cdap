@@ -22,7 +22,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.client.DatasetExploreFacade;
 import com.continuuity.explore.service.ExploreService;
-import com.continuuity.explore.service.ResultWithSchema;
+import com.continuuity.hive.objectinspector.ObjectInspectorFactory;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.io.UnsupportedTypeException;
@@ -30,6 +30,7 @@ import com.continuuity.proto.QueryHandle;
 
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -184,7 +185,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       LOG.debug("Disabling explore for dataset {}", datasetName);
 
-      Dataset dataset = datasetFramework.getDataset("continuuity.user." + datasetName, null);
+      Dataset dataset = datasetFramework.getDataset(datasetName, null);
       if (dataset == null) {
         responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot find dataset " + datasetName);
         return;
@@ -192,14 +193,17 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
       if (!(dataset instanceof RecordScannable)) {
         LOG.debug("Dataset {} does not implement {}", datasetName, RecordScannable.class.getName());
-        responder.sendError(HttpResponseStatus.NOT_FOUND, String.format("Dataset %s does not implement %s", datasetName, RecordScannable.class.getName()));
+        responder.sendError(HttpResponseStatus.NOT_FOUND, String.format("Dataset %s does not implement %s",
+                                                                        datasetName, RecordScannable.class.getName()));
         return;
       }
 
-      // NOTE: here we add continuuity_user prefix to be consistent with other datasets endpoints where the
-      // name given in the URL does not contain a prefix
-      ResultWithSchema datasetSchema = exploreService.getDatasetSchema("continuuity_user_" + datasetName);
-      responder.sendJson(HttpResponseStatus.OK, datasetSchema);
+      RecordScannable recordScannable = (RecordScannable) dataset;
+      ObjectInspector oi = ObjectInspectorFactory.getReflectionObjectInspector(recordScannable.getRecordType());
+
+      JsonObject json = new JsonObject();
+      json.addProperty("schema", oi.getTypeName());
+      responder.sendJson(HttpResponseStatus.OK, json);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
