@@ -1217,7 +1217,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendJson(status, message);
   }
 
-  private int getRunnableCount(String accountId, String appId, ProgramType programType, String programId, String runnableId) {
+  private int getRunnableCount(String accountId, String appId, ProgramType programType,
+                               String programId, String runnableId) {
     ProgramLiveInfo info = runtimeService.getLiveInfo(Id.Program.from(accountId, appId, programId), programType);
     int count = 0;
     if (info instanceof NotRunningProgramLiveInfo) {
@@ -2292,7 +2293,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     // Delete webapp
     // TODO: this will go away once webapp gets a spec
     try {
-      Id.Program programId = Id.Program.from(appId.getAccountId(), appId.getId(), ProgramType.WEBAPP.name().toLowerCase());
+      Id.Program programId = Id.Program.from(appId.getAccountId(), appId.getId(),
+                                             ProgramType.WEBAPP.name().toLowerCase());
       Location location = Programs.programLocation(locationFactory, appFabricDir, programId, ProgramType.WEBAPP);
       location.delete();
     } catch (FileNotFoundException e) {
