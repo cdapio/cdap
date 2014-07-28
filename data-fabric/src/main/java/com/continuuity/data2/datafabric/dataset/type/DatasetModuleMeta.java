@@ -19,6 +19,7 @@ package com.continuuity.data2.datafabric.dataset.type;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
+import org.apache.twill.filesystem.Location;
 
 import java.net.URI;
 import java.util.Collection;
@@ -33,7 +34,7 @@ public class DatasetModuleMeta {
   private final String name;
   private final String className;
   // TODO: change type to Location
-  private final URI jarLocation;
+  private final Location jarLocation;
 
   private final List<String> types;
   private final List<String> usesModules;
@@ -49,7 +50,7 @@ public class DatasetModuleMeta {
    * @param usesModules list of modules that this module depends on, ordered in a way they must be
    *                    loaded and initialized
    */
-  public DatasetModuleMeta(String name, String className, @Nullable URI jarLocation,
+  public DatasetModuleMeta(String name, String className, @Nullable Location jarLocation,
                            List<String> types, List<String> usesModules) {
     this.name = name;
     this.className = className;
@@ -78,7 +79,7 @@ public class DatasetModuleMeta {
    *         in classpath. This helps to minimize redundant copying of jars
    */
   @Nullable
-  public URI getJarLocation() {
+  public Location getJarLocation() {
     return jarLocation;
   }
 

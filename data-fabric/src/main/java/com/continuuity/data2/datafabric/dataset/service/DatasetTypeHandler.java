@@ -18,6 +18,7 @@ package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.lang.jar.BundleJarUtil;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleConflictException;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
@@ -28,6 +29,7 @@ import com.continuuity.http.HttpResponder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -38,6 +40,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -155,9 +158,11 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     } finally {
       inputStream.close();
     }
+    File unpackedJarDir = Files.createTempDir();
+    BundleJarUtil.unpackProgramJar(archive, unpackedJarDir);
 
-    try {
-      manager.addModule(name, className, archive);
+      try {
+      manager.addModule(name, className, archive, unpackedJarDir);
     } catch (DatasetModuleConflictException e) {
       responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
       return;

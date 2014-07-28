@@ -46,7 +46,7 @@ public class DistributedDatasetTypeClassLoaderFactory implements DatasetTypeClas
 
     // creating tempDir is fine since it will be created inside a YARN container, so it will be cleaned up
     File tempDir = Files.createTempDir();
-    BundleJarUtil.unpackProgramJar(locationFactory.create(moduleMeta.getJarLocation()), tempDir);
+    BundleJarUtil.unpackProgramJar(moduleMeta.getJarLocation(), tempDir);
     return ClassLoaders.newProgramClassLoaderWithoutFilter(tempDir, parentClassLoader);
   }
 }
