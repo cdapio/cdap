@@ -221,7 +221,6 @@ define([], function () {
 		}.property('elements.Flow', 'elements.Mapreduce', 'elements.Procedure'),
 
 		transition: function (elements, action, transition, endState, done) {
-
 			var i = elements.length, model, appId = this.get('model.id');
 			var remaining = i;
 
@@ -229,8 +228,8 @@ define([], function () {
 
 			while (i--) {
 
-				if (elements[i].get('currentState') === transition ||
-					elements[i].get('currentState') === endState) {
+				if (elements[i].get('currentState').toLowerCase() === transition.toLowerCase() ||
+					elements[i].get('currentState').toLowerCase() === endState.toLowerCase()) {
 					remaining --;
 					continue;
 				}
@@ -248,6 +247,10 @@ define([], function () {
 
 				});
 
+			}
+
+			if (!remaining  && typeof done === 'function') {
+			  done();
 			}
 
 		},
