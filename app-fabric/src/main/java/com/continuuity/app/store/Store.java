@@ -25,7 +25,6 @@ import com.continuuity.data2.OperationException;
 import com.continuuity.proto.Id;
 import com.continuuity.proto.ProgramType;
 import com.continuuity.proto.RunRecord;
-import com.google.common.collect.Table;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;

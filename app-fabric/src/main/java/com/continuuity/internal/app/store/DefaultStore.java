@@ -28,11 +28,8 @@ import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
-import com.continuuity.app.program.RunRecord;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.store.Store;
 import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.common.conf.CConfiguration;
@@ -52,6 +49,9 @@ import com.continuuity.internal.app.ForwardingTwillSpecification;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
 import com.continuuity.internal.service.DefaultServiceSpecification;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
+import com.continuuity.proto.RunRecord;
 import com.continuuity.tephra.DefaultTransactionExecutor;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
@@ -140,7 +140,7 @@ public class DefaultStore implements Store {
 
   @Nullable
   @Override
-  public Program loadProgram(final Id.Program id, Type type) throws IOException {
+  public Program loadProgram(final Id.Program id, ProgramType type) throws IOException {
     ApplicationMeta appMeta = txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, ApplicationMeta>() {
       @Override
       public ApplicationMeta apply(AppMds mds) throws Exception {
@@ -362,7 +362,7 @@ public class DefaultStore implements Store {
       public Void apply(AppMds mds) throws Exception {
         ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
         ApplicationSpecification newAppSpec = updateFlowletInstancesInAppSpec(appSpec, id, flowletId, count);
-        replaceAppSpecInProgramJar(id, newAppSpec, Type.FLOW);
+        replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.FLOW);
 
         mds.apps.updateAppSpec(id.getAccountId(), id.getApplicationId(), newAppSpec);
         return null;
@@ -418,7 +418,7 @@ public class DefaultStore implements Store {
                                                                                      count);
 
         ApplicationSpecification newAppSpec = replaceProcedureInAppSpec(appSpec, id, newSpecification);
-        replaceAppSpecInProgramJar(id, newAppSpec, Type.PROCEDURE);
+        replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.PROCEDURE);
 
         mds.apps.updateAppSpec(id.getAccountId(), id.getApplicationId(), newAppSpec);
         return null;
@@ -466,7 +466,7 @@ public class DefaultStore implements Store {
 
         ApplicationSpecification newAppSpec =
           replaceServiceSpec(appSpec, id.getId(), replaceRuntimeSpec(runnable, serviceSpec, newRuntimeSpec));
-        replaceAppSpecInProgramJar(id, newAppSpec, Type.SERVICE);
+        replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.SERVICE);
 
         mds.apps.updateAppSpec(id.getAccountId(), id.getApplicationId(), newAppSpec);
         return null;
@@ -623,7 +623,7 @@ public class DefaultStore implements Store {
         FlowletDefinition newFlowletDef = new FlowletDefinition(flowletDef, oldValue, newValue);
         ApplicationSpecification newAppSpec = replaceInAppSpec(appSpec, flow, flowSpec, newFlowletDef, conns);
 
-        replaceAppSpecInProgramJar(flow, newAppSpec, Type.FLOW);
+        replaceAppSpecInProgramJar(flow, newAppSpec, ProgramType.FLOW);
 
         Id.Application app = flow.getApplication();
         mds.apps.updateAppSpec(app.getAccountId(), app.getId(), newAppSpec);
@@ -651,7 +651,7 @@ public class DefaultStore implements Store {
    * @return The {@link Location} of the given program.
    * @throws RuntimeException if program can't be found.
    */
-  private Location getProgramLocation(Id.Program id, Type type) throws IOException {
+  private Location getProgramLocation(Id.Program id, ProgramType type) throws IOException {
     String appFabricOutputDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
                                                   System.getProperty("java.io.tmpdir"));
     return Programs.programLocation(locationFactory, appFabricOutputDir, id, type);
@@ -752,7 +752,7 @@ public class DefaultStore implements Store {
     }
   }
 
-  private void replaceAppSpecInProgramJar(Id.Program id, ApplicationSpecification appSpec, Type type) {
+  private void replaceAppSpecInProgramJar(Id.Program id, ApplicationSpecification appSpec, ProgramType type) {
     try {
       Location programLocation = getProgramLocation(id, type);
       ArchiveBundler bundler = new ArchiveBundler(programLocation);

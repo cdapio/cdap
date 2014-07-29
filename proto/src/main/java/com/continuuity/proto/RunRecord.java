@@ -16,9 +16,9 @@
 
 package com.continuuity.proto;
 
-import javax.annotation.Nullable;
-
 import com.google.gson.annotations.SerializedName;
+
+import javax.annotation.Nullable;
 
 /**
  * This class records information for a particular run.
