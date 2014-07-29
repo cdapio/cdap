@@ -94,12 +94,12 @@ public class RoutingToExploreTest {
 
   @Test
   public void testExploreHandlerRequests() throws Exception {
-    Assert.assertEquals("sendQuery", doRequest("/data/queries", "POST"));
-    Assert.assertEquals("stop:fooId", doRequest("/data/queries/fooId", "DELETE"));
-    Assert.assertEquals("cancel:fooId", doRequest("/data/queries/fooId/cancel", "POST"));
-    Assert.assertEquals("status:fooId", doRequest("/data/queries/fooId/status", "GET"));
-    Assert.assertEquals("schema:fooId", doRequest("/data/queries/fooId/schema", "GET"));
-    Assert.assertEquals("nextResults:fooId", doRequest("/data/queries/fooId/nextResults", "POST"));
+    Assert.assertEquals("sendQuery", doRequest("/data/explore/queries", "POST"));
+    Assert.assertEquals("stop:fooId", doRequest("/data/explore/queries/fooId", "DELETE"));
+    Assert.assertEquals("cancel:fooId", doRequest("/data/explore/queries/fooId/cancel", "POST"));
+    Assert.assertEquals("status:fooId", doRequest("/data/explore/queries/fooId/status", "GET"));
+    Assert.assertEquals("schema:fooId", doRequest("/data/explore/queries/fooId/schema", "GET"));
+    Assert.assertEquals("nextResults:fooId", doRequest("/data/explore/queries/fooId/nextResults", "POST"));
   }
 
   @Test
@@ -132,41 +132,41 @@ public class RoutingToExploreTest {
   public static final class MockExploreExecutorHandler extends AbstractHttpHandler {
 
     @POST
-    @Path("/data/queries")
+    @Path("/data/explore/queries")
     public void query(HttpRequest request, HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "sendQuery");
     }
 
     @DELETE
-    @Path("/data/queries/{id}")
+    @Path("/data/explore/queries/{id}")
     public void closeQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                            @PathParam("id") final String id) {
       responder.sendString(HttpResponseStatus.OK, "stop:" + id);
     }
 
     @POST
-    @Path("/data/queries/{id}/cancel")
+    @Path("/data/explore/queries/{id}/cancel")
     public void cancelQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("id") final String id) {
       responder.sendString(HttpResponseStatus.OK, "cancel:" + id);
     }
 
     @GET
-    @Path("/data/queries/{id}/status")
+    @Path("/data/explore/queries/{id}/status")
     public void getQueryStatus(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                                @PathParam("id") final String id) {
       responder.sendString(HttpResponseStatus.OK, "status:" + id);
     }
 
     @GET
-    @Path("/data/queries/{id}/schema")
+    @Path("/data/explore/queries/{id}/schema")
     public void getQueryResultsSchema(@SuppressWarnings("UnusedParameters") HttpRequest request,
                                       HttpResponder responder, @PathParam("id") final String id) {
       responder.sendString(HttpResponseStatus.OK, "schema:" + id);
     }
 
     @POST
-    @Path("/data/queries/{id}/nextResults")
+    @Path("/data/explore/queries/{id}/nextResults")
     public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
       responder.sendString(HttpResponseStatus.OK, "nextResults:" + id);
     }
