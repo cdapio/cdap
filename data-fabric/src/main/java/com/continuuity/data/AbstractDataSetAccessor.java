@@ -19,7 +19,6 @@ package com.continuuity.data;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
-import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableClient;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableManager;
@@ -39,9 +38,6 @@ public abstract class AbstractDataSetAccessor extends NamespacingDataSetAccessor
 
   protected abstract <T> T getOcTableClient(String name, ConflictDetection level, int ttl) throws Exception;
   protected abstract DataSetManager getOcTableManager() throws Exception;
-
-  protected abstract <T> T getMetricsTableClient(String name) throws Exception;
-  protected abstract DataSetManager getMetricsTableManager() throws Exception;
 
   @SuppressWarnings("unchecked")
   @Override
@@ -66,9 +62,6 @@ public abstract class AbstractDataSetAccessor extends NamespacingDataSetAccessor
       level = level == null ? ConflictDetection.ROW : level;
       return getOcTableClient(name, level, ttl);
     }
-    if (type == MetricsTable.class) {
-      return getMetricsTableClient(name);
-    }
 
     return null;
   }
@@ -81,9 +74,6 @@ public abstract class AbstractDataSetAccessor extends NamespacingDataSetAccessor
 
     } else if (type == OrderedColumnarTable.class) {
       return getOcTableManager();
-    }
-    if (type == MetricsTable.class) {
-      return getMetricsTableManager();
     }
     return null;
   }

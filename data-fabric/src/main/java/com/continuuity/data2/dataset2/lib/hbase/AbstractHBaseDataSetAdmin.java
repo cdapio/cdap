@@ -66,11 +66,36 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     this.tableUtil = tableUtil;
   }
 
-  // todo
-//  @Override
+  @Override
   public void upgrade() throws IOException {
     // todo: do we need HBaseTableUtil.getHBaseTableName
     upgradeTable(HBaseTableUtil.getHBaseTableName(tableName));
+  }
+
+  @Override
+  public boolean exists() throws IOException {
+    return admin.tableExists(tableName);
+  }
+
+  @Override
+  public void truncate() throws IOException {
+    byte[] tableName = Bytes.toBytes(this.tableName);
+    HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
+    admin.disableTable(tableName);
+    admin.deleteTable(tableName);
+    admin.createTable(tableDescriptor);
+  }
+
+  @Override
+  public void drop() throws IOException {
+    byte[] tableName = Bytes.toBytes(this.tableName);
+    admin.disableTable(tableName);
+    admin.deleteTable(tableName);
+  }
+
+  @Override
+  public void close() throws IOException {
+    admin.close();
   }
 
   /**
