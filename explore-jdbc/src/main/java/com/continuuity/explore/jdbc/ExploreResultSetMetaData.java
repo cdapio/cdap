@@ -16,8 +16,7 @@
 
 package com.continuuity.explore.jdbc;
 
-import com.continuuity.common.conf.Constants;
-import com.continuuity.explore.service.ColumnDesc;
+import com.continuuity.proto.ColumnDesc;
 import com.google.common.base.Preconditions;
 
 import java.sql.ResultSetMetaData;

@@ -20,11 +20,11 @@ import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.RunRecord;
-import com.continuuity.app.program.Type;
 import com.continuuity.data2.OperationException;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
+import com.continuuity.proto.RunRecord;
 import com.google.common.collect.Table;
 import org.apache.twill.filesystem.Location;
 
@@ -47,7 +47,7 @@ public interface Store {
    * @return An instance of {@link com.continuuity.app.program.DefaultProgram} if found.
    * @throws IOException
    */
-  Program loadProgram(Id.Program program, Type type) throws IOException;
+  Program loadProgram(Id.Program program, ProgramType type) throws IOException;
 
   /**
    * Logs start of program run.
@@ -87,7 +87,7 @@ public interface Store {
    * @return An immutable table of program type, id and run records
    * @throws OperationException
    */
-  Table<Type, Id.Program, List<RunRecord>> getAllRunHistory(Id.Account account) throws OperationException;
+  Table<ProgramType, Id.Program, List<RunRecord>> getAllRunHistory(Id.Account account) throws OperationException;
 
   /**
    * Creates a new stream if it does not exist.

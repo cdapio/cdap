@@ -17,11 +17,12 @@
 package com.continuuity.app.program;
 
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.Id;
 import com.continuuity.common.lang.ApiResourceListHolder;
 import com.continuuity.common.lang.ClassLoaders;
 import com.continuuity.common.lang.jar.BundleJarUtil;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -41,7 +42,7 @@ import javax.annotation.Nullable;
 public final class DefaultProgram implements Program {
 
   private final String mainClassName;
-  private final Type processorType;
+  private final ProgramType processorType;
 
   private final Id.Program id;
 
@@ -77,7 +78,7 @@ public final class DefaultProgram implements Program {
                          getAttribute(manifest, ManifestFields.APPLICATION_ID),
                          getAttribute(manifest, ManifestFields.PROGRAM_NAME));
 
-    processorType = Type.valueOf(getAttribute(manifest, ManifestFields.PROCESSOR_TYPE));
+    this.processorType = ProgramType.valueOfPrettyName(getAttribute(manifest, ManifestFields.PROCESSOR_TYPE));
 
     // Load the app spec from the jar file if no expand folder is provided. Otherwise do lazy loading after the jar
     // is expanded.
@@ -108,7 +109,7 @@ public final class DefaultProgram implements Program {
   }
 
   @Override
-  public Type getType() {
+  public ProgramType getType() {
     return processorType;
   }
 

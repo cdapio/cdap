@@ -18,7 +18,6 @@ package com.continuuity.runtime;
 import com.continuuity.OneActionWorkflowApp;
 import com.continuuity.WorkflowApp;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -26,6 +25,7 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.proto.ProgramType;
 import com.continuuity.test.XSlowTests;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.base.Predicate;
@@ -83,7 +83,7 @@ public class WorkflowTest {
     Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {
       @Override
       public boolean apply(Program input) {
-        return input.getType() == Type.WORKFLOW;
+        return input.getType() == ProgramType.WORKFLOW;
       }
     }).next();
 
@@ -120,7 +120,7 @@ public class WorkflowTest {
     Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {
       @Override
       public boolean apply(Program input) {
-        return input.getType() == Type.WORKFLOW;
+        return input.getType() == ProgramType.WORKFLOW;
       }
     }).next();
 

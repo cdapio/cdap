@@ -19,11 +19,10 @@ package com.continuuity.explore.jdbc;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.client.StatementExecutionFuture;
-import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.MetaDataInfo;
-import com.continuuity.explore.service.Result;
-
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryResult;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ForwardingListenableFuture;
@@ -42,10 +41,10 @@ import javax.annotation.Nullable;
 public class MockExploreClient extends AbstractIdleService implements ExploreClient {
 
   private final Map<String, List<ColumnDesc>> statementsToMetadata;
-  private final Map<String, List<Result>> statementsToResults;
+  private final Map<String, List<QueryResult>> statementsToResults;
 
   public MockExploreClient(Map<String, List<ColumnDesc>> statementsToMetadata,
-                           Map<String, List<Result>> statementsToResults) {
+                           Map<String, List<QueryResult>> statementsToResults) {
     this.statementsToMetadata = Maps.newHashMap(statementsToMetadata);
     this.statementsToResults = Maps.newHashMap(statementsToResults);
   }
@@ -151,9 +150,9 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
 
   private static final class MockExploreExecutionResult implements ExploreExecutionResult {
 
-    private final Iterator<Result> delegate;
+    private final Iterator<QueryResult> delegate;
 
-    MockExploreExecutionResult(Iterator<Result> delegate) {
+    MockExploreExecutionResult(Iterator<QueryResult> delegate) {
       this.delegate = delegate;
     }
 
@@ -163,7 +162,7 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
     }
 
     @Override
-    public Result next() {
+    public QueryResult next() {
       return delegate.next();
     }
 
@@ -193,12 +192,12 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
     implements StatementExecutionFuture {
 
     private final Map<String, List<ColumnDesc>> statementsToMetadata;
-    private final Map<String, List<Result>> statementsToResults;
+    private final Map<String, List<QueryResult>> statementsToResults;
     private final String statement;
 
     MockStatementExecutionFuture(ListenableFuture<ExploreExecutionResult> delegate, String statement,
                                  Map<String, List<ColumnDesc>> statementsToMetadata,
-                                 Map<String, List<Result>> statementsToResults) {
+                                 Map<String, List<QueryResult>> statementsToResults) {
       super(delegate);
       this.statement = statement;
       this.statementsToMetadata = statementsToMetadata;

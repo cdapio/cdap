@@ -25,6 +25,8 @@ import com.continuuity.explore.service.UnexpectedQueryStatusException;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.UnsupportedTypeException;
+import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryStatus;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
