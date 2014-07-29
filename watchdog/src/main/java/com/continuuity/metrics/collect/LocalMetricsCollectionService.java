@@ -97,7 +97,7 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
       public void run() {
         // Only do cleanup if the underlying table doesn't supports TTL.
         try {
-          if (!tableFactory.isTTLSupported()) {
+          if (tableFactory.isTTLSupported()) {
             return;
           }
         } catch (Exception e) {
