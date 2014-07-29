@@ -300,7 +300,7 @@ Comments
   first obtain a consumer (group) id, which is then passed to subsequent read requests.
 - The ``Consumer-ID`` is returned in a response header and—for convenience—also in the body of the response::
 
-  X-Continuuity-ConsumerId: <consumer-id>
+    X-Continuuity-ConsumerId: <consumer-id>
 
   Once you have the ``Consumer-ID``, single events can be read from the Stream.
 
@@ -468,7 +468,7 @@ Example
 
        with the new TTL value as a JSON string in the body::
 
-    { "ttl" : 86400 }
+         { "ttl" : 86400 }
      
    * - Description
      - Change the TTL property of the Stream named *mystream* to 1 day
@@ -623,7 +623,7 @@ Example
 Deleting all Datasets
 ---------------------
 
-You can delete all Datasets by issuing an HTTP DELETE request to the URL::
+You can delete all Datasets (see **Note** below) by issuing an HTTP DELETE request to the URL::
 
   DELETE <base-url>/data/unrecoverable/datasets
 
@@ -637,6 +637,8 @@ HTTP Responses
      - Description
    * - ``200 OK``
      - All Datasets were successfully deleted
+
+:Note: This operation will only be successful if the property ``enable.unrecoverable.reset`` in ``continuuity-site.xml`` is set to ``True``. Otherwise, this operation will return "403 Forbidden".
 
 Truncating a Dataset
 --------------------
@@ -1589,7 +1591,8 @@ Examples
 
        with the arguments as a JSON string in the body::
 
-    { "instances" : 2 }
+         { "instances" : 2 }
+
    * - Description
      - Change the number of instances of the Flowlet *saver*
        in the Flow *WhoFlow* of the Application *HelloWorld*
