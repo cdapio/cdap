@@ -95,7 +95,7 @@ DevServer.prototype.start = function() {
       var enableMocks = !!(argv.enableMocks === 'true');
       if (enableMocks) {
         this.logger.info('Webapp running with mocks enabled.');
-        HttpMockInjector = require('../../test/httpMockInjector.js');
+        HttpMockInjector = require('../../test/httpMockInjector');
         new HttpMockInjector(nock, this.config['gateway.server.address'], this.config['gateway.server.port']);
       }
 

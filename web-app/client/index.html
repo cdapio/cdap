@@ -256,30 +256,22 @@
 
   <script type="text/x-handlebars" data-template-name="UserserviceStatus">
 {{#if model}}
-    <div id="panels">
-      <div class="panel">
-        <table class="table">
-          <tbody>
-            <tr>
-              <td style="max-width: 350px;" class="app-list-name service-col">
-                <a class="none-text-decoration">{{model.name}}</a>
-                <br />
-                <span class="app-list-status">{{model.description}}</span>
-              </td>
-              <td>
-                <div class="info-box" style="float: right; border: 0;padding-right: 14px;padding-left: 0px;">
-                  <div id="action-buttons" class="btn-group pull-right">
-
-                    <button class="btn btn-blank start-stop" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
-                    <button class="btn btn-blank btn-icon" {{action "config"}}><span class="btn-config"></span></button>
-                  </div>
-                  <div class="flow-state"><strong>{{model.currentState}}</strong></div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <div id="info">
+      <div class="info-box">
+        <div class="flow-schedule">
+            <strong>{{model.name}}</strong>
+        </div>
       </div>
+      <div class="info-box" style="float: right; border: 0;">
+          <div id="action-buttons" class="btn-group pull-right">
+            <button class="btn btn-blank start-stop" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+            <button class="btn btn-blank btn-icon" {{action "config"}}><span class="btn-config"></span></button>
+          </div>
+          <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+      </div>
+    </div>
+
+    <div id="panels">
       <h2>Runnables</h2>
       <br />
       <div class="panel">
@@ -335,6 +327,7 @@
       <ul class="nav nav-pills pull-right" style="margin: 2px 14px;"> 
         <li>{{#linkTo UserserviceStatus model}}Status{{/linkTo }}</li>
         <li>{{#linkTo Userservice.History model}}History{{/linkTo}}</li>        
+        <li>{{#linkTo Userservice.Log model}}Log{{/linkTo}}</li>
       </ul>
       <h1><span>Service</span> <a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}</h1>
     </div>

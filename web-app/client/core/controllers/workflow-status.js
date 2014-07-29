@@ -54,7 +54,7 @@ define(['helpers/plumber'], function (Plumber) {
       this.interval = setInterval(function () {
         self.updateStats();
       }, C.POLLING_INTERVAL);
-      this.interval_updateTimeRemaining = setInterval(function () {
+      this.intervalUpdateTimeRemaining = setInterval(function () {
         self.updateTimeRemaining();
       }, 1000);
 
@@ -118,7 +118,7 @@ define(['helpers/plumber'], function (Plumber) {
     unload: function () {
 
       clearInterval(this.interval);
-      clearInterval(this.interval_updateTimeRemaining);
+      clearInterval(this.intervalUpdateTimeRemaining);
       this.set('elements.Action.content', []);
 
     },

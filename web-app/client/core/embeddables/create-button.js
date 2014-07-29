@@ -31,10 +31,10 @@ define([], function () {
 		 */
 		doneLoading: function () {
 			if ($("#app-upload-input")[0].files.length) {
-        clearInterval(this.interval);
-        var file = $('#app-upload-input')[0].files[0];
-        var name = file.name;
-        C.Util.Upload.sendFiles([file], name);
+				clearInterval(this.interval);
+				var file = $('#app-upload-input')[0].files[0];
+				var name = file.name;
+				C.Util.Upload.sendFiles([file], name);
 			}
 		},
 

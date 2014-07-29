@@ -76,6 +76,7 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
       this.resource('UserserviceStatus', { path: '/' } , function () {
         this.route('Config', { path: '/config' } );
       });
+      this.route('Log', { path: '/log' } );
       this.route('History', { path: '/history' });
     });
 
@@ -319,6 +320,15 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
     UserserviceStatusConfigRoute: basicRouter.extend({
       renderTemplate: function () {
         this.render('Runnable/Config', {outlet: "config"});
+      }
+    }),
+
+    UserserviceLogRoute: basicRouter.extend({
+      model: function () {
+        return this.modelFor('Userservice');
+      },
+      renderTemplate: function () {
+        this.render('Runnable/Log');
       }
     }),
 
