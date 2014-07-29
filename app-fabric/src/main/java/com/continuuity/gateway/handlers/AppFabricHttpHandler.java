@@ -1120,7 +1120,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         provisioned = getRunnableCount(accountId, appId, programType, programId, runnableId);
         requestedObj.addProperty("requested", requested);
         requestedObj.addProperty("provisioned", provisioned);
-        args.set(i, requestedObj);
       }
       responder.sendJson(HttpResponseStatus.OK, args);
     } catch (SecurityException e) {
@@ -1152,7 +1151,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, "No data provided");
         return;
       }
-      ArrayList<JsonObject> returnedObj = new ArrayList<JsonObject>();
       for (int i = 0; i < args.size(); ++i) {
         JsonObject requestedObj = args.get(i);
         String appId, programTypeStr, programId;
@@ -1190,9 +1188,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         while (!requestedObj.has("status")) {
           Thread.sleep(1);
         }
-        returnedObj.add(requestedObj);
+        requestedObj.addProperty(PROGRAM_TYPE_ARG, programType.getPrettyName());
       }
-      responder.sendJson(HttpResponseStatus.OK, returnedObj);
+      responder.sendJson(HttpResponseStatus.OK, args);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (JsonSyntaxException e) {
