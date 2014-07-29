@@ -77,7 +77,7 @@ public class ExploreResultSetTest {
         ))
     );
 
-    ResultSet resultSet = new ExploreResultSet(exploreClient.submit("mock_query"),
+    ResultSet resultSet = new ExploreResultSet(exploreClient.submit("mock_query").get(),
                                                new ExploreStatement(null, exploreClient),
                                                0);
     Assert.assertTrue(resultSet.next());
@@ -119,7 +119,7 @@ public class ExploreResultSetTest {
         ))
     );
 
-    ResultSet resultSet = new ExploreResultSet(exploreClient.submit("mock_query"),
+    ResultSet resultSet = new ExploreResultSet(exploreClient.submit("mock_query").get(),
                                                new ExploreStatement(null, exploreClient),
                                                0);
     Assert.assertTrue(resultSet.next());
