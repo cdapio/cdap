@@ -239,9 +239,9 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   }
 
   private int createUpdateInstance(String instanceName, String typeName,
-                                   DatasetProperties props, boolean isUpgrade) throws IOException {
+                                   DatasetProperties props, boolean isUpdate) throws IOException {
     DatasetInstanceConfiguration creationProperties =
-      new DatasetInstanceConfiguration(typeName, props.getProperties(), isUpgrade);
+      new DatasetInstanceConfiguration(typeName, props.getProperties(), isUpdate);
 
     HttpRequest request = HttpRequest.put(getUrl("/data/datasets/" + instanceName))
       .withBody(new Gson().toJson(creationProperties)).build();

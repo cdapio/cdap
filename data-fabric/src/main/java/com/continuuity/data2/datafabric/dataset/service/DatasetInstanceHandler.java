@@ -124,7 +124,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
   /**
    * Creates a new Dataset or updates existing Dataset specification's
-   * properties if an optional upgrade parameter in the body is set to true, {@link DatasetInstanceConfiguration}
+   * properties if an optional update parameter in the body is set to true, {@link DatasetInstanceConfiguration}
    * is constructed based on request and appropriate action is performed
    */
   @PUT
@@ -134,7 +134,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
 
     DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
-    String operation = (creationProperties.isUpgrade() == true) ? "update" : "create";
+    String operation = (creationProperties.isUpdate() == true) ? "update" : "create";
 
     LOG.info("{} dataset {}, type name: {}, typeAndProps: {}",
              operation, name, creationProperties.getTypeName(), creationProperties.getProperties());
@@ -142,7 +142,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
     if (existing != null) {
       String message = null;
-      if (!creationProperties.isUpgrade()) {
+      if (!creationProperties.isUpdate()) {
         message = String.format("Cannot create dataset %s: instance with same name already exists %s",
                                 name, existing);
       } else if (!existing.getType().equals(creationProperties.getTypeName())) {
@@ -181,7 +181,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Note: today explore enable is not transactional with dataset create - REACTOR-314
 
     try {
-      if (creationProperties.isUpgrade()) {
+      if (creationProperties.isUpdate()) {
         datasetExploreFacade.disableExplore(name);
       }
       datasetExploreFacade.enableExplore(name);
