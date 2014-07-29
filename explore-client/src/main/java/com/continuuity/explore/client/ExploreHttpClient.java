@@ -101,6 +101,14 @@ abstract class ExploreHttpClient implements Explore {
                                  getDetails(response));
   }
 
+  public Map<String, String> getDatasetSchema(String datasetName) throws ExploreException {
+    HttpResponse response = doGet(String.format("data/explore/datasets/%s/schema", datasetName));
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return parseJson(response, MAP_TYPE_TOKEN);
+    }
+    throw new ExploreException("Cannot get dataset schema. Reason: " + getDetails(response));
+  }
+
   @Override
   public QueryHandle execute(String statement) throws ExploreException {
     HttpResponse response = doPost("data/queries", GSON.toJson(ImmutableMap.of("query", statement)), null);

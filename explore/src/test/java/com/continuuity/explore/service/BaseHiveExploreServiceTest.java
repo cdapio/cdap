@@ -29,7 +29,6 @@ import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.ExploreExecutionResult;
-import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
@@ -40,6 +39,7 @@ import com.continuuity.proto.QueryResult;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -98,18 +98,19 @@ public class BaseHiveExploreServiceTest {
                                    List<ColumnDesc> expectedColumnDescs, List<QueryResult> expectedResults)
     throws Exception {
 
-    StatementExecutionFuture future = exploreClient.submit(command);
+    ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(command);
     assertStatementResult(future, expectedHasResult, expectedColumnDescs, expectedResults);
   }
 
-  protected static void assertStatementResult(StatementExecutionFuture future, boolean expectedHasResult,
-                                              List<ColumnDesc> expectedColumnDescs, List<QueryResult> expectedResults)
+  protected static void assertStatementResult(ListenableFuture<ExploreExecutionResult> future,
+                                              boolean expectedHasResult, List<ColumnDesc> expectedColumnDescs,
+                                              List<QueryResult> expectedResults)
     throws Exception {
     ExploreExecutionResult results = future.get();
 
     Assert.assertEquals(expectedHasResult, results.hasNext());
 
-    Assert.assertEquals(expectedColumnDescs, future.getResultSchema());
+    Assert.assertEquals(expectedColumnDescs, results.getResultSchema());
     Assert.assertEquals(expectedResults, trimColumnValues(results));
 
     results.close();
