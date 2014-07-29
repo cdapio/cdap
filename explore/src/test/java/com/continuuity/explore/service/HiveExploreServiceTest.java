@@ -40,6 +40,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 
 import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyValue;
@@ -168,6 +169,14 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                Lists.newArrayList(
                  new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
+
+    List<QueryInfo> result = exploreService.getQueries();
+    Assert.assertEquals(7, result.size());
+    Assert.assertNotNull(result.get(0).getStatement());
+    Assert.assertNotNull(result.get(0).getQueryHandle());
+    Assert.assertTrue(result.get(0).isHasResults());
+    Assert.assertFalse(result.get(0).isActive());
+    Assert.assertEquals("FINISHED", result.get(0).getStatus().toString());
   }
 
   @Test

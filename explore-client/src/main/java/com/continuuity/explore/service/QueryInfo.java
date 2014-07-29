@@ -44,4 +44,24 @@ public class QueryInfo {
     this.hasResults = status.hasResults();
     this.isActive = isActive;
   }
+
+  public String getStatement() {
+    return statement;
+  }
+
+  public QueryStatus.OpStatus getStatus() {
+    return status;
+  }
+
+  public String getQueryHandle() {
+    return queryHandle;
+  }
+
+  public boolean isHasResults() {
+    return hasResults;
+  }
+
+  public boolean isActive() {
+    return isActive;
+  }
 }

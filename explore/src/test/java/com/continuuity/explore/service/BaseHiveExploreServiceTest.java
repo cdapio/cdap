@@ -59,6 +59,7 @@ public class BaseHiveExploreServiceTest {
   protected static DatasetFramework datasetFramework;
   protected static DatasetService datasetService;
   protected static ExploreExecutorService exploreExecutorService;
+  protected static ExploreService exploreService;
 
   protected static ExploreClient exploreClient;
 
@@ -77,6 +78,7 @@ public class BaseHiveExploreServiceTest {
     datasetFramework = injector.getInstance(DatasetFramework.class);
 
     exploreClient = injector.getInstance(ExploreClient.class);
+    exploreService = injector.getInstance(ExploreService.class);
     Assert.assertTrue(exploreClient.isServiceAvailable());
   }
 
