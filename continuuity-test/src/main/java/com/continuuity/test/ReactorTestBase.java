@@ -257,11 +257,6 @@ public class ReactorTestBase {
     );
     txService = injector.getInstance(InMemoryTransactionManager.class);
     txService.startAndWait();
-    // todo: workaround for first tx being bad
-    TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
-    Transaction tx = txClient.startShort();
-    txClient.commit(tx);
-
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
