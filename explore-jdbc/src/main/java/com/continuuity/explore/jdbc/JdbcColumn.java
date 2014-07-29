@@ -84,12 +84,12 @@ public class JdbcColumn {
         case INT:
         case BIGINT:
         case DECIMAL:
+        case TINYINT:
           return true;
         case STRING:
         case VARCHAR:
         case CHAR:
         case BOOLEAN:
-        case TINYINT:
         case TIMESTAMP:
         case DATE:
         case BINARY:
