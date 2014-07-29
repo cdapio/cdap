@@ -20,7 +20,7 @@ import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.explore.client.StatementExecutionFuture;
+import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.jdbc.ExploreDriver;
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryResult;
@@ -29,6 +29,7 @@ import com.continuuity.test.SlowTests;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
@@ -165,11 +166,13 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
     runCommand("select * from my_table where key = '2'",
                true,
-               Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null),
-                                  new ColumnDesc("my_table.value",
-                                                 "struct<name:string,ints:array<int>>", 2, null)),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+                 new ColumnDesc("my_table.key", "STRING", 1, null),
+                 new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null)
+               ),
+               Lists.newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
+               )
     );
   }
 
@@ -310,7 +313,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testCancel() throws Exception {
-    StatementExecutionFuture future = exploreClient.submit("select key, value from my_table");
+    ListenableFuture<ExploreExecutionResult> future = exploreClient.submit("select key, value from my_table");
     future.cancel(true);
     try {
       future.get();

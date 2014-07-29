@@ -55,14 +55,13 @@ public interface ExploreClient extends Closeable {
   ListenableFuture<Void> disableExplore(String datasetInstance);
 
   /**
-   * Execute a Hive SQL statement asynchronously. The returned
-   * {@link StatementExecutionFuture} can be used to get the
+   * Execute a Hive SQL statement asynchronously. The returned {@link ListenableFuture} can be used to get the
    * schema of the operation, and it contains an iterator on the results of the statement.
-
+   *
    * @param statement SQL statement.
-   * @return {@link StatementExecutionFuture} eventually containing the results of the statement execution.
+   * @return {@link ListenableFuture} eventually containing the results of the statement execution.
    */
-  StatementExecutionFuture submit(String statement);
+  ListenableFuture<ExploreExecutionResult> submit(String statement);
 
   /**
    * Return a schema for the specified dataset.
@@ -91,17 +90,17 @@ public interface ExploreClient extends Closeable {
    *                      null means that the schema name should not be used to narrow the search.
    * @param tableNamePattern a table name pattern; must match the table name as it is stored in the database.
    * @param columnNamePattern a column name pattern; must match the column name as it is stored in the database.
-   * @return {@link StatementExecutionFuture} eventually containing the columns of interest.
+   * @return {@link ListenableFuture} eventually containing the columns of interest.
    */
-  StatementExecutionFuture columns(@Nullable String catalog, @Nullable String schemaPattern,
-                                   String tableNamePattern, String columnNamePattern);
+  ListenableFuture<ExploreExecutionResult> columns(@Nullable String catalog, @Nullable String schemaPattern,
+                                                   String tableNamePattern, String columnNamePattern);
 
   /**
    * Retrieves the catalog names available in this database.
    *
-   * @return {@link StatementExecutionFuture} eventually containing the catalogs.
+   * @return {@link ListenableFuture} eventually containing the catalogs.
    */
-  StatementExecutionFuture catalogs();
+  ListenableFuture<ExploreExecutionResult> catalogs();
 
   /**
    * Retrieves the schema names available in this database.
@@ -114,9 +113,9 @@ public interface ExploreClient extends Closeable {
    * @param schemaPattern a schema name pattern; must match the schema name as it is stored in the database;
    *                      "" retrieves those without a schema;
    *                      null means that the schema name should not be used to narrow the search.
-   * @return {@link StatementExecutionFuture} eventually containing the schemas of interest.
+   * @return {@link ListenableFuture} eventually containing the schemas of interest.
    */
-  StatementExecutionFuture schemas(@Nullable String catalog, @Nullable String schemaPattern);
+  ListenableFuture<ExploreExecutionResult> schemas(@Nullable String catalog, @Nullable String schemaPattern);
 
   /**
    * Retrieves a description of the system and user functions available in the given catalog.
@@ -131,10 +130,10 @@ public interface ExploreClient extends Closeable {
    *                      "" retrieves those without a schema;
    *                      null means that the schema name should not be used to narrow the search.
    * @param functionNamePattern a function name pattern; must match the function name as it is stored in the database
-   * @return {@link StatementExecutionFuture} eventually containing the functions of interest.
+   * @return {@link ListenableFuture} eventually containing the functions of interest.
    */
-  StatementExecutionFuture functions(@Nullable String catalog, @Nullable String schemaPattern,
-                                     String functionNamePattern);
+  ListenableFuture<ExploreExecutionResult> functions(@Nullable String catalog, @Nullable String schemaPattern,
+                                                     String functionNamePattern);
 
 
   /**
@@ -161,26 +160,26 @@ public interface ExploreClient extends Closeable {
    * @param tableTypes a list of table types, which must come from
    *                   "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM";
    *                   null returns all types.
-   * @return {@link StatementExecutionFuture} eventually containing the tables of interest.
+   * @return {@link ListenableFuture} eventually containing the tables of interest.
    */
-  StatementExecutionFuture tables(@Nullable String catalog, @Nullable String schemaPattern, String tableNamePattern,
-                                  @Nullable List<String> tableTypes);
+  ListenableFuture<ExploreExecutionResult> tables(@Nullable String catalog, @Nullable String schemaPattern,
+                                                  String tableNamePattern, @Nullable List<String> tableTypes);
 
   /**
    * Retrieves the table types available in this database.
    *
    * See {@link java.sql.DatabaseMetaData#getTableTypes()}.
    *
-   * @return {@link StatementExecutionFuture} eventually containing the different table types available in Explore.
+   * @return {@link ListenableFuture} eventually containing the different table types available in Explore.
    */
-  StatementExecutionFuture tableTypes();
+  ListenableFuture<ExploreExecutionResult> tableTypes();
 
   /**
    * Retrieves a description of all the data types supported by this database.
    *
    * See {@link java.sql.DatabaseMetaData#getTypeInfo()}.
    *
-   * @return {@link StatementExecutionFuture} eventually containing the different data types available in Explore.
+   * @return {@link ListenableFuture} eventually containing the different data types available in Explore.
    */
-  StatementExecutionFuture dataTypes();
+  ListenableFuture<ExploreExecutionResult> dataTypes();
 }

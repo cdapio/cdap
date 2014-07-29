@@ -127,8 +127,9 @@ public class ReflectionStructObjectInspector extends
     fields = new ArrayList<MyField>(structFieldObjectInspectors.size());
     int used = 0;
     for (int i = 0; i < reflectionFields.length; i++) {
-      // Exclude transient fields
-      if (Modifier.isTransient(reflectionFields[i].getModifiers())) {
+      // Exclude transient fields and synthetic fields. The latter has the effect of excluding the implicit
+      // "this" pointer present in nested classes and that references the parent.
+      if (Modifier.isTransient(reflectionFields[i].getModifiers()) || reflectionFields[i].isSynthetic()) {
         continue;
       }
       if (!shouldIgnoreField(reflectionFields[i].getName())) {
