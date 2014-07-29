@@ -141,8 +141,9 @@ public final class ObjectInspectorFactory {
     Field[] fields = ObjectInspectorUtils.getDeclaredNonStaticFields(c);
     List<ObjectInspector> structFieldObjectInspectors = new ArrayList<ObjectInspector>(fields.length);
     for (int i = 0; i < fields.length; i++) {
-      // Exclude transient fields
-      if (Modifier.isTransient(fields[i].getModifiers())) {
+      // Exclude transient fields and synthetic fields. The latter has the effect of excluding the implicit
+      // "this" pointer present in nested classes and that references the parent.
+      if (Modifier.isTransient(fields[i].getModifiers()) || fields[i].isSynthetic()) {
         continue;
       }
       if (!oi.shouldIgnoreField(fields[i].getName())) {
