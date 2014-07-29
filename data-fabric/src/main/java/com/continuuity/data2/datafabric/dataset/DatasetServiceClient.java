@@ -27,8 +27,6 @@ import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
 import com.continuuity.common.io.Locations;
-import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceHandler;
-import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.InstanceConflictException;
 import com.continuuity.data2.dataset2.ModuleConflictException;
@@ -41,7 +39,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -156,12 +153,6 @@ class DatasetServiceClient {
     DatasetInstanceConfiguration creationProperties =
       new DatasetInstanceConfiguration(meta.getSpec().getType(), props.getProperties(), true);
     createUpdateInstance(datasetInstanceName, creationProperties, "update");
-    // after creating dataset instance with new spec, we call upgrade admin op
-    HttpResponse response = doPost("datasets/" + datasetInstanceName + "/admin/upgrade");
-    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to upgrade instance %s, details: %s",
-                                                          datasetInstanceName, getDetails(response)));
-    }
   }
 
   public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
@@ -178,13 +169,6 @@ class DatasetServiceClient {
 
   public void addModule(String moduleName, String className, Location jarLocation)
     throws DatasetManagementException {
-
-    try {
-      jarLocation.getInputStream();
-    } catch (IOException e) {
-      throw new DatasetManagementException(String.format("Failed to read jar of module %s at %s",
-                                                         moduleName, jarLocation));
-    }
 
     HttpResponse response = doRequest(HttpMethod.PUT, "modules/" + moduleName,
                            ImmutableMap.of("X-Continuuity-Class-Name", className),

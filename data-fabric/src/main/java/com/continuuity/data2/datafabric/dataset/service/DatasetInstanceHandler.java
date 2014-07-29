@@ -193,6 +193,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 //      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
 //      return;
     }
+    //caling admin upgrade, after updating specification
+    if (creationProperties.isUpdate()) {
+      executeAdmin(request, responder, name, "upgrade");
+    }
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
