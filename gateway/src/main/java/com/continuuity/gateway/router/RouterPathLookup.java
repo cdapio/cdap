@@ -62,6 +62,8 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       } else if ((uriParts.length >= 2) && uriParts[1].equals("data")) {
         if ((uriParts.length >= 3) && uriParts[2].equals("queries")) {
           return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
+        } else if (uriParts[1].equals("data") && uriParts[2].equals("explore")) {
+          return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
         }
         return Constants.Service.DATASET_MANAGER;
       } else if ((uriParts.length == 3) && uriParts[1].equals("explore") && uriParts[2].equals("status")) {

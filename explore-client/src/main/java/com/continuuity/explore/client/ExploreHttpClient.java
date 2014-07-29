@@ -26,14 +26,13 @@ import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
+import com.continuuity.explore.service.QueryInfo;
 import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
@@ -46,6 +45,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -62,6 +62,7 @@ abstract class ExploreHttpClient implements Explore {
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type COL_DESC_LIST_TYPE = new TypeToken<List<ColumnDesc>>() { }.getType();
   private static final Type ROW_LIST_TYPE = new TypeToken<List<Result>>() { }.getType();
+  private static final Type QUERY_INFO_LIST_TYPE = new TypeToken<List<QueryInfo>>() { }.getType();
 
   protected abstract InetSocketAddress getExploreServiceAddress();
 
@@ -148,6 +149,16 @@ abstract class ExploreHttpClient implements Explore {
       return;
     }
     throw new ExploreException("Cannot close operation. Reason: " + getDetails(response));
+  }
+
+  @Override
+  public List<QueryInfo> getQueries() throws ExploreException, SQLException {
+
+    HttpResponse response = doGet("data/queries/%s");
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return parseJson(response, QUERY_INFO_LIST_TYPE);
+    }
+    throw new ExploreException("Cannot get list of queries. Reason: " + getDetails(response));
   }
 
   private String parseResponseAsMap(HttpResponse response, String key) throws ExploreException {

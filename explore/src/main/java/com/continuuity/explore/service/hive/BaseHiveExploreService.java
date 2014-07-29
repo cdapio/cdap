@@ -24,6 +24,7 @@ import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
+import com.continuuity.explore.service.QueryInfo;
 import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
 import com.continuuity.hive.context.CConfCodec;
@@ -40,6 +41,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.cli.CLIService;
@@ -181,7 +185,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // It looks like the username and password below is not used when security is disabled in Hive Server2.
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       OperationHandle operationHandle = doExecute(sessionHandle, statement);
-      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, statement);
       LOG.trace("Executing statement: {} with handle {}", statement, handle);
       return handle;
     } catch (HiveSQLException e) {
@@ -329,6 +333,35 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     activeHandleCache.invalidate(handle);
   }
 
+  @Override
+  public List<QueryInfo> getQueries() throws ExploreException, SQLException {
+    List<QueryInfo> result = Lists.newArrayList();
+    try {
+      for (Map.Entry<Handle, OperationInfo> entry : activeHandleCache.asMap().entrySet()) {
+        try {
+          Status status = fetchStatus(entry.getValue().getOperationHandle());
+          result.add(new QueryInfo(entry.getValue().getStatement(), entry.getKey(), status, true));
+        } catch (HandleNotFoundException e) {
+          // ignore the handle not found exception. this method returns all queries and handle, if the
+          // handle is removed from the internal cache, then there is no point returning them from here.
+        }
+      }
+
+      for (Map.Entry<Handle, InactiveOperationInfo> entry : inactiveHandleCache.asMap().entrySet()) {
+        try {
+          Status status = fetchStatus(entry.getValue().getOperationHandle());
+          result.add(new QueryInfo(entry.getValue().getStatement(), entry.getKey(), status, false));
+        } catch (HandleNotFoundException e) {
+          // ignore the handle not found exception. this method returns all queries and handle, if the
+          // handle is removed from the internal cache, then there is no point returning them from here.
+        }
+      }
+    } catch (HiveSQLException e) {
+      throw getSqlException(e);
+    }
+    return result;
+  }
+
   void closeInternal(Handle handle, OperationInfo opInfo)
     throws ExploreException, HandleNotFoundException, SQLException {
     try {
@@ -387,9 +420,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @return {@link Handle} that represents the Hive operation being run.
    */
   protected Handle saveOperationInfo(OperationHandle operationHandle, SessionHandle sessionHandle,
-                                     Map<String, String> sessionConf) {
+                                     Map<String, String> sessionConf, String statement) {
     Handle handle = Handle.generate();
-    activeHandleCache.put(handle, new OperationInfo(sessionHandle, operationHandle, sessionConf));
+    activeHandleCache.put(handle, new OperationInfo(sessionHandle, operationHandle, sessionConf, statement));
     return handle;
   }
 
@@ -500,12 +533,14 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     private final SessionHandle sessionHandle;
     private final OperationHandle operationHandle;
     private final Map<String, String> sessionConf;
+    private final String statement;
 
     OperationInfo(SessionHandle sessionHandle, OperationHandle operationHandle,
-                  Map<String, String> sessionConf) {
+                  Map<String, String> sessionConf, String statement) {
       this.sessionHandle = sessionHandle;
       this.operationHandle = operationHandle;
       this.sessionConf = sessionConf;
+      this.statement = statement;
     }
 
     public SessionHandle getSessionHandle() {
@@ -519,6 +554,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     public Map<String, String> getSessionConf() {
       return sessionConf;
     }
+
+    public String getStatement() {
+      return statement;
+    }
   }
 
   private static class InactiveOperationInfo extends OperationInfo {
@@ -526,7 +565,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     private final Status status;
 
     private InactiveOperationInfo(OperationInfo operationInfo, List<ColumnDesc> schema, Status status) {
-      super(operationInfo.getSessionHandle(), operationInfo.getOperationHandle(), operationInfo.getSessionConf());
+      super(operationInfo.getSessionHandle(), operationInfo.getOperationHandle(),
+            operationInfo.getSessionConf(), operationInfo.getStatement());
       this.schema = schema;
       this.status = status;
     }

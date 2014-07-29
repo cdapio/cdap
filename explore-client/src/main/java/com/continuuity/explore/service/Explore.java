@@ -91,4 +91,12 @@ public interface Explore {
    * @throws HandleNotFoundException when handle is not found.
    */
   void close(Handle handle) throws ExploreException, HandleNotFoundException;
+
+  /**
+   * Fetch information about queries executed in Hive.
+   *
+   * @return List of {@link QueryInfo}
+   * @throws ExploreException
+   */
+  List<QueryInfo> getQueries() throws ExploreException, SQLException;
 }
