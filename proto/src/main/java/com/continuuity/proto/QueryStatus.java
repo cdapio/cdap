@@ -83,7 +83,7 @@ public class QueryStatus {
     UNKNOWN,
     PENDING;
 
-    public boolean isFinished() {
+    public boolean isDone() {
       return this.equals(FINISHED) || this.equals(CANCELED) || this.equals(CLOSED) || this.equals(ERROR);
     }
   }

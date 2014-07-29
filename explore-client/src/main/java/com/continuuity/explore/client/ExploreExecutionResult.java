@@ -16,10 +16,13 @@
 
 package com.continuuity.explore.client;
 
+import com.continuuity.explore.service.ExploreException;
+import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryResult;
 
 import java.io.Closeable;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Results of an Explore statement execution.
@@ -39,4 +42,12 @@ public interface ExploreExecutionResult extends Iterator<QueryResult>, Closeable
    * @param fetchSize the number of rows to fetch
    */
   void setFetchSize(int fetchSize);
+
+  /**
+   * Fetch the schema of this execution result. The schema of a query is only available when the query is finished.
+   *
+   * @return list of {@link ColumnDesc} representing the schema of the results. Empty list if there are no results.
+   * @throws ExploreException on any error fetching schema.
+   */
+  public abstract List<ColumnDesc> getResultSchema() throws ExploreException;
 }
