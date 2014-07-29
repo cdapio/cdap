@@ -42,14 +42,24 @@ public class DatasetsProxyRule implements ProxyRule {
       // three parts with '/' wrapping them
       int insertAt = uriParts[0].length() + uriParts[1].length() + uriParts[2].length() + 4;
       String datasetName = uriParts[3];
-      String newPath = path.substring(0, insertAt) + namespace.namespace(datasetName);
-      if (insertAt + datasetName.length() < path.length()) {
-        int copyAfter = insertAt + datasetName.length();
-        newPath = newPath + path.substring(copyAfter);
-      }
-      request.setUri(newPath);
+      request.setUri(processNewPath(path, insertAt, datasetName));
+    } else if ((uriParts.length == 6) && uriParts[1].equals("data") && uriParts[2].equals("explore")
+      && uriParts[3].equals("datasets") && uriParts[5].equals("schema")) {
+      // four parts with '/' wrapping them
+      int insertAt = uriParts[0].length() + uriParts[1].length() + uriParts[2].length() + uriParts[3].length() + 5;
+      String datasetName = uriParts[4];
+      request.setUri(processNewPath(path, insertAt, datasetName));
     }
 
     return request;
+  }
+
+  private String processNewPath(String path, int insertAt, String datasetName) {
+    String newPath = path.substring(0, insertAt) + namespace.namespace(datasetName);
+    if (insertAt + datasetName.length() < path.length()) {
+      int copyAfter = insertAt + datasetName.length();
+      newPath = newPath + path.substring(copyAfter);
+    }
+    return newPath;
   }
 }

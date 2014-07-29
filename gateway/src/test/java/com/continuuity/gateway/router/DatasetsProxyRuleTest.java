@@ -34,6 +34,7 @@ public class DatasetsProxyRuleTest {
 
   @Test
   public void testApplyingProxyRules() {
+    assertChange("/v2/data/explore/datasets/continuuity.user.myTable/schema", "/v2/data/explore/datasets/myTable/schema");
     assertChange("/v2/data/datasets/continuuity.user.myTable", "/v2/data/datasets/myTable");
     assertChange("/v2/data/datasets/continuuity.user.myTable/admin", "/v2/data/datasets/myTable/admin");
     assertChange("/v2/data/datasets/continuuity.user.myTable/admin/truncate",
