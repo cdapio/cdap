@@ -56,7 +56,7 @@ function usage() {
   echo "  Options (select one)"
   echo "    build        Clean build of javadocs, docs (HTML and PDF), copy javadocs and pdfs, zip results"
   echo "    stage        Stages docs and logins to server"
-  echo "    stage_index  Stages the index page and logins to server"
+  echo "    stage-index  Stages the index page and logins to server"
   echo "  or "
   echo "    build-docs   Clean build of docs"
   echo "    javadocs     Clean build of javadocs"
@@ -217,7 +217,7 @@ case "$1" in
   pdf-rest )          build_pdf_rest; exit 1;;
   sdk )               build_sdk; exit 1;;
   stage )             stage_docs; exit 1;;
-  stage_index )       stage_doc_index; exit 1;;
+  stage-index )       stage_doc_index; exit 1;;
   version )           version; exit 1;;
   zip )               make_zip; exit 1;;
   * )                 usage; exit 1;;
