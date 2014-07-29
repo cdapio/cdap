@@ -235,7 +235,8 @@ This new method that will count IP address occurrences.
 To the class ``StatusCodeProcedure``, add the following ``getClientIPCounts`` method::
 
     @Handle("getClientIPCounts")
-    public void getClientIPCounts(ProcedureRequest request, ProcedureResponder responder) throws IOException {
+    public void getClientIPCounts(ProcedureRequest request, 
+                                  ProcedureResponder responder) throws IOException {
       Map<String, Long> statusCountMap = new HashMap<String, Long>();
       Row row = statusCodes.get(Bytes.toBytes("clientIPKey"));
 
@@ -244,7 +245,8 @@ To the class ``StatusCodeProcedure``, add the following ``getClientIPCounts`` me
       
         // Get the number of occurrences of each client IP address
         for (Map.Entry<byte[], byte[]> colValue : row.getColumns().entrySet()) {
-          statusCountMap.put(Bytes.toString(colValue.getKey()), Bytes.toLong(colValue.getValue()));
+          statusCountMap.put(Bytes.toString(colValue.getKey()), 
+                             Bytes.toLong(colValue.getValue()));
         }
       }
       // Send response in JSON format
