@@ -26,6 +26,7 @@ import com.continuuity.common.http.HttpMethod;
 import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
+import com.continuuity.common.io.Locations;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceHandler;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.dataset2.DatasetManagementException;
@@ -178,27 +179,16 @@ class DatasetServiceClient {
   public void addModule(String moduleName, String className, Location jarLocation)
     throws DatasetManagementException {
 
-    InputStream is;
     try {
-      is = jarLocation.getInputStream();
+      jarLocation.getInputStream();
     } catch (IOException e) {
       throw new DatasetManagementException(String.format("Failed to read jar of module %s at %s",
                                                          moduleName, jarLocation));
     }
-    HttpResponse response;
-    try {
-      final InputStream inputStream = is;
-      response = doRequest(HttpMethod.PUT, "modules/" + moduleName,
+
+    HttpResponse response = doRequest(HttpMethod.PUT, "modules/" + moduleName,
                            ImmutableMap.of("X-Continuuity-Class-Name", className),
-                           new InputSupplier<InputStream>() {
-                             @Override
-                             public InputStream getInput() throws IOException {
-                               return inputStream;
-                             }
-                           });
-    } finally {
-      Closeables.closeQuietly(is);
-    }
+                           Locations.newInputSupplier(jarLocation));
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new ModuleConflictException(String.format("Failed to add module %s due to conflict, details: %s",
