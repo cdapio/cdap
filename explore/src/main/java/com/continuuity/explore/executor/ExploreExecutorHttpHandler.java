@@ -196,8 +196,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
       if (!(dataset instanceof RecordScannable)) {
         LOG.debug("Dataset {} does not implement {}", datasetName, RecordScannable.class.getName());
-        responder.sendError(HttpResponseStatus.NOT_FOUND, String.format("Dataset %s does not implement %s",
-                                                                        datasetName, RecordScannable.class.getName()));
+        responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                            String.format("Dataset %s does not implement %s",
+                                          datasetName, RecordScannable.class.getName()));
         return;
       }
 
@@ -218,9 +219,6 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         ObjectInspector tmp = structField.getFieldObjectInspector();
         builder.put(structField.getFieldName(), tmp.getTypeName());
       }
-
-      JsonObject json = new JsonObject();
-      json.addProperty("schema", oi.getTypeName());
       responder.sendJson(HttpResponseStatus.OK, builder.build());
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
