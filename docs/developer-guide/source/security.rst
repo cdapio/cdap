@@ -5,14 +5,6 @@
 Reactor Security
 =====================================
 
-.. reST Editor: .. section-numbering::
-.. reST Editor: .. contents::
-
-.. rst2pdf: .. contents::
-.. rst2pdf: config _templates/pdf-config
-.. rst2pdf: stylesheets _templates/pdf-stylesheet
-.. rst2pdf: build ../build-pdf/
-
 Continuuity Reactor supports securing clusters using a perimeter security model.  With perimeter
 security, access to cluster nodes is restricted through a firewall.  Cluster nodes can communicate
 with each other, but outside clients can only communicate with the cluster through a secured
@@ -392,8 +384,6 @@ Comments
 
 __ rfc6750_
 
-.. rst2pdf: PageBreak
-
 
 Authentication with REST Endpoints
 ----------------------------------
@@ -509,5 +499,3 @@ Now that you've secured your Continuuity Reactor, take a look at:
 
 - `Operating a Continuuity Reactor <operations.html>`__,
   which covers putting Continuuity Reactor into production.
-
-.. rst2pdf: PageBreak

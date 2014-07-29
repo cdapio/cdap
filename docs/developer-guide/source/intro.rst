@@ -5,9 +5,6 @@
 Introduction
 ===================================
 
-.. reST Editor: .. section-numbering::
-.. reST Editor: .. contents::
-
 The Challenge of Big Data Applications
 ======================================
 
