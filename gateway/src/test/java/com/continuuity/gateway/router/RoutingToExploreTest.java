@@ -104,7 +104,7 @@ public class RoutingToExploreTest {
 
   @Test
   public void testExploreExecutorHandlerRequests() throws Exception {
-    Assert.assertEquals("schema:foobar", doRequest("/data/explore/datasets/foobar/schema", "GET"));
+    Assert.assertEquals("schema:continuuity.user.foobar", doRequest("/data/explore/datasets/foobar/schema", "GET"));
   }
 
   @Test
