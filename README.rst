@@ -289,7 +289,7 @@ The total should match the number of injections you made after you restarted the
 
 Step 8: Stop the Server
 .......................
-To stop the CDAP Server when you are finished:
+To stop the CDAP Server when you are finished::
 
 	$ bin/server.sh stop
 
