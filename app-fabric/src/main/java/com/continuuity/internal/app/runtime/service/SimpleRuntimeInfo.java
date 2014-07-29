@@ -16,11 +16,11 @@
 
 package com.continuuity.internal.app.runtime.service;
 
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
 import com.google.common.base.Objects;
 
 /**
@@ -29,7 +29,7 @@ import com.google.common.base.Objects;
 public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInfo {
 
   private final ProgramController controller;
-  private final Type type;
+  private final ProgramType type;
   private final Id.Program programId;
 
   public SimpleRuntimeInfo(ProgramController controller, Program program) {
@@ -38,7 +38,7 @@ public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInf
          Id.Program.from(program.getAccountId(), program.getApplicationId(), program.getName()));
   }
 
-  public SimpleRuntimeInfo(ProgramController controller, Type type, Id.Program programId) {
+  public SimpleRuntimeInfo(ProgramController controller, ProgramType type, Id.Program programId) {
     this.controller = controller;
     this.type = type;
     this.programId = programId;
@@ -50,7 +50,7 @@ public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInf
   }
 
   @Override
-  public Type getType() {
+  public ProgramType getType() {
     return type;
   }
 

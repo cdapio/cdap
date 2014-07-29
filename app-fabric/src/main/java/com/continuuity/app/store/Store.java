@@ -20,11 +20,12 @@ import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.RunRecord;
-import com.continuuity.app.program.Type;
 import com.continuuity.data2.OperationException;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
+import com.continuuity.proto.RunRecord;
+import com.google.common.collect.Table;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -47,7 +48,7 @@ public interface Store {
    * @return An instance of {@link com.continuuity.app.program.DefaultProgram} if found.
    * @throws IOException
    */
-  Program loadProgram(Id.Program program, Type type) throws IOException;
+  Program loadProgram(Id.Program program, ProgramType type) throws IOException;
 
   /**
    * Logs start of program run.

@@ -44,12 +44,12 @@ import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.DefaultAppConfigurer;
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.RunRecord;
-import com.continuuity.app.program.Type;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.internal.app.Specifications;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
+import com.continuuity.proto.RunRecord;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.DefaultId;
@@ -109,7 +109,8 @@ public class DefaultStoreTest {
   @Test
   public void testLoadingProgram() throws Exception {
     AppFabricTestHelper.deployApplication(ToyApp.class);
-    Program program = store.loadProgram(Id.Program.from(DefaultId.ACCOUNT.getId(), "ToyApp", "ToyFlow"), Type.FLOW);
+    Program program = store.loadProgram(Id.Program.from(DefaultId.ACCOUNT.getId(), "ToyApp", "ToyFlow"),
+                                        ProgramType.FLOW);
     Assert.assertNotNull(program);
   }
 
@@ -433,7 +434,7 @@ public class DefaultStoreTest {
                         adjustedSpec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
 
     // checking that program spec in program jar was adjsuted
-    Program program = store.loadProgram(programId, Type.FLOW);
+    Program program = store.loadProgram(programId, ProgramType.FLOW);
     Assert.assertEquals(initialInstances + 5,
                         program.getSpecification().
                           getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
