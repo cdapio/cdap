@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Build script for Reactor docs
+# Build script for Product docs
 # Builds the docs
 # Copies the javadocs into place
 # Zips everything up so it can be staged
@@ -16,7 +16,8 @@ APIDOCS="apidocs"
 JAVADOCS="javadocs"
 LICENSES="licenses"
 LICENSES_PDF="licenses-pdf"
-REACTOR="reactor"
+PRODUCT="reactor"
+PRODUCT_INIT_CAP="Reactor"
 
 SCRIPT_PATH=`pwd`
 SOURCE_PATH="$SCRIPT_PATH/$SOURCE"
@@ -37,21 +38,21 @@ INSTALL_SOURCE="$INSTALL_GUIDE/source/install.rst"
 WWW_PATH="/var/www/website-docs"
 
 if [ "x$2" == "x" ]; then
-  REACTOR_PATH="$SCRIPT_PATH/../../"
+  PRODUCT_PATH="$SCRIPT_PATH/../../"
 else
-  REACTOR_PATH="$2"
+  PRODUCT_PATH="$2"
 fi
-REACTOR_JAVADOCS="$REACTOR_PATH/continuuity-api/target/site/apidocs"
+PRODUCT_JAVADOCS="$PRODUCT_PATH/continuuity-api/target/site/apidocs"
 
 ZIP_FILE_NAME=$HTML
 ZIP="$ZIP_FILE_NAME.zip"
 STAGING_SERVER="stg-web101.sw.joyent.continuuity.net"
 
 function usage() {
-  cd $REACTOR_PATH
-  REACTOR_PATH=`pwd`
-  echo "Build script for Reactor docs"
-  echo "Usage: $SCRIPT < option > [reactor]"
+  cd $PRODUCT_PATH
+  PRODUCT_PATH=`pwd`
+  echo "Build script for '$PRODUCT' docs"
+  echo "Usage: $SCRIPT < option > [source]"
   echo ""
   echo "  Options (select one)"
   echo "    build        Clean build of javadocs, docs (HTML and PDF), copy javadocs and pdfs, zip results"
@@ -63,11 +64,12 @@ function usage() {
   echo "    pdf-rest     Clean build of REST PDF"
   echo "    pdf-install  Clean build of Install Guide PDF"
   echo "    login        Logs you into $STAGING_SERVER"
-  echo "    reactor      Path to Reactor source for javadocs, if not $REACTOR_PATH"
   echo "    zip          Zips docs into $ZIP"
-  echo "  or "
+  echo "  or"
   echo "    depends      Build Site listing dependencies"  
-  echo "    sdk          Build SDK"  
+  echo "    sdk          Build SDK"
+  echo "  with"
+  echo "    source       Path to $PRODUCT source for javadocs, if not $PRODUCT_PATH"
   echo " "
   exit 1
 }
@@ -77,7 +79,7 @@ function clean() {
 }
 
 function build_javadocs() {
-  cd $REACTOR_PATH
+  cd $PRODUCT_PATH
   mvn clean package site -pl continuuity-api -am -Pjavadocs -DskipTests
 }
 
@@ -95,7 +97,7 @@ function build_pdf_rest() {
 
 function build_pdf_install() {
   version
-  INSTALL_PDF="$INSTALL_GUIDE/$BUILD_PDF/Reactor-Installation-Guide-v$REACTOR_VERSION.pdf"
+  INSTALL_PDF="$INSTALL_GUIDE/$BUILD_PDF/$PRODUCT_INIT_CAP-Installation-Guide-v$PRODUCT_VERSION.pdf"
   rm -rf $INSTALL_GUIDE/$BUILD_PDF
   mkdir $INSTALL_GUIDE/$BUILD_PDF
   python $DOCS_PY -g pdf -o $INSTALL_PDF $INSTALL_SOURCE
@@ -104,7 +106,7 @@ function build_pdf_install() {
 function copy_javadocs() {
   cd $BUILD_PATH/$HTML
   rm -rf $JAVADOCS
-  cp -r $REACTOR_JAVADOCS .
+  cp -r $PRODUCT_JAVADOCS .
   mv -f $APIDOCS $JAVADOCS
 }
 
@@ -123,9 +125,9 @@ function stage_docs() {
   echo "rsync -vz $SCRIPT_PATH/$BUILD/$ZIP \"$USER@$STAGING_SERVER:$ZIP\""
   rsync -vz $SCRIPT_PATH/$BUILD/$ZIP "$USER@$STAGING_SERVER:$ZIP"
   version
-  cd_cmd="cd $WWW_PATH/$REACTOR; ls"
-  remove_cmd="sudo rm -rf $REACTOR_VERSION"
-  unzip_cmd="sudo unzip ~/$ZIP; sudo mv $HTML $REACTOR_VERSION"
+  cd_cmd="cd $WWW_PATH/$PRODUCT; ls"
+  remove_cmd="sudo rm -rf $PRODUCT_VERSION"
+  unzip_cmd="sudo unzip ~/$ZIP; sudo mv $HTML $PRODUCT_VERSION"
   echo ""
   echo "To install on server:"
   echo ""
@@ -183,18 +185,18 @@ function build() {
 
 function build_sdk() {
   build_pdf_rest
-  cd $REACTOR_PATH
+  cd $PRODUCT_PATH
   mvn clean package -DskipTests -P examples && mvn package -pl singlenode -am -DskipTests -P dist,release
 }
 
 function build_dependencies() {
-  cd $REACTOR_PATH
+  cd $PRODUCT_PATH
   mvn clean package site -am -Pjavadocs -DskipTests
 }
 
 function version() {
-  cd $REACTOR_PATH
-  REACTOR_VERSION=`mvn help:evaluate -o -Dexpression=project.version | grep -v '^\['`
+  cd $PRODUCT_PATH
+  PRODUCT_VERSION=`mvn help:evaluate -o -Dexpression=project.version | grep -v '^\['`
   IFS=/ read -a branch <<< "`git rev-parse --abbrev-ref HEAD`"
   GIT_BRANCH="${branch[1]}"
 }
