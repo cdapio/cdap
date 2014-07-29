@@ -22,17 +22,24 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.client.DatasetExploreFacade;
 import com.continuuity.explore.service.ExploreService;
+import com.continuuity.hive.objectinspector.ObjectInspectorFactory;
+import com.continuuity.hive.objectinspector.ReflectionStructObjectInspector;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.proto.QueryHandle;
+
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -57,6 +64,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    * Enable ad-hoc exploration of a dataset instance.
    */
   @POST
+  // TODO rename to datasets instead of instances. Also, path should be v2/data/explore/datasets/<name>/enable
   @Path("/explore/instances/{instance}/enable")
   public void enableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("instance") final String instance) {
@@ -132,6 +140,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    * Disable ad-hoc exploration of a dataset instance.
    */
   @POST
+  // TODO rename to datasets instead of instances. Also, path should be v2/data/explore/datasets/<name>/disable
   @Path("/explore/instances/{instance}/disable")
   public void disableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                              @PathParam("instance") final String instance) {
@@ -169,4 +178,51 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
+  /**
+    * Get the schema of a dataset.
+    */
+  @GET
+  @Path("/data/explore/datasets/{dataset}/schema")
+  public void getDatasetSchema(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+                               @PathParam("dataset") final String datasetName) {
+    try {
+      LOG.trace("Retrieving Explore schema for dataset {}", datasetName);
+
+      Dataset dataset = datasetFramework.getDataset(datasetName, null);
+      if (dataset == null) {
+        responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot find dataset " + datasetName);
+        return;
+      }
+
+      if (!(dataset instanceof RecordScannable)) {
+        LOG.debug("Dataset {} does not implement {}", datasetName, RecordScannable.class.getName());
+        responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                            String.format("Dataset %s does not implement %s",
+                                          datasetName, RecordScannable.class.getName()));
+        return;
+      }
+
+      RecordScannable recordScannable = (RecordScannable) dataset;
+
+      ObjectInspector oi = ObjectInspectorFactory.getReflectionObjectInspector(recordScannable.getRecordType());
+      if (!(oi instanceof ReflectionStructObjectInspector)) {
+        LOG.debug("Record type {} for dataset {} is not a RECORD.",
+                  recordScannable.getRecordType().getClass().getName(), datasetName);
+        responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                            String.format("Record type %s for dataset %s is not a RECORD.",
+                                          recordScannable.getRecordType().getClass().getName(), datasetName));
+        return;
+      }
+
+      ImmutableMap.Builder builder = ImmutableMap.builder();
+      for (StructField structField : ((ReflectionStructObjectInspector) oi).getAllStructFieldRefs()) {
+        ObjectInspector tmp = structField.getFieldObjectInspector();
+        builder.put(structField.getFieldName(), tmp.getTypeName());
+      }
+      responder.sendJson(HttpResponseStatus.OK, builder.build());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
 }
