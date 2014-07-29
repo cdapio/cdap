@@ -369,8 +369,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
-
-
   @Override
   public QueryHandle execute(String statement) throws ExploreException, SQLException {
     try {
