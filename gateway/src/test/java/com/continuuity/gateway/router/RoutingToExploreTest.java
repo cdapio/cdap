@@ -78,8 +78,8 @@ public class RoutingToExploreTest {
     // Starting mock DataSet service
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
     mockService = new MockHttpService(discoveryService, Constants.Service.EXPLORE_HTTP_USER_SERVICE,
-                                      new MockExploreExecutorHandler(), new MockExplorePingHandler(),
-                                      new MockExploreMetadataHandler());
+                                      new MockQueryExecutorHandler(), new MockExplorePingHandler(),
+                                      new MockExploreExecutorHandler(), new MockExploreMetadataHandler());
     mockService.startAndWait();
   }
 
@@ -93,13 +93,18 @@ public class RoutingToExploreTest {
   }
 
   @Test
-  public void testExploreHandlerRequests() throws Exception {
+  public void testExploreQueriesHandlerRequests() throws Exception {
     Assert.assertEquals("sendQuery", doRequest("/data/queries", "POST"));
     Assert.assertEquals("stop:fooId", doRequest("/data/queries/fooId", "DELETE"));
     Assert.assertEquals("cancel:fooId", doRequest("/data/queries/fooId/cancel", "POST"));
     Assert.assertEquals("status:fooId", doRequest("/data/queries/fooId/status", "GET"));
     Assert.assertEquals("schema:fooId", doRequest("/data/queries/fooId/schema", "GET"));
     Assert.assertEquals("nextResults:fooId", doRequest("/data/queries/fooId/nextResults", "POST"));
+  }
+
+  @Test
+  public void testExploreExecutorHandlerRequests() throws Exception {
+    Assert.assertEquals("schema:continuuity.user.foobar", doRequest("/data/explore/datasets/foobar/schema", "GET"));
   }
 
   @Test
@@ -129,7 +134,7 @@ public class RoutingToExploreTest {
   }
 
   @Path(Constants.Gateway.GATEWAY_VERSION)
-  public static final class MockExploreExecutorHandler extends AbstractHttpHandler {
+  public static final class MockQueryExecutorHandler extends AbstractHttpHandler {
 
     @POST
     @Path("/data/queries")
@@ -220,6 +225,16 @@ public class RoutingToExploreTest {
     @Path("/data/explore/jdbc/info/{type}")
     public void getInfo(HttpRequest request, HttpResponder responder, @PathParam("type") final String type) {
       responder.sendString(HttpResponseStatus.OK, "info:" + type);
+    }
+  }
+
+  @Path(Constants.Gateway.GATEWAY_VERSION)
+  public static class MockExploreExecutorHandler extends AbstractHttpHandler {
+    @GET
+    @Path("/data/explore/datasets/{dataset}/schema")
+    public void getSchema(HttpRequest request, HttpResponder responder,
+                          @PathParam("dataset") final String datasetName) {
+      responder.sendString(HttpResponseStatus.OK, "schema:" + datasetName);
     }
   }
 
