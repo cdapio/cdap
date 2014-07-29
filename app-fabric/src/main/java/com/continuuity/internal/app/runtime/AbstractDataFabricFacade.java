@@ -17,7 +17,6 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.data.DataSetContext;
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.queue.QueueName;
@@ -34,6 +33,7 @@ import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.continuuity.data2.transaction.stream.ForwardingStreamConsumer;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
+import com.continuuity.proto.Id;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionContext;
 import com.continuuity.tephra.TransactionExecutor;
@@ -133,7 +133,7 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
     try {
       DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
       DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework, configuration,
-                                                                        program.getMainClass().getClassLoader());
+                                                                        program.getClassLoader());
       dataSetInstantiator.setDataSets(program.getSpecification().getDataSets().values(),
                                       program.getSpecification().getDatasets().values());
       return dataSetInstantiator;

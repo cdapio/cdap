@@ -36,9 +36,7 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator.Node;
@@ -81,6 +79,8 @@ import com.continuuity.internal.io.SchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.internal.lang.Reflections;
 import com.continuuity.internal.specification.FlowletMethod;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -175,9 +175,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
       ApplicationSpecification appSpec = program.getSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-      Type processorType = program.getType();
+      ProgramType processorType = program.getType();
       Preconditions.checkNotNull(processorType, "Missing processor type.");
-      Preconditions.checkArgument(processorType == Type.FLOW, "Only FLOW process type is supported.");
+      Preconditions.checkArgument(processorType == ProgramType.FLOW, "Only FLOW process type is supported.");
 
       String processorName = program.getName();
       Preconditions.checkNotNull(processorName, "Missing processor name.");
@@ -193,7 +193,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       }
 
       Class<?> clz = Class.forName(flowletDef.getFlowletSpec().getClassName(), true,
-                                   program.getMainClass().getClassLoader());
+                                   program.getClassLoader());
       Preconditions.checkArgument(Flowlet.class.isAssignableFrom(clz), "%s is not a Flowlet.", clz);
 
       Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>) clz;
@@ -616,7 +616,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     schemas.add(schemaGenerator.generate(StreamEventData.class));
 
 
-    return new SchemaCache(schemas.build(), program.getMainClass().getClassLoader());
+    return new SchemaCache(schemas.build(), program.getClassLoader());
   }
 
   /**

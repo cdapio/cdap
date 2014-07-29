@@ -25,9 +25,7 @@ import com.continuuity.api.data.stream.StreamBatchReadable;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
@@ -58,6 +56,8 @@ import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.continuuity.internal.lang.Reflections;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.TransactionExecutorFactory;
@@ -158,9 +158,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
     ApplicationSpecification appSpec = program.getSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-    Type processorType = program.getType();
+    ProgramType processorType = program.getType();
     Preconditions.checkNotNull(processorType, "Missing processor type.");
-    Preconditions.checkArgument(processorType == Type.MAPREDUCE, "Only MAPREDUCE process type is supported.");
+    Preconditions.checkArgument(processorType == ProgramType.MAPREDUCE, "Only MAPREDUCE process type is supported.");
 
     MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
@@ -413,7 +413,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     Id.Program programId = context.getProgram().getId();
     Location programJarCopy = locationFactory.create(String.format("%s.%s.%s.%s.%s.program.jar",
-                                         Type.MAPREDUCE.name().toLowerCase(),
+                                         ProgramType.MAPREDUCE.name().toLowerCase(),
                                          programId.getAccountId(), programId.getApplicationId(),
                                          programId.getId(), context.getRunId().getId()));
     InputStream src = jobJarLocation.getInputStream();
@@ -576,7 +576,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     Location appFabricDependenciesJarLocation =
       locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
-                                           Type.MAPREDUCE.name().toLowerCase(),
+                                           ProgramType.MAPREDUCE.name().toLowerCase(),
                                            programId.getAccountId(), programId.getApplicationId(),
                                            programId.getId(), context.getRunId().getId()));
 

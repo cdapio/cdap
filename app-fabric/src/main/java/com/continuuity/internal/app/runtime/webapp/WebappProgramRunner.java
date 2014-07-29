@@ -17,13 +17,13 @@
 package com.continuuity.internal.app.runtime.webapp;
 
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.http.NettyHttpService;
+import com.continuuity.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -75,14 +75,14 @@ public class WebappProgramRunner implements ProgramRunner {
   public ProgramController run(Program program, ProgramOptions options) {
     try {
 
-      Type processorType = program.getType();
+      ProgramType processorType = program.getType();
       Preconditions.checkNotNull(processorType, "Missing processor type.");
-      Preconditions.checkArgument(processorType == Type.WEBAPP, "Only WEBAPP process type is supported.");
+      Preconditions.checkArgument(processorType == ProgramType.WEBAPP, "Only WEBAPP process type is supported.");
 
       LOG.info("Initializing web app for app {} with jar {}", program.getApplicationId(),
                program.getJarLocation().getName());
 
-      String serviceName = getServiceName(Type.WEBAPP, program);
+      String serviceName = getServiceName(ProgramType.WEBAPP, program);
       Preconditions.checkNotNull(serviceName, "Cannot determine service name for program %s", program.getName());
       LOG.info("Got service name {}", serviceName);
 
@@ -105,7 +105,7 @@ public class WebappProgramRunner implements ProgramRunner {
       cancellables.add(serviceAnnouncer.announce(serviceName, address.getPort()));
 
       for (String hname : getServingHostNames(program.getJarLocation().getInputStream())) {
-        final String sname = Type.WEBAPP.name().toLowerCase() + "/" + hname;
+        final String sname = ProgramType.WEBAPP.name().toLowerCase() + "/" + hname;
 
         LOG.info("Webapp {} running on address {} registering as {}", program.getApplicationId(), address, sname);
         cancellables.add(discoveryService.register(new Discoverable() {
@@ -135,7 +135,7 @@ public class WebappProgramRunner implements ProgramRunner {
     }
   }
 
-  public static String getServiceName(Type type, Program program) throws Exception {
+  public static String getServiceName(ProgramType type, Program program) throws Exception {
     return String.format("%s.%s.%s.%s", type.name().toLowerCase(),
                          program.getAccountId(), program.getApplicationId(), type.name().toLowerCase());
   }

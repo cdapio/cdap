@@ -16,9 +16,9 @@
 
 package com.continuuity.internal.app.authorization;
 
-import com.continuuity.app.Id;
 import com.continuuity.app.authorization.AuthorizationHandler;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.proto.Id;
 
 /**
  *
