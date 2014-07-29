@@ -21,8 +21,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
-import com.continuuity.data2.dataset.lib.table.hbase.HBaseMetricsTableClient;
-import com.continuuity.data2.dataset.lib.table.hbase.HBaseMetricsTableManager;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableClient;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableManager;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
@@ -67,17 +65,6 @@ public class DistributedDataSetAccessor extends AbstractDataSetAccessor {
   @Override
   protected DataSetManager getOcTableManager() throws Exception {
     return new HBaseOcTableManager(cConf, hConf, locationFactory, tableUtil);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  protected <T> T getMetricsTableClient(String name) throws Exception {
-    return (T) new HBaseMetricsTableClient(name, hConf);
-  }
-
-  @Override
-  protected DataSetManager getMetricsTableManager() throws Exception {
-    return new HBaseMetricsTableManager(hConf, tableUtil);
   }
 
   @Override
