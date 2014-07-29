@@ -19,7 +19,6 @@ package com.continuuity.explore.executor;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.ExploreService;
-import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.MetaDataInfo;
 import com.continuuity.explore.utils.ColumnsArgs;
 import com.continuuity.explore.utils.FunctionsArgs;
@@ -27,6 +26,7 @@ import com.continuuity.explore.utils.SchemasArgs;
 import com.continuuity.explore.utils.TablesArgs;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
+import com.continuuity.proto.QueryHandle;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -66,9 +66,9 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("data/explore/jdbc/tables")
   public void getTables(HttpRequest request, HttpResponder responder) {
-    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
+    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
-      public Handle execute(HttpRequest request, HttpResponder responder)
+      public QueryHandle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         TablesArgs args = decodeArguments(request, TablesArgs.class,
                                                             new TablesArgs(null, null, "%", null));
@@ -82,9 +82,9 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("data/explore/jdbc/columns")
   public void getColumns(HttpRequest request, HttpResponder responder) {
-    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
+    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
-      public Handle execute(HttpRequest request, HttpResponder responder)
+      public QueryHandle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         ColumnsArgs args = decodeArguments(request, ColumnsArgs.class,
                                                              new ColumnsArgs(null, null, "%", "%"));
@@ -98,9 +98,9 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("data/explore/jdbc/catalogs")
   public void getCatalogs(HttpRequest request, HttpResponder responder) {
-    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
+    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
-      public Handle execute(HttpRequest request, HttpResponder responder)
+      public QueryHandle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         LOG.trace("Received get catalogs query.");
         return exploreService.getCatalogs();
@@ -111,9 +111,9 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("data/explore/jdbc/schemas")
   public void getSchemas(HttpRequest request, HttpResponder responder) {
-    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
+    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
-      public Handle execute(HttpRequest request, HttpResponder responder)
+      public QueryHandle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         SchemasArgs args = decodeArguments(request, SchemasArgs.class,
                                                             new SchemasArgs(null, null));
@@ -126,9 +126,9 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("data/explore/jdbc/functions")
   public void getFunctions(HttpRequest request, HttpResponder responder) {
-    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
+    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
-      public Handle execute(HttpRequest request, HttpResponder responder)
+      public QueryHandle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         FunctionsArgs args = decodeArguments(request, FunctionsArgs.class,
                                                                new FunctionsArgs(null, null, "%"));
@@ -142,9 +142,9 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("data/explore/jdbc/tableTypes")
   public void getTableTypes(HttpRequest request, HttpResponder responder) {
-    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
+    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
-      public Handle execute(HttpRequest request, HttpResponder responder)
+      public QueryHandle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         LOG.trace("Received get table types query.");
         return exploreService.getTableTypes();
@@ -155,9 +155,9 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("data/explore/jdbc/types")
   public void getTypes(HttpRequest request, HttpResponder responder) {
-    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<Handle>() {
+    handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
-      public Handle execute(HttpRequest request, HttpResponder responder)
+      public QueryHandle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         LOG.trace("Received get type info query.");
         return exploreService.getTypeInfo();
@@ -182,12 +182,12 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   }
 
   private void handleResponseEndpointExecution(HttpRequest request, HttpResponder responder,
-                                               final EndpointCoreExecution<Handle> execution) {
+                                               final EndpointCoreExecution<QueryHandle> execution) {
     genericEndpointExecution(request, responder, new EndpointCoreExecution<Void>() {
       @Override
       public Void execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
-        Handle handle = execution.execute(request, responder);
+        QueryHandle handle = execution.execute(request, responder);
         JsonObject json = new JsonObject();
         json.addProperty("handle", handle.getHandle());
         responder.sendJson(HttpResponseStatus.OK, json);

@@ -25,11 +25,13 @@ import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import com.continuuity.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
-import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.explore.client.DatasetExploreFacade;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
+import com.continuuity.proto.DatasetInstanceConfiguration;
+import com.continuuity.proto.DatasetMeta;
+import com.continuuity.proto.DatasetTypeMeta;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
@@ -40,7 +42,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -116,7 +117,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      DatasetInstanceMeta info = new DatasetInstanceMeta(spec, implManager.getTypeInfo(spec.getType()));
+      DatasetMeta info = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()));
       responder.sendJson(HttpResponseStatus.OK, info);
     }
   }
@@ -127,10 +128,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                   @PathParam("name") String name) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
 
-    DatasetTypeAndProperties typeAndProps = GSON.fromJson(reader, DatasetTypeAndProperties.class);
+    DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
 
-    LOG.info("Creating dataset {}, type name: {}, typeAndProps: {}",
-             name, typeAndProps.getTypeName(), typeAndProps.getProperties());
+    LOG.info("Creating dataset {}, type name: {}, creationProperties: {}", name, creationProperties.getTypeName(),
+             creationProperties.getProperties());
 
     DatasetSpecification existing = instanceManager.get(name);
     if (existing != null) {
@@ -141,10 +142,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
 
-    DatasetTypeMeta typeMeta = implManager.getTypeInfo(typeAndProps.getTypeName());
+    DatasetTypeMeta typeMeta = implManager.getTypeInfo(creationProperties.getTypeName());
     if (typeMeta == null) {
       String message = String.format("Cannot create dataset %s: unknown type %s",
-                                     name, typeAndProps.getTypeName());
+                                     name, creationProperties.getTypeName());
       LOG.warn(message);
       responder.sendError(HttpResponseStatus.NOT_FOUND, message);
       return;
@@ -153,11 +154,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     DatasetSpecification spec;
     try {
-      spec = opExecutorClient.create(name, typeMeta,
-                                     DatasetProperties.builder().addAll(typeAndProps.getProperties()).build());
+      spec = opExecutorClient.create(name, typeMeta, DatasetProperties.builder()
+        .addAll(creationProperties.getProperties()).build());
     } catch (Exception e) {
       String msg = String.format("Cannot create dataset %s of type %s: executing create() failed, reason: %s",
-                                 name, typeAndProps.getTypeName(), e.getMessage());
+                                 name, creationProperties.getTypeName(), e.getMessage());
       LOG.error(msg, e);
       throw new RuntimeException(msg, e);
     }
@@ -169,7 +170,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       datasetExploreFacade.enableExplore(name);
     } catch (Exception e) {
       String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
-                                 name, typeAndProps.getProperties(), e.getMessage());
+                                 name, creationProperties.getProperties(), e.getMessage());
       LOG.error(msg, e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
 //      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
@@ -246,27 +247,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                            @PathParam("method") String method) {
     // todo: execute data operation
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
-  }
-
-  /**
-   * POJO that carries dataset type and properties information for create dataset request
-   */
-  public static final class DatasetTypeAndProperties {
-    private final String typeName;
-    private final Map<String, String> properties;
-
-    public DatasetTypeAndProperties(String typeName, Map<String, String> properties) {
-      this.typeName = typeName;
-      this.properties = properties;
-    }
-
-    public String getTypeName() {
-      return typeName;
-    }
-
-    public Map<String, String> getProperties() {
-      return properties;
-    }
   }
 
   /**

@@ -19,9 +19,9 @@ package com.continuuity.explore.jdbc;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Status;
 import com.continuuity.explore.service.UnexpectedQueryStatusException;
 
+import com.continuuity.proto.QueryStatus;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,7 +120,7 @@ public class ExploreStatement implements Statement {
         throw new SQLException("Unknown state");
       } else if (t instanceof UnexpectedQueryStatusException) {
         UnexpectedQueryStatusException sE = (UnexpectedQueryStatusException) t;
-        if (Status.OpStatus.CANCELED.equals(sE.getStatus())) {
+        if (QueryStatus.OpStatus.CANCELED.equals(sE.getStatus())) {
           // The query execution may have been canceled without calling futureResults.cancel(), using the right
           // REST endpoint with the handle for eg.
           return false;

@@ -16,8 +16,8 @@
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
+import com.continuuity.proto.ProgramType;
 import com.google.common.base.Throwables;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.ResourceSpecification;
@@ -56,7 +56,7 @@ public final class WebappTwillApplication implements TwillApplication {
     Location programLocation = program.getJarLocation();
 
     try {
-      String serviceName = WebappProgramRunner.getServiceName(Type.WEBAPP, program);
+      String serviceName = WebappProgramRunner.getServiceName(ProgramType.WEBAPP, program);
 
       return TwillSpecification.Builder.with()
         .setName(serviceName)

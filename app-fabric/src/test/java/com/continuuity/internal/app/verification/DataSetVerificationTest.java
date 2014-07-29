@@ -18,8 +18,8 @@ package com.continuuity.internal.app.verification;
 
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.app.Id;
 import com.continuuity.app.verification.VerifyResult;
+import com.continuuity.proto.Id;
 import org.junit.Assert;
 import org.junit.Test;
 
