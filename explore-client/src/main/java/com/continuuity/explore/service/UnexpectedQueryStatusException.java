@@ -16,19 +16,21 @@
 
 package com.continuuity.explore.service;
 
+import com.continuuity.proto.QueryStatus;
+
 /**
  * Exception thrown in case a query execution ends in an unexpected state.
  */
 public class UnexpectedQueryStatusException extends Exception {
 
-  private final Status.OpStatus status;
+  private final QueryStatus.OpStatus status;
 
-  public UnexpectedQueryStatusException(String s, Status.OpStatus status) {
+  public UnexpectedQueryStatusException(String s, QueryStatus.OpStatus status) {
     super(s);
     this.status = status;
   }
 
-  public Status.OpStatus getStatus() {
+  public QueryStatus.OpStatus getStatus() {
     return status;
   }
 }

@@ -35,7 +35,8 @@ import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryResult;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -58,9 +59,10 @@ public class BaseHiveExploreServiceTest {
   protected static DatasetFramework datasetFramework;
   protected static DatasetService datasetService;
   protected static ExploreExecutorService exploreExecutorService;
-  protected static ExploreClient exploreClient;
-  protected static Injector injector;
 
+  protected static ExploreClient exploreClient;
+
+  protected static Injector injector;
   protected static void startServices(CConfiguration cConf) throws Exception {
     injector = Guice.createInjector(createInMemoryModules(cConf, new Configuration()));
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
@@ -86,9 +88,21 @@ public class BaseHiveExploreServiceTest {
     transactionManager.stopAndWait();
   }
 
+  public static ExploreClient getExploreClient() {
+    return exploreClient;
+  }
+
   protected static void runCommand(String command, boolean expectedHasResult,
-                                 List<ColumnDesc> expectedColumnDescs, List<Result> expectedResults) throws Exception {
+                                   List<ColumnDesc> expectedColumnDescs, List<QueryResult> expectedResults)
+    throws Exception {
+
     StatementExecutionFuture future = exploreClient.submit(command);
+    assertStatementResult(future, expectedHasResult, expectedColumnDescs, expectedResults);
+  }
+
+  protected static void assertStatementResult(StatementExecutionFuture future, boolean expectedHasResult,
+                                              List<ColumnDesc> expectedColumnDescs, List<QueryResult> expectedResults)
+    throws Exception {
     ExploreExecutionResult results = future.get();
 
     Assert.assertEquals(expectedHasResult, results.hasNext());
@@ -99,10 +113,13 @@ public class BaseHiveExploreServiceTest {
     results.close();
   }
 
-  protected static List<Result> trimColumnValues(Iterator<Result> results) {
-    List<Result> newResults = Lists.newArrayList();
-    while (results.hasNext()) {
-      Result result = results.next();
+  protected static List<QueryResult> trimColumnValues(Iterator<QueryResult> results) {
+    int i = 0;
+    List<QueryResult> newResults = Lists.newArrayList();
+    // Max 100 results
+    while (results.hasNext() && i < 100) {
+      i++;
+      QueryResult result = results.next();
       List<Object> newCols = Lists.newArrayList();
       for (Object obj : result.getColumns()) {
         if (obj instanceof String) {
@@ -114,7 +131,7 @@ public class BaseHiveExploreServiceTest {
           newCols.add(obj);
         }
       }
-      newResults.add(new Result(newCols));
+      newResults.add(new QueryResult(newCols));
     }
     return newResults;
   }

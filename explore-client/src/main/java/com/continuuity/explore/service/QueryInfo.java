@@ -16,6 +16,8 @@
 
 package com.continuuity.explore.service;
 
+import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryStatus;
 import com.google.gson.annotations.SerializedName;
 
 /**
@@ -24,7 +26,7 @@ import com.google.gson.annotations.SerializedName;
 public class QueryInfo {
 
   private final String statement;
-  private final Status.OpStatus status;
+  private final QueryStatus.OpStatus status;
 
   @SerializedName("query_handle")
   private final String queryHandle;
@@ -35,7 +37,7 @@ public class QueryInfo {
   @SerializedName("is_active")
   private final boolean isActive;
 
-  public QueryInfo(String query, Handle handle, Status status, boolean isActive) {
+  public QueryInfo(String query, QueryHandle handle, QueryStatus status, boolean isActive) {
     this.statement = query;
     this.queryHandle = handle.getHandle();
     this.status = status.getStatus();
