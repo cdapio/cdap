@@ -152,7 +152,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -468,23 +467,20 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       final Id.Program id = Id.Program.from(accountId, appId, runnableId);
       final ProgramType type = RUNNABLE_TYPE_MAP.get(runnableType);
-      final Map<Id.Program, String> statusMap = new HashMap<Id.Program, String>();
+      final JsonObject statusMap = new JsonObject();
       // getStatus has a callback for mapreduce jobs that run in workflows
       getStatus(id, type, statusMap);
       // wait for statuses to come back in case we are polling mapreduce status in workflow
-      while (statusMap.isEmpty()) {
+      while (!statusMap.has("status")) {
         Thread.sleep(1);
       }
-      // this is null only when mapreduce status cannot be retrieved
-      if (statusMap.get(id) == null) {
-        throw new Throwable("Exception occurred while retrieving status of " + runnableId);
-      }
-      if (statusMap.get(id).equals("NOT_FOUND")) {
+      String status = statusMap.get("status").getAsString();
+      if (status.equals(HttpResponseStatus.NOT_FOUND.toString())) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else if (status.equals(HttpResponseStatus.INTERNAL_SERVER_ERROR.toString())) {
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       } else {
-        JsonObject reply = new JsonObject();
-        reply.addProperty("status", statusMap.get(id));
-        responder.sendJson(HttpResponseStatus.OK, reply);
+        responder.sendJson(HttpResponseStatus.OK, statusMap);
       }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -494,7 +490,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void getStatus(final Id.Program id, final ProgramType type, final Map<Id.Program, String> statusMap)
+  private void getStatus(final Id.Program id, final ProgramType type, final JsonObject statusMap)
     throws Throwable {
     // must do it this way to allow anon function in workflow to modify status
     if (type == ProgramType.MAPREDUCE) {
@@ -503,7 +499,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         // check that mapreduce exists
         ApplicationSpecification appSpec = store.getApplication(id.getApplication());
         if (appSpec == null || !appSpec.getMapReduce().containsKey(id.getId())) {
-          statusMap.put(id, "NOT_FOUND");
+          statusMap.addProperty("status", HttpResponseStatus.NOT_FOUND.toString());
         }
 
         //mapreduce is part of a workflow
@@ -512,15 +508,15 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             @Override
             public void handle(WorkflowClient.Status status) {
               if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
-                statusMap.put(id, "RUNNING");
+                statusMap.addProperty("status", "RUNNING");
               } else {
                 //mapreduce name might follow the same format even when its not part of the workflow.
                 try {
-                  statusMap.put(id, getProgramStatus(id, type).getStatus());
+                  statusMap.addProperty("status", getProgramStatus(id, type).getStatus());
                 } catch (Exception e) {
                   LOG.error("Got exception: ", e);
-                  // null means that there was an error getting the status code
-                  statusMap.put(id, null);
+                  // error occurred so say internal server error
+                  statusMap.addProperty("status", HttpResponseStatus.INTERNAL_SERVER_ERROR.toString());
                 }
               }
             }
@@ -528,13 +524,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         );
       } else {
         //mapreduce is not part of a workflow
-        statusMap.put(id, getProgramStatus(id, type).getStatus());
+        statusMap.addProperty("status", getProgramStatus(id, type).getStatus());
       }
     } else if (type == null) {
       // invalid type does not exist
-      statusMap.put(id, "NOT_FOUND");
+      statusMap.addProperty("status", HttpResponseStatus.NOT_FOUND.toString());
     } else {
-      statusMap.put(id, getProgramStatus(id, type).getStatus());
+      statusMap.addProperty("status", getProgramStatus(id, type).getStatus());
     }
   }
 
@@ -599,7 +595,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private void runnableStatus(HttpResponder responder, Id.Program id, ProgramType type) {
     try {
       ProgramStatus status = getProgramStatus(id, type);
-      if (status.getStatus().equals("NOT_FOUND")) {
+      if (status.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
         JsonObject reply = new JsonObject();
@@ -877,7 +873,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     if (runtimeInfo == null) {
       try {
         ProgramStatus status = getProgramStatus(identifier, type);
-        if ("NOT_FOUND".equals(status.getStatus())) {
+        if (status.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
           return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
         } else if (ProgramController.State.STOPPED.toString().equals(status.getStatus())) {
           return AppFabricServiceStatus.PROGRAM_ALREADY_STOPPED;
@@ -1024,32 +1020,35 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           programTypeStr = requestedObj.getAsJsonPrimitive(PROGRAM_TYPE_ARG).getAsString();
           programId = requestedObj.getAsJsonPrimitive(PROGRAM_ID_ARG).getAsString();
         } catch (NullPointerException e) {
-          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST,
-                        "Must provide appId, programType, and programId");
-          return;
+          requestedObj.addProperty("error", "Must provide appId, programType, and programId");
+          requestedObj.addProperty("status", HttpResponseStatus.BAD_REQUEST.toString());
+          continue;
         } catch (ClassCastException e) {
-          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST,
-                        "appId, programType, and programId must be strings");
-          return;
+          requestedObj.addProperty("error", "appId, programType, and programId must be strings");
+          requestedObj.addProperty("status", HttpResponseStatus.BAD_REQUEST.toString());
+          continue;
         }
         ProgramType programType;
         try {
           programType = ProgramType.valueOfPrettyName(programTypeStr);
         } catch (IllegalArgumentException e) {
           // invalid type
-          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, programTypeStr + " is not a valid program type");
-          return;
+          requestedObj.addProperty("error", programTypeStr + " is not a valid program type");
+          requestedObj.addProperty("status", HttpResponseStatus.BAD_REQUEST.toString());
+          continue;
         }
         if (programType == null) {
-          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, programTypeStr + " is not a valid program type");
-          return;
+          requestedObj.addProperty("error", programTypeStr + " is not a valid program type");
+          requestedObj.addProperty("status", HttpResponseStatus.BAD_REQUEST.toString());
+          continue;
         }
         // these values will be overwritten later
         int requested, provisioned;
         ApplicationSpecification spec = store.getApplication(Id.Application.from(accountId, appId));
         if (spec == null) {
-          respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "App " + appId + " not found");
-          return;
+          requestedObj.addProperty("error", "App: " + appId + " not found");
+          requestedObj.addProperty("status", HttpResponseStatus.NOT_FOUND.toString());
+          continue;
         }
         if (programType == ProgramType.PROCEDURE) {
           // the "runnable" for procedures has the same id as the procedure name
@@ -1057,23 +1056,28 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           if (spec.getProcedures().containsKey(programId)) {
             requested = store.getProcedureInstances(Id.Program.from(accountId, appId, programId));
           } else {
-            respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Procedure: " + programId + " not found");
-            return;
+            requestedObj.addProperty("error", "Procedure: " + programId + " not found");
+            requestedObj.addProperty("status", HttpResponseStatus.NOT_FOUND.toString());
+            continue;
           }
         } else {
           // cant get instances for things that are not flows, services, or procedures
           if (programType != ProgramType.FLOW && programType != ProgramType.SERVICE) {
-            respondAndLog(responder, HttpResponseStatus.BAD_REQUEST,
-                          "Cannot get instances for Program type: " + programTypeStr);
-            return;
+            requestedObj.addProperty("error", programTypeStr + " is not a valid program type");
+            requestedObj.addProperty("status", HttpResponseStatus.BAD_REQUEST.toString());
+            continue;
           }
           // services and flows must have runnable id
           try {
             runnableId = requestedObj.getAsJsonPrimitive(RUNNABLE_ID_ARG).getAsString();
           } catch (NullPointerException e) {
-            respondAndLog(responder, HttpResponseStatus.BAD_REQUEST,
-                          "Must provide runnableId for flows/services");
-            return;
+            requestedObj.addProperty("error", "Must provide runnableId for flows/services");
+            requestedObj.addProperty("status", HttpResponseStatus.BAD_REQUEST.toString());
+            continue;
+          } catch (ClassCastException e) {
+            requestedObj.addProperty("error", "runnableId must be a string");
+            requestedObj.addProperty("status", HttpResponseStatus.BAD_REQUEST.toString());
+            continue;
           }
           if (programType == ProgramType.FLOW) {
             FlowSpecification flowSpec = spec.getFlows().get(programId);
@@ -1082,12 +1086,14 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
               if (flowletSpecs != null && flowletSpecs.containsKey(runnableId)) {
                 requested = flowletSpecs.get(runnableId).getInstances();
               } else {
-                respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Flowlet: " + runnableId + " not found");
-                return;
+                requestedObj.addProperty("error", "Flowlet: " + runnableId + " not found");
+                requestedObj.addProperty("status", HttpResponseStatus.NOT_FOUND.toString());
+                continue;
               }
             } else {
-              respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Flow: " + programId + " not found");
-              return;
+              requestedObj.addProperty("error", "Flow: " + programId + " not found");
+              requestedObj.addProperty("status", HttpResponseStatus.NOT_FOUND.toString());
+              continue;
             }
 
           } else {
@@ -1098,15 +1104,19 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
               if (runtimeSpecs != null && runtimeSpecs.containsKey(runnableId)) {
                 requested = runtimeSpecs.get(runnableId).getResourceSpecification().getInstances();
               } else {
-                respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Runnable: " + runnableId + " not found");
-                return;
+                requestedObj.addProperty("error", "Runnable: " + runnableId + " not found");
+                requestedObj.addProperty("status", HttpResponseStatus.NOT_FOUND.toString());
+                continue;
               }
             } else {
-              respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Service: " + programId + " not found");
-              return;
+              requestedObj.addProperty("error", "Service: " + programId + " not found");
+              requestedObj.addProperty("status", HttpResponseStatus.NOT_FOUND.toString());
+              continue;
             }
           }
         }
+        // use the pretty name of program types to be consistent
+        requestedObj.addProperty(PROGRAM_TYPE_ARG, programType.getPrettyName());
         provisioned = getRunnableCount(accountId, appId, programType, programId, runnableId);
         requestedObj.addProperty("requested", requested);
         requestedObj.addProperty("provisioned", provisioned);
@@ -1142,7 +1152,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, "No data provided");
         return;
       }
-      final Map<Id.Program, String> statusMap = new HashMap<Id.Program, String>();
+      ArrayList<JsonObject> returnedObj = new ArrayList<JsonObject>();
       for (int i = 0; i < args.size(); ++i) {
         JsonObject requestedObj = args.get(i);
         String appId, programTypeStr, programId;
@@ -1151,12 +1161,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           programTypeStr = requestedObj.getAsJsonPrimitive(PROGRAM_TYPE_ARG).getAsString();
           programId = requestedObj.getAsJsonPrimitive(PROGRAM_ID_ARG).getAsString();
         } catch (NullPointerException e) {
-          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, "Must provide appId, programType, and programId");
-          return;
+          requestedObj.addProperty("error", "Must provide appId, programType, and programId");
+          requestedObj.addProperty("status", HttpResponseStatus.BAD_REQUEST.toString());
+          continue;
         } catch (ClassCastException e) {
-          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST,
-                        "appId, programType, and programId must be strings");
-          return;
+          requestedObj.addProperty("error", "appId, programType, and programId must be strings");
+          requestedObj.addProperty("status", HttpResponseStatus.BAD_REQUEST.toString());
+          continue;
         }
         Id.Program progId = Id.Program.from(accountId, appId, programId);
         ProgramType programType;
@@ -1164,38 +1175,24 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           programType = ProgramType.valueOfPrettyName(programTypeStr);
         } catch (IllegalArgumentException e) {
           // invalid type
-          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, programTypeStr + " is not a valid program type");
-          return;
+          requestedObj.addProperty("error", programTypeStr + " is not a valid program type");
+          requestedObj.addProperty("status", HttpResponseStatus.BAD_REQUEST.toString());
+          continue;
         }
         if (programType == null) {
-          respondAndLog(responder, HttpResponseStatus.BAD_REQUEST, programTypeStr + " is not a valid program type");
-          return;
+          requestedObj.addProperty("error", programTypeStr + " is not a valid program type");
+          requestedObj.addProperty("status", HttpResponseStatus.BAD_REQUEST.toString());
+          continue;
         }
         // getStatus has a callback for mapreduce jobs that run in workflows
-        getStatus(progId, programType, statusMap);
-      }
-      // wait for statuses to come back in case we are polling mapreduce status in workflow
-      while (statusMap.size() != args.size()) {
-        Thread.sleep(1);
-      }
-      for (int i = 0; i < args.size(); ++i) {
-        JsonObject requestedObj = args.get(i);
-        for (Id.Program id : statusMap.keySet()) {
-          String status = statusMap.get(id);
-          if (status == null) {
-            // could not get status
-            throw new Throwable("Could not retrieve status of " + id.getId());
-          } else if (status.equals("NOT_FOUND")) {
-            respondAndLog(responder, HttpResponseStatus.NOT_FOUND, "Could not find app, program type or program");
-            return;
-          }
-          if (id.getId().equals(requestedObj.getAsJsonPrimitive(PROGRAM_ID_ARG).getAsString()) &&
-            id.getApplicationId().equals(requestedObj.getAsJsonPrimitive(APP_ID_ARG).getAsString())) {
-            requestedObj.addProperty("status", status);
-          }
+        getStatus(progId, programType, requestedObj);
+        // wait for statuses to come back in case we are polling mapreduce status in workflow
+        while (!requestedObj.has("status")) {
+          Thread.sleep(1);
         }
+        returnedObj.add(requestedObj);
       }
-      responder.sendJson(HttpResponseStatus.OK, args);
+      responder.sendJson(HttpResponseStatus.OK, returnedObj);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (JsonSyntaxException e) {
@@ -1356,7 +1353,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           String spec = getProgramSpecification(id, type);
           if (spec == null || spec.isEmpty()) {
             // program doesn't exist
-            return new ProgramStatus(id.getApplicationId(), id.getId(), "NOT_FOUND");
+            return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
           } else {
             // program exists and not running. so return stopped.
             return new ProgramStatus(id.getApplicationId(), id.getId(), ProgramController.State.STOPPED.toString());
@@ -1375,7 +1372,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             return new ProgramStatus(id.getApplicationId(), id.getId(), ProgramController.State.STOPPED.toString());
           } else {
             // webapp doesn't exist
-            return new ProgramStatus(id.getApplicationId(), id.getId(), "NOT_FOUND");
+            return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
           }
         }
       }
@@ -1983,7 +1980,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     Id.Program programId = Id.Program.from(accountId, appId, flowId);
     try {
       ProgramStatus status = getProgramStatus(programId, ProgramType.FLOW);
-      if (status.getStatus().equals("NOT_FOUND")) {
+      if (status.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else if (status.getStatus().equals("RUNNING")) {
         responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
