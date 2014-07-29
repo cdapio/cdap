@@ -58,11 +58,14 @@ final class HttpHandlerGenerator {
 
   private ClassWriter classWriter;
   private Type classType;
+  private TypeToken<?> delegateType;
+  private boolean useClassAnnotation;
 
   ClassDefinition generate(final TypeToken<?> delegateType) throws IOException {
     Class<?> rawType = delegateType.getRawType();
 
-    classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+    this.classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+    this.delegateType = delegateType;
 
     String internalName = Type.getInternalName(rawType);
     String className = internalName + Hashing.md5().hashString(internalName);
@@ -73,6 +76,31 @@ final class HttpHandlerGenerator {
                       className, null,
                       Type.getInternalName(AbstractHttpHandlerDelegator.class), null);
 
+    // Inspect the delegate class hierarchy to generate public handler methods.
+    useClassAnnotation = true;
+    for (TypeToken<?> type : delegateType.getTypes().classes()) {
+      if (!Object.class.equals(type.getRawType())) {
+        inspectHandler(type);
+      }
+    }
+
+    // Generate the delegate field
+    // DelegateType delegate;
+    classWriter.visitField(Opcodes.ACC_PRIVATE + Opcodes.ACC_FINAL, "delegate",
+                           Type.getDescriptor(rawType), null, null).visitEnd();
+
+    generateConstructor(delegateType);
+
+    ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className);
+    // DEBUG block. Uncomment for debug
+//    com.continuuity.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
+    // End DEBUG block
+    return classDefinition;
+  }
+
+  private void inspectHandler(final TypeToken<?> type) throws IOException {
+    Class<?> rawType = type.getRawType();
+
     // Visit the delegate class, copy class @Path annotations and methods annotated with @Path
     InputStream sourceBytes = rawType.getClassLoader().getResourceAsStream(Type.getInternalName(rawType) + ".class");
     try {
@@ -81,9 +109,10 @@ final class HttpHandlerGenerator {
 
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-          // Copy the class annotation if it is @Path
+          // Copy the class annotation if it is @Path. Only do it for one time.
           Type type = Type.getType(desc);
-          if (type.equals(Type.getType(Path.class))) {
+          if (useClassAnnotation && type.equals(Type.getType(Path.class))) {
+            useClassAnnotation = false;
             return classWriter.visitAnnotation(desc, visible);
           } else {
             return super.visitAnnotation(desc, visible);
@@ -135,7 +164,7 @@ final class HttpHandlerGenerator {
                 for (AnnotationNode annotation : annotations) {
                   annotation.accept(mg.visitAnnotation(annotation.desc, true));
                 }
-                generateDelegateMethodBody(mg, new Method(name, desc), delegateType);
+                generateDelegateMethodBody(mg, new Method(name, desc));
               }
             }
           };
@@ -144,20 +173,6 @@ final class HttpHandlerGenerator {
     } finally {
       sourceBytes.close();
     }
-
-    // Generate the delegate field
-    // DelegateType delegate;
-    // Schema field
-    classWriter.visitField(Opcodes.ACC_PRIVATE + Opcodes.ACC_FINAL, "delegate",
-                           Type.getDescriptor(rawType), null, null).visitEnd();
-
-    generateConstructor(delegateType);
-
-    ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className);
-    // DEBUG block. Uncomment for debug
-//    com.continuuity.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
-    // End DEBUG block
-    return classDefinition;
   }
 
   /**
@@ -195,7 +210,7 @@ final class HttpHandlerGenerator {
    * }
    * </pre>
    */
-  private void generateDelegateMethodBody(GeneratorAdapter mg, Method method, TypeToken<?> delegateType) {
+  private void generateDelegateMethodBody(GeneratorAdapter mg, Method method) {
     mg.loadThis();
     mg.getField(classType, "delegate", Type.getType(delegateType.getRawType()));
 
