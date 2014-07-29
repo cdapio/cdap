@@ -30,7 +30,12 @@ import java.io.Closeable;
 import java.io.IOException;
 
 /**
- * Utility to perform transactional operations
+ * Handy utility for performing transactional operations that delegates execution to {@link TransactionExecutor}
+ * and manages resources in transaction context. Transaction context is supplied using given {@link Supplier} and
+ * provides list of resources by implementing {@link Iterable}. This applies transaction logic to those resources
+ * that implement {@link TransactionAware}. Additionally, if resource implements {@link Closeable} its
+ * {@link java.io.Closeable#close()} is invoked at the end of transaction.
+ *
  * @param <T> type of the transactional context
  */
 public class Transactional<T extends Iterable> {
@@ -38,7 +43,7 @@ public class Transactional<T extends Iterable> {
   private final Supplier<T> supplier;
 
   /**
-   * Ctor.
+   * Creates instance of {@link Transactional}.
    * @param txFactory factory for {@link TransactionExecutor}s
    * @param supplier supplies transaction context. Transaction logic will be applied to the items returned by the
    *                 context's getIterator() method for those that implement {@link TransactionAware}
@@ -48,12 +53,19 @@ public class Transactional<T extends Iterable> {
     this.supplier = supplier;
   }
 
+  /**
+   * Executes given function within new transaction.
+   */
   public <R> R execute(final TransactionExecutor.Function<T, R> func)
     throws TransactionFailureException, InterruptedException, IOException {
 
     return execute(txFactory, supplier, func);
   }
 
+  /**
+   * Executes given function within new transaction and rethrows all exceptions with
+   * {@link Throwables#propagate(Throwable)}
+   */
   public <R> R executeUnchecked(final TransactionExecutor.Function<T, R> func) {
     try {
       return execute(txFactory, supplier, func);
@@ -67,6 +79,15 @@ public class Transactional<T extends Iterable> {
     }
   }
 
+  /**
+   * Executes function within new transaction. See {@link Transactional} for more details.
+   * @param txFactory transaction factory to create new transaction
+   * @param supplier supplier of transaction context
+   * @param func function to execute
+   * @param <T> type of the transaction context
+   * @param <R> type of the function result
+   * @return function result
+   */
   public static <T extends Iterable<?>, R> R execute(TransactionExecutorFactory txFactory,
                                  Supplier<T> supplier,
                                  final TransactionExecutor.Function<T, R> func)

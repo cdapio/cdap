@@ -91,8 +91,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   // todo: do we need appId? may be use from appSpec?
-  // NOTE: we need lastDeployTs since not all (e.g. persiting app jar) covered with tx,
-  //       and currently we use it resolve some races :(
   public void updateAppSpec(String accountId, String appId, ApplicationSpecification spec) {
     LOG.trace("App spec to be updated: id: {}: spec: {}", appId, GSON.toJson(spec));
     Key key = new Key.Builder().add(TYPE_APP_META, accountId, appId).build();

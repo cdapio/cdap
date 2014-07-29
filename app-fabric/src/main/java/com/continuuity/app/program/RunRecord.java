@@ -28,10 +28,7 @@ public final class RunRecord {
   private final String endStatus;
 
   public RunRecord(String pid, long startTs) {
-    this.pid = pid;
-    this.startTs = startTs;
-    this.stopTs = -1;
-    this.endStatus = null;
+    this(pid, startTs, -1, null);
   }
 
   public RunRecord(String pid, long startTs, long stopTs, String endStatus) {
@@ -42,10 +39,7 @@ public final class RunRecord {
   }
 
   public RunRecord(RunRecord started, long stopTs, String endStatus) {
-    this.pid = started.pid;
-    this.startTs = started.startTs;
-    this.stopTs = stopTs;
-    this.endStatus = endStatus;
+    this(started.pid, started.startTs, stopTs, endStatus);
   }
 
   public String getPid() {
