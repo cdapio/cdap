@@ -255,6 +255,8 @@ public class ReactorTestBase {
       }
     );
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
+    datasetService = injector.getInstance(DatasetService.class);
+    datasetService.startAndWait();
     locationFactory = injector.getInstance(LocationFactory.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
     metricsQueryService.startAndWait();
@@ -263,8 +265,6 @@ public class ReactorTestBase {
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
     httpHandler = injector.getInstance(AppFabricHttpHandler.class);
-    datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
     DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
     datasetFramework =
       new NamespacedDatasetFramework(dsFramework,
