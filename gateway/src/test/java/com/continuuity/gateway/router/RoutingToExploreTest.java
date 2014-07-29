@@ -232,7 +232,8 @@ public class RoutingToExploreTest {
   public static class MockExploreExecutorHandler extends AbstractHttpHandler {
     @GET
     @Path("/data/explore/datasets/{dataset}/schema")
-    public void getSchema(HttpRequest request, HttpResponder responder, @PathParam("dataset") final String datasetName) {
+    public void getSchema(HttpRequest request, HttpResponder responder,
+                          @PathParam("dataset") final String datasetName) {
       responder.sendString(HttpResponseStatus.OK, "schema:" + datasetName);
     }
   }

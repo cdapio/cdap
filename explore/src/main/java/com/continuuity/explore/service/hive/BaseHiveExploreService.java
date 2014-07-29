@@ -490,22 +490,19 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
       // Fetch schema from hive
       LOG.trace("Getting schema for handle {}", handle);
-      return fetchResultSchema(getOperationHandle(handle));
+      ImmutableList.Builder<ColumnDesc> listBuilder = ImmutableList.builder();
+      OperationHandle operationHandle = getOperationHandle(handle);
+      if (operationHandle.hasResultSet()) {
+        TableSchema tableSchema = cliService.getResultSetMetadata(operationHandle);
+        for (ColumnDescriptor colDesc : tableSchema.getColumnDescriptors()) {
+          listBuilder.add(new ColumnDesc(colDesc.getName(), colDesc.getTypeName(),
+                                         colDesc.getOrdinalPosition(), colDesc.getComment()));
+        }
+      }
+      return listBuilder.build();
     } catch (HiveSQLException e) {
       throw getSqlException(e);
     }
-  }
-
-  private List<ColumnDesc> fetchResultSchema(OperationHandle operationHandle) throws SQLException {
-    ImmutableList.Builder<ColumnDesc> listBuilder = ImmutableList.builder();
-    if (operationHandle.hasResultSet()) {
-      TableSchema tableSchema = cliService.getResultSetMetadata(operationHandle);
-      for (ColumnDescriptor colDesc : tableSchema.getColumnDescriptors()) {
-        listBuilder.add(new ColumnDesc(colDesc.getName(), colDesc.getTypeName(),
-                                       colDesc.getOrdinalPosition(), colDesc.getComment()));
-      }
-    }
-    return listBuilder.build();
   }
 
   @Override

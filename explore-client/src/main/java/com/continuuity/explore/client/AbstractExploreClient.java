@@ -217,7 +217,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
       public void onSuccess(final QueryHandle handle) {
         try {
           QueryStatus status = getStatus(handle);
-          if (!status.getStatus().isFinished()) {
+          if (!status.getStatus().isDone()) {
             executor.schedule(new Runnable() {
               @Override
               public void run() {
