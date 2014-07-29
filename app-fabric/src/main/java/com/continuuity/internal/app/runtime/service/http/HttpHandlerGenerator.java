@@ -20,6 +20,7 @@ import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.internal.asm.ClassDefinition;
 import com.continuuity.internal.asm.Methods;
+import com.google.common.collect.Lists;
 import com.google.common.hash.Hashing;
 import com.google.common.reflect.TypeToken;
 import org.objectweb.asm.AnnotationVisitor;
@@ -31,10 +32,17 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
+import org.objectweb.asm.tree.AnnotationNode;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
+import java.util.List;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
 /**
@@ -93,29 +101,44 @@ final class HttpHandlerGenerator {
           }
 
           return new MethodVisitor(Opcodes.ASM4, mv) {
+
+            private final List<AnnotationNode> annotations = Lists.newArrayList();
+
             @Override
-            public AnnotationVisitor visitAnnotation(String annotationDesc, boolean visible) {
-              Type type = Type.getType(annotationDesc);
-              if (!type.equals(Type.getType(Path.class))) {
-                return super.visitAnnotation(annotationDesc, visible);
+            public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+              // Memorize all visible annotations
+              if (visible) {
+                AnnotationNode annotationNode = new AnnotationNode(Opcodes.ASM4, desc);
+                annotations.add(annotationNode);
+                return annotationNode;
+              }
+              return super.visitAnnotation(desc, visible);
+            }
+
+            @Override
+            public void visitEnd() {
+              // If any annotations of the method is one of those HttpMethod,
+              // this is a handler process, hence need to copy.
+              boolean handlerMethod = false;
+              for (AnnotationNode annotation : annotations) {
+                if (isHandlerMethod(Type.getType(annotation.desc))) {
+                  handlerMethod = true;
+                  break;
+                }
               }
 
-              MethodVisitor methodVisitor = classWriter.visitMethod(access, name, desc, signature, exceptions);
-              final GeneratorAdapter mg = new GeneratorAdapter(methodVisitor, access, name, desc);
-              return new AnnotationVisitor(Opcodes.ASM4, mg.visitAnnotation(annotationDesc, visible)) {
-                @Override
-                public void visitEnd() {
-                  super.visitEnd();
-                  generateDelegateMethodBody(mg, new Method(name, desc), delegateType);
+              if (handlerMethod) {
+                MethodVisitor methodVisitor = classWriter.visitMethod(access, name, desc, signature, exceptions);
+                final GeneratorAdapter mg = new GeneratorAdapter(methodVisitor, access, name, desc);
+
+                // Replay all annotations before generating the body.
+                for (AnnotationNode annotation : annotations) {
+                  annotation.accept(mg.visitAnnotation(annotation.desc, true));
                 }
-              };
+                generateDelegateMethodBody(mg, new Method(name, desc), delegateType);
+              }
             }
           };
-        }
-
-        @Override
-        public void visitEnd() {
-          super.visitEnd();
         }
       }, ClassReader.SKIP_DEBUG);
     } finally {
@@ -183,5 +206,27 @@ final class HttpHandlerGenerator {
     mg.invokeVirtual(Type.getType(delegateType.getRawType()), method);
     mg.returnValue();
     mg.endMethod();
+  }
+
+  /**
+   * Returns true if the annotation is of type {@link Path} or on of those {@link javax.ws.rs.HttpMethod} annotations.
+   */
+  private boolean isHandlerMethod(Type annotationType) {
+    if (annotationType.equals(Type.getType(GET.class))) {
+      return true;
+    }
+    if (annotationType.equals(Type.getType(POST.class))) {
+      return true;
+    }
+    if (annotationType.equals(Type.getType(PUT.class))) {
+      return true;
+    }
+    if (annotationType.equals(Type.getType(DELETE.class))) {
+      return true;
+    }
+    if (annotationType.equals(Type.getType(HEAD.class))) {
+      return true;
+    }
+    return false;
   }
 }

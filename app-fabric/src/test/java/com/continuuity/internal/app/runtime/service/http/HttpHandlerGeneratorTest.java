@@ -21,14 +21,22 @@ import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.HttpResponder;
+import com.continuuity.http.NettyHttpService;
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.ByteStreams;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.Closeable;
-import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Map;
+import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
 /**
@@ -39,8 +47,10 @@ public class HttpHandlerGeneratorTest {
   @Path("/v2")
   public static final class MyHttpHandler implements HttpServiceHandler {
 
+    @GET
     @Path("/handle")
     public void process(HttpRequest request, HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.OK, "Hello World");
     }
 
     @Override
@@ -74,10 +84,16 @@ public class HttpHandlerGeneratorTest {
       }
     });
 
-    Method method = httpHandler.getClass().getMethod("process", HttpRequest.class, HttpResponder.class);
-    Assert.assertNotNull(method.getAnnotation(Path.class));
+    NettyHttpService service = NettyHttpService.builder().addHttpHandlers(ImmutableList.of(httpHandler)).build();
+    service.startAndWait();
 
-    // This should have any exception.
-    method.invoke(httpHandler, null, null);
+    InetSocketAddress bindAddress = service.getBindAddress();
+    URLConnection urlConn = new URL(String.format("http://%s:%d/v2/handle",
+                                                  bindAddress.getHostName(), bindAddress.getPort())).openConnection();
+    try {
+      Assert.assertEquals("Hello World", new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));
+    } finally {
+      service.stopAndWait();
+    }
   }
 }
