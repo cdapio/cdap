@@ -22,6 +22,7 @@ define([], function () {
 
 		fetchQueries: function () {
 		  var self = this;
+		  self.getExploreStatus();
 		  var objArr = this.get('objArr');
       this.HTTP.rest('data/explore/queries', function (queries, status) {
         if(status != 200) {
@@ -31,21 +32,60 @@ define([], function () {
         queries.forEach(function (query) {
           var existingObj = self.find(query.query_handle);
           if (!existingObj) {
-            objArr.pushObject(Ember.Object.create(query));
+            var newObj = Ember.Object.create(query);
+            newObj.query_handle_hashed = "#" + newObj.query_handle;
+            existingObj = objArr.pushObject(newObj);
           } else {
-//            existingObj.set('status', query.status);
+            existingObj.set('status', query.status);
             existingObj.set('has_results', query.has_results);
             existingObj.set('is_active', query.is_active);
-            existingObj.set('status', existingObj.get('status')==="FINISHED"?"RUNNING":"FINISHED");
+          }
+
+          if (existingObj.get('has_results')) {
+            if (!existingObj.get('results')) {
+              self.getResults(existingObj);
+              self.getSchema(existingObj);
+            }
           }
         });
       });
 		},
 
+    getExploreStatus: function () {
+      var self = this;
+      this.HTTP.rest('explore/status', function () {
+//        console.log(response + "s");
+      });
+    },
+
+    getResults: function (query) {
+      var self = this;
+      var handle = query.get('query_handle');
+      this.HTTP.post('rest/data/queries/' + handle + '/next', function (response) {
+        query.set('results', response);
+        query.set('downloadableResults', "data:text/plain;charset=UTF-8," + response);
+        query.set('downloadName', "results_" + handle + ".txt");
+      });
+    },
+
+    getSchema: function (query) {
+      var self = this;
+      var handle = query.get('query_handle');
+      this.HTTP.rest('data/queries/' + handle + '/schema', function (response) {
+        query.set('schema', response);
+        console.log(response);
+      });
+    },
+
     submitSQLQuery: function () {
-      var sqlString = this.get("SQLQueryString");
-      this.HTTP.post('rest', 'data/explore/queries', { "query": sqlString },
-        function (response) {
+      var controller = this.get('controllers');
+      var sqlString = controller.get("SQLQueryString");
+      this.HTTP.post('rest/data/queries', {data: { "query": sqlString }},
+        function (response, status) {
+          if(status != 200) {
+            console.log('error in submitSQLQuery in data-explore.js');
+            return;
+          }
           //TODO: do something with the handle, such as adding it to list of queries. or refresh the list.
         }
       );
@@ -61,12 +101,8 @@ define([], function () {
       return false;
     },
 
-    //TODO: loop over all queries, and update their status every interval=2000ms?
-    //HTTP.rest('data/explore/queries/{handleID}/status');
-    //HTTP.rest('data/explore/queries');
 
     //TODO
-    //HTTP.rest('explore/status',function(response){});
     //HTTP.rest('data/explore/queries',function(response){});
     //HTTP.rest('data/explore/queries/{handleID}/schema'
 

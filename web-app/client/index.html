@@ -326,16 +326,17 @@
         {{#each objArr}}
         {{#unless deleted}}
 
-
-
-
-
-        <tr data-toggle="collapse" data-target="#demo1" class="accordion-toggle">
+        <tr data-toggle="collapse" {{bindAttr data-target="query_handle_hashed"}} class="accordion-toggle">
           <td>{{query_handle}}</td>
           <td>{{statement}}</td>
           <td>{{status}}</td>
           {{#if has_results}}
-            <td>[Download]</td>
+            <td>
+                <a download="hello.txt" href="data:text/plain;charset=UTF-8,Hello, File!"></a>
+                <a {{bindAttr download=downloadName}} {{bindAttr href="downloadableResults"}}>
+                  Download Results
+                </a>
+            </td>
           {{ else }}
             <td>[No results]</td>
           {{/if}}
@@ -343,9 +344,9 @@
 
         {{#if has_results}}
           <tr>
-            <td class="hiddenRow">
-              <div id="demo1" class="accordion-body collapse">
-                YEPP2
+            <td class="hiddenRow" style="padding: 0 !important;">
+              <div {{bindAttr id="query_handle"}} class="accordion-body collapse">
+                {{results}}
               </div>
             </td>
           </tr>
@@ -359,7 +360,6 @@
 
 
 
-
         {{/unless}}
         {{/each}}
       </tbody>
@@ -368,10 +368,10 @@
 
 
   <script type="text/x-handlebars" data-template-name="DataExploreQuery">
-<div class="yes" style:"display:inline-flex;">
       <table class="table">
         <thead>
           <th>Dataset</th>
+          <th>Hive Table: continuuity.user.history</th>
         </thead>
         <tbody>
           <tr>
@@ -390,15 +390,12 @@
           </tr>
         </tbody>
       </table>
+
       <table class="table">
-        <thead>
-          <th>Hive Table: continuuity.user.history</th>
-        </thead>
         <tbody>
           {{!-- Information about the table will go here (schema) --}}
         </tbody>
       </table>
-      </div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="DataExplore">
