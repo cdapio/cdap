@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -108,10 +109,11 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String datasetInstanceName, ClassLoader ignored)
+  public <T extends Dataset> T getDataset(String datasetInstanceName, Map<String, String> arguments,
+                                          ClassLoader classLoader)
     throws DatasetManagementException, IOException {
 
-    return delegate.getDataset(namespace(datasetInstanceName), ignored);
+    return delegate.getDataset(namespace(datasetInstanceName), arguments, classLoader);
   }
 
   @Nullable

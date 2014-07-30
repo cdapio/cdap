@@ -23,6 +23,7 @@ import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Provides access to {@link DatasetDefinition} while removing burden of managing classloader separatelly.
@@ -49,5 +50,9 @@ public final class DatasetType<D extends Dataset, A extends DatasetAdmin> {
 
   public D getDataset(DatasetSpecification spec) throws IOException {
     return delegate.getDataset(spec, classLoader);
+  }
+
+  public D getDataset(DatasetSpecification spec, Map<String, String> arguments) throws IOException {
+    return delegate.getDataset(spec, arguments, classLoader);
   }
 }

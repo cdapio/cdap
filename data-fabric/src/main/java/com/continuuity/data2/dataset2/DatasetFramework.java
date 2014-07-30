@@ -24,6 +24,7 @@ import com.continuuity.api.dataset.module.DatasetModule;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -151,12 +152,14 @@ public interface DatasetFramework {
    * Gets dataset to be used to perform data operations.
    * @param datasetInstanceName dataset instance name
    * @param <T> dataset type to be returned
+   * @param arguments runtime arguments for the dataset instance
    * @param classLoader classLoader to be used to load classes or {@code null} to use system classLoader
    * @return instance of dataset or {@code null} if dataset instance of this name doesn't exist.
    * @throws DatasetManagementException when there's trouble getting dataset meta info
    * @throws IOException when there's trouble to instantiate {@link com.continuuity.api.dataset.Dataset}
    */
   @Nullable
-  <T extends Dataset> T getDataset(String datasetInstanceName, @Nullable ClassLoader classLoader)
+  <T extends Dataset> T getDataset(String datasetInstanceName, @Nullable Map<String, String> arguments,
+                                   @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException;
 }

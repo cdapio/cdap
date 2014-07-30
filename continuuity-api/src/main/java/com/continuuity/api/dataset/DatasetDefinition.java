@@ -19,6 +19,8 @@ package com.continuuity.api.dataset;
 import com.continuuity.api.annotation.Beta;
 
 import java.io.IOException;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Defines named dataset type implementation.
@@ -81,4 +83,17 @@ public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
    * @throws IOException
    */
   D getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException;
+
+  /**
+   * Provides dataset to be used to perform data operations on the dataset instance data defined by passed
+   * {@link DatasetSpecification} and the given arguments.
+   *
+   * @param spec specification of the dataset instance.
+   * @param arguments optional arguments for this instance of the dataset.
+   * @param classLoader classloader to use when executing dataset operations
+   * @return dataset to perform object operations
+   * @throws IOException
+   */
+  D getDataset(DatasetSpecification spec, @Nullable Map<String, String> arguments, ClassLoader classLoader)
+      throws IOException;
 }

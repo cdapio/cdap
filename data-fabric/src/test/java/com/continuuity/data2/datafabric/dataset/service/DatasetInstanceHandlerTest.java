@@ -131,8 +131,8 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(2, getInstances().getResponseObject().size());
 
     // we want to verify that data is also gone, so we write smth to tables first
-    final Table table1 = dsFramework.getDataset("myTable1", null);
-    final Table table2 = dsFramework.getDataset("myTable2", null);
+    final Table table1 = dsFramework.getDataset("myTable1", null, null);
+    final Table table2 = dsFramework.getDataset("myTable2", null, null);
     TransactionExecutor txExecutor =
       new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
                                      ImmutableList.of((TransactionAware) table1, (TransactionAware) table2));

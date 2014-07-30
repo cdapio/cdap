@@ -26,6 +26,7 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 
 import java.io.Closeable;
+import java.util.Map;
 
 /**
  * The data set instantiator creates instances of data sets at runtime. It
@@ -59,15 +60,15 @@ public class DataSetInstantiator extends DataSetInstantiationBase implements Dat
                                      new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER));
   }
 
-  /**
-   *  The main value of this class: Creates a new instance of a data set, as
-   *  specified by the matching data set spec, and injects the data fabric
-   *  runtime into the new data set.
-   *  @param dataSetName the name of the data set to instantiate
-   */
   @Override
   public <T extends Closeable> T getDataSet(String dataSetName)
     throws DataSetInstantiationException {
-    return (T) super.getDataSet(dataSetName, this.fabric, this.datasetFramework);
+    return getDataSet(dataSetName, null);
+  }
+
+  @Override
+  public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
+    throws DataSetInstantiationException {
+    return (T) super.getDataSet(name, arguments, this.fabric, this.datasetFramework);
   }
 }

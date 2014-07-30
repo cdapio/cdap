@@ -71,7 +71,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       Dataset dataset;
       try {
-        dataset = datasetFramework.getDataset(instance, null);
+        dataset = datasetFramework.getDataset(instance, null, null);
       } catch (Exception e) {
         String className = isClassNotFoundException(e);
         if (className == null) {
@@ -147,7 +147,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       LOG.debug("Disabling explore for dataset instance {}", instance);
 
-      Dataset dataset = datasetFramework.getDataset(instance, null);
+      Dataset dataset = datasetFramework.getDataset(instance, null, null);
       if (dataset == null) {
         responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + instance);
         return;
@@ -188,7 +188,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       LOG.trace("Retrieving Explore schema for dataset {}", datasetName);
 
-      Dataset dataset = datasetFramework.getDataset(datasetName, null);
+      Dataset dataset = datasetFramework.getDataset(datasetName, null, null);
       if (dataset == null) {
         responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot find dataset " + datasetName);
         return;
