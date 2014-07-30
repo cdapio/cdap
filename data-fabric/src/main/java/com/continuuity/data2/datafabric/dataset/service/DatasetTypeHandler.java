@@ -161,7 +161,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     File unpackedJarDir = Files.createTempDir();
     BundleJarUtil.unpackProgramJar(archive, unpackedJarDir);
 
-      try {
+    try {
       manager.addModule(name, className, archive, unpackedJarDir);
     } catch (DatasetModuleConflictException e) {
       responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());

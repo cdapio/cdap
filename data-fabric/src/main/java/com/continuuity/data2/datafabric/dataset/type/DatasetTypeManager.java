@@ -114,8 +114,6 @@ public class DatasetTypeManager extends AbstractIdleService {
             //       are system classes
             // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
 
-            // Instead of using JarClassLoader , use program class loader after unpacking the jar
-
             cl = jarLocation == null ? this.getClass().getClassLoader() :
               ClassLoaders.newProgramClassLoaderWithoutFilter(unpackedLocation, this.getClass().getClassLoader());
             @SuppressWarnings("unchecked")

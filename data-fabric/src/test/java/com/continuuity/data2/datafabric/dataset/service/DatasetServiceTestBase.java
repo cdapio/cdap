@@ -161,7 +161,6 @@ public abstract class DatasetServiceTestBase {
   // used to make request for deploying module.
   protected int deployModuleBundled(String moduleName, String moduleClassName, Class moduleClass,
                                     File...bundleEmbeddedJars) throws IOException {
-
     String jarPath = JarFinder.getJar(moduleClass);
     JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jarPath));
     try {
