@@ -18,13 +18,15 @@ package com.continuuity.logging.save;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.table.OrderedTable;
+import com.continuuity.data2.dataset2.tx.DatasetContext;
+import com.continuuity.data2.dataset2.tx.Transactional;
 import com.continuuity.tephra.DefaultTransactionExecutor;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
+import com.continuuity.tephra.TransactionExecutorFactory;
 import com.continuuity.tephra.TransactionSystemClient;
-import com.google.common.collect.ImmutableList;
-
-import java.util.concurrent.Callable;
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 
 /**
  * Manages reading/writing of checkpoint information for a topic and partition.
@@ -34,41 +36,54 @@ public final class CheckpointManager {
   private static final byte [] ROW_KEY_PREFIX = Bytes.toBytes(100);
   private static final byte [] OFFSET_COLNAME = Bytes.toBytes("nextOffset");
 
-  private final TransactionExecutor txExecutor;
-  private final OrderedTable metaTable;
+  private final Transactional<DatasetContext<OrderedTable>> mds;
   private final byte [] rowKeyPrefix;
 
-  public CheckpointManager(OrderedTable metaTable,
-                           TransactionSystemClient txClient,
-                           String topic) {
-    this.metaTable = metaTable;
-    this.txExecutor = new DefaultTransactionExecutor(txClient, ImmutableList.of((TransactionAware) metaTable));
+  public CheckpointManager(final LogSaverTableUtil tableUtil, final TransactionSystemClient txClient, String topic) {
     this.rowKeyPrefix = Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(topic));
+    this.mds = new Transactional<DatasetContext<OrderedTable>>(
+      new TransactionExecutorFactory() {
+        @Override
+        public TransactionExecutor createExecutor(Iterable<TransactionAware> txAwares) {
+          return new DefaultTransactionExecutor(txClient, txAwares);
+        }
+      },
+      new Supplier<DatasetContext<OrderedTable>>() {
+        @Override
+        public DatasetContext<OrderedTable> get() {
+          try {
+            return new DatasetContext(tableUtil.getMetaTable());
+          } catch (Exception e) {
+            // there's nothing much we can do here
+            throw Throwables.propagate(e);
+          }
+        }
+      });
   }
 
+
   public void saveCheckpoint(final int partition, final long nextOffset) throws Exception {
-    txExecutor.execute(new TransactionExecutor.Subroutine() {
+    mds.execute(new TransactionExecutor.Function<DatasetContext<OrderedTable>, Void>() {
       @Override
-      public void apply() throws Exception {
-        metaTable.put(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)), OFFSET_COLNAME, Bytes.toBytes(nextOffset));
+      public Void apply(DatasetContext<OrderedTable> ctx) throws Exception {
+        ctx.get().put(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)), OFFSET_COLNAME, Bytes.toBytes(nextOffset));
+        return null;
       }
     });
   }
 
   public long getCheckpoint(final int partition) throws Exception {
-    Long checkpoint = txExecutor.execute(new Callable<Long>() {
+    return mds.execute(new TransactionExecutor.Function<DatasetContext<OrderedTable>, Long>() {
       @Override
-      public Long call() throws Exception {
+      public Long apply(DatasetContext<OrderedTable> ctx) throws Exception {
         byte [] result =
-          metaTable.get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)), OFFSET_COLNAME);
+          ctx.get().get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)), OFFSET_COLNAME);
         if (result == null) {
-          return null;
+          return -1L;
         }
 
         return Bytes.toLong(result);
       }
     });
-
-    return checkpoint == null ? -1 : checkpoint;
   }
 }

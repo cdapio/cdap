@@ -145,7 +145,8 @@ public class SingleNodeMain {
    * Start the service.
    */
   protected void startUp(String[] args) throws Exception {
-    logAppenderInitializer.initialize();
+    // todo: REACTOR-682
+//    logAppenderInitializer.initialize();
 
     // Start all the services.
     txService.startAndWait();
