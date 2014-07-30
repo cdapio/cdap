@@ -18,12 +18,15 @@ package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.dataset.DataSetException;
 import com.continuuity.api.data.stream.StreamSpecification;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.verification.Verifier;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.data.dataset.DatasetCreationSpec;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.internal.app.verification.ApplicationVerification;
 import com.continuuity.internal.app.verification.DataSetVerification;
 import com.continuuity.internal.app.verification.DatasetCreationSpecVerifier;
@@ -48,9 +51,11 @@ import java.util.Map;
 public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
 
   private final Map<Class<?>, Verifier<?>> verifiers = Maps.newIdentityHashMap();
+  private final DatasetFramework dsFramework;
 
-  public VerificationStage() {
+  public VerificationStage(DatasetFramework dsFramework) {
     super(TypeToken.of(ApplicationSpecLocation.class));
+    this.dsFramework = dsFramework;
   }
 
   /**
@@ -85,6 +90,14 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
       if (!result.isSuccess()) {
         throw new RuntimeException(result.getMessage());
       }
+      String dsName = dataSetCreateSpec.getInstanceName();
+      DatasetSpecification existingSpec = dsFramework.getDatasetSpec(dsName);
+      if (existingSpec != null && !existingSpec.getType().equals(dataSetCreateSpec.getTypeName())) {
+          // New app trying to deploy an dataset with same instanceName but different Type than that of existing.
+          throw new DataSetException
+            (String.format("Cannot Deploy Dataset : %s with Type : %s : Dataset with different Type Already Exists",
+                           dsName, dataSetCreateSpec.getTypeName()));
+        }
     }
 
     for (StreamSpecification spec : specification.getStreams().values()) {
