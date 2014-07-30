@@ -88,7 +88,6 @@ public abstract class GatewayTestBase {
 
   private static Injector injector;
   private static AppFabricServer appFabricServer;
-  private static DatasetService dsService;
   private static NettyRouter router;
   private static EndpointStrategy endpointStrategy;
   private static MetricsQueryService metrics;
