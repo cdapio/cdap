@@ -75,7 +75,10 @@ public class NamespacedDatasetFramework implements DatasetFramework {
     // client may pass the name back e.g. do delete instance, so we need to un-namespace it
     ImmutableList.Builder<DatasetSpecification> builder = ImmutableList.builder();
     for (DatasetSpecification spec : specs) {
-      builder.add(fromNamespaced(spec));
+      DatasetSpecification s = fromNamespaced(spec);
+      if (s != null) {
+        builder.add(s);
+      }
     }
     return builder.build();
   }
@@ -122,7 +125,11 @@ public class NamespacedDatasetFramework implements DatasetFramework {
 
   @Nullable
   private DatasetSpecification fromNamespaced(@Nullable DatasetSpecification spec) {
-    return spec == null ? null : DatasetSpecification.changeName(spec, namespace.fromNamespaced(spec.getName()));
+    if (spec == null) {
+      return null;
+    }
+    String notNamespaced = namespace.fromNamespaced(spec.getName());
+    return notNamespaced == null ? null : DatasetSpecification.changeName(spec, notNamespaced);
   }
 
   private String namespace(String datasetInstanceName) {

@@ -71,8 +71,10 @@ import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.metrics.query.MetricsQueryService;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
-import com.continuuity.test.internal.AppFabricTestHelper;
+import com.continuuity.test.internal.AppFabricClient;
 import com.continuuity.test.internal.ApplicationManagerFactory;
 import com.continuuity.test.internal.DefaultApplicationManager;
 import com.continuuity.test.internal.DefaultId;
@@ -118,18 +120,18 @@ public class ReactorTestBase {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static LocationFactory locationFactory;
   private static Injector injector;
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
   private static LogAppenderInitializer logAppenderInitializer;
-  private static AppFabricHttpHandler httpHandler;
+  private static AppFabricClient appFabricClient;
   private static SchedulerService schedulerService;
   private static DatasetService datasetService;
   private static DatasetFramework datasetFramework;
   private static DiscoveryServiceClient discoveryClient;
   private static ExploreExecutorService exploreExecutorService;
   private static ExploreClient exploreClient;
+  private static InMemoryTransactionManager txService;
 
   /**
    * Deploys an {@link com.continuuity.api.Application}. The {@link com.continuuity.api.flow.Flow Flows} and
@@ -160,8 +162,7 @@ public class ReactorTestBase {
                                              + applicationClz.getName());
       }
 
-      Location deployedJar = AppFabricTestHelper.deployApplication(httpHandler, locationFactory, appSpec.getName(),
-                                                                   applicationClz, bundleEmbeddedJars);
+      Location deployedJar = appFabricClient.deployApplication(appSpec.getName(), applicationClz, bundleEmbeddedJars);
 
       return
         injector.getInstance(ApplicationManagerFactory.class).create(DefaultId.ACCOUNT.getId(), appSpec.getName(),
@@ -174,7 +175,7 @@ public class ReactorTestBase {
 
   protected void clear() {
     try {
-      AppFabricTestHelper.reset(httpHandler);
+      appFabricClient.reset();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -254,17 +255,19 @@ public class ReactorTestBase {
         }
       }
     );
-    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
-    locationFactory = injector.getInstance(LocationFactory.class);
+    txService = injector.getInstance(InMemoryTransactionManager.class);
+    txService.startAndWait();
+    datasetService = injector.getInstance(DatasetService.class);
+    datasetService.startAndWait();
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
-    httpHandler = injector.getInstance(AppFabricHttpHandler.class);
-    datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    AppFabricHttpHandler httpHandler = injector.getInstance(AppFabricHttpHandler.class);
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+    appFabricClient = new AppFabricClient(httpHandler, locationFactory);
     DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
     datasetFramework =
       new NamespacedDatasetFramework(dsFramework,
@@ -319,7 +322,6 @@ public class ReactorTestBase {
   public static final void finish() {
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();
-    datasetService.stopAndWait();
     schedulerService.stopAndWait();
     try {
       exploreClient.close();
@@ -328,6 +330,8 @@ public class ReactorTestBase {
     }
     exploreExecutorService.stopAndWait();
     logAppenderInitializer.close();
+    datasetService.stopAndWait();
+    txService.stopAndWait();
   }
 
   private static void cleanDir(File dir) {
