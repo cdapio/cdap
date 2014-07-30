@@ -89,9 +89,9 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void list(HttpRequest request, final HttpResponder responder) {
     Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
     boolean isMeta = queryParams.containsKey("meta") && queryParams.get("meta").contains("true");
-    boolean explorableDatasetsOption = queryParams.containsKey("exploreEnabled")
-      && (queryParams.get("exploreEnabled").contains("true") || queryParams.get("exploreEnabled").contains("false"));
-    boolean getExplorableDatasets = explorableDatasetsOption && queryParams.get("exploreEnabled").contains("true");
+    boolean explorableDatasetsOption = queryParams.containsKey("explorable")
+      && (queryParams.get("explorable").contains("true") || queryParams.get("explorable").contains("false"));
+    boolean getExplorableDatasets = explorableDatasetsOption && queryParams.get("explorable").contains("true");
 
     Collection<DatasetSpecification> datasetSpecifications = instanceManager.getAll();
 

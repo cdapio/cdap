@@ -242,14 +242,14 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     HttpRequest request;
     InetSocketAddress address = datasetManagerEndpointStrategy.pick().getSocketAddress();
 
-    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?exploreEnabled=true",
+    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?explorable=true",
                                                     address.getHostName(), address.getPort()))).build();
     datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
                                            new TypeToken<List<DatasetSpecification>>() { }.getType());
     Assert.assertEquals(1, datasets.getResponseObject().size());
     Assert.assertEquals("my_table", ((DatasetSpecification) datasets.getResponseObject().get(0)).getName());
 
-    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?exploreEnabled=false",
+    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?explorable=false",
                                                     address.getHostName(), address.getPort()))).build();
     datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
                                            new TypeToken<List<DatasetSpecification>>() { }.getType());
@@ -257,14 +257,14 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     Assert.assertEquals("my_table_not_record_scannable",
                         ((DatasetSpecification) datasets.getResponseObject().get(0)).getName());
 
-    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?meta=true&exploreEnabled=true",
+    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?meta=true&explorable=true",
                                                     address.getHostName(), address.getPort()))).build();
     datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
                                            new TypeToken<List<DatasetMeta>>() { }.getType());
     Assert.assertEquals(1, datasets.getResponseObject().size());
     Assert.assertEquals("my_table", ((DatasetMeta) datasets.getResponseObject().get(0)).getSpec().getName());
 
-    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?meta=true&exploreEnabled=false",
+    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?meta=true&explorable=false",
                                                     address.getHostName(), address.getPort()))).build();
     datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
                                            new TypeToken<List<DatasetMeta>>() { }.getType());
