@@ -113,13 +113,13 @@ After the build completes, you will have a distribution of the CDAP Single-node 
 
 [To build for installation on a Hadoop Cluster, see the 
 `CDAP Building and Installation Guide <http://cask.com/developers/docs/cdap/current/en/install.html>`__,
-a copy of which is included in the source distribution in ``/docs/developer-guide/source/install.rst``.)
+a copy of which is included in the source distribution in ``/docs/developer-guide/source/install.rst``.]
 
 Take the ``cdap-<version>.tar.gz`` file and unzip it into a suitable location.
 
 Step 1: Installation and Startup
 ................................
-Start the CDAP Server from a command line in the SDK directory:
+Start the CDAP Server from a command line in the SDK directory::
 
 	$ bin/server.sh start
 
