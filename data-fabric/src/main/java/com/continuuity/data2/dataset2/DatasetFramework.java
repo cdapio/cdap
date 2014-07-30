@@ -94,6 +94,22 @@ public interface DatasetFramework {
     throws DatasetManagementException, IOException;
 
   /**
+   * Updates the existing dataset instance in the system.
+   *
+   * This uses
+   * {@link com.continuuity.api.dataset.DatasetDefinition#configure(String, DatasetProperties)}
+   * method to build {@link com.continuuity.api.dataset.DatasetSpecification} with new properties,
+   * which describes dataset instance and {@link DatasetAdmin} is used to upgrade
+   * {@link Dataset} for the dataset instance.
+   * @param datasetInstanceName dataset instance name
+   * @param props dataset instance properties
+   * @throws IOException when creation of dataset instance using its admin fails
+   * @throws DatasetManagementException
+   */
+  void updateInstance(String datasetInstanceName, DatasetProperties props)
+    throws DatasetManagementException, IOException;
+
+  /**
    * @return a collection of {@link com.continuuity.api.dataset.DatasetSpecification}s for all datasets
    */
   Collection<DatasetSpecification> getInstances() throws DatasetManagementException;

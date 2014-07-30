@@ -205,6 +205,24 @@ public class DatasetOpExecutorServiceTest {
     testAdminOp("bob", "exists", 404, null);
   }
 
+  @Test
+  public void testUpdate() throws Exception {
+    // check non-existence with 404
+    testAdminOp("bob", "exists", 404, null);
+
+    // add instance, should automatically create an instance
+    dsFramework.addInstance("table", "bob", DatasetProperties.EMPTY);
+    testAdminOp("bob", "exists", 200, true);
+
+    dsFramework.updateInstance("bob", DatasetProperties.builder().add("dataset.table.ttl", "10000").build());
+    // check upgrade
+    testAdminOp("bob", "upgrade", 200, null);
+
+    // drop and check non-existence
+    dsFramework.deleteInstance("bob");
+    testAdminOp("bob", "exists", 404, null);
+  }
+
   private void testAdminOp(String instanceName, String opName, int expectedStatus, Object expectedResult)
     throws URISyntaxException, IOException {
     String path = String.format("/data/datasets/%s/admin/%s", instanceName, opName);

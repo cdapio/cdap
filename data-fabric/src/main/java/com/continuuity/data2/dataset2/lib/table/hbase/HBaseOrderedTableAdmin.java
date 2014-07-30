@@ -40,7 +40,6 @@ import java.io.IOException;
  */
 public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
   public static final String PROPERTY_SPLITS = "hbase.splits";
-
   static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
   private static final Gson GSON = new Gson();
 
@@ -109,6 +108,16 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
       tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
       needUpgrade = true;
     }
+    if (spec.getProperty(TxConstants.PROPERTY_TTL) == null &&
+        columnDescriptor.getValue(TxConstants.PROPERTY_TTL) != null) {
+      columnDescriptor.remove(TxConstants.PROPERTY_TTL.getBytes());
+      needUpgrade = true;
+    } else if (!spec.getProperty(TxConstants.PROPERTY_TTL).equals(
+                columnDescriptor.getValue(TxConstants.PROPERTY_TTL))) {
+      columnDescriptor.setValue(TxConstants.PROPERTY_TTL, spec.getProperty(TxConstants.PROPERTY_TTL));
+      needUpgrade = true;
+    }
+
     return needUpgrade;
   }
 
