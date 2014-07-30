@@ -62,11 +62,6 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
   }
 
   @Override
-  public boolean exists() throws IOException {
-    return admin.tableExists(tableName);
-  }
-
-  @Override
   public void create() throws IOException {
     final byte[] name = Bytes.toBytes(HBaseTableUtil.getHBaseTableName(tableName));
 
@@ -99,27 +94,6 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
     }
 
     tableUtil.createTableIfNotExists(admin, name, tableDescriptor, splits);
-  }
-
-  @Override
-  public void truncate() throws IOException {
-    byte[] tableName = Bytes.toBytes(this.tableName);
-    HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
-    admin.disableTable(tableName);
-    admin.deleteTable(tableName);
-    admin.createTable(tableDescriptor);
-  }
-
-  @Override
-  public void drop() throws IOException {
-    byte[] tableName = Bytes.toBytes(this.tableName);
-    admin.disableTable(tableName);
-    admin.deleteTable(tableName);
-  }
-
-  @Override
-  public void close() throws IOException {
-    admin.close();
   }
 
   @Override
