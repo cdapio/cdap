@@ -18,6 +18,10 @@ package com.continuuity.proto;
 
 import com.continuuity.api.dataset.DatasetSpecification;
 
+import com.google.common.collect.Maps;
+
+import java.util.Map;
+
 /**
  * Dataset instance metadata.
  */
@@ -27,9 +31,12 @@ public class DatasetMeta {
   // todo: meta of modules inside will have list of all types in the module that is redundant here
   private final DatasetTypeMeta type;
 
+  private final Map<String, String> properties;
+
   public DatasetMeta(DatasetSpecification spec, DatasetTypeMeta type) {
     this.spec = spec;
     this.type = type;
+    this.properties = Maps.newHashMap();
   }
 
   public DatasetSpecification getSpec() {
@@ -38,5 +45,13 @@ public class DatasetMeta {
 
   public DatasetTypeMeta getType() {
     return type;
+  }
+
+  public void addProperty(String key, String value) {
+    properties.put(key, value);
+  }
+
+  public Map<String, String> getProperties() {
+    return properties;
   }
 }

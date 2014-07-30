@@ -25,8 +25,10 @@ import com.continuuity.explore.service.UnexpectedQueryStatusException;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.UnsupportedTypeException;
+import com.continuuity.proto.ColumnDesc;
 
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -36,6 +38,7 @@ import java.io.StringWriter;
 import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -131,6 +134,41 @@ public class DatasetExploreFacade {
     } catch (TimeoutException e) {
       LOG.error("Error running disable explore - operation timed out", e);
       throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Return a list of datasets Hive table names.
+   */
+  public List<String> getExplorableDatasetsTableNames() throws SQLException, ExploreException {
+    // NOTE: here we return all the hive tables, because, depending on the user,
+    // the prefix of the table might be different. Today they all start with "continuuity_user"
+    // but this might not be the case in the future.
+    ListenableFuture<ExploreExecutionResult> tablesFuture = exploreClient.tables(null, null, "%", null);
+    try {
+      ExploreExecutionResult results = tablesFuture.get();
+      int tableNameIdx = -1;
+      for (ColumnDesc columnDesc : results.getResultSchema()) {
+        if (columnDesc.getName().equals("TABLE_NAME")) {
+          tableNameIdx = columnDesc.getPosition() - 1;
+          break;
+        }
+      }
+      if (tableNameIdx == -1) {
+        throw new ExploreException("Could not find TABLE_NAME column in getTables request.");
+      }
+      ImmutableList.Builder<String> hiveTablesBuilder = ImmutableList.builder();
+      while (results.hasNext()) {
+        hiveTablesBuilder.add(((String) results.next().getColumns().get(tableNameIdx)).toLowerCase());
+      }
+      return hiveTablesBuilder.build();
+    } catch (InterruptedException e) {
+      LOG.error("Caught exception", e);
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
+    } catch (ExecutionException e) {
+      LOG.error("Error executing query", e);
+      throw new SQLException(e);
     }
   }
 

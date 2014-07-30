@@ -32,16 +32,24 @@ import com.continuuity.http.HttpResponder;
 import com.continuuity.proto.DatasetInstanceConfiguration;
 import com.continuuity.proto.DatasetMeta;
 import com.continuuity.proto.DatasetTypeMeta;
+
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -79,7 +87,51 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/datasets/")
   public void list(HttpRequest request, final HttpResponder responder) {
-    responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll());
+    Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
+    boolean isMeta = queryParams.containsKey("meta") && queryParams.get("meta").contains("true");
+    boolean explorableDatasetsOption = queryParams.containsKey("exploreEnabled")
+      && (queryParams.get("exploreEnabled").contains("true") || queryParams.get("exploreEnabled").contains("false"));
+    boolean getExplorableDatasets = explorableDatasetsOption && queryParams.get("exploreEnabled").contains("true");
+
+    Collection<DatasetSpecification> datasetSpecifications = instanceManager.getAll();
+
+    if (explorableDatasetsOption) {
+      // Do a join of the list of datasets, and the list of Hive tables
+      try {
+        List<String> hiveTables = datasetExploreFacade.getExplorableDatasetsTableNames();
+        ImmutableList.Builder<?> joinBuilder = ImmutableList.builder();
+
+        for (DatasetSpecification spec : datasetSpecifications) {
+          boolean isExplorable = hiveTables.contains(spec.getName().replace('.', '_').toLowerCase());
+          if (isExplorable && getExplorableDatasets || !isExplorable && !getExplorableDatasets) {
+            if (isMeta) {
+              DatasetMeta meta = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()));
+              if (isExplorable) {
+                meta.addProperty("hive_table", meta.getSpec().getName().replace('.', '_').toLowerCase());
+              }
+              joinBuilder.add(meta);
+            } else {
+              joinBuilder.add(spec);
+            }
+          }
+        }
+        responder.sendJson(HttpResponseStatus.OK, joinBuilder.build());
+        return;
+      } catch (Throwable t) {
+        LOG.error("Caught exception while listing explorable datasets", t);
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        return;
+      }
+    }
+    if (isMeta) {
+      ImmutableList.Builder<DatasetMeta> builder = ImmutableList.builder();
+      for (DatasetSpecification spec : datasetSpecifications) {
+        builder.add(new DatasetMeta(spec, implManager.getTypeInfo(spec.getType())));
+      }
+      responder.sendJson(HttpResponseStatus.OK, builder.build());
+    } else {
+      responder.sendJson(HttpResponseStatus.OK, datasetSpecifications);
+    }
   }
 
   @DELETE

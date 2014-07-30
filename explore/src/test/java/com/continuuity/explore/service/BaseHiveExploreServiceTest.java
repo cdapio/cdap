@@ -18,6 +18,9 @@ package com.continuuity.explore.service;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
@@ -27,6 +30,7 @@ import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.explore.client.DiscoveryExploreClient;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.executor.ExploreExecutorService;
@@ -44,12 +48,14 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 
 import java.io.File;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Base class for tests that need explore service to be running.
@@ -59,6 +65,7 @@ public class BaseHiveExploreServiceTest {
   protected static DatasetFramework datasetFramework;
   protected static DatasetService datasetService;
   protected static ExploreExecutorService exploreExecutorService;
+  protected static EndpointStrategy datasetManagerEndpointStrategy;
 
   protected static ExploreClient exploreClient;
 
@@ -75,6 +82,10 @@ public class BaseHiveExploreServiceTest {
     exploreExecutorService.startAndWait();
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
+
+    DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
+    datasetManagerEndpointStrategy = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)), 1L, TimeUnit.SECONDS);
 
     exploreClient = injector.getInstance(ExploreClient.class);
     Assert.assertTrue(exploreClient.isServiceAvailable());

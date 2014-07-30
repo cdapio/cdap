@@ -17,19 +17,29 @@
 package com.continuuity.explore.service;
 
 import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.common.http.HttpRequest;
+import com.continuuity.common.http.HttpRequests;
+import com.continuuity.common.http.ObjectResponse;
 import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.jdbc.ExploreDriver;
 import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.DatasetMeta;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.test.SlowTests;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.reflect.TypeToken;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
@@ -39,12 +49,15 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.net.InetSocketAddress;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 
 import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyValue;
 
@@ -97,7 +110,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
   @Test
   public void testDeployNotRecordScannable() throws Exception {
     // Try to deploy a dataset that is not record scannable, when explore is enabled.
-    // This should be processed with no exceptionbeing thrown
+    // This should be processed with no exception being thrown
     datasetFramework.addModule("module2", new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
     datasetFramework.addInstance("NotRecordScannableTableDef", "my_table_not_record_scannable",
                                  DatasetProperties.EMPTY);
@@ -216,6 +229,57 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     stmt.close();
 
     connection.close();
+  }
+
+  @Test
+  public void getDatasetsTest() throws Exception {
+
+    datasetFramework.addModule("module2", new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
+    datasetFramework.addInstance("NotRecordScannableTableDef", "my_table_not_record_scannable",
+                                 DatasetProperties.EMPTY);
+
+    ObjectResponse<List<?>> datasets;
+    HttpRequest request;
+    InetSocketAddress address = datasetManagerEndpointStrategy.pick().getSocketAddress();
+
+    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?exploreEnabled=true",
+                                                    address.getHostName(), address.getPort()))).build();
+    datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
+                                           new TypeToken<List<DatasetSpecification>>() { }.getType());
+    Assert.assertEquals(1, datasets.getResponseObject().size());
+    Assert.assertEquals("my_table", ((DatasetSpecification) datasets.getResponseObject().get(0)).getName());
+
+    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?exploreEnabled=false",
+                                                    address.getHostName(), address.getPort()))).build();
+    datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
+                                           new TypeToken<List<DatasetSpecification>>() { }.getType());
+    Assert.assertEquals(1, datasets.getResponseObject().size());
+    Assert.assertEquals("my_table_not_record_scannable",
+                        ((DatasetSpecification) datasets.getResponseObject().get(0)).getName());
+
+    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?meta=true&exploreEnabled=true",
+                                                    address.getHostName(), address.getPort()))).build();
+    datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
+                                           new TypeToken<List<DatasetMeta>>() { }.getType());
+    Assert.assertEquals(1, datasets.getResponseObject().size());
+    Assert.assertEquals("my_table", ((DatasetMeta) datasets.getResponseObject().get(0)).getSpec().getName());
+
+    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?meta=true&exploreEnabled=false",
+                                                    address.getHostName(), address.getPort()))).build();
+    datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
+                                           new TypeToken<List<DatasetMeta>>() { }.getType());
+    Assert.assertEquals(1, datasets.getResponseObject().size());
+    Assert.assertEquals("my_table_not_record_scannable",
+                        ((DatasetMeta) datasets.getResponseObject().get(0)).getSpec().getName());
+
+    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?meta=true",
+                                                    address.getHostName(), address.getPort()))).build();
+    datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
+                                           new TypeToken<List<DatasetMeta>>() { }.getType());
+    Assert.assertEquals(2, datasets.getResponseObject().size());
+
+    datasetFramework.deleteInstance("my_table_not_record_scannable");
+    datasetFramework.deleteModule("module2");
   }
 
   @Test
