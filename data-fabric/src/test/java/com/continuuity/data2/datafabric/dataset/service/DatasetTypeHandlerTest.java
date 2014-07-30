@@ -26,8 +26,8 @@ import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
-import com.continuuity.common.http.HttpResponse;
 import com.continuuity.common.http.ObjectResponse;
+import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.google.common.base.Function;
@@ -191,6 +191,16 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
   private ObjectResponse<DatasetTypeMeta> getType(String typeName) throws IOException {
     HttpRequest request = HttpRequest.get(getUrl("/data/types/" + typeName)).build();
     return ObjectResponse.fromJsonBody(HttpRequests.execute(request), DatasetTypeMeta.class);
+  }
+
+
+  @Test
+  public void testBundledJarModule() throws Exception {
+    //Get jar of TestModule1
+    String module1Jar = JarFinder.getJar(TestModule1.class);
+    // Create bundle jar with TestModule2 and TestModule1 inside it, request for deploy is made for Module1.
+    Assert.assertEquals(200, deployModuleBundled("module1", TestModule1.class.getName(),
+                                                 TestModule2.class, new File(module1Jar)));
   }
 
   /**
