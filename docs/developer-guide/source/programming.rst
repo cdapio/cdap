@@ -62,6 +62,11 @@ generate a skeleton for your Java project.
 dependencies management tool for creating and managing a Java
 application projects.
 
+If you are running in an environment whose network access is mediated by a proxy server,
+look at the `Maven guide to configuring a proxy <http://maven.apache.org/guides/mini/guide-proxies.html>`__
+for instructions on how to modify ``pom.xml`` files in the SDK so that dependencies can be
+downloaded and resolved correctly.
+
 This Maven archetype generates a Reactor application Java project with
 the proper dependencies and sample code as a base to start writing your
 own Big Data application. To generate a new project, execute the
