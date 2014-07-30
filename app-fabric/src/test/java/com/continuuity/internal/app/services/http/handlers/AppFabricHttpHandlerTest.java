@@ -16,6 +16,8 @@
 
 package com.continuuity.internal.app.services.http.handlers;
 
+import com.continuuity.AppWithDataset;
+import com.continuuity.AppWithDatasetDuplicate;
 import com.continuuity.AppWithSchedule;
 import com.continuuity.AppWithWorkflow;
 import com.continuuity.DummyAppWithTrackingTable;
@@ -882,6 +884,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   public void testResetTxManagerState() throws Exception {
     HttpResponse response = doPost("/v2/transactions/state");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    // todo: first transaction after reset will fail, doGet() is a placeholder, can remove after tephra tx-fix
+    doGet("/v2/apps");
   }
 
   /**
@@ -893,6 +897,20 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
     Assert.assertTrue(response.getEntity().getContentLength() > 0);
+  }
+
+  /**
+   * Tests deploying an application with dataset same name as existing dataset but a different type
+   */
+  @Test
+  public void testDeployFailure() throws Exception {
+    HttpResponse response = deploy(AppWithDataset.class);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertNotNull(response.getEntity());
+
+    response = deploy(AppWithDatasetDuplicate.class);
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+    Assert.assertNotNull(response.getEntity());
   }
 
   /**
