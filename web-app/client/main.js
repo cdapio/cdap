@@ -97,6 +97,10 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		});
 
 		this.resource('Datasets', { path: '/datasets' });
+		this.resource('DataExplore', { path: '/dataexplore' }, function () {
+      this.route('Query', { path: '/query'});
+      this.route('Results', { path: '/results'});
+		});
 		this.resource('Dataset', { path: '/datasets/:dataset_id' });
 
 		this.resource('Procedures', { path: '/procedures' });
@@ -404,6 +408,26 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		}),
 
 		DatasetRoute: basicRouter.extend(),
+
+		DataExploreRoute: basicRouter.extend({
+		  renderTemplate: function () {
+		    this.render('DataExplore');
+		  }
+		}),
+
+		DataExploreQueryRoute: Ember.Route.extend({
+		  controllerName: 'DataExplore',
+      renderTemplate: function () {
+        this.render('DataExploreQuery');
+      }
+    }),
+
+		DataExploreResultsRoute: Ember.Route.extend({
+		  controllerName: 'DataExplore',
+      renderTemplate: function () {
+        this.render('DataExploreResults');
+      }
+    }),
 
 		/*
 		 * Ensures that the HTTP injection is handled properly (see basicRouter)

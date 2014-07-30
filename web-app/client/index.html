@@ -246,6 +246,180 @@
 
   </script>
 
+  <script type="text/x-handlebars" data-template-name="DataExploreResults">
+{{!--
+<div class="panel-group" id="accordion">
+   <div class=" panel-primary">
+
+        <div class="panel-heading">
+            <h4 class="panel-title">
+            <a data-toggle="collapse" data-parent="#accordion" href="#accordionOne">
+              Collapsible Accordion 1
+            </a>
+           </h4>
+        </div>
+
+        <div id="accordionOne" class="panel-collapse collapse in">
+          <div class="panel-body">
+           Lorem ipsum dolor sit amet, consectetur adipisicing elit,
+            sed do eiusmod tempor incididunt ut labore et dolore magna
+            aliqua. Ut enim ad minim veniam, quis nostrud exercitation
+            ullamco laboris nisi ut aliquip ex ea commodo consequat
+          </div>
+        </div>
+  </div>
+
+   <div class=" panel-success">
+
+          <div class="panel-heading">
+          <h4 class="panel-title">
+            <a data-toggle="collapse" data-parent="#accordion" href="#accordionTwo">
+              Collapsible Accordion 2
+            </a>
+          </h4>
+          </div>
+
+        <div id="accordionTwo" class="panel-collapse collapse">
+          <div class="panel-body">
+            Change does not roll in on the wheels of inevitability,
+            but comes through continuous struggle.
+            And so we must straighten our backs and work for
+            our freedom. A man can't ride you unless your back is bent.
+          </div>
+        </div>
+
+   </div>
+
+    <div class="panel panel-warning">
+
+        <div class="panel-heading">
+          <h4 class="panel-title">
+            <a data-toggle="collapse" data-parent="#accordion" href="#accordionThree">
+              Collapsible Accordion 3
+            </a>
+          </h4>
+        </div>
+
+        <div id="accordionThree" class="panel-collapse collapse">
+          <div class="panel-body">
+          You must take personal responsibility.
+            You cannot change the circumstances,
+            the seasons, or the wind, but you can change yourself.
+            That is something you have charge of.
+        </div>
+
+     </div>
+
+ </div>
+--}}
+
+    <table class="table">
+      <thead>
+        <th>Query Handle</th>
+        <th>Query</th>
+        <th>Status</th>
+        <th>Result</th>
+      </thead>
+      <tbody>
+      {{#if objArr}}
+        {{/if}}
+        {{#each objArr}}
+        {{#unless deleted}}
+
+
+
+
+
+        <tr data-toggle="collapse" data-target="#demo1" class="accordion-toggle">
+          <td>{{query_handle}}</td>
+          <td>{{statement}}</td>
+          <td>{{status}}</td>
+          {{#if has_results}}
+            <td>[Download]</td>
+          {{ else }}
+            <td>[No results]</td>
+          {{/if}}
+        </tr>
+
+        {{#if has_results}}
+          <tr>
+            <td class="hiddenRow">
+              <div id="demo1" class="accordion-body collapse">
+                YEPP2
+              </div>
+            </td>
+          </tr>
+        {{ else }}
+          <tr id="showHide">
+          <td colspan="4" style="text-align:center;">
+            <a>This query does not (yet) have results.</a>
+          </td>
+          </tr>
+        {{/if}}
+
+
+
+
+        {{/unless}}
+        {{/each}}
+      </tbody>
+    </table>
+  </script>
+
+
+  <script type="text/x-handlebars" data-template-name="DataExploreQuery">
+<div class="yes" style:"display:inline-flex;">
+      <table class="table">
+        <thead>
+          <th>Dataset</th>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="max-width: 350px;" class="app-list-name service-col">
+              <a class="none-text-decoration">Name</a>
+              <br />
+              <span class="app-list-status">description</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="max-width: 350px;" class="app-list-name service-col">
+              <a class="none-text-decoration">Name</a>
+              <br />
+              <span class="app-list-status">description</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <table class="table">
+        <thead>
+          <th>Hive Table: continuuity.user.history</th>
+        </thead>
+        <tbody>
+          {{!-- Information about the table will go here (schema) --}}
+        </tbody>
+      </table>
+      </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="DataExplore">
+    <div id="panels">
+      <div class="panel">
+        <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+          <li>{{#linkTo DataExplore.Query}}Query{{/linkTo }}</li>
+          <li>{{#linkTo DataExplore.Results}}Reults{{/linkTo}}</li>
+        </ul>
+
+        <h1><span>Data</span> Explore</h1>
+        <td>
+          {{view C.Embed.Injector valueBinding="controllers.SQLQueryString"}}
+          <button class="btn btn-blank btn-default" {{action 'submitSQLQuery' on="click"}}>Submit</button>
+        </td>
+
+        {{outlet}}
+      </div>
+    </div>
+  </script>
+
   <script type="text/x-handlebars" data-template-name="Login">
     <div id="title">
       <h1>Login&nbsp;<span>Accounts</span></h1>
