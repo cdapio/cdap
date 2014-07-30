@@ -32,11 +32,11 @@ import javax.annotation.Nullable;
 /**
  * A metrics table client based on leveldb.
  */
-public class LevelDBMetricsTableClient implements MetricsTable {
+public class LevelDBMetricsTable implements MetricsTable {
 
   private final LevelDBOcTableCore core;
 
-  public LevelDBMetricsTableClient(String tableName, LevelDBOcTableService service) throws IOException {
+  public LevelDBMetricsTable(String tableName, LevelDBOcTableService service) throws IOException {
     this.core = new LevelDBOcTableCore(tableName, service);
   }
 
@@ -92,5 +92,10 @@ public class LevelDBMetricsTableClient implements MetricsTable {
   public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop, @Nullable byte[][] columns,
                       @Nullable FuzzyRowFilter filter) throws IOException {
     return core.scan(start, stop, filter, columns, null);
+  }
+
+  @Override
+  public void close() throws IOException {
+    // Do nothing
   }
 }

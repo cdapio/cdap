@@ -15,11 +15,18 @@
  */
 package com.continuuity.metrics.data;
 
+import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
+import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
-import com.continuuity.data2.dataset.lib.table.TimeToLiveSupported;
+import com.continuuity.data2.dataset.lib.table.hbase.HBaseMetricsTable;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.DatasetManagementException;
+import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.process.KafkaConsumerMetaTable;
 import com.google.common.base.Throwables;
@@ -30,8 +37,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.Properties;
+import java.io.IOException;
 
 /**
  * Implementation of {@link MetricsTableFactory} that reuses the same instance of {@link MetricsEntityCodec} for
@@ -44,24 +50,25 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
   private final CConfiguration cConf;
   // Stores the MetricsEntityCodec per namespace
   private final LoadingCache<String, MetricsEntityCodec> entityCodecs;
-  private final DataSetAccessor accessor;
-  private final DataSetManager manager;
+  private final DatasetFramework dsFramework;
+
+  private Boolean ttlSupported;
 
   @Inject
   public DefaultMetricsTableFactory(final CConfiguration cConf,
-                                    final DataSetAccessor accessor) {
+                                    final DatasetFramework dsFramework) {
     try {
       this.cConf = cConf;
-      this.accessor = accessor;
-      this.manager = accessor.getDataSetManager(MetricsTable.class, DataSetAccessor.Namespace.SYSTEM);
+      this.dsFramework =
+        new NamespacedDatasetFramework(dsFramework,
+                                       new ReactorDatasetNamespace(cConf, DataSetAccessor.Namespace.SYSTEM));
+
       this.entityCodecs = CacheBuilder.newBuilder().build(new CacheLoader<String, MetricsEntityCodec>() {
         @Override
         public MetricsEntityCodec load(String namespace) throws Exception {
           String tableName = namespace.toLowerCase() + "." + cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
                                                                        MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
-          accessor.getDataSetManager(MetricsTable.class, DataSetAccessor.Namespace.SYSTEM).create(tableName);
-          MetricsTable table = accessor.getDataSetClient(tableName, MetricsTable.class,
-                                                         DataSetAccessor.Namespace.SYSTEM);
+          MetricsTable table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
           EntityTable entityTable = new EntityTable(table);
 
           return new MetricsEntityCodec(entityTable,
@@ -83,12 +90,8 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
                                     MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
       int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
-      Properties props = new Properties();
-      if (isTTLSupported() && ttl > 0) {
-        props.setProperty(TimeToLiveSupported.PROPERTY_TTL, Integer.toString(ttl));
-      }
-      manager.create(tableName, props);
-      MetricsTable table = accessor.getDataSetClient(tableName, MetricsTable.class, DataSetAccessor.Namespace.SYSTEM);
+      DatasetProperties props = ttl > 0 ? DatasetProperties.builder().add("ttl", ttl).build() : DatasetProperties.EMPTY;
+      MetricsTable table = getOrCreateMetricsTable(tableName, props);
       LOG.info("TimeSeriesTable created: {}", tableName);
       return new TimeSeriesTable(table, entityCodecs.getUnchecked(namespace), resolution, getRollTime(resolution));
     } catch (Exception e) {
@@ -103,8 +106,7 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
       String tableName = namespace.toLowerCase() + "." +
                           cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
                                     MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".agg";
-      manager.create(tableName);
-      MetricsTable table = accessor.getDataSetClient(tableName, MetricsTable.class, DataSetAccessor.Namespace.SYSTEM);
+      MetricsTable table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
       LOG.info("AggregatesTable created: {}", tableName);
       return new AggregatesTable(table, entityCodecs.getUnchecked(namespace));
     } catch (Exception e) {
@@ -118,8 +120,7 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
     try {
       String tableName = namespace.toLowerCase() + "." + cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
                                                      MetricsConstants.DEFAULT_KAFKA_META_TABLE);
-      manager.create(tableName);
-      MetricsTable table = accessor.getDataSetClient(tableName, MetricsTable.class, DataSetAccessor.Namespace.SYSTEM);
+      MetricsTable table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
       LOG.info("KafkaConsumerMetaTable created: {}", tableName);
       return new KafkaConsumerMetaTable(table);
     } catch (Exception e) {
@@ -130,32 +131,42 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
 
   @Override
   public boolean isTTLSupported() {
-    return (manager instanceof TimeToLiveSupported) && ((TimeToLiveSupported) manager).isTTLSupported();
+    if (ttlSupported == null) {
+      // this is pretty dirty hack: we know that only HBaseMetricsTable supports TTL
+      // todo: expose type information in different way
+      try {
+        ttlSupported = dsFramework.hasType(HBaseMetricsTable.class.getName());
+      } catch (DatasetManagementException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+    return ttlSupported;
   }
 
   @Override
   public void upgrade() throws Exception {
     String metricsPrefix = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
                                      MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX);
-    for (Map.Entry<String, Class<?>> entry : accessor.list(DataSetAccessor.Namespace.SYSTEM).entrySet()) {
-      String tableName = entry.getKey();
+    for (DatasetSpecification spec : dsFramework.getInstances()) {
+      String dsName = spec.getName();
       // See if it is timeseries or aggregates table
 
-      if (tableName.contains(metricsPrefix + ".ts.")) {
-        // Time series
-        // Parse the time resolution
-        int resolution = Integer.parseInt(tableName.substring(tableName.lastIndexOf('.') + 1));
-        int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
-        Properties props = new Properties();
-        if (isTTLSupported() && ttl > 0) {
-          props.setProperty(TimeToLiveSupported.PROPERTY_TTL, Integer.toString(ttl));
+      if (dsName.contains(metricsPrefix + ".ts.") || dsName.contains(metricsPrefix + ".agg")) {
+        DatasetAdmin admin = dsFramework.getAdmin(dsName, null);
+        if (admin != null) {
+          admin.upgrade();
+        } else {
+          LOG.error("Could not obtain admin to upgrade metrics table: " + dsName);
+          // continue to best effort
         }
-        manager.upgrade(tableName, props);
-      } else if (tableName.contains(metricsPrefix + ".agg")) {
-        // Aggregate
-        manager.upgrade(tableName, new Properties());
       }
     }
+  }
+
+  private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props)
+    throws DatasetManagementException, IOException {
+
+    return DatasetsUtil.getOrCreateDataset(dsFramework, tableName, MetricsTable.class.getName(), props, null);
   }
 
   private int getRollTime(int resolution) {

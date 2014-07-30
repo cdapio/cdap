@@ -16,6 +16,7 @@
 
 package com.continuuity.data2.dataset.lib.table;
 
+import com.continuuity.api.dataset.Dataset;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.OperationResult;
 
@@ -27,7 +28,7 @@ import javax.annotation.Nullable;
  * A table interface dedicated to our metrics system. It is non-transactional, hence does not implement read or write
  * isolation. It provides all functions that the metrics system uses for its data.
  */
-public interface MetricsTable {
+public interface MetricsTable extends Dataset {
 
   /**
    * Read single column of a row

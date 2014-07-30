@@ -20,6 +20,8 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -38,13 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class MetricsTableTest {
   private static final byte ONES = 0x7f;
 
-  // subclasses must instantiate this in their @BeforeClass method
-  protected static DataSetAccessor dsAccessor = null;
-
-  protected MetricsTable getTable(String name) throws Exception {
-    dsAccessor.getDataSetManager(MetricsTable.class, DataSetAccessor.Namespace.SYSTEM).create(name);
-    return dsAccessor.getDataSetClient(name, MetricsTable.class, DataSetAccessor.Namespace.SYSTEM);
-  }
+  protected abstract MetricsTable getTable(String name) throws Exception;
 
   static final byte[] A = { 'a' };
   static final byte[] B = { 'b' };

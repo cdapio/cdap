@@ -17,7 +17,6 @@
 package com.continuuity.data2.datafabric.dataset;
 
 import com.continuuity.api.dataset.DatasetProperties;
-import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
