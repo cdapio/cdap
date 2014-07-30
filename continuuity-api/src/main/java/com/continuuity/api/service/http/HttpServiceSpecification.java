@@ -16,20 +16,11 @@
 
 package com.continuuity.api.service.http;
 
-import com.continuuity.api.RuntimeContext;
+import com.continuuity.api.ProgramSpecification;
+import com.continuuity.api.common.PropertyProvider;
 
 /**
- *
+ * The specification for Custom HttpServices
  */
-public interface HttpServiceContext extends RuntimeContext {
-//  /**
-//   * @return A map of argument key and value.
-//   */
-//  Map<String, String> getRuntimeArguments();
-//
-//  /**
-//   * @return The HttpServiceSpecification for this HttpServiceContext
-//   */
-//  HttpServiceSpecification getSpecification();
-
+public interface HttpServiceSpecification extends PropertyProvider, ProgramSpecification {
 }

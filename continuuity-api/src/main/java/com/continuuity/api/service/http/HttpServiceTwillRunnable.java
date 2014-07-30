@@ -16,20 +16,8 @@
 
 package com.continuuity.api.service.http;
 
-import com.continuuity.api.RuntimeContext;
+import org.apache.twill.api.AbstractTwillRunnable;
 
-/**
- *
- */
-public interface HttpServiceContext extends RuntimeContext {
-//  /**
-//   * @return A map of argument key and value.
-//   */
-//  Map<String, String> getRuntimeArguments();
-//
-//  /**
-//   * @return The HttpServiceSpecification for this HttpServiceContext
-//   */
-//  HttpServiceSpecification getSpecification();
+import java.util.List;
 
-}
+
