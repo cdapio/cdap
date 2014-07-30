@@ -99,8 +99,24 @@ These services and features include:
   HBase and HDFS, giving the scalability and performance of Hadoop without the complexity. 
 
 
+Is It Building?
+---------------
+
+================================================================ =========================
+Build                                                            Status / Version
+Continuous Integration Build at `Travis CI <|travis_link|>`__    |(travis_badge)|
+`GitHub Version <|github_link|>`__                               |(github_badge)|
+================================================================ =========================
+
+.. |travis_link|  replace:: https://travis-ci.org/caskco/cdap
+.. |(travis_badge)| image:: https://travis-ci.org/caskco/cdap.svg?branch=develop
+
+.. |github_link|  replace:: https://github.com/caskco/cdap/releases/latest
+.. |(github_badge)| image:: http://img.shields.io/github/release/caskco/cdap.svg
+
+
 Getting Started
---------------------------------
+---------------
 
 You can get started with CDAP by building directly from the latest source code::
 
