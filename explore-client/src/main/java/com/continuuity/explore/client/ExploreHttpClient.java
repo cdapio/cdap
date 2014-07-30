@@ -167,7 +167,7 @@ abstract class ExploreHttpClient implements Explore {
   @Override
   public List<QueryInfo> getQueries() throws ExploreException, SQLException {
 
-    HttpResponse response = doGet("data/queries/%s");
+    HttpResponse response = doGet("data/explore/queries/");
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, QUERY_INFO_LIST_TYPE);
     }

@@ -231,6 +231,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       List<QueryInfo> handles = exploreService.getQueries();
       responder.sendJson(HttpResponseStatus.OK, handles);
     } catch (Exception e) {
+      LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error");
     }
   }
