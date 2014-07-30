@@ -536,8 +536,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     List<QueryInfo> result = Lists.newArrayList();
     for (Map.Entry<QueryHandle, OperationInfo> entry : activeHandleCache.asMap().entrySet()) {
       try {
-        QueryStatus status = getStatus(entry.getKey());
-        result.add(new QueryInfo(entry.getValue().getStatement(), entry.getKey(), status, true));
+        // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
+        if (!entry.getValue().getStatement().isEmpty()) {
+          QueryStatus status = getStatus(entry.getKey());
+          result.add(new QueryInfo(entry.getValue().getStatement(), entry.getKey(), status, true));
+        }
       } catch (HandleNotFoundException e) {
         // ignore the handle not found exception. this method returns all queries and handle, if the
         // handle is removed from the internal cache, then there is no point returning them from here.
@@ -546,8 +549,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     for (Map.Entry<QueryHandle, InactiveOperationInfo> entry : inactiveHandleCache.asMap().entrySet()) {
       try {
-        QueryStatus status = getStatus(entry.getKey());
-        result.add(new QueryInfo(entry.getValue().getStatement(), entry.getKey(), status, false));
+        // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
+        if (!entry.getValue().getStatement().isEmpty()) {
+          QueryStatus status = getStatus(entry.getKey());
+          result.add(new QueryInfo(entry.getValue().getStatement(), entry.getKey(), status, false));
+        }
       } catch (HandleNotFoundException e) {
         // ignore the handle not found exception. this method returns all queries and handle, if the
         // handle is removed from the internal cache, then there is no point returning them from here.
