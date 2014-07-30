@@ -62,7 +62,9 @@ to add an Event to the Flow. We've pre-populated the injector with an Apache log
 
   165.225.156.91 - - [09/Jan/2014:21:28:53 -0400] "GET /index.html HTTP/1.1" 200 225 "http://continuuity.com" "Mozilla/4.08 [en] (Win98; I ;Nav)"
 
-Once you inject the Event, if you leave the dialog box open, you can see it passing through the Flow on the real-time graph of *Events Per Second*. (Depending on the load on your computer, it might take as long as second for the event to show up.) Close the dialog when you're done and click on the Application link in the
+Once you inject the Event, if you leave the dialog box open, you can see it passing through the Flow on the real-time 
+graph of *Events Per Second*. (Depending on the load on your computer, it might take as long as a second for the 
+event to show up.) Close the dialog when you're done and click on the Application link in the
 upper-left corner to return to the Application Overview.
 
 Step 4: Query Procedure

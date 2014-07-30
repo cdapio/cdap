@@ -71,15 +71,13 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   protected void startUp() throws Exception {
     super.startUp();
 
-    // Only do cleanup if the underlying table doesn't supports TTL.
-    if (!tableFactory.isTTLSupported()) {
-      scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-cleanup"));
-      long retention = cConf.getLong(MetricsConstants.ConfigKeys.RETENTION_SECONDS + ".1.seconds",
-                                     MetricsConstants.DEFAULT_RETENTION_HOURS);
+    // It will only do cleanup if the underlying table doesn't supports TTL.
+    scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-cleanup"));
+    long retention = cConf.getLong(MetricsConstants.ConfigKeys.RETENTION_SECONDS + ".1.seconds",
+                                   MetricsConstants.DEFAULT_RETENTION_HOURS);
 
-
-      scheduler.scheduleAtFixedRate(createCleanupTask(retention), 0, 1, TimeUnit.HOURS);
-    }
+    // Try right away if there's anything to cleanup, then we'll schedule to do that periodically
+    scheduler.schedule(createCleanupTask(retention), 1, TimeUnit.SECONDS);
   }
 
   @Override
@@ -98,6 +96,17 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
     return new Runnable() {
       @Override
       public void run() {
+        // Only do cleanup if the underlying table doesn't supports TTL.
+        try {
+          if (tableFactory.isTTLSupported()) {
+            return;
+          }
+        } catch (Exception e) {
+          // If we cannot determine that ttl is supported then try again in 1 second
+          scheduler.schedule(this, 1, TimeUnit.SECONDS);
+          return;
+        }
+
         long currentTime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         long deleteBefore = currentTime - retention;
 
@@ -109,6 +118,8 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
             LOG.error("Failed in cleaning up metrics table: {}", e.getMessage(), e);
           }
         }
+
+        scheduler.schedule(this, 1, TimeUnit.HOURS);
       }
     };
   }

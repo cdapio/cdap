@@ -21,6 +21,7 @@ import sun.misc.CompoundEnumeration;
 
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Enumeration;
 
 /**
@@ -29,20 +30,7 @@ import java.util.Enumeration;
 public class FilterClassLoader extends ClassLoader {
 
   private final Predicate<String> resourceAcceptor;
-
-  private static final String[] STANDARD_LIB_PREFIXES = {
-    "sun.org.",
-    "com.sun.",
-    "launcher.",
-    "java.",
-    "javax.",
-    "org.ietf",
-    "org.omg",
-    "org.w3c",
-    "org.xml",
-    "sunw.",
-    "sun.reflect.",
-  };
+  private final ClassLoader bootstrapClassLoader;
 
   /**
    * @param resourceAcceptor Filter for accepting resources
@@ -51,15 +39,20 @@ public class FilterClassLoader extends ClassLoader {
   public FilterClassLoader(Predicate<String> resourceAcceptor, ClassLoader parentClassLoader) {
     super(parentClassLoader);
     this.resourceAcceptor = resourceAcceptor;
+    this.bootstrapClassLoader = new URLClassLoader(new URL[0], null);
   }
 
   @Override
   protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-    if (isStandardLibraryClass(name) || isValidResource(classNameToResourceName(name))) {
-      return super.loadClass(name, resolve);
+    // Try to load it from bootstrap class loader first
+    try {
+      return bootstrapClassLoader.loadClass(name);
+    } catch (ClassNotFoundException e) {
+      if (isValidResource(classNameToResourceName(name))) {
+        return super.loadClass(name, resolve);
+      }
+      throw e;
     }
-
-    throw new ClassNotFoundException(name);
   }
 
   @Override
@@ -78,15 +71,6 @@ public class FilterClassLoader extends ClassLoader {
     }
 
     return new CompoundEnumeration<URL>(new Enumeration[0]);
-  }
-
-  private boolean isStandardLibraryClass(String className) {
-    for (String prefix : STANDARD_LIB_PREFIXES) {
-      if (className.startsWith(prefix)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private String classNameToResourceName(String className) {
