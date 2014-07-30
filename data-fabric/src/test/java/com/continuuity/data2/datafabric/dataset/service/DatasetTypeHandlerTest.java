@@ -193,7 +193,6 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     return ObjectResponse.fromJsonBody(HttpRequests.execute(request), DatasetTypeMeta.class);
   }
 
-
   @Test
   public void testBundledJarModule() throws Exception {
     //Get jar of TestModule1
