@@ -70,6 +70,8 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunResources;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,8 +80,11 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -327,6 +332,43 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     return new NotRunningProgramLiveInfo(program, type);
   }
 
+  public List<String> getDiscoverables(Id.Program program, ProgramType type) {
+    String twillAppName = String.format("%s.%s.%s.%s", type.name().toLowerCase(),
+                                        program.getAccountId(), program.getApplicationId(), program.getId());
+    Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
+    if (controllers.hasNext()) {
+      TwillController controller = controllers.next();
+      if (controllers.hasNext()) {
+        LOG.warn("Expected at most one live instance of Twill app {} but found at least two.", twillAppName);
+      }
+      ResourceReport report = controller.getResourceReport();
+      if (report != null) {
+        return report.getServices();
+      }
+    }
+    return Collections.EMPTY_LIST;
+  }
+
+  public List<String> discoverService(Id.Program program, ProgramType type, String serviceName) {
+    String twillAppName = String.format("%s.%s.%s.%s", type.name().toLowerCase(),
+                                        program.getAccountId(), program.getApplicationId(), program.getId());
+    Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
+    if (controllers.hasNext()) {
+      TwillController controller = controllers.next();
+      if (controllers.hasNext()) {
+        LOG.warn("Expected at most one live instance of Twill app {} but found at least two.", twillAppName);
+      }
+      List<String> result = new ArrayList<String>();
+      ServiceDiscovered discoverables = controller.discoverService(serviceName);
+      for (Discoverable discoverable : discoverables) {
+        String url = String.format("http://%s:%d", discoverable.getSocketAddress().getHostName(),
+                                                    discoverable.getSocketAddress().getPort());
+        result.add(url);
+      }
+      return result;
+    }
+    return Collections.EMPTY_LIST;
+  }
 
   /**
    * Reports resource usage of the cluster and all the app masters of running twill programs.

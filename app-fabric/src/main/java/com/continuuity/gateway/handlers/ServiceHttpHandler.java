@@ -29,6 +29,8 @@ import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.internal.app.runtime.distributed.DistributedProgramRuntimeService;
+import com.continuuity.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import com.continuuity.proto.Containers;
 import com.continuuity.proto.Id;
 import com.continuuity.proto.NotRunningProgramLiveInfo;
@@ -40,6 +42,8 @@ import com.continuuity.proto.ServiceMeta;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import org.apache.twill.api.RuntimeSpecification;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -152,6 +156,66 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
           getRunnableCount(accountId, appId, serviceId, runnableName
         )));
       }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Return a list of discoverables announced by this service.
+   */
+  @GET
+  @Path("/apps/{app-id}/services/{service-id}/discoverables")
+  public void getDiscoverables(HttpRequest request, HttpResponder responder,
+                               @PathParam("app-id") String appId,
+                               @PathParam("service-id") String serviceId) {
+    try {
+      if (runtimeService instanceof InMemoryProgramRuntimeService) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Service discovery not supported for SingleNode");
+      }
+
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program programId = Id.Program.from(accountId, appId, serviceId);
+
+      DistributedProgramRuntimeService distributedRuntimeService = (DistributedProgramRuntimeService) runtimeService;
+      List<String> discoverables = distributedRuntimeService.getDiscoverables(programId, ProgramType.SERVICE);
+      JsonArray array = new JsonArray();
+      for (String discoverable : discoverables) {
+        array.add(new JsonPrimitive(discoverable));
+      }
+
+      responder.sendJson(HttpResponseStatus.OK, array);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @GET
+  @Path("/apps/{app-id}/services/{service-id}/discover/{discoverable-id}")
+  public void discoverService(HttpRequest request, HttpResponder responder,
+                              @PathParam("app-id") String appId,
+                              @PathParam("service-id") String serviceId,
+                              @PathParam("discoverable-id") String discoverableId) {
+    try {
+      if (runtimeService instanceof InMemoryProgramRuntimeService) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Service discovery not supported for SingleNode");
+      }
+      DistributedProgramRuntimeService distributedRuntimeService = (DistributedProgramRuntimeService) runtimeService;
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program programId = Id.Program.from(accountId, appId, serviceId);
+      List<String> servicesDiscovered = distributedRuntimeService.discoverService(programId,
+                                                                          ProgramType.SERVICE, discoverableId);
+      JsonArray array = new JsonArray();
+      for (String url  : servicesDiscovered) {
+        array.add(new JsonPrimitive(url));
+      }
+      responder.sendJson(HttpResponseStatus.OK, array);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
