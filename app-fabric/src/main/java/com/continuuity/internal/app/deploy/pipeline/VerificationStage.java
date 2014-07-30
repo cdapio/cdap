@@ -51,7 +51,7 @@ import java.util.Map;
 public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
 
   private final Map<Class<?>, Verifier<?>> verifiers = Maps.newIdentityHashMap();
-  private DatasetFramework dsFramework;
+  private final DatasetFramework dsFramework;
 
   public VerificationStage(DatasetFramework dsFramework) {
     super(TypeToken.of(ApplicationSpecLocation.class));
@@ -92,14 +92,12 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
       }
       String dsName = dataSetCreateSpec.getInstanceName();
       DatasetSpecification existingSpec = dsFramework.getDatasetSpec(dsName);
-      if (existingSpec != null) {
-        if (!existingSpec.getType().equals(dataSetCreateSpec.getTypeName())) {
+      if (existingSpec != null && !existingSpec.getType().equals(dataSetCreateSpec.getTypeName())) {
           // New app trying to deploy an dataset with same instanceName but different Type than that of existing.
           throw new DataSetException
             (String.format("Cannot Deploy Dataset : %s with Type : %s : Dataset with different Type Already Exists",
                            dsName, dataSetCreateSpec.getTypeName()));
         }
-      }
     }
 
     for (StreamSpecification spec : specification.getStreams().values()) {
