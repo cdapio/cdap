@@ -22,6 +22,8 @@ import java.util.Iterator;
 
 /**
  * Handy implementation of tx context for {@link Transactional} that holds single dataset.
+ *
+ * @param <T> type of the dataset
  */
 public class DatasetContext<T> implements Iterable {
   private final T dataset;
