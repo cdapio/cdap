@@ -25,6 +25,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.http.BodyConsumer;
 import com.continuuity.internal.app.BufferFileInputStream;
@@ -99,6 +100,7 @@ public class AppFabricTestHelper {
       injector = Guice.createInjector(new AppFabricTestModule(configuration));
       injector.getInstance(InMemoryTransactionManager.class).startAndWait();
       injector.getInstance(SchedulerService.class).startAndWait();
+      injector.getInstance(DatasetService.class).startAndWait();
 
       LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
