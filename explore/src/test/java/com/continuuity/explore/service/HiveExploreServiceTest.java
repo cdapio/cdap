@@ -177,12 +177,14 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     );
 
     List<QueryInfo> result = exploreService.getQueries();
-    Assert.assertEquals(7, result.size());
-    Assert.assertNotNull(result.get(0).getStatement());
-    Assert.assertNotNull(result.get(0).getQueryHandle());
-    Assert.assertTrue(result.get(0).isHasResults());
-    Assert.assertFalse(result.get(0).isActive());
-    Assert.assertEquals("FINISHED", result.get(0).getStatus().toString());
+    Assert.assertTrue(result.size() > 0);
+    for (QueryInfo queryInfo : result) {
+      Assert.assertNotNull(queryInfo.getStatement());
+      Assert.assertNotNull(queryInfo.getQueryHandle());
+      Assert.assertTrue(queryInfo.isHasResults());
+      Assert.assertFalse(queryInfo.isActive());
+      Assert.assertEquals("FINISHED", queryInfo.getStatus().toString());
+    }
   }
 
   @Test
