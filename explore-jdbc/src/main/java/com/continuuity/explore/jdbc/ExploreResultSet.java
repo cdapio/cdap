@@ -17,10 +17,9 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreExecutionResult;
-import com.continuuity.explore.client.StatementExecutionFuture;
-import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Result;
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryResult;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,33 +35,25 @@ import java.util.List;
 public class ExploreResultSet extends BaseExploreResultSet {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreResultSet.class);
 
-  private Result currentRow;
+  private QueryResult currentRow;
   private int nextRowNb = 1;
   private ExploreResultSetMetaData metaData;
 
   private ExploreStatement statement;
   private int maxRows = 0;
 
-  private StatementExecutionFuture futureResults;
   private ExploreExecutionResult executionResult;
 
-  ExploreResultSet(StatementExecutionFuture futureResults, ExploreStatement statement, int maxRows)
+  ExploreResultSet(ExploreExecutionResult executionResult, ExploreStatement statement, int maxRows)
     throws SQLException {
-    this(futureResults, statement.getFetchSize());
+    this(executionResult, statement.getFetchSize());
     this.statement = statement;
     this.maxRows = maxRows;
   }
 
-  public ExploreResultSet(StatementExecutionFuture futureResults, int fetchSize) throws SQLException {
-    this.futureResults = futureResults;
-    try {
-      this.executionResult = futureResults.get();
-      setFetchSize(fetchSize);
-    } catch (Throwable e) {
-      // This should not happen, as ExploreStatement created this object after calling the get method on the future
-      LOG.error("Exception when retrieving result iterator from future object", e);
-      throw new SQLException(e);
-    }
+  public ExploreResultSet(ExploreExecutionResult executionResult, int fetchSize) throws SQLException {
+    this.executionResult = executionResult;
+    setFetchSize(fetchSize);
   }
 
   @Override
@@ -93,7 +84,6 @@ public class ExploreResultSet extends BaseExploreResultSet {
       LOG.error("Could not close the query results", e);
       throw new SQLException(e);
     } finally {
-      futureResults = null;
       executionResult = null;
       statement = null;
       setIsClosed(true);
@@ -107,7 +97,7 @@ public class ExploreResultSet extends BaseExploreResultSet {
     }
     if (metaData == null) {
       try {
-        List<ColumnDesc> columnDescs = futureResults.getResultSchema();
+        List<ColumnDesc> columnDescs = executionResult.getResultSchema();
         metaData = new ExploreResultSetMetaData(columnDescs);
       } catch (ExploreException e) {
         LOG.error("Caught exception", e);

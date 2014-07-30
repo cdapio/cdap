@@ -18,13 +18,14 @@ package com.continuuity.explore.jdbc;
 
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.explore.client.ExploreClient;
-import com.continuuity.explore.client.StatementExecutionFuture;
+import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.MetaDataInfo;
+import com.continuuity.proto.QueryHandle;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,10 +62,9 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
     this.exploreClient = exploreClient;
   }
 
-  private ResultSet getMetadataResultSet(StatementExecutionFuture future) throws SQLException {
+  private ResultSet getMetadataResultSet(ListenableFuture<ExploreExecutionResult> future) throws SQLException {
     try {
-      future.get();
-      return new ExploreResultSet(future, RESULT_FETCH_SIZE);
+      return new ExploreResultSet(future.get(), RESULT_FETCH_SIZE);
     } catch (InterruptedException e) {
       LOG.error("Caught exception", e);
       Thread.currentThread().interrupt();
@@ -1064,6 +1064,6 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
    * Produces an explore handle.
    */
   private interface HandleProducer {
-    Handle getHandle() throws ExploreException, SQLException;
+    QueryHandle getHandle() throws ExploreException, SQLException;
   }
 }

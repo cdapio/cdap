@@ -18,6 +18,8 @@ package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
 
+import com.google.common.collect.Maps;
+
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -40,6 +42,7 @@ import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.Map;
 
 /**
  * Explore JDBC prepared statement.
@@ -47,6 +50,9 @@ import java.util.Calendar;
 public class ExplorePreparedStatement extends ExploreStatement implements PreparedStatement {
 
   private final String sql;
+
+  // Save the SQL parameters {paramLoc:paramValue}
+  private final Map<Integer, String> parameters = Maps.newHashMap();
 
   ExplorePreparedStatement(Connection connection, ExploreClient exploreClient, String sql) {
     super(connection, exploreClient);
@@ -58,68 +64,61 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
 
   @Override
   public boolean execute() throws SQLException {
-    // TODO update the SQL string with parameters set by setXXX methods [REACTOR-320]
-    return super.execute(sql);
+    return super.execute(updateSql());
   }
 
   @Override
   public ResultSet executeQuery() throws SQLException {
-    // TODO update the SQL string with parameters set by setXXX methods [REACTOR-320]
-    return super.executeQuery(sql);
+    return super.executeQuery(updateSql());
   }
 
   @Override
-  public int executeUpdate() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+  public void setBoolean(int parameterIndex, boolean x) throws SQLException {
+    this.parameters.put(parameterIndex, String.valueOf(x));
+  }
+
+  @Override
+  public void setByte(int parameterIndex, byte x) throws SQLException {
+    this.parameters.put(parameterIndex, String.valueOf(x));
+  }
+
+  @Override
+  public void setShort(int parameterIndex, short x) throws SQLException {
+    this.parameters.put(parameterIndex, String.valueOf(x));
+  }
+
+  @Override
+  public void setInt(int parameterIndex, int x) throws SQLException {
+    this.parameters.put(parameterIndex, String.valueOf(x));
+  }
+
+  @Override
+  public void setLong(int parameterIndex, long x) throws SQLException {
+    this.parameters.put(parameterIndex, String.valueOf(x));
+  }
+
+  @Override
+  public void setFloat(int parameterIndex, float x) throws SQLException {
+    this.parameters.put(parameterIndex, String.valueOf(x));
+  }
+
+  @Override
+  public void setDouble(int parameterIndex, double x) throws SQLException {
+    this.parameters.put(parameterIndex, String.valueOf(x));
+  }
+
+  @Override
+  public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
+    this.parameters.put(parameterIndex, x.toPlainString());
+  }
+
+  @Override
+  public void setString(int parameterIndex, String x) throws SQLException {
+    this.parameters.put(parameterIndex, String.format("'%s'", x.replace("'", "\\'")));
   }
 
   @Override
   public void setNull(int i, int i2) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setBoolean(int i, boolean b) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setByte(int i, byte b) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setShort(int i, short i2) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setInt(int i, int i2) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setLong(int i, long l) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setFloat(int i, float v) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setDouble(int i, double v) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setBigDecimal(int i, BigDecimal bigDecimal) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void setString(int i, String s) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -129,8 +128,18 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
   }
 
   @Override
-  public void setDate(int i, Date date) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+  public void setDate(int parameterIndex, Date date) throws SQLException {
+    this.parameters.put(parameterIndex, date.toString());
+  }
+
+  @Override
+  public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
+    this.parameters.put(parameterIndex, x.toString());
+  }
+
+  @Override
+  public void clearParameters() throws SQLException {
+    parameters.clear();
   }
 
   @Override
@@ -139,7 +148,7 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
   }
 
   @Override
-  public void setTimestamp(int i, Timestamp timestamp) throws SQLException {
+  public int executeUpdate() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -155,11 +164,6 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
 
   @Override
   public void setBinaryStream(int i, InputStream inputStream, int i2) throws SQLException {
-    throw new SQLFeatureNotSupportedException();
-  }
-
-  @Override
-  public void clearParameters() throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }
 
@@ -331,5 +335,63 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
   @Override
   public void setNClob(int i, Reader reader) throws SQLException {
     throw new SQLFeatureNotSupportedException();
+  }
+
+  /**
+   * Update the SQL string with parameters set by setXXX methods of {@link PreparedStatement}.
+   * Package visibility is for testing.
+   */
+  String updateSql() throws SQLException {
+    StringBuilder newSql = new StringBuilder(sql);
+
+    int paramLoc = 1;
+    while (true) {
+      int nextParamIndex = getCharIndexFromSqlByParamLocation(newSql, '?', 1);
+      if (nextParamIndex < 0) {
+        break;
+      }
+      String tmp = parameters.get(paramLoc);
+      if (tmp == null) {
+        throw new SQLException("Parameter in position " + paramLoc + " has not been set.");
+      }
+      newSql.replace(nextParamIndex, nextParamIndex + 1, tmp);
+      paramLoc++;
+    }
+    return newSql.toString();
+  }
+
+  /**
+   * Get the index of the paramLoc-th given cchar from the SQL string.
+   * -1 will be return, if nothing found
+   */
+  private int getCharIndexFromSqlByParamLocation(StringBuilder sql, char cchar, int paramLoc) {
+    boolean singleQuoteStr = false;
+    boolean doubleQuoteStr = false;
+    boolean escapeActive = false;
+    int charIndex = -1;
+    int num = 0;
+    for (int i = 0; i < sql.length(); i++) {
+      char c = sql.charAt(i);
+      if (escapeActive) {
+        escapeActive = false;
+      } else if (!singleQuoteStr && !doubleQuoteStr && c == '"') {
+        doubleQuoteStr = true;
+      } else if (!singleQuoteStr && !doubleQuoteStr && c == '\'') {
+        singleQuoteStr = true;
+      } else if ((singleQuoteStr || doubleQuoteStr) && !escapeActive && c == '\\') {
+        escapeActive = true;
+      } else if (singleQuoteStr && c == '\'') {
+        singleQuoteStr = false;
+      } else if (doubleQuoteStr && c == '"') {
+        doubleQuoteStr = false;
+      } else if (c == cchar && !singleQuoteStr && !doubleQuoteStr) {
+        num++;
+        if (num == paramLoc) {
+          charIndex = i;
+          break;
+        }
+      }
+    }
+    return charIndex;
   }
 }
