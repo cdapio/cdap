@@ -16,8 +16,8 @@
 
 package com.continuuity.logging.save;
 
+import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.kafka.KafkaTopic;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
@@ -89,7 +89,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     LOG.info(String.format("Kafka topic is %s", this.topic));
     this.serializer = new LoggingEventSerializer();
 
-    OrderedColumnarTable metaTable = tableUtil.getMetaTable();
+    OrderedTable metaTable = tableUtil.getMetaTable();
     this.checkpointManager = new CheckpointManager(metaTable, txClient, topic);
     FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(metaTable, txClient, locationFactory);
     this.messageTable = HashBasedTable.create();

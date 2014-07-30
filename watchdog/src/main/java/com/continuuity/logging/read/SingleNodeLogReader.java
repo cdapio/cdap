@@ -18,7 +18,7 @@ package com.continuuity.logging.read;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.filter.AndFilter;
@@ -65,7 +65,8 @@ public class SingleNodeLogReader implements LogReader {
   private final ExecutorService executor;
 
   @Inject
-  public SingleNodeLogReader(CConfiguration cConf, DataSetAccessor dataSetAccessor,
+  public SingleNodeLogReader(CConfiguration cConf,
+                             DatasetFramework dsFramework,
                              TransactionSystemClient txClient,
                              LocalLocationFactory locationFactory) {
     String baseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
@@ -73,7 +74,7 @@ public class SingleNodeLogReader implements LogReader {
 
     try {
       this.schema = new LogSchema().getAvroSchema();
-      this.fileMetaDataManager = new FileMetaDataManager(new LogSaverTableUtil(dataSetAccessor).getMetaTable(),
+      this.fileMetaDataManager = new FileMetaDataManager(new LogSaverTableUtil(dsFramework, cConf).getMetaTable(),
                                                          txClient, locationFactory);
 
     } catch (Exception e) {

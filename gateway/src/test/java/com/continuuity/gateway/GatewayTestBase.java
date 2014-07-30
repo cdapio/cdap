@@ -93,6 +93,8 @@ public abstract class GatewayTestBase {
   private static EndpointStrategy endpointStrategy;
   private static MetricsQueryService metrics;
   private static StreamHttpService streamHttpService;
+  private static InMemoryTransactionManager txService;
+  private static DatasetService dsService;
 
   @ClassRule
   public static ExternalResource resources = new ExternalResource() {
@@ -176,7 +178,10 @@ public abstract class GatewayTestBase {
     );
 
     gateway = injector.getInstance(Gateway.class);
-    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
+    txService = injector.getInstance(InMemoryTransactionManager.class);
+    txService.startAndWait();
+    dsService = injector.getInstance(DatasetService.class);
+    dsService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     metrics = injector.getInstance(MetricsQueryService.class);
     streamHttpService = injector.getInstance(StreamHttpService.class);
@@ -209,6 +214,7 @@ public abstract class GatewayTestBase {
     streamHttpService.stopAndWait();
     router.stopAndWait();
     dsService.stopAndWait();
+    txService.stopAndWait();
     conf.clear();
   }
 

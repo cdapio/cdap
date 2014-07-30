@@ -126,8 +126,8 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   @Nullable
   private DatasetSpecification fromNamespaced(@Nullable DatasetSpecification spec) {
     if (spec == null) {
-        return null;
-      }
+      return null;
+    }
     String notNamespaced = namespace.fromNamespaced(spec.getName());
     return notNamespaced == null ? null : DatasetSpecification.changeName(spec, notNamespaced);
   }
