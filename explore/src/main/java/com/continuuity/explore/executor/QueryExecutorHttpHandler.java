@@ -19,6 +19,7 @@ package com.continuuity.explore.executor;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.HandleNotFoundException;
+import com.continuuity.explore.service.QueryInfo;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.proto.ColumnDesc;
@@ -220,6 +221,17 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @GET
+  @Path("/data/explore/queries")
+  public void getQueryLiveHandles(HttpRequest request, HttpResponder responder) {
+    try {
+      List<QueryInfo> handles = exploreService.getQueries();
+      responder.sendJson(HttpResponseStatus.OK, handles);
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error");
     }
   }
 

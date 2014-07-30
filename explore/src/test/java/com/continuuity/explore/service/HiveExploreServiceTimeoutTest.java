@@ -63,8 +63,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
       if (++tries > maxTries) {
         break;
       }
-    } while (status.getStatus() == QueryStatus.OpStatus.RUNNING || status.getStatus() == QueryStatus.OpStatus.PENDING ||
-      status.getStatus() == QueryStatus.OpStatus.INITIALIZED || status.getStatus() == QueryStatus.OpStatus.UNKNOWN);
+    } while (!status.getStatus().isDone());
     return status;
   }
 
