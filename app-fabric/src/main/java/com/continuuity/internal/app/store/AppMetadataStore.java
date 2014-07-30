@@ -23,6 +23,7 @@ import com.continuuity.api.dataset.table.Table;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.data2.dataset2.lib.table.MetadataStoreDataset;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
+import com.continuuity.internal.app.DefaultApplicationSpecification;
 import com.continuuity.proto.RunRecord;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -70,7 +71,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   @Nullable
   public ApplicationMeta getApplication(String accountId, String appId) {
-    return get(new Key.Builder().add(TYPE_APP_META, accountId, appId).build(), ApplicationMeta.class);
+    ApplicationMeta meta = get(new Key.Builder().add(TYPE_APP_META, accountId, appId).build(), ApplicationMeta.class);
+    return meta;
   }
 
   public List<ApplicationMeta> getAllApplications(String accountId) {
@@ -78,6 +80,9 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public void writeApplication(String accountId, String appId, ApplicationSpecification spec, String archiveLocation) {
+    // NOTE: we use Gson underneath to do serde, as it doesn't serialize inner classes (which we use everywhere for
+    //       specs - see forwarding specs), we want to wrap spec with DefaultApplicationSpecification
+    spec = DefaultApplicationSpecification.from(spec);
     write(new Key.Builder().add(TYPE_APP_META, accountId, appId).build(),
           new ApplicationMeta(appId, spec, archiveLocation));
   }
@@ -92,6 +97,9 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   // todo: do we need appId? may be use from appSpec?
   public void updateAppSpec(String accountId, String appId, ApplicationSpecification spec) {
+    // NOTE: we use Gson underneath to do serde, as it doesn't serialize inner classes (which we use everywhere for
+    //       specs - see forwarding specs), we want to wrap spec with DefaultApplicationSpecification
+    spec = DefaultApplicationSpecification.from(spec);
     LOG.trace("App spec to be updated: id: {}: spec: {}", appId, GSON.toJson(spec));
     Key key = new Key.Builder().add(TYPE_APP_META, accountId, appId).build();
     ApplicationMeta existing = get(key, ApplicationMeta.class);
