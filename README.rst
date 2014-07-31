@@ -362,7 +362,7 @@ Thanks for helping to improve CDAP!
 Mailing List
 ............
 
-CDAP User Group and Development Discussions: `cask-cdap-dev@googlegroups.com 
+CDAP User Group and Development Discussions: `cdap-dev@googlegroups.com 
 <https://groups.google.com/d/forum/cdap-dev>`__
 
 IRC Channel
