@@ -10,25 +10,89 @@ define([], function () {
 		load: function () {
 		  var self = this;
 		  this.set('objArr', []);
+		  this.set('numQueries', 0);
 		  this.fetchQueries();
 		  this.interval = setInterval(function () {
+		    //self.getExploreStatus();
         self.fetchQueries();
 		  }, 1000);
+		  this.set('datasets', []);
+		  this.loadDiscoverableDatasets();
+
+
+      C.deleteQuery = function(handle){
+        self.deleteQuery(Ember.Object.create({query_handle:handle}));
+      };
+      C.cancelQuery = function(handle){
+        self.cancelQuery(Ember.Object.create({query_handle:handle}));
+      };
+      C.HTTP = self.HTTP;
 		},
 
+		loadDiscoverableDatasets: function () {
+		  var self = this;
+      var datasets = self.get('datasets');
+		  //TODO: hit the endpoint that Julien will provide.
+      var completed = 0;
+      console.log(completed);
+      self.HTTP.post('rest/data/queries', {data: { "query": "show tables" }},
+          function (response) {
+            response = jQuery.parseJSON( response );
+            self.HTTP.post('rest/data/queries/' + response.handle + '/next', function (response) {
+              response = jQuery.parseJSON( response );
+              response.forEach(function(data){
+                var name = data.columns[0];
+                var shortName = name.replace(/.*_/,'');
+                var dataset = Ember.Object.create({name:name, shortName:shortName});
+                datasets.pushObject(dataset);
+                self.HTTP.post('rest/data/queries', {data: { "query": "describe " + dataset.name }},
+                    function (response) {
+
+                      C.Util.threadSleep(200);
+                      response = jQuery.parseJSON( response );
+                      self.HTTP.post('rest/data/queries/' + response.handle + '/next', function (response) {
+                        response = jQuery.parseJSON( response );
+                        dataset.set('results', response);
+                        console.log(++completed);
+                      });
+                      self.HTTP.rest('data/queries/' + response.handle + '/schema', function (response) {
+                        dataset.set('schema', response);
+                        console.log(++completed);
+                      });
+
+                    }
+                );
+              });
+            });
+          }
+      );
+		},
+
+    selectDataset: function (dataset) {
+      this.set('selectedDataset', dataset);
+    },
 
 		unload: function () {
 		},
 
 		fetchQueries: function () {
 		  var self = this;
-		  self.getExploreStatus();
 		  var objArr = this.get('objArr');
+		  C.clearQueries = function(){objArr.forEach(function(query){query.set('deleted',true)});};
+		  if(C.debug){ //TODO: remove this block (is/was for debugging purposes only).
+		    C.debug = false;
+		    debugger;
+		  }
       this.HTTP.rest('data/explore/queries', function (queries, status) {
         if(status != 200) {
           console.log('error in fetchQueries in data-explore.js');
           return;
         }
+        self.set('numQueries', queries.length);
+
+        objArr.forEach(function(query){
+          query.set('inList', false);
+        });
         queries.forEach(function (query) {
           var existingObj = self.find(query.query_handle);
           if (!existingObj) {
@@ -41,12 +105,16 @@ define([], function () {
             existingObj.set('is_active', query.is_active);
           }
 
-          if (existingObj.get('has_results')) {
+          existingObj.set('inList', true);
+          if (existingObj.get('status') === 'FINISHED' && existingObj.get('has_results')) {
             if (!existingObj.get('results')) {
               self.getResults(existingObj);
               self.getSchema(existingObj);
             }
           }
+        });
+        objArr.forEach(function(query){
+          query.set('deleted', !query.get('inList'));
         });
       });
 		},
@@ -54,7 +122,7 @@ define([], function () {
     getExploreStatus: function () {
       var self = this;
       this.HTTP.rest('explore/status', function () {
-//        console.log(response + "s");
+        //todo: set explore status in the view, if thats what is agreed upon for the view.
       });
     },
 
@@ -62,10 +130,20 @@ define([], function () {
       var self = this;
       var handle = query.get('query_handle');
       this.HTTP.post('rest/data/queries/' + handle + '/next', function (response) {
-        query.set('results', response);
         query.set('downloadableResults', "data:text/plain;charset=UTF-8," + response);
         query.set('downloadName', "results_" + handle + ".txt");
+        response = jQuery.parseJSON( response );
+        query.set('results', response);
       });
+    },
+
+    cancelQuery: function (query) {
+      var handle = query.get('query_handle');
+      this.HTTP.post('rest/data/queries/' + handle + '/cancel');
+    },
+    deleteQuery: function (query) {
+      var handle = query.get('query_handle');
+      this.HTTP.del('rest/data/queries/' + handle);
     },
 
     getSchema: function (query) {
@@ -73,20 +151,21 @@ define([], function () {
       var handle = query.get('query_handle');
       this.HTTP.rest('data/queries/' + handle + '/schema', function (response) {
         query.set('schema', response);
-        console.log(response);
       });
     },
 
     submitSQLQuery: function () {
+      var self = this;
       var controller = this.get('controllers');
       var sqlString = controller.get("SQLQueryString");
       this.HTTP.post('rest/data/queries', {data: { "query": sqlString }},
         function (response, status) {
           if(status != 200) {
+            C.Util.showWarning(response.error + ' : ' + response.message);
             console.log('error in submitSQLQuery in data-explore.js');
             return;
           }
-          //TODO: do something with the handle, such as adding it to list of queries. or refresh the list.
+          self.fetchQueries();
         }
       );
     },
@@ -100,11 +179,6 @@ define([], function () {
       }
       return false;
     },
-
-
-    //TODO
-    //HTTP.rest('data/explore/queries',function(response){});
-    //HTTP.rest('data/explore/queries/{handleID}/schema'
 
 	});
 
