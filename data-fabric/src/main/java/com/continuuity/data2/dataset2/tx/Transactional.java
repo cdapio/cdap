@@ -37,10 +37,16 @@ import java.io.IOException;
  * {@link java.io.Closeable#close()} is invoked at the end of transaction.
  *
  * @param <T> type of the transactional context
+ * @param <V> type of objects contained inside the transaction context
  */
-public class Transactional<T extends Iterable> {
+public class Transactional<T extends Iterable<V>, V> {
   private final TransactionExecutorFactory txFactory;
   private final Supplier<T> supplier;
+
+  public static <T extends Iterable<V>, V> Transactional<T, V> of(TransactionExecutorFactory txFactory,
+                                                                            Supplier<T> supplier) {
+    return new Transactional<T, V>(txFactory, supplier);
+  }
 
   /**
    * Creates instance of {@link Transactional}.
@@ -48,7 +54,7 @@ public class Transactional<T extends Iterable> {
    * @param supplier supplies transaction context. Transaction logic will be applied to the items returned by the
    *                 context's getIterator() method for those that implement {@link TransactionAware}
    */
-  public Transactional(TransactionExecutorFactory txFactory, Supplier<T> supplier) {
+  private Transactional(TransactionExecutorFactory txFactory, Supplier<T> supplier) {
     this.txFactory = txFactory;
     this.supplier = supplier;
   }
@@ -84,20 +90,21 @@ public class Transactional<T extends Iterable> {
    * @param txFactory transaction factory to create new transaction
    * @param supplier supplier of transaction context
    * @param func function to execute
+   * @param <V> type of object contained inside the transaction context
    * @param <T> type of the transaction context
    * @param <R> type of the function result
    * @return function result
    */
-  public static <T extends Iterable<?>, R> R execute(TransactionExecutorFactory txFactory,
-                                 Supplier<T> supplier,
-                                 final TransactionExecutor.Function<T, R> func)
+  public static <V, T extends Iterable<V>, R> R execute(TransactionExecutorFactory txFactory,
+                                                        Supplier<T> supplier,
+                                                        TransactionExecutor.Function<T, R> func)
     throws TransactionFailureException, IOException, InterruptedException {
 
     T it = supplier.get();
     Iterable<TransactionAware> txAwares = Iterables.transform(
-      Iterables.filter(it, Predicates.instanceOf(TransactionAware.class)), new Function<Object, TransactionAware>() {
+      Iterables.filter(it, Predicates.instanceOf(TransactionAware.class)), new Function<V, TransactionAware>() {
       @Override
-      public TransactionAware apply(Object input) {
+      public TransactionAware apply(V input) {
         return (TransactionAware) input;
       }
     });
@@ -106,7 +113,7 @@ public class Transactional<T extends Iterable> {
     try {
       return executor.execute(func, it);
     } finally {
-      for (Object t : it) {
+      for (V t : it) {
         if (t instanceof Closeable) {
           ((Closeable) t).close();
         }

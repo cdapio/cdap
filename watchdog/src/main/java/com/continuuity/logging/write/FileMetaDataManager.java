@@ -54,11 +54,11 @@ public final class FileMetaDataManager {
 
   private final LocationFactory locationFactory;
 
-  private final Transactional<DatasetContext<OrderedTable>> mds;
+  private final Transactional<DatasetContext<OrderedTable>, OrderedTable> mds;
 
   public FileMetaDataManager(final LogSaverTableUtil tableUtil, final TransactionSystemClient txClient,
                              LocationFactory locationFactory) {
-    this.mds = new Transactional<DatasetContext<OrderedTable>>(
+    this.mds = Transactional.of(
       new TransactionExecutorFactory() {
         @Override
         public TransactionExecutor createExecutor(Iterable<TransactionAware> txAwares) {
@@ -69,7 +69,7 @@ public final class FileMetaDataManager {
         @Override
         public DatasetContext<OrderedTable> get() {
           try {
-            return new DatasetContext(tableUtil.getMetaTable());
+            return DatasetContext.of(tableUtil.getMetaTable());
           } catch (Exception e) {
             // there's nothing much we can do here
             throw Throwables.propagate(e);
