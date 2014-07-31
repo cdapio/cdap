@@ -26,22 +26,23 @@ import com.continuuity.common.http.HttpMethod;
 import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
-import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceHandler;
-import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
-import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
-import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
+import com.continuuity.common.io.Locations;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.InstanceConflictException;
 import com.continuuity.data2.dataset2.ModuleConflictException;
+import com.continuuity.proto.DatasetInstanceConfiguration;
+import com.continuuity.proto.DatasetMeta;
+import com.continuuity.proto.DatasetModuleMeta;
+import com.continuuity.proto.DatasetTypeMeta;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -77,7 +78,7 @@ class DatasetServiceClient {
   }
 
   @Nullable
-  public DatasetInstanceMeta getInstance(String instanceName) throws DatasetManagementException {
+  public DatasetMeta getInstance(String instanceName) throws DatasetManagementException {
     HttpResponse response = doGet("datasets/" + instanceName);
     if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
       return null;
@@ -87,7 +88,7 @@ class DatasetServiceClient {
                                                          instanceName, getDetails(response)));
     }
 
-    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), DatasetInstanceMeta.class);
+    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), DatasetMeta.class);
   }
 
   public Collection<DatasetSpecification> getAllInstances() throws DatasetManagementException {
@@ -126,18 +127,33 @@ class DatasetServiceClient {
 
   public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
     throws DatasetManagementException {
+    DatasetInstanceConfiguration creationProperties = new DatasetInstanceConfiguration(datasetType,
+                                                                                       props.getProperties());
 
-    DatasetInstanceHandler.DatasetTypeAndProperties typeAndProps =
-      new DatasetInstanceHandler.DatasetTypeAndProperties(datasetType, props.getProperties());
-    HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(typeAndProps));
+    createUpdateInstance(datasetInstanceName, creationProperties, "add");
+  }
+
+  private void createUpdateInstance(String datasetInstanceName,
+                                    DatasetInstanceConfiguration creationProperties, String op)
+    throws DatasetManagementException {
+    HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(creationProperties));
+
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
-      throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
-                                                        datasetInstanceName, getDetails(response)));
+      throw new InstanceConflictException(String.format("Failed to %s instance %s due to conflict, details: %s",
+                                                        op, datasetInstanceName, getDetails(response)));
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
-                                                         datasetInstanceName, getDetails(response)));
+      throw new DatasetManagementException(String.format("Failed to %s instance %s, details: %s",
+                                                         op, datasetInstanceName, getDetails(response)));
     }
+  }
+
+  public void updateInstance(String datasetInstanceName, DatasetProperties props)
+    throws DatasetManagementException {
+    DatasetMeta meta = getInstance(datasetInstanceName);
+    DatasetInstanceConfiguration creationProperties =
+      new DatasetInstanceConfiguration(meta.getSpec().getType(), props.getProperties(), true);
+    createUpdateInstance(datasetInstanceName, creationProperties, "update");
   }
 
   public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
@@ -155,27 +171,9 @@ class DatasetServiceClient {
   public void addModule(String moduleName, String className, Location jarLocation)
     throws DatasetManagementException {
 
-    InputStream is;
-    try {
-      is = jarLocation.getInputStream();
-    } catch (IOException e) {
-      throw new DatasetManagementException(String.format("Failed to read jar of module %s at %s",
-                                                         moduleName, jarLocation));
-    }
-    HttpResponse response;
-    try {
-      final InputStream inputStream = is;
-      response = doRequest(HttpMethod.PUT, "modules/" + moduleName,
-                       ImmutableMap.of("X-Continuuity-Class-Name", className),
-                       new InputSupplier<InputStream>() {
-                         @Override
-                         public InputStream getInput() throws IOException {
-                           return inputStream;
-                         }
-                       });
-    } finally {
-      Closeables.closeQuietly(is);
-    }
+    HttpResponse response = doRequest(HttpMethod.PUT, "modules/" + moduleName,
+                           ImmutableMap.of("X-Continuuity-Class-Name", className),
+                           Locations.newInputSupplier(jarLocation));
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new ModuleConflictException(String.format("Failed to add module %s due to conflict, details: %s",
@@ -183,7 +181,7 @@ class DatasetServiceClient {
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to add module %s, details: %s",
-                                                      moduleName, getDetails(response)));
+                                                         moduleName, getDetails(response)));
     }
   }
 
@@ -229,13 +227,18 @@ class DatasetServiceClient {
     return doRequest(HttpMethod.PUT, resource, null, body);
   }
 
+  private HttpResponse doPost(String resource)
+    throws DatasetManagementException {
+    return doRequest(HttpMethod.POST, resource);
+  }
+
   private HttpResponse doDelete(String resource) throws DatasetManagementException {
     return doRequest(HttpMethod.DELETE, resource);
   }
 
   private HttpResponse doRequest(HttpMethod method, String resource,
-                               @Nullable Map<String, String> headers,
-                               @Nullable String body) throws DatasetManagementException {
+                                 @Nullable Map<String, String> headers,
+                                 @Nullable String body) throws DatasetManagementException {
 
     String url = resolve(resource);
     try {
@@ -276,8 +279,12 @@ class DatasetServiceClient {
 
   }
 
-  private String resolve(String resource) {
-    InetSocketAddress addr = this.endpointStrategySupplier.get().pick().getSocketAddress();
+  private String resolve(String resource) throws DatasetManagementException {
+    Discoverable discoverable = endpointStrategySupplier.get().pick();
+    if (discoverable == null) {
+      throw new DatasetManagementException("Cannot discover dataset service");
+    }
+    InetSocketAddress addr = discoverable.getSocketAddress();
     return String.format("http://%s:%s%s/data/%s", addr.getHostName(), addr.getPort(),
                          Constants.Gateway.GATEWAY_VERSION, resource);
   }

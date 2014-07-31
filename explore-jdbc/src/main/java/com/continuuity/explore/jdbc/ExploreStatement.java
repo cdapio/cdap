@@ -17,12 +17,13 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
-import com.continuuity.explore.client.StatementExecutionFuture;
+import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Status;
 import com.continuuity.explore.service.UnexpectedQueryStatusException;
+import com.continuuity.proto.QueryStatus;
 
 import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +67,7 @@ public class ExploreStatement implements Statement {
   private SQLWarning warningChain = null;
 
   private volatile boolean isClosed = false;
-  private volatile StatementExecutionFuture futureResults = null;
+  private volatile ListenableFuture<ExploreExecutionResult> futureResults = null;
 
   private Connection connection;
   private ExploreClient exploreClient;
@@ -104,8 +105,7 @@ public class ExploreStatement implements Statement {
 
     futureResults = exploreClient.submit(sql);
     try {
-      futureResults.get();
-      resultSet = new ExploreResultSet(futureResults, this, maxRows);
+      resultSet = new ExploreResultSet(futureResults.get(), this, maxRows);
       // NOTE: Javadoc states: "returns false if the first result is an update count or there is no result"
       // Here we have a result, it may contain rows or may be empty, but it exists.
       return true;
@@ -120,7 +120,7 @@ public class ExploreStatement implements Statement {
         throw new SQLException("Unknown state");
       } else if (t instanceof UnexpectedQueryStatusException) {
         UnexpectedQueryStatusException sE = (UnexpectedQueryStatusException) t;
-        if (Status.OpStatus.CANCELED.equals(sE.getStatus())) {
+        if (QueryStatus.OpStatus.CANCELED.equals(sE.getStatus())) {
           // The query execution may have been canceled without calling futureResults.cancel(), using the right
           // REST endpoint with the handle for eg.
           return false;

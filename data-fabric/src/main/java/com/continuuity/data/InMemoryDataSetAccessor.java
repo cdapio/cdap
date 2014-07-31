@@ -20,7 +20,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
-import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryMetricsTableClient;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableClient;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableManager;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableService;
@@ -47,17 +46,6 @@ public class InMemoryDataSetAccessor extends AbstractDataSetAccessor {
 
   @Override
   protected DataSetManager getOcTableManager() throws Exception {
-    return new InMemoryOcTableManager();
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  protected <T> T getMetricsTableClient(String name) throws Exception {
-    return (T) new InMemoryMetricsTableClient(name);
-  }
-
-  @Override
-  protected DataSetManager getMetricsTableManager() throws Exception {
     return new InMemoryOcTableManager();
   }
 

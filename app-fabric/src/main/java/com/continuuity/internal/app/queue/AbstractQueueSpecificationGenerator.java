@@ -18,13 +18,13 @@ package com.continuuity.internal.app.queue;
 
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
-import com.continuuity.app.Id;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.internal.app.SchemaFinder;
 import com.continuuity.internal.io.Schema;
+import com.continuuity.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 

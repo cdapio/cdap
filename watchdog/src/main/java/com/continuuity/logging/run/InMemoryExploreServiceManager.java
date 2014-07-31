@@ -16,13 +16,30 @@
 
 package com.continuuity.logging.run;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.AbstractInMemoryReactorServiceManager;
+
+import com.google.inject.Inject;
+import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * In memory explore service manager.
  */
 public class InMemoryExploreServiceManager extends AbstractInMemoryReactorServiceManager {
+
+  private final CConfiguration cConf;
+
+  @Inject
+  public InMemoryExploreServiceManager(CConfiguration cConf) {
+    this.cConf = cConf;
+  }
+
+  @Override
+  public boolean isServiceEnabled() {
+    return cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
+  }
 
   @Override
   public String getDescription() {

@@ -17,16 +17,21 @@
 package com.continuuity.logging.write;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.table.OrderedTable;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.dataset2.tx.DatasetContext;
+import com.continuuity.data2.dataset2.tx.Transactional;
+import com.continuuity.logging.save.LogSaverTableUtil;
 import com.continuuity.tephra.DefaultTransactionExecutor;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
+import com.continuuity.tephra.TransactionExecutorFactory;
 import com.continuuity.tephra.TransactionSystemClient;
-import com.google.common.collect.ImmutableList;
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.filesystem.Location;
@@ -37,7 +42,6 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.concurrent.Callable;
 
 /**
  * Handles reading/writing of file metadata.
@@ -48,17 +52,32 @@ public final class FileMetaDataManager {
   private static final byte [] ROW_KEY_PREFIX = Bytes.toBytes(200);
   private static final byte [] ROW_KEY_PREFIX_END = Bytes.toBytes(201);
 
-  private final TransactionExecutor txExecutor;
-  private final OrderedColumnarTable metaTable;
   private final LocationFactory locationFactory;
 
-  public FileMetaDataManager(OrderedColumnarTable metaTable, TransactionSystemClient txClient,
+  private final Transactional<DatasetContext<OrderedTable>> mds;
+
+  public FileMetaDataManager(final LogSaverTableUtil tableUtil, final TransactionSystemClient txClient,
                              LocationFactory locationFactory) {
-    this.metaTable = metaTable;
-    this.txExecutor = new DefaultTransactionExecutor(txClient, ImmutableList.of((TransactionAware) metaTable));
+    this.mds = new Transactional<DatasetContext<OrderedTable>>(
+      new TransactionExecutorFactory() {
+        @Override
+        public TransactionExecutor createExecutor(Iterable<TransactionAware> txAwares) {
+          return new DefaultTransactionExecutor(txClient, txAwares);
+        }
+      },
+      new Supplier<DatasetContext<OrderedTable>>() {
+        @Override
+        public DatasetContext<OrderedTable> get() {
+          try {
+            return new DatasetContext(tableUtil.getMetaTable());
+          } catch (Exception e) {
+            // there's nothing much we can do here
+            throw Throwables.propagate(e);
+          }
+        }
+      });
     this.locationFactory = locationFactory;
   }
-
 
   /**
    * Persistes meta data associated with a log file.
@@ -73,12 +92,13 @@ public final class FileMetaDataManager {
     LOG.debug("Writing meta data for logging context {} as startTimeMs {} and location {}",
               loggingContext.getLogPartition(), startTimeMs, location.toURI());
 
-    txExecutor.execute(new TransactionExecutor.Subroutine() {
+    mds.execute(new TransactionExecutor.Function<DatasetContext<OrderedTable>, Void>() {
       @Override
-      public void apply() throws Exception {
-        metaTable.put(getRowKey(loggingContext),
+      public Void apply(DatasetContext<OrderedTable> ctx) throws Exception {
+        ctx.get().put(getRowKey(loggingContext),
                       Bytes.toBytes(startTimeMs),
                       Bytes.toBytes(location.toURI().toString()));
+        return null;
       }
     });
   }
@@ -90,10 +110,10 @@ public final class FileMetaDataManager {
    * @throws OperationException
    */
   public SortedMap<Long, Location> listFiles(final LoggingContext loggingContext) throws Exception {
-    return txExecutor.execute(new Callable<SortedMap<Long, Location>>() {
+    return mds.execute(new TransactionExecutor.Function<DatasetContext<OrderedTable>, SortedMap<Long, Location>>() {
       @Override
-      public SortedMap<Long, Location> call() throws Exception {
-        Map<byte[], byte[]> cols = metaTable.get(getRowKey(loggingContext));
+      public SortedMap<Long, Location> apply(DatasetContext<OrderedTable> ctx) throws Exception {
+        Map<byte[], byte[]> cols = ctx.get().get(getRowKey(loggingContext));
 
         if (cols.isEmpty()) {
           return ImmutableSortedMap.of();
@@ -116,20 +136,20 @@ public final class FileMetaDataManager {
    * @throws OperationException
    */
   public int cleanMetaData(final long tillTime, final DeleteCallback callback) throws Exception {
-    return txExecutor.execute(new Callable<Integer>() {
+    return mds.execute(new TransactionExecutor.Function<DatasetContext<OrderedTable>, Integer>() {
       @Override
-      public Integer call() throws Exception {
+      public Integer apply(DatasetContext<OrderedTable> ctx) throws Exception {
         byte [] tillTimeBytes = Bytes.toBytes(tillTime);
 
         int deletedColumns = 0;
-        Scanner scanner = metaTable.scan(ROW_KEY_PREFIX, ROW_KEY_PREFIX_END);
+        Scanner scanner = ctx.get().scan(ROW_KEY_PREFIX, ROW_KEY_PREFIX_END);
         try {
-          ImmutablePair<byte[], Map<byte[], byte[]>> row;
+          Row row;
           while ((row = scanner.next()) != null) {
-            byte [] rowKey = row.getFirst();
-            byte [] maxCol = getMaxKey(row.getSecond());
+            byte [] rowKey = row.getRow();
+            byte [] maxCol = getMaxKey(row.getColumns());
 
-            for (Map.Entry<byte[], byte[]> entry : row.getSecond().entrySet()) {
+            for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
               byte [] colName = entry.getKey();
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Got file {} with start time {}", Bytes.toString(entry.getValue()),
@@ -138,7 +158,7 @@ public final class FileMetaDataManager {
               // Delete if colName is less than tillTime, but don't delete the last one
               if (Bytes.compareTo(colName, tillTimeBytes) < 0 && Bytes.compareTo(colName, maxCol) != 0) {
                 callback.handle(locationFactory.create(new URI(Bytes.toString(entry.getValue()))));
-                metaTable.delete(rowKey, colName);
+                ctx.get().delete(rowKey, colName);
                 deletedColumns++;
               }
             }

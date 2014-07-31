@@ -18,15 +18,17 @@ package com.continuuity.explore.client;
 
 import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.MetaDataInfo;
-import com.continuuity.explore.service.Result;
-import com.continuuity.explore.service.Status;
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryResult;
+import com.continuuity.proto.QueryStatus;
 
 import com.google.common.base.Functions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
+import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -40,6 +42,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -70,9 +73,9 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
   @Override
   public ListenableFuture<Void> disableExplore(final String datasetInstance) {
-    StatementExecutionFuture futureResults = getResultsFuture(new HandleProducer() {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return doDisableExplore(datasetInstance);
       }
     });
@@ -83,9 +86,9 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
   @Override
   public ListenableFuture<Void> enableExplore(final String datasetInstance) {
-    StatementExecutionFuture futureResults = getResultsFuture(new HandleProducer() {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return doEnableExplore(datasetInstance);
       }
     });
@@ -95,52 +98,61 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public StatementExecutionFuture submit(final String statement) {
+  public ListenableFuture<ExploreExecutionResult> submit(final String statement) {
     return getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return execute(statement);
       }
     });
   }
 
   @Override
-  public StatementExecutionFuture columns(@Nullable final String catalog, @Nullable final String schemaPattern,
-                                          final String tableNamePattern, final String columnNamePattern) {
+  public Map<String, String> datasetSchema(String datasetName) throws ExploreException {
+    return getDatasetSchema(datasetName);
+  }
+
+  @Override
+  public ListenableFuture<ExploreExecutionResult> columns(@Nullable final String catalog,
+                                                          @Nullable final String schemaPattern,
+                                                          final String tableNamePattern,
+                                                          final String columnNamePattern) {
     return getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return getColumns(catalog, schemaPattern, tableNamePattern, columnNamePattern);
       }
     });
   }
 
   @Override
-  public StatementExecutionFuture catalogs() {
+  public ListenableFuture<ExploreExecutionResult> catalogs() {
     return getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return getCatalogs();
       }
     });
   }
 
   @Override
-  public StatementExecutionFuture schemas(@Nullable final String catalog, @Nullable final String schemaPattern) {
+  public ListenableFuture<ExploreExecutionResult> schemas(@Nullable final String catalog,
+                                                          @Nullable final String schemaPattern) {
     return getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return getSchemas(catalog, schemaPattern);
       }
     });
   }
 
   @Override
-  public StatementExecutionFuture functions(@Nullable final String catalog, @Nullable final String schemaPattern,
-                                            final String functionNamePattern) {
+  public ListenableFuture<ExploreExecutionResult> functions(@Nullable final String catalog,
+                                                            @Nullable final String schemaPattern,
+                                                            final String functionNamePattern) {
     return getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return getFunctions(catalog, schemaPattern, functionNamePattern);
       }
     });
@@ -157,43 +169,45 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public StatementExecutionFuture tables(@Nullable final String catalog, @Nullable final String schemaPattern,
-                                         final String tableNamePattern, @Nullable final List<String> tableTypes) {
+  public ListenableFuture<ExploreExecutionResult> tables(@Nullable final String catalog,
+                                                         @Nullable final String schemaPattern,
+                                                         final String tableNamePattern,
+                                                         @Nullable final List<String> tableTypes) {
     return getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return getTables(catalog, schemaPattern, tableNamePattern, tableTypes);
       }
     });
   }
 
   @Override
-  public StatementExecutionFuture tableTypes() {
+  public ListenableFuture<ExploreExecutionResult> tableTypes() {
     return getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return getTableTypes();
       }
     });
   }
 
   @Override
-  public StatementExecutionFuture dataTypes() {
+  public ListenableFuture<ExploreExecutionResult> dataTypes() {
     return getResultsFuture(new HandleProducer() {
       @Override
-      public Handle getHandle() throws ExploreException, SQLException {
+      public QueryHandle getHandle() throws ExploreException, SQLException {
         return getTypeInfo();
       }
     });
   }
 
-  private StatementExecutionFuture getResultsFuture(final HandleProducer handleProducer) {
+  private ListenableFuture<ExploreExecutionResult> getResultsFuture(final HandleProducer handleProducer) {
     // NOTE: here we have two levels of Future because we want to return the future that actually
     // finishes the execution of the operation - it is not enough that the future handle
     // be available
-    ListenableFuture<Handle> futureHandle = executor.submit(new Callable<Handle>() {
+    ListenableFuture<QueryHandle> futureHandle = executor.submit(new Callable<QueryHandle>() {
       @Override
-      public Handle call() throws Exception {
+      public QueryHandle call() throws Exception {
         return handleProducer.getHandle();
       }
     });
@@ -201,18 +215,18 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   /**
-   * Create a {@link StatementExecutionFuture} object by polling the Explore service using the
-   * {@link ListenableFuture} containing a {@link Handle}.
+   * Create a {@link ListenableFuture} object by polling the Explore service using the
+   * {@link ListenableFuture} containing a {@link QueryHandle}.
    */
-  private StatementExecutionFuture getFutureResultsFromHandle(
-    final ListenableFuture<Handle> futureHandle) {
-    final StatementExecutionFutureImpl resultFuture = new StatementExecutionFutureImpl(this, futureHandle);
-    Futures.addCallback(futureHandle, new FutureCallback<Handle>() {
+  private ListenableFuture<ExploreExecutionResult> getFutureResultsFromHandle(
+    final ListenableFuture<QueryHandle> futureHandle) {
+    final StatementExecutionFuture resultFuture = new StatementExecutionFuture(this, futureHandle);
+    Futures.addCallback(futureHandle, new FutureCallback<QueryHandle>() {
       @Override
-      public void onSuccess(final Handle handle) {
+      public void onSuccess(final QueryHandle handle) {
         try {
-          Status status = getStatus(handle);
-          if (!status.getStatus().isFinished()) {
+          QueryStatus status = getStatus(handle);
+          if (!status.getStatus().isDone()) {
             executor.schedule(new Runnable() {
               @Override
               public void run() {
@@ -245,32 +259,32 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
    * Interface that produces a handle.
    */
   private static interface HandleProducer {
-    Handle getHandle() throws ExploreException, SQLException;
+    QueryHandle getHandle() throws ExploreException, SQLException;
   }
 
   /**
    * Result iterator which polls Explore service using HTTP to get next results.
    */
-  private static final class ClientExploreExecutionResult extends AbstractIterator<Result>
+  private static final class ClientExploreExecutionResult extends AbstractIterator<QueryResult>
     implements ExploreExecutionResult {
     private static final Logger LOG = LoggerFactory.getLogger(ClientExploreExecutionResult.class);
     private static final int DEFAUL_FETCH_SIZE = 100;
 
     private int fetchSize = DEFAUL_FETCH_SIZE;
-    private Iterator<Result> delegate;
+    private Iterator<QueryResult> delegate;
 
     private final ExploreHttpClient exploreClient;
-    private final Handle handle;
+    private final QueryHandle handle;
     private final boolean hasResults;
 
-    public ClientExploreExecutionResult(ExploreHttpClient exploreClient, Handle handle, boolean hasResults) {
+    public ClientExploreExecutionResult(ExploreHttpClient exploreClient, QueryHandle handle, boolean hasResults) {
       this.exploreClient = exploreClient;
       this.handle = handle;
       this.hasResults = hasResults;
     }
 
     @Override
-    protected Result computeNext() {
+    protected QueryResult computeNext() {
       if (!hasResults) {
         return endOfData();
       }
@@ -280,7 +294,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
       }
       try {
         // call the endpoint 'next' to get more results and set delegate
-        List<Result> nextResults = exploreClient.nextResults(handle, fetchSize);
+        List<QueryResult> nextResults = exploreClient.nextResults(handle, fetchSize);
         delegate = nextResults.iterator();
 
         // At this point, if delegate has no result, there are no more results at all
@@ -319,6 +333,69 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     @Override
     public void setFetchSize(int fetchSize) {
       this.fetchSize = (fetchSize <= 0) ? DEFAUL_FETCH_SIZE : fetchSize;
+    }
+
+    @Override
+    public List<ColumnDesc> getResultSchema() throws ExploreException {
+      try {
+        return exploreClient.getResultSchema(handle);
+      } catch (HandleNotFoundException e) {
+        LOG.error("Caught exception when retrieving results schema", e);
+        throw new ExploreException(e);
+      }
+    }
+  }
+
+  /**
+   * Implementation of a listenable future for {@link ExploreExecutionResult} with an overridden
+   * {@link com.google.common.util.concurrent.ListenableFuture#cancel(boolean)} method.
+   */
+  private static final class StatementExecutionFuture extends AbstractFuture<ExploreExecutionResult> {
+    private static final Logger LOG = LoggerFactory.getLogger(StatementExecutionFuture.class);
+
+    private final Explore exploreClient;
+    private final ListenableFuture<QueryHandle> futureHandle;
+
+    StatementExecutionFuture(Explore exploreClient, ListenableFuture<QueryHandle> futureHandle) {
+      this.exploreClient = exploreClient;
+      this.futureHandle = futureHandle;
+    }
+
+    @Override
+    public boolean set(@Nullable ExploreExecutionResult value) {
+      return super.set(value);
+    }
+
+    @Override
+    public boolean setException(Throwable throwable) {
+      return super.setException(throwable);
+    }
+
+    @Override
+    protected void interruptTask() {
+      // Cancelling the future object means cancelling the query, as well as closing it
+      // Since closing the query also cancels it, we only need to close
+      Futures.addCallback(futureHandle, new FutureCallback<QueryHandle>() {
+        @Override
+        public void onSuccess(QueryHandle handle) {
+          try {
+            exploreClient.close(handle);
+          } catch (ExploreException e) {
+            LOG.error("Caught exception during cancel operation", e);
+            throw Throwables.propagate(e);
+          } catch (HandleNotFoundException e) {
+            // Don't need to throw an exception in that case -
+            // if the handle is not found, the query is already closed
+            LOG.warn("Caught exception when closing execution", e);
+          }
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+          LOG.error("Caught exception", t);
+          setException(t);
+        }
+      });
     }
   }
 }

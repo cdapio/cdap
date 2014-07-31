@@ -18,12 +18,10 @@ package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.ExploreExecutionResult;
-import com.continuuity.explore.client.StatementExecutionFuture;
-import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.MetaDataInfo;
-import com.continuuity.explore.service.Result;
-
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryResult;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ForwardingListenableFuture;
@@ -42,10 +40,10 @@ import javax.annotation.Nullable;
 public class MockExploreClient extends AbstractIdleService implements ExploreClient {
 
   private final Map<String, List<ColumnDesc>> statementsToMetadata;
-  private final Map<String, List<Result>> statementsToResults;
+  private final Map<String, List<QueryResult>> statementsToResults;
 
   public MockExploreClient(Map<String, List<ColumnDesc>> statementsToMetadata,
-                           Map<String, List<Result>> statementsToResults) {
+                           Map<String, List<QueryResult>> statementsToResults) {
     this.statementsToMetadata = Maps.newHashMap(statementsToMetadata);
     this.statementsToResults = Maps.newHashMap(statementsToResults);
   }
@@ -66,40 +64,50 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
-  public StatementExecutionFuture submit(final String statement) {
+  public ListenableFuture<ExploreExecutionResult> submit(final String statement) {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
-    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get(statement).iterator()));
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get(statement).iterator(),
+                                                      statementsToMetadata.get(statement)));
     return new MockStatementExecutionFuture(futureDelegate, statement, statementsToMetadata, statementsToResults);
   }
 
   @Override
-  public StatementExecutionFuture columns(@Nullable String catalog, @Nullable String schemaPattern,
-                                          String tableNamePattern, String columnNamePattern) {
+  public Map<String, String> datasetSchema(String datasetName) throws ExploreException {
+    throw new ExploreException("Not implemented");
+  }
+
+  @Override
+  public ListenableFuture<ExploreExecutionResult> columns(@Nullable String catalog, @Nullable String schemaPattern,
+                                                          String tableNamePattern, String columnNamePattern) {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
-    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("columns_stmt").iterator()));
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("columns_stmt").iterator(),
+                                                      statementsToMetadata.get("columns_stmt")));
     return new MockStatementExecutionFuture(futureDelegate, "columns_stmt", statementsToMetadata, statementsToResults);
   }
 
   @Override
-  public StatementExecutionFuture catalogs() {
+  public ListenableFuture<ExploreExecutionResult> catalogs() {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
-    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("catalogs_stmt").iterator()));
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("catalogs_stmt").iterator(),
+                                                      statementsToMetadata.get("catalogs_stmt")));
     return new MockStatementExecutionFuture(futureDelegate, "catalogs_stmt", statementsToMetadata, statementsToResults);
   }
 
   @Override
-  public StatementExecutionFuture schemas(@Nullable String catalog, @Nullable String schemaPattern) {
+  public ListenableFuture<ExploreExecutionResult> schemas(@Nullable String catalog, @Nullable String schemaPattern) {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
-    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("schemas_stmt").iterator()));
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("schemas_stmt").iterator(),
+                                                      statementsToMetadata.get("schemas_stmt")));
     return new MockStatementExecutionFuture(futureDelegate, "schemas_stmt",
                                             statementsToMetadata, statementsToResults);
   }
 
   @Override
-  public StatementExecutionFuture functions(@Nullable String catalog, @Nullable String schemaPattern,
-                                            String functionNamePattern) {
+  public ListenableFuture<ExploreExecutionResult> functions(@Nullable String catalog, @Nullable String schemaPattern,
+                                                            String functionNamePattern) {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
-    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("functions_stmt").iterator()));
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("functions_stmt").iterator(),
+                                                      statementsToMetadata.get("functions_stmt")));
     return new MockStatementExecutionFuture(futureDelegate, "functions_stmt",
                                             statementsToMetadata, statementsToResults);
   }
@@ -110,26 +118,29 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
-  public StatementExecutionFuture tables(@Nullable String catalog, @Nullable String schemaPattern,
-                                         String tableNamePattern, @Nullable List<String> tableTypes) {
+  public ListenableFuture<ExploreExecutionResult> tables(@Nullable String catalog, @Nullable String schemaPattern,
+                                                         String tableNamePattern, @Nullable List<String> tableTypes) {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
-    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("tables_stmt").iterator()));
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("tables_stmt").iterator(),
+                                                      statementsToMetadata.get("tables_stmt")));
     return new MockStatementExecutionFuture(futureDelegate, "tables_stmt",
                                             statementsToMetadata, statementsToResults);
   }
 
   @Override
-  public StatementExecutionFuture tableTypes() {
+  public ListenableFuture<ExploreExecutionResult> tableTypes() {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
-    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("tableTypes_stmt").iterator()));
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("tableTypes_stmt").iterator(),
+                                                      statementsToMetadata.get("tableTypes_stmt")));
     return new MockStatementExecutionFuture(futureDelegate, "tableTypes_stmt",
                                             statementsToMetadata, statementsToResults);
   }
 
   @Override
-  public StatementExecutionFuture dataTypes() {
+  public ListenableFuture<ExploreExecutionResult> dataTypes() {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
-    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("dataTypes_stmt").iterator()));
+    futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get("dataTypes_stmt").iterator(),
+                                                      statementsToMetadata.get("dataTypes_stmt")));
     return new MockStatementExecutionFuture(futureDelegate, "dataTypes_stmt",
                                             statementsToMetadata, statementsToResults);
   }
@@ -151,10 +162,12 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
 
   private static final class MockExploreExecutionResult implements ExploreExecutionResult {
 
-    private final Iterator<Result> delegate;
+    private final Iterator<QueryResult> delegate;
+    private final List<ColumnDesc> schema;
 
-    MockExploreExecutionResult(Iterator<Result> delegate) {
+    MockExploreExecutionResult(Iterator<QueryResult> delegate, List<ColumnDesc> schema) {
       this.delegate = delegate;
+      this.schema = schema;
     }
 
     @Override
@@ -163,7 +176,7 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
     }
 
     @Override
-    public Result next() {
+    public QueryResult next() {
       return delegate.next();
     }
 
@@ -186,28 +199,28 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
     public void setFetchSize(int fetchSize) {
       // Do nothing
     }
+
+    @Override
+    public List<ColumnDesc> getResultSchema() throws ExploreException {
+      return schema;
+    }
   }
 
   private static final class MockStatementExecutionFuture
     extends ForwardingListenableFuture.SimpleForwardingListenableFuture<ExploreExecutionResult>
-    implements StatementExecutionFuture {
+    implements ListenableFuture<ExploreExecutionResult> {
 
     private final Map<String, List<ColumnDesc>> statementsToMetadata;
-    private final Map<String, List<Result>> statementsToResults;
+    private final Map<String, List<QueryResult>> statementsToResults;
     private final String statement;
 
     MockStatementExecutionFuture(ListenableFuture<ExploreExecutionResult> delegate, String statement,
                                  Map<String, List<ColumnDesc>> statementsToMetadata,
-                                 Map<String, List<Result>> statementsToResults) {
+                                 Map<String, List<QueryResult>> statementsToResults) {
       super(delegate);
       this.statement = statement;
       this.statementsToMetadata = statementsToMetadata;
       this.statementsToResults = statementsToResults;
-    }
-
-    @Override
-    public List<ColumnDesc> getResultSchema() throws ExploreException {
-      return statementsToMetadata.get(statement);
     }
 
     @Override

@@ -18,9 +18,10 @@ package com.continuuity.internal.app.deploy;
 
 import com.continuuity.ToyApp;
 import com.continuuity.WebCrawlApp;
-import com.continuuity.app.program.Type;
 import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import com.continuuity.proto.ProgramType;
+import com.continuuity.test.internal.AppFabricClient;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -65,14 +66,14 @@ public class LocalManagerTest {
   @Test
   public void testGoodPipeline() throws Exception {
     Location deployedJar = lf.create(
-      JarFinder.getJar(ToyApp.class, AppFabricTestHelper.getManifestWithMainClass(ToyApp.class))
+      JarFinder.getJar(ToyApp.class, AppFabricClient.getManifestWithMainClass(ToyApp.class))
     );
 
     ListenableFuture<?> p = AppFabricTestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar);
     ApplicationWithPrograms input = (ApplicationWithPrograms) p.get();
 
     Assert.assertEquals(input.getAppSpecLoc().getArchive(), deployedJar);
-    Assert.assertEquals(input.getPrograms().iterator().next().getType(), Type.FLOW);
+    Assert.assertEquals(input.getPrograms().iterator().next().getType(), ProgramType.FLOW);
     Assert.assertEquals(input.getPrograms().iterator().next().getName(), "ToyFlow");
   }
 

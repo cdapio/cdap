@@ -85,12 +85,7 @@ public class ByteCodeClassLoader extends ClassLoader {
       return result;
     }
 
-    //Check with the parent classloader
-    ClassLoader parent = getParent();
-    if (parent != null) {
-      return parent.loadClass(className);
-    }
-
-    throw new ClassNotFoundException("Failed to load class: " + className);
+    // Load with parent classloader
+    return super.loadClass(className, resolveIt);
   }
 }
