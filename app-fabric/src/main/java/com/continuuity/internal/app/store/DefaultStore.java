@@ -96,7 +96,7 @@ public class DefaultStore implements Store {
   private final CConfiguration configuration;
   private final DatasetFramework dsFramework;
 
-  private Transactional<AppMds> txnl;
+  private Transactional<AppMds, AppMetadataStore> txnl;
 
   @Inject
   public DefaultStore(CConfiguration conf,
@@ -110,7 +110,7 @@ public class DefaultStore implements Store {
       new NamespacedDatasetFramework(framework, new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.SYSTEM));
 
     txnl =
-      new Transactional<AppMds>(
+      Transactional.of(
         new TransactionExecutorFactory() {
           @Override
           public TransactionExecutor createExecutor(Iterable<TransactionAware> transactionAwares) {
@@ -961,7 +961,7 @@ public class DefaultStore implements Store {
     }
   }
 
-  private static final class AppMds implements Iterable {
+  private static final class AppMds implements Iterable<AppMetadataStore> {
     private final AppMetadataStore apps;
 
     private AppMds(Table mdsTable) {
@@ -969,8 +969,8 @@ public class DefaultStore implements Store {
     }
 
     @Override
-    public Iterator iterator() {
-      return Iterators.forArray(apps);
+    public Iterator<AppMetadataStore> iterator() {
+      return Iterators.singletonIterator(apps);
     }
   }
 }
