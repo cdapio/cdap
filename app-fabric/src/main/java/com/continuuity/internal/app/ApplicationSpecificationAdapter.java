@@ -66,21 +66,26 @@ public final class ApplicationSpecificationAdapter {
   private final Gson gson;
 
   public static ApplicationSpecificationAdapter create(SchemaGenerator generator) {
-    Gson gson = new GsonBuilder()
-                  .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-                  .registerTypeAdapter(ApplicationSpecification.class, new ApplicationSpecificationCodec())
-                  .registerTypeAdapter(FlowSpecification.class, new FlowSpecificationCodec())
-                  .registerTypeAdapter(FlowletSpecification.class, new FlowletSpecificationCodec())
-                  .registerTypeAdapter(ProcedureSpecification.class, new ProcedureSpecificationCodec())
-                  .registerTypeAdapter(MapReduceSpecification.class, new MapReduceSpecificationCodec())
-                  .registerTypeAdapter(WorkflowSpecification.class, new WorkflowSpecificationCodec())
-                  .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
-                  .registerTypeAdapter(Schedule.class, new ScheduleCodec())
-                  .registerTypeAdapter(ResourceSpecification.class, new ResourceSpecificationCodec())
-                  .registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec())
-                  .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory())
-                  .create();
-    return new ApplicationSpecificationAdapter(generator, gson);
+    GsonBuilder builder = new GsonBuilder();
+    addTypeAdapters(builder);
+
+    return new ApplicationSpecificationAdapter(generator, builder.create());
+  }
+
+  public static void addTypeAdapters(GsonBuilder builder) {
+    builder
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .registerTypeAdapter(ApplicationSpecification.class, new ApplicationSpecificationCodec())
+      .registerTypeAdapter(FlowSpecification.class, new FlowSpecificationCodec())
+      .registerTypeAdapter(FlowletSpecification.class, new FlowletSpecificationCodec())
+      .registerTypeAdapter(ProcedureSpecification.class, new ProcedureSpecificationCodec())
+      .registerTypeAdapter(MapReduceSpecification.class, new MapReduceSpecificationCodec())
+      .registerTypeAdapter(WorkflowSpecification.class, new WorkflowSpecificationCodec())
+      .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
+      .registerTypeAdapter(Schedule.class, new ScheduleCodec())
+      .registerTypeAdapter(ResourceSpecification.class, new ResourceSpecificationCodec())
+      .registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec())
+      .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory());
   }
 
   public static ApplicationSpecificationAdapter create() {

@@ -43,7 +43,7 @@ import com.continuuity.internal.app.runtime.schedule.ExecutorThreadPool;
 import com.continuuity.internal.app.runtime.schedule.LocalSchedulerService;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
-import com.continuuity.internal.app.store.MDTBasedStoreFactory;
+import com.continuuity.internal.app.store.DefaultStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.continuuity.logging.run.AppFabricServiceManager;
 import com.continuuity.logging.run.InMemoryDatasetExecutorServiceManager;
@@ -204,7 +204,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
 
-      bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
+      bind(StoreFactory.class).to(DefaultStoreFactory.class);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                         Names.named("appfabric.http.handler"));

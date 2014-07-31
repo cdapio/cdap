@@ -1120,7 +1120,7 @@ Submitting a Query
 ------------------
 To submit a SQL query, post the query string to the ``queries`` URL::
 
-  POST <base-url>/data/queries
+  POST <base-url>/data/explore/queries
 
 The body of the request must contain a JSON string of the form::
 
@@ -1157,7 +1157,7 @@ Status of a Query
 -----------------
 The status of a query is obtained using a HTTP GET request to the query's URL::
 
-  GET <base-url>/data/queries/<query-handle>
+  GET <base-url>/data/explore/queries/<query-handle>/status
 
 HTTP Responses
 ..............
@@ -1190,7 +1190,7 @@ Obtaining the Result Schema
 ---------------------------
 If the query's status is ``FINISHED`` and it has results, you can obtain the schema of the results::
 
-  GET <base-url>/data/queries/<query-handle>/schema
+  GET <base-url>/data/explore/queries/<query-handle>/schema
 
 HTTP Responses
 ..............
@@ -1224,7 +1224,7 @@ Retrieving Query Results
 Query results can be retrieved in batches after the query is finished, optionally specifying the batch
 size in the body of the request::
 
-  POST <base-url>/data/queries/<query-handle>/next
+  POST <base-url>/data/explore/queries/<query-handle>/next
 
 The body of the request can contain a JSON string specifying the batch size::
 
@@ -1270,7 +1270,7 @@ Closing a Query
 ---------------
 The query can be closed by issuing an HTTP DELETE against its URL::
 
-  DELETE <base-url>/data/queries/<query-handle>
+  DELETE <base-url>/data/explore/queries/<query-handle>
 
 This frees all resources that are held by this query.
 
@@ -1293,7 +1293,7 @@ Canceling a Query
 -----------------
 Execution of a query can be canceled before it is finished with an HTTP POST::
 
-  POST <base-url>/data/queries/<query-handle>/cancel
+  POST <base-url>/data/explore/queries/<query-handle>/cancel
 
 After this, the query can only be closed.
 

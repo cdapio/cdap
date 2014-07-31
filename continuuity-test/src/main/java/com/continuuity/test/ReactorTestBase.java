@@ -263,8 +263,6 @@ public class ReactorTestBase {
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
-    logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-    logAppenderInitializer.initialize();
     AppFabricHttpHandler httpHandler = injector.getInstance(AppFabricHttpHandler.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     appFabricClient = new AppFabricClient(httpHandler, locationFactory);
@@ -329,7 +327,6 @@ public class ReactorTestBase {
       throw Throwables.propagate(e);
     }
     exploreExecutorService.stopAndWait();
-    logAppenderInitializer.close();
     datasetService.stopAndWait();
     txService.stopAndWait();
   }

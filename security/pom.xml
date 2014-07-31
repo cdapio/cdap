@@ -23,9 +23,8 @@
 
   <parent>
     <groupId>com.continuuity</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>reactor</artifactId>
     <version>2.4.0-SNAPSHOT</version>
-    <relativePath>../parent/pom.xml</relativePath>
   </parent>
 
   <artifactId>security</artifactId>
@@ -37,6 +36,14 @@
       <groupId>com.continuuity</groupId>
       <artifactId>common</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.twill</groupId>
@@ -79,6 +86,10 @@
       <artifactId>resteasy-guice</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-minicluster</artifactId>

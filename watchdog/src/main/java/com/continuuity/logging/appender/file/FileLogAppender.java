@@ -130,7 +130,7 @@ public class FileLogAppender extends LogAppender {
     super.start();
     try {
       logSchema = new LogSchema().getAvroSchema();
-      FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil.getMetaTable(),
+      FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil,
                                                                         txClient,
                                                                         locationFactory);
 
