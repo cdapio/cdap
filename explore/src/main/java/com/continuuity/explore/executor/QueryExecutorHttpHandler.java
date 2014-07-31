@@ -72,7 +72,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/data/queries")
+  @Path("data/explore/queries")
   public void query(HttpRequest request, HttpResponder responder) {
     try {
       Map<String, String> args = decodeArguments(request);
@@ -93,7 +93,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("/data/queries/{id}")
+  @Path("data/explore/queries/{id}")
   public void closeQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                          @PathParam("id") final String id) {
     try {
@@ -114,7 +114,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/data/queries/{id}/cancel")
+  @Path("/data/explore/queries/{id}/cancel")
   public void cancelQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                           @PathParam("id") final String id) {
     try {
@@ -139,7 +139,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/data/queries/{id}/status")
+  @Path("data/explore/queries/{id}/status")
   public void getQueryStatus(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                              @PathParam("id") final String id) {
     try {
@@ -167,7 +167,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/data/queries/{id}/schema")
+  @Path("data/explore/queries/{id}/schema")
   public void getQueryResultsSchema(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                                     @PathParam("id") final String id) {
     try {
@@ -195,7 +195,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/data/queries/{id}/next")
+  @Path("data/explore/queries/{id}/next")
   public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
