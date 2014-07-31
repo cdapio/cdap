@@ -19,13 +19,16 @@ package com.continuuity.explore.jdbc;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.FixedAddressExploreClient;
-
+import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverPropertyInfo;
@@ -132,17 +135,27 @@ public class ExploreDriver implements Driver {
     URI jdbcURI = URI.create(url.substring(ExploreJDBCUtils.URI_JDBC_PREFIX.length()));
     String host = jdbcURI.getHost();
     int port = jdbcURI.getPort();
-
-    QueryStringDecoder decoder = new QueryStringDecoder(jdbcURI);
-    Map<String, List<String>> parameters = decoder.getParameters();
     ImmutableMap.Builder<ConnectionParams.Info, List<String>> builder = ImmutableMap.builder();
-    if (parameters != null) {
-      for (Map.Entry<String, List<String>> param : parameters.entrySet()) {
-        ConnectionParams.Info info = ConnectionParams.Info.fromStr(param.getKey());
-        if (info != null) {
-          builder.put(info, param.getValue());
+    try {
+      // get the query params
+      String query = jdbcURI.getQuery();
+      if (query != null) {
+        String decoded  = URLDecoder.decode(query, "UTF-8");
+        Map<String, String> keyValues = Splitter.on("&").withKeyValueSeparator("=")
+                                                        .split(decoded);
+        for (Map.Entry<String, String> entry : keyValues.entrySet()) {
+          ConnectionParams.Info info = ConnectionParams.Info.fromStr(entry.getKey());
+          if (info != null) {
+            List<String> values = Lists.newArrayList(entry.getValue().split(","));
+            builder.put(info, values);
+          }
         }
       }
+    } catch (UnsupportedEncodingException e) {
+      throw Throwables.propagate(e);
+    } catch (IllegalArgumentException e) {
+      // This is thrown by guava because splitter doesn't return an empty map if it can't split.
+      // Issue: 1577 guava libs.
     }
     return new ConnectionParams(host, port, builder.build());
   }

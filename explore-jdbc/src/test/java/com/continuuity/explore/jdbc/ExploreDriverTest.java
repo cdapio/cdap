@@ -114,13 +114,13 @@ public class ExploreDriverTest {
       ImmutableMap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, ImmutableList.of("foo")),
       connectionParams.getExtraInfos());
 
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&reactor.auth.token");
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&reactor.auth.token=foo,bar");
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(
-      ImmutableMap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, ImmutableList.of("")),
+      ImmutableMap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, ImmutableList.of("foo", "bar")),
       connectionParams.getExtraInfos());
-  }
+ }
 
   @Test
   public void testDriverConnection() throws Exception {
