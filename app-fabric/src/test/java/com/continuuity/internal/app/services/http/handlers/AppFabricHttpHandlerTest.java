@@ -1632,17 +1632,17 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     // data requires appId, programId, and programType. Test missing fields/invalid programType
     List<JsonObject> returnedBody = readResponse(doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow'}]"),
                                                  typeToken);
-    Assert.assertEquals("400 Bad Request", returnedBody.get(0).get("status").getAsString());
+    Assert.assertEquals(400, returnedBody.get(0).get("statusCode").getAsInt());
     returnedBody = readResponse(doPost(url, "[{'appId':'WordCountApp', 'programId':'WordCountFlow'}]"), typeToken);
-    Assert.assertEquals("400 Bad Request", returnedBody.get(0).get("status").getAsString());
+    Assert.assertEquals(400, returnedBody.get(0).get("statusCode").getAsInt());
     returnedBody = readResponse(doPost(url, "[{'programType':'Flow', 'programId':'WordCountFlow'}," +
       "{'appId': 'AppWithServices', 'programType': 'service', 'programId': 'NoOpService'}]"), typeToken);
-    Assert.assertEquals("400 Bad Request", returnedBody.get(0).get("status").getAsString());
+    Assert.assertEquals(400, returnedBody.get(0).get("statusCode").getAsInt());
     // second object is fine
     Assert.assertEquals("STOPPED", returnedBody.get(1).get("status").getAsString());
     returnedBody = readResponse(
       doPost(url, "[{'appId':'WordCountApp', 'programType':'NotExist', 'programId':'WordCountFlow'}]"), typeToken);
-    Assert.assertEquals("400 Bad Request", returnedBody.get(0).get("status").getAsString());
+    Assert.assertEquals("Invalid program type provided", returnedBody.get(0).get("error").getAsString());
     // Test malformed json
     Assert.assertEquals(400,
                         doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow' 'programId':'WordCountFlow'}]")
@@ -1650,12 +1650,12 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     // Test missing app, programType, etc
     returnedBody = readResponse(
       doPost(url, "[{'appId':'NotExist', 'programType':'Flow', 'programId':'WordCountFlow'}]"), typeToken);
-    Assert.assertEquals("404 Not Found", returnedBody.get(0).get("status").getAsString());
+    Assert.assertEquals("App: NotExist not found", returnedBody.get(0).get("error").getAsString());
     returnedBody = readResponse(
       doPost(url, "[{'appId':'WordCountApp', 'programType':'flow', 'programId':'NotExist'}," +
         "{'appId':'WordCountApp', 'programType':'flow', 'programId':'WordCountFlow'}]"), typeToken);
-    Assert.assertEquals("404 Not Found", returnedBody.get(0).get("status").getAsString());
-    // The programType should be consistent
+    Assert.assertEquals("Program not found", returnedBody.get(0).get("error").getAsString());
+    // The programType should be consistent. Second object should have proper status
     Assert.assertEquals("Flow", returnedBody.get(1).get("programType").getAsString());
     Assert.assertEquals("STOPPED", returnedBody.get(1).get("status").getAsString());
     HttpResponse response = doPost(url,
@@ -1666,6 +1666,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     returnedBody = readResponse(response, typeToken);
     for (JsonObject obj : returnedBody) {
+      Assert.assertEquals(200, obj.get("statusCode").getAsInt());
       Assert.assertEquals("STOPPED", obj.get("status").getAsString());
     }
     // start the flow
@@ -1687,7 +1688,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("STOPPED", returnedBody.get(2).get("status").getAsString());
   }
 
-  // TODO: IMPLEMENT BATCH INSTANCES TEST
   @Test
   public void testBatchInstances() throws Exception {
     String url = "/v2/instances";
@@ -1698,21 +1698,22 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     deploy(WordCountApp.class);
     deploy(AppWithServices.class);
     // data requires appId, programId, and programType. Test missing fields/invalid programType
-    List<JsonObject> returnedBody = readResponse(doPost(url,"[{'appId':'WordCountApp', 'programType':'Flow'}]"),
+    List<JsonObject> returnedBody = readResponse(doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow'}]"),
                                                  typeToken);
-    Assert.assertEquals("400 Bad Request", returnedBody.get(0).get("status").getAsString());
+    Assert.assertEquals(400, returnedBody.get(0).get("statusCode").getAsInt());
     returnedBody = readResponse(doPost(url, "[{'appId':'WordCountApp', 'programId':'WordCountFlow'}]"), typeToken);
-    Assert.assertEquals("400 Bad Request", returnedBody.get(0).get("status").getAsString());
+    Assert.assertEquals(400, returnedBody.get(0).get("statusCode").getAsInt());
     returnedBody = readResponse(doPost(url, "[{'programType':'Flow', 'programId':'WordCountFlow'}," +
       "{'appId': 'WordCountApp', 'programType': 'procedure', 'programId': 'WordFrequency'}]"), typeToken);
-    Assert.assertEquals("400 Bad Request", returnedBody.get(0).get("status").getAsString());
+    Assert.assertEquals(400, returnedBody.get(0).get("statusCode").getAsInt());
     // second object is fine because procedures dont need runnableId
     // The programType should be consistent
+    Assert.assertEquals(200, returnedBody.get(1).get("statusCode").getAsInt());
     Assert.assertEquals("Procedure", returnedBody.get(1).get("programType").getAsString());
     Assert.assertEquals(0, returnedBody.get(1).get("provisioned").getAsInt());
     returnedBody = readResponse(
       doPost(url, "[{'appId':'WordCountApp', 'programType':'NotExist', 'programId':'WordCountFlow'}]"), typeToken);
-    Assert.assertEquals("400 Bad Request", returnedBody.get(0).get("status").getAsString());
+    Assert.assertEquals(400, returnedBody.get(0).get("statusCode").getAsInt());
     // Test malformed json
     Assert.assertEquals(400,
                         doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow' 'programId':'WordCountFlow'}]")
@@ -1720,11 +1721,11 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     // Test missing app, programType, etc
     returnedBody = readResponse(
       doPost(url, "[{'appId':'NotExist', 'programType':'Flow', 'programId':'WordCountFlow'}]"), typeToken);
-    Assert.assertEquals("404 Not Found", returnedBody.get(0).get("status").getAsString());
+    Assert.assertEquals(404, returnedBody.get(0).get("statusCode").getAsInt());
     returnedBody = readResponse(
       doPost(url, "[{'appId':'WordCountApp', 'programType':'flow', 'programId':'WordCountFlow', 'runnableId': " +
         "NotExist'}]"), typeToken);
-    Assert.assertEquals("404 Not Found", returnedBody.get(0).get("status").getAsString());
+    Assert.assertEquals(404, returnedBody.get(0).get("statusCode").getAsInt());
     HttpResponse response = doPost(url,
       "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow', 'runnableId': 'StreamSource'}," +
       "{'appId': 'WordCountApp', 'programType': 'Procedure', 'programId': 'WordFrequency'}," +
@@ -1732,6 +1733,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     // test valid cases
     returnedBody = readResponse(response, typeToken);
     for (JsonObject obj : returnedBody) {
+      Assert.assertEquals(200, obj.get("statusCode").getAsInt());
       Assert.assertEquals(1, obj.get("requested").getAsInt());
       Assert.assertEquals(0, obj.get("provisioned").getAsInt());
     }
@@ -1746,13 +1748,12 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     response = doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow','programId':'WordCountFlow','runnableId':" +
       "'StreamSource'}, {'appId':'AppWithServices', 'programType':'Service','programId':'NoOpService', 'runnableId':" +
       "'DummyService'}, {'appId': 'WordCountApp', 'programType': 'Mapreduce','programId': 'VoidMapReduceJob'}]");
-    // test valid cases
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     returnedBody = readResponse(response, typeToken);
     Assert.assertEquals(1, returnedBody.get(0).get("provisioned").getAsInt());
     Assert.assertEquals(1, returnedBody.get(1).get("provisioned").getAsInt());
     // no instances for mapreduce jobs
-    Assert.assertEquals("400 Bad Request", returnedBody.get(2).get("status").getAsString());
+    Assert.assertEquals(400, returnedBody.get(2).get("statusCode").getAsInt());
     doPut("/v2/apps/WordCountApp/flows/WordCountFlow/flowlets/StreamSource/instances", "{'instances': 2}");
     returnedBody = readResponse(doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow'," +
       "'programId':'WordCountFlow', 'runnableId': 'StreamSource'}]"), typeToken);
