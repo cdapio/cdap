@@ -90,10 +90,4 @@ public class HiveCDH4ExploreService extends BaseHiveExploreService {
     throws HiveSQLException, ExploreException {
     return getCliService().executeStatement(sessionHandle, statement, ImmutableMap.<String, String>of());
   }
-
-  @Override
-  public void cancel(QueryHandle handle) throws ExploreException, HandleNotFoundException, SQLException {
-    LOG.warn("Trying to cancel operation with handle {}", handle);
-    throw new ExploreException("Cancel operation is not supported with CDH4.");
-  }
 }

@@ -66,7 +66,7 @@ public class ActiveOperationRemovalHandler implements RemovalListener<QueryHandl
           status.getStatus() != QueryStatus.OpStatus.CANCELED && status.getStatus() != QueryStatus.OpStatus.ERROR) {
           LOG.info("Cancelling handle {} with status {} due to timeout",
                    handle.getHandle(), status.getStatus());
-          exploreService.cancel(handle);
+          exploreService.cancelInternal(handle);
         }
 
       } catch (Throwable e) {

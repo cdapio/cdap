@@ -80,17 +80,6 @@ public interface Explore {
     throws ExploreException, HandleNotFoundException, SQLException;
 
   /**
-   * Cancel a running Hive operation. After the operation moves into a {@link QueryStatus.OpStatus#CANCELED},
-   * {@link #close(QueryHandle)} needs to be called to release resources.
-   *
-   * @param handle handle returned by {@link #execute(String)}.
-   * @throws ExploreException on any error cancelling operation.
-   * @throws HandleNotFoundException when handle is not found.
-   * @throws SQLException if there are errors in the SQL statement.
-   */
-  void cancel(QueryHandle handle) throws ExploreException, HandleNotFoundException, SQLException;
-
-  /**
    * Release resources associated with a Hive operation. After this call, handle of the operation becomes invalid.
    *
    * @param handle handle returned by {@link #execute(String)}.
