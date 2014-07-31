@@ -26,7 +26,6 @@ import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.test.SlowTests;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -181,7 +180,6 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     for (QueryInfo queryInfo : result) {
       Assert.assertNotNull(queryInfo.getStatement());
       Assert.assertNotNull(queryInfo.getQueryHandle());
-      Assert.assertTrue(queryInfo.isHasResults());
       Assert.assertFalse(queryInfo.isActive());
       Assert.assertEquals("FINISHED", queryInfo.getStatus().toString());
     }
