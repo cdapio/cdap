@@ -52,8 +52,6 @@ import javax.annotation.Nullable;
  * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP.
  */
 public abstract class AbstractExploreClient extends ExploreHttpClient implements ExploreClient {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractExploreClient.class);
-
   private final ListeningScheduledExecutorService executor;
 
   protected AbstractExploreClient() {
