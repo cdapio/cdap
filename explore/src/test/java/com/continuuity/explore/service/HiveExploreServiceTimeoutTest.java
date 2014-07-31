@@ -50,23 +50,6 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
 
   private static ExploreService exploreService;
 
-
-  private static QueryStatus waitForCompletionStatus(ExploreService exploreService, QueryHandle handle,
-                                                long sleepTime, TimeUnit timeUnit, int maxTries)
-    throws ExploreException, HandleNotFoundException, InterruptedException, SQLException {
-    QueryStatus status;
-    int tries = 0;
-    do {
-      timeUnit.sleep(sleepTime);
-      status = exploreService.getStatus(handle);
-
-      if (++tries > maxTries) {
-        break;
-      }
-    } while (!status.getStatus().isDone());
-    return status;
-  }
-
   @BeforeClass
   public static void start() throws Exception {
     // Set smaller values for timeouts for testing
@@ -154,7 +137,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
 
-    QueryStatus status = waitForCompletionStatus(exploreService, handle, 200, TimeUnit.MILLISECONDS, 20);
+    QueryStatus status = waitForCompletionStatus(handle, 200, TimeUnit.MILLISECONDS, 20);
     Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
     Assert.assertTrue(status.hasResults());
 
@@ -238,7 +221,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
 
-    QueryStatus status = waitForCompletionStatus(exploreService, handle, 200, TimeUnit.MILLISECONDS, 20);
+    QueryStatus status = waitForCompletionStatus(handle, 200, TimeUnit.MILLISECONDS, 20);
     Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
     Assert.assertFalse(status.hasResults());
 

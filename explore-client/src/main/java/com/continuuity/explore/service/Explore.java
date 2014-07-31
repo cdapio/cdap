@@ -79,6 +79,9 @@ public interface Explore {
   List<QueryResult> nextResults(QueryHandle handle, int size)
     throws ExploreException, HandleNotFoundException, SQLException;
 
+  List<QueryResult> previewResults(QueryHandle handle)
+    throws ExploreException, HandleNotFoundException, SQLException;
+
   /**
    * Cancel a running Hive operation. After the operation moves into a {@link QueryStatus.OpStatus#CANCELED},
    * {@link #close(QueryHandle)} needs to be called to release resources.
