@@ -21,6 +21,8 @@ import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.lang.ClassLoaders;
+import com.continuuity.common.lang.jar.BundleJarUtil;
+import com.continuuity.common.utils.DirUtils;
 import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasets;
 import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
@@ -35,6 +37,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -88,8 +91,7 @@ public class DatasetTypeManager extends AbstractIdleService {
    * @param className module class
    * @param jarLocation location of the module jar
    */
-  public void addModule(final String name, final String className, final Location jarLocation,
-                        final File unpackedLocation)
+  public void addModule(final String name, final String className, final Location jarLocation)
     throws DatasetModuleConflictException {
 
     LOG.info("adding module, name: {}, className: {}, jarLocation: {}",
@@ -109,10 +111,12 @@ public class DatasetTypeManager extends AbstractIdleService {
 
           ClassLoader cl;
           DatasetModule module;
+          File unpackedLocation = Files.createTempDir();
           try {
             // NOTE: we assume all classes needed to load dataset module class are available in the jar or otherwise
             //       are system classes
             // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
+            BundleJarUtil.unpackProgramJar(jarLocation, unpackedLocation);
             cl = jarLocation == null ? this.getClass().getClassLoader() :
               ClassLoaders.newProgramClassLoaderWithoutFilter(unpackedLocation, this.getClass().getClassLoader());
             @SuppressWarnings("unchecked")
@@ -122,6 +126,12 @@ public class DatasetTypeManager extends AbstractIdleService {
             LOG.error("Could not instantiate instance of dataset module class {} for module {} using jarLocation {}",
                       className, name, jarLocation);
             throw Throwables.propagate(e);
+          } finally {
+            try {
+              DirUtils.deleteDirectoryContents(unpackedLocation);
+            } catch (IOException e) {
+              LOG.warn("Failed to delete directory {}", unpackedLocation, e);
+            }
           }
 
           DependencyTrackingRegistry reg = new DependencyTrackingRegistry(datasets, cl);
@@ -327,7 +337,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     for (Map.Entry<String, DatasetModule> module : defaultModules.entrySet()) {
       try {
         // NOTE: we assume default modules are always in classpath, hence passing null for jar location
-        addModule(module.getKey(), module.getValue().getClass().getName(), null, null);
+        addModule(module.getKey(), module.getValue().getClass().getName(), null);
       } catch (DatasetModuleConflictException e) {
         // perfectly fine: we need to add default modules only the very first time service is started
         LOG.info("Not adding " + module.getKey() + " module: it already exists");

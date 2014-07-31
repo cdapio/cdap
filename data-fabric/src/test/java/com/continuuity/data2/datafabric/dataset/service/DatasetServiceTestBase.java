@@ -41,7 +41,6 @@ import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
-import com.google.common.io.InputSupplier;
 import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -56,7 +55,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -145,12 +143,7 @@ public abstract class DatasetServiceTestBase {
     try {
       HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
         .addHeader("X-Continuuity-Class-Name", moduleClass.getName())
-        .withBody(new InputSupplier<InputStream>() {
-        @Override
-        public InputStream getInput() throws IOException {
-          return is;
-        }
-      }).build();
+        .withBody(new File(jarPath)).build();
       return HttpRequests.execute(request).getResponseCode();
     } finally {
       is.close();
@@ -178,12 +171,7 @@ public abstract class DatasetServiceTestBase {
     try {
       HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
         .addHeader("X-Continuuity-Class-Name", moduleClassName)
-        .withBody(new InputSupplier<InputStream>() {
-          @Override
-          public InputStream getInput() throws IOException {
-            return is;
-          }
-        }).build();
+        .withBody(new File(jarPath)).build();
       return HttpRequests.execute(request).getResponseCode();
     } finally {
       is.close();

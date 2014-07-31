@@ -200,6 +200,9 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     // Create bundle jar with TestModule2 and TestModule1 inside it, request for deploy is made for Module1.
     Assert.assertEquals(200, deployModuleBundled("module1", TestModule1.class.getName(),
                                                  TestModule2.class, new File(module1Jar)));
+    Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
+    List<DatasetModuleMeta> modules = getModules().getResponseObject();
+    Assert.assertEquals(0, modules.size());
   }
 
   /**
