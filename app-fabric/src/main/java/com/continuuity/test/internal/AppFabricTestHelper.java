@@ -29,7 +29,6 @@ import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
-import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.proto.Id;
 import com.continuuity.proto.ProgramType;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
@@ -76,9 +75,6 @@ public class AppFabricTestHelper {
       injector.getInstance(DatasetService.class).startAndWait();
       injector.getInstance(SchedulerService.class).startAndWait();
       injector.getInstance(DatasetService.class).startAndWait();
-
-      LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-      logAppenderInitializer.initialize();
     }
     return injector;
   }

@@ -207,7 +207,8 @@ public class SingleNodeMain {
       if (externalAuthenticationServer != null) {
         externalAuthenticationServer.stopAndWait();
       }
-      logAppenderInitializer.close();
+      // todo: REACTOR-682
+//      logAppenderInitializer.close();
 
     } catch (Throwable e) {
       LOG.error("Exception during shutdown", e);
