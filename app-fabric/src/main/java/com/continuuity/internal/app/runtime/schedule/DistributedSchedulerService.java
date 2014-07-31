@@ -52,8 +52,8 @@ public final class DistributedSchedulerService extends AbstractSchedulerService 
 
   @Override
   protected void startUp() throws Exception {
-    //Wait till TransactionService is discovered then start the scheduler.
-    ServiceDiscovered discover = discoveryServiceClient.discover(Constants.Service.TRANSACTION);
+    // Wait till DatasetService is discovered then start the scheduler.
+    ServiceDiscovered discover = discoveryServiceClient.discover(Constants.Service.DATASET_MANAGER);
     cancellable = discover.watchChanges(
       new ServiceDiscovered.ChangeListener() {
         @Override

@@ -16,6 +16,8 @@
 
 package com.continuuity.data2.dataset2;
 
+import javax.annotation.Nullable;
+
 /**
  * Performs namespacing for data set names.
  */
@@ -28,8 +30,9 @@ public interface DatasetNamespace {
 
   /**
    * @param name namespaced name of the dataset
-   * @return original name of the dataset
+   * @return original name of the dataset or null if name is not within this namespace
    */
   // TODO: possible design issue, see REACTOR-217
+  @Nullable
   String fromNamespaced(String name);
 }

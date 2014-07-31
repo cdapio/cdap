@@ -1,1 +1,0 @@
-Place holder for thrift wrapper for Passport Service

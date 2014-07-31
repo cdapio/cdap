@@ -100,6 +100,7 @@ public class RoutingToExploreTest {
     Assert.assertEquals("status:fooId", doRequest("/data/explore/queries/fooId/status", "GET"));
     Assert.assertEquals("schema:fooId", doRequest("/data/explore/queries/fooId/schema", "GET"));
     Assert.assertEquals("nextResults:fooId", doRequest("/data/explore/queries/fooId/nextResults", "POST"));
+    Assert.assertEquals("queries-list", doRequest("/data/explore/queries", "GET"));
   }
 
   @Test
@@ -174,6 +175,12 @@ public class RoutingToExploreTest {
     @Path("/data/explore/queries/{id}/nextResults")
     public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
       responder.sendString(HttpResponseStatus.OK, "nextResults:" + id);
+    }
+
+    @GET
+    @Path("/data/explore/queries")
+    public void getQueries(HttpRequest request, HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.OK, "queries-list");
     }
   }
 

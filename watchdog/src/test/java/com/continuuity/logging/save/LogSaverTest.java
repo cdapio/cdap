@@ -24,7 +24,10 @@ import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.logging.SystemLoggingContext;
-import com.continuuity.data.InMemoryDataSetAccessor;
+import com.continuuity.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.logging.KafkaTestBase;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.LogAppenderInitializer;
@@ -93,11 +96,14 @@ public class LogSaverTest extends KafkaTestBase {
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private static InMemoryTxSystemClient txClient = null;
-  private static InMemoryDataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor(CConfiguration.create());
+  private static DatasetFramework dsFramework;
   private static LogSaverTableUtil tableUtil;
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
+    dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
+    dsFramework.addModule("table", new InMemoryOrderedTableModule());
+
     String logBaseDir = temporaryFolder.newFolder().getAbsolutePath();
     LOG.info("Log base dir {}", logBaseDir);
 
@@ -131,7 +137,7 @@ public class LogSaverTest extends KafkaTestBase {
     KafkaClientService kafkaClient = new ZKKafkaClientService(zkClientService);
     kafkaClient.startAndWait();
 
-    tableUtil = new LogSaverTableUtil(dataSetAccessor);
+    tableUtil = new LogSaverTableUtil(dsFramework, cConf);
     LogSaver logSaver =
       new LogSaver(tableUtil, txClient, kafkaClient,
                    cConf, new LocalLocationFactory());
@@ -159,8 +165,7 @@ public class LogSaverTest extends KafkaTestBase {
 
   @AfterClass
   public static void testCheckpoint() throws Exception {
-    CheckpointManager checkpointManager = new CheckpointManager(tableUtil.getMetaTable(),
-                                                                txClient, KafkaTopic.getTopic());
+    CheckpointManager checkpointManager = new CheckpointManager(tableUtil, txClient, KafkaTopic.getTopic());
     Assert.assertEquals(60, checkpointManager.getCheckpoint(0));
     Assert.assertEquals(120, checkpointManager.getCheckpoint(1));
   }
@@ -187,7 +192,7 @@ public class LogSaverTest extends KafkaTestBase {
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
     conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "developer");
     DistributedLogReader distributedLogReader =
-      new DistributedLogReader(new InMemoryDataSetAccessor(conf), txClient, conf, new LocalLocationFactory());
+      new DistributedLogReader(dsFramework, txClient, conf, new LocalLocationFactory());
 
     LogCallback logCallback1 = new LogCallback();
     distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback1);

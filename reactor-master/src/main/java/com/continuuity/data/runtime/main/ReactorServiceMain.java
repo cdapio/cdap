@@ -43,6 +43,7 @@ import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.services.AppFabricServer;
+import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Charsets;
@@ -200,6 +201,9 @@ public class ReactorServiceMain extends DaemonMain {
 
   @Override
   public void start() {
+    LogAppenderInitializer logAppenderInitializer = baseInjector.getInstance(LogAppenderInitializer.class);
+    logAppenderInitializer.initialize();
+
     Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService);
 
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
