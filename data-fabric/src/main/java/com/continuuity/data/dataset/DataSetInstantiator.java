@@ -18,6 +18,7 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetInstantiationException;
+import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataSetAccessor;
@@ -63,7 +64,7 @@ public class DataSetInstantiator extends DataSetInstantiationBase implements Dat
   @Override
   public <T extends Closeable> T getDataSet(String dataSetName)
     throws DataSetInstantiationException {
-    return getDataSet(dataSetName, null);
+    return getDataSet(dataSetName, DatasetDefinition.NO_ARGUMENTS);
   }
 
   @Override
