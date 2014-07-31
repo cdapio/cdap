@@ -63,7 +63,7 @@ CDAP functions as a middle-tier application platform. As seen in the diagram bel
 it provides an interface (using either HTTP REST or Java APIs) to clients through a Router 
 along with services and features that run inside YARN containers in Hadoop.
 
-.. image:: docs/_images/CDAP_Diagram.png
+.. image:: /docs/developer-guide/source/_images/Arch_Diagram.png
    :width: 6in
    :align: center
 
@@ -154,7 +154,7 @@ Step 2: The Dashboard
 .....................
 When you first open the Dashboard, you'll be greeted with:
 
-.. image:: /docs/_images/overview.png
+.. image:: /docs/developer-guide/source/_images/quickstart/overview.png
    :width: 4in
    :align: center
    
@@ -387,5 +387,5 @@ No endorsement by The Apache Software Foundation is implied by the use of these 
 .. |(TM)| unicode:: U+2122 .. trademark sign
    :trim:
 
-.. |(Cask)| image:: docs/_images/CDAP.png
+.. |(Cask)| image:: /docs/developer-guide/source/_images/CDAP.png
 
