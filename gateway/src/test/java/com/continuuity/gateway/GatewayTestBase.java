@@ -73,6 +73,7 @@ import java.util.Set;
 /**
  *
  */
+// TODO: refactor this test. It is complete mess
 public abstract class GatewayTestBase {
 
   private static final String API_KEY = "SampleTestApiKey";
@@ -178,8 +179,6 @@ public abstract class GatewayTestBase {
     gateway = injector.getInstance(Gateway.class);
     txService = injector.getInstance(InMemoryTransactionManager.class);
     txService.startAndWait();
-    dsService = injector.getInstance(DatasetService.class);
-    dsService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     metrics = injector.getInstance(MetricsQueryService.class);
     streamHttpService = injector.getInstance(StreamHttpService.class);
@@ -187,6 +186,8 @@ public abstract class GatewayTestBase {
     metrics.startAndWait();
     streamHttpService.startAndWait();
     gateway.startAndWait();
+    dsService = injector.getInstance(DatasetService.class);
+    dsService.startAndWait();
 
     // Restart handlers to check if they are resilient across restarts.
     gateway.stopAndWait();

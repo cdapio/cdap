@@ -38,6 +38,7 @@ import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
 import com.continuuity.internal.app.runtime.distributed.DistributedProgramServiceDiscovery;
 import com.continuuity.logging.appender.LogAppender;
+import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.appender.kafka.KafkaLogAppender;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.inject.AbstractModule;
@@ -103,6 +104,11 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
 
     zkClientService = injector.getInstance(ZKClientService.class);
     zkClientService.start();
+
+    // todo: we should do this in AbstractMapReduceContextBuilder, see REACTOR-682
+    // Initialize log appender
+    LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+    logAppenderInitializer.initialize();
 
     return injector;
   }

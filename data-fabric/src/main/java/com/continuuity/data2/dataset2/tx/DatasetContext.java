@@ -14,7 +14,30 @@
  * the License.
  */
 
+package com.continuuity.data2.dataset2.tx;
+
+import com.google.common.collect.Iterators;
+
+import java.util.Iterator;
+
 /**
- * Metadata tests.
+ * Handy implementation of tx context for {@link Transactional} that holds single dataset.
+ *
+ * @param <T> type of the dataset
  */
-package com.continuuity.metadata;
+public class DatasetContext<T> implements Iterable {
+  private final T dataset;
+
+  public DatasetContext(T dataset) {
+    this.dataset = dataset;
+  }
+
+  public T get() {
+    return dataset;
+  }
+
+  @Override
+  public Iterator iterator() {
+    return Iterators.forArray(dataset);
+  }
+}

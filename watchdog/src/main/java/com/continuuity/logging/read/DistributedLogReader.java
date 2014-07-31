@@ -99,7 +99,7 @@ public final class DistributedLogReader implements LogReader {
       this.serializer = new LoggingEventSerializer();
 
       this.fileMetaDataManager =
-        new FileMetaDataManager(new LogSaverTableUtil(dsFramework, cConfig).getMetaTable(), txClient, locationFactory);
+        new FileMetaDataManager(new LogSaverTableUtil(dsFramework, cConfig), txClient, locationFactory);
 
       this.schema = new LogSchema().getAvroSchema();
     } catch (Exception e) {

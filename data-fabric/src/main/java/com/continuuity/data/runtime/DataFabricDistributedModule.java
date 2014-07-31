@@ -34,8 +34,6 @@ import com.continuuity.data2.transaction.stream.hbase.HBaseStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.hbase.HBaseStreamFileConsumerFactory;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
-import com.continuuity.metadata.MetaDataTable;
-import com.continuuity.metadata.SerializingMetaDataTable;
 import com.continuuity.tephra.TxConstants;
 import com.continuuity.tephra.distributed.PooledClientProvider;
 import com.continuuity.tephra.distributed.ThreadLocalClientProvider;
@@ -63,9 +61,6 @@ public class DataFabricDistributedModule extends AbstractModule {
 
   @Override
   public void configure() {
-    // bind meta data store
-    bind(MetaDataTable.class).to(SerializingMetaDataTable.class).in(Singleton.class);
-
     bind(ThriftClientProvider.class).toProvider(ThriftClientProviderSupplier.class);
     bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
