@@ -34,6 +34,8 @@ import java.sql.Driver;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -141,13 +143,17 @@ public class ExploreDriver implements Driver {
       String query = jdbcURI.getQuery();
       if (query != null) {
         String decoded  = URLDecoder.decode(query, "UTF-8");
-        Map<String, String> keyValues = Splitter.on("&").withKeyValueSeparator("=")
-                                                        .split(decoded);
-        for (Map.Entry<String, String> entry : keyValues.entrySet()) {
-          ConnectionParams.Info info = ConnectionParams.Info.fromStr(entry.getKey());
-          if (info != null) {
-            List<String> values = Lists.newArrayList(entry.getValue().split(","));
-            builder.put(info, values);
+        Iterator<String> iterator = Splitter.on("&").split(decoded).iterator();
+        while (iterator.hasNext()) {
+          // Need to do it twice because of error in guava libs Issue: 1577
+          List<String> keyValues = Lists.newArrayList(Splitter.on("=").limit(2).split(iterator.next()));
+          if (keyValues.size() > 0) {
+            ConnectionParams.Info info = ConnectionParams.Info.fromStr(keyValues.get(0));
+            if (info != null && keyValues.size() > 1) {
+              builder.put(info, Lists.newArrayList(keyValues.get(1).split(",")));
+            } else if (info != null) {
+              builder.put(info, new ArrayList<String>());
+            }
           }
         }
       }
