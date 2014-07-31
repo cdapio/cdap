@@ -363,7 +363,12 @@ Mailing List
 ............
 
 CDAP User Group and Development Discussions: `cask-cdap-dev@googlegroups.com 
-<https://groups.google.com/d/forum/cask-cdap-dev>`__
+<https://groups.google.com/d/forum/cdap-dev>`__
+
+IRC Channel
+...........
+
+CDAP IRC Channel #cask-cdap on irc.freenode.net
 
 
 License and Trademarks
