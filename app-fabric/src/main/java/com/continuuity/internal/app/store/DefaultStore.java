@@ -20,6 +20,7 @@ import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.table.Table;
 import com.continuuity.api.flow.FlowSpecification;
@@ -121,7 +122,8 @@ public class DefaultStore implements Store {
           public AppMds get() {
             try {
               Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, APP_META_TABLE, "table",
-                                                               DatasetProperties.EMPTY, null);
+                                                               DatasetProperties.EMPTY,
+                                                               DatasetDefinition.NO_ARGUMENTS, null);
               return new AppMds(mdsTable);
             } catch (Exception e) {
               LOG.error("Failed to access app.meta table", e);

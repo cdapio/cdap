@@ -16,6 +16,7 @@
 package com.continuuity.data.stream.service;
 
 import com.continuuity.api.data.stream.StreamSpecification;
+import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.table.Table;
 import com.continuuity.common.conf.CConfiguration;
@@ -70,7 +71,8 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
           public StreamMds get() {
             try {
               Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, STREAM_META_TABLE, "table",
-                                                               DatasetProperties.EMPTY, null);
+                                                               DatasetProperties.EMPTY,
+                                                               DatasetDefinition.NO_ARGUMENTS, null);
 
               return new StreamMds(new MetadataStoreDataset(mdsTable));
             } catch (Exception e) {
