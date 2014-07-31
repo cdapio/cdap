@@ -1713,8 +1713,8 @@ Example
    * - Description
      - Retrieve the history of the Flow *WhoFlow* of the Application *HelloWorld*
    * - Returns
-     - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
-       ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
+     - ``{"runid":"...","start":1382567447,"stop":1382567492,"status":"STOPPED"},``
+       ``{"runid":"...","start":1382567383,"stop":1382567397,"status":"STOPPED"}``
 
 The *runid* field is a UUID that uniquely identifies a run within the Continuuity Reactor,
 with the start and end times in seconds since the start of the Epoch (midnight 1/1/1970).
@@ -1734,8 +1734,8 @@ Example
    * - Description
      - Retrieve the history of the Service *WhoService* of the Application *HelloWorld*
    * - Returns
-     - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
-       ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
+     - ``{"runid":"...","start":1382567447,"stop":1382567492,"status":"STOPPED"},``
+       ``{"runid":"...","start":1382567383,"stop":1382567397,"status":"STOPPED"}``
 
 For Workflows, you can also retrieve:
 
