@@ -23,9 +23,8 @@
 
   <parent>
     <groupId>com.continuuity</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>reactor</artifactId>
     <version>2.4.0-SNAPSHOT</version>
-    <relativePath>../parent/pom.xml</relativePath>
   </parent>
 
   <artifactId>data-fabric-tests</artifactId>
@@ -59,6 +58,10 @@
     </dependency>
 
     <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>data-fabric</artifactId>
       <version>${project.version}</version>
@@ -71,6 +74,11 @@
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>common-unit-test</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
