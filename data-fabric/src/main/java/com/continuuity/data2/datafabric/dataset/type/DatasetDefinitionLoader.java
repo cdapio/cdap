@@ -20,14 +20,19 @@ import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.lang.ClassLoaders;
-import com.continuuity.common.lang.jar.JarClassLoader;
+import com.continuuity.common.lang.jar.BundleJarUtil;
+import com.continuuity.common.utils.DirUtils;
 import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.module.lib.DatasetModules;
 import com.continuuity.proto.DatasetModuleMeta;
 import com.continuuity.proto.DatasetTypeMeta;
 import com.google.common.base.Throwables;
+import com.google.common.io.Files;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -36,6 +41,7 @@ import java.util.List;
  */
 public class DatasetDefinitionLoader {
   private final LocationFactory locationFactory;
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetDefinitionLoader.class);
 
   /**
    * Creates instance of {@link DatasetDefinitionLoader}
@@ -64,13 +70,15 @@ public class DatasetDefinitionLoader {
    */
   public <T extends DatasetDefinition> T load(DatasetTypeMeta meta, DatasetDefinitionRegistry registry)
     throws IOException {
-
     ClassLoader classLoader = DatasetDefinitionLoader.class.getClassLoader();
     List<DatasetModuleMeta> modulesToLoad = meta.getModules();
+    File unpackedLocation = Files.createTempDir();
     for (DatasetModuleMeta moduleMeta : modulesToLoad) {
       // for default "system" modules it can be null, see getJarLocation() javadoc
       if (moduleMeta.getJarLocation() != null) {
-        classLoader = new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation()), classLoader);
+        BundleJarUtil.unpackProgramJar(locationFactory.create(moduleMeta.getJarLocation()), unpackedLocation);
+        classLoader =
+          ClassLoaders.newProgramClassLoaderWithoutFilter(unpackedLocation, this.getClass().getClassLoader());
       }
       DatasetModule module;
       try {
@@ -81,7 +89,11 @@ public class DatasetDefinitionLoader {
       }
       module.register(registry);
     }
-
+    try {
+      DirUtils.deleteDirectoryContents(unpackedLocation);
+    } catch (IOException e) {
+      LOG.warn("Failed to delete directory {}", unpackedLocation, e);
+    }
     return registry.get(meta.getName());
   }
 }

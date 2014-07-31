@@ -126,17 +126,15 @@ public class DatasetTypeManager extends AbstractIdleService {
             LOG.error("Could not instantiate instance of dataset module class {} for module {} using jarLocation {}",
                       className, name, jarLocation);
             throw Throwables.propagate(e);
-          } finally {
-            try {
-              DirUtils.deleteDirectoryContents(unpackedLocation);
-            } catch (IOException e) {
-              LOG.warn("Failed to delete directory {}", unpackedLocation, e);
-            }
           }
 
           DependencyTrackingRegistry reg = new DependencyTrackingRegistry(datasets, cl);
           module.register(reg);
-
+          try {
+            DirUtils.deleteDirectoryContents(unpackedLocation);
+          } catch (IOException e) {
+            LOG.warn("Failed to delete directory {}", unpackedLocation, e);
+          }
           List<String> moduleDependencies = Lists.newArrayList();
           for (String usedType : reg.getUsedTypes()) {
             DatasetModuleMeta usedModule = datasets.getTypeMDS().getModuleByType(usedType);
