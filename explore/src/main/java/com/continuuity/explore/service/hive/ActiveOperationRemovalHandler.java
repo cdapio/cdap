@@ -64,8 +64,8 @@ public class ActiveOperationRemovalHandler implements RemovalListener<QueryHandl
         // If operation is still not complete, cancel it.
         if (status.getStatus() != QueryStatus.OpStatus.FINISHED && status.getStatus() != QueryStatus.OpStatus.CLOSED &&
           status.getStatus() != QueryStatus.OpStatus.CANCELED && status.getStatus() != QueryStatus.OpStatus.ERROR) {
-          LOG.info("Cancelling handle {} with status {} due to timeout",
-                   handle.getHandle(), status.getStatus());
+          LOG.info("Cancelling handle {} with status {} due to timeout", handle.getHandle(), status.getStatus());
+          // This operation is aysnc, except with Hive CDH 4, in which case cancel throws an unsupported exception
           exploreService.cancelInternal(handle);
         }
 
