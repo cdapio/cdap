@@ -13,105 +13,152 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.continuuity.examples.helloworld;
 
 import com.continuuity.api.annotation.Handle;
-import com.continuuity.api.annotation.ProcessInput;
-import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.app.AbstractApplication;
-import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.stream.Stream;
-import com.continuuity.api.dataset.lib.KeyValueTable;
-import com.continuuity.api.flow.Flow;
-import com.continuuity.api.flow.FlowSpecification;
-import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.procedure.AbstractProcedure;
+import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
+import com.continuuity.api.service.http.HttpServiceContext;
+import com.continuuity.api.service.http.HttpServiceHandler;
+import com.continuuity.http.HttpResponder;
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.io.ByteStreams;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.ServiceDiscovered;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static com.continuuity.api.procedure.ProcedureResponse.Code.SUCCESS;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 /**
- * This is a simple HelloWorld example that uses one stream, one dataset, one flow and one procedure.
- * <uL>
- *   <li>A stream to send names to.</li>
- *   <li>A flow with a single flowlet that reads the stream and stores each name in a KeyValueTable</li>
- *   <li>A procedure that reads the name from the KeyValueTable and prints 'Hello [Name]!'</li>
- * </uL>
+ *
  */
 public class HelloWorld extends AbstractApplication {
-
+  /**
+   * Override this method to configure the application.
+   */
   @Override
   public void configure() {
-    setName("HelloWorld");
-    setDescription("A Hello World program for the Continuuity Reactor");
-    addStream(new Stream("who"));
-    createDataset("whom", KeyValueTable.class);
-    addFlow(new WhoFlow());
-    addProcedure(new Greeting());
+    setName("HttpServiceApp");
+    setDescription("Application with Http Service");
+    addService("HttpService", ImmutableList.<HttpServiceHandler>of(new BaseHttpHandler()));
+    addProcedure(new NoOpProcedure());
   }
 
   /**
-   * Sample Flow.
+   *
    */
-  public static class WhoFlow implements Flow {
+  @Path("/v1")
+  public static final class BaseHttpHandler implements HttpServiceHandler {
+    @GET
+    @Path("/handle")
+    public void process(HttpRequest request, HttpResponder responder) {
+      System.err.println("GOT TO THE HANDLER METHOD!");
+      responder.sendString(HttpResponseStatus.OK, "Hello World");
+    }
 
+    /**
+     *
+     * @param context
+     * @throws Exception
+     */
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with().
-        setName("WhoFlow").
-        setDescription("A flow that collects names").
-        withFlowlets().add("saver", new NameSaver()).
-        connect().fromStream("who").to("saver").
-        build();
+    public void initialize(HttpServiceContext context) throws Exception {
+
+    }
+
+    /**
+     *
+     */
+    @Override
+    public void destroy() {
+
     }
   }
 
   /**
-   * Sample Flowlet.
+   *
    */
-  public static class NameSaver extends AbstractFlowlet {
+  public static final class NoOpProcedure extends AbstractProcedure {
 
-    static final byte[] NAME = { 'n', 'a', 'm', 'e' };
+    private static final Logger LOG = LoggerFactory.getLogger(NoOpProcedure.class);
 
-    @UseDataSet("whom")
-    KeyValueTable whom;
-    Metrics flowletMetrics;
+    private ServiceDiscovered serviceDiscovered;
 
-    @ProcessInput
-    public void process(StreamEvent event) {
-      byte[] name = Bytes.toBytes(event.getBody());
-      if (name != null && name.length > 0) {
-        whom.write(NAME, name);
-      }
-      if (name.length > 10) {
-        flowletMetrics.count("names.longnames", 1);
-      }
-      flowletMetrics.count("names.bytes", name.length);
+    /**
+     *
+     * @param context
+     */
+    @Override
+    public void initialize(ProcedureContext context) {
+      //Discover the UserInterestsLookup service via discovery service
+      LOG.debug("GOT INITIALIZE");
+      serviceDiscovered = context.discover("HttpServiceApp", "HttpService", "HttpService");
+      LOG.debug("GOT AFTER INITIALIZE");
+      LOG.debug("SERVICE NAME: {}, SERVICE DISCOVERABLE: {}", serviceDiscovered.getName(),
+                serviceDiscovered.iterator().hasNext());
     }
-  }
 
-  /**
-   * Sample Procedure.
-   */
-  public static class Greeting extends AbstractProcedure {
-
-    @UseDataSet("whom")
-    KeyValueTable whom;
-    Metrics procedureMetrics;
-
-    @Handle("greet")
-    public void greet(ProcedureRequest request, ProcedureResponder responder) throws Exception {
-      byte[] name = whom.read(NameSaver.NAME);
-      String toGreet = name != null ? new String(name) : "World";
-      if (toGreet.equals("Jane Doe")) {
-        procedureMetrics.count("greetings.count.jane_doe", 1);
+    /**
+     *
+     * @param request
+     * @param responder
+     * @throws Exception
+     */
+    @Handle("noop")
+    public void handle(ProcedureRequest request, ProcedureResponder responder) throws Exception {
+      LOG.debug("GOT PROCEDURE");
+      Discoverable discoverable = Iterables.getFirst(serviceDiscovered, null);
+      LOG.debug("GOT BEFORE DISCOVER NULL");
+      if (discoverable != null) {
+        LOG.debug("GOT AFTER DISCOVER NOT NULL");
+        String hostName = discoverable.getSocketAddress().getHostName();
+        int port = discoverable.getSocketAddress().getPort();
+        LOG.debug("host: {}, port: {}", hostName, String.valueOf(port));
+        String response = doGet(hostName, port);
+        LOG.debug("GOT RESPONSE: {}", response);
+        responder.sendJson(ProcedureResponse.Code.SUCCESS, response);
       }
-      responder.sendJson(new ProcedureResponse(SUCCESS), "Hello " + toGreet + "!");
+      responder.sendJson(ProcedureResponse.Code.FAILURE, "ERROR!");
+    }
+
+    /**
+     *
+     * @param hostName
+     * @param port
+     * @return
+     * @throws Exception
+     */
+    public static String doGet(String hostName, int port) throws Exception {
+      try {
+        LOG.debug("GOT DOGET: {}", hostName + " " + port);
+        URL url = new URL(String.format("http://%s:%d/v1/handle", hostName, port));
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
+          LOG.debug("GOT HTTP OK IN DOGET");
+          try {
+            return new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
+          } finally {
+            conn.disconnect();
+          }
+        }
+        LOG.warn("Unexpected response from Catalog Service: {} {}", conn.getResponseCode(), conn.getResponseMessage());
+      } catch (Throwable th) {
+        LOG.warn("Error while callilng Catalog Service", th);
+      }
+      return null;
     }
   }
 }
-

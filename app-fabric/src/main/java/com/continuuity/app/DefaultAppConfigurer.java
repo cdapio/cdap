@@ -37,7 +37,7 @@ import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.data.dataset.DatasetCreationSpec;
 import com.continuuity.internal.app.DefaultApplicationSpecification;
-import com.continuuity.internal.app.services.DefaultHttpServiceTwillApp;
+import com.continuuity.internal.app.services.HttpServiceTwillApp;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.continuuity.internal.flow.DefaultFlowSpecification;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
@@ -189,7 +189,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
 
   @Override
   public void addService(String name, Iterable<HttpServiceHandler> handlers) {
-    addService(new DefaultHttpServiceTwillApp(name, handlers));
+    addService(new HttpServiceTwillApp(name, handlers));
   }
 
   public ApplicationSpecification createApplicationSpec() {
