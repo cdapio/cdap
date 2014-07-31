@@ -30,7 +30,7 @@ public final class RunRecord {
   @SerializedName("start")
   private final long startTs;
 
-  @SerializedName("stop")
+  @SerializedName("end")
   private final long stopTs;
 
   @SerializedName("status")
