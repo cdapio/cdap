@@ -159,9 +159,6 @@ public class ExploreDriver implements Driver {
       }
     } catch (UnsupportedEncodingException e) {
       throw Throwables.propagate(e);
-    } catch (IllegalArgumentException e) {
-      // This is thrown by guava because splitter doesn't return an empty map if it can't split.
-      // Issue: 1577 guava libs.
     }
     return new ConnectionParams(host, port, builder.build());
   }
