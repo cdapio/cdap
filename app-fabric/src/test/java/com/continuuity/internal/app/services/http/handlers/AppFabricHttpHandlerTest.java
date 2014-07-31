@@ -310,7 +310,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     deploy(WordCountApp.class);
     Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
-    Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+    waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
 
     //Get Flowlet Instances
     Assert.assertEquals(1, getFlowletInstances("WordCountApp", "WordCountFlow", "StreamSource"));
@@ -321,7 +321,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     // Stop the flow and check its status
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
-    Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+    waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
   }
 
   @Test
@@ -360,43 +360,38 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     deploy(WordCountApp.class);
     Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
-    Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+    waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
 
     //web-app, start, stop and status check.
     Assert.assertEquals(200,
       doPost("/v2/apps/WordCountApp/webapp/start", null).getStatusLine().getStatusCode());
 
     Assert.assertEquals("RUNNING", getWebappStatus("WordCountApp"));
-    Assert.assertEquals(200,
-                        doPost("/v2/apps/WordCountApp/webapp/stop", null)
-                          .getStatusLine().getStatusCode());
+    Assert.assertEquals(200, doPost("/v2/apps/WordCountApp/webapp/stop", null).getStatusLine().getStatusCode());
     Assert.assertEquals("STOPPED", getWebappStatus("WordCountApp"));
 
     // Stop the flow and check its status
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
-    Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+    waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
 
     // Check the start/stop endpoints for procedures
     Assert.assertEquals("STOPPED", getRunnableStatus("procedures", "WordCountApp", "WordFrequency"));
     Assert.assertEquals(200, getRunnableStartStop("procedures", "WordCountApp", "WordFrequency", "start"));
-    Assert.assertEquals("RUNNING", getRunnableStatus("procedures", "WordCountApp", "WordFrequency"));
+    waitState("procedures", "WordCountApp", "WordFrequency", "RUNNING");
     Assert.assertEquals(200, getRunnableStartStop("procedures", "WordCountApp", "WordFrequency", "stop"));
-    Assert.assertEquals("STOPPED", getRunnableStatus("procedures", "WordCountApp", "WordFrequency"));
+    waitState("procedures", "WordCountApp", "WordFrequency", "STOPPED");
 
     //start map-reduce and check status and stop the map-reduce job and check the status ..
     deploy(DummyAppWithTrackingTable.class);
     Assert.assertEquals(200, getRunnableStartStop("mapreduce", "dummy", "dummy-batch", "start"));
-    Assert.assertEquals("RUNNING", getRunnableStatus("mapreduce", "dummy", "dummy-batch"));
+    waitState("mapreduce", "dummy", "dummy-batch", "RUNNING");
     Assert.assertEquals(200, getRunnableStartStop("mapreduce", "dummy", "dummy-batch", "stop"));
-    Assert.assertEquals("STOPPED", getRunnableStatus("mapreduce", "dummy", "dummy-batch"));
+    waitState("mapreduce", "dummy", "dummy-batch", "STOPPED");
 
     //deploy and check status of a workflow
     deploy(SleepingWorkflowApp.class);
     Assert.assertEquals(200, getRunnableStartStop("workflows", "SleepWorkflowApp", "SleepWorkflow", "start"));
-    while ("STARTING".equals(getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"))) {
-      TimeUnit.MILLISECONDS.sleep(10);
-    }
-    Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"));
+    waitState("workflows", "SleepWorkflowApp", "SleepWorkflow", "RUNNING");
   }
 
   /**
@@ -709,33 +704,26 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     //start flow and check the status
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
-    Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+    waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
 
     //stop the flow and check the status
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
-    Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+    waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
 
     //check the status for procedure
     Assert.assertEquals(200, getRunnableStartStop("procedures", "WordCountApp", "WordFrequency", "start"));
-    Assert.assertEquals("RUNNING", getRunnableStatus("procedures", "WordCountApp", "WordFrequency"));
+    waitState("procedures", "WordCountApp", "WordFrequency", "RUNNING");
     Assert.assertEquals(200, getRunnableStartStop("procedures", "WordCountApp", "WordFrequency", "stop"));
+    waitState("procedures", "WordCountApp", "WordFrequency", "STOPPED");
 
     deploy(DummyAppWithTrackingTable.class);
     //start map-reduce and check status and stop the map-reduce job and check the status ..
     Assert.assertEquals(200, getRunnableStartStop("mapreduce", "dummy", "dummy-batch", "start"));
-    Assert.assertEquals("RUNNING", getRunnableStatus("mapreduce", "dummy", "dummy-batch"));
+    waitState("mapreduce", "dummy", "dummy-batch", "RUNNING");
 
     //stop the mapreduce program and check the status
     Assert.assertEquals(200, getRunnableStartStop("mapreduce", "dummy", "dummy-batch", "stop"));
-    Assert.assertEquals("STOPPED", getRunnableStatus("mapreduce", "dummy", "dummy-batch"));
-
-    //deploy and check status of a workflow
-    deploy(SleepingWorkflowApp.class);
-    Assert.assertEquals(200, getRunnableStartStop("workflows", "SleepWorkflowApp", "SleepWorkflow", "start"));
-    while ("STARTING".equals(getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"))) {
-      TimeUnit.MILLISECONDS.sleep(10);
-    }
-    Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"));
+    waitState("mapreduce", "dummy", "dummy-batch", "STOPPED");
   }
 
   private String getWebappStatus(String appId) throws Exception {
@@ -923,10 +911,12 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
     deploy(WordCountApp.class);
     getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start");
+    waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
     //Try to delete an App while its flow is running
     response = doDelete("/v2/apps/WordCountApp");
     Assert.assertEquals(403, response.getStatusLine().getStatusCode());
     getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop");
+    waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
     //Delete the App after stopping the flow
     response = doDelete("/v2/apps/WordCountApp");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -1629,10 +1619,22 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deploy(WordCountApp.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
-    Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+    waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
     response = doPost("/v2/unrecoverable/reset");
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
   }
 
+  private void waitState(String runnableType, String appId, String runnableId, String state) throws Exception {
+    int trials = 0;
+    while (trials++ < 5) {
+      HttpResponse response = doGet(String.format("/v2/apps/%s/%s/%s/status", appId, runnableType, runnableId));
+      JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
+      if (status != null && status.has("status") && state.equals(status.get("status").getAsString())) {
+        break;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertTrue(trials < 5);
+  }
 }

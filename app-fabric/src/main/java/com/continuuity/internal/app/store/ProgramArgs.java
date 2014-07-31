@@ -14,7 +14,21 @@
  * the License.
  */
 
+package com.continuuity.internal.app.store;
+
+import java.util.Map;
+
 /**
- * This package contains a generic meta data store on top of data fabric abstractions.
+ * Stores program runtime arguments
  */
-package com.continuuity.metadata;
+public class ProgramArgs {
+  private final Map<String, String> args;
+
+  public ProgramArgs(Map<String, String> args) {
+    this.args = args;
+  }
+
+  public Map<String, String> getArgs() {
+    return args;
+  }
+}

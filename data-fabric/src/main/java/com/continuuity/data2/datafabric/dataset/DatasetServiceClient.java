@@ -42,6 +42,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -278,8 +279,12 @@ class DatasetServiceClient {
 
   }
 
-  private String resolve(String resource) {
-    InetSocketAddress addr = this.endpointStrategySupplier.get().pick().getSocketAddress();
+  private String resolve(String resource) throws DatasetManagementException {
+    Discoverable discoverable = endpointStrategySupplier.get().pick();
+    if (discoverable == null) {
+      throw new DatasetManagementException("Cannot discover dataset service");
+    }
+    InetSocketAddress addr = discoverable.getSocketAddress();
     return String.format("http://%s:%s%s/data/%s", addr.getHostName(), addr.getPort(),
                          Constants.Gateway.GATEWAY_VERSION, resource);
   }

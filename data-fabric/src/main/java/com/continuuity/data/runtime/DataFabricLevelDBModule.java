@@ -31,8 +31,6 @@ import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
-import com.continuuity.metadata.MetaDataTable;
-import com.continuuity.metadata.SerializingMetaDataTable;
 import com.continuuity.tephra.runtime.TransactionModules;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
@@ -44,10 +42,6 @@ public class DataFabricLevelDBModule extends AbstractModule {
 
   @Override
   public void configure() {
-
-    // bind meta data store
-    bind(MetaDataTable.class).to(SerializingMetaDataTable.class).in(Singleton.class);
-
     bind(LevelDBOcTableService.class).toInstance(LevelDBOcTableService.getInstance());
 
     bind(DataSetAccessor.class).to(LocalDataSetAccessor.class).in(Singleton.class);

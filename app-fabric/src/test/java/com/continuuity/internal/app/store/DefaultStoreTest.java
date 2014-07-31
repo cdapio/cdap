@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.continuuity.internal.app.program;
+package com.continuuity.internal.app.store;
 
 import com.continuuity.AllProgramsApp;
 import com.continuuity.AppWithNoServices;
@@ -45,25 +45,27 @@ import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.DefaultAppConfigurer;
 import com.continuuity.app.program.Program;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data2.OperationException;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.internal.app.Specifications;
-import com.continuuity.internal.app.store.MDTBasedStore;
-import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.proto.Id;
 import com.continuuity.proto.ProgramType;
 import com.continuuity.proto.RunRecord;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
+import com.google.inject.Injector;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -71,19 +73,37 @@ import java.util.Set;
 /**
  *
  */
-public class MDTBasedStoreTest {
-  private MDTBasedStore store;
+public class DefaultStoreTest {
+  private static InMemoryTransactionManager txManager;
+  private static DatasetService dsService;
 
-  // we do it in @Before (not in @BeforeClass) to have easy automatic cleanup between tests
-  @Before
-  public void before() throws OperationException {
-    store = AppFabricTestHelper.getInjector().getInstance(MDTBasedStore.class);
+  private static DefaultStore store;
 
-    // clean up data
-    MetaDataTable mds = AppFabricTestHelper.getInjector().getInstance(MetaDataTable.class);
-    for (String account : mds.listAccounts(new OperationContext(DefaultId.DEFAULT_ACCOUNT_ID))) {
-      mds.clear(new OperationContext(account), account, null);
+  @BeforeClass
+  public static void beforeClass() throws IOException {
+    Injector injector = AppFabricTestHelper.getInjector();
+
+    txManager = injector.getInstance(InMemoryTransactionManager.class);
+    txManager.startAndWait();
+
+    dsService = injector.getInstance(DatasetService.class);
+    dsService.startAndWait();
+
+    store = injector.getInstance(DefaultStore.class);
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    try {
+      dsService.stopAndWait();
+    } finally {
+      txManager.stopAndWait();
     }
+  }
+
+  @Before
+  public void before() throws Exception {
+    store.clear();
   }
 
   @Test
@@ -102,7 +122,7 @@ public class MDTBasedStoreTest {
   }
 
   @Test
-  public void testConcurrentStopStart() throws OperationException {
+  public void testConcurrentStopStart() throws Exception {
     // Two programs that start/stop at same time
     // Should have two run history.
     Id.Program programId = Id.Program.from("account1", "concurrentApp", "concurrentFlow");
@@ -119,7 +139,7 @@ public class MDTBasedStoreTest {
   }
 
   @Test
-  public void testLogProgramRunHistory() throws OperationException {
+  public void testLogProgramRunHistory() throws Exception {
     // record finished flow
     Id.Program programId = Id.Program.from("account1", "application1", "flow1");
     long now = System.currentTimeMillis();
@@ -142,7 +162,7 @@ public class MDTBasedStoreTest {
     // record for different account
     store.setStart(Id.Program.from("account2", "application1", "flow1"), "run3", now - 300);
 
-    // we should probably be better with "get" method in MDTBasedStore interface to do that, but we don't have one
+    // we should probably be better with "get" method in DefaultStore interface to do that, but we don't have one
     List<RunRecord> history = store.getRunHistory(programId, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
 
     // only finished runs should be returned
@@ -157,37 +177,6 @@ public class MDTBasedStoreTest {
     Assert.assertEquals(now - 2000, run.getStartTs());
     Assert.assertEquals(now - 1000, run.getStopTs());
     Assert.assertEquals("FAILED", run.getEndStatus());
-
-    // testing "get all history for account"
-    // note: we need to add account's apps info into store
-    store.addApplication(Id.Application.from("account1", "application1"),
-                         getSpec(
-                           com.continuuity.api.ApplicationSpecification.Builder.with()
-                             .setName("application1").setDescription("")
-                             .noStream().noDataSet()
-                             .withFlows().add(new FlowImpl("flow1")).add(new FlowImpl("flow2"))
-                             .noProcedure().noMapReduce().noWorkflow().build()),
-                         new LocalLocationFactory().create("/foo"));
-    store.addApplication(Id.Application.from("account2", "application1"),
-                         getSpec(
-                           com.continuuity.api.ApplicationSpecification.Builder.with()
-                             .setName("application1").setDescription("")
-                             .noStream().noDataSet()
-                             .withFlows().add(new FlowImpl("flow1")).add(new FlowImpl("flow2"))
-                             .noProcedure().noMapReduce().noWorkflow().build()),
-                         new LocalLocationFactory().create("/foo"));
-
-    com.google.common.collect.Table<ProgramType, Id.Program, List<RunRecord>> runHistory =
-                                                           store.getAllRunHistory(new Id.Account("account1"));
-
-    // we ran two programs (flows)
-    Assert.assertEquals(2, runHistory.size());
-    int totalHistoryRecords = 0;
-    for (com.google.common.collect.Table.Cell<ProgramType, Id.Program, List<RunRecord>> cell : runHistory.cellSet()) {
-      totalHistoryRecords += cell.getValue().size();
-    }
-    // there were 3 "finished" runs of different programs
-    Assert.assertEquals(3, totalHistoryRecords);
   }
 
   @Test
@@ -353,7 +342,7 @@ public class MDTBasedStoreTest {
     }
 
     @Handle("proced")
-    public void process(String word) throws OperationException {
+    public void process(String word) throws Exception {
       this.counters.read(word.getBytes(Charsets.UTF_8));
     }
   }
@@ -505,9 +494,9 @@ public class MDTBasedStoreTest {
     store.removeAll(accountId);
 
     Assert.assertNull(store.getApplication(appId));
-    // Streams and DataSets should survive deletion
-    Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
-    Assert.assertEquals(1, store.getAllDataSets(new Id.Account("account1")).size());
+    // Streams and DataSets should not survive deletion
+    Assert.assertEquals(0, store.getAllStreams(new Id.Account("account1")).size());
+    Assert.assertEquals(0, store.getAllDataSets(new Id.Account("account1")).size());
   }
 
   @Test

@@ -74,7 +74,7 @@ public class SingleNodeLogReader implements LogReader {
 
     try {
       this.schema = new LogSchema().getAvroSchema();
-      this.fileMetaDataManager = new FileMetaDataManager(new LogSaverTableUtil(dsFramework, cConf).getMetaTable(),
+      this.fileMetaDataManager = new FileMetaDataManager(new LogSaverTableUtil(dsFramework, cConf),
                                                          txClient, locationFactory);
 
     } catch (Exception e) {
