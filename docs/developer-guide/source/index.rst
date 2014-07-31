@@ -16,7 +16,7 @@ Continuuity Reactor Documentation
    Operations Guide </operations>
    HTTP REST API </rest>
    /javadocs/index
-   Dependencies </licenses/index>
+   Licenses and Dependencies </licenses/index>
    Release Notes </releasenotes>
    FAQ </faq>
 
