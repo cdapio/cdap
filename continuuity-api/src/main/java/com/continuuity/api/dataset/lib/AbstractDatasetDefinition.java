@@ -20,11 +20,6 @@ import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
-import com.continuuity.api.dataset.DatasetSpecification;
-
-import java.io.IOException;
-import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Basic abstract implementation of {@link DatasetDefinition}.
@@ -48,12 +43,5 @@ public abstract class AbstractDatasetDefinition<D extends Dataset, A extends Dat
   @Override
   public String getName() {
     return name;
-  }
-
-  @Override
-  public D getDataset(DatasetSpecification spec, @Nullable Map<String, String> arguments, ClassLoader classLoader)
-    throws IOException {
-    // be default, most data don't support arguments and will simply ignore them.
-    return getDataset(spec, classLoader);
   }
 }

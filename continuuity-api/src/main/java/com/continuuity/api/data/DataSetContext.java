@@ -16,6 +16,8 @@
 
 package com.continuuity.api.data;
 
+import com.continuuity.api.annotation.Beta;
+
 import java.io.Closeable;
 import java.util.Map;
 
@@ -50,6 +52,7 @@ public interface DataSetContext {
    *         cannot be opened (for example, one of the underlying tables in the DataFabric
    *         cannot be accessed).
    */
+  @Beta
   public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
     throws DataSetInstantiationException;
 }

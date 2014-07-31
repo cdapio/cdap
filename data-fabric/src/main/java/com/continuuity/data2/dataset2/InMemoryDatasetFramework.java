@@ -149,6 +149,6 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       return null;
     }
     DatasetDefinition def = registry.get(spec.getType());
-    return (T) (arguments == null ? def.getDataset(spec, classLoader) : def.getDataset(spec, arguments, classLoader));
+    return (T) (def.getDataset(spec, arguments, classLoader));
   }
 }

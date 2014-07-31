@@ -49,6 +49,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Unit-test for {@link com.continuuity.data2.datafabric.dataset.service.DatasetInstanceHandler}
@@ -240,8 +241,9 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     }
   }
 
-  private static DatasetDefinition createDefinition(String name) {
-    return new AbstractDatasetDefinition(name) {
+
+  private static <D extends Dataset> DatasetDefinition<D, DatasetAdmin> createDefinition(String name) {
+    return new AbstractDatasetDefinition<D, DatasetAdmin>(name) {
       @Override
       public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
         return createSpec(instanceName, getName(), properties);
@@ -253,7 +255,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       }
 
       @Override
-      public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) {
+      public D getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader) {
         return null;
       }
     };
