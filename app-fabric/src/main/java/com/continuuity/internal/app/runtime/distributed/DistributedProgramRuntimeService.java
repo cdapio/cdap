@@ -326,6 +326,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           }
         }
 
+        // Add a list of announced services and their discoverables to the liveInfo.
         List<String> services = report.getServices();
         for (String service : services) {
           ServiceDiscovered serviceDiscovered = controller.discoverService(service);

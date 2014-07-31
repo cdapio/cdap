@@ -24,12 +24,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * ServiceLiveInfo has details for a service including a list of discoverables.
  */
 public class ServiceLiveInfo {
   private final String name;
   private final List<Map<String, Object>> discoverables;
 
+  /**
+   * Create an instance of ServiceLiveInfo with a given set of discoverables.
+   * @param name Name of service.
+   * @param discoverables Discoverables for the service.
+   */
   public ServiceLiveInfo(String name, List<Discoverable> discoverables) {
     this.name = name;
     this.discoverables = new ArrayList<Map<String, Object>>();
@@ -38,10 +43,18 @@ public class ServiceLiveInfo {
     }
   }
 
+  /**
+   * Create an instance of ServiceLiveInfo.
+   * @param name Name of service.
+   */
   public ServiceLiveInfo(String name) {
     this(name, new ArrayList<Discoverable>());
   }
 
+  /**
+   * Add a discoverable to this ServiceLiveInfo.
+   * @param discoverable discoverable to be added.
+   */
   public void addDiscoverable(Discoverable discoverable) {
     Map<String, Object> discoverableInfo = new HashMap<String, Object>();
     discoverableInfo.put("host", discoverable.getSocketAddress().getHostName());
@@ -49,6 +62,10 @@ public class ServiceLiveInfo {
     discoverables.add(discoverableInfo);
   }
 
+  /**
+   * Get name of service.
+   * @return name of service.
+   */
   public String getName() {
     return name;
   }
