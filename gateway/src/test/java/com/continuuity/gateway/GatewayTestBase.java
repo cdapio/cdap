@@ -179,8 +179,6 @@ public abstract class GatewayTestBase {
     gateway = injector.getInstance(Gateway.class);
     txService = injector.getInstance(InMemoryTransactionManager.class);
     txService.startAndWait();
-    dsService = injector.getInstance(DatasetService.class);
-    dsService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     metrics = injector.getInstance(MetricsQueryService.class);
     streamHttpService = injector.getInstance(StreamHttpService.class);
