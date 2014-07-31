@@ -79,6 +79,16 @@ public interface Explore {
   List<QueryResult> nextResults(QueryHandle handle, int size)
     throws ExploreException, HandleNotFoundException, SQLException;
 
+  /**
+   * Fetch a preview of the results of a Hive operation. This can be called only after the state of the operation is
+   * {@link QueryStatus.OpStatus#FINISHED}. Two subsequent calls to this methods will return the same list of results.
+   * 
+   * @param handle handle returned by {@link #execute(String)}.
+   * @return preview list of {@link QueryResult}s.
+   * @throws ExploreException on any error fetching a preview of the results.
+   * @throws HandleNotFoundException when handle is not found.
+   * @throws SQLException if there are errors in the SQL statement.
+   */
   List<QueryResult> previewResults(QueryHandle handle)
     throws ExploreException, HandleNotFoundException, SQLException;
 
