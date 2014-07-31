@@ -39,11 +39,11 @@ import java.io.IOException;
  * @param <T> type of the transactional context
  * @param <V> type of objects contained inside the transaction context
  */
-public class Transactional<T extends Iterable<? extends V>, V> {
+public class Transactional<T extends Iterable<V>, V> {
   private final TransactionExecutorFactory txFactory;
   private final Supplier<T> supplier;
 
-  public static <T extends Iterable<? extends V>, V> Transactional<T, V> of(TransactionExecutorFactory txFactory,
+  public static <T extends Iterable<V>, V> Transactional<T, V> of(TransactionExecutorFactory txFactory,
                                                                             Supplier<T> supplier) {
     return new Transactional<T, V>(txFactory, supplier);
   }
@@ -95,9 +95,9 @@ public class Transactional<T extends Iterable<? extends V>, V> {
    * @param <R> type of the function result
    * @return function result
    */
-  public static <V, T extends Iterable<? extends V>, R> R execute(TransactionExecutorFactory txFactory,
-                                                                  Supplier<T> supplier,
-                                                                  TransactionExecutor.Function<T, R> func)
+  public static <V, T extends Iterable<V>, R> R execute(TransactionExecutorFactory txFactory,
+                                                        Supplier<T> supplier,
+                                                        TransactionExecutor.Function<T, R> func)
     throws TransactionFailureException, IOException, InterruptedException {
 
     T it = supplier.get();
