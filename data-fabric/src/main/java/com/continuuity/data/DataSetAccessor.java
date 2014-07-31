@@ -74,7 +74,12 @@ public interface DataSetAccessor {
       return prefix + datasetName;
     }
 
+    // returns null if given name doesn't belong to namespace
+    @Nullable
     public String fromNamespaced(String namespacedDatasetName) {
+      if (!namespacedDatasetName.startsWith(prefix)) {
+        return null;
+      }
       return namespacedDatasetName.substring(prefix.length());
     }
   }

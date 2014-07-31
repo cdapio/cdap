@@ -22,10 +22,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <artifactId>parent</artifactId>
     <groupId>com.continuuity</groupId>
+    <artifactId>reactor</artifactId>
     <version>2.4.0-SNAPSHOT</version>
-    <relativePath>../parent/pom.xml</relativePath>
   </parent>
 
   <artifactId>gateway</artifactId>
@@ -33,6 +32,14 @@
   <packaging>jar</packaging>
 
   <dependencies>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>common</artifactId>
@@ -61,6 +68,10 @@
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>http</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
     </dependency>
   </dependencies>
 

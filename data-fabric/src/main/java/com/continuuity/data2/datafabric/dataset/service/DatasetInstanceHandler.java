@@ -86,7 +86,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/unrecoverable/datasets/")
   public void deleteAll(HttpRequest request, final HttpResponder responder) throws Exception {
     if (!conf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
-                                  Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
+                         Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
       return;
     }
@@ -122,30 +122,43 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     }
   }
 
+  /**
+   * Creates a new Dataset or updates existing Dataset specification's
+   * properties if an optional update parameter in the body is set to true, {@link DatasetInstanceConfiguration}
+   * is constructed based on request and appropriate action is performed
+   */
   @PUT
   @Path("/data/datasets/{name}")
-  public void add(HttpRequest request, final HttpResponder responder,
+  public void createOrUpdate(HttpRequest request, final HttpResponder responder,
                   @PathParam("name") String name) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
 
     DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
+    String operation = (creationProperties.isUpdate() == true) ? "update" : "create";
 
-    LOG.info("Creating dataset {}, type name: {}, creationProperties: {}", name, creationProperties.getTypeName(),
-             creationProperties.getProperties());
-
+    LOG.info("{} dataset {}, type name: {}, typeAndProps: {}",
+             operation, name, creationProperties.getTypeName(), creationProperties.getProperties());
     DatasetSpecification existing = instanceManager.get(name);
-    if (existing != null) {
-      String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
-                                     name, existing);
-      LOG.warn(message);
-      responder.sendError(HttpResponseStatus.CONFLICT, message);
-      return;
-    }
 
+    if (existing != null) {
+      String message = null;
+      if (!creationProperties.isUpdate()) {
+        message = String.format("Cannot create dataset %s: instance with same name already exists %s",
+                                name, existing);
+      } else if (!existing.getType().equals(creationProperties.getTypeName())) {
+        message = String.format("Cannot update dataset %s instance with a different type, old type is %s",
+                                name, existing.getType());
+      }
+      if (message != null) {
+        LOG.warn(message);
+        responder.sendError(HttpResponseStatus.CONFLICT, message);
+        return;
+      }
+    }
     DatasetTypeMeta typeMeta = implManager.getTypeInfo(creationProperties.getTypeName());
     if (typeMeta == null) {
-      String message = String.format("Cannot create dataset %s: unknown type %s",
-                                     name, creationProperties.getTypeName());
+      String message = String.format("Cannot %s dataset %s: unknown type %s",
+                                     operation, name, creationProperties.getTypeName());
       LOG.warn(message);
       responder.sendError(HttpResponseStatus.NOT_FOUND, message);
       return;
@@ -154,11 +167,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     DatasetSpecification spec;
     try {
-      spec = opExecutorClient.create(name, typeMeta, DatasetProperties.builder()
-        .addAll(creationProperties.getProperties()).build());
+      spec = opExecutorClient.create(name, typeMeta,
+                                     DatasetProperties.builder().addAll(creationProperties.getProperties()).build());
     } catch (Exception e) {
-      String msg = String.format("Cannot create dataset %s of type %s: executing create() failed, reason: %s",
-                                 name, creationProperties.getTypeName(), e.getMessage());
+      String msg = String.format("Cannot %s dataset %s of type %s: executing create() failed, reason: %s",
+                                 operation, name, creationProperties.getTypeName(), e.getMessage());
       LOG.error(msg, e);
       throw new RuntimeException(msg, e);
     }
@@ -166,7 +179,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
     // Enable ad-hoc exploration of dataset
     // Note: today explore enable is not transactional with dataset create - REACTOR-314
+
     try {
+      if (creationProperties.isUpdate()) {
+        datasetExploreFacade.disableExplore(name);
+      }
       datasetExploreFacade.enableExplore(name);
     } catch (Exception e) {
       String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
@@ -176,14 +193,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 //      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
 //      return;
     }
-
+    //caling admin upgrade, after updating specification
+    if (creationProperties.isUpdate()) {
+      executeAdmin(request, responder, name, "upgrade");
+    }
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @DELETE
   @Path("/data/datasets/{name}")
   public void drop(HttpRequest request, final HttpResponder responder,
-                       @PathParam("name") String name) {
+                   @PathParam("name") String name) {
     LOG.info("Deleting dataset {}", name);
 
     DatasetSpecification spec = instanceManager.get(name);
@@ -243,8 +263,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @POST
   @Path("/data/datasets/{name}/data/{method}")
   public void executeDataOp(HttpRequest request, final HttpResponder responder,
-                           @PathParam("name") String instanceName,
-                           @PathParam("method") String method) {
+                            @PathParam("name") String instanceName,
+                            @PathParam("method") String method) {
     // todo: execute data operation
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
   }

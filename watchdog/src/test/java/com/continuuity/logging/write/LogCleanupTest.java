@@ -16,12 +16,14 @@
 
 package com.continuuity.logging.write;
 
+import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.io.Locations;
 import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.InMemoryDataSetAccessor;
-import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.logging.context.FlowletLoggingContext;
 import com.continuuity.logging.save.LogSaverTableUtil;
 import com.continuuity.tephra.TransactionSystemClient;
@@ -70,10 +72,12 @@ public class LogCleanupTest {
 
   @Test
   public void testCleanup() throws Exception {
+    DatasetFramework dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
+    dsFramework.addModule("table", new InMemoryOrderedTableModule());
+
     CConfiguration cConf = CConfiguration.create();
 
-    DataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor(cConf);
-    OrderedColumnarTable metaTable = new LogSaverTableUtil(dataSetAccessor).getMetaTable();
+    OrderedTable metaTable = new LogSaverTableUtil(dsFramework, cConf).getMetaTable();
 
     Configuration conf = HBaseConfiguration.create();
     cConf.copyTxProperties(conf);
