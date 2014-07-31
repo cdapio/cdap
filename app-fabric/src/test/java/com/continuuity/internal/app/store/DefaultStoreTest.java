@@ -494,9 +494,9 @@ public class DefaultStoreTest {
     store.removeAll(accountId);
 
     Assert.assertNull(store.getApplication(appId));
-    // Streams and DataSets should survive deletion
-    Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
-    Assert.assertEquals(1, store.getAllDataSets(new Id.Account("account1")).size());
+    // Streams and DataSets should not survive deletion
+    Assert.assertEquals(0, store.getAllStreams(new Id.Account("account1")).size());
+    Assert.assertEquals(0, store.getAllDataSets(new Id.Account("account1")).size());
   }
 
   @Test

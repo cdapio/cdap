@@ -176,6 +176,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
     deleteAll(new Key.Builder().add(TYPE_DATASET, accountId, name).build());
   }
 
+  public void deleteAllDatasets(String accountId) {
+    deleteAll(new Key.Builder().add(TYPE_DATASET, accountId).build());
+  }
+
   public void writeStream(String accountId, StreamSpecification spec) {
     write(new Key.Builder().add(TYPE_STREAM, accountId, spec.getName()).build(), spec);
   }
@@ -186,6 +190,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   public List<StreamSpecification> getAllStreams(String accountId) {
     return list(new Key.Builder().add(TYPE_STREAM, accountId).build(), StreamSpecification.class);
+  }
+
+  public void deleteAllStreams(String accountId) {
+    deleteAll(new Key.Builder().add(TYPE_STREAM, accountId).build());
   }
 
   public void deleteStream(String accountId, String name) {

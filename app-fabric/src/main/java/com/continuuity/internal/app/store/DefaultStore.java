@@ -509,9 +509,20 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void removeAll(Id.Account id) {
-    // only apps belong to account
-    removeAllApplications(id);
+  public void removeAll(final Id.Account id) {
+    LOG.trace("Removing all applications of account with id: {}", id.getId());
+
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.deleteApplications(id.getId());
+        mds.apps.deleteProgramArgs(id.getId());
+        mds.apps.deleteAllDatasets(id.getId());
+        mds.apps.deleteAllStreams(id.getId());
+        // todo: delete program history?
+        return null;
+      }
+    });
   }
 
   @Override
