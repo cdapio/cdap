@@ -39,6 +39,7 @@ import com.google.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,6 +110,12 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
     return isRunning(programId, type)
       ? new InMemoryProgramLiveInfo(programId, type)
       : new NotRunningProgramLiveInfo(programId, type);
+  }
+
+  @Override
+  public ServiceDiscovered discoverService(Id.Program programId, ProgramType type, String service) {
+    // TODO: ImplementND
+    return null;
   }
 
   @Override
