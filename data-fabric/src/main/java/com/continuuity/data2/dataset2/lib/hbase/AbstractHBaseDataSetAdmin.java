@@ -109,17 +109,18 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
     HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
 
+    // Upgrade any table properties if necessary
+    boolean needUpgrade = upgradeTable(tableDescriptor);
+
     // Get the continuuity version from the table
     ProjectInfo.Version version = new ProjectInfo.Version(tableDescriptor.getValue(CONTINUUITY_VERSION));
-    if (version.compareTo(ProjectInfo.getVersion()) >= 0) {
+
+    if (!needUpgrade && version.compareTo(ProjectInfo.getVersion()) >= 0) {
       // If the table has greater than or same version, no need to upgrade.
       LOG.info("Table '{}' was upgraded with same or newer version '{}'. Current version is '{}'",
                tableNameStr, version, ProjectInfo.getVersion());
       return;
     }
-
-    // Upgrade any table properties if necessary
-    boolean needUpgrade = upgradeTable(tableDescriptor);
 
     // Generate the coprocessor jar
     CoprocessorJar coprocessorJar = createCoprocessorJar();

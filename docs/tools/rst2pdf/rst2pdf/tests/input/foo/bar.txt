@@ -1,3 +1,0 @@
-I'm in foo/bar!
-
-.. include:: bar/baz.txt

@@ -112,6 +112,12 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public void updateInstance(String datasetInstanceName, DatasetProperties props)
+    throws DatasetManagementException {
+    client.updateInstance(datasetInstanceName, props);
+  }
+
+  @Override
   public Collection<DatasetSpecification> getInstances() throws DatasetManagementException {
     return client.getAllInstances();
   }

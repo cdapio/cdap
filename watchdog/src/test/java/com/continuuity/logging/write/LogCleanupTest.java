@@ -19,9 +19,10 @@ package com.continuuity.logging.write;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.io.Locations;
 import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.InMemoryDataSetAccessor;
-import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.logging.context.FlowletLoggingContext;
 import com.continuuity.logging.save.LogSaverTableUtil;
 import com.continuuity.tephra.TransactionSystemClient;
@@ -70,17 +71,18 @@ public class LogCleanupTest {
 
   @Test
   public void testCleanup() throws Exception {
-    CConfiguration cConf = CConfiguration.create();
+    DatasetFramework dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
+    dsFramework.addModule("table", new InMemoryOrderedTableModule());
 
-    DataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor(cConf);
-    OrderedColumnarTable metaTable = new LogSaverTableUtil(dataSetAccessor).getMetaTable();
+    CConfiguration cConf = CConfiguration.create();
 
     Configuration conf = HBaseConfiguration.create();
     cConf.copyTxProperties(conf);
     InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf);
     txManager.startAndWait();
     TransactionSystemClient txClient = new InMemoryTxSystemClient(txManager);
-    FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(metaTable, txClient, locationFactory);
+    FileMetaDataManager fileMetaDataManager =
+      new FileMetaDataManager(new LogSaverTableUtil(dsFramework, cConf), txClient, locationFactory);
 
     // Create base dir
     Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());

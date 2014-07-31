@@ -20,9 +20,7 @@ import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.ObjectResponse;
@@ -34,8 +32,6 @@ import com.continuuity.proto.QueryResult;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.test.SlowTests;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -57,7 +53,6 @@ import java.sql.ResultSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.TimeUnit;
 
 import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyValue;
 
@@ -187,6 +182,15 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                  new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
                )
     );
+
+    List<QueryInfo> result = exploreService.getQueries();
+    Assert.assertTrue(result.size() > 0);
+    for (QueryInfo queryInfo : result) {
+      Assert.assertNotNull(queryInfo.getStatement());
+      Assert.assertNotNull(queryInfo.getQueryHandle());
+      Assert.assertFalse(queryInfo.isActive());
+      Assert.assertEquals("FINISHED", queryInfo.getStatus().toString());
+    }
   }
 
   @Test

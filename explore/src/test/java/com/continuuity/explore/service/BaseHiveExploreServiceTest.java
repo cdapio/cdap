@@ -30,7 +30,6 @@ import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.explore.client.DiscoveryExploreClient;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.executor.ExploreExecutorService;
@@ -41,6 +40,7 @@ import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -66,6 +66,7 @@ public class BaseHiveExploreServiceTest {
   protected static DatasetService datasetService;
   protected static ExploreExecutorService exploreExecutorService;
   protected static EndpointStrategy datasetManagerEndpointStrategy;
+  protected static ExploreService exploreService;
 
   protected static ExploreClient exploreClient;
 
@@ -88,6 +89,7 @@ public class BaseHiveExploreServiceTest {
       new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)), 1L, TimeUnit.SECONDS);
 
     exploreClient = injector.getInstance(ExploreClient.class);
+    exploreService = injector.getInstance(ExploreService.class);
     Assert.assertTrue(exploreClient.isServiceAvailable());
   }
 
