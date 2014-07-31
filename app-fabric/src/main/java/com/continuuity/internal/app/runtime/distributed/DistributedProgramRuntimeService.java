@@ -44,6 +44,7 @@ import com.continuuity.proto.Id;
 import com.continuuity.proto.NotRunningProgramLiveInfo;
 import com.continuuity.proto.ProgramLiveInfo;
 import com.continuuity.proto.ProgramType;
+import com.continuuity.proto.ServiceLiveInfo;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -80,9 +81,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -326,48 +325,20 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
                                                     resources.getDebugPort()));
           }
         }
+
+        List<String> services = report.getServices();
+        for (String service : services) {
+          ServiceDiscovered serviceDiscovered = controller.discoverService(service);
+          ServiceLiveInfo serviceLiveInfo = new ServiceLiveInfo(service);
+          for (Discoverable discoverable : serviceDiscovered) {
+            serviceLiveInfo.addDiscoverable(discoverable);
+          }
+          liveInfo.addServiceInfo(serviceLiveInfo);
+        }
         return liveInfo;
       }
     }
     return new NotRunningProgramLiveInfo(program, type);
-  }
-
-  public List<String> getDiscoverables(Id.Program program, ProgramType type) {
-    String twillAppName = String.format("%s.%s.%s.%s", type.name().toLowerCase(),
-                                        program.getAccountId(), program.getApplicationId(), program.getId());
-    Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
-    if (controllers.hasNext()) {
-      TwillController controller = controllers.next();
-      if (controllers.hasNext()) {
-        LOG.warn("Expected at most one live instance of Twill app {} but found at least two.", twillAppName);
-      }
-      ResourceReport report = controller.getResourceReport();
-      if (report != null) {
-        return report.getServices();
-      }
-    }
-    return Collections.EMPTY_LIST;
-  }
-
-  public List<String> discoverService(Id.Program program, ProgramType type, String serviceName) {
-    String twillAppName = String.format("%s.%s.%s.%s", type.name().toLowerCase(),
-                                        program.getAccountId(), program.getApplicationId(), program.getId());
-    Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
-    if (controllers.hasNext()) {
-      TwillController controller = controllers.next();
-      if (controllers.hasNext()) {
-        LOG.warn("Expected at most one live instance of Twill app {} but found at least two.", twillAppName);
-      }
-      List<String> result = new ArrayList<String>();
-      ServiceDiscovered discoverables = controller.discoverService(serviceName);
-      for (Discoverable discoverable : discoverables) {
-        String url = String.format("http://%s:%d", discoverable.getSocketAddress().getHostName(),
-                                                    discoverable.getSocketAddress().getPort());
-        result.add(url);
-      }
-      return result;
-    }
-    return Collections.EMPTY_LIST;
   }
 
   /**
