@@ -2262,7 +2262,8 @@ HTTP Responses
 
 Scaling System Services
 -----------------------
-The number of instances for system services can be queried and changed by using these commands::
+In distributed Continuuity Reactor installations, the number of instances for system services 
+can be queried and changed by using these commands::
 
   GET <base-url>/system/services/<service-name>/instances
   PUT <base-url>/system/services/<service-name>/instances
@@ -2281,6 +2282,8 @@ with the arguments as a JSON string in the body::
      - Name of the system service 
    * - ``<quantity>``
      - Number of instances to be used
+     
+:Note: In single-node Reactor, these commands will return a Status Code ``400 Bad Request``.
 
 Examples
 ........
