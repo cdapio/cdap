@@ -35,8 +35,8 @@ import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.runtime.schedule.ScheduleStoreTableUtil;
+import com.continuuity.internal.app.store.DefaultStore;
 import com.continuuity.logging.save.LogSaverTableUtil;
-import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -164,7 +164,6 @@ public class ReactorTool {
     QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
     MetricsTableFactory metricsTableFactory = injector.getInstance(MetricsTableFactory.class);
-    MetaDataTable metaDataTable = injector.getInstance(MetaDataTable.class);
     LogSaverTableUtil logSaverUtil = injector.getInstance(LogSaverTableUtil.class);
     ScheduleStoreTableUtil scheduleStoreUtil = injector.getInstance(ScheduleStoreTableUtil.class);
 
@@ -183,8 +182,8 @@ public class ReactorTool {
     queueAdmin.upgrade();
     streamAdmin.upgrade();
 
-    // Upgrade the metadata table
-    metaDataTable.upgrade();
+    // Upgrade app mds datasets
+    DefaultStore.upgrade(framework);
 
     // Upgrade schedule store
     scheduleStoreUtil.upgrade();

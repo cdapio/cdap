@@ -162,10 +162,6 @@ public abstract class AbstractMapReduceContextBuilder {
       context.setOutput((BatchWritable) context.getDataSet(outputDataSetName));
     }
 
-    // Initialize log appender
-    LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-    logAppenderInitializer.initialize();
-
     return context;
   }
 

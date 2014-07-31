@@ -76,6 +76,7 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
     long retention = cConf.getLong(MetricsConstants.ConfigKeys.RETENTION_SECONDS + ".1.seconds",
                                    MetricsConstants.DEFAULT_RETENTION_HOURS);
 
+    // Try right away if there's anything to cleanup, then we'll schedule to do that periodically
     scheduler.schedule(createCleanupTask(retention), 1, TimeUnit.SECONDS);
   }
 
@@ -97,11 +98,13 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
       public void run() {
         // Only do cleanup if the underlying table doesn't supports TTL.
         try {
-          if (!tableFactory.isTTLSupported()) {
+          if (tableFactory.isTTLSupported()) {
             return;
           }
         } catch (Exception e) {
+          // If we cannot determine that ttl is supported then try again in 1 second
           scheduler.schedule(this, 1, TimeUnit.SECONDS);
+          return;
         }
 
         long currentTime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);

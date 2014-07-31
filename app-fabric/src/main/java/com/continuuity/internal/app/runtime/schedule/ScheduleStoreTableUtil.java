@@ -16,8 +16,9 @@
 
 package com.continuuity.internal.app.runtime.schedule;
 
-import com.continuuity.data.DataSetAccessor;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.lib.table.MetaTableUtil;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.google.inject.Inject;
 
 /**
@@ -28,8 +29,8 @@ public class ScheduleStoreTableUtil extends MetaTableUtil {
   public static final String SCHEDULE_STORE_DATASET_NAME = "schedulestore";
 
   @Inject
-  public ScheduleStoreTableUtil(DataSetAccessor dataSetAccessor) {
-    super(dataSetAccessor);
+  public ScheduleStoreTableUtil(DatasetFramework framework, CConfiguration conf) {
+    super(framework, conf);
   }
 
   @Override
