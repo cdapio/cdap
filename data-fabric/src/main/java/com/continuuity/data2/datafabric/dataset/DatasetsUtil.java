@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Has handy methods for dealing with Datasets.
@@ -44,12 +45,14 @@ public final class DatasetsUtil {
    * NOTE: does poor job guarding against races, i.e. only one client for this dataset instance is supported at a time
    */
   public static <T extends Dataset> T getOrCreateDataset(DatasetFramework datasetFramework,
-                                                   String instanceName, String typeName,
-                                                   DatasetProperties props, ClassLoader cl)
+                                                         String instanceName, String typeName,
+                                                         DatasetProperties props,
+                                                         Map<String, String> arguments,
+                                                         ClassLoader cl)
     throws DatasetManagementException, IOException {
 
     createIfNotExists(datasetFramework, instanceName, typeName, props);
-    return (T) datasetFramework.getDataset(instanceName, null);
+    return (T) datasetFramework.getDataset(instanceName, arguments, null);
   }
 
   /**

@@ -29,6 +29,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * HBase based implementation for {@link MetricsTable}.
@@ -55,7 +56,8 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
   }
 
   @Override
-  public MetricsTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public MetricsTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
+    throws IOException {
     return new HBaseMetricsTable(spec.getName(), hConf);
   }
 

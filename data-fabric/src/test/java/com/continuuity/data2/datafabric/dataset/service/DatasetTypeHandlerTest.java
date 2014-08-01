@@ -16,17 +16,10 @@
 
 package com.continuuity.data2.datafabric.dataset.service;
 
-import com.continuuity.api.dataset.Dataset;
-import com.continuuity.api.dataset.DatasetAdmin;
-import com.continuuity.api.dataset.DatasetDefinition;
-import com.continuuity.api.dataset.DatasetProperties;
-import com.continuuity.api.dataset.DatasetSpecification;
-import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
-import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
-import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.ObjectResponse;
+import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.proto.DatasetModuleMeta;
 import com.continuuity.proto.DatasetTypeMeta;
 import com.google.common.base.Function;
@@ -192,44 +185,15 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     return ObjectResponse.fromJsonBody(HttpRequests.execute(request), DatasetTypeMeta.class);
   }
 
-  /**
-   * Test dataset module
-   */
-  public static class TestModule1 implements DatasetModule {
-    @Override
-    public void register(DatasetDefinitionRegistry registry) {
-      registry.add(createDefinition("datasetType1"));
-    }
-  }
-
-  /**
-   * Test dataset module
-   */
-  // NOTE: this depends on TestModule
-  public static class TestModule2 implements DatasetModule {
-    @Override
-    public void register(DatasetDefinitionRegistry registry) {
-      Assert.assertNotNull(registry.get("datasetType1"));
-      registry.add(createDefinition("datasetType2"));
-    }
-  }
-
-  private static DatasetDefinition createDefinition(String name) {
-    return new AbstractDatasetDefinition(name) {
-      @Override
-      public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-        return null;
-      }
-
-      @Override
-      public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) {
-        return null;
-      }
-
-      @Override
-      public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) {
-        return null;
-      }
-    };
+  @Test
+  public void testBundledJarModule() throws Exception {
+    //Get jar of TestModule1
+    String module1Jar = JarFinder.getJar(TestModule1.class);
+    // Create bundle jar with TestModule2 and TestModule1 inside it, request for deploy is made for Module1.
+    Assert.assertEquals(200, deployModuleBundled("module1", TestModule1.class.getName(),
+                                                 TestModule2.class, new File(module1Jar)));
+    Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
+    List<DatasetModuleMeta> modules = getModules().getResponseObject();
+    Assert.assertEquals(0, modules.size());
   }
 }

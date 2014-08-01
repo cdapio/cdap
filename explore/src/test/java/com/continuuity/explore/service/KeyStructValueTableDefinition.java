@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Simple key value table for testing.
@@ -66,8 +67,9 @@ public class KeyStructValueTableDefinition
   }
 
   @Override
-  public KeyStructValueTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("key-value-table"), classLoader);
+  public KeyStructValueTable getDataset(DatasetSpecification spec,
+                                        Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+    Table table = tableDef.getDataset(spec.getSpecification("key-value-table"), arguments, classLoader);
     return new KeyStructValueTable(spec.getName(), table);
   }
 

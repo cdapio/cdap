@@ -25,6 +25,7 @@ import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.api.dataset.table.Table;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Defines Table data set
@@ -52,8 +53,9 @@ public class TableDefinition extends AbstractDatasetDefinition<Table, DatasetAdm
   }
 
   @Override
-  public Table getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    OrderedTable table = tableDef.getDataset(spec.getSpecification(""), classLoader);
+  public Table getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
+    throws IOException {
+    OrderedTable table = tableDef.getDataset(spec.getSpecification(""), arguments, classLoader);
     return new TableDataset(spec.getName(), table);
   }
 }
