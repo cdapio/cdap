@@ -29,6 +29,7 @@ import com.continuuity.api.dataset.table.Table;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class UniqueCountTableDefinition
   extends CompositeDatasetDefinition<UniqueCountTableDefinition.UniqueCountTable> {
@@ -39,10 +40,11 @@ public class UniqueCountTableDefinition
   }
 
   @Override
-  public UniqueCountTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public UniqueCountTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
+    throws IOException {
     return new UniqueCountTable(spec.getName(),
-                                getDataset("entryCountTable", Table.class, spec, classLoader),
-                                getDataset("uniqueCountTable", Table.class, spec, classLoader));
+                                getDataset("entryCountTable", Table.class, spec, arguments, classLoader),
+                                getDataset("uniqueCountTable", Table.class, spec, arguments, classLoader));
   }
 
   public static class UniqueCountTable extends AbstractDataset {

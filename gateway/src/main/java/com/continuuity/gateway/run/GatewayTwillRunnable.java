@@ -90,7 +90,7 @@ public class GatewayTwillRunnable extends AbstractTwillRunnable {
     name = context.getSpecification().getName();
     Map<String, String> configs = context.getSpecification().getConfigs();
 
-    LOG.info("Initializing runnable " + name);
+    LOG.info("Initializing runnable {}", name);
     try {
       // Load configuration
       Configuration hConf = new Configuration();
@@ -103,13 +103,13 @@ public class GatewayTwillRunnable extends AbstractTwillRunnable {
       cConf.clear();
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
 
-      LOG.info("Setting host name to " + context.getHost().getCanonicalHostName());
+      LOG.info("Setting host name to {}", context.getHost().getCanonicalHostName());
       cConf.set(Constants.Gateway.ADDRESS, context.getHost().getCanonicalHostName());
 
       // Set Gateway port to 0, so that it binds to any free port.
       cConf.setInt(Constants.Gateway.PORT, 0);
 
-      LOG.info("Continuuity conf {}", cConf);
+      LOG.info("cConf {}", cConf);
       LOG.info("HBase conf {}", hConf);
 
       Injector injector = createGuiceInjector(cConf, hConf);
@@ -124,7 +124,7 @@ public class GatewayTwillRunnable extends AbstractTwillRunnable {
       // Get the Gateway
       gateway = injector.getInstance(Gateway.class);
 
-      LOG.info("Runnable initialized " + name);
+      LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
       throw Throwables.propagate(t);
@@ -133,10 +133,10 @@ public class GatewayTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void run() {
-    LOG.info("Starting runnable " + name);
+    LOG.info("Starting runnable {}", name);
     Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService,
                                              metricsCollectionService, gateway));
-    LOG.info("Runnable started " + name);
+    LOG.info("Runnable started {}", name);
 
     try {
       runLatch.await();
@@ -145,12 +145,12 @@ public class GatewayTwillRunnable extends AbstractTwillRunnable {
       Thread.currentThread().interrupt();
     }
 
-    LOG.info("Runnable stopped " + name);
+    LOG.info("Runnable stopped {}", name);
   }
 
   @Override
   public void stop() {
-    LOG.info("Stopping runnable " + name);
+    LOG.info("Stopping runnable {}", name);
 
     Futures.getUnchecked(Services.chainStop(gateway, metricsCollectionService,
                                             kafkaClientService, zkClientService));

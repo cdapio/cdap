@@ -26,6 +26,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * DatasetDefinition for {@link IndexedTable}.
@@ -60,12 +61,13 @@ public class IndexedTableDefinition
   }
 
   @Override
-  public IndexedTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public IndexedTable getDataset(DatasetSpecification spec,
+                                 Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     DatasetSpecification tableInstance = spec.getSpecification("d");
-    Table table = tableDef.getDataset(tableInstance, classLoader);
+    Table table = tableDef.getDataset(tableInstance, arguments, classLoader);
 
     DatasetSpecification indexTableInstance = spec.getSpecification("i");
-    Table index = tableDef.getDataset(indexTableInstance, classLoader);
+    Table index = tableDef.getDataset(indexTableInstance, arguments, classLoader);
 
     String columnToIndex = spec.getProperty("columnToIndex");
     Preconditions.checkNotNull(columnToIndex, "columnToIndex must be specified");

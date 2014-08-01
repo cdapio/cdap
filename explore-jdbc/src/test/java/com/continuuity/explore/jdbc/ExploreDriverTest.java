@@ -235,7 +235,7 @@ public class ExploreDriverTest {
     }
 
     @POST
-    @Path("v2/data/queries")
+    @Path("v2/data/explore/queries")
     public void query(HttpRequest request, HttpResponder responder) {
       try {
         QueryHandle handle = QueryHandle.generate();
@@ -250,7 +250,7 @@ public class ExploreDriverTest {
     }
 
     @DELETE
-    @Path("v2/data/queries/{id}")
+    @Path("v2/data/explore/queries/{id}")
     public void closeQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                            @PathParam("id") final String id) {
       if (closedHandles.contains(id)) {
@@ -262,7 +262,7 @@ public class ExploreDriverTest {
     }
 
     @POST
-    @Path("v2/data/queries/{id}/cancel")
+    @Path("v2/data/explore/queries/{id}/cancel")
     public void cancelQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("id") final String id) {
       if (closedHandles.contains(id)) {
@@ -274,7 +274,7 @@ public class ExploreDriverTest {
     }
 
     @GET
-    @Path("v2/data/queries/{id}/status")
+    @Path("v2/data/explore/queries/{id}/status")
     public void getQueryStatus(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                                @PathParam("id") final String id) {
       QueryStatus status = null;
@@ -292,7 +292,7 @@ public class ExploreDriverTest {
     }
 
     @GET
-    @Path("v2/data/queries/{id}/schema")
+    @Path("v2/data/explore/queries/{id}/schema")
     public void getQueryResultsSchema(@SuppressWarnings("UnusedParameters") HttpRequest request,
                                       HttpResponder responder, @PathParam("id") final String id) {
       if (closedHandles.contains(id)) {
@@ -307,7 +307,7 @@ public class ExploreDriverTest {
     }
 
     @POST
-    @Path("v2/data/queries/{id}/next")
+    @Path("v2/data/explore/queries/{id}/next")
     public void getQueryNextResults(@SuppressWarnings("UnusedParameters") HttpRequest request,
                                     HttpResponder responder, @PathParam("id") final String id) {
       if (closedHandles.contains(id)) {

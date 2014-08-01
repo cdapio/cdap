@@ -25,6 +25,7 @@ import com.continuuity.api.dataset.table.Table;
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * {@link DatasetDefinition} for {@link KeyValueTable}.
@@ -55,8 +56,9 @@ public class KeyValueTableDefinition
   }
 
   @Override
-  public KeyValueTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("kv"), classLoader);
+  public KeyValueTable getDataset(DatasetSpecification spec,
+                                  Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+    Table table = tableDef.getDataset(spec.getSpecification("kv"), arguments, classLoader);
     return new KeyValueTable(spec.getName(), table);
   }
 }

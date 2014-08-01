@@ -25,6 +25,7 @@ import com.continuuity.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableAdmin
 import com.google.inject.Inject;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * LevelDB backed implementation for {@link com.continuuity.data2.dataset.lib.table.MetricsTable}
@@ -47,7 +48,8 @@ public class LevelDBMetricsTableDefinition
   }
 
   @Override
-  public MetricsTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public MetricsTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
+    throws IOException {
     return new LevelDBMetricsTable(spec.getName(), service);
   }
 

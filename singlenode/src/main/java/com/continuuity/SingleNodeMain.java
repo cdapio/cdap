@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.continuuity;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
@@ -155,7 +156,7 @@ public class SingleNodeMain {
 
     Service.State state = appFabricServer.startAndWait();
     if (state != Service.State.RUNNING) {
-      throw new Exception("Failed to start Application Fabric.");
+      throw new Exception("Failed to start Application Fabric");
     }
 
     gatewayV2.startAndWait();
@@ -174,7 +175,7 @@ public class SingleNodeMain {
     }
 
     String hostname = InetAddress.getLocalHost().getHostName();
-    System.out.println("Continuuity Reactor started successfully");
+    System.out.println("Application Server started successfully");
     System.out.println("Connect to dashboard at http://" + hostname + ":9999");
   }
 
@@ -182,7 +183,7 @@ public class SingleNodeMain {
    * Shutdown the service.
    */
   public void shutDown() {
-    LOG.info("Shutting down reactor...");
+    LOG.info("Shutting down the Application Server");
 
     try {
       // order matters: first shut down web app 'cause it will stop working after router is down
@@ -243,7 +244,7 @@ public class SingleNodeMain {
     }
     out.println("");
     out.println("Additional options:");
-    out.println("  --web-app-path  Path to web-app");
+    out.println("  --web-app-path  Path to Webapp");
     out.println("  --in-memory     To run everything in memory");
     out.println("  --help          To print this message");
     out.println("");
@@ -312,8 +313,8 @@ public class SingleNodeMain {
       main = new SingleNodeMain(modules, cConf, webAppPath);
       main.startUp(args);
     } catch (Throwable e) {
-      System.err.println("Failed to start server. " + e.getMessage());
-      LOG.error("Failed to start server", e);
+      System.err.println("Failed to start Application Server: " + e.getMessage());
+      LOG.error("Failed to start Application Server", e);
       if (main != null) {
         main.shutDown();
       }
@@ -355,7 +356,7 @@ public class SingleNodeMain {
     String environment =
       configuration.get(Constants.CFG_APPFABRIC_ENVIRONMENT, Constants.DEFAULT_APPFABRIC_ENVIRONMENT);
     if (environment.equals("vpc")) {
-      System.err.println("Reactor Environment : " + environment);
+      System.err.println("Application Server Environment: " + environment);
     }
 
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
