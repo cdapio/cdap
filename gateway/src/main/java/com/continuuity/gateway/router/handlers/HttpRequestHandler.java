@@ -184,14 +184,17 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   private WrappedDiscoverable getDiscoverable(final HttpRequest httpRequest,
                                               final InetSocketAddress address) {
     EndpointStrategy strategy = serviceLookup.getDiscoverable(address.getPort(), httpRequest);
-    raiseExceptionIfNull(strategy, HttpResponseStatus.SERVICE_UNAVAILABLE,
-                         "No endpoint strategy found for service : %s",
-                         serviceLookup.getDestinationService(address.getPort(), httpRequest));
+    if (strategy == null) {
+      throw  new HandlerException(HttpResponseStatus.SERVICE_UNAVAILABLE,
+                                  String.format("No endpoint strategy found for service : %s",
+                                  serviceLookup.getDestinationService(address.getPort(), httpRequest)));
+    }
     Discoverable discoverable = strategy.pick();
-    raiseExceptionIfNull(discoverable,
-                         HttpResponseStatus.SERVICE_UNAVAILABLE, "No discoverable found for service : %s",
-                         serviceLookup.getDestinationService(address.getPort(), httpRequest));
-
+    if (discoverable == null) {
+      throw  new HandlerException(HttpResponseStatus.SERVICE_UNAVAILABLE,
+                                  String.format("No discoverable found for service : %s",
+                                                serviceLookup.getDestinationService(address.getPort(), httpRequest)));
+    }
     return new WrappedDiscoverable(discoverable);
   }
 
