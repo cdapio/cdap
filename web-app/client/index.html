@@ -247,31 +247,26 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="DataExploreResults">
-    <div>Number of Queries: {{numQueries}}</div>
-    <table class="table">
+    <table class="table" id="query-list-table">
       <thead>
-        <th>Query Handle</th>
-        <th>Query</th>
-        <th>Status</th>
-        <th>Result</th>
+        <th style="width: 25%">Query Handle</th>
+        <th style="width: 45%">Query</th>
+        <th style="width: 15%">Status</th>
+        <th style="width: 15%">Result</th>
       </thead>
+    </table>
+    {{#each objArr}}
+    {{#unless deleted}}
+    <table {{bindAttr class=":table :cursor-pointer :query-table-entry this.isSelected:selected:notselected" }} {{ action showTable this }}>
       <tbody>
-      {{#if objArr}}
-        {{/if}}
-        {{#each objArr}}
-        {{#unless deleted}}
-
-        <tr data-toggle="collapse" {{bindAttr data-target="query_handle_hashed"}} class="accordion-toggle">
-          <td>
-            {{query_handle}}
-            <span {{action cancelQuery this bubbles=false}}>cancel</span>
-            <span {{action deleteQuery this bubbles=false}}>delete</span>
-            <span {{action getResults this bubbles=false}}>results</span>
+        <tr {{bindAttr data-target="query_handle_hashed"}}>
+          <td style="width: 25%">
+            <span class="lighter-color">{{query_handle}}</span>
           </td>
-          <td>{{statement}}</td>
-          <td>{{status}}</td>
+          <td style="width: 45%"><span class="bolder-font">{{statement}}</span></td>
+          <td style="width: 15%"><span {{bindAttr class=":query-status status"}}>{{status}}</span></td>
           {{#if has_results}}
-            <td>
+            <td style="width: 15%">
                 <a {{bindAttr download=downloadName}} {{bindAttr href="downloadableResults"}}>
                   Download Results
                 </a>
@@ -280,48 +275,36 @@
             <td>[No results]</td>
           {{/if}}
         </tr>
-
+        </tbody>
+      </table>
         {{#if has_results}}
-          <tr>
-            <td class="hiddenRow" style="padding:0;">
-              <div {{bindAttr id="query_handle"}} class="accordion-body collapse">
+          <div {{bindAttr id="query_handle"}} style="display:none">
 
-                <table>
-                  <thead>
-                    {{#each schema}}
-                      <th>{{name}}</th>
-                    {{/each}}
-                  </thead>
-                  <tbody>
-                  {{#each results}}
-                    <tr>
-                    {{#each columns}}
-                      <td>{{this}}</td>
-                    {{/each}}
-                    </tr>
-                  {{/each}}
-                  </tbody>
-                </table>
+            <table class="table query-results-table-entry">
+              <thead>
+                {{#each schema}}
+                  <th>{{name}}</th>
+                {{/each}}
+              </thead>
+              <tbody>
+              {{#each results}}
+                <tr>
+                {{#each columns}}
+                  <td>{{this}}</td>
+                {{/each}}
+                </tr>
+              {{/each}}
+              </tbody>
+            </table>
 
-              </div>
-            </td>
-          </tr>
+          </div>
         {{ else }}
-          <tr>
-            <td class="hiddenRow" colspan="4" style="text-align:center;padding:0;">
-            <div {{bindAttr id="query_handle"}} class="accordion-body collapse">
-              <a>This query does not have results.</a>
-            </div>
-            </td>
-          </tr>
+          <div {{bindAttr id="query_handle"}}>
+            <a>This query does not have results.</a>
+          </div>
         {{/if}}
-
-
-
-        {{/unless}}
-        {{/each}}
-      </tbody>
-    </table>
+    {{/unless}}
+    {{/each}}
   </script>
 
 

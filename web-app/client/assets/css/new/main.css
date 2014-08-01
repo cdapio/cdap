@@ -3561,6 +3561,70 @@ div.tooltip {
 	margin-top: -20px;
 }
 
+#query-list-table {
+	font-size: 14px;
+}
+
+.lighter-color {
+	color: #ABAFBE;
+}
+
+.query-status {
+	color: #ABAFBE;
+	font-weight: bold;
+}
+
+.query-status.FINISHED {
+	color: #3EC173; 
+}
+
+.query-status.RUNNING {
+	color: #2D65C9; 
+}
+
+.query-status.ERROR {
+	color: #E34F6A; 
+}
+
+.query-table-entry {
+	font-size: 14px;
+}
+
+.query-table-entry.selected {
+	background: #4A4A4A;
+	color: white;
+}
+
+.query-table-entry:hover {
+	background: #4A4A4A;
+	color: white;
+}
+
+.query-results-table-entry {
+	color: white !important;
+}
+
+.query-results-table-entry > thead > tr > th {
+	background: #6D6D6D;
+	color: white;
+}
+
+.query-results-table-entry > tbody > tr > td {
+	background: #888888;
+	color: white;
+	border-right: 1px solid #929292;
+	border-bottom: 1px solid #929292;
+}
+
+.query-results-table-entry > tbody > tr > td:last-child {
+	border-right: 0;
+}
+
+.query-results-table-entry > tbody > tr:last-child > td:last-child {
+	border-bottom: 0;
+}
+
+
 /**
  *Login form
  */

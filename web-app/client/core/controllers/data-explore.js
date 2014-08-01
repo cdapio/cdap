@@ -68,6 +68,19 @@ define([], function () {
       );
 		},
 
+    showTable: function (obj) {
+      var self = this;
+      obj.set('isSelected', !obj.get('isSelected'));
+      $("#" + obj.query_handle).slideToggle(200, function () {
+        var objArr = self.get('objArr');
+        objArr.forEach(function (entry) {
+          if (!$("#" + obj.query_handle + " :visible")) {
+            entry.set('isSelected', false);  
+          }
+        });
+      });
+    },
+
     selectDataset: function (dataset) {
       this.set('selectedDataset', dataset);
       var datasets = this.get('datasets');
