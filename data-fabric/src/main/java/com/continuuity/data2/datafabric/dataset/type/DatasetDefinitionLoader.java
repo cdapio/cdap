@@ -41,8 +41,8 @@ import java.util.List;
  * Loads {@link DatasetDefinition} using its metadata info
  */
 public class DatasetDefinitionLoader {
-  private final LocationFactory locationFactory;
   private static final Logger LOG = LoggerFactory.getLogger(DatasetDefinitionLoader.class);
+  private final LocationFactory locationFactory;
 
   /**
    * Creates instance of {@link DatasetDefinitionLoader}
