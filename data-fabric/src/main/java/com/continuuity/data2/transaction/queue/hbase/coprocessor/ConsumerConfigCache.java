@@ -21,14 +21,14 @@ import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.google.common.collect.Maps;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -43,8 +43,8 @@ import javax.annotation.Nullable;
  * queue consumer configuration.
  */
 public class ConsumerConfigCache {
-  private static final Log LOG = LogFactory.getLog(ConsumerConfigCache.class);
-
+  private static final Logger LOG = LoggerFactory.getLogger(ConsumerConfigCache.class);
+  
   private static final int LONG_BYTES = Long.SIZE / Byte.SIZE;
   // update interval for CConfiguration
   private static final long CONFIG_UPDATE_FREQUENCY = 300 * 1000L;
@@ -89,15 +89,15 @@ public class ConsumerConfigCache {
       try {
         this.conf = configTable.read(ConfigurationTable.Type.DEFAULT, tableNamespace);
         if (this.conf != null) {
-          LOG.info("Reloaded CConfiguration at " + now);
+          LOG.info("Reloaded CConfiguration at {}", now);
           this.lastConfigUpdate = now;
           long configUpdateFrequency = conf.getLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY,
                                                     QueueConstants.DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY);
-          LOG.info("Will reload consumer config cache every " + configUpdateFrequency + " seconds");
+          LOG.info("Will reload consumer config cache every {} seconds", configUpdateFrequency);
           this.configCacheUpdateFrequency = configUpdateFrequency * 1000;
         }
       } catch (IOException ioe) {
-        LOG.error("Error reading continuuity configuration table", ioe);
+        LOG.error("Error reading default configuration table", ioe);
       }
     }
   }
@@ -148,16 +148,16 @@ public class ConsumerConfigCache {
       this.configCache = newCache;
       this.lastUpdated = now;
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Updated consumer config cache with " + configCnt + " entries, took " + elapsed + " msec.");
+        LOG.debug("Updated consumer config cache with {} entries, took {} msec", configCnt, elapsed);
       }
     } catch (IOException ioe) {
-      LOG.warn("Error updating queue consumer config cache: " + ioe.getMessage());
+      LOG.warn("Error updating queue consumer config cache: {}", ioe.getMessage());
     } finally {
       if (table != null) {
         try {
           table.close();
         } catch (IOException ioe) {
-          LOG.error("Error closing table " + Bytes.toString(configTableName), ioe);
+          LOG.error("Error closing table {}", Bytes.toString(configTableName), ioe);
         }
       }
     }

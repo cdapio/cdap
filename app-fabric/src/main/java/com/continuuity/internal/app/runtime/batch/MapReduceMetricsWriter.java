@@ -97,7 +97,7 @@ public class MapReduceMetricsWriter {
     context.getSystemMapperMetrics().gauge(METRIC_USED_CONTAINERS, runningMappers);
     context.getSystemMapperMetrics().gauge(METRIC_USED_MEMORY, runningMappers * memoryPerMapper);
 
-    LOG.trace("reporting mapper stats: (completion, ins, outs, bytes, containers, memory) = ({}, {}, {}, {}, {}, {})",
+    LOG.trace("Reporting mapper stats: (completion, ins, outs, bytes, containers, memory) = ({}, {}, {}, {}, {}, {})",
               (int) (mapProgress * 100), mapInputRecords, mapOutputRecords, mapOutputBytes, runningMappers,
               runningMappers * memoryPerMapper);
 
@@ -114,7 +114,7 @@ public class MapReduceMetricsWriter {
     context.getSystemReducerMetrics().gauge(METRIC_USED_CONTAINERS, runningReducers);
     context.getSystemReducerMetrics().gauge(METRIC_USED_MEMORY, runningReducers * memoryPerReducer);
 
-    LOG.trace("reporting reducer stats: (completion, ins, outs, containers, memory) = ({}, {}, {}, {}, {})",
+    LOG.trace("Reporting reducer stats: (completion, ins, outs, containers, memory) = ({}, {}, {}, {}, {})",
               (int) (reduceProgress * 100), reduceInputRecords, reduceOutputRecords, runningReducers,
               runningReducers * memoryPerReducer);
   }

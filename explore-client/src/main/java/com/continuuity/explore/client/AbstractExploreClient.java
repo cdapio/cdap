@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -51,8 +52,6 @@ import javax.annotation.Nullable;
  * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP.
  */
 public abstract class AbstractExploreClient extends ExploreHttpClient implements ExploreClient {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractExploreClient.class);
-
   private final ListeningScheduledExecutorService executor;
 
   protected AbstractExploreClient() {
@@ -106,6 +105,11 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
         return execute(statement);
       }
     });
+  }
+
+  @Override
+  public Map<String, String> datasetSchema(String datasetName) throws ExploreException {
+    return getDatasetSchema(datasetName);
   }
 
   @Override
@@ -222,7 +226,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
       public void onSuccess(final QueryHandle handle) {
         try {
           QueryStatus status = getStatus(handle);
-          if (!status.getStatus().isFinished()) {
+          if (!status.getStatus().isDone()) {
             executor.schedule(new Runnable() {
               @Override
               public void run() {

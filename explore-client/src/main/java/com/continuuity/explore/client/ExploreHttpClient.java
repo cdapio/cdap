@@ -25,6 +25,7 @@ import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.MetaDataInfo;
+import com.continuuity.explore.service.QueryInfo;
 import com.continuuity.explore.utils.ColumnsArgs;
 import com.continuuity.explore.utils.FunctionsArgs;
 import com.continuuity.explore.utils.SchemasArgs;
@@ -65,6 +66,7 @@ abstract class ExploreHttpClient implements Explore {
 
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type COL_DESC_LIST_TYPE = new TypeToken<List<ColumnDesc>>() { }.getType();
+  private static final Type QUERY_INFO_LIST_TYPE = new TypeToken<List<QueryInfo>>() { }.getType();
   private static final Type ROW_LIST_TYPE = new TypeToken<List<QueryResult>>() { }.getType();
 
   protected abstract InetSocketAddress getExploreServiceAddress();
@@ -82,7 +84,7 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   protected QueryHandle doEnableExplore(String datasetInstance) throws ExploreException {
-    HttpResponse response = doPost(String.format("explore/instances/%s/enable", datasetInstance), null, null);
+    HttpResponse response = doPost(String.format("data/explore/datasets/%s/enable", datasetInstance), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -91,7 +93,7 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   protected QueryHandle doDisableExplore(String datasetInstance) throws ExploreException {
-    HttpResponse response = doPost(String.format("explore/instances/%s/disable", datasetInstance), null, null);
+    HttpResponse response = doPost(String.format("data/explore/datasets/%s/disable", datasetInstance), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -99,9 +101,17 @@ abstract class ExploreHttpClient implements Explore {
                                  getDetails(response));
   }
 
+  public Map<String, String> getDatasetSchema(String datasetName) throws ExploreException {
+    HttpResponse response = doGet(String.format("data/explore/datasets/%s/schema", datasetName));
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return parseJson(response, MAP_TYPE_TOKEN);
+    }
+    throw new ExploreException("Cannot get dataset schema. Reason: " + getDetails(response));
+  }
+
   @Override
   public QueryHandle execute(String statement) throws ExploreException {
-    HttpResponse response = doPost("data/queries", GSON.toJson(ImmutableMap.of("query", statement)), null);
+    HttpResponse response = doPost("data/explore/queries", GSON.toJson(ImmutableMap.of("query", statement)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -110,7 +120,7 @@ abstract class ExploreHttpClient implements Explore {
 
   @Override
   public QueryStatus getStatus(QueryHandle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doGet(String.format("data/queries/%s/%s", handle.getHandle(), "status"));
+    HttpResponse response = doGet(String.format("data/explore/queries/%s/%s", handle.getHandle(), "status"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, QueryStatus.class);
     }
@@ -119,7 +129,7 @@ abstract class ExploreHttpClient implements Explore {
 
   @Override
   public List<ColumnDesc> getResultSchema(QueryHandle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doGet(String.format("data/queries/%s/%s", handle.getHandle(), "schema"));
+    HttpResponse response = doGet(String.format("data/explore/queries/%s/%s", handle.getHandle(), "schema"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, COL_DESC_LIST_TYPE);
     }
@@ -128,7 +138,7 @@ abstract class ExploreHttpClient implements Explore {
 
   @Override
   public List<QueryResult> nextResults(QueryHandle handle, int size) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doPost(String.format("data/queries/%s/%s", handle.getHandle(), "next"),
+    HttpResponse response = doPost(String.format("data/explore/queries/%s/%s", handle.getHandle(), "next"),
                                    GSON.toJson(ImmutableMap.of("size", size)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, ROW_LIST_TYPE);
@@ -138,7 +148,8 @@ abstract class ExploreHttpClient implements Explore {
 
   @Override
   public void cancel(QueryHandle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doPost(String.format("data/queries/%s/%s", handle.getHandle(), "cancel"), null, null);
+    HttpResponse response = doPost(String.format("data/explore/queries/%s/%s", handle.getHandle(), "cancel"),
+                                   null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return;
     }
@@ -147,7 +158,7 @@ abstract class ExploreHttpClient implements Explore {
 
   @Override
   public void close(QueryHandle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doDelete(String.format("data/queries/%s", handle.getHandle()));
+    HttpResponse response = doDelete(String.format("data/explore/queries/%s", handle.getHandle()));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return;
     }
@@ -155,6 +166,15 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   @Override
+  public List<QueryInfo> getQueries() throws ExploreException, SQLException {
+
+    HttpResponse response = doGet("data/explore/queries/");
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return parseJson(response, QUERY_INFO_LIST_TYPE);
+    }
+    throw new ExploreException("Cannot get list of queries. Reason: " + getDetails(response));
+  }
+
   public QueryHandle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
     throws ExploreException, SQLException {
     String body = GSON.toJson(new ColumnsArgs(catalog, schemaPattern,

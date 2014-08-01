@@ -17,7 +17,7 @@
 package com.continuuity.internal.app.runtime.schedule;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.TransactionExecutorFactory;
@@ -56,7 +56,7 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
 
   private final TransactionExecutorFactory factory;
   private final ScheduleStoreTableUtil tableUtil;
-  private OrderedColumnarTable table;
+  private OrderedTable table;
 
   @Inject
   public DataSetBasedScheduleStore(TransactionExecutorFactory factory, ScheduleStoreTableUtil tableUtil) {
@@ -211,7 +211,7 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
   }
 
   // Persist the job information to dataset
-  private void persistJob(OrderedColumnarTable table, JobDetail job) throws Exception {
+  private void persistJob(OrderedTable table, JobDetail job) throws Exception {
     byte[][] cols = new byte[1][];
     byte[][] values = new byte[1][];
 
@@ -220,22 +220,22 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
     table.put(JOB_KEY, cols, values);
   }
 
-  private void removeTrigger(OrderedColumnarTable table, TriggerKey key) throws Exception {
+  private void removeTrigger(OrderedTable table, TriggerKey key) throws Exception {
     byte[][] col = new byte[1][];
-    col[0] = Bytes.toBytes(key.getName().toString());
+    col[0] = Bytes.toBytes(key.getName());
     table.delete(TRIGGER_KEY, col);
   }
 
 
-  private void removeJob(OrderedColumnarTable table, JobKey key) throws Exception {
+  private void removeJob(OrderedTable table, JobKey key) throws Exception {
     byte[][] col = new byte[1][];
-    col[0] = Bytes.toBytes(key.getName().toString());
+    col[0] = Bytes.toBytes(key.getName());
     table.delete(JOB_KEY, col);
   }
 
   private TriggerStatus readTrigger(TriggerKey key) throws Exception {
     byte[][] col = new byte[1][];
-    col[0] = Bytes.toBytes(key.getName().toString());
+    col[0] = Bytes.toBytes(key.getName());
     Map<byte[], byte[]> result = table.get(TRIGGER_KEY, col);
     byte[] bytes = null;
     if (!result.isEmpty()) {
@@ -249,13 +249,13 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
   }
 
   // Persist the trigger information to dataset
-  private void persistTrigger(OrderedColumnarTable table, OperableTrigger trigger,
+  private void persistTrigger(OrderedTable table, OperableTrigger trigger,
                               Trigger.TriggerState state) throws Exception {
 
     byte[][] cols = new byte[1][];
     byte[][] values = new byte[1][];
 
-    cols[0] = Bytes.toBytes(trigger.getKey().getName().toString());
+    cols[0] = Bytes.toBytes(trigger.getKey().getName());
     values[0] = SerializationUtils.serialize(new TriggerStatus(trigger, state));
     table.put(TRIGGER_KEY, cols, values);
   }

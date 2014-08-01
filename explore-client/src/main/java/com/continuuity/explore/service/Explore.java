@@ -99,6 +99,14 @@ public interface Explore {
    */
   void close(QueryHandle handle) throws ExploreException, HandleNotFoundException;
 
+  /**
+   * Fetch information about queries executed in Hive.
+   *
+   * @return List of {@link QueryInfo}
+   * @throws ExploreException
+   */
+  List<QueryInfo> getQueries() throws ExploreException, SQLException;
+
 
   ////// Metadata methods
 

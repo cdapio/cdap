@@ -30,8 +30,6 @@ import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.gateway.auth.AuthModule;
-import com.continuuity.internal.migrate.MetricsTableMigrator20to21;
-import com.continuuity.internal.migrate.TableMigrator;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.MetricsConstants;
@@ -137,11 +135,9 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
       bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class)
         .in(Scopes.SINGLETON);
       bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
-      bind(TableMigrator.class).to(MetricsTableMigrator20to21.class);
       install(new FactoryModuleBuilder()
                 .build(KafkaMetricsProcessorServiceFactory.class));
 
-      expose(TableMigrator.class);
       expose(KafkaMetricsProcessorServiceFactory.class);
     }
     @Provides
