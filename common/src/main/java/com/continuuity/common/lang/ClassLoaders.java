@@ -68,12 +68,6 @@ public final class ClassLoaders {
     return new ProgramClassLoader(unpackedJarDir, filterClassLoader);
   }
 
-  public static ProgramClassLoader newProgramClassLoaderWithoutFilter(
-    File unpackedJarDir, ClassLoader parentClassLoader) throws IOException {
-
-    return new ProgramClassLoader(unpackedJarDir, parentClassLoader);
-  }
-
   public static Iterable<String> getAPIResources(ClassLoader classLoader) throws IOException {
     // Get the bootstrap classpath. This is for exclusion.
     Set<String> bootstrapPaths = Sets.newHashSet();

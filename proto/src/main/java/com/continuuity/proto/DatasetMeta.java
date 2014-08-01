@@ -17,6 +17,7 @@
 package com.continuuity.proto;
 
 import com.continuuity.api.dataset.DatasetSpecification;
+import com.google.gson.annotations.SerializedName;
 
 /**
  * Dataset instance metadata.
@@ -27,9 +28,13 @@ public class DatasetMeta {
   // todo: meta of modules inside will have list of all types in the module that is redundant here
   private final DatasetTypeMeta type;
 
-  public DatasetMeta(DatasetSpecification spec, DatasetTypeMeta type) {
+  @SerializedName("hive_table")
+  private final String hiveTableName;
+
+  public DatasetMeta(DatasetSpecification spec, DatasetTypeMeta type, String hiveTableName) {
     this.spec = spec;
     this.type = type;
+    this.hiveTableName = hiveTableName;
   }
 
   public DatasetSpecification getSpec() {
@@ -38,5 +43,9 @@ public class DatasetMeta {
 
   public DatasetTypeMeta getType() {
     return type;
+  }
+
+  public String getHiveTableName() {
+    return hiveTableName;
   }
 }

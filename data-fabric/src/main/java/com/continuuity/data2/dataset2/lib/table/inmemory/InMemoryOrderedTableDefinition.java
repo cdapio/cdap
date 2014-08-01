@@ -22,6 +22,7 @@ import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
 import com.continuuity.api.dataset.table.ConflictDetection;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  *
@@ -41,7 +42,8 @@ public class InMemoryOrderedTableDefinition
   }
 
   @Override
-  public InMemoryOrderedTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public InMemoryOrderedTable getDataset(DatasetSpecification spec,
+                                         Map<String, String> arguments, ClassLoader classLoader) {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     return new InMemoryOrderedTable(spec.getName(), conflictDetection);

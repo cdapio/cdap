@@ -24,6 +24,7 @@ import com.continuuity.data2.dataset2.lib.table.ObjectStoreDataset;
 import com.continuuity.internal.io.UnsupportedTypeException;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  *
@@ -52,9 +53,11 @@ public class IntegerStoreDefinition
   }
 
   @Override
-  public ObjectStoreDataset<Integer> getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public ObjectStoreDataset<Integer> getDataset(DatasetSpecification spec,
+                                                Map<String, String> arguments,
+                                                ClassLoader classLoader) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("table");
-    KeyValueTable table = tableDef.getDataset(kvTableSpec, classLoader);
+    KeyValueTable table = tableDef.getDataset(kvTableSpec, arguments, classLoader);
 
     try {
       return new IntegerStore(spec.getName(), table);

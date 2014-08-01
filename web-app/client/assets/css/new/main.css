@@ -573,6 +573,14 @@ a, a:visited {
 	border-right: 1px solid #ccc;
 }
 
+#global .my-account {
+	cursor: pointer;
+}
+
+#global .my-account:hover ul.dropdown-menu{
+	display: block !important;
+}
+
 #global .user-link.small-pad {
 	padding-left: 30px;
 	color: black;

@@ -32,16 +32,22 @@ import com.continuuity.http.HttpResponder;
 import com.continuuity.proto.DatasetInstanceConfiguration;
 import com.continuuity.proto.DatasetMeta;
 import com.continuuity.proto.DatasetTypeMeta;
+
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -79,14 +85,72 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/datasets/")
   public void list(HttpRequest request, final HttpResponder responder) {
-    responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll());
+    Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
+
+    // if meta is true, then DatasetMeta objects will be returned by this endpoint
+    // Otherwise, by default and for any other value, DatasetSpecification objects will be returned.
+    boolean isMeta = queryParams.containsKey("meta") && queryParams.get("meta").contains("true");
+
+    // If explorable is true, only explorable datasets (defined as ones for which a Hive table exists) will
+    // be returned. If it is false, only non-explorable datasets will be returned.
+    // If this option is not set, or neither true nor false, then all datasets are returned.
+    boolean explorableDatasetsOption = queryParams.containsKey("explorable")
+      && (queryParams.get("explorable").contains("true") || queryParams.get("explorable").contains("false"));
+    boolean getExplorableDatasets = explorableDatasetsOption && queryParams.get("explorable").contains("true");
+
+    Collection<DatasetSpecification> datasetSpecifications = instanceManager.getAll();
+
+    if (explorableDatasetsOption) {
+      try {
+        // Do a join/disjoin of the list of datasets, and the list of Hive tables
+        List<String> hiveTables = datasetExploreFacade.getExplorableDatasetsTableNames();
+        ImmutableList.Builder<?> joinBuilder = ImmutableList.builder();
+
+        for (DatasetSpecification spec : datasetSpecifications) {
+          // True if this dataset has a Hive table associated with it
+          boolean isExplorable = hiveTables.contains(DatasetExploreFacade.getHiveTableName(spec.getName()));
+          if (isExplorable && getExplorableDatasets || !isExplorable && !getExplorableDatasets) {
+            if (isMeta) {
+              // Return DatasetMeta objects
+              DatasetMeta meta;
+              if (isExplorable) {
+                // Add dataset Hive table name to the DatasetMeta object
+                meta = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()),
+                                       DatasetExploreFacade.getHiveTableName(spec.getName()));
+              } else {
+                meta = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null);
+              }
+              joinBuilder.add(meta);
+            } else {
+              // Return DatasetSpecification objects
+              joinBuilder.add(spec);
+            }
+          }
+        }
+        responder.sendJson(HttpResponseStatus.OK, joinBuilder.build());
+        return;
+      } catch (Throwable t) {
+        LOG.error("Caught exception while listing explorable datasets", t);
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        return;
+      }
+    }
+    if (isMeta) {
+      ImmutableList.Builder<DatasetMeta> builder = ImmutableList.builder();
+      for (DatasetSpecification spec : datasetSpecifications) {
+        builder.add(new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null));
+      }
+      responder.sendJson(HttpResponseStatus.OK, builder.build());
+    } else {
+      responder.sendJson(HttpResponseStatus.OK, datasetSpecifications);
+    }
   }
 
   @DELETE
   @Path("/data/unrecoverable/datasets/")
   public void deleteAll(HttpRequest request, final HttpResponder responder) throws Exception {
     if (!conf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
-                                  Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
+                         Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
       return;
     }
@@ -117,35 +181,48 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      DatasetMeta info = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()));
+      DatasetMeta info = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null);
       responder.sendJson(HttpResponseStatus.OK, info);
     }
   }
 
+  /**
+   * Creates a new Dataset or updates existing Dataset specification's
+   * properties if an optional update parameter in the body is set to true, {@link DatasetInstanceConfiguration}
+   * is constructed based on request and appropriate action is performed
+   */
   @PUT
   @Path("/data/datasets/{name}")
-  public void add(HttpRequest request, final HttpResponder responder,
+  public void createOrUpdate(HttpRequest request, final HttpResponder responder,
                   @PathParam("name") String name) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
 
     DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
+    String operation = (creationProperties.isUpdate() == true) ? "update" : "create";
 
-    LOG.info("Creating dataset {}, type name: {}, creationProperties: {}", name, creationProperties.getTypeName(),
-             creationProperties.getProperties());
-
+    LOG.info("{} dataset {}, type name: {}, typeAndProps: {}",
+             operation, name, creationProperties.getTypeName(), creationProperties.getProperties());
     DatasetSpecification existing = instanceManager.get(name);
-    if (existing != null) {
-      String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
-                                     name, existing);
-      LOG.warn(message);
-      responder.sendError(HttpResponseStatus.CONFLICT, message);
-      return;
-    }
 
+    if (existing != null) {
+      String message = null;
+      if (!creationProperties.isUpdate()) {
+        message = String.format("Cannot create dataset %s: instance with same name already exists %s",
+                                name, existing);
+      } else if (!existing.getType().equals(creationProperties.getTypeName())) {
+        message = String.format("Cannot update dataset %s instance with a different type, old type is %s",
+                                name, existing.getType());
+      }
+      if (message != null) {
+        LOG.warn(message);
+        responder.sendError(HttpResponseStatus.CONFLICT, message);
+        return;
+      }
+    }
     DatasetTypeMeta typeMeta = implManager.getTypeInfo(creationProperties.getTypeName());
     if (typeMeta == null) {
-      String message = String.format("Cannot create dataset %s: unknown type %s",
-                                     name, creationProperties.getTypeName());
+      String message = String.format("Cannot %s dataset %s: unknown type %s",
+                                     operation, name, creationProperties.getTypeName());
       LOG.warn(message);
       responder.sendError(HttpResponseStatus.NOT_FOUND, message);
       return;
@@ -154,11 +231,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     DatasetSpecification spec;
     try {
-      spec = opExecutorClient.create(name, typeMeta, DatasetProperties.builder()
-        .addAll(creationProperties.getProperties()).build());
+      spec = opExecutorClient.create(name, typeMeta,
+                                     DatasetProperties.builder().addAll(creationProperties.getProperties()).build());
     } catch (Exception e) {
-      String msg = String.format("Cannot create dataset %s of type %s: executing create() failed, reason: %s",
-                                 name, creationProperties.getTypeName(), e.getMessage());
+      String msg = String.format("Cannot %s dataset %s of type %s: executing create() failed, reason: %s",
+                                 operation, name, creationProperties.getTypeName(), e.getMessage());
       LOG.error(msg, e);
       throw new RuntimeException(msg, e);
     }
@@ -166,7 +243,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
     // Enable ad-hoc exploration of dataset
     // Note: today explore enable is not transactional with dataset create - REACTOR-314
+
     try {
+      if (creationProperties.isUpdate()) {
+        datasetExploreFacade.disableExplore(name);
+      }
       datasetExploreFacade.enableExplore(name);
     } catch (Exception e) {
       String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
@@ -176,14 +257,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 //      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
 //      return;
     }
-
+    //caling admin upgrade, after updating specification
+    if (creationProperties.isUpdate()) {
+      executeAdmin(request, responder, name, "upgrade");
+    }
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @DELETE
   @Path("/data/datasets/{name}")
   public void drop(HttpRequest request, final HttpResponder responder,
-                       @PathParam("name") String name) {
+                   @PathParam("name") String name) {
     LOG.info("Deleting dataset {}", name);
 
     DatasetSpecification spec = instanceManager.get(name);
@@ -243,8 +327,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @POST
   @Path("/data/datasets/{name}/data/{method}")
   public void executeDataOp(HttpRequest request, final HttpResponder responder,
-                           @PathParam("name") String instanceName,
-                           @PathParam("method") String method) {
+                            @PathParam("name") String instanceName,
+                            @PathParam("method") String method) {
     // todo: execute data operation
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
   }

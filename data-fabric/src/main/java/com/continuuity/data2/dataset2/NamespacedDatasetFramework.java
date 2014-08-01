@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -64,12 +65,21 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public void updateInstance(String datasetInstanceName, DatasetProperties props)
+    throws DatasetManagementException, IOException {
+    delegate.updateInstance(namespace(datasetInstanceName), props);
+  }
+
+  @Override
   public Collection<DatasetSpecification> getInstances() throws DatasetManagementException {
     Collection<DatasetSpecification> specs = delegate.getInstances();
     // client may pass the name back e.g. do delete instance, so we need to un-namespace it
     ImmutableList.Builder<DatasetSpecification> builder = ImmutableList.builder();
     for (DatasetSpecification spec : specs) {
-      builder.add(fromNamespaced(spec));
+      DatasetSpecification s = fromNamespaced(spec);
+      if (s != null) {
+        builder.add(s);
+      }
     }
     return builder.build();
   }
@@ -108,15 +118,20 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String datasetInstanceName, ClassLoader ignored)
+  public <T extends Dataset> T getDataset(String datasetInstanceName, Map<String, String> arguments,
+                                          ClassLoader classLoader)
     throws DatasetManagementException, IOException {
 
-    return delegate.getDataset(namespace(datasetInstanceName), ignored);
+    return delegate.getDataset(namespace(datasetInstanceName), arguments, classLoader);
   }
 
   @Nullable
   private DatasetSpecification fromNamespaced(@Nullable DatasetSpecification spec) {
-    return spec == null ? null : DatasetSpecification.changeName(spec, namespace.fromNamespaced(spec.getName()));
+    if (spec == null) {
+      return null;
+    }
+    String notNamespaced = namespace.fromNamespaced(spec.getName());
+    return notNamespaced == null ? null : DatasetSpecification.changeName(spec, notNamespaced);
   }
 
   private String namespace(String datasetInstanceName) {

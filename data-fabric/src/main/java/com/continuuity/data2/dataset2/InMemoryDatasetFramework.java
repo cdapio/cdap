@@ -95,6 +95,21 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public synchronized void updateInstance(String datasetInstanceName, DatasetProperties props)
+    throws InstanceConflictException, IOException {
+    DatasetSpecification oldSpec = instances.get(datasetInstanceName);
+    if (oldSpec == null) {
+      throw new InstanceConflictException("Dataset instance with name does not exist: " + datasetInstanceName);
+    }
+    String datasetType = oldSpec.getType();
+    DatasetDefinition def = registry.get(datasetType);
+    Preconditions.checkNotNull(def, "Dataset type '%s' is not registered", datasetType);
+    DatasetSpecification spec = def.configure(datasetInstanceName, props);
+    instances.put(datasetInstanceName, spec);
+    def.getAdmin(spec, null).upgrade();
+  }
+
+  @Override
   public Collection<DatasetSpecification> getInstances() {
     return Collections.unmodifiableCollection(instances.values());
   }
@@ -140,14 +155,15 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public synchronized <T extends Dataset> T getDataset(String datasetInstanceName, ClassLoader classLoader)
+  public synchronized <T extends Dataset> T getDataset(String datasetInstanceName,
+                                                       Map<String, String> arguments, ClassLoader classLoader)
     throws IOException {
 
     DatasetSpecification spec = instances.get(datasetInstanceName);
     if (spec == null) {
       return null;
     }
-    DatasetDefinition impl = registry.get(spec.getType());
-    return (T) impl.getDataset(spec, classLoader);
+    DatasetDefinition def = registry.get(spec.getType());
+    return (T) (def.getDataset(spec, arguments, classLoader));
   }
 }

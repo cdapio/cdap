@@ -20,6 +20,8 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.dataset2.DatasetNamespace;
 
+import javax.annotation.Nullable;
+
 /**
  * Reactor's dataset namespace.
  */
@@ -35,11 +37,16 @@ public class ReactorDatasetNamespace implements DatasetNamespace {
 
   @Override
   public String namespace(String name) {
-    return namespacePrefix +  namespace.namespace(name);
+    return namespacePrefix + namespace.namespace(name);
   }
 
   @Override
+  @Nullable
   public String fromNamespaced(String name) {
+    if (!name.startsWith(namespacePrefix)) {
+      return null;
+    }
+    // will return null if doesn't belong to namespace
     return namespace.fromNamespaced(name.substring(namespacePrefix.length()));
   }
 }
