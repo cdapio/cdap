@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.logging.save;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -8,9 +24,10 @@ import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.logging.SystemLoggingContext;
-import com.continuuity.data.InMemoryDataSetAccessor;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.logging.KafkaTestBase;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.LogAppenderInitializer;
@@ -22,6 +39,8 @@ import com.continuuity.logging.read.AvroFileLogReader;
 import com.continuuity.logging.read.DistributedLogReader;
 import com.continuuity.logging.read.LogEvent;
 import com.continuuity.logging.serialize.LogSchema;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.continuuity.test.SlowTests;
 import com.continuuity.watchdog.election.MultiLeaderElection;
 import ch.qos.logback.classic.LoggerContext;
@@ -33,7 +52,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
@@ -75,11 +96,14 @@ public class LogSaverTest extends KafkaTestBase {
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private static InMemoryTxSystemClient txClient = null;
-  private static InMemoryDataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor(CConfiguration.create());
+  private static DatasetFramework dsFramework;
   private static LogSaverTableUtil tableUtil;
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
+    dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
+    dsFramework.addModule("table", new InMemoryOrderedTableModule());
+
     String logBaseDir = temporaryFolder.newFolder().getAbsolutePath();
     LOG.info("Log base dir {}", logBaseDir);
 
@@ -95,7 +119,9 @@ public class LogSaverTest extends KafkaTestBase {
     cConf.set(LoggingConfiguration.LOG_SAVER_EVENT_PROCESSING_DELAY_MS, "600");
     cConf.set(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS, "10");
 
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+    Configuration conf = HBaseConfiguration.create();
+    cConf.copyTxProperties(conf);
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
 
@@ -111,7 +137,7 @@ public class LogSaverTest extends KafkaTestBase {
     KafkaClientService kafkaClient = new ZKKafkaClientService(zkClientService);
     kafkaClient.startAndWait();
 
-    tableUtil = new LogSaverTableUtil(dataSetAccessor);
+    tableUtil = new LogSaverTableUtil(dsFramework, cConf);
     LogSaver logSaver =
       new LogSaver(tableUtil, txClient, kafkaClient,
                    cConf, new LocalLocationFactory());
@@ -167,7 +193,7 @@ public class LogSaverTest extends KafkaTestBase {
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
     conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "developer");
     DistributedLogReader distributedLogReader =
-      new DistributedLogReader(new InMemoryDataSetAccessor(conf), txClient, conf, new LocalLocationFactory());
+      new DistributedLogReader(dsFramework, txClient, conf, new LocalLocationFactory());
 
     LogCallback logCallback1 = new LogCallback();
     distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback1);

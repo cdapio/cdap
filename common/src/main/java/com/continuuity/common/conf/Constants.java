@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.common.conf;
 
 import java.util.concurrent.TimeUnit;
@@ -39,14 +55,6 @@ public final class Constants {
    */
   public static final class HBase {
     public static final String AUTH_KEY_UPDATE_INTERVAL = "hbase.auth.key.update.interval";
-  }
-
-  /**
-   * Thrift configuration.
-   */
-  public static final class Thrift {
-    public static final String MAX_READ_BUFFER = "thrift.max.read.buffer";
-    public static final int DEFAULT_MAX_READ_BUFFER = 16 * 1024 * 1024;
   }
 
   /**
@@ -116,6 +124,7 @@ public final class Constants {
      * Twill Runnable configuration.
      */
     public static final class Container {
+      // TODO: This is duplicated from TxConstants. Needs to be removed.
       public static final String ADDRESS = "data.tx.bind.address";
       public static final String NUM_INSTANCES = "data.tx.num.instances";
       public static final String NUM_CORES = "data.tx.num.cores";
@@ -453,8 +462,8 @@ public final class Constants {
     public static final String CONTAINER_MEMORY_MB = "explore.executor.container.memory.mb";
     public static final String CONTAINER_INSTANCES = "explore.executor.container.instances";
 
-    public static final String CFG_LOCAL_DATA_DIR = "hive.local.data.dir";
-    public static final String CFG_EXPLORE_ENABLED = "reactor.explore.enabled";
+    public static final String LOCAL_DATA_DIR = "explore.local.data.dir";
+    public static final String EXPLORE_ENABLED = "reactor.explore.enabled";
 
     //max-instances of explore HTTP service
     public static final String MAX_INSTANCES = "explore.executor.max.instances";

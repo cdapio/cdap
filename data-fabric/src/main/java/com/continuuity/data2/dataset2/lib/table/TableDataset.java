@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.annotation.Beta;
@@ -43,7 +59,7 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       return new Result(row, table.get(row, columns));
     } catch (Exception e) {
-      LOG.debug("get failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("get failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("get failed", e);
     }
   }
@@ -53,7 +69,7 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       return new Result(row, table.get(row));
     } catch (Exception e) {
-      LOG.debug("get failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("get failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("get failed", e);
     }
   }
@@ -63,7 +79,7 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       return table.get(row, column);
     } catch (Exception e) {
-      LOG.debug("get failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("get failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("get failed", e);
     }
   }
@@ -73,7 +89,7 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       return new Result(row, table.get(row, startColumn, stopColumn, limit));
     } catch (Exception e) {
-      LOG.debug("get failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("get failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("get failed", e);
     }
   }
@@ -91,7 +107,7 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       table.put(row, columns, values);
     } catch (Exception e) {
-      LOG.debug("put failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("put failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("put failed", e);
     }
   }
@@ -101,7 +117,7 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       table.put(row, column, value);
     } catch (Exception e) {
-      LOG.debug("put failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("put failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("put failed", e);
     }
   }
@@ -125,7 +141,7 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       table.delete(row);
     } catch (Exception e) {
-      LOG.debug("delete failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("delete failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("delete failed", e);
     }
   }
@@ -135,7 +151,7 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       table.delete(row, column);
     } catch (Exception e) {
-      LOG.debug("delete failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("delete failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("delete failed", e);
     }
   }
@@ -145,7 +161,7 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       table.delete(row, columns);
     } catch (Exception e) {
-      LOG.debug("delete failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("delete failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("delete failed", e);
     }
   }
@@ -164,10 +180,10 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       return table.increment(row, column, amount);
     } catch (NumberFormatException e) {
-      LOG.debug("increment failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("increment failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw e;
     } catch (Exception e) {
-      LOG.debug("increment failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("increment failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("increment failed", e);
     }
   }
@@ -178,10 +194,10 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       incResult = table.increment(row, columns, amounts);
     } catch (NumberFormatException e) {
-      LOG.debug("increment failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("increment failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw e;
     } catch (Exception e) {
-      LOG.debug("increment failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("increment failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("increment failed", e);
     }
     // todo: define IncrementResult to make it more efficient
@@ -213,7 +229,8 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       table.incrementWrite(row, column, amount);
     } catch (Exception e) {
-      LOG.debug("incrementWrite failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("incrementWrite failed for table: " + getTransactionAwareName() +
+                  ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("incrementWrite failed", e);
     }
   }
@@ -223,7 +240,8 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       table.incrementWrite(row, columns, amounts);
     } catch (Exception e) {
-      LOG.debug("incrementWrite failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("incrementWrite failed for table: " + getTransactionAwareName() +
+                  ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("incrementWrite failed", e);
     }
   }
@@ -247,7 +265,7 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       return table.compareAndSwap(row, column, expectedValue, newValue);
     } catch (Exception e) {
-      String msg = "compareAndSwap failed for table: " + getName();
+      String msg = "compareAndSwap failed for table: " + getTransactionAwareName();
       LOG.debug(msg, e);
       throw new DataSetException(msg, e);
     }
@@ -258,7 +276,7 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       return table.scan(startRow, stopRow);
     } catch (Exception e) {
-      LOG.debug("scan failed for table: " + getName(), e);
+      LOG.debug("scan failed for table: " + getTransactionAwareName(), e);
       throw new DataSetException("scan failed", e);
     }
   }
@@ -283,7 +301,7 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       return table.getSplits(numSplits, start, stop);
     } catch (Exception e) {
-      LOG.error("getSplits failed for table: " + getName(), e);
+      LOG.error("getSplits failed for table: " + getTransactionAwareName(), e);
       throw new DataSetException("getSplits failed", e);
     }
   }
@@ -317,7 +335,7 @@ class TableDataset extends AbstractDataset implements Table {
       try {
         this.scanner = table.scan(tableSplit.getStart(), tableSplit.getStop());
       } catch (Exception e) {
-        LOG.debug("scan failed for table: " + getName(), e);
+        LOG.debug("scan failed for table: " + getTransactionAwareName(), e);
         throw new DataSetException("scan failed", e);
       }
     }

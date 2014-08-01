@@ -1,9 +1,25 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.app.runtime;
 
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
-import com.continuuity.internal.app.runtime.service.LiveInfo;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramLiveInfo;
+import com.continuuity.proto.ProgramType;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 
@@ -20,7 +36,7 @@ public interface ProgramRuntimeService extends Service {
   interface RuntimeInfo {
     ProgramController getController();
 
-    Type getType();
+    ProgramType getType();
 
     Id.Program getProgramId();
   }
@@ -48,12 +64,12 @@ public interface ProgramRuntimeService extends Service {
    * @param type Type of running programs to list.
    * @return An immutable map from {@link RunId} to {@link ProgramController}.
    */
-  Map<RunId, RuntimeInfo> list(Type type);
+  Map<RunId, RuntimeInfo> list(ProgramType type);
 
   /**
    * Get runtime information about a running program. The content of this information is different
    * for each runtime environment. For example, in a distributed environment, this would contain the
    * YARN application id and the container information for each runnable. For in-memory, it may be empty.
    */
-  LiveInfo getLiveInfo(Id.Program programId, Type type);
+  ProgramLiveInfo getLiveInfo(Id.Program programId, ProgramType type);
 }

@@ -1,22 +1,40 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.logging.write;
 
+import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.io.Locations;
 import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.InMemoryDataSetAccessor;
-import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
-import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.logging.context.FlowletLoggingContext;
-import com.continuuity.logging.save.LogSaver;
 import com.continuuity.logging.save.LogSaverTableUtil;
+import com.continuuity.tephra.TransactionSystemClient;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -54,12 +72,16 @@ public class LogCleanupTest {
 
   @Test
   public void testCleanup() throws Exception {
+    DatasetFramework dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
+    dsFramework.addModule("table", new InMemoryOrderedTableModule());
+
     CConfiguration cConf = CConfiguration.create();
 
-    DataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor(cConf);
-    OrderedColumnarTable metaTable = new LogSaverTableUtil(dataSetAccessor).getMetaTable();
+    OrderedTable metaTable = new LogSaverTableUtil(dsFramework, cConf).getMetaTable();
 
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+    Configuration conf = HBaseConfiguration.create();
+    cConf.copyTxProperties(conf);
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf);
     txManager.startAndWait();
     TransactionSystemClient txClient = new InMemoryTxSystemClient(txManager);
     FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(metaTable, txClient, locationFactory);

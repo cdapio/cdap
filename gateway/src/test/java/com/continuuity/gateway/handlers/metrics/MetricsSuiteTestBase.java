@@ -1,11 +1,22 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.gateway.handlers.metrics;
 
 import com.continuuity.api.Application;
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.Id;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
@@ -20,7 +31,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.gateway.MockMetricsCollectionService;
 import com.continuuity.gateway.MockedPassportClient;
 import com.continuuity.gateway.apps.wordcount.WCount;
@@ -33,6 +44,8 @@ import com.continuuity.logging.read.LogReader;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
+import com.continuuity.proto.Id;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -84,6 +97,7 @@ public abstract class MetricsSuiteTestBase {
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
 
   private static MetricsQueryService metrics;
+  private static DatasetService dsService;
   private static final String hostname = "127.0.0.1";
   private static int port;
 
@@ -117,6 +131,10 @@ public abstract class MetricsSuiteTestBase {
     conf.set(Constants.Metrics.CLUSTER_NAME, CLUSTER);
 
     injector = startMetricsService(conf);
+
+    dsService = injector.getInstance(DatasetService.class);
+    dsService.startAndWait();
+
     StoreFactory storeFactory = injector.getInstance(StoreFactory.class);
     store = storeFactory.create();
     locationFactory = injector.getInstance(LocationFactory.class);
@@ -166,6 +184,7 @@ public abstract class MetricsSuiteTestBase {
   }
 
   public static void stop() throws OperationException {
+    dsService.startAndWait();
     collectionService.stopAndWait();
     store.removeApplication(wordCountAppId);
     store.removeApplication(wCountAppId);

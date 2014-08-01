@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data2.datafabric.dataset.service.executor;
 
 import com.continuuity.api.dataset.DatasetProperties;
@@ -14,23 +30,25 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
+import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.runtime.DataSetsModules;
+import com.continuuity.data.runtime.TransactionMetricsModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
-import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
+import com.continuuity.tephra.DefaultTransactionExecutor;
+import com.continuuity.tephra.TransactionAware;
+import com.continuuity.tephra.TransactionExecutor;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
@@ -110,7 +128,8 @@ public class DatasetOpExecutorServiceTest {
         }
       }),
       new AuthModule(),
-      new TransactionMetricsModule());
+      new TransactionMetricsModule(),
+      new ExploreClientModule());
 
     txManager = injector.getInstance(InMemoryTransactionManager.class);
     txManager.startAndWait();
@@ -186,12 +205,30 @@ public class DatasetOpExecutorServiceTest {
     testAdminOp("bob", "exists", 404, null);
   }
 
+  @Test
+  public void testUpdate() throws Exception {
+    // check non-existence with 404
+    testAdminOp("bob", "exists", 404, null);
+
+    // add instance, should automatically create an instance
+    dsFramework.addInstance("table", "bob", DatasetProperties.EMPTY);
+    testAdminOp("bob", "exists", 200, true);
+
+    dsFramework.updateInstance("bob", DatasetProperties.builder().add("dataset.table.ttl", "10000").build());
+    // check upgrade
+    testAdminOp("bob", "upgrade", 200, null);
+
+    // drop and check non-existence
+    dsFramework.deleteInstance("bob");
+    testAdminOp("bob", "exists", 404, null);
+  }
+
   private void testAdminOp(String instanceName, String opName, int expectedStatus, Object expectedResult)
     throws URISyntaxException, IOException {
     String path = String.format("/data/datasets/%s/admin/%s", instanceName, opName);
 
     URL targetUrl = resolve(path);
-    HttpResponse response = HttpRequests.post(targetUrl);
+    HttpResponse response = HttpRequests.execute(HttpRequest.post(targetUrl).build());
     DatasetAdminOpResponse body = getResponse(response.getResponseBody());
     Assert.assertEquals(expectedStatus, response.getResponseCode());
     Assert.assertEquals(expectedResult, body.getResult());

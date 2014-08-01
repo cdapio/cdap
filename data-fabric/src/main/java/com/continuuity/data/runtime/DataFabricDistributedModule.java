@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -7,14 +23,9 @@ import com.continuuity.data.stream.DistributedStreamCoordinator;
 import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.queue.QueueClientFactory;
-import com.continuuity.data2.transaction.TxConstants;
-import com.continuuity.data2.transaction.distributed.PooledClientProvider;
-import com.continuuity.data2.transaction.distributed.ThreadLocalClientProvider;
-import com.continuuity.data2.transaction.distributed.ThriftClientProvider;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
-import com.continuuity.data2.transaction.runtime.TransactionModules;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
@@ -25,10 +36,16 @@ import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metadata.SerializingMetaDataTable;
+import com.continuuity.tephra.TxConstants;
+import com.continuuity.tephra.distributed.PooledClientProvider;
+import com.continuuity.tephra.distributed.ThreadLocalClientProvider;
+import com.continuuity.tephra.distributed.ThriftClientProvider;
+import com.continuuity.tephra.runtime.TransactionModules;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,11 +92,13 @@ public class DataFabricDistributedModule extends AbstractModule {
   private static final class ThriftClientProviderSupplier implements Provider<ThriftClientProvider> {
 
     private final CConfiguration cConf;
+    private final Configuration hConf;
     private DiscoveryServiceClient discoveryServiceClient;
 
     @Inject
-    ThriftClientProviderSupplier(CConfiguration cConf) {
+    ThriftClientProviderSupplier(CConfiguration cConf, Configuration hConf) {
       this.cConf = cConf;
+      this.hConf = hConf;
     }
 
     @Inject(optional = true)
@@ -94,9 +113,9 @@ public class DataFabricDistributedModule extends AbstractModule {
                                   TxConstants.Service.DEFAULT_DATA_TX_CLIENT_PROVIDER);
       ThriftClientProvider clientProvider;
       if ("pool".equals(provider)) {
-        clientProvider = new PooledClientProvider(cConf, discoveryServiceClient);
+        clientProvider = new PooledClientProvider(hConf, discoveryServiceClient);
       } else if ("thread-local".equals(provider)) {
-        clientProvider = new ThreadLocalClientProvider(cConf, discoveryServiceClient);
+        clientProvider = new ThreadLocalClientProvider(hConf, discoveryServiceClient);
       } else {
         String message = "Unknown Transaction Service Client Provider '" + provider + "'.";
         LOG.error(message);

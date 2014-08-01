@@ -1,5 +1,17 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.data2.transaction.queue.hbase;
 
@@ -15,23 +27,23 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.data.runtime.TransactionMetricsModule;
 import com.continuuity.data2.queue.QueueClientFactory;
-import com.continuuity.data2.transaction.TransactionExecutorFactory;
-import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.TxConstants;
-import com.continuuity.data2.transaction.distributed.TransactionService;
-import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
-import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueTest;
 import com.continuuity.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
-import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
+import com.continuuity.tephra.TransactionExecutorFactory;
+import com.continuuity.tephra.TransactionSystemClient;
+import com.continuuity.tephra.TxConstants;
+import com.continuuity.tephra.distributed.TransactionService;
+import com.continuuity.tephra.persist.NoOpTransactionStateStorage;
+import com.continuuity.tephra.persist.TransactionStateStorage;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -96,7 +108,7 @@ public abstract class HBaseQueueTest extends QueueTest {
               Integer.toString(Networks.getRandomPort()));
     cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
     cConf.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, false);
-    cConf.unset(Constants.CFG_HDFS_USER);
+    cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     cConf.setLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY, 1L);
 
     final DataFabricDistributedModule dfModule =

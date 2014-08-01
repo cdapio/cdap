@@ -1,5 +1,17 @@
 /*
- * Copyright (c) 2012-2013 Continuuity Inc. All rights reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package com.continuuity.internal.app.program;
@@ -32,15 +44,15 @@ import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.DefaultAppConfigurer;
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.RunRecord;
-import com.continuuity.app.program.Type;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.OperationException;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.store.MDTBasedStore;
 import com.continuuity.metadata.MetaDataTable;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
+import com.continuuity.proto.RunRecord;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Charsets;
@@ -77,7 +89,8 @@ public class MDTBasedStoreTest {
   @Test
   public void testLoadingProgram() throws Exception {
     AppFabricTestHelper.deployApplication(ToyApp.class);
-    Program program = store.loadProgram(Id.Program.from(DefaultId.ACCOUNT.getId(), "ToyApp", "ToyFlow"), Type.FLOW);
+    Program program = store.loadProgram(Id.Program.from(DefaultId.ACCOUNT.getId(), "ToyApp", "ToyFlow"),
+                                        ProgramType.FLOW);
     Assert.assertNotNull(program);
   }
 
@@ -164,13 +177,13 @@ public class MDTBasedStoreTest {
                              .noProcedure().noMapReduce().noWorkflow().build()),
                          new LocalLocationFactory().create("/foo"));
 
-    com.google.common.collect.Table<Type, Id.Program, List<RunRecord>> runHistory =
+    com.google.common.collect.Table<ProgramType, Id.Program, List<RunRecord>> runHistory =
                                                            store.getAllRunHistory(new Id.Account("account1"));
 
     // we ran two programs (flows)
     Assert.assertEquals(2, runHistory.size());
     int totalHistoryRecords = 0;
-    for (com.google.common.collect.Table.Cell<Type, Id.Program, List<RunRecord>> cell : runHistory.cellSet()) {
+    for (com.google.common.collect.Table.Cell<ProgramType, Id.Program, List<RunRecord>> cell : runHistory.cellSet()) {
       totalHistoryRecords += cell.getValue().size();
     }
     // there were 3 "finished" runs of different programs
@@ -432,7 +445,7 @@ public class MDTBasedStoreTest {
                         adjustedSpec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
 
     // checking that program spec in program jar was adjsuted
-    Program program = store.loadProgram(programId, Type.FLOW);
+    Program program = store.loadProgram(programId, ProgramType.FLOW);
     Assert.assertEquals(initialInstances + 5,
                         program.getSpecification().
                           getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());

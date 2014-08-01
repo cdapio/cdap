@@ -1,32 +1,40 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.explore.service.hive;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Result;
-import com.continuuity.explore.service.Status;
+import com.continuuity.proto.QueryStatus;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.cli.CLIService;
-import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationState;
 import org.apache.hive.service.cli.SessionHandle;
-import org.apache.hive.service.cli.thrift.TColumnValue;
-import org.apache.hive.service.cli.thrift.TRow;
-import org.apache.hive.service.cli.thrift.TRowSet;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Hive 12 implementation of {@link com.continuuity.explore.service.ExploreService}.
@@ -47,7 +55,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  protected Status fetchStatus(OperationHandle operationHandle)
+  protected QueryStatus fetchStatus(OperationHandle operationHandle)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     try {
       // In Hive 12, CLIService.getOperationStatus returns OperationState.
@@ -57,7 +65,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
       Class cliServiceClass = getCliService().getClass();
       Method m = cliServiceClass.getMethod("getOperationStatus", OperationHandle.class);
       OperationState operationState = (OperationState) m.invoke(getCliService(), operationHandle);
-      return new Status(Status.OpStatus.valueOf(operationState.toString()), operationHandle.hasResultSet());
+      return new QueryStatus(QueryStatus.OpStatus.valueOf(operationState.toString()), operationHandle.hasResultSet());
     } catch (InvocationTargetException e) {
       throw Throwables.propagate(e);
     } catch (NoSuchMethodException e) {

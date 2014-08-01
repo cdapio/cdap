@@ -1,5 +1,17 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.metrics.query;
 
@@ -17,6 +29,8 @@ import com.continuuity.metrics.data.MetricsScanQuery;
 import com.continuuity.metrics.data.MetricsScanQueryBuilder;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.data.TimeSeriesTable;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -47,7 +61,7 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DeleteMetricsHandler.class);
 
   private final Map<MetricsScope, LoadingCache<Integer, TimeSeriesTable>> metricsTableCaches;
-  private final Map<MetricsScope, AggregatesTable> aggregatesTables;
+  private final Supplier<Map<MetricsScope, AggregatesTable>> aggregatesTables;
   private final int tsRetentionSeconds;
 
   @Inject
@@ -55,7 +69,6 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
                               final MetricsTableFactory metricsTableFactory, CConfiguration cConf) {
     super(authenticator);
     this.metricsTableCaches = Maps.newHashMap();
-    this.aggregatesTables = Maps.newHashMap();
     for (final MetricsScope scope : MetricsScope.values()) {
       LoadingCache<Integer, TimeSeriesTable> cache =
         CacheBuilder.newBuilder().build(new CacheLoader<Integer, TimeSeriesTable>() {
@@ -65,8 +78,18 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
           }
         });
       this.metricsTableCaches.put(scope, cache);
-      this.aggregatesTables.put(scope, metricsTableFactory.createAggregates(scope.name()));
     }
+
+    this.aggregatesTables = Suppliers.memoize(new Supplier<Map<MetricsScope, AggregatesTable>>() {
+      @Override
+      public Map<MetricsScope, AggregatesTable> get() {
+        Map<MetricsScope, AggregatesTable> map = Maps.newHashMap();
+        for (final MetricsScope scope : MetricsScope.values()) {
+          map.put(scope, metricsTableFactory.createAggregates(scope.name()));
+        }
+        return map;
+      }
+    });
 
     String retentionStr = cConf.get(MetricsConstants.ConfigKeys.RETENTION_SECONDS);
     this.tsRetentionSeconds = (retentionStr == null) ?
@@ -209,7 +232,7 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
   private void deleteTableEntries(MetricsScope scope, String contextPrefix,
                                   String metricPrefix, String tag) throws OperationException {
     TimeSeriesTable ts1Table = metricsTableCaches.get(scope).getUnchecked(1);
-    AggregatesTable aggTable = aggregatesTables.get(scope);
+    AggregatesTable aggTable = aggregatesTables.get().get(scope);
 
     if (contextPrefix == null && tag == null && metricPrefix == null) {
       ts1Table.clear();

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data2.datafabric.dataset.type;
 
 import com.continuuity.api.dataset.DatasetDefinition;
@@ -7,6 +23,8 @@ import com.continuuity.common.lang.ClassLoaders;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.module.lib.DatasetModules;
+import com.continuuity.proto.DatasetModuleMeta;
+import com.continuuity.proto.DatasetTypeMeta;
 import com.google.common.base.Throwables;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -35,7 +53,7 @@ public class DatasetDefinitionLoader {
   }
 
   /**
-   * Loads {@link com.continuuity.api.dataset.DatasetDefinition} using {@link DatasetTypeMeta} info. It will use given
+   * Loads {@link DatasetDefinition} using {@link DatasetTypeMeta} info. It will use given
    * {@link DatasetDefinitionRegistry} to load all required modules and types. If registry is missing some of them,
    * it will load respective jars and add them to the registry (thus, modifying the given registry).
    * @param meta info of type to load

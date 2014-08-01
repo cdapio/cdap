@@ -1,6 +1,23 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.hive.objectinspector;
 
 import com.continuuity.common.utils.ImmutablePair;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -9,7 +26,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.junit.Assert;
 import org.junit.Test;
-import scala.reflect.internal.Trees;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -44,7 +60,7 @@ public class ObjectInspectorFactoryTest {
     }
     ImmutableList.Builder builder = ImmutableList.builder();
     for (Field f : tmpFields) {
-      if (!Modifier.isTransient(f.getModifiers())) {
+      if (!Modifier.isTransient(f.getModifiers()) && !f.isSynthetic()) {
         builder.add(f);
       }
     }
@@ -77,22 +93,26 @@ public class ObjectInspectorFactoryTest {
 
   @Test
   public void reflectionObjectInspectorTest() throws Exception {
-    // The "this$0" field comes from the fact that some classes are
-    // nested classes - 'this' refers to this test class
     Assert.assertEquals("array<string>", getObjectName(new TypeToken<List<String>>() { }.getType()));
-    Assert.assertEquals("array<struct<address:struct<street:string,this$0:struct<>>,this$0:struct<>>>",
+    Assert.assertEquals("array<struct<address:struct<street:string>>>",
                         getObjectName(new TypeToken<List<DummyEmployee<DummyAddress<String>>>>() { }.getType()));
     Assert.assertEquals("array<string>",
                         getObjectName(new TypeToken<ArrayList<String>>() { }.getType()));
     Assert.assertEquals("struct<first:array<string>,second:int>",
                         getObjectName(new TypeToken<ImmutablePair<ImmutableList<String>, Integer>>() { }.getType()));
-    Assert.assertEquals("struct<address:struct<street:string,this$0:struct<>>,this$0:struct<>>",
+    Assert.assertEquals("struct<address:struct<street:string>>",
                         getObjectName(new TypeToken<DummyEmployee<DummyAddress<String>>>() { }.getType()));
     Assert.assertEquals("struct<myint:int,myinteger:int,mystring:string,dummystruct:this," +
                         "myliststring:array<string>,mymapstringstring:map<string,string>," +
-                        "employee:struct<address:struct<street:string,this$0:struct<>>,this$0:struct<>>," +
-                        "ints:array<int>,this$0:struct<>>",
+                        "employee:struct<address:struct<street:string>>,ints:array<int>>",
                         getObjectName(DummyStruct.class));
+
+    // Make sure we don't have infinite loop with nested classes
+    Assert.assertEquals("struct<i:int>",
+                        getObjectName(DummyParentStruct.DummyInnerClass.class));
+    Assert.assertEquals("struct<innerclass:struct<i:int>>",
+                        getObjectName(DummyParentStruct.class));
+
 
     DummyStruct a = new DummyStruct();
     a.myInt = 1;
@@ -143,5 +163,12 @@ public class ObjectInspectorFactoryTest {
     public int[] ints;
     // Test transient field
     public transient int t;
+  }
+
+  public class DummyParentStruct {
+    public DummyInnerClass innerClass;
+    public class DummyInnerClass {
+      public int i;
+    }
   }
 }

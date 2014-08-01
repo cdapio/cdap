@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.api.dataset.lib;
 
 import com.continuuity.api.common.Bytes;
@@ -13,14 +29,15 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * This dataset extends ObjectStore to support access to objects via indices. Look by the index will return
- * all the objects stored in the object store that has the index value.
+ * An ObjectStore Dataset extension that supports access to objects via indices; lookups by the index will return
+ * all the objects stored in the object store that have the index value.
  *
- * The dataset uses two tables: object store - to store the actual data, and a second table for the index.
+ * The dataset uses two tables: an object store, to store the actual data, and a second table for the index.
+ *
  * @param <T> the type of objects in the store
  */
 public class IndexedObjectStore<T> extends AbstractDataset {
-  // NOTE: cannot use byte[0] as empty value because byte[0] is treated as null
+  //NOTE: cannot use byte[0] as empty value because byte[0] is treated as null
   private static final byte[] EMPTY_VALUE = new byte[1];
   //KEY_PREFIX is used to prefix primary key when it stores PrimaryKey -> Categories mapping.
   private static final byte[] KEY_PREFIX = Bytes.toBytes("_fk");
@@ -35,7 +52,8 @@ public class IndexedObjectStore<T> extends AbstractDataset {
   private final Table index;
 
   /**
-   * Construct IndexObjectStore with name and type.
+   * Constructs the IndexedObjectStore with name and type.
+   *
    * @param name name of the dataset
    * @param objectStore dataset to use as the objectStore
    * @param index dataset to use as the index
@@ -47,8 +65,9 @@ public class IndexedObjectStore<T> extends AbstractDataset {
   }
 
   /**
-   * Read all the objects from objectStore via index. Returns all the objects that match the secondaryKey.
-   * Returns an empty list if no value is found. Never returns null.
+   * Read all the objects from the objectStore for a given index. Returns all the objects that match the secondaryKey.
+   * Returns an empty list if no values are found. Never returns null.
+   *
    * @param secondaryKey for the lookup.
    * @return List of Objects matching the secondaryKey.
    */
@@ -101,11 +120,12 @@ public class IndexedObjectStore<T> extends AbstractDataset {
   }
 
   /**
-   * Write to the data set, deletes existing secondaryKey corresponding the key and updates the indexTable with the
-   * secondaryKey that is passed.
-   * @param key key for storing the object.
-   * @param object object to be stored.
-   * @param secondaryKeys indices that can be used to lookup the object.
+   * Writes to the dataset, deleting any existing secondaryKey corresponding to the key and updates the indexTable with
+   * the secondaryKey that is passed.
+   *
+   * @param key key for storing the object
+   * @param object object to be stored
+   * @param secondaryKeys indices that can be used to lookup the object
    */
   public void write(byte[] key, T object, byte[][] secondaryKeys) {
     writeToObjectStore(key, object);
@@ -177,10 +197,11 @@ public class IndexedObjectStore<T> extends AbstractDataset {
   }
 
   /**
-   * Delete an index that is no longer needed. After deleting the index the lookup using the index value will no
+   * Deletes an index that is no longer needed. After deleting the index, lookups using the index value will no
    * longer return the object.
-   * @param key key for the object.
-   * @param secondaryKey index to be pruned.
+   *
+   * @param key key for the object
+   * @param secondaryKey index to be pruned
    */
   public void pruneIndex(byte[] key, byte[] secondaryKey) {
     this.index.delete(secondaryKey, key);
@@ -188,9 +209,10 @@ public class IndexedObjectStore<T> extends AbstractDataset {
   }
 
   /**
-   * Update index value for an existing key. This will not delete the older secondaryKeys.
-   * @param key key for the object.
-   * @param secondaryKey index to be pruned.
+   * Updates the index value for an existing key. This will not delete the older secondaryKeys.
+   *
+   * @param key key for the object
+   * @param secondaryKey index to be pruned
    */
   public void updateIndex(byte[] key, byte[] secondaryKey) {
     this.index.put(secondaryKey, key, EMPTY_VALUE);

@@ -1,11 +1,23 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
+import com.continuuity.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
@@ -46,7 +58,7 @@ public final class ProcedureTwillApplication implements TwillApplication {
 
     return TwillSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",
-                             Type.PROCEDURE.name().toLowerCase(),
+                             ProgramType.PROCEDURE.name().toLowerCase(),
                              program.getAccountId(), program.getApplicationId(), spec.getName()))
       .withRunnable()
         .add(spec.getName(),

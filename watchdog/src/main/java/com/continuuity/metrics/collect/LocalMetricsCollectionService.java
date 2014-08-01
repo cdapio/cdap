@@ -1,5 +1,17 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.metrics.collect;
 
@@ -59,15 +71,13 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   protected void startUp() throws Exception {
     super.startUp();
 
-    // Only do cleanup if the underlying table doesn't supports TTL.
-    if (!tableFactory.isTTLSupported()) {
-      scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-cleanup"));
-      long retention = cConf.getLong(MetricsConstants.ConfigKeys.RETENTION_SECONDS + ".1.seconds",
-                                     MetricsConstants.DEFAULT_RETENTION_HOURS);
+    // It will only do cleanup if the underlying table doesn't supports TTL.
+    scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-cleanup"));
+    long retention = cConf.getLong(MetricsConstants.ConfigKeys.RETENTION_SECONDS + ".1.seconds",
+                                   MetricsConstants.DEFAULT_RETENTION_HOURS);
 
-
-      scheduler.scheduleAtFixedRate(createCleanupTask(retention), 0, 1, TimeUnit.HOURS);
-    }
+    // Try right away if there's anything to cleanup, then we'll schedule to do that periodically
+    scheduler.schedule(createCleanupTask(retention), 1, TimeUnit.SECONDS);
   }
 
   @Override
@@ -86,6 +96,17 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
     return new Runnable() {
       @Override
       public void run() {
+        // Only do cleanup if the underlying table doesn't supports TTL.
+        try {
+          if (tableFactory.isTTLSupported()) {
+            return;
+          }
+        } catch (Exception e) {
+          // If we cannot determine that ttl is supported then try again in 1 second
+          scheduler.schedule(this, 1, TimeUnit.SECONDS);
+          return;
+        }
+
         long currentTime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         long deleteBefore = currentTime - retention;
 
@@ -97,6 +118,8 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
             LOG.error("Failed in cleaning up metrics table: {}", e.getMessage(), e);
           }
         }
+
+        scheduler.schedule(this, 1, TimeUnit.HOURS);
       }
     };
   }

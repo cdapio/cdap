@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.hive.datasets;
 
 import com.continuuity.api.data.batch.RecordScannable;
@@ -5,11 +21,11 @@ import com.continuuity.api.dataset.Dataset;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DatasetManagementException;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.hive.context.ConfigurationUtil;
 import com.continuuity.hive.context.ContextManager;
 import com.continuuity.hive.context.TxnCodec;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionAware;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 

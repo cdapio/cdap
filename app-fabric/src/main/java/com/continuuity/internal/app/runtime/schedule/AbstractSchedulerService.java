@@ -1,11 +1,27 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.internal.app.runtime.schedule;
 
 import com.continuuity.api.schedule.Schedule;
-import com.continuuity.app.Id;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -70,17 +86,17 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public void schedule(Id.Program programId, Type programType, Iterable<Schedule> schedules) {
+  public void schedule(Id.Program programId, ProgramType programType, Iterable<Schedule> schedules) {
     delegate.schedule(programId, programType, schedules);
   }
 
   @Override
-  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, Type programType) {
+  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, ProgramType programType) {
    return delegate.nextScheduledRuntime(program, programType);
   }
 
   @Override
-  public List<String> getScheduleIds(Id.Program program, Type programType) {
+  public List<String> getScheduleIds(Id.Program program, ProgramType programType) {
     return delegate.getScheduleIds(program, programType);
   }
 
@@ -95,7 +111,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public void deleteSchedules(Id.Program program, Type programType,
+  public void deleteSchedules(Id.Program program, ProgramType programType,
                               List<String> scheduleIds) {
     delegate.deleteSchedules(program, programType, scheduleIds);
   }
@@ -136,7 +152,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     @Override
-    public void schedule(Id.Program programId, Type programType, Iterable<Schedule> schedules) {
+    public void schedule(Id.Program programId, ProgramType programType, Iterable<Schedule> schedules) {
       Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
       Preconditions.checkNotNull(schedules);
 
@@ -175,7 +191,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     @Override
-    public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, Type programType) {
+    public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, ProgramType programType) {
       Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
 
       List<ScheduledRuntime> scheduledRuntimes = Lists.newArrayList();
@@ -193,7 +209,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     @Override
-    public List<String> getScheduleIds(Id.Program program, Type programType) {
+    public List<String> getScheduleIds(Id.Program program, ProgramType programType) {
       Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
 
       List<String> scheduleIds = Lists.newArrayList();
@@ -230,7 +246,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     @Override
-    public void deleteSchedules(Id.Program program, Type programType, List<String> scheduleIds) {
+    public void deleteSchedules(Id.Program program, ProgramType programType, List<String> scheduleIds) {
       Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
       try {
         for (String scheduleId : scheduleIds) {
@@ -264,7 +280,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       }
     }
 
-    private String getJobKey(Id.Program program, Type programType) {
+    private String getJobKey(Id.Program program, ProgramType programType) {
       return String.format("%s:%s:%s:%s", programType.name(), program.getAccountId(),
                            program.getApplicationId(), program.getId());
     }

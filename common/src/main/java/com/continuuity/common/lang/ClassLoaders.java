@@ -1,22 +1,42 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.common.lang;
 
+import com.continuuity.api.app.Application;
 import com.continuuity.common.internal.guava.ClassPath;
 import com.continuuity.common.lang.jar.ProgramClassLoader;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
-import org.apache.commons.io.FileUtils;
 import org.apache.twill.internal.utils.Dependencies;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.List;
@@ -31,6 +51,12 @@ public final class ClassLoaders {
 
   private static final List<String> HADOOP_PACKAGES = Lists.newArrayList("org.apache.hadoop");
   private static final List<String> CONTINUUITY_API_PACKAGES = Lists.newArrayList("com.continuuity.api");
+  private static final Predicate<URI> JAR_ONLY_URI = new Predicate<URI>() {
+    @Override
+    public boolean apply(URI input) {
+      return input.getPath().endsWith(".jar");
+    }
+  };
 
   private ClassLoaders() { }
 
@@ -48,7 +74,7 @@ public final class ClassLoaders {
     return new ProgramClassLoader(unpackedJarDir, parentClassLoader);
   }
 
-  public static Iterable<String> getApiResourceList(ClassLoader classLoader) throws IOException {
+  public static Iterable<String> getAPIResources(ClassLoader classLoader) throws IOException {
     // Get the bootstrap classpath. This is for exclusion.
     Set<String> bootstrapPaths = Sets.newHashSet();
     for (String classpath : Splitter.on(File.pathSeparatorChar).split(System.getProperty("sun.boot.class.path"))) {
@@ -61,9 +87,11 @@ public final class ClassLoaders {
       }
     }
 
-    Set<String> resources = getResources(classLoader, CONTINUUITY_API_PACKAGES, true,
-                                         bootstrapPaths, Sets.<String>newHashSet());
-    return getResources(classLoader, HADOOP_PACKAGES, false, bootstrapPaths, resources);
+    Set<String> resources = getResources(classLoader, getAPIClassPath(), CONTINUUITY_API_PACKAGES,
+                                         true, bootstrapPaths, Sets.<String>newHashSet());
+
+    return getResources(classLoader, ClassPath.from(classLoader, JAR_ONLY_URI),
+                        HADOOP_PACKAGES, false, bootstrapPaths, resources);
   }
 
 
@@ -105,14 +133,58 @@ public final class ClassLoaders {
     return new CombineClassLoader(parent, classLoaders);
   }
 
+  /**
+   * Gathers all resources for api classes.
+   */
+  private static ClassPath getAPIClassPath() throws IOException {
+    ClassLoader classLoader = Application.class.getClassLoader();
+    String resourceName = Application.class.getName().replace('.', '/') + ".class";
+    URL url = classLoader.getResource(resourceName);
+    if (url == null) {
+      throw new IOException("Resource not found for " + resourceName);
+    }
+
+    try {
+      URI classPathURI = getClassPathURL(resourceName, url).toURI();
+      return ClassPath.from(classPathURI, classLoader);
+    } catch (URISyntaxException e) {
+      throw new IOException(e);
+    }
+  }
+
+  /**
+   * Find the classpath that contains the given resource.
+   */
+  private static URL getClassPathURL(String resourceName, URL resourceURL) {
+    try {
+      if ("file".equals(resourceURL.getProtocol())) {
+        String path = resourceURL.getFile();
+        // Compute the directory container the class.
+        int endIdx = path.length() - resourceName.length();
+        if (endIdx > 1) {
+          // If it is not the root directory, return the end index to remove the trailing '/'.
+          endIdx--;
+        }
+        return new URL("file", "", -1, path.substring(0, endIdx));
+      }
+      if ("jar".equals(resourceURL.getProtocol())) {
+        String path = resourceURL.getFile();
+        return URI.create(path.substring(0, path.indexOf("!/"))).toURL();
+      }
+    } catch (MalformedURLException e) {
+      throw Throwables.propagate(e);
+    }
+    throw new IllegalStateException("Unsupported class URL: " + resourceURL);
+  }
+
+
   private static <T extends Collection<String>> T getResources(ClassLoader classLoader,
+                                                               ClassPath classPath,
                                                                Iterable<String> packages,
                                                                boolean includeDependencies,
                                                                final Set<String> bootstrapPaths,
                                                                final T result) throws IOException {
-
     Set<String> classes = Sets.newHashSet();
-    final ClassPath classPath = ClassPath.from(classLoader);
     for (String pkg : packages) {
       ImmutableSet<ClassPath.ClassInfo> packageClasses = classPath.getAllClassesRecursive(pkg);
       for (ClassPath.ClassInfo cls : packageClasses) {
@@ -120,8 +192,6 @@ public final class ClassLoaders {
         classes.add(cls.getName());
       }
     }
-
-//    FileUtils.writeLines(new File("classloaders." + packages.iterator().next() + ".log"), classes);
 
     if (includeDependencies) {
       final Set<URL> classPathSeen = Sets.newHashSet();
@@ -153,6 +223,7 @@ public final class ClassLoaders {
 
     return result;
   }
+
 
   /**
    * Loads the class with the given class name with the given classloader. If it is {@code null},

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.explore.service;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -8,10 +24,14 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetsModules;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryResult;
+import com.continuuity.proto.QueryStatus;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -42,7 +62,7 @@ public class InMemoryExploreServiceTest {
     CConfiguration configuration = CConfiguration.create();
     Configuration hConf = new Configuration();
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
-    configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
+    configuration.set(Constants.Explore.LOCAL_DATA_DIR,
                       new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
 
     Injector injector = Guice.createInjector(
@@ -78,19 +98,19 @@ public class InMemoryExploreServiceTest {
     runCommand("drop table if exists test",
         false,
         ImmutableList.<ColumnDesc>of(),
-        ImmutableList.<Result>of());
+        ImmutableList.<QueryResult>of());
 
     runCommand("create table test (first INT, second STRING) ROW FORMAT " +
                "DELIMITED FIELDS TERMINATED BY '\\t'",
         false,
         ImmutableList.<ColumnDesc>of(),
-        ImmutableList.<Result>of()
+        ImmutableList.<QueryResult>of()
     );
 
     runCommand("show tables",
         true,
         Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-        Lists.newArrayList(new Result(Lists.<Object>newArrayList("test"))));
+        Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("test"))));
 
     runCommand("describe test",
         true,
@@ -100,8 +120,8 @@ public class InMemoryExploreServiceTest {
             new ColumnDesc("comment", "STRING", 3, "from deserializer")
         ),
         Lists.newArrayList(
-            new Result(Lists.<Object>newArrayList("first", "int", "")),
-            new Result(Lists.<Object>newArrayList("second", "string", ""))
+            new QueryResult(Lists.<Object>newArrayList("first", "int", "")),
+            new QueryResult(Lists.<Object>newArrayList("second", "string", ""))
         )
     );
 
@@ -109,7 +129,7 @@ public class InMemoryExploreServiceTest {
                "' INTO TABLE test",
         false,
         ImmutableList.<ColumnDesc>of(),
-        ImmutableList.<Result>of()
+        ImmutableList.<QueryResult>of()
     );
 
     runCommand("select first, second from test",
@@ -117,11 +137,11 @@ public class InMemoryExploreServiceTest {
         Lists.newArrayList(new ColumnDesc("first", "INT", 1, null),
                            new ColumnDesc("second", "STRING", 2, null)),
         Lists.newArrayList(
-            new Result(Lists.<Object>newArrayList("1", "one")),
-            new Result(Lists.<Object>newArrayList("2", "two")),
-            new Result(Lists.<Object>newArrayList("3", "three")),
-            new Result(Lists.<Object>newArrayList("4", "four")),
-            new Result(Lists.<Object>newArrayList("5", "five")))
+            new QueryResult(Lists.<Object>newArrayList("1", "one")),
+            new QueryResult(Lists.<Object>newArrayList("2", "two")),
+            new QueryResult(Lists.<Object>newArrayList("3", "three")),
+            new QueryResult(Lists.<Object>newArrayList("4", "four")),
+            new QueryResult(Lists.<Object>newArrayList("5", "five")))
     );
 
     runCommand("select * from test",
@@ -129,24 +149,25 @@ public class InMemoryExploreServiceTest {
         Lists.newArrayList(new ColumnDesc("test.first", "INT", 1, null),
                            new ColumnDesc("test.second", "STRING", 2, null)),
         Lists.newArrayList(
-            new Result(Lists.<Object>newArrayList("1", "one")),
-            new Result(Lists.<Object>newArrayList("2", "two")),
-            new Result(Lists.<Object>newArrayList("3", "three")),
-            new Result(Lists.<Object>newArrayList("4", "four")),
-            new Result(Lists.<Object>newArrayList("5", "five"))));
+            new QueryResult(Lists.<Object>newArrayList("1", "one")),
+            new QueryResult(Lists.<Object>newArrayList("2", "two")),
+            new QueryResult(Lists.<Object>newArrayList("3", "three")),
+            new QueryResult(Lists.<Object>newArrayList("4", "four")),
+            new QueryResult(Lists.<Object>newArrayList("5", "five"))));
 
     runCommand("drop table if exists test",
         false,
         ImmutableList.<ColumnDesc>of(),
-        ImmutableList.<Result>of());
+        ImmutableList.<QueryResult>of());
   }
 
   private static void runCommand(String command, boolean expectedHasResult,
-                                 List<ColumnDesc> expectedColumnDescs, List<Result> expectedResults) throws Exception {
-    Handle handle = exploreService.execute(command);
+                                 List<ColumnDesc> expectedColumnDescs,
+                                 List<QueryResult> expectedResults) throws Exception {
+    QueryHandle handle = exploreService.execute(command);
 
-    Status status = waitForCompletionStatus(handle);
-    Assert.assertEquals(Status.OpStatus.FINISHED, status.getStatus());
+    QueryStatus status = waitForCompletionStatus(handle);
+    Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
     Assert.assertEquals(expectedHasResult, status.hasResults());
 
     Assert.assertEquals(expectedColumnDescs, exploreService.getResultSchema(handle));
@@ -156,9 +177,9 @@ public class InMemoryExploreServiceTest {
     exploreService.close(handle);
   }
 
-  private static List<Result> trimColumnValues(List<Result> results) {
-    List<Result> newResults = Lists.newArrayList();
-    for (Result result : results) {
+  private static List<QueryResult> trimColumnValues(List<QueryResult> results) {
+    List<QueryResult> newResults = Lists.newArrayList();
+    for (QueryResult result : results) {
       List<Object> newCols = Lists.newArrayList();
       for (Object obj : result.getColumns()) {
         if (obj instanceof String) {
@@ -167,17 +188,18 @@ public class InMemoryExploreServiceTest {
           newCols.add(obj);
         }
       }
-      newResults.add(new Result(newCols));
+      newResults.add(new QueryResult(newCols));
     }
     return newResults;
   }
 
-  private static Status waitForCompletionStatus(Handle handle) throws Exception {
-    Status status;
+  private static QueryStatus waitForCompletionStatus(QueryHandle handle) throws Exception {
+    QueryStatus status;
     do {
       TimeUnit.MILLISECONDS.sleep(200);
       status = exploreService.getStatus(handle);
-    } while (status.getStatus() == Status.OpStatus.RUNNING || status.getStatus() == Status.OpStatus.PENDING);
+    } while (status.getStatus() == QueryStatus.OpStatus.RUNNING ||
+             status.getStatus() == QueryStatus.OpStatus.PENDING);
     return status;
   }
 }

@@ -1,10 +1,25 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.runtime;
 
 import com.continuuity.DummyAppWithTrackingTable;
 import com.continuuity.TrackingTable;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.queue.QueueName;
@@ -13,12 +28,13 @@ import com.continuuity.common.stream.StreamEventCodec;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.QueueProducer;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.proto.ProgramType;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionAware;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.continuuity.test.XSlowTests;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.DefaultId;
@@ -79,7 +95,7 @@ public class OpenCloseDataSetTest {
 
     // start the flow and procedure
     for (Program program : app.getPrograms()) {
-      if (program.getType().equals(Type.MAPREDUCE)) {
+      if (program.getType().equals(ProgramType.MAPREDUCE)) {
         continue;
       }
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
@@ -155,7 +171,7 @@ public class OpenCloseDataSetTest {
     // start the flow and procedure
     ProgramController controller = null;
     for (Program program : app.getPrograms()) {
-      if (program.getType().equals(Type.MAPREDUCE)) {
+      if (program.getType().equals(ProgramType.MAPREDUCE)) {
         ProgramRunner runner = runnerFactory.create(
           ProgramRunnerFactory.Type.valueOf(program.getType().name()));
         controller = runner.run(program, new SimpleProgramOptions(program));

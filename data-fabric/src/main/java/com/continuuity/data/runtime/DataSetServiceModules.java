@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data.runtime;
 
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
@@ -16,8 +32,11 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
+import com.continuuity.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import com.continuuity.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
+import com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
 import com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
@@ -45,6 +64,7 @@ public class DataSetServiceModules {
         // NOTE: order is important due to dependencies between modules
         Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
         defaultModules.put("orderedTable-memory", new InMemoryOrderedTableModule());
+        defaultModules.put("metricsTable-memory", new InMemoryMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
@@ -74,6 +94,7 @@ public class DataSetServiceModules {
         // NOTE: order is important due to dependencies between modules
         Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
         defaultModules.put("orderedTable-leveldb", new LevelDBOrderedTableModule());
+        defaultModules.put("metricsTable-leveldb", new LevelDBMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
@@ -111,6 +132,7 @@ public class DataSetServiceModules {
         // NOTE: order is important due to dependencies between modules
         Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
         defaultModules.put("orderedTable-hbase", new HBaseOrderedTableModule());
+        defaultModules.put("metricsTable-hbase", new HBaseMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })

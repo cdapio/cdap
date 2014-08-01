@@ -1,5 +1,17 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.metrics.query;
 
@@ -14,6 +26,8 @@ import com.continuuity.metrics.data.AggregatesScanner;
 import com.continuuity.metrics.data.AggregatesTable;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.google.common.base.Splitter;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonArray;
@@ -42,7 +56,7 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
 
-  private final Map<MetricsScope, AggregatesTable> aggregatesTables;
+  private final Supplier<Map<MetricsScope, AggregatesTable>> aggregatesTables;
 
   // just user metrics for now.  Can add reactor metrics when there is a unified way to query for them
   // currently you query differently depending on the metric, and some metrics you can query for in the
@@ -115,10 +129,17 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
   @Inject
   public MetricsDiscoveryHandler(Authenticator authenticator, final MetricsTableFactory metricsTableFactory) {
     super(authenticator);
-    this.aggregatesTables = Maps.newHashMap();
-    for (MetricsScope scope : scopesToDiscover) {
-      aggregatesTables.put(scope, metricsTableFactory.createAggregates(scope.name()));
-    }
+
+    this.aggregatesTables = Suppliers.memoize(new Supplier<Map<MetricsScope, AggregatesTable>>() {
+      @Override
+      public Map<MetricsScope, AggregatesTable> get() {
+        Map<MetricsScope, AggregatesTable> map = Maps.newHashMap();
+        for (final MetricsScope scope : MetricsScope.values()) {
+          map.put(scope, metricsTableFactory.createAggregates(scope.name()));
+        }
+        return map;
+      }
+    });
   }
 
   @Override
@@ -202,7 +223,7 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
     String metricPrefix = (prefixEntity == null || prefixEntity.isEmpty()) ? null : prefixEntity.get(0);
 
     Map<String, ContextNode> metricContextsMap = Maps.newHashMap();
-    for (AggregatesTable table : aggregatesTables.values()) {
+    for (AggregatesTable table : aggregatesTables.get().values()) {
       AggregatesScanner scanner = table.scanRowsOnly(contextPrefix, metricPrefix);
 
       // scanning through all metric rows in the aggregates table

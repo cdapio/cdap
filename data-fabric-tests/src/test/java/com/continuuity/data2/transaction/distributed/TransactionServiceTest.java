@@ -1,5 +1,17 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.data2.transaction.distributed;
 
@@ -16,15 +28,16 @@ import com.continuuity.data.InMemoryDataSetAccessor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetsModules;
+import com.continuuity.data.runtime.TransactionMetricsModule;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.TransactionFailureException;
-import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.TxConstants;
-import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
+import com.continuuity.tephra.DefaultTransactionExecutor;
+import com.continuuity.tephra.TransactionAware;
+import com.continuuity.tephra.TransactionExecutor;
+import com.continuuity.tephra.TransactionFailureException;
+import com.continuuity.tephra.TransactionSystemClient;
+import com.continuuity.tephra.TxConstants;
+import com.continuuity.tephra.distributed.TransactionService;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -68,7 +81,7 @@ public class TransactionServiceTest {
     try {
       CConfiguration cConf = CConfiguration.create();
       // tests should use the current user for HDFS
-      cConf.unset(Constants.CFG_HDFS_USER);
+      cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
       cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
       cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
@@ -176,7 +189,7 @@ public class TransactionServiceTest {
                                              Configuration hConf, final File outPath) {
     final CConfiguration cConf = CConfiguration.create();
     // tests should use the current user for HDFS
-    cConf.unset(Constants.CFG_HDFS_USER);
+    cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     cConf.set(Constants.Zookeeper.QUORUM, zkConnectionString);
     cConf.set(TxConstants.Service.CFG_DATA_TX_BIND_PORT,
               Integer.toString(txServicePort));

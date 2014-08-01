@@ -1,5 +1,17 @@
 /*
- * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.data2.transaction.stream;
 
@@ -13,10 +25,10 @@ import com.continuuity.common.stream.StreamEventDataCodec;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.QueueConsumer;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.SchemaHash;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionAware;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -149,7 +161,7 @@ public final class QueueToStreamConsumer implements StreamConsumer {
   }
 
   @Override
-  public String getName() {
+  public String getTransactionAwareName() {
     return Objects.toStringHelper(this)
       .add("queue", streamName)
       .add("config", consumerConfig)

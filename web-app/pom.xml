@@ -14,6 +14,23 @@
   <artifactId>web-app</artifactId>
   <name>Continuuity Web-App</name>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+        <version>0.10</version>
+        <executions>
+          <execution>
+            <!-- Disable rat check for the web-app module for now. Check with rohit on how to do it.  -->
+            <id>rat-check</id>
+            <phase>none</phase>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
   <profiles>
     <profile>
       <id>dist</id>
@@ -309,9 +326,10 @@
                   <version>${project.version}</version>
                   <groupId>${dist.deploy.groupId}</groupId>
                   <artifactId>continuuity-${project.artifactId}</artifactId>
-                  <packaging>rpm</packaging>
+                  <packaging>noarch.rpm</packaging>
                   <generatePom>false</generatePom>
                   <file>${project.build.directory}/continuuity-${project.artifactId}-${package.version}-1.noarch.rpm</file>
+                  <classifier>1</classifier>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
                 </configuration>

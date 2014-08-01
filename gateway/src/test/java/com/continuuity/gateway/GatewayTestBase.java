@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -9,7 +25,7 @@ import com.continuuity.data.runtime.LocationStreamFileWriterFactory;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data.stream.service.StreamServiceRuntimeModule;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
@@ -25,6 +41,7 @@ import com.continuuity.logging.read.LogReader;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.security.guice.InMemorySecurityModule;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -74,6 +91,8 @@ public abstract class GatewayTestBase {
   private static EndpointStrategy endpointStrategy;
   private static MetricsQueryService metrics;
   private static StreamHttpService streamHttpService;
+  private static InMemoryTransactionManager txService;
+  private static DatasetService dsService;
 
   @ClassRule
   public static ExternalResource resources = new ExternalResource() {
@@ -157,7 +176,10 @@ public abstract class GatewayTestBase {
     );
 
     gateway = injector.getInstance(Gateway.class);
-    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
+    txService = injector.getInstance(InMemoryTransactionManager.class);
+    txService.startAndWait();
+    dsService = injector.getInstance(DatasetService.class);
+    dsService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     metrics = injector.getInstance(MetricsQueryService.class);
     streamHttpService = injector.getInstance(StreamHttpService.class);
@@ -187,6 +209,8 @@ public abstract class GatewayTestBase {
     metrics.stopAndWait();
     streamHttpService.stopAndWait();
     router.stopAndWait();
+    dsService.stopAndWait();
+    txService.stopAndWait();
     conf.clear();
   }
 

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.data.batch.BatchReadable;
@@ -16,13 +32,12 @@ import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.workflow.WorkflowMapReduceProgram;
 import com.continuuity.logging.appender.LogAppenderInitializer;
-
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
@@ -152,11 +167,6 @@ public abstract class AbstractMapReduceContextBuilder {
     logAppenderInitializer.initialize();
 
     return context;
-  }
-
-  protected Program loadProgram(URI programLocation, LocationFactory locationFactory,
-                                File destinationUnpackedJarDir, ClassLoader classLoader) throws IOException {
-    return Programs.createWithUnpack(locationFactory.create(programLocation), destinationUnpackedJarDir, classLoader);
   }
 
   /**

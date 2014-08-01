@@ -1,5 +1,17 @@
 /*
- * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.data2.dataset2.lib.hbase;
 
@@ -55,11 +67,36 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     this.tableUtil = tableUtil;
   }
 
-  // todo
-//  @Override
+  @Override
   public void upgrade() throws IOException {
     // todo: do we need HBaseTableUtil.getHBaseTableName
     upgradeTable(HBaseTableUtil.getHBaseTableName(tableName));
+  }
+
+  @Override
+  public boolean exists() throws IOException {
+    return admin.tableExists(tableName);
+  }
+
+  @Override
+  public void truncate() throws IOException {
+    byte[] tableName = Bytes.toBytes(this.tableName);
+    HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
+    admin.disableTable(tableName);
+    admin.deleteTable(tableName);
+    admin.createTable(tableDescriptor);
+  }
+
+  @Override
+  public void drop() throws IOException {
+    byte[] tableName = Bytes.toBytes(this.tableName);
+    admin.disableTable(tableName);
+    admin.deleteTable(tableName);
+  }
+
+  @Override
+  public void close() throws IOException {
+    admin.close();
   }
 
   /**
@@ -73,17 +110,18 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
     HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
 
+    // Upgrade any table properties if necessary
+    boolean needUpgrade = upgradeTable(tableDescriptor);
+
     // Get the continuuity version from the table
     ProjectInfo.Version version = new ProjectInfo.Version(tableDescriptor.getValue(CONTINUUITY_VERSION));
-    if (version.compareTo(ProjectInfo.getVersion()) >= 0) {
+
+    if (!needUpgrade && version.compareTo(ProjectInfo.getVersion()) >= 0) {
       // If the table has greater than or same version, no need to upgrade.
       LOG.info("Table '{}' was upgraded with same or newer version '{}'. Current version is '{}'",
                tableNameStr, version, ProjectInfo.getVersion());
       return;
     }
-
-    // Upgrade any table properties if necessary
-    boolean needUpgrade = upgradeTable(tableDescriptor);
 
     // Generate the coprocessor jar
     CoprocessorJar coprocessorJar = createCoprocessorJar();

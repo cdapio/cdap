@@ -1,13 +1,23 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.AbstractProgramRuntimeService;
@@ -27,9 +37,13 @@ import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.AbstractResourceReporter;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
-import com.continuuity.internal.app.runtime.service.LiveInfo;
-import com.continuuity.internal.app.runtime.service.NotRunningLiveInfo;
 import com.continuuity.internal.app.runtime.service.SimpleRuntimeInfo;
+import com.continuuity.proto.Containers;
+import com.continuuity.proto.DistributedProgramLiveInfo;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.NotRunningProgramLiveInfo;
+import com.continuuity.proto.ProgramLiveInfo;
+import com.continuuity.proto.ProgramType;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -71,8 +85,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.continuuity.internal.app.runtime.distributed.Containers.ContainerInfo;
-import static com.continuuity.internal.app.runtime.distributed.Containers.ContainerType.FLOWLET;
+import static com.continuuity.proto.Containers.ContainerInfo;
+import static com.continuuity.proto.Containers.ContainerType.FLOWLET;
 
 /**
  *
@@ -142,7 +156,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       return null;
     }
 
-    Type type = getType(matcher.group(1));
+    ProgramType type = getType(matcher.group(1));
     if (type == null) {
       LOG.warn("Unrecognized program type {}", appName);
       return null;
@@ -160,7 +174,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   @Override
-  public synchronized Map<RunId, RuntimeInfo> list(Type type) {
+  public synchronized Map<RunId, RuntimeInfo> list(ProgramType type) {
     Map<RunId, RuntimeInfo> result = Maps.newHashMap();
     result.putAll(super.list(type));
 
@@ -171,7 +185,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       if (!matcher.matches()) {
         continue;
       }
-      Type appType = getType(matcher.group(1));
+      ProgramType appType = getType(matcher.group(1));
       if (appType != type) {
         continue;
       }
@@ -195,7 +209,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     return ImmutableMap.copyOf(result);
   }
 
-  private RuntimeInfo createRuntimeInfo(Type type, Id.Program programId, TwillController controller) {
+  private RuntimeInfo createRuntimeInfo(ProgramType type, Id.Program programId, TwillController controller) {
     try {
       Program program = store.loadProgram(programId, type);
       Preconditions.checkNotNull(program, "Program not found");
@@ -242,9 +256,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     return programController == null ? null : programController.startListen();
   }
 
-  private Type getType(String typeName) {
+  private ProgramType getType(String typeName) {
     try {
-      return Type.valueOf(typeName.toUpperCase());
+      return ProgramType.valueOf(typeName.toUpperCase());
     } catch (IllegalArgumentException e) {
       return null;
     }
@@ -276,7 +290,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   @Override
-  public LiveInfo getLiveInfo(Id.Program program, Type type) {
+  public ProgramLiveInfo getLiveInfo(Id.Program program, ProgramType type) {
     String twillAppName = String.format("%s.%s.%s.%s", type.name().toLowerCase(),
                                       program.getAccountId(), program.getApplicationId(), program.getId());
     Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
@@ -289,10 +303,10 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
       ResourceReport report = controller.getResourceReport();
       if (report != null) {
-        DistributedLiveInfo liveInfo = new DistributedLiveInfo(program, type, report.getApplicationId());
+        DistributedProgramLiveInfo liveInfo = new DistributedProgramLiveInfo(program, type, report.getApplicationId());
 
         // if program type is flow then the container type is flowlet.
-        Containers.ContainerType containerType = Type.FLOW.equals(type) ? FLOWLET :
+        Containers.ContainerType containerType = ProgramType.FLOW.equals(type) ? FLOWLET :
                                                  Containers.ContainerType.valueOf(type.name());
 
         for (Map.Entry<String, Collection<TwillRunResources>> entry : report.getResources().entrySet()) {
@@ -310,7 +324,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         return liveInfo;
       }
     }
-    return new NotRunningLiveInfo(program, type);
+    return new NotRunningProgramLiveInfo(program, type);
   }
 
 
@@ -450,7 +464,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         return null;
       }
 
-      Type type = getType(matcher.group(1));
+      ProgramType type = getType(matcher.group(1));
       if (type == null) {
         return null;
       }

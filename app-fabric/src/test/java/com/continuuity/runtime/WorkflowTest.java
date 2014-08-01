@@ -1,12 +1,23 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.runtime;
 
 import com.continuuity.OneActionWorkflowApp;
 import com.continuuity.WorkflowApp;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -14,6 +25,7 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.proto.ProgramType;
 import com.continuuity.test.XSlowTests;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.base.Predicate;
@@ -71,7 +83,7 @@ public class WorkflowTest {
     Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {
       @Override
       public boolean apply(Program input) {
-        return input.getType() == Type.WORKFLOW;
+        return input.getType() == ProgramType.WORKFLOW;
       }
     }).next();
 
@@ -108,7 +120,7 @@ public class WorkflowTest {
     Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {
       @Override
       public boolean apply(Program input) {
-        return input.getType() == Type.WORKFLOW;
+        return input.getType() == ProgramType.WORKFLOW;
       }
     }).next();
 

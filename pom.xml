@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2012-2014 Continuuity, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+  -->
+
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -19,6 +35,18 @@
     <repository>
       <id>apache.snapshots</id>
       <url>https://repository.apache.org/content/repositories/snapshots</url>
+    </repository>
+    <repository>
+      <id>continuuity-public</id>
+      <url>https://repository.continuuity.com/content/repositories/public</url>
+    </repository>
+    <repository>
+      <id>smartifacts</id>
+      <url>https://repository.continuuity.com/content/repositories/smartifacts</url>
+    </repository>
+    <repository>
+      <id>sonatype</id>
+      <url>https://oss.sonatype.org/content/groups/public/</url>
     </repository>
   </repositories>
 
@@ -42,7 +70,8 @@
     <gson.version>2.2.4</gson.version>
     <guava.version>13.0.1</guava.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <twill.version>0.3.0-incubating-SNAPSHOT</twill.version>
+    <tephra.version>0.2.0-SNAPSHOT</tephra.version>
+    <twill.version>0.4.0-incubating-SNAPSHOT</twill.version>
   </properties>
 
   <modules>
@@ -50,28 +79,24 @@
     <module>continuuity-api</module>
     <module>parent</module>
     <module>common</module>
-    <module>passport-api</module>
     <module>watchdog-api</module>
     <module>kafka</module>
     <module>data-fabric</module>
     <module>data-fabric-tests</module>
     <module>hbase-compat-0.94</module>
     <module>hbase-compat-0.96</module>
-    <module>passport</module>
     <module>watchdog</module>
     <module>watchdog-tests</module>
     <module>app-fabric</module>
     <module>security</module>
     <module>gateway</module>
     <module>explore-client</module>
+    <module>explore-jdbc</module>
     <module>explore</module>
     <module>continuuity-test</module>
     <module>reactor-master</module>
     <module>web-app</module>
-    <module>tx-api</module>
-    <module>tx-core</module>
-    <module>tx-hbase-compat-0.94</module>
-    <module>tx-hbase-compat-0.96</module>
+    <module>proto</module>
     <module>singlenode</module>
     <module>distributions</module>
   </modules>
@@ -97,6 +122,11 @@
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.continuuity.tephra</groupId>
+        <artifactId>tephra-api</artifactId>
+        <version>${tephra.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.twill</groupId>
@@ -142,6 +172,40 @@
           </configuration>
         </plugin>
         <plugin>
+          <groupId>org.apache.rat</groupId>
+          <artifactId>apache-rat-plugin</artifactId>
+          <version>0.10</version>
+          <executions>
+            <execution>
+              <id>rat-check</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+              <configuration>
+                <excludes>
+                  <exclude>build-number.txt</exclude>
+                  <exclude>LICENSE*.txt</exclude>
+                  <exclude>README.md</exclude>
+                  <exclude>logs/**</exclude>
+                  <exclude>docs/**</exclude>
+                  <exclude>conf/**</exclude>
+                  <exclude>data/**</exclude>
+                  <exclude>**/Apache-LICENSE-2.0</exclude>
+                  <exclude>**/VERSION</exclude>
+                  <exlcude>**/*.patch</exlcude>
+                  <exclude>**/logrotate.d/**</exclude>
+                  <exclude>**/limits.d/**</exclude>
+                  <!-- Excludes AVRO schema files -->
+                  <exclude>**/*.avsc</exclude>
+                  <!-- Excludes examples by default, include it in the examples profile -->
+                  <exclude>examples/**</exclude>
+                </excludes>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
           <version>2.12.1</version>
@@ -167,6 +231,11 @@
     </pluginManagement>
 
     <plugins>
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+        <version>0.10</version>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>

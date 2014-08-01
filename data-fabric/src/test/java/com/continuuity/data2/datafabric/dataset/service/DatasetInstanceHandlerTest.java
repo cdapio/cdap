@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.api.dataset.Dataset;
@@ -12,15 +28,17 @@ import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Put;
 import com.continuuity.api.dataset.table.Table;
+import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.ObjectResponse;
-import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.proto.DatasetInstanceConfiguration;
+import com.continuuity.proto.DatasetModuleMeta;
+import com.continuuity.tephra.DefaultTransactionExecutor;
+import com.continuuity.tephra.TransactionAware;
+import com.continuuity.tephra.TransactionExecutor;
+import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -92,6 +110,44 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     // cannot delete non-existing dataset instance
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, deleteInstance("non-existing-dataset"));
     Assert.assertEquals(1, getInstances().getResponseObject().size());
+
+    // delete dataset instance
+    Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1"));
+    Assert.assertEquals(0, getInstances().getResponseObject().size());
+
+    // delete dataset modules
+    Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module2"));
+    Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module1"));
+  }
+
+  @Test
+  public void testUpdateInstance() throws Exception {
+
+    // nothing has been created, modules and types list is empty
+    List<DatasetSpecification> instances = getInstances().getResponseObject();
+
+    // nothing in the beginning
+    Assert.assertEquals(0, instances.size());
+
+    DatasetProperties props = DatasetProperties.builder().add("prop1", "val1").build();
+
+    // deploy modules
+    deployModule("module1", TestModule1.class);
+    deployModule("module2", TestModule2.class);
+
+    // create dataset instance
+    Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", props));
+
+    // verify instance was created
+    instances = getInstances().getResponseObject();
+    Assert.assertEquals(1, instances.size());
+
+    DatasetProperties newProps = DatasetProperties.builder().add("prop2", "val2").build();
+
+    // update dataset instance
+    Assert.assertEquals(HttpStatus.SC_OK, updateInstance("dataset1", "datasetType2", newProps));
+    Assert.assertEquals("val2", getInstance("dataset1").getResponseObject().getSpec().getProperty("prop2"));
+    Assert.assertNull(getInstance("dataset1").getResponseObject().getSpec().getProperty("prop1"));
 
     // delete dataset instance
     Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1"));
@@ -176,26 +232,41 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
   }
 
-  private int createInstance(String instanceName, String typeName, DatasetProperties props) throws IOException {
-    DatasetInstanceHandler.DatasetTypeAndProperties typeAndProps =
-      new DatasetInstanceHandler.DatasetTypeAndProperties(typeName, props.getProperties());
-    return HttpRequests.put(getUrl("/data/datasets/" + instanceName), new Gson().toJson(typeAndProps))
-      .getResponseCode();
+
+  private int createInstance(String instanceName, String typeName,
+                             DatasetProperties props) throws IOException {
+    return createUpdateInstance(instanceName, typeName, props, false);
+  }
+
+  private int createUpdateInstance(String instanceName, String typeName,
+                                   DatasetProperties props, boolean isUpdate) throws IOException {
+    DatasetInstanceConfiguration creationProperties =
+      new DatasetInstanceConfiguration(typeName, props.getProperties(), isUpdate);
+
+    HttpRequest request = HttpRequest.put(getUrl("/data/datasets/" + instanceName))
+      .withBody(new Gson().toJson(creationProperties)).build();
+    return HttpRequests.execute(request).getResponseCode();
+  }
+
+  private int updateInstance(String instanceName, String typeName,
+                             DatasetProperties props) throws IOException {
+    return createUpdateInstance(instanceName, typeName, props, true);
   }
 
   private ObjectResponse<List<DatasetSpecification>> getInstances() throws IOException {
-    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/datasets")),
-                                       new TypeToken<List<DatasetSpecification>>() {
-                                       }.getType());
+    HttpRequest request = HttpRequest.get(getUrl("/data/datasets")).build();
+    return ObjectResponse.fromJsonBody(HttpRequests.execute(request),
+                                       new TypeToken<List<DatasetSpecification>>() { }.getType());
   }
 
   private ObjectResponse<DatasetInstanceMeta> getInstance(String instanceName) throws IOException {
-    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/datasets/" + instanceName)),
-                                       DatasetInstanceMeta.class);
+    HttpRequest request = HttpRequest.get(getUrl("/data/datasets/" + instanceName)).build();
+    return ObjectResponse.fromJsonBody(HttpRequests.execute(request), DatasetInstanceMeta.class);
   }
 
   private int deleteInstance(String instanceName) throws IOException {
-    return HttpRequests.delete(getUrl("/data/datasets/" + instanceName)).getResponseCode();
+    HttpRequest request = HttpRequest.delete(getUrl("/data/datasets/" + instanceName)).build();
+    return HttpRequests.execute(request).getResponseCode();
   }
 
   /**
@@ -240,7 +311,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   }
 
   private static DatasetSpecification createSpec(String instanceName, String typeName,
-                                                DatasetProperties properties) {
+                                                 DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, typeName).properties(properties.getProperties()).build();
   }
 }

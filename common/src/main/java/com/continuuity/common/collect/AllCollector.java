@@ -1,8 +1,24 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.common.collect;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.ObjectArrays;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -15,12 +31,6 @@ public class AllCollector<Element> implements Collector<Element> {
 
   private final List<Element> elements = Lists.newArrayList();
 
-  private final Class<Element> clazz;
-
-  public AllCollector(Class<Element> clazz) {
-    this.clazz = clazz;
-  }
-
   @Override
   public boolean addElement(Element element) {
     elements.add(element);
@@ -28,8 +38,9 @@ public class AllCollector<Element> implements Collector<Element> {
   }
 
   @Override
-  public Element[] finish() {
-    Element[] array = ObjectArrays.newArray(clazz, elements.size());
-    return elements.toArray(array);
+  public <T extends Collection<? super Element>> T finish(T collection) {
+    collection.addAll(elements);
+    elements.clear();
+    return collection;
   }
 }

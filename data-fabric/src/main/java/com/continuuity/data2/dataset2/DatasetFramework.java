@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data2.dataset2;
 
 import com.continuuity.api.dataset.Dataset;
@@ -78,13 +94,28 @@ public interface DatasetFramework {
     throws DatasetManagementException, IOException;
 
   /**
+   * Updates the existing dataset instance in the system.
+   *
+   * This uses
+   * {@link com.continuuity.api.dataset.DatasetDefinition#configure(String, DatasetProperties)}
+   * method to build {@link com.continuuity.api.dataset.DatasetSpecification} with new properties,
+   * which describes dataset instance and {@link DatasetAdmin} is used to upgrade
+   * {@link Dataset} for the dataset instance.
+   * @param datasetInstanceName dataset instance name
+   * @param props dataset instance properties
+   * @throws IOException when creation of dataset instance using its admin fails
+   * @throws DatasetManagementException
+   */
+  void updateInstance(String datasetInstanceName, DatasetProperties props)
+    throws DatasetManagementException, IOException;
+
+  /**
    * @return a collection of {@link com.continuuity.api.dataset.DatasetSpecification}s for all datasets
    */
   Collection<DatasetSpecification> getInstances() throws DatasetManagementException;
 
   /**
-   * @return {@link com.continuuity.api.dataset.DatasetSpecification} of the dataset or {@code null} if dataset does
-   *         not exist
+   * @return {@link DatasetSpecification} of the dataset or {@code null} if dataset not not exist
    */
   @Nullable
   DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException;

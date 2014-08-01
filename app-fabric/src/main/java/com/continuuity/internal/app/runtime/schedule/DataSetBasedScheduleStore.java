@@ -1,10 +1,26 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.internal.app.runtime.schedule;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.TransactionExecutorFactory;
+import com.continuuity.api.dataset.table.OrderedTable;
+import com.continuuity.tephra.TransactionAware;
+import com.continuuity.tephra.TransactionExecutor;
+import com.continuuity.tephra.TransactionExecutorFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -40,7 +56,7 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
 
   private final TransactionExecutorFactory factory;
   private final ScheduleStoreTableUtil tableUtil;
-  private OrderedColumnarTable table;
+  private OrderedTable table;
 
   @Inject
   public DataSetBasedScheduleStore(TransactionExecutorFactory factory, ScheduleStoreTableUtil tableUtil) {
@@ -195,7 +211,7 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
   }
 
   // Persist the job information to dataset
-  private void persistJob(OrderedColumnarTable table, JobDetail job) throws Exception {
+  private void persistJob(OrderedTable table, JobDetail job) throws Exception {
     byte[][] cols = new byte[1][];
     byte[][] values = new byte[1][];
 
@@ -204,22 +220,22 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
     table.put(JOB_KEY, cols, values);
   }
 
-  private void removeTrigger(OrderedColumnarTable table, TriggerKey key) throws Exception {
+  private void removeTrigger(OrderedTable table, TriggerKey key) throws Exception {
     byte[][] col = new byte[1][];
-    col[0] = Bytes.toBytes(key.getName().toString());
+    col[0] = Bytes.toBytes(key.getName());
     table.delete(TRIGGER_KEY, col);
   }
 
 
-  private void removeJob(OrderedColumnarTable table, JobKey key) throws Exception {
+  private void removeJob(OrderedTable table, JobKey key) throws Exception {
     byte[][] col = new byte[1][];
-    col[0] = Bytes.toBytes(key.getName().toString());
+    col[0] = Bytes.toBytes(key.getName());
     table.delete(JOB_KEY, col);
   }
 
   private TriggerStatus readTrigger(TriggerKey key) throws Exception {
     byte[][] col = new byte[1][];
-    col[0] = Bytes.toBytes(key.getName().toString());
+    col[0] = Bytes.toBytes(key.getName());
     Map<byte[], byte[]> result = table.get(TRIGGER_KEY, col);
     byte[] bytes = null;
     if (!result.isEmpty()) {
@@ -233,13 +249,13 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
   }
 
   // Persist the trigger information to dataset
-  private void persistTrigger(OrderedColumnarTable table, OperableTrigger trigger,
+  private void persistTrigger(OrderedTable table, OperableTrigger trigger,
                               Trigger.TriggerState state) throws Exception {
 
     byte[][] cols = new byte[1][];
     byte[][] values = new byte[1][];
 
-    cols[0] = Bytes.toBytes(trigger.getKey().getName().toString());
+    cols[0] = Bytes.toBytes(trigger.getKey().getName());
     values[0] = SerializationUtils.serialize(new TriggerStatus(trigger, state));
     table.put(TRIGGER_KEY, cols, values);
   }

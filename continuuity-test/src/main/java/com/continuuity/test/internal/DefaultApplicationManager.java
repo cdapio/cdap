@@ -1,7 +1,22 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.test.internal;
 
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.program.RunRecord;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.queue.QueueName;
@@ -10,10 +25,11 @@ import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.transaction.TransactionContext;
-import com.continuuity.data2.transaction.TransactionFailureException;
-import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
+import com.continuuity.proto.RunRecord;
+import com.continuuity.tephra.TransactionContext;
+import com.continuuity.tephra.TransactionFailureException;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
 import com.continuuity.test.FlowManager;
@@ -29,10 +45,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -55,8 +72,8 @@ public class DefaultApplicationManager implements ApplicationManager {
   private final DataSetInstantiator dataSetInstantiator;
   private final StreamWriterFactory streamWriterFactory;
   private final ProcedureClientFactory procedureClientFactory;
-  private final AppFabricHttpHandler httpHandler;
-
+  private final AppFabricClient appFabricClient;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
   public DefaultApplicationManager(LocationFactory locationFactory,
@@ -66,17 +83,19 @@ public class DefaultApplicationManager implements ApplicationManager {
                                    StreamWriterFactory streamWriterFactory,
                                    ProcedureClientFactory procedureClientFactory,
                                    CConfiguration configuration,
+                                   DiscoveryServiceClient discoveryServiceClient,
+                                   AppFabricHttpHandler httpHandler,
                                    @Assisted("accountId") String accountId,
                                    @Assisted("applicationId") String applicationId,
                                    @Assisted Location deployedJar,
-                                   @Assisted ApplicationSpecification appSpec,
-                                   AppFabricHttpHandler httpHandler) {
+                                   @Assisted ApplicationSpecification appSpec) {
     this.accountId = accountId;
     this.applicationId = applicationId;
     this.streamWriterFactory = streamWriterFactory;
     this.procedureClientFactory = procedureClientFactory;
+    this.discoveryServiceClient = discoveryServiceClient;
     this.txSystemClient = txSystemClient;
-    this.httpHandler = httpHandler;
+    this.appFabricClient = new AppFabricClient(httpHandler, locationFactory);
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
 
@@ -103,7 +122,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(flowName, flowId) == null,
                                "Flow %s is already running", flowName);
       try {
-        AppFabricTestHelper.startProgram(httpHandler, applicationId, flowName, "flows", arguments);
+        appFabricClient.startProgram(applicationId, flowName, "flows", arguments);
       } catch (Exception e) {
         runningProcessses.remove(flowName);
         throw Throwables.propagate(e);
@@ -114,7 +133,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void setFlowletInstances(String flowletName, int instances) {
           Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
           try {
-            AppFabricTestHelper.setFlowletInstances(httpHandler, applicationId, flowName, flowletName, instances);
+            appFabricClient.setFlowletInstances(applicationId, flowName, flowletName, instances);
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }
@@ -124,7 +143,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(flowName, flowId)) {
-              AppFabricTestHelper.stopProgram(httpHandler, applicationId, flowName, "flows");
+              appFabricClient.stopProgram(applicationId, flowName, "flows");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -155,7 +174,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(jobName, jobId) == null,
                                "MapReduce job %s is already running", jobName);
       try {
-        AppFabricTestHelper.startProgram(httpHandler, applicationId, jobName, "mapreduce", arguments);
+        appFabricClient.startProgram(applicationId, jobName, "mapreduce", arguments);
       } catch (Exception e) {
         runningProcessses.remove(jobName);
         throw Throwables.propagate(e);
@@ -166,7 +185,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(jobName, jobId)) {
-              AppFabricTestHelper.stopProgram(httpHandler, applicationId, jobName, "mapreduce");
+              appFabricClient.stopProgram(applicationId, jobName, "mapreduce");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -203,7 +222,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(procedureName, procedureId) == null,
                                "Procedure %s is already running", procedureName);
       try {
-        AppFabricTestHelper.startProgram(httpHandler, applicationId, procedureName, "procedures", arguments);
+        appFabricClient.startProgram(applicationId, procedureName, "procedures", arguments);
       } catch (Exception e) {
         runningProcessses.remove(procedureName);
         throw Throwables.propagate(e);
@@ -214,7 +233,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(procedureName, procedureId)) {
-              AppFabricTestHelper.stopProgram(httpHandler, applicationId, procedureName, "procedures");
+              appFabricClient.stopProgram(applicationId, procedureName, "procedures");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -245,24 +264,12 @@ public class DefaultApplicationManager implements ApplicationManager {
       return new WorkflowManager() {
         @Override
         public List<String> getSchedules() {
-          List<String> schedules = Lists.newArrayList();
-          try {
-            schedules = AppFabricTestHelper.getSchedules(httpHandler, applicationId, workflowName);
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-          return schedules;
+          return appFabricClient.getSchedules(applicationId, workflowName);
         }
 
         @Override
         public List<RunRecord> getHistory() {
-          List<RunRecord> history = Lists.newArrayList();
-          try {
-            history = AppFabricTestHelper.getHistory(httpHandler, applicationId, workflowName);
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-          return history;
+          return appFabricClient.getHistory(applicationId, workflowName);
         }
 
         public ScheduleManager getSchedule(final String schedName) {
@@ -270,31 +277,17 @@ public class DefaultApplicationManager implements ApplicationManager {
           return new ScheduleManager() {
             @Override
             public void suspend() {
-              try {
-                AppFabricTestHelper.suspend(httpHandler, applicationId, workflowName, schedName);
-              } catch (Exception e) {
-                throw Throwables.propagate(e);
-              }
+              appFabricClient.suspend(applicationId, workflowName, schedName);
             }
 
             @Override
             public void resume() {
-              try {
-                AppFabricTestHelper.resume(httpHandler, applicationId, workflowName, schedName);
-              } catch (Exception e) {
-                throw Throwables.propagate(e);
-              }
+              appFabricClient.resume(applicationId, workflowName, schedName);
             }
 
             @Override
             public String status() {
-              String status = null;
-              try {
-                status = AppFabricTestHelper.scheduleStatus(httpHandler, applicationId, workflowName, schedName);
-              } catch (Exception e) {
-                throw Throwables.propagate(e);
-              }
-              return status;
+              return appFabricClient.scheduleStatus(applicationId, workflowName, schedName);
             }
           };
         }
@@ -317,7 +310,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(serviceName, serviceId) == null,
                                "Service %s is already running", serviceName);
       try {
-        AppFabricTestHelper.startProgram(httpHandler, applicationId, serviceName, "services", arguments);
+        appFabricClient.startProgram(applicationId, serviceName, "services", arguments);
       } catch (Exception e) {
         runningProcessses.remove(serviceName);
         throw Throwables.propagate(e);
@@ -328,7 +321,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(serviceName, serviceId)) {
-              AppFabricTestHelper.stopProgram(httpHandler, applicationId, serviceName, "services");
+              appFabricClient.stopProgram(applicationId, serviceName, "services");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -340,6 +333,12 @@ public class DefaultApplicationManager implements ApplicationManager {
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }
+        }
+
+        @Override
+        public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
+          String discoveryName = String.format("service.%s.%s.%s.%s", accountId, applicationId, serviceId, serviceName);
+          return discoveryServiceClient.discover(discoveryName);
         }
       };
     } catch (Exception e) {
@@ -391,7 +390,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         // throw error when you stop smth that is not running.
         if (isRunning(entry.getValue())) {
           ProgramId id = entry.getValue();
-          AppFabricTestHelper.stopProgram(httpHandler, id.getApplicationId(), id.getRunnableId(), id.getRunnableType());
+          appFabricClient.stopProgram(id.getApplicationId(), id.getRunnableId(), id.getRunnableType());
         }
       }
     } catch (Exception e) {
@@ -439,7 +438,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   private boolean isRunning(ProgramId programId) {
     try {
 
-      String status = AppFabricTestHelper.getStatus(httpHandler, programId.getApplicationId(),
+      String status = appFabricClient.getStatus(programId.getApplicationId(),
                                                     programId.getRunnableId(), programId.getRunnableType());
       // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
       return "RUNNING".equals(status);

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.explore.service;
 
 import com.continuuity.api.dataset.DatasetProperties;
@@ -12,13 +28,14 @@ import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.explore.client.DiscoveryExploreClient;
 import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -40,6 +57,7 @@ public class ExploreDisabledTest {
   private static InMemoryTransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
   private static DatasetService datasetService;
+  private static ExploreClient exploreClient;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -50,14 +68,15 @@ public class ExploreDisabledTest {
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
 
-    ExploreClient exploreClient = injector.getInstance(DiscoveryExploreClient.class);
-    Assert.assertFalse(exploreClient.isAvailable());
+    exploreClient = injector.getInstance(DiscoveryExploreClient.class);
+    Assert.assertFalse(exploreClient.isServiceAvailable());
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
   }
 
   @AfterClass
   public static void stop() throws Exception {
+    exploreClient.close();
     datasetService.stopAndWait();
     transactionManager.stopAndWait();
   }
@@ -140,8 +159,8 @@ public class ExploreDisabledTest {
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
-    configuration.setBoolean(Constants.Explore.CFG_EXPLORE_ENABLED, false);
-    configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
+    configuration.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
+    configuration.set(Constants.Explore.LOCAL_DATA_DIR,
                       new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
 
     return ImmutableList.of(
@@ -154,7 +173,8 @@ public class ExploreDisabledTest {
         new DataSetsModules().getInMemoryModule(),
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new AuthModule(),
-        new ExploreRuntimeModule().getInMemoryModules()
+        new ExploreRuntimeModule().getInMemoryModules(),
+        new ExploreClientModule()
     );
   }
 }

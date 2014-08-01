@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.explore.guice;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -7,6 +23,7 @@ import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.explore.executor.ExploreExecutorHttpHandler;
 import com.continuuity.explore.executor.ExploreExecutorService;
+import com.continuuity.explore.executor.ExploreMetadataHttpHandler;
 import com.continuuity.explore.executor.ExplorePingHandler;
 import com.continuuity.explore.executor.QueryExecutorHttpHandler;
 import com.continuuity.explore.service.ExploreService;
@@ -79,6 +96,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(QueryExecutorHttpHandler.class);
       handlerBinder.addBinding().to(ExploreExecutorHttpHandler.class);
       handlerBinder.addBinding().to(ExplorePingHandler.class);
+      handlerBinder.addBinding().to(ExploreMetadataHttpHandler.class);
       handlerBinder.addBinding().to(PingHandler.class);
 
       bind(ExploreExecutorService.class).in(Scopes.SINGLETON);
@@ -107,23 +125,32 @@ public class ExploreRuntimeModule extends RuntimeModule {
     private static final class ExploreServiceProvider implements Provider<ExploreService> {
 
       private final CConfiguration cConf;
+      private final Configuration hConf;
       private final ExploreService exploreService;
       private final boolean isInMemory;
 
       @Inject
-      public ExploreServiceProvider(CConfiguration cConf,
+      public ExploreServiceProvider(CConfiguration cConf, Configuration hConf,
                                     @Named("explore.service.impl") ExploreService exploreService,
                                     @Named("explore.inmemory") boolean isInMemory) {
         this.exploreService = exploreService;
         this.cConf = cConf;
+        this.hConf = hConf;
         this.isInMemory = isInMemory;
       }
 
       private static final long seed = System.currentTimeMillis();
       @Override
       public ExploreService get() {
-        File warehouseDir = new File(cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR), "warehouse");
-        File databaseDir = new File(cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR), "database");
+        File hiveDataDir = new File(cConf.get(Constants.Explore.LOCAL_DATA_DIR));
+        System.setProperty(HiveConf.ConfVars.SCRATCHDIR.toString(),
+                           new File(hiveDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
+
+        // Reset hadoop tmp dir because Hive does not pick it up from hConf
+        System.setProperty("hadoop.tmp.dir", hConf.get("hadoop.tmp.dir"));
+
+        File warehouseDir = new File(cConf.get(Constants.Explore.LOCAL_DATA_DIR), "warehouse");
+        File databaseDir = new File(cConf.get(Constants.Explore.LOCAL_DATA_DIR), "database");
 
         if (isInMemory) {
           // This seed is required to make all tests pass when launched together, and when several of them
@@ -139,7 +166,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
         // Set derby log location
         System.setProperty("derby.stream.error.file",
-                           cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR) + File.separator + "derby.log");
+                           cConf.get(Constants.Explore.LOCAL_DATA_DIR) + File.separator + "derby.log");
 
         String connectUrl = String.format("jdbc:derby:;databaseName=%s;create=true", databaseDir.getAbsoluteFile());
         LOG.debug("Setting {} to {}", HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);

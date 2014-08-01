@@ -1,11 +1,28 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.logging.appender.kafka;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
-import com.continuuity.data.InMemoryDataSetAccessor;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.logging.KafkaTestBase;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.LogAppender;
@@ -13,9 +30,13 @@ import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.appender.LoggingTester;
 import com.continuuity.logging.context.FlowletLoggingContext;
 import com.continuuity.logging.read.DistributedLogReader;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.continuuity.test.SlowTests;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -24,7 +45,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 
 /**
@@ -33,10 +53,15 @@ import java.io.PrintStream;
 @Category(SlowTests.class)
 public class TestKafkaLogging extends KafkaTestBase {
   private static InMemoryTxSystemClient txClient = null;
+  private static DatasetFramework dsFramework;
 
   @BeforeClass
-  public static void init() throws IOException {
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+  public static void init() throws Exception {
+    dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
+    dsFramework.addModule("table", new InMemoryOrderedTableModule());
+
+    Configuration txConf = HBaseConfiguration.create();
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager(txConf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
 
@@ -97,7 +122,7 @@ public class TestKafkaLogging extends KafkaTestBase {
 
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     DistributedLogReader logReader =
-      new DistributedLogReader(new InMemoryDataSetAccessor(conf), txClient, conf, new LocalLocationFactory());
+      new DistributedLogReader(dsFramework, txClient, conf, new LocalLocationFactory());
     LoggingTester tester = new LoggingTester();
     tester.testGetNext(logReader, loggingContext);
     logReader.close();
@@ -112,7 +137,7 @@ public class TestKafkaLogging extends KafkaTestBase {
 
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     DistributedLogReader logReader =
-      new DistributedLogReader(new InMemoryDataSetAccessor(conf), txClient, conf, new LocalLocationFactory());
+      new DistributedLogReader(dsFramework, txClient, conf, new LocalLocationFactory());
     LoggingTester tester = new LoggingTester();
     tester.testGetPrev(logReader, loggingContext);
     logReader.close();

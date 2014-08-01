@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.data2.datafabric.dataset;
 
 import com.continuuity.api.dataset.DatasetProperties;
@@ -6,22 +22,24 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.common.http.HttpMethod;
+import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
-import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceHandler;
-import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
-import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
-import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
+import com.continuuity.common.io.Locations;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.InstanceConflictException;
 import com.continuuity.data2.dataset2.ModuleConflictException;
+import com.continuuity.proto.DatasetInstanceConfiguration;
+import com.continuuity.proto.DatasetMeta;
+import com.continuuity.proto.DatasetModuleMeta;
+import com.continuuity.proto.DatasetTypeMeta;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
+import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -59,7 +77,7 @@ class DatasetServiceClient {
   }
 
   @Nullable
-  public DatasetInstanceMeta getInstance(String instanceName) throws DatasetManagementException {
+  public DatasetMeta getInstance(String instanceName) throws DatasetManagementException {
     HttpResponse response = doGet("datasets/" + instanceName);
     if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
       return null;
@@ -69,7 +87,7 @@ class DatasetServiceClient {
                                                          instanceName, getDetails(response)));
     }
 
-    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), DatasetInstanceMeta.class);
+    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), DatasetMeta.class);
   }
 
   public Collection<DatasetSpecification> getAllInstances() throws DatasetManagementException {
@@ -108,18 +126,33 @@ class DatasetServiceClient {
 
   public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
     throws DatasetManagementException {
+    DatasetInstanceConfiguration creationProperties = new DatasetInstanceConfiguration(datasetType,
+                                                                                       props.getProperties());
 
-    DatasetInstanceHandler.DatasetTypeAndProperties typeAndProps =
-      new DatasetInstanceHandler.DatasetTypeAndProperties(datasetType, props.getProperties());
-    HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(typeAndProps));
+    createUpdateInstance(datasetInstanceName, creationProperties, "add");
+  }
+
+  private void createUpdateInstance(String datasetInstanceName,
+                                    DatasetInstanceConfiguration creationProperties, String op)
+    throws DatasetManagementException {
+    HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(creationProperties));
+
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
-      throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
-                                                        datasetInstanceName, getDetails(response)));
+      throw new InstanceConflictException(String.format("Failed to %s instance %s due to conflict, details: %s",
+                                                        op, datasetInstanceName, getDetails(response)));
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
-                                                         datasetInstanceName, getDetails(response)));
+      throw new DatasetManagementException(String.format("Failed to %s instance %s, details: %s",
+                                                         op, datasetInstanceName, getDetails(response)));
     }
+  }
+
+  public void updateInstance(String datasetInstanceName, DatasetProperties props)
+    throws DatasetManagementException {
+    DatasetMeta meta = getInstance(datasetInstanceName);
+    DatasetInstanceConfiguration creationProperties =
+      new DatasetInstanceConfiguration(meta.getSpec().getType(), props.getProperties(), true);
+    createUpdateInstance(datasetInstanceName, creationProperties, "update");
   }
 
   public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
@@ -137,22 +170,9 @@ class DatasetServiceClient {
   public void addModule(String moduleName, String className, Location jarLocation)
     throws DatasetManagementException {
 
-    InputStream is;
-    try {
-      is = jarLocation.getInputStream();
-    } catch (IOException e) {
-      throw new DatasetManagementException(String.format("Failed to read jar of module %s at %s",
-                                                         moduleName, jarLocation));
-    }
-    HttpResponse response;
-    try {
-      response = doRequest("modules/" + moduleName,
-                       "PUT",
-                       ImmutableMap.of("X-Continuuity-Class-Name", className),
-                       null, is);
-    } finally {
-      Closeables.closeQuietly(is);
-    }
+    HttpResponse response = doRequest(HttpMethod.PUT, "modules/" + moduleName,
+                           ImmutableMap.of("X-Continuuity-Class-Name", className),
+                           Locations.newInputSupplier(jarLocation));
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new ModuleConflictException(String.format("Failed to add module %s due to conflict, details: %s",
@@ -160,7 +180,7 @@ class DatasetServiceClient {
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to add module %s, details: %s",
-                                                      moduleName, getDetails(response)));
+                                                         moduleName, getDetails(response)));
     }
   }
 
@@ -197,38 +217,57 @@ class DatasetServiceClient {
   }
 
   private HttpResponse doGet(String resource) throws DatasetManagementException {
-    return doRequest(resource, "GET", null, null, null);
+    return doRequest(HttpMethod.GET, resource);
   }
 
   private HttpResponse doPut(String resource, String body)
     throws DatasetManagementException {
 
-    return doRequest(resource, "PUT", null, body, null);
+    return doRequest(HttpMethod.PUT, resource, null, body);
+  }
+
+  private HttpResponse doPost(String resource)
+    throws DatasetManagementException {
+    return doRequest(HttpMethod.POST, resource);
   }
 
   private HttpResponse doDelete(String resource) throws DatasetManagementException {
-    return doRequest(resource, "DELETE", null, null, null);
+    return doRequest(HttpMethod.DELETE, resource);
   }
 
-  private HttpResponse doRequest(String resource, String requestMethod,
+  private HttpResponse doRequest(HttpMethod method, String resource,
                                  @Nullable Map<String, String> headers,
-                                 @Nullable String body,
-                                 @Nullable InputStream bodySrc)
-    throws DatasetManagementException {
+                                 @Nullable String body) throws DatasetManagementException {
 
-    Preconditions.checkArgument(!(body != null && bodySrc != null), "only one of body and bodySrc can be used as body");
-
-    String resolvedUrl = resolve(resource);
+    String url = resolve(resource);
     try {
-      URL url = new URL(resolvedUrl);
-      return HttpRequests.doRequest(requestMethod, url, headers, body, bodySrc);
+      return HttpRequests.execute(HttpRequest.builder(method, new URL(url)).addHeaders(headers).withBody(body).build());
     } catch (IOException e) {
       throw new DatasetManagementException(
         String.format("Error during talking to Dataset Service at %s while doing %s with headers %s and body %s",
-                      resolvedUrl, requestMethod,
-                      headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers),
-                      body == null ? bodySrc : body), e);
+                      url, method, headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers),
+                      body == null ? "null" : body), e);
     }
+  }
+
+  private HttpResponse doRequest(HttpMethod method, String resource,
+                                 @Nullable Map<String, String> headers,
+                                 @Nullable InputSupplier<? extends InputStream> body)
+    throws DatasetManagementException {
+
+    String url = resolve(resource);
+    try {
+      return HttpRequests.execute(HttpRequest.builder(method, new URL(url)).addHeaders(headers).withBody(body).build());
+    } catch (IOException e) {
+      throw new DatasetManagementException(
+        String.format("Error during talking to Dataset Service at %s while doing %s with headers %s and body %s",
+                      url, method, headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers),
+                      body == null ? "null" : body), e);
+    }
+  }
+
+  private HttpResponse doRequest(HttpMethod method, String url) throws DatasetManagementException {
+    return doRequest(method, url, null, (InputSupplier<? extends InputStream>) null);
   }
 
   private String getDetails(HttpResponse response) throws DatasetManagementException {

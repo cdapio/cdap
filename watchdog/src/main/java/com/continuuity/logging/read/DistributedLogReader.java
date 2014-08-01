@@ -1,13 +1,24 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package com.continuuity.logging.read;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.kafka.KafkaTopic;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
@@ -16,10 +27,10 @@ import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.filter.AndFilter;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.kafka.KafkaConsumer;
-import com.continuuity.logging.save.LogSaver;
 import com.continuuity.logging.save.LogSaverTableUtil;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.logging.write.FileMetaDataManager;
+import com.continuuity.tephra.TransactionSystemClient;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -68,7 +79,7 @@ public final class DistributedLogReader implements LogReader {
    * @param cConfig configuration object containing Kafka seed brokers and number of Kafka partitions for log topic.
    */
   @Inject
-  public DistributedLogReader(DataSetAccessor dataSetAccessor,
+  public DistributedLogReader(DatasetFramework dsFramework,
                               TransactionSystemClient txClient,
                               CConfiguration cConfig,
                               LocationFactory locationFactory) {
@@ -88,7 +99,7 @@ public final class DistributedLogReader implements LogReader {
       this.serializer = new LoggingEventSerializer();
 
       this.fileMetaDataManager =
-        new FileMetaDataManager(new LogSaverTableUtil(dataSetAccessor).getMetaTable(), txClient, locationFactory);
+        new FileMetaDataManager(new LogSaverTableUtil(dsFramework, cConfig).getMetaTable(), txClient, locationFactory);
 
       this.schema = new LogSchema().getAvroSchema();
     } catch (Exception e) {

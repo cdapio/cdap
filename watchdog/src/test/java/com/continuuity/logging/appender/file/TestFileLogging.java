@@ -1,11 +1,28 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.logging.appender.file;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
-import com.continuuity.data.InMemoryDataSetAccessor;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.appender.LoggingTester;
@@ -13,9 +30,13 @@ import com.continuuity.logging.context.FlowletLoggingContext;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.read.LogEvent;
 import com.continuuity.logging.read.SingleNodeLogReader;
+import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
 import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -36,11 +57,14 @@ import java.util.Random;
 public class TestFileLogging {
   private static String logBaseDir;
 
-  private static InMemoryDataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor(CConfiguration.create());
+  private static DatasetFramework dsFramework;
   private static InMemoryTxSystemClient txClient;
 
   @BeforeClass
   public static void setUpContext() throws Exception {
+    dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
+    dsFramework.addModule("table", new InMemoryOrderedTableModule());
+
     LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
     logBaseDir = "/tmp/log_files_" + new Random(System.currentTimeMillis()).nextLong();
 
@@ -49,11 +73,14 @@ public class TestFileLogging {
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
 
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+
+    Configuration conf = HBaseConfiguration.create();
+    cConf.copyTxProperties(conf);
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
 
-    FileLogAppender appender = new FileLogAppender(cConf, dataSetAccessor, txClient, new LocalLocationFactory());
+    FileLogAppender appender = new FileLogAppender(cConf, dsFramework, txClient, new LocalLocationFactory());
     new LogAppenderInitializer(appender).initialize("TestFileLogging");
 
     Logger logger = LoggerFactory.getLogger("TestFileLogging");
@@ -81,7 +108,7 @@ public class TestFileLogging {
 
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     SingleNodeLogReader logReader =
-      new SingleNodeLogReader(cConf, dataSetAccessor, txClient, new LocalLocationFactory());
+      new SingleNodeLogReader(cConf, dsFramework, txClient, new LocalLocationFactory());
     LoggingTester tester = new LoggingTester();
     tester.testGetNext(logReader, loggingContext);
     logReader.close();
@@ -94,7 +121,7 @@ public class TestFileLogging {
 
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     SingleNodeLogReader logReader =
-      new SingleNodeLogReader(cConf, dataSetAccessor, txClient, new LocalLocationFactory());
+      new SingleNodeLogReader(cConf, dsFramework, txClient, new LocalLocationFactory());
     LoggingTester tester = new LoggingTester();
     tester.testGetPrev(logReader, loggingContext);
     logReader.close();
@@ -107,7 +134,7 @@ public class TestFileLogging {
 
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     SingleNodeLogReader logTail =
-      new SingleNodeLogReader(cConf, dataSetAccessor, txClient, new LocalLocationFactory());
+      new SingleNodeLogReader(cConf, dsFramework, txClient, new LocalLocationFactory());
     LoggingTester.LogCallback logCallback1 = new LoggingTester.LogCallback();
     logTail.getLogPrev(loggingContext, -1, 60, Filter.EMPTY_FILTER,
                        logCallback1);

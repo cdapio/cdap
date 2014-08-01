@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.app.store.ServiceStore;
@@ -6,6 +22,8 @@ import com.continuuity.common.twill.ReactorServiceManager;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import com.continuuity.http.HttpResponder;
+import com.continuuity.proto.SystemServiceMeta;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -52,7 +70,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("service-name") String serviceName) throws Exception {
     JsonObject reply = new JsonObject();
     if (!reactorServiceManagementMap.containsKey(serviceName)) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("Invalid service name %s", serviceName));
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Invalid service name %s", serviceName));
       return;
     }
     ReactorServiceManager serviceManager = reactorServiceManagementMap.get(serviceName);
@@ -129,7 +147,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   public void monitor(final HttpRequest request, final HttpResponder responder,
                       @PathParam("service-name") final String serviceName) {
     if (!reactorServiceManagementMap.containsKey(serviceName)) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("Invalid service name %s", serviceName));
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Invalid service name %s", serviceName));
       return;
     }
     ReactorServiceManager reactorServiceManager = reactorServiceManagementMap.get(serviceName);
@@ -149,7 +167,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @Path("/system/services")
   @GET
   public void getServiceSpec(final HttpRequest request, final HttpResponder responder) throws Exception {
-    List<JsonObject> serviceSpec = new ArrayList<JsonObject>();
+    List<SystemServiceMeta> response = Lists.newArrayList();
     SortedSet<String> services = new TreeSet<String>(reactorServiceManagementMap.keySet());
     List<String> serviceList = new ArrayList<String>(services);
     for (String service : serviceList) {
@@ -158,34 +176,23 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
         String logs = serviceManager.isLogAvailable() ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
         String canCheck = serviceManager.canCheckStatus() ? (
                           serviceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK) : NOTAPPLICABLE;
-        JsonObject reply = new JsonObject();
-        reply.addProperty("name", service);
-        reply.addProperty("logs", logs);
-        reply.addProperty("status", canCheck);
-        reply.addProperty("min", String.valueOf(serviceManager.getMinInstances()));
-        reply.addProperty("max", String.valueOf(serviceManager.getMaxInstances()));
-        reply.addProperty("requested", String.valueOf(getSystemServiceInstanceCount(service)));
-        reply.addProperty("provisioned", String.valueOf(serviceManager.getInstances()));
-        reply.addProperty("description", serviceManager.getDescription());
         //TODO: Add metric name for Event Rate monitoring
-        serviceSpec.add(reply);
+        response.add(new SystemServiceMeta(service, serviceManager.getDescription(), canCheck, logs,
+                                           serviceManager.getMinInstances(), serviceManager.getMaxInstances(),
+                                           getSystemServiceInstanceCount(service), serviceManager.getInstances()));
       }
     }
-    responder.sendJson(HttpResponseStatus.OK, serviceSpec);
+    responder.sendJson(HttpResponseStatus.OK, response);
   }
 
   private int getSystemServiceInstanceCount(String serviceName) throws Exception {
     Integer count = serviceStore.getServiceInstance(serviceName);
-    int provisioned = 0;
 
-    //If entry is not present in the table, create one by setting to provisioned instance count for the service
+    //In SingleNode, this count will be null. And thus we just return the actual instance count.
     if (count == null) {
-      provisioned = reactorServiceManagementMap.get(serviceName).getInstances();
+      return reactorServiceManagementMap.get(serviceName).getInstances();
     } else {
       return count;
     }
-
-    serviceStore.setServiceInstance(serviceName, provisioned);
-    return provisioned;
   }
 }

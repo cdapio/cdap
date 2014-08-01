@@ -584,7 +584,7 @@ Example
    * - HTTP Request
      - ``PUT <base-url>/data/datasets/mydataset``
    * - Body
-     - ``{"typeName":"com.continuuity.api.dataset.table.Table", "properties":{"ttl":"3600000"}}``
+     - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"3600000"}}``
    * - Description
      - Creates a Dataset named "mydataset" of the type "table" and time-to-live property set to 1 hour
 
@@ -1537,30 +1537,6 @@ The response is formatted in JSON; an example of this is shown in:
 
 	`Continuuity Reactor Testing and Debugging Guide <http://continuuity.com/docs/reactor/current/en/debugging.html#debugging-reactor-applications>`__
 
-To find out the address of a Service's container host and the container's debug port, you 
-can query the Reactor for the live info of a Service's Twill Runnable via an HTTP GET method::
-
-  GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/live-info
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<app-id>``
-     - Name of the Application being called
-   * - ``<service-id>``
-     - Name of the Custom Service being called
-   * - ``<runnable-id>``
-     - Name of the Twill Runnable being called
-
-Example::
-
-	GET <base-url>/apps/WordCount/services/CounterService/runnables/CountRunnable/live-info
-
-The response is formatted in JSON.
-
 .. rst2pdf: PageBreak
 
 Scale
@@ -1697,7 +1673,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/instances``
+     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables`` ``/WhoRunnable/instances``
    * - Description
      - Retrieve the number of instances of the Twill Runnable *WhoRunnable* of the Service *WhoService*
 
@@ -1706,12 +1682,12 @@ Example
 Run History and Schedule
 ------------------------
 
-To see the history of all runs of an element,
-issue an HTTP GET to the element’s URL with ``history`` parameter.
+To see the history of all runs of selected elements (Flows, Procedures, MapReduce jobs, Workflows, and
+Services), issue an HTTP GET to the element’s URL with the ``history`` parameter.
 This will return a JSON list of all completed runs, each with a start time,
 end time and termination status::
 
-	GET <base-url>/apps/<app-id>/flows/<flow-id>/history
+	GET <base-url>/apps/<app-id>/<element>/<element-id>/history
 
 .. list-table::
    :widths: 20 80
@@ -1721,8 +1697,10 @@ end time and termination status::
      - Description
    * - ``<app-id>``
      - Name of the Application
-   * - ``<flow-id>``
-     - Name of the Flow
+   * - ``<element-type>``
+     - One of ``flows``, ``procedures``, ``mapreduce``, ``workflows`` or ``services``
+   * - ``<element-id>``
+     - Name of the element
 
 Example
 .......
@@ -1741,9 +1719,9 @@ Example
 The *runid* field is a UUID that uniquely identifies a run within the Continuuity Reactor,
 with the start and end times in seconds since the start of the Epoch (midnight 1/1/1970).
 
-For Services, you can retrieve the history of a Twill Runnable using::
+For Services, you can retrieve the history of a Twill Service using::
 
-  GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/history
+  GET <base-url>/apps/<app-id>/services/<service-id>/history
 
 Example
 .......
@@ -1752,10 +1730,9 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/history``
+     - ``GET <base-url>/apps/HelloWorld/services/WhoService/history``
    * - Description
-     - Retrieve the history of the Runnable *WhoRunnable* of the Service *WhoService* of the
-       Application *HelloWorld*
+     - Retrieve the history of the Service *WhoService* of the Application *HelloWorld*
    * - Returns
      - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
        ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
@@ -1806,8 +1783,8 @@ Logging HTTP API
 
 Downloading Logs
 ----------------
-You can download the logs that are emitted by any of the *Flows*, *Procedures*, or *MapReduce* jobs
-running in the Continuuity Reactor. To do that, send an HTTP GET request::
+You can download the logs that are emitted by any of the *Flows*, *Procedures*, *MapReduce* jobs,
+or *Services* running in the Continuuity Reactor. To do that, send an HTTP GET request::
 
 	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
 
@@ -1820,9 +1797,9 @@ running in the Continuuity Reactor. To do that, send an HTTP GET request::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<element-type>``
-     - One of ``flows``, ``procedures``, or ``mapreduce``
+     - One of ``flows``, ``procedures``, ``mapreduce``, or ``services``
    * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce* job) being called
+     - Name of the element (*Flow*, *Procedure*, *MapReduce* job, *Service*) being called
    * - ``<ts>``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
@@ -1838,42 +1815,6 @@ Example
    * - Description
      - Return the logs for all the events from the Flow *CountTokensFlow* of the *CountTokens*
        Application,
-       beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
-       ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
-
-You can download the logs that are emitted by the Twill Runnable of a Service in a Reactor Application by
-sending an HTTP GET request::
-
-	GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/logs?start=<ts>&stop=<ts>
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<app-id>``
-     - Name of the Application being called
-   * - ``<service-id>``
-     - Name of the Service being called
-   * - ``<runnable-id>``
-     - Name of the Twill Runnable being called
-   * - ``<ts>``
-     - *Start* and *stop* times, given as seconds since the start of the Epoch.
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/apps/CountTokens/services/CountTokensService/runnables/CountTokensRunnable/``
-       ``logs?start=1382576400&stop=1382576700``
-   * - Description
-     - Return the logs for all the events of the Runnable CountTokensRunnable from the Service
-       *CountTokensService*
-       of the *CountTokens* Application,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 

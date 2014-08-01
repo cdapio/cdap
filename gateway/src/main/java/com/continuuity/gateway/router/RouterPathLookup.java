@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.Constants;
@@ -44,7 +60,12 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       if ((uriParts.length >= 2) && uriParts[1].equals("metrics")) {
         return Constants.Service.METRICS;
       } else if ((uriParts.length >= 2) && uriParts[1].equals("data")) {
-        if ((uriParts.length >= 3) && uriParts[2].equals("queries")) {
+        if ((uriParts.length >= 3) && (uriParts[2].equals("queries") ||
+          (uriParts[2].equals("explore") && uriParts[3].equals("jdbc")))) {
+          return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
+        } else if ((uriParts.length == 6) && uriParts[2].equals("explore") && uriParts[3].equals("datasets")
+          && uriParts[5].equals("schema")) {
+          // v2/data/explore/datasets/<dataset>/schema
           return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
         }
         return Constants.Service.DATASET_MANAGER;

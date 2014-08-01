@@ -1,4 +1,22 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.common.collect;
+
+import java.util.Collection;
 
 /**
  * This can be used to collect with different strategies while iterating
@@ -15,11 +33,14 @@ public interface Collector<Element> {
    * @param element the element to collect
    * @return whether more elements need to be collected
    */
-  public boolean addElement(Element element);
+  boolean addElement(Element element);
 
   /**
-   * Finish collection of elements and return all elements that were added.
-   * @return all the collected elements
+   * Finish collection of elements and add all collected elements into the given {@link Collection}.
+   *
+   * @param collection {@link Collection} for storing collected elements.
+   * @param <T> Type of collection
+   * @return The same {@link Collection} instance given in the parameter.
    */
-  public Element[] finish();
+  <T extends Collection<? super Element>> T finish(T collection);
 }

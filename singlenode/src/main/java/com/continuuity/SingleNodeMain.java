@@ -1,5 +1,17 @@
 /*
- * com.continuuity - Copyright (c) 2012 Continuuity Inc. All rights reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity;
 
@@ -20,8 +32,9 @@ import com.continuuity.data.runtime.DataSetsModules;
 import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data.stream.service.StreamServiceRuntimeModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionService;
+import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.executor.ExploreExecutorService;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.gateway.Gateway;
@@ -39,6 +52,7 @@ import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.security.guice.SecurityModules;
 import com.continuuity.security.server.ExternalAuthenticationServer;
+import com.continuuity.tephra.inmemory.InMemoryTransactionService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -51,6 +65,7 @@ import org.apache.hadoop.mapreduce.counters.Limits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.util.List;
@@ -79,6 +94,7 @@ public class SingleNodeMain {
   private final DatasetService datasetService;
 
   private ExploreExecutorService exploreExecutorService;
+  private final ExploreClient exploreClient;
 
   public SingleNodeMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
     this.webCloudAppService = new WebCloudAppService(webAppPath);
@@ -102,11 +118,13 @@ public class SingleNodeMain {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
     }
 
-    boolean exploreEnabled = configuration.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
+    boolean exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     if (exploreEnabled) {
       ExploreServiceUtils.checkHiveSupportWithoutSecurity(this.getClass().getClassLoader());
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     }
+
+    exploreClient = injector.getInstance(ExploreClient.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -177,6 +195,7 @@ public class SingleNodeMain {
       if (exploreExecutorService != null) {
         exploreExecutorService.stopAndWait();
       }
+      exploreClient.close();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now
@@ -238,7 +257,7 @@ public class SingleNodeMain {
    * @param args Our cmdline arguments
    */
   public static void main(String[] args) {
-    CConfiguration configuration = CConfiguration.create();
+    CConfiguration cConf = CConfiguration.create();
 
     // Single node use persistent data fabric by default
     boolean inMemory = false;
@@ -268,27 +287,27 @@ public class SingleNodeMain {
     // someone else initializes it.
     Limits.init(hConf);
 
-    String localDataDir = configuration.get(Constants.CFG_LOCAL_DATA_DIR);
-    hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir);
-    hConf.set(Constants.AppFabric.OUTPUT_DIR, configuration.get(Constants.AppFabric.OUTPUT_DIR));
+    File localDataDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
+    hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
+    hConf.set(Constants.AppFabric.OUTPUT_DIR, cConf.get(Constants.AppFabric.OUTPUT_DIR));
+    hConf.set("hadoop.tmp.dir", new File(localDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
 
     // Windows specific requirements
     if (OSDetector.isWindows()) {
       String userDir = System.getProperty("user.dir");
       System.load(userDir + "/lib/native/hadoop.dll");
-      hConf.set("hadoop.tmp.dir", userDir + "/" + localDataDir + "/temp");
     }
 
     //Run gateway on random port and forward using router.
-    configuration.setInt(Constants.Gateway.PORT, 0);
+    cConf.setInt(Constants.Gateway.PORT, 0);
 
     //Run dataset service on random port
-    List<Module> modules = inMemory ? createInMemoryModules(configuration, hConf)
-                                    : createPersistentModules(configuration, hConf);
+    List<Module> modules = inMemory ? createInMemoryModules(cConf, hConf)
+                                    : createPersistentModules(cConf, hConf);
 
     SingleNodeMain main = null;
     try {
-      main = new SingleNodeMain(modules, configuration, webAppPath);
+      main = new SingleNodeMain(modules, cConf, webAppPath);
       main.startUp(args);
     } catch (Throwable e) {
       System.err.println("Failed to start server. " + e.getMessage());
@@ -323,7 +342,8 @@ public class SingleNodeMain {
       new SecurityModules().getInMemoryModules(),
       new StreamServiceRuntimeModule().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules(),
-      new ServiceStoreModules().getInMemoryModule()
+      new ServiceStoreModules().getInMemoryModule(),
+      new ExploreClientModule()
     );
   }
 
@@ -372,7 +392,8 @@ public class SingleNodeMain {
       new SecurityModules().getSingleNodeModules(),
       new StreamServiceRuntimeModule().getSingleNodeModules(),
       new ExploreRuntimeModule().getSingleNodeModules(),
-      new ServiceStoreModules().getSingleNodeModule()
+      new ServiceStoreModules().getSingleNodeModule(),
+      new ExploreClientModule()
     );
   }
 }

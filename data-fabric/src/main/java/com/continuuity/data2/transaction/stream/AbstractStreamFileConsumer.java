@@ -1,5 +1,17 @@
 /*
- * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.data2.transaction.stream;
 
@@ -17,10 +29,10 @@ import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.queue.ConsumerEntryState;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TxConstants;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Stopwatch;
@@ -383,7 +395,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   }
 
   @Override
-  public String getName() {
+  public String getTransactionAwareName() {
     return toString();
   }
 

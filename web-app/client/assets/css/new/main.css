@@ -535,6 +535,10 @@ a, a:visited {
 	background-image: url('/assets/img/v2/signout_icon.png');
 }
 
+#global .services-link {
+	position: relative;
+}
+
 #global .services-link:hover {
 	background-image: url('/assets/img/v2/services_active_icon.png');
 }
@@ -564,7 +568,7 @@ a, a:visited {
 	background-position: 8px 0;
 	background-repeat: no-repeat;
 	padding-left: 50px;
-  padding-top: 3px;
+  	padding-top: 3px;
 	white-space: nowrap;
 	border-right: 1px solid #ccc;
 }
@@ -574,16 +578,31 @@ a, a:visited {
 	color: black;
 }
 
+#global #failed-services-container {
+  background-color: red;
+  border-radius: 100%;
+  color: white;
+  height: 18px;
+  width: 18px;
+  text-align: center;
+  display: none;
+  position: absolute;
+  top: -4px;
+  left: 0px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
 ul.top-dropdown-listholder {
 
 }
 
 ul.top-dropdown-listholder li {
-	
+
 }
 
-#global ul.top-dropdown-listholder li a { 
-	margin-left: 0px;
+#global ul.top-dropdown-listholder li a {
+	margin-left: 0;
 	float: none;
 	text-align: center;
 	height: 30px;
@@ -891,7 +910,7 @@ h1 span {
 
 .sparkline-list-value {
 	float: right;
-	width: 78px;
+	width: 90px;
 	border-left: 0;
 	background-color: white;
 	color: #555;
@@ -912,7 +931,7 @@ h1 span {
 }
 .sparkline-list-container {
 	height: 34px;
-	margin-right: 78px;
+	margin-right: 90px;
 	overflow: hidden;
 }
 
@@ -1434,16 +1453,28 @@ span.service-icon {
   width: 32px;
   background-repeat: no-repeat;
   border: none !important;
-  float: right;
   display: inline-block;
 }
 
 span.service-icon.loading {
-  background-image: url('/assets/img/services-loading-darkBg.gif');
+  background-image: url('/assets/img/services-loading-blue.gif');
 }
 
 span.service-icon.complete {
   background-image: url('/assets/img/ok-icon.png');
+}
+
+span.log-icon.loading {
+  display: none;
+}
+
+span.log-icon.complete {
+  background-image: url('/assets/img/log-icon.png');
+  height: 30px;
+  width: 30px;
+  background-repeat: no-repeat;
+  border: none !important;
+  display: inline-block;
 }
 
 #services-loading {
@@ -1565,9 +1596,22 @@ span.service-icon.complete {
 	text-align: center;
 }
 
-img[src="assets/img/minus.png"] {
-	margin-right: -5px;
+.instance-col span.minus-icon, .instance-col span.plus-icon {
+  height: 30px;
+  width: 30px;
+  background-repeat: no-repeat;
+  border: none !important;
+  display: inline-block;
 }
+
+.instance-col span.minus-icon {
+  background-image: url('/assets/img/minus.png');
+}
+
+.instance-col span.plus-icon {
+  background-image: url('/assets/img/plus.png');
+}
+
 
 /*
  * Bootstrap Overrides
@@ -2012,7 +2056,6 @@ a strong {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background-color: rgba(240, 241, 241, 0.8);
 	z-index: 50;
 }
 

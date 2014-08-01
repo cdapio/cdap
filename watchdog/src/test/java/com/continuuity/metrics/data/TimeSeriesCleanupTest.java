@@ -1,35 +1,48 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.metrics.data;
 
+import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
-import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
+import com.continuuity.data.runtime.TransactionMetricsModule;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
+import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
+import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -116,7 +129,7 @@ public class TimeSeriesCleanupTest {
   }
 
   @BeforeClass
-  public static void init() throws IOException {
+  public static void init() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "300");
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
@@ -125,18 +138,18 @@ public class TimeSeriesCleanupTest {
       new DataFabricLevelDBModule(),
       new ConfigModule(cConf),
       new TransactionMetricsModule(),
-      new PrivateModule() {
-
+      new AbstractModule() {
         @Override
         protected void configure() {
-          try {
-            bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
-            expose(MetricsTableFactory.class);
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
+          install(new FactoryModuleBuilder()
+                    .implement(DatasetDefinitionRegistry.class,
+                               DefaultDatasetDefinitionRegistry.class)
+                    .build(DatasetDefinitionRegistryFactory.class));
         }
       });
-    tableFactory = injector.getInstance(MetricsTableFactory.class);
+    DatasetFramework dsFramework =
+      new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
+    dsFramework.addModule("metrics-leveldb", new InMemoryMetricsTableModule());
+    tableFactory = new DefaultMetricsTableFactory(cConf, dsFramework);
   }
 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.runtime;
 
 import com.continuuity.ArgumentCheckApp;
@@ -5,7 +21,6 @@ import com.continuuity.InvalidFlowOutputApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.discovery.EndpointStrategy;
@@ -17,13 +32,14 @@ import com.continuuity.common.stream.StreamEventCodec;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.QueueProducer;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.proto.ProgramType;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionAware;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.continuuity.test.SlowTests;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.DefaultId;
@@ -128,7 +144,7 @@ public class FlowTest {
 
     for (final Program program : app.getPrograms()) {
       // running mapreduce is out of scope of this tests (there's separate unit-test for that)
-      if (program.getType() == Type.MAPREDUCE) {
+      if (program.getType() == ProgramType.MAPREDUCE) {
         continue;
       }
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));

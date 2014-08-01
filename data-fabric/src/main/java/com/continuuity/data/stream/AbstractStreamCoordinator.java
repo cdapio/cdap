@@ -1,5 +1,17 @@
 /*
- * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.data.stream;
 
@@ -138,7 +150,8 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
 
   @Override
   public Cancellable addListener(String streamName, StreamPropertyListener listener) {
-    return propertyStore.get().addChangeListener(streamName, new StreamPropertyChangeListener(listener));
+    return propertyStore.get().addChangeListener(streamName,
+                                                 new StreamPropertyChangeListener(streamAdmin, streamName, listener));
   }
 
   @Override
@@ -231,8 +244,15 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
     // Callback from PropertyStore is
     private StreamProperty currentProperty;
 
-    private StreamPropertyChangeListener(StreamPropertyListener listener) {
+    private StreamPropertyChangeListener(StreamAdmin streamAdmin, String streamName, StreamPropertyListener listener) {
       this.listener = listener;
+      try {
+        StreamConfig streamConfig = streamAdmin.getConfig(streamName);
+        this.currentProperty = new StreamProperty(StreamUtils.getGeneration(streamConfig), streamConfig.getTTL());
+      } catch (Exception e) {
+        // It's ok if the stream config is not yet available (meaning no data has ever been writen to the stream yet.
+        this.currentProperty = new StreamProperty(0, Long.MAX_VALUE);
+      }
     }
 
     @Override

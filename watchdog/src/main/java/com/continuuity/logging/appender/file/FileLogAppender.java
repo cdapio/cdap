@@ -1,5 +1,17 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package com.continuuity.logging.appender.file;
@@ -7,11 +19,9 @@ package com.continuuity.logging.appender.file;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.LogAppender;
-import com.continuuity.logging.save.LogSaver;
 import com.continuuity.logging.save.LogSaverTableUtil;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.logging.serialize.LoggingEvent;
@@ -21,6 +31,7 @@ import com.continuuity.logging.write.LogCleanup;
 import com.continuuity.logging.write.LogFileWriter;
 import com.continuuity.logging.write.LogWriteEvent;
 import com.continuuity.logging.write.SimpleLogFileWriter;
+import com.continuuity.tephra.TransactionSystemClient;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -67,12 +78,13 @@ public class FileLogAppender extends LogAppender {
   private Schema logSchema;
 
   @Inject
-  public FileLogAppender(CConfiguration cConfig, DataSetAccessor dataSetAccessor,
+  public FileLogAppender(CConfiguration cConfig,
+                         DatasetFramework dsFramework,
                          TransactionSystemClient txClient,
                          LocationFactory locationFactory) {
     setName(APPENDER_NAME);
 
-    this.tableUtil = new LogSaverTableUtil(dataSetAccessor);
+    this.tableUtil = new LogSaverTableUtil(dsFramework, cConfig);
     this.txClient = txClient;
     this.locationFactory = locationFactory;
 

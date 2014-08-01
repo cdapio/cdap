@@ -1,10 +1,21 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package com.continuuity.internal.app.deploy;
 
-import com.continuuity.app.Id;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
@@ -24,6 +35,7 @@ import com.continuuity.internal.app.deploy.pipeline.ProgramGenerationStage;
 import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
 import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.PipelineFactory;
+import com.continuuity.proto.Id;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -77,7 +89,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
   public ListenableFuture<O> deploy(Id.Account id, @Nullable String appId, I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(id, appId));
-    pipeline.addLast(new VerificationStage());
+    pipeline.addLast(new VerificationStage(datasetFramework));
     pipeline.addLast(new DeployDatasetModulesStage(datasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(datasetFramework));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,

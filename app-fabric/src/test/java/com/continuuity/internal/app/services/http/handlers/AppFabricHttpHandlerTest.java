@@ -1,5 +1,23 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.internal.app.services.http.handlers;
 
+import com.continuuity.AppWithDataset;
+import com.continuuity.AppWithDatasetDuplicate;
 import com.continuuity.AppWithSchedule;
 import com.continuuity.AppWithWorkflow;
 import com.continuuity.DummyAppWithTrackingTable;
@@ -23,17 +41,17 @@ import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.queue.QueueConsumer;
 import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.QueueProducer;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionContext;
-import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.TransactionExecutorFactory;
-import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.persist.TransactionSnapshot;
-import com.continuuity.data2.transaction.snapshot.SnapshotCodec;
-import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.internal.app.services.http.AppFabricTestBase;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionAware;
+import com.continuuity.tephra.TransactionContext;
+import com.continuuity.tephra.TransactionExecutor;
+import com.continuuity.tephra.TransactionExecutorFactory;
+import com.continuuity.tephra.TransactionSystemClient;
+import com.continuuity.tephra.persist.TransactionSnapshot;
+import com.continuuity.tephra.snapshot.SnapshotCodec;
+import com.continuuity.tephra.snapshot.SnapshotCodecProvider;
 import com.continuuity.test.SlowTests;
 import com.continuuity.test.XSlowTests;
 import com.continuuity.test.internal.DefaultId;
@@ -240,6 +258,15 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
         new TypeToken<Map<String, String>>() { }.getType());
     Assert.assertEquals(0, argsRead.size());
+  }
+
+  /**
+   * Ping test
+   */
+  @Test
+  public void pingTest() throws Exception {
+    HttpResponse response = doGet("/v2/ping");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
   /**
@@ -857,6 +884,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   public void testResetTxManagerState() throws Exception {
     HttpResponse response = doPost("/v2/transactions/state");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    // todo: first transaction after reset will fail, doGet() is a placeholder, can remove after tephra tx-fix
+    doGet("/v2/apps");
   }
 
   /**
@@ -868,6 +897,20 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
     Assert.assertTrue(response.getEntity().getContentLength() > 0);
+  }
+
+  /**
+   * Tests deploying an application with dataset same name as existing dataset but a different type
+   */
+  @Test
+  public void testDeployFailure() throws Exception {
+    HttpResponse response = deploy(AppWithDataset.class);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertNotNull(response.getEntity());
+
+    response = deploy(AppWithDatasetDuplicate.class);
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+    Assert.assertNotNull(response.getEntity());
   }
 
   /**

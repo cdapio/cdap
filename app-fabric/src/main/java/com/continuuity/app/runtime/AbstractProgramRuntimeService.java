@@ -1,14 +1,26 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.continuuity.app.runtime;
 
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.service.SimpleRuntimeInfo;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
@@ -28,7 +40,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramRuntimeService.class);
 
-  private final Table<Type, RunId, RuntimeInfo> runtimeInfos;
+  private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
 
   protected AbstractProgramRuntimeService(ProgramRunnerFactory programRunnerFactory) {
@@ -48,7 +60,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   @Override
   public synchronized RuntimeInfo lookup(RunId runId) {
-    Map<Type, RuntimeInfo> column = runtimeInfos.column(runId);
+    Map<ProgramType, RuntimeInfo> column = runtimeInfos.column(runId);
     if (column.size() != 1) {
       // It should be exactly one if the the program is running.
       return null;
@@ -57,7 +69,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   @Override
-  public synchronized Map<RunId, RuntimeInfo> list(Type type) {
+  public synchronized Map<RunId, RuntimeInfo> list(ProgramType type) {
     return ImmutableMap.copyOf(runtimeInfos.row(type));
   }
 
@@ -71,7 +83,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     // No-op
   }
 
-  protected synchronized void updateRuntimeInfo(Type type, RunId runId, RuntimeInfo runtimeInfo) {
+  protected synchronized void updateRuntimeInfo(ProgramType type, RunId runId, RuntimeInfo runtimeInfo) {
     if (!runtimeInfos.contains(type, runId)) {
       runtimeInfos.put(type, runId, addRemover(runtimeInfo));
     }
@@ -99,7 +111,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     LOG.debug("RuntimeInfo removed: {}", removed);
   }
 
-  protected boolean isRunning(Id.Program programId, Type type) {
+  protected boolean isRunning(Id.Program programId, ProgramType type) {
     for (Map.Entry<RunId, RuntimeInfo> entry : list(type).entrySet()) {
       if (entry.getValue().getProgramId().equals(programId)) {
         return true;

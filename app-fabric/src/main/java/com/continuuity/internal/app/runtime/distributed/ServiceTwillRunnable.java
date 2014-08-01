@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.api.common.RuntimeArguments;
@@ -168,7 +184,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
       String className = runtimeSpec.getRunnableSpecification().getClassName();
       LOG.info("Getting class : {}", program.getMainClass().getName());
-      Class<?> clz = Class.forName(className, true, program.getMainClass().getClassLoader());
+      Class<?> clz = Class.forName(className, true, program.getClassLoader());
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
       delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
       Reflections.visit(delegate, TypeToken.of(delegate.getClass()),
