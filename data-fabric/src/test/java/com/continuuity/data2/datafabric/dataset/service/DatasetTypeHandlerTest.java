@@ -22,8 +22,6 @@ import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
-import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
-import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.ObjectResponse;
@@ -205,29 +203,7 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(0, modules.size());
   }
 
-  /**
-   * Test dataset module
-   */
-  public static class TestModule1 implements DatasetModule {
-    @Override
-    public void register(DatasetDefinitionRegistry registry) {
-      registry.add(createDefinition("datasetType1"));
-    }
-  }
-
-  /**
-   * Test dataset module
-   */
-  // NOTE: this depends on TestModule
-  public static class TestModule2 implements DatasetModule {
-    @Override
-    public void register(DatasetDefinitionRegistry registry) {
-      Assert.assertNotNull(registry.get("datasetType1"));
-      registry.add(createDefinition("datasetType2"));
-    }
-  }
-
-  private static DatasetDefinition createDefinition(String name) {
+  public static DatasetDefinition createDefinition(String name) {
     return new AbstractDatasetDefinition(name) {
       @Override
       public DatasetSpecification configure(String instanceName, DatasetProperties properties) {

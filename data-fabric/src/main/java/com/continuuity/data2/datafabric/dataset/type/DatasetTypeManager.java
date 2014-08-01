@@ -20,6 +20,7 @@ import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
+import com.continuuity.common.lang.ApiResourceListHolder;
 import com.continuuity.common.lang.ClassLoaders;
 import com.continuuity.common.lang.jar.BundleJarUtil;
 import com.continuuity.common.utils.DirUtils;
@@ -121,7 +122,8 @@ public class DatasetTypeManager extends AbstractIdleService {
               BundleJarUtil.unpackProgramJar(jarLocation, unpackedLocation);
             }
             cl = jarLocation == null ? this.getClass().getClassLoader() :
-              ClassLoaders.newProgramClassLoaderWithoutFilter(unpackedLocation, this.getClass().getClassLoader());
+              ClassLoaders.newProgramClassLoader(unpackedLocation, ApiResourceListHolder.getResourceList(),
+                                                 this.getClass().getClassLoader());
             @SuppressWarnings("unchecked")
             Class clazz = ClassLoaders.loadClass(className, cl, this);
             module = DatasetModules.getDatasetModule(clazz);
