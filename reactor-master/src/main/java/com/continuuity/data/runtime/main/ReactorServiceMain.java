@@ -130,7 +130,7 @@ public class ReactorServiceMain extends DaemonMain {
   private boolean isExploreEnabled;
 
   public static void main(final String[] args) throws Exception {
-    LOG.info("Starting {}", ReactorServiceMain.class);
+    LOG.info("Starting {}", ReactorServiceMain.class.getSimpleName);
     new ReactorServiceMain(CConfiguration.create(), HBaseConfiguration.create()).doMain(args);
   }
 
@@ -377,7 +377,7 @@ public class ReactorServiceMain extends DaemonMain {
           LOG.warn("Stopping one extra instance of {}", serviceName);
           controller.stopAndWait();
         }
-        LOG.warn("Completed stopping extra instances of {}", serviceName);
+        LOG.warn("Stopped extra instances of {}", serviceName);
       }
     } else {
       LOG.info("Starting {} application", serviceName);

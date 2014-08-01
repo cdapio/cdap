@@ -290,7 +290,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     //       if we allow deploying new program while existing is running. To prevent races we submit a temp copy
 
     final Location jobJar = buildJobJar(context);
-    LOG.info("Built Job Jar at {}", jobJar.toURI().toString());
+    LOG.info("Built MapReduce Job Jar at {}", jobJar.toURI().toString());
     final Location programJarCopy = createJobJarTempCopy(jobJarLocation, context);
     LOG.info("Copied Program Jar to {}, source: {}", programJarCopy.toURI().toString(),
              jobJarLocation.toURI().toString());
@@ -460,7 +460,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       try {
         controller.stop().get();
       } catch (Throwable e) {
-        LOG.warn("Exception from stopping controller: {}". context, e);
+        LOG.warn("Exception from stopping controller: {}", context, e);
         // we ignore the exception because we don't really care about the controller, but we must end the transaction!
       }
       try {
