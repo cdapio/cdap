@@ -18,6 +18,7 @@ package com.continuuity.hive.datasets;
 
 import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DatasetManagementException;
@@ -92,7 +93,7 @@ public class DatasetAccessor {
         classLoader = conf.getClassLoader();
         dataset = firstLoad(framework, datasetName, classLoader);
       } else {
-        dataset = framework.getDataset(datasetName, null, classLoader);
+        dataset = framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, classLoader);
       }
 
       if (!(dataset instanceof RecordScannable)) {
@@ -114,11 +115,11 @@ public class DatasetAccessor {
     ClassLoader datasetClassLoader = DATASET_CLASSLOADERS.get(datasetName);
     if (datasetClassLoader != null) {
       // Some other call in parallel may have already loaded it, so use the same classlaoder
-      return framework.getDataset(datasetName, null, datasetClassLoader);
+      return framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, datasetClassLoader);
     }
 
     // No classloader for dataset exists, load the dataset and save the classloader.
-    Dataset dataset = framework.getDataset(datasetName, null, classLoader);
+    Dataset dataset = framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, classLoader);
     if (dataset != null) {
       DATASET_CLASSLOADERS.put(datasetName, dataset.getClass().getClassLoader());
     }
