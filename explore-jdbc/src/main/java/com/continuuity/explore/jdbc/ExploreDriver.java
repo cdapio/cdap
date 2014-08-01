@@ -21,8 +21,9 @@ import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.FixedAddressExploreClient;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,10 +35,9 @@ import java.sql.Driver;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
@@ -70,7 +70,8 @@ public class ExploreDriver implements Driver {
     ConnectionParams params = parseConnectionUrl(url);
 
     String authToken = null;
-    List<String> tokenParams = params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_AUTH_TOKEN);
+
+    List<String> tokenParams = Lists.newArrayList(params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_AUTH_TOKEN));
     if (tokenParams != null && !tokenParams.isEmpty() && !tokenParams.get(0).isEmpty()) {
       authToken = tokenParams.get(0);
     }
@@ -137,7 +138,8 @@ public class ExploreDriver implements Driver {
     URI jdbcURI = URI.create(url.substring(ExploreJDBCUtils.URI_JDBC_PREFIX.length()));
     String host = jdbcURI.getHost();
     int port = jdbcURI.getPort();
-    ImmutableMap.Builder<ConnectionParams.Info, List<String>> builder = ImmutableMap.builder();
+    ImmutableMultimap.Builder<ConnectionParams.Info, String>  builder = ImmutableMultimap.builder();
+
     try {
       // get the query params
       String query = jdbcURI.getQuery();
@@ -146,13 +148,14 @@ public class ExploreDriver implements Driver {
         Iterator<String> iterator = Splitter.on("&").split(decoded).iterator();
         while (iterator.hasNext()) {
           // Need to do it twice because of error in guava libs Issue: 1577
-          List<String> keyValues = Lists.newArrayList(Splitter.on("=").limit(2).split(iterator.next()));
-          if (keyValues.size() > 0) {
-            ConnectionParams.Info info = ConnectionParams.Info.fromStr(keyValues.get(0));
-            if (info != null && keyValues.size() > 1) {
-              builder.put(info, Lists.newArrayList(keyValues.get(1).split(",")));
-            } else if (info != null) {
-              builder.put(info, new ArrayList<String>());
+          String [] splits = (iterator.next()).split("=");
+          // splits[0] is the key. Rest are values.
+          if (splits.length > 0) {
+            ConnectionParams.Info info = ConnectionParams.Info.fromStr(splits[0]);
+            if (info != null) {
+              for (int i = 1; i < splits.length; i++) {
+                builder.putAll(info, splits[i].split(","));
+              }
             }
           }
         }
@@ -196,15 +199,15 @@ public class ExploreDriver implements Driver {
 
     private final String host;
     private final int port;
-    private final Map<Info, List<String>> extraInfos;
+    private final Multimap<Info, String> extraInfos;
 
-    private ConnectionParams(String host, int port, Map<Info, List<String>> extraInfos) {
+    private ConnectionParams(String host, int port, Multimap<Info, String> extraInfos) {
       this.host = host;
       this.port = port;
       this.extraInfos = extraInfos;
     }
 
-    public Map<Info, List<String>> getExtraInfos() {
+    public Multimap<Info, String> getExtraInfos() {
       return extraInfos;
     }
 
