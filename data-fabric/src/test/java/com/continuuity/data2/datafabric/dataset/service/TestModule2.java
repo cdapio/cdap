@@ -22,8 +22,11 @@ import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
+import com.continuuity.api.dataset.lib.CompositeDatasetAdmin;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
+
+import java.util.Collections;
 
 /**
  * Test dataset module
@@ -39,12 +42,12 @@ public class TestModule2 implements DatasetModule {
     return new AbstractDatasetDefinition(name) {
       @Override
       public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-        return null;
+        return createSpec(instanceName, getName(), properties);
       }
 
       @Override
       public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) {
-        return null;
+        return new CompositeDatasetAdmin(Collections.<DatasetAdmin>emptyList());
       }
 
       @Override
@@ -52,5 +55,9 @@ public class TestModule2 implements DatasetModule {
         return null;
       }
     };
+  }
+  private DatasetSpecification createSpec(String instanceName, String typeName,
+                                          DatasetProperties properties) {
+    return DatasetSpecification.builder(instanceName, typeName).properties(properties.getProperties()).build();
   }
 }

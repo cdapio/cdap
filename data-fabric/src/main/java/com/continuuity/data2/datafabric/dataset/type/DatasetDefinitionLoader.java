@@ -85,13 +85,8 @@ public class DatasetDefinitionLoader {
           classLoader = ClassLoaders.newProgramClassLoader(temp, ApiResourceListHolder.getResourceList(),
                                                            this.getClass().getClassLoader());
         }
-        DatasetModule module;
-        try {
-          Class<?> moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
-          module = DatasetModules.getDatasetModule(moduleClass);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
+        Class<?> moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
+        DatasetModule module = DatasetModules.getDatasetModule(moduleClass);
         module.register(registry);
       }
     } catch (Exception e) {
