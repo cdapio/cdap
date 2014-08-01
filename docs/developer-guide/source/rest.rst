@@ -2311,6 +2311,36 @@ Examples
    * - Description
      - Sets the number of instances of the metrics HTTP service to 2
 
+Details of A Deployed Application
+---------------------------------
+
+For detailed information on an application that has been deployed, use::
+
+  GET <base-url>/apps/<app-id>
+
+The information will be returned in the body of the response.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application 
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The event successfully called the method, and the body contains the results
+
+
 .. rst2pdf: CutStart
 
 Where to Go Next
