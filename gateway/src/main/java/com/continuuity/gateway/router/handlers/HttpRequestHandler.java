@@ -174,9 +174,9 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     }
   }
 
-  private static <T> T raiseExceptionIfNull(T reference, HttpResponseStatus status, String message) {
+  private static <T> T raiseExceptionIfNull(T reference, HttpResponseStatus status, String message, Object... args) {
     if (reference == null) {
-      throw new HandlerException(status, message);
+      throw new HandlerException(status, String.format(message, args));
     }
     return reference;
   }
@@ -185,12 +185,12 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
                                               final InetSocketAddress address) {
     EndpointStrategy strategy = serviceLookup.getDiscoverable(address.getPort(), httpRequest);
     raiseExceptionIfNull(strategy, HttpResponseStatus.SERVICE_UNAVAILABLE,
-                         String.format("No endpoint strategy found for service : %s",
-                                       serviceLookup.getDestService(address.getPort(), httpRequest)));
+                         "No endpoint strategy found for service : %s",
+                         serviceLookup.getDestService(address.getPort(), httpRequest));
     Discoverable discoverable = strategy.pick();
-    raiseExceptionIfNull(discoverable, HttpResponseStatus.SERVICE_UNAVAILABLE,
-                         String.format("No discoverable found for service : %s",
-                                       serviceLookup.getDestService(address.getPort(), httpRequest)));
+    raiseExceptionIfNull(discoverable,
+                         HttpResponseStatus.SERVICE_UNAVAILABLE, "No discoverable found for service : %s",
+                         serviceLookup.getDestService(address.getPort(), httpRequest));
 
     return new WrappedDiscoverable(discoverable);
   }
