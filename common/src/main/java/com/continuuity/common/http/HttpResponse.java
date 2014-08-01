@@ -15,6 +15,10 @@
  */
 package com.continuuity.common.http;
 
+import com.google.common.base.Charsets;
+
+import java.nio.charset.Charset;
+
 /**
  * Return type for http requests executed by {@link HttpResponse}
  */
@@ -39,5 +43,13 @@ public class HttpResponse {
 
   public byte[] getResponseBody() {
     return responseBody;
+  }
+
+  public String getResponseBodyAsString() {
+    return new String(responseBody, Charsets.UTF_8);
+  }
+
+  public String getResponseBodyAsString(Charset charset) {
+    return new String(responseBody, charset);
   }
 }

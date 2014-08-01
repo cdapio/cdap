@@ -29,10 +29,13 @@ import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.jdbc.ExploreDriver;
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.DatasetMeta;
+import com.continuuity.proto.QueryHandle;
 import com.continuuity.proto.QueryInfo;
 import com.continuuity.proto.QueryResult;
+import com.continuuity.proto.QueryStatus;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.test.SlowTests;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
@@ -55,6 +58,7 @@ import java.sql.ResultSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 
 import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyValue;
 
@@ -140,7 +144,8 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                Lists.newArrayList(
                  new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
                  new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
-                 new ColumnDesc("comment", "STRING", 3, "from deserializer")),
+                 new ColumnDesc("comment", "STRING", 3, "from deserializer")
+               ),
                Lists.newArrayList(
                  new QueryResult(Lists.<Object>newArrayList("key", "string", "from deserializer")),
                  new QueryResult(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
@@ -205,6 +210,57 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
     // verify the ordering
     Assert.assertTrue(Ordering.natural().reverse().isOrdered(timestamps));
+  }
+
+  @Test
+  public void previewResultsTest() throws Exception {
+    datasetFramework.addInstance("keyStructValueTable", "my_table_2", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", "my_table_3", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", "my_table_4", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", "my_table_5", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", "my_table_6", DatasetProperties.EMPTY);
+
+    try {
+      QueryHandle handle = exploreService.execute("show tables");
+      QueryStatus status = waitForCompletionStatus(handle, 200, TimeUnit.MILLISECONDS, 50);
+      Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
+
+      List<QueryResult> firstPreview = exploreService.previewResults(handle);
+      Assert.assertEquals(ImmutableList.of(
+        new QueryResult(ImmutableList.<Object>of("my_table")),
+        new QueryResult(ImmutableList.<Object>of("my_table_2")),
+        new QueryResult(ImmutableList.<Object>of("my_table_3")),
+        new QueryResult(ImmutableList.<Object>of("my_table_4")),
+        new QueryResult(ImmutableList.<Object>of("my_table_5"))
+      ), firstPreview);
+
+
+      List<QueryResult> endResults = exploreService.nextResults(handle, 100);
+      Assert.assertEquals(ImmutableList.of(
+        new QueryResult(ImmutableList.<Object>of("my_table_6"))
+      ), endResults);
+
+      List<QueryResult> secondPreview = exploreService.previewResults(handle);
+      Assert.assertEquals(firstPreview, secondPreview);
+
+      Assert.assertEquals(ImmutableList.of(), exploreService.nextResults(handle, 100));
+
+      try {
+        // All results are fetched, query should be inactive now
+        exploreService.previewResults(handle);
+        Assert.fail("HandleNotFoundException expected - query should be inactive.");
+      } catch (HandleNotFoundException e) {
+        Assert.assertTrue(e.isInactive());
+        // Expected exception
+      }
+
+    } finally {
+      datasetFramework.deleteInstance("my_table_2");
+      datasetFramework.deleteInstance("my_table_3");
+      datasetFramework.deleteInstance("my_table_4");
+      datasetFramework.deleteInstance("my_table_5");
+      datasetFramework.deleteInstance("my_table_6");
+    }
   }
 
   @Test
