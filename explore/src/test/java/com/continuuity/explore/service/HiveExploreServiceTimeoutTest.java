@@ -25,7 +25,7 @@ import com.continuuity.proto.QueryHandle;
 import com.continuuity.proto.QueryStatus;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.test.XSlowTests;
-import com.google.common.collect.ImmutableList;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -179,45 +179,6 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
     // Check if calls using inactive handle still work
     Assert.assertEquals(status, exploreService.getStatus(handle));
     Assert.assertEquals(schema, exploreService.getResultSchema(handle));
-    exploreService.cancel(handle);
-    exploreService.close(handle);
-
-    // Sleep for timeout to happen
-    TimeUnit.SECONDS.sleep(INACTIVE_OPERATION_TIMEOUT_SECS + 3);
-
-    try {
-      exploreService.getStatus(handle);
-      Assert.fail("Should throw HandleNotFoundException due to operation cleanup");
-    } catch (HandleNotFoundException e) {
-      // Expected exception due to timeout
-    }
-  }
-
-  @Test
-  public void testTimeoutCancel() throws Exception {
-    Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
-
-    QueryHandle handle = exploreService.execute("select key, value from my_table");
-
-    Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
-    Assert.assertFalse(queryTxns.isEmpty());
-
-    exploreService.cancel(handle);
-
-    // Sleep for some time for txn to get closed
-    TimeUnit.SECONDS.sleep(1);
-
-    // Make sure that the transaction got closed
-    Assert.assertEquals(ImmutableSet.<Long>of(),
-                        Sets.intersection(
-                          queryTxns,
-                          transactionManager.getCurrentState().getInProgress().keySet()).immutableCopy()
-    );
-
-    // Check if calls using inactive handle still work
-    Assert.assertEquals(new QueryStatus(QueryStatus.OpStatus.CANCELED, false), exploreService.getStatus(handle));
-    Assert.assertEquals(ImmutableList.<ColumnDesc>of(), exploreService.getResultSchema(handle));
-    exploreService.cancel(handle);
     exploreService.close(handle);
 
     // Sleep for timeout to happen
@@ -259,11 +220,23 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
     // Check if calls using inactive handle still work
     Assert.assertEquals(status, exploreService.getStatus(handle));
     Assert.assertEquals(schema, exploreService.getResultSchema(handle));
-    exploreService.cancel(handle);
     exploreService.close(handle);
 
     // Sleep for timeout to happen
     TimeUnit.SECONDS.sleep(INACTIVE_OPERATION_TIMEOUT_SECS + 3);
+
+    try {
+      exploreService.getStatus(handle);
+      Assert.fail("Should throw HandleNotFoundException due to operation cleanup");
+    } catch (HandleNotFoundException e) {
+      // Expected exception due to timeout
+    }
+  }
+
+  @Test
+  public void testCloseQuery() throws Exception {
+    QueryHandle handle = exploreService.execute("drop table if exists not_existing_table_name");
+    exploreService.close(handle);
 
     try {
       exploreService.getStatus(handle);
