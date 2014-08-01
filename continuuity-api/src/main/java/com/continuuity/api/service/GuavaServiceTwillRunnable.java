@@ -26,10 +26,8 @@ import org.apache.twill.api.TwillRunnableSpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.ServerSocket;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * {@link org.apache.twill.api.TwillRunnable} that accepts a {@link com.google.common.util.concurrent.Service} and
@@ -39,7 +37,7 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(GuavaServiceTwillRunnable.class);
   private Service service;
   private String name;
-  private ConcurrentHashMap<String, String> runnableArgs;
+  private Map<String, String> runnableArgs;
   private ClassLoader programClassLoader;
 
   /**
@@ -51,7 +49,7 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
    */
   public GuavaServiceTwillRunnable(String name, Service service, Map<String, String> runnableArgs) {
     this.service = service;
-    this.runnableArgs = new ConcurrentHashMap<String, String>(runnableArgs);
+    this.runnableArgs = new HashMap<String, String>(runnableArgs);
     this.name = name;
   }
 
@@ -75,7 +73,7 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void initialize(TwillContext context) {
-    runnableArgs = new ConcurrentHashMap<String, String>(context.getSpecification().getConfigs());
+    runnableArgs = new HashMap<String, String>(context.getSpecification().getConfigs());
     String serviceClassName = runnableArgs.remove("service.class.name");
     name = runnableArgs.remove("service.runnable.name");
 
@@ -93,7 +91,7 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void handleCommand(Command command) throws Exception {
-
+    // no-op
   }
 
   @Override
@@ -110,18 +108,5 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
   @Override
   public void run() {
     // no-op
-  }
-
-  private int getRandomPort() {
-    try {
-      ServerSocket socket = new ServerSocket(0);
-      try {
-        return socket.getLocalPort();
-      } finally {
-        socket.close();
-      }
-    } catch (IOException e) {
-      return -1;
-    }
   }
 }
