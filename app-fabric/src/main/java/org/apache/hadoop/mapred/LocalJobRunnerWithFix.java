@@ -19,8 +19,6 @@
 package org.apache.hadoop.mapred;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
@@ -50,6 +48,8 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authorize.AccessControlList;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.util.ReflectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -74,8 +74,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @InterfaceStability.Unstable
 @SuppressWarnings("deprecation")
 public class LocalJobRunnerWithFix implements ClientProtocol {
-  public static final Log LOG = LogFactory.getLog(LocalJobRunnerWithFix.class);
-
+  public static final Logger LOG = LoggerFactory.getLogger(LocalJobRunnerWithFix.class);
+  
   /** The maximum number of map tasks to run in parallel in LocalJobRunner */
   public static final String LOCAL_MAX_MAPS =
     "mapreduce.local.map.tasks.maximum";
@@ -229,7 +229,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
         try {
           TaskAttemptID mapId = new TaskAttemptID(new TaskID(
             jobId, TaskType.MAP, taskId), 0);
-          LOG.info("Starting task: " + mapId);
+          LOG.info("Starting task: {}", mapId);
           mapIds.add(mapId);
           MapTask map = new MapTask(systemJobFile.toString(), mapId, taskId,
                                     info.getSplitIndex(), 1);
@@ -254,7 +254,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
             map_tasks.getAndDecrement();
           }
 
-          LOG.info("Finishing task: " + mapId);
+          LOG.info("Finishing task: {}", mapId);
         } catch (Throwable e) {
           this.storedException = e;
         }
@@ -307,7 +307,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
         try {
           TaskAttemptID reduceId = new TaskAttemptID(new TaskID(
             jobId, TaskType.REDUCE, taskId), 0);
-          LOG.info("Starting task: " + reduceId);
+          LOG.info("Starting task: {}", reduceId);
 
           ReduceTask reduce = new ReduceTask(systemJobFile.toString(),
                                              reduceId, taskId, mapIds.size(), 1);
@@ -330,7 +330,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
               reduce_tasks.getAndDecrement();
             }
 
-            LOG.info("Finishing task: " + reduceId);
+            LOG.info("Finishing task: {}", reduceId);
           } else {
             throw new InterruptedException();
           }
@@ -400,9 +400,9 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
       maxMapThreads = Math.min(maxMapThreads, this.numMapTasks);
       maxMapThreads = Math.max(maxMapThreads, 1); // In case of no tasks.
 
-      LOG.debug("Starting mapper thread pool executor.");
-      LOG.debug("Max local threads: " + maxMapThreads);
-      LOG.debug("Map tasks to process: " + this.numMapTasks);
+      LOG.debug("Starting mapper thread pool executor");
+      LOG.debug("Max local threads: {}", maxMapThreads);
+      LOG.debug("Map tasks to process: {}", this.numMapTasks);
 
       // Create a new executor service to drain the work queue.
       ThreadFactory tf = new ThreadFactoryBuilder()
@@ -429,9 +429,9 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
       maxReduceThreads = Math.min(maxReduceThreads, this.numReduceTasks);
       maxReduceThreads = Math.max(maxReduceThreads, 1); // In case of no tasks.
 
-      LOG.debug("Starting reduce thread pool executor.");
-      LOG.debug("Max local threads: " + maxReduceThreads);
-      LOG.debug("Reduce tasks to process: " + this.numReduceTasks);
+      LOG.debug("Starting reduce thread pool executor");
+      LOG.debug("Max local threads: {}", maxReduceThreads);
+      LOG.debug("Reduce tasks to process: {}", this.numReduceTasks);
 
       // Create a new executor service to drain the work queue.
       ExecutorService executor = Executors.newFixedThreadPool(maxReduceThreads);
@@ -453,7 +453,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
 
         // Wait for tasks to finish; do not use a time-based timeout.
         // (See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6179024)
-        LOG.info("Waiting for " + taskType + " tasks");
+        LOG.info("Waiting for {} tasks", taskType);
         service.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
       } catch (InterruptedException ie) {
         // Cancel all threads.
@@ -461,7 +461,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
         throw ie;
       }
 
-      LOG.info(taskType + " task executor complete.");
+      LOG.info("{} task executor complete", taskType);
 
       // After waiting for the tasks to complete, if any of these
       // have thrown an exception, rethrow it now in the main thread context.
@@ -476,8 +476,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
     createOutputCommitter(boolean newApiCommitter, JobID jobId, Configuration conf) throws Exception {
       org.apache.hadoop.mapreduce.OutputCommitter committer = null;
 
-      LOG.info("OutputCommitter set in config "
-                 + conf.get("mapred.output.committer.class"));
+      LOG.info("OutputCommitter set in config {}", conf.get("mapred.output.committer.class"));
 
       if (newApiCommitter) {
         org.apache.hadoop.mapreduce.TaskID taskId =
@@ -494,7 +493,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
           "mapred.output.committer.class", FileOutputCommitter.class,
           org.apache.hadoop.mapred.OutputCommitter.class), conf);
       }
-      LOG.info("OutputCommitter is " + committer.getClass().getName());
+      LOG.info("OutputCommitter is {}", committer.getClass().getName());
       return committer;
     }
 
@@ -576,7 +575,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
           // Cleanup distributed cache
           localDistributedCacheManager.close();
         } catch (IOException e) {
-          LOG.warn("Error cleaning up "+id+": "+e);
+          LOG.warn("Error cleaning up {}", id, e);
         }
       }
     }
@@ -691,16 +690,16 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
 
     public synchronized void fsError(TaskAttemptID taskId, String message)
       throws IOException {
-      LOG.fatal("FSError: "+ message + "from task: " + taskId);
+      LOG.error("FSError: {} from task: {}", message, taskId);
     }
 
     public void shuffleError(TaskAttemptID taskId, String message) throws IOException {
-      LOG.fatal("shuffleError: "+ message + "from task: " + taskId);
+      LOG.error("shuffleError: {} from task: {}", message, taskId);
     }
 
     public synchronized void fatalError(TaskAttemptID taskId, String msg)
       throws IOException {
-      LOG.fatal("Fatal: "+ msg + "from task: " + taskId);
+      LOG.error("Fatal: {} from task: {}", msg, taskId);
     }
 
     public MapTaskCompletionEventsUpdate getMapCompletionEvents(JobID jobId, int fromEventId,
@@ -979,7 +978,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
       childMapredLocalDir.append("," + localDirs[i] + Path.SEPARATOR
                                    + getLocalTaskDir(user, jobId, taskId, isCleanup));
     }
-    LOG.debug(MRConfig.LOCAL_DIR + " for child : " + childMapredLocalDir);
+    LOG.debug("{} for child: {}", MRConfig.LOCAL_DIR, childMapredLocalDir);
     conf.set(MRConfig.LOCAL_DIR, childMapredLocalDir.toString());
   }
 
