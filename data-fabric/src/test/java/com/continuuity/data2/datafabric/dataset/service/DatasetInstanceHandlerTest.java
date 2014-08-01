@@ -16,6 +16,7 @@
 
 package com.continuuity.data2.datafabric.dataset.service;
 
+import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.table.Get;
