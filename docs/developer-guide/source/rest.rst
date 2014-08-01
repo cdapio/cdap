@@ -591,10 +591,10 @@ Example
 .. rst2pdf: PageBreak
 
 
-Updating a Dataset
-------------------
+Updating an Existing Dataset
+----------------------------
 
-You can update a Dataset by issuing an HTTP PUT request to the URL::
+You can update an existing Dataset's table and properties by issuing an HTTP PUT request to the URL::
 
 	PUT <base-url>/data/datasets/<dataset-name>
 
@@ -603,7 +603,7 @@ with JSON-formatted name of the dataset type and properties in a body::
   {
      "typeName":"<type-name>",
      "properties":{<properties>},
-     "update":"<flag>"
+     "update":"true"
   }
 
 
@@ -614,13 +614,11 @@ with JSON-formatted name of the dataset type and properties in a body::
    * - Parameter
      - Description
    * - ``<dataset-name>``
-     - Name of the new Dataset
+     - Name of the existing Dataset
    * - ``<type-name>``
-     - Type of the new Dataset
+     - Type of the existing Dataset
    * - ``<properties>``
-     - Dataset properties, map of String to String.
-   * - ``<flag>``
-     - If true, Dataset specification is updated and Dataset is upgraded, if false, tries to create a new Dataset
+     - Dataset properties as a map of String to String
 
 HTTP Responses
 ..............
@@ -648,7 +646,7 @@ Example
    * - Body
      - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"7200000"},"update":"true"}``
    * - Description
-     - Updates the Dataset's time-to-live property to 2 hour, of "mydataset" of the type "table" and also upgrades it.
+     - For the "mydataset" of type "Table", updates the Dataset and its time-to-live property to 2 hours.
 
 .. rst2pdf: PageBreak
 
