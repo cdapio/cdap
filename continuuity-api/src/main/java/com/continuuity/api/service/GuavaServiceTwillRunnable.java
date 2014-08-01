@@ -67,6 +67,8 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
   public TwillRunnableSpecification configure() {
     runnableArgs.put("service.class.name", service.getClass().getName());
     runnableArgs.put("service.runnable.name", name);
+    LOG.info("!!!!! " + service.getClass().getName());
+    LOG.info("!!!!! " + name);
     return TwillRunnableSpecification.Builder.with()
       .setName(name)
       .withConfigs(ImmutableMap.copyOf(runnableArgs))
@@ -79,6 +81,8 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
     String serviceClassName = runnableArgs.remove("service.class.name");
     name = runnableArgs.remove("service.runnable.name");
 
+    LOG.info("!!!! " + serviceClassName);
+    LOG.info("!!!! " + name);
     try {
       Class<?> serviceClass = programClassLoader.loadClass(serviceClassName);
       service = (Service) serviceClass.newInstance();
