@@ -18,9 +18,13 @@ package com.continuuity.internal.app.runtime.service.http;
 
 import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
+import com.continuuity.api.service.http.HttpServiceRequest;
+import com.continuuity.api.service.http.HttpServiceResponder;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpHandler;
+import com.continuuity.http.HttpResponder;
 import com.google.common.base.Throwables;
+import org.jboss.netty.handler.codec.http.HttpRequest;
 
 /**
  *
@@ -47,5 +51,13 @@ public abstract class AbstractHttpHandlerDelegator implements HttpHandler {
   @Override
   public void destroy(HandlerContext context) {
     delegate.destroy();
+  }
+
+  protected final HttpServiceRequest wrapRequest(HttpRequest request) {
+    return new DefaultHttpServiceRequest(request);
+  }
+
+  protected final HttpServiceResponder wrapResponder(HttpResponder responder) {
+    return new DefaultHttpServiceResponder(responder);
   }
 }

@@ -29,13 +29,13 @@ import java.util.Map;
 /**
  *
  */
-public final class DefaultHttpServiceRequest implements HttpServiceRequest {
+final class DefaultHttpServiceRequest implements HttpServiceRequest {
 
   private final HttpRequest request;
   private final ByteBuffer content;
   private final Multimap<String, String> headers;
 
-  public DefaultHttpServiceRequest(HttpRequest request) {
+  DefaultHttpServiceRequest(HttpRequest request) {
     this.request = request;
     this.content = request.getContent().toByteBuffer();
 
