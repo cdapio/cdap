@@ -295,7 +295,7 @@ public class ProcedureHandlerTest extends GatewayTestBase {
       GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
                                     getQueryParams(content));
     Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals("Router cannot forward this request to any service",
+    Assert.assertEquals("No endpoint strategy found for service : procedure.developer.ProcedureTestApp.TestProcedure",
                         EntityUtils.toString(response.getEntity()));
 
     // Deploy procedure, but do not start it.
@@ -306,7 +306,7 @@ public class ProcedureHandlerTest extends GatewayTestBase {
       GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
                                     getQueryParams(content));
     Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals("Router cannot forward this request to any service",
+    Assert.assertEquals("No endpoint strategy found for service : procedure.developer.ProcedureTestApp.TestProcedure",
                         EntityUtils.toString(response.getEntity()));
 
     // Start procedure
@@ -331,7 +331,7 @@ public class ProcedureHandlerTest extends GatewayTestBase {
       GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
                                     getQueryParams(content));
     Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals("Router cannot forward this request to any service",
+    Assert.assertEquals("No discoverable found for service : procedure.developer.ProcedureTestApp.TestProcedure",
                         EntityUtils.toString(response.getEntity()));
 
 
@@ -343,7 +343,7 @@ public class ProcedureHandlerTest extends GatewayTestBase {
       GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
                                     getQueryParams(content));
     Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals("Router cannot forward this request to any service",
+    Assert.assertEquals("No discoverable found for service : procedure.developer.ProcedureTestApp.TestProcedure",
                         EntityUtils.toString(response.getEntity()));
   }
 

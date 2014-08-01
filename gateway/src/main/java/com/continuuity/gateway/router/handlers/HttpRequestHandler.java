@@ -185,10 +185,12 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
                                               final InetSocketAddress address) {
     EndpointStrategy strategy = serviceLookup.getDiscoverable(address.getPort(), httpRequest);
     raiseExceptionIfNull(strategy, HttpResponseStatus.SERVICE_UNAVAILABLE,
-                         "Router cannot forward this request to any service");
+                         String.format("No endpoint strategy found for service : %s",
+                                       serviceLookup.getDestService(address.getPort(), httpRequest)));
     Discoverable discoverable = strategy.pick();
     raiseExceptionIfNull(discoverable, HttpResponseStatus.SERVICE_UNAVAILABLE,
-                         "Router cannot forward this request to any service");
+                         String.format("No discoverable found for service : %s",
+                                       serviceLookup.getDestService(address.getPort(), httpRequest)));
 
     return new WrappedDiscoverable(discoverable);
   }

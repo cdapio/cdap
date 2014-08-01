@@ -92,6 +92,29 @@ public class RouterServiceLookup {
    * @return instance of EndpointStrategy if available null otherwise.
    */
   public EndpointStrategy getDiscoverable(int port, HttpRequest httpRequest) {
+    try {
+      // Routing to webapp is a special case. If the service contains "$HOST" the destination is webapp
+      // Otherwise the destination service will be other continuuity services.
+      // Path lookup can be skipped for requests to webapp.
+      String path = URI.create(httpRequest.getUri()).normalize().getPath();
+      String host = httpRequest.getHeader(HttpHeaders.Names.HOST);
+      String destService = getDestService(port, httpRequest);
+      CacheKey cacheKey = new CacheKey(destService, host, path);
+      LOG.trace("Request was routed from {} to: {}", path, cacheKey.getService());
+
+      return discoverableCache.get(cacheKey);
+    } catch (ExecutionException e) {
+      return null;
+    }
+  }
+
+  /**
+   * Get the destination service to look-up for the given port and the httpRequest.
+   * @param port port to lookup.
+   * @param httpRequest provides the header information for lookup.
+   * @return name of the service.
+   */
+  public String getDestService(int port, HttpRequest httpRequest) {
     //Get the service based on Port.
     final String service = serviceMapRef.get().get(port);
     if (service == null) {
@@ -107,19 +130,7 @@ public class RouterServiceLookup {
       LOG.debug("Cannot find host header for service {} on port {}", service, port);
       return null;
     }
-
-    try {
-      // Routing to webapp is a special case. If the service contains "$HOST" the destination is webapp
-      // Otherwise the destination service will be other continuuity services.
-      // Path lookup can be skipped for requests to webapp.
-      String destService = routerPathLookup.getRoutingService(service, path, httpRequest);
-      CacheKey cacheKey = new CacheKey(destService, host, path);
-      LOG.trace("Request was routed from {} to: {}", path, cacheKey.getService());
-
-      return discoverableCache.get(cacheKey);
-    } catch (ExecutionException e) {
-      return null;
-    }
+    return routerPathLookup.getRoutingService(service, path, httpRequest);
   }
 
   public void updateServiceMap(Map<Integer, String> serviceMap) {
