@@ -37,6 +37,7 @@ import com.continuuity.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.reflect.TypeToken;
 import org.apache.twill.discovery.Discoverable;
@@ -196,13 +197,18 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     );
 
     List<QueryInfo> result = exploreService.getQueries();
+    List<Long> timestamps = Lists.newArrayList();
     Assert.assertTrue(result.size() > 0);
     for (QueryInfo queryInfo : result) {
       Assert.assertNotNull(queryInfo.getStatement());
       Assert.assertNotNull(queryInfo.getQueryHandle());
       Assert.assertFalse(queryInfo.isActive());
       Assert.assertEquals("FINISHED", queryInfo.getStatus().toString());
+      timestamps.add(queryInfo.getTimestamp());
     }
+
+    // verify the ordering
+    Assert.assertTrue(Ordering.natural().reverse().isOrdered(timestamps));
   }
 
   @Test
