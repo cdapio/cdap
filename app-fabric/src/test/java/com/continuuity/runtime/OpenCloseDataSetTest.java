@@ -68,6 +68,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * tests that flowlets, procedures and batch jobs close their data sets.
  */
+// todo: un-ignore: REACTOR-690 "Fix unit-test that checks open/close dataset correctness"
 @Ignore
 @Category(XSlowTests.class)
 public class OpenCloseDataSetTest {
