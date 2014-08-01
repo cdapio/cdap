@@ -16,15 +16,8 @@
 
 package com.continuuity.data2.datafabric.dataset.service;
 
-import com.continuuity.api.dataset.Dataset;
-import com.continuuity.api.dataset.DatasetAdmin;
-import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
-import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
-import com.continuuity.api.dataset.lib.CompositeDatasetAdmin;
-import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
-import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Put;
 import com.continuuity.api.dataset.table.Table;
@@ -49,7 +42,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Unit-test for {@link com.continuuity.data2.datafabric.dataset.service.DatasetInstanceHandler}
@@ -268,48 +260,6 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   private int deleteInstance(String instanceName) throws IOException {
     HttpRequest request = HttpRequest.delete(getUrl("/data/datasets/" + instanceName)).build();
     return HttpRequests.execute(request).getResponseCode();
-  }
-
-  /**
-   * Test dataset module
-   */
-  public static class TestModule1 implements DatasetModule {
-    @Override
-    public void register(DatasetDefinitionRegistry registry) {
-      registry.add(createDefinition("datasetType1"));
-    }
-  }
-
-  /**
-   * Test dataset module
-   */
-  // NOTE: this depends on TestModule
-  public static class TestModule2 implements DatasetModule {
-    @Override
-    public void register(DatasetDefinitionRegistry registry) {
-      registry.get("datasetType1");
-      registry.add(createDefinition("datasetType2"));
-    }
-  }
-
-
-  private static <D extends Dataset> DatasetDefinition<D, DatasetAdmin> createDefinition(String name) {
-    return new AbstractDatasetDefinition<D, DatasetAdmin>(name) {
-      @Override
-      public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-        return createSpec(instanceName, getName(), properties);
-      }
-
-      @Override
-      public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) {
-        return new CompositeDatasetAdmin(Collections.<DatasetAdmin>emptyList());
-      }
-
-      @Override
-      public D getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader) {
-        return null;
-      }
-    };
   }
 
   private static DatasetSpecification createSpec(String instanceName, String typeName,
