@@ -10,54 +10,63 @@ define([], function () {
 		load: function () {
 		  var self = this;
 		  this.set('objArr', []);
-		  this.set('numQueries', 0);
 		  this.fetchQueries();
 		  this.interval = setInterval(function () {
-		    //self.getExploreStatus();
         self.fetchQueries();
 		  }, 1000);
 		  this.set('datasets', []);
 		  this.loadDiscoverableDatasets();
 
-
-      C.deleteQuery = function(handle){
-        self.deleteQuery(Ember.Object.create({query_handle:handle}));
-      };
-      C.cancelQuery = function(handle){
-        self.cancelQuery(Ember.Object.create({query_handle:handle}));
-      };
-      C.HTTP = self.HTTP;
 		},
+
 
 		loadDiscoverableDatasets: function () {
 		  var self = this;
       var datasets = self.get('datasets');
+		  self.HTTP.rest('data/datasets?meta=true&explorable=true', function (response) {
+		    response.forEach(function (dataset) {
+		      var name = dataset.hive_table;
+          var shortName = dataset.spec.name.replace(/.*\./,'');
+          self.HTTP.rest('data/explore/datasets/' + shortName + '/schema', function (response, status) {
+            var schemaString = '[{"name":"col_name"},{"name":"data_type"}]'
+            schema = jQuery.parseJSON(schemaString);
+            var results = [];
+            for(var key in response) {
+              if(response.hasOwnProperty(key)){
+                results.push({columns:[key, response[key]]});
+              }
+            }
+            datasets.pushObject(Ember.Object.create({name:name, shortName:shortName, schema:schema, results:results}));
+          });
+		    });
+		  });
+		},
+
+		loadDiscoverableDatasetsOld: function () {
+		  var self = this;
+      var datasets = self.get('datasets');
 		  //TODO: hit the endpoint that Julien will provide.
-      var completed = 0;
-      console.log(completed);
-      self.HTTP.post('rest/data/queries', {data: { "query": "show tables" }},
+      self.HTTP.post('rest/data/explore/queries', {data: { "query": "show tables" }},
           function (response) {
             response = jQuery.parseJSON( response );
-            self.HTTP.post('rest/data/queries/' + response.handle + '/next', function (response) {
+            self.HTTP.post('rest/data/explore/queries/' + response.handle + '/next', function (response) {
               response = jQuery.parseJSON( response );
               response.forEach(function(data){
                 var name = data.columns[0];
                 var shortName = name.replace(/.*_/,'');
                 var dataset = Ember.Object.create({name:name, shortName:shortName});
                 datasets.pushObject(dataset);
-                self.HTTP.post('rest/data/queries', {data: { "query": "describe " + dataset.name }},
-                    function (response) {
+                self.HTTP.post('rest/data/explore/queries', {data: { "query": "describe " + dataset.name }},
+                    function (response, status) {
 
                       C.Util.threadSleep(200);
                       response = jQuery.parseJSON( response );
-                      self.HTTP.post('rest/data/queries/' + response.handle + '/next', function (response) {
+                      self.HTTP.post('rest/data/explore/queries/' + response.handle + '/next', function (response) {
                         response = jQuery.parseJSON( response );
                         dataset.set('results', response);
-                        console.log(++completed);
                       });
-                      self.HTTP.rest('data/queries/' + response.handle + '/schema', function (response) {
+                      self.HTTP.rest('data/explore/queries/' + response.handle + '/schema', function (response) {
                         dataset.set('schema', response);
-                        console.log(++completed);
                       });
 
                     }
@@ -106,7 +115,6 @@ define([], function () {
           console.log('error in fetchQueries in data-explore.js');
           return;
         }
-        self.set('numQueries', queries.length);
 
         objArr.forEach(function(query){
           query.set('inList', false);
@@ -137,17 +145,10 @@ define([], function () {
       });
 		},
 
-    getExploreStatus: function () {
-      var self = this;
-      this.HTTP.rest('explore/status', function () {
-        //todo: set explore status in the view, if thats what is agreed upon for the view.
-      });
-    },
-
     getResults: function (query) {
       var self = this;
       var handle = query.get('query_handle');
-      this.HTTP.post('rest/data/queries/' + handle + '/next', function (response) {
+      this.HTTP.post('rest/data/explore/queries/' + handle + '/next', function (response) {
         query.set('downloadableResults', "data:text/plain;charset=UTF-8," + response);
         query.set('downloadName', "results_" + handle + ".txt");
         response = jQuery.parseJSON( response );
@@ -157,17 +158,17 @@ define([], function () {
 
     cancelQuery: function (query) {
       var handle = query.get('query_handle');
-      this.HTTP.post('rest/data/queries/' + handle + '/cancel');
+      this.HTTP.post('rest/data/explore/queries/' + handle + '/cancel');
     },
     deleteQuery: function (query) {
       var handle = query.get('query_handle');
-      this.HTTP.del('rest/data/queries/' + handle);
+      this.HTTP.del('rest/data/explore/queries/' + handle);
     },
 
     getSchema: function (query) {
       var self = this;
       var handle = query.get('query_handle');
-      this.HTTP.rest('data/queries/' + handle + '/schema', function (response) {
+      this.HTTP.rest('data/explore/queries/' + handle + '/schema', function (response) {
         query.set('schema', response);
       });
     },
@@ -176,7 +177,7 @@ define([], function () {
       var self = this;
       var controller = this.get('controllers');
       var sqlString = controller.get("SQLQueryString");
-      this.HTTP.post('rest/data/queries', {data: { "query": sqlString }},
+      this.HTTP.post('rest/data/explore/queries', {data: { "query": sqlString }},
         function (response, status) {
           if(status != 200) {
             C.Util.showWarning(response.error + ' : ' + response.message);
