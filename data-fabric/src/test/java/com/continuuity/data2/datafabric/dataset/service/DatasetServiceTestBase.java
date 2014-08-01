@@ -40,7 +40,7 @@ import com.continuuity.proto.DatasetModuleMeta;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.InputSupplier;
+import com.google.common.io.Files;
 import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -53,12 +53,14 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 
 /**
  * Base class for unit-tests that require running of {@link DatasetService}
@@ -136,17 +138,37 @@ public abstract class DatasetServiceTestBase {
 
   protected int deployModule(String moduleName, Class moduleClass) throws Exception {
     String jarPath = JarFinder.getJar(moduleClass);
-
     final FileInputStream is = new FileInputStream(jarPath);
     try {
       HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
         .addHeader("X-Continuuity-Class-Name", moduleClass.getName())
-        .withBody(new InputSupplier<InputStream>() {
-        @Override
-        public InputStream getInput() throws IOException {
-          return is;
-        }
-      }).build();
+        .withBody(new File(jarPath)).build();
+      return HttpRequests.execute(request).getResponseCode();
+    } finally {
+      is.close();
+    }
+  }
+
+  // creates a bundled jar with moduleClass and list of bundleEmbeddedJar files, moduleName and moduleClassName are
+  // used to make request for deploying module.
+  protected int deployModuleBundled(String moduleName, String moduleClassName, Class moduleClass,
+                                    File...bundleEmbeddedJars) throws IOException {
+    String jarPath = JarFinder.getJar(moduleClass);
+    JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jarPath));
+    try {
+      for (File embeddedJar : bundleEmbeddedJars) {
+        JarEntry jarEntry = new JarEntry("lib/" + embeddedJar.getName());
+        jarOutput.putNextEntry(jarEntry);
+        Files.copy(embeddedJar, jarOutput);
+      }
+    } finally {
+      jarOutput.close();
+    }
+    final FileInputStream is = new FileInputStream(jarPath);
+    try {
+      HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
+        .addHeader("X-Continuuity-Class-Name", moduleClassName)
+        .withBody(new File(jarPath)).build();
       return HttpRequests.execute(request).getResponseCode();
     } finally {
       is.close();

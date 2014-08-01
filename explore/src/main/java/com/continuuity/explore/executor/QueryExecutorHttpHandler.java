@@ -113,31 +113,6 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  @POST
-  @Path("/data/explore/queries/{id}/cancel")
-  public void cancelQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                          @PathParam("id") final String id) {
-    try {
-      QueryHandle handle = QueryHandle.fromId(id);
-      if (!handle.equals(QueryHandle.NO_OP)) {
-        exploreService.cancel(handle);
-      }
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (IllegalArgumentException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (SQLException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
-    } catch (HandleNotFoundException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
   @GET
   @Path("data/explore/queries/{id}/status")
   public void getQueryStatus(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
@@ -233,6 +208,37 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     } catch (Exception e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error");
+    }
+  }
+
+  @POST
+  @Path("/data/explore/queries/{id}/preview")
+  public void getQueryResultPreview(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+    // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
+    try {
+      QueryHandle handle = QueryHandle.fromId(id);
+      List<QueryResult> results;
+      if (handle.equals(QueryHandle.NO_OP)) {
+        results = Lists.newArrayList();
+      } else {
+        results = exploreService.previewResults(handle);
+      }
+      responder.sendJson(HttpResponseStatus.OK, results);
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+    } catch (HandleNotFoundException e) {
+      if (e.isInactive()) {
+        responder.sendString(HttpResponseStatus.CONFLICT, "Preview is unavailable for inactive queries.");
+      }
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

@@ -15,6 +15,7 @@ Continuuity Reactor Documentation
    Security </security>
    Operations Guide </operations>
    HTTP REST API </rest>
+   Java Client API </java_client>
    /javadocs/index
    Dependencies </licenses/index>
    Release Notes </releasenotes>

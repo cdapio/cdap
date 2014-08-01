@@ -16,6 +16,7 @@
 
 package com.continuuity.explore.service;
 
+import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -93,7 +94,8 @@ public class ExploreDisabledTest {
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
-    KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("table1", null, null);
+    KeyStructValueTableDefinition.KeyStructValueTable table =
+      datasetFramework.getDataset("table1", DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
     table.startTx(tx1);
 
@@ -133,7 +135,8 @@ public class ExploreDisabledTest {
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
-    NotRecordScannableTableDefinition.KeyValueTable table = datasetFramework.getDataset("table2", null, null);
+    NotRecordScannableTableDefinition.KeyValueTable table =
+      datasetFramework.getDataset("table2", DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
     table.startTx(tx1);
 
