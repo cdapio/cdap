@@ -26,7 +26,6 @@ import org.apache.twill.api.TwillSpecification;
  * A simple {@link org.apache.twill.api.TwillApplication} that contains
  * only one {@link org.apache.twill.api.TwillRunnable}.
  *
- * TODO: This has been copied verbatim from twill-internal since that is not available on the server side to use.
  */
 public class SingleRunnableApplication implements TwillApplication {
 

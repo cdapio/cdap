@@ -181,7 +181,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
       runnableName = programOpts.getName();
 
       ServiceSpecification serviceSpec = appSpec.getServices().get(processorName);
-      RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnableName);
+      final RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnableName);
 
       String className = runtimeSpec.getRunnableSpecification().getClassName();
       LOG.info("Getting class : {}", program.getMainClass().getName());
@@ -208,6 +208,11 @@ public class ServiceTwillRunnable implements TwillRunnable {
         @Override
         public String[] getApplicationArguments() {
           return argArray;
+        }
+
+        @Override
+        public TwillRunnableSpecification getSpecification() {
+          return runtimeSpec.getRunnableSpecification();
         }
       });
 
