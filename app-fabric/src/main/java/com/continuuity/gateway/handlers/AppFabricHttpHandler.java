@@ -83,14 +83,18 @@ import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.metrics.MetricsConstants;
+import com.continuuity.proto.ApplicationRecord;
 import com.continuuity.proto.Containers;
+import com.continuuity.proto.DatasetRecord;
 import com.continuuity.proto.Id;
 import com.continuuity.proto.Instances;
 import com.continuuity.proto.NotRunningProgramLiveInfo;
 import com.continuuity.proto.ProgramLiveInfo;
+import com.continuuity.proto.ProgramRecord;
 import com.continuuity.proto.ProgramStatus;
 import com.continuuity.proto.ProgramType;
 import com.continuuity.proto.ProgramTypes;
+import com.continuuity.proto.StreamRecord;
 import com.continuuity.tephra.TransactionContext;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
@@ -2739,7 +2743,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Account accId = Id.Account.from(accountId);
-      List<Map<String, String>> result = Lists.newArrayList();
+      List<ApplicationRecord> result = Lists.newArrayList();
       List<ApplicationSpecification> specList;
       if (appid == null) {
         specList = new ArrayList<ApplicationSpecification>(store.getAllApplications(accId));
@@ -2836,7 +2840,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private String listPrograms(Collection<ApplicationSpecification> appSpecs, ProgramType type) throws Exception {
-    List<Map<String, String>> result = Lists.newArrayList();
+    List<ProgramRecord> result = Lists.newArrayList();
     for (ApplicationSpecification appSpec : appSpecs) {
       if (type == ProgramType.FLOW) {
         for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
@@ -3367,7 +3371,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       if (type == Data.DATASET) {
         Collection<DataSetSpecification> specs = store.getAllDataSets(new Id.Account(programId.getAccountId()));
-        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(specs.size());
+        List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(specs.size());
         for (DataSetSpecification spec : specs) {
           result.add(makeDataSetRecord(spec.getName(), spec.getType(), null));
         }
@@ -3379,7 +3383,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return GSON.toJson(result);
       } else if (type == Data.STREAM) {
         Collection<StreamSpecification> specs = store.getAllStreams(new Id.Account(programId.getAccountId()));
-        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(specs.size());
+        List<StreamRecord> result = Lists.newArrayListWithExpectedSize(specs.size());
         for (StreamSpecification spec : specs) {
           result.add(makeStreamRecord(spec.getName(), null));
         }
@@ -3399,7 +3403,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         account, programId.getApplicationId()));
       if (type == Data.DATASET) {
         Set<String> dataSetsUsed = dataSetsUsedBy(appSpec);
-        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
+        List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
         for (String dsName : dataSetsUsed) {
           DataSetSpecification spec = appSpec.getDataSets().get(dsName);
           String typeName = null;
@@ -3423,7 +3427,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }
       if (type == Data.STREAM) {
         Set<String> streamsUsed = streamsUsedBy(appSpec);
-        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(streamsUsed.size());
+        List<StreamRecord> result = Lists.newArrayListWithExpectedSize(streamsUsed.size());
         for (String streamName : streamsUsed) {
           result.add(makeStreamRecord(streamName, null));
         }
@@ -3532,10 +3536,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private String listProgramsByDataAccess(Id.Program programId, ProgramType type, Data data, String name)
-    throws Exception {
+  private String listProgramsByDataAccess(Id.Program programId, ProgramType type, Data data,
+                                          String name) throws Exception {
     try {
-      List<Map<String, String>> result = Lists.newArrayList();
+      List<ProgramRecord> result = Lists.newArrayList();
       Collection<ApplicationSpecification> appSpecs = store.getAllApplications(
         new Id.Account(programId.getAccountId()));
       if (appSpecs != null) {
@@ -3590,53 +3594,20 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
    /* -----------------  helpers to return Json consistently -------------- */
 
-  private static Map<String, String> makeAppRecord(ApplicationSpecification appSpec) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "App");
-    builder.put("id", appSpec.getName());
-    builder.put("name", appSpec.getName());
-    if (appSpec.getDescription() != null) {
-      builder.put("description", appSpec.getDescription());
-    }
-    return builder.build();
+  private static ApplicationRecord makeAppRecord(ApplicationSpecification appSpec) {
+    return new ApplicationRecord("App", appSpec.getName(), appSpec.getName(), appSpec.getDescription());
   }
 
-  private static Map<String, String> makeProgramRecord (String appId, ProgramSpecification spec, ProgramType type) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", type.getPrettyName());
-    builder.put("app", appId);
-    builder.put("id", spec.getName());
-    builder.put("name", spec.getName());
-    if (spec.getDescription() != null) {
-      builder.put("description", spec.getDescription());
-    }
-    return builder.build();
+  private static ProgramRecord makeProgramRecord (String appId, ProgramSpecification spec, ProgramType type) {
+    return new ProgramRecord(type, appId, spec.getName(), spec.getName(), spec.getDescription());
   }
 
-  private static Map<String, String> makeDataSetRecord(String name, String classname,
-                                                       DataSetSpecification specification) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "Dataset");
-    builder.put("id", name);
-    builder.put("name", name);
-    if (classname != null) {
-      builder.put("classname", classname);
-    }
-    if (specification != null) {
-      builder.put("specification", GSON.toJson(specification));
-    }
-    return builder.build();
+  private static DatasetRecord makeDataSetRecord(String name, String classname, DataSetSpecification specification) {
+    return new DatasetRecord("Dataset", name, name, classname, GSON.toJson(specification));
   }
 
-  private static Map<String, String> makeStreamRecord(String name, StreamSpecification specification) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "Stream");
-    builder.put("id", name);
-    builder.put("name", name);
-    if (specification != null) {
-      builder.put("specification", GSON.toJson(specification));
-    }
-    return builder.build();
+  private static StreamRecord makeStreamRecord(String name, StreamSpecification specification) {
+    return new StreamRecord("Stream", name, name, GSON.toJson(specification));
   }
 
   /**
