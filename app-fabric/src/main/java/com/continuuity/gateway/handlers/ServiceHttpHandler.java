@@ -22,7 +22,7 @@ import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.zookeeper.coordination.DiscoveredServicesCodec;
+import com.continuuity.common.zookeeper.coordination.DiscoverablesCodec;
 import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -72,7 +72,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   private final ProgramRuntimeService runtimeService;
   private static final Gson GSON = new GsonBuilder()
                                       .registerTypeAdapter(new TypeToken<List<Discoverable>>() { }.getType(),
-                                                           new DiscoveredServicesCodec())
+                                                            new DiscoverablesCodec())
                                       .create();
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceHttpHandler.class);
@@ -157,7 +157,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
       List<Discoverable> discoverables = runtimeService.discoverService(programId,
                                                                            ProgramType.SERVICE, discoverableId);
       responder.sendString(HttpResponseStatus.OK, GSON.toJson(discoverables,
-                                                              new TypeToken<List<Discoverable>>() { }.getType()));
+                                                                new TypeToken<List<Discoverable>>() { }.getType()));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {

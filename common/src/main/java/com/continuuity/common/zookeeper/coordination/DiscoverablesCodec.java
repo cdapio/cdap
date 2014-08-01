@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * A Gson codec for a list of discoverables.
  */
-public class DiscoveredServicesCodec implements JsonSerializer<List<Discoverable>> {
+public class DiscoverablesCodec implements JsonSerializer<List<Discoverable>> {
 
   @Override
   public JsonElement serialize(List<Discoverable> discoverables, Type typeOfSrc, JsonSerializationContext context) {

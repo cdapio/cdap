@@ -76,11 +76,11 @@ public interface ProgramRuntimeService extends Service {
   ProgramLiveInfo getLiveInfo(Id.Program programId, ProgramType type);
 
   /**
-   * Discover a service for a particular application.
+   * Get a list of discoverables for a service.
    * @param programId ProgramId for application.
    * @param type Type of service.
    * @param service Name of service.
-   * @return ServiceDiscovered for the service.
+   * @return List of discoverables for the service.
    */
   List<Discoverable> discoverService(Id.Program programId, ProgramType type, String service);
 }
