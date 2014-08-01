@@ -20,18 +20,18 @@ import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.RunRecord;
-import com.continuuity.app.program.Type;
 import com.continuuity.data2.OperationException;
-import com.google.common.collect.Table;
+import com.continuuity.proto.Id;
+import com.continuuity.proto.ProgramType;
+import com.continuuity.proto.RunRecord;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * {@link Store} operates on a {@link Program}. It's responsible
@@ -47,7 +47,7 @@ public interface Store {
    * @return An instance of {@link com.continuuity.app.program.DefaultProgram} if found.
    * @throws IOException
    */
-  Program loadProgram(Id.Program program, Type type) throws IOException;
+  Program loadProgram(Id.Program program, ProgramType type) throws IOException;
 
   /**
    * Logs start of program run.
@@ -80,14 +80,6 @@ public interface Store {
    * @throws          OperationException
    */
   List<RunRecord> getRunHistory(Id.Program id, long startTime, long endTime, int limit) throws OperationException;
-
-  /**
-   * Returns all {@link RunRecord} of the account.
-   * @param account account id
-   * @return An immutable table of program type, id and run records
-   * @throws OperationException
-   */
-  Table<Type, Id.Program, List<RunRecord>> getAllRunHistory(Id.Account account) throws OperationException;
 
   /**
    * Creates a new stream if it does not exist.
@@ -186,6 +178,7 @@ public interface Store {
    * @return application specification
    * @throws OperationException
    */
+  @Nullable
   ApplicationSpecification getApplication(Id.Application id) throws OperationException;
 
   /**
@@ -200,6 +193,7 @@ public interface Store {
    * @return application archive location
    * @throws OperationException
    */
+  @Nullable
   Location getApplicationArchiveLocation(Id.Application id) throws OperationException;
 
   /**
@@ -263,10 +257,9 @@ public interface Store {
    * Removes all program under the given application and also the application itself.
    *
    * @param id Application id
-   * @return An {@link ApplicationSpecification} of the application being removed.
    * @throws OperationException
    */
-  ApplicationSpecification removeApplication(Id.Application id) throws OperationException;
+  void removeApplication(Id.Application id) throws OperationException;
 
   /**
    * Removes all applications (with programs) of the given account.

@@ -24,6 +24,7 @@ import com.continuuity.api.dataset.module.DatasetModule;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -94,13 +95,28 @@ public interface DatasetFramework {
     throws DatasetManagementException, IOException;
 
   /**
+   * Updates the existing dataset instance in the system.
+   *
+   * This uses
+   * {@link com.continuuity.api.dataset.DatasetDefinition#configure(String, DatasetProperties)}
+   * method to build {@link com.continuuity.api.dataset.DatasetSpecification} with new properties,
+   * which describes dataset instance and {@link DatasetAdmin} is used to upgrade
+   * {@link Dataset} for the dataset instance.
+   * @param datasetInstanceName dataset instance name
+   * @param props dataset instance properties
+   * @throws IOException when creation of dataset instance using its admin fails
+   * @throws DatasetManagementException
+   */
+  void updateInstance(String datasetInstanceName, DatasetProperties props)
+    throws DatasetManagementException, IOException;
+
+  /**
    * @return a collection of {@link com.continuuity.api.dataset.DatasetSpecification}s for all datasets
    */
   Collection<DatasetSpecification> getInstances() throws DatasetManagementException;
 
   /**
-   * @return {@link com.continuuity.api.dataset.DatasetSpecification} of the dataset or {@code null} if dataset does
-   *         not exist
+   * @return {@link DatasetSpecification} of the dataset or {@code null} if dataset not not exist
    */
   @Nullable
   DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException;
@@ -152,12 +168,14 @@ public interface DatasetFramework {
    * Gets dataset to be used to perform data operations.
    * @param datasetInstanceName dataset instance name
    * @param <T> dataset type to be returned
+   * @param arguments runtime arguments for the dataset instance
    * @param classLoader classLoader to be used to load classes or {@code null} to use system classLoader
    * @return instance of dataset or {@code null} if dataset instance of this name doesn't exist.
    * @throws DatasetManagementException when there's trouble getting dataset meta info
    * @throws IOException when there's trouble to instantiate {@link com.continuuity.api.dataset.Dataset}
    */
   @Nullable
-  <T extends Dataset> T getDataset(String datasetInstanceName, @Nullable ClassLoader classLoader)
+  <T extends Dataset> T getDataset(String datasetInstanceName, @Nullable Map<String, String> arguments,
+                                   @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException;
 }

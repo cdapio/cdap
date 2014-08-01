@@ -25,6 +25,7 @@ import com.continuuity.api.dataset.table.Table;
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * {@link com.continuuity.api.dataset.DatasetDefinition} for {@link com.continuuity.api.dataset.lib.KeyValueTable}.
@@ -55,8 +56,9 @@ public class TimeseriesTableDefinition
   }
 
   @Override
-  public TimeseriesTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("ts"), classLoader);
+  public TimeseriesTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
+    throws IOException {
+    Table table = tableDef.getDataset(spec.getSpecification("ts"), arguments, classLoader);
     return new TimeseriesTable(spec, table);
   }
 }

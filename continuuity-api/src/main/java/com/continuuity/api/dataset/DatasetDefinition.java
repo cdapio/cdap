@@ -19,6 +19,8 @@ package com.continuuity.api.dataset;
 import com.continuuity.api.annotation.Beta;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * Defines named dataset type implementation.
@@ -34,7 +36,7 @@ import java.io.IOException;
  *   </li>
  *   <li>
  *     a way to perform operations to manipulate data of the dataset instance (e.g. read, write etc.) by providing
- *     implementation of {@link Dataset} via {@link #getDataset(DatasetSpecification, ClassLoader)} method
+ *     implementation of {@link Dataset} via {@link #getDataset(DatasetSpecification, Map, ClassLoader)} method
  *   </li>
  * </ul>
  *
@@ -43,6 +45,11 @@ import java.io.IOException;
  */
 @Beta
 public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
+
+  /**
+   * Convenience constant for passing in no arguments.
+   */
+  public static final Map<String, String> NO_ARGUMENTS = Collections.emptyMap();
 
   /**
    * @return name of this dataset implementation
@@ -56,7 +63,7 @@ public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
    * @return instance of {@link DatasetSpecification} that fully describes dataset instance.
    *         The {@link DatasetSpecification} can be used to create {@link DatasetAdmin} and {@link Dataset} to perform
    *         administrative and data operations respectively, see {@link #getAdmin(DatasetSpecification, ClassLoader)}
-   *         and {@link #getDataset(DatasetSpecification, ClassLoader)}.
+   *         and {@link #getDataset(DatasetSpecification, Map, ClassLoader)}.
    */
   DatasetSpecification configure(String instanceName, DatasetProperties properties);
 
@@ -73,12 +80,15 @@ public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
 
   /**
    * Provides dataset to be used to perform data operations on the dataset instance data defined by passed
-   * {@link DatasetSpecification}.
+   * {@link DatasetSpecification} and the given arguments.
    *
    * @param spec specification of the dataset instance.
+   * @param arguments arguments for this instance of the dataset. Should not be null - provide an empty map for no
+   *                  arguments.
    * @param classLoader classloader to use when executing dataset operations
    * @return dataset to perform object operations
    * @throws IOException
    */
-  D getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException;
+  D getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
+      throws IOException;
 }

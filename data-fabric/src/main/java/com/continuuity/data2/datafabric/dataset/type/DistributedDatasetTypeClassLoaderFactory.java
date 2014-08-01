@@ -16,8 +16,10 @@
 
 package com.continuuity.data2.datafabric.dataset.type;
 
+import com.continuuity.common.lang.ApiResourceListHolder;
 import com.continuuity.common.lang.ClassLoaders;
 import com.continuuity.common.lang.jar.BundleJarUtil;
+import com.continuuity.proto.DatasetModuleMeta;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
@@ -47,6 +49,6 @@ public class DistributedDatasetTypeClassLoaderFactory implements DatasetTypeClas
     // creating tempDir is fine since it will be created inside a YARN container, so it will be cleaned up
     File tempDir = Files.createTempDir();
     BundleJarUtil.unpackProgramJar(locationFactory.create(moduleMeta.getJarLocation()), tempDir);
-    return ClassLoaders.newProgramClassLoaderWithoutFilter(tempDir, parentClassLoader);
+    return ClassLoaders.newProgramClassLoader(tempDir, ApiResourceListHolder.getResourceList(), parentClassLoader);
   }
 }

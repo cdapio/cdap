@@ -17,15 +17,17 @@
 package com.continuuity.explore.service.hive;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Status;
+import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryStatus;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.cli.HiveSQLException;
@@ -35,6 +37,7 @@ import org.apache.hive.service.cli.SessionHandle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
@@ -57,13 +60,14 @@ public class HiveCDH4ExploreService extends BaseHiveExploreService {
 
   @Inject
   protected HiveCDH4ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
-    super(txClient, datasetFramework, cConf, hConf, hiveConf);
+                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
+                                   @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir) {
+    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir);
     System.setProperty("hive.server2.blocking.query", "false");
   }
 
   @Override
-  protected Status fetchStatus(OperationHandle operationHandle)
+  protected QueryStatus fetchStatus(OperationHandle operationHandle)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     try {
       // In Hive patched for CDH4, CLIService.getOperationStatus returns OperationState.
@@ -75,7 +79,7 @@ public class HiveCDH4ExploreService extends BaseHiveExploreService {
       Class cliServiceClass = getCliService().getClass();
       Method m = cliServiceClass.getMethod("getOperationStatus", OperationHandle.class);
       OperationState operationState = (OperationState) m.invoke(getCliService(), operationHandle);
-      return new Status(Status.OpStatus.valueOf(operationState.toString()), operationHandle.hasResultSet());
+      return new QueryStatus(QueryStatus.OpStatus.valueOf(operationState.toString()), operationHandle.hasResultSet());
     } catch (InvocationTargetException e) {
       throw Throwables.propagate(e);
     } catch (NoSuchMethodException e) {
@@ -92,8 +96,8 @@ public class HiveCDH4ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  public void cancel(Handle handle) throws ExploreException, HandleNotFoundException, SQLException {
+  void cancelInternal(QueryHandle handle) throws ExploreException, HandleNotFoundException, SQLException {
     LOG.warn("Trying to cancel operation with handle {}", handle);
-    throw new ExploreException("Cancel operation is not supported with CDH4.");
+    throw new UnsupportedOperationException("Cancel operation is not supported with CDH4.");
   }
 }

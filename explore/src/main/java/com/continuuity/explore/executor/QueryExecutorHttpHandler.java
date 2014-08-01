@@ -17,20 +17,20 @@
 package com.continuuity.explore.executor;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreService;
-import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Result;
-import com.continuuity.explore.service.Status;
+import com.continuuity.explore.service.QueryInfo;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryResult;
+import com.continuuity.proto.QueryStatus;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -72,16 +72,13 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/data/queries")
+  @Path("data/explore/queries")
   public void query(HttpRequest request, HttpResponder responder) {
     try {
       Map<String, String> args = decodeArguments(request);
       String query = args.get("query");
       LOG.trace("Received query: {}", query);
-      Handle handle = exploreService.execute(query);
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
+      responder.sendJson(HttpResponseStatus.OK, exploreService.execute(query));
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -96,12 +93,12 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("/data/queries/{id}")
+  @Path("data/explore/queries/{id}")
   public void closeQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                          @PathParam("id") final String id) {
     try {
-      Handle handle = Handle.fromId(id);
-      if (!handle.equals(Handle.NO_OP)) {
+      QueryHandle handle = QueryHandle.fromId(id);
+      if (!handle.equals(QueryHandle.NO_OP)) {
         exploreService.close(handle);
       }
       responder.sendStatus(HttpResponseStatus.OK);
@@ -116,42 +113,17 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  @POST
-  @Path("/data/queries/{id}/cancel")
-  public void cancelQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                          @PathParam("id") final String id) {
-    try {
-      Handle handle = Handle.fromId(id);
-      if (!handle.equals(Handle.NO_OP)) {
-        exploreService.cancel(handle);
-      }
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (IllegalArgumentException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (SQLException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
-    } catch (HandleNotFoundException e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
   @GET
-  @Path("/data/queries/{id}/status")
+  @Path("data/explore/queries/{id}/status")
   public void getQueryStatus(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                              @PathParam("id") final String id) {
     try {
-      Handle handle = Handle.fromId(id);
-      Status status;
-      if (!handle.equals(Handle.NO_OP)) {
+      QueryHandle handle = QueryHandle.fromId(id);
+      QueryStatus status;
+      if (!handle.equals(QueryHandle.NO_OP)) {
         status = exploreService.getStatus(handle);
       } else {
-        status = Status.NO_OP;
+        status = QueryStatus.NO_OP;
       }
       responder.sendJson(HttpResponseStatus.OK, status);
     } catch (IllegalArgumentException e) {
@@ -170,13 +142,13 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/data/queries/{id}/schema")
+  @Path("data/explore/queries/{id}/schema")
   public void getQueryResultsSchema(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                                     @PathParam("id") final String id) {
     try {
-      Handle handle = Handle.fromId(id);
+      QueryHandle handle = QueryHandle.fromId(id);
       List<ColumnDesc> schema;
-      if (!handle.equals(Handle.NO_OP)) {
+      if (!handle.equals(QueryHandle.NO_OP)) {
         schema = exploreService.getResultSchema(handle);
       } else {
         schema = Lists.newArrayList();
@@ -198,13 +170,13 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/data/queries/{id}/next")
+  @Path("data/explore/queries/{id}/next")
   public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
-      Handle handle = Handle.fromId(id);
-      List<Result> results;
-      if (handle.equals(Handle.NO_OP)) {
+      QueryHandle handle = QueryHandle.fromId(id);
+      List<QueryResult> results;
+      if (handle.equals(QueryHandle.NO_OP)) {
         results = Lists.newArrayList();
       } else {
         Map<String, String> args = decodeArguments(request);
@@ -220,6 +192,49 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendError(HttpResponseStatus.BAD_REQUEST,
                           String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @GET
+  @Path("/data/explore/queries")
+  public void getQueryLiveHandles(HttpRequest request, HttpResponder responder) {
+    try {
+      List<QueryInfo> handles = exploreService.getQueries();
+      responder.sendJson(HttpResponseStatus.OK, handles);
+    } catch (Exception e) {
+      LOG.error("Got exception:", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error");
+    }
+  }
+
+  @POST
+  @Path("/data/explore/queries/{id}/preview")
+  public void getQueryResultPreview(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+    // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
+    try {
+      QueryHandle handle = QueryHandle.fromId(id);
+      List<QueryResult> results;
+      if (handle.equals(QueryHandle.NO_OP)) {
+        results = Lists.newArrayList();
+      } else {
+        results = exploreService.previewResults(handle);
+      }
+      responder.sendJson(HttpResponseStatus.OK, results);
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+    } catch (HandleNotFoundException e) {
+      if (e.isInactive()) {
+        responder.sendString(HttpResponseStatus.CONFLICT, "Preview is unavailable for inactive queries.");
+      }
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);

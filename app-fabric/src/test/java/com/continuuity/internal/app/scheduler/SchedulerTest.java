@@ -16,11 +16,17 @@
 
 package com.continuuity.internal.app.scheduler;
 
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
-import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.runtime.DataSetsModules;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
 import com.continuuity.internal.app.runtime.schedule.ScheduleStoreTableUtil;
 import com.continuuity.internal.io.UnsupportedTypeException;
@@ -28,8 +34,10 @@ import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.tephra.TransactionExecutorFactory;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.test.SlowTests;
+import com.continuuity.test.internal.TempFolder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.twill.common.Services;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -56,28 +64,45 @@ import java.util.List;
 @Category(SlowTests.class)
 public class SchedulerTest {
 
+  private static final TempFolder TEMP_FOLDER = new TempFolder();
+
   private static Injector injector;
   private static Scheduler scheduler;
   private static TransactionExecutorFactory factory;
-  private static DataSetAccessor accessor;
+  private static DatasetFramework dsFramework;
+  private static InMemoryTransactionManager txService;
+  private static DatasetService dsService;
 
   @BeforeClass
-  public static void setup() throws Exception {
-    injector = Guice.createInjector (new LocationRuntimeModule().getInMemoryModules(),
-                                     new DiscoveryRuntimeModule().getInMemoryModules(),
-                                     new MetricsClientRuntimeModule().getInMemoryModules(),
-                                     new DataFabricModules().getInMemoryModules(),
-                                     new DataSetsModules().getInMemoryModule());
-    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
-    accessor = injector.getInstance(DataSetAccessor.class);
+  public static void beforeClass() throws Exception {
+    CConfiguration conf = CConfiguration.create();
+    conf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
+    injector = Guice.createInjector(new ConfigModule(conf),
+                                    new LocationRuntimeModule().getInMemoryModules(),
+                                    new DiscoveryRuntimeModule().getInMemoryModules(),
+                                    new MetricsClientRuntimeModule().getInMemoryModules(),
+                                    new DataFabricModules().getInMemoryModules(),
+                                    new DataSetsModules().getInMemoryModule(),
+                                    new DataSetServiceModules().getInMemoryModule(),
+                                    new ExploreClientModule());
+    txService = injector.getInstance(InMemoryTransactionManager.class);
+    dsService = injector.getInstance(DatasetService.class);
+    dsFramework = injector.getInstance(DatasetFramework.class);
     factory = injector.getInstance(TransactionExecutorFactory.class);
+    Services.chainStart(txService, dsService);
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    Services.chainStop(dsService, txService);
   }
 
   public static void schedulerSetup(boolean enablePersistence, String schedulerName)
     throws SchedulerException, UnsupportedTypeException {
     JobStore js;
     if (enablePersistence) {
-      js = new DataSetBasedScheduleStore(factory, new ScheduleStoreTableUtil(accessor));
+      CConfiguration conf = injector.getInstance(CConfiguration.class);
+      js = new DataSetBasedScheduleStore(factory, new ScheduleStoreTableUtil(dsFramework, conf));
     } else {
       js = new RAMJobStore();
     }

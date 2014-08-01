@@ -17,7 +17,6 @@
 package com.continuuity.data2.datafabric.dataset;
 
 import com.continuuity.api.dataset.DatasetProperties;
-import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
@@ -53,13 +52,13 @@ public class DatasetMetaTableUtil {
   public DatasetTypeMDS getTypeMetaTable() throws DatasetManagementException, IOException {
     return (DatasetTypeMDS) DatasetsUtil.getOrCreateDataset(framework, META_TABLE_NAME,
                                                             DatasetTypeMDS.class.getName(),
-                                                            DatasetProperties.EMPTY, null);
+                                                            DatasetProperties.EMPTY, null, null);
   }
 
   public DatasetInstanceMDS getInstanceMetaTable() throws DatasetManagementException, IOException {
     return (DatasetInstanceMDS) DatasetsUtil.getOrCreateDataset(framework, INSTANCE_TABLE_NAME,
                                                                 DatasetInstanceMDS.class.getName(),
-                                                                DatasetProperties.EMPTY, null);
+                                                                DatasetProperties.EMPTY, null, null);
   }
 
   public void upgrade() throws Exception {

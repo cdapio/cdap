@@ -32,8 +32,11 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
+import com.continuuity.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import com.continuuity.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
+import com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
 import com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
@@ -61,6 +64,7 @@ public class DataSetServiceModules {
         // NOTE: order is important due to dependencies between modules
         Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
         defaultModules.put("orderedTable-memory", new InMemoryOrderedTableModule());
+        defaultModules.put("metricsTable-memory", new InMemoryMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
@@ -90,6 +94,7 @@ public class DataSetServiceModules {
         // NOTE: order is important due to dependencies between modules
         Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
         defaultModules.put("orderedTable-leveldb", new LevelDBOrderedTableModule());
+        defaultModules.put("metricsTable-leveldb", new LevelDBMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
@@ -127,6 +132,7 @@ public class DataSetServiceModules {
         // NOTE: order is important due to dependencies between modules
         Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
         defaultModules.put("orderedTable-hbase", new HBaseOrderedTableModule());
+        defaultModules.put("metricsTable-hbase", new HBaseMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })

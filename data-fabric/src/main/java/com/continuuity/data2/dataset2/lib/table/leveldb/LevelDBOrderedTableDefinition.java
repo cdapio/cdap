@@ -24,6 +24,7 @@ import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.google.inject.Inject;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  *
@@ -46,7 +47,8 @@ public class LevelDBOrderedTableDefinition
   }
 
   @Override
-  public LevelDBOrderedTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public LevelDBOrderedTable getDataset(DatasetSpecification spec,
+                                        Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     return new LevelDBOrderedTable(spec.getName(), service, conflictDetection);

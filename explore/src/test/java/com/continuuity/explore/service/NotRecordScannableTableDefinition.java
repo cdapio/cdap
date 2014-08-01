@@ -30,11 +30,11 @@ import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
-
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -65,8 +65,9 @@ public class NotRecordScannableTableDefinition
   }
 
   @Override
-  public KeyValueTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("kv"), classLoader);
+  public KeyValueTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
+    throws IOException {
+    Table table = tableDef.getDataset(spec.getSpecification("kv"), arguments, classLoader);
     return new KeyValueTable(spec.getName(), table);
   }
 

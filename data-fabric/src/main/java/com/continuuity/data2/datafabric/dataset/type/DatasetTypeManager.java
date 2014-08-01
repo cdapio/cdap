@@ -20,13 +20,17 @@ import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
+import com.continuuity.common.lang.ApiResourceListHolder;
 import com.continuuity.common.lang.ClassLoaders;
-import com.continuuity.common.lang.jar.JarClassLoader;
+import com.continuuity.common.lang.jar.BundleJarUtil;
+import com.continuuity.common.utils.DirUtils;
 import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasets;
 import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.module.lib.DatasetModules;
 import com.continuuity.data2.dataset2.tx.TxCallable;
+import com.continuuity.proto.DatasetModuleMeta;
+import com.continuuity.proto.DatasetTypeMeta;
 import com.continuuity.tephra.TransactionFailureException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
@@ -34,6 +38,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -42,6 +47,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -106,23 +112,34 @@ public class DatasetTypeManager extends AbstractIdleService {
 
           ClassLoader cl;
           DatasetModule module;
+          File unpackedLocation = Files.createTempDir();
+          DependencyTrackingRegistry reg;
           try {
             // NOTE: we assume all classes needed to load dataset module class are available in the jar or otherwise
             //       are system classes
             // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
-            cl = jarLocation == null ? this.getClass().getClassLoader() : new JarClassLoader(jarLocation);
+            if (jarLocation != null) {
+              BundleJarUtil.unpackProgramJar(jarLocation, unpackedLocation);
+            }
+            cl = jarLocation == null ? this.getClass().getClassLoader() :
+              ClassLoaders.newProgramClassLoader(unpackedLocation, ApiResourceListHolder.getResourceList(),
+                                                 this.getClass().getClassLoader());
             @SuppressWarnings("unchecked")
             Class clazz = ClassLoaders.loadClass(className, cl, this);
             module = DatasetModules.getDatasetModule(clazz);
+            reg = new DependencyTrackingRegistry(datasets, cl);
+            module.register(reg);
           } catch (Exception e) {
             LOG.error("Could not instantiate instance of dataset module class {} for module {} using jarLocation {}",
                       className, name, jarLocation);
             throw Throwables.propagate(e);
+          } finally {
+            try {
+              DirUtils.deleteDirectoryContents(unpackedLocation);
+            } catch (IOException e) {
+              LOG.warn("Failed to delete directory {}", unpackedLocation, e);
+            }
           }
-
-          DependencyTrackingRegistry reg = new DependencyTrackingRegistry(datasets, cl);
-          module.register(reg);
-
           List<String> moduleDependencies = Lists.newArrayList();
           for (String usedType : reg.getUsedTypes()) {
             DatasetModuleMeta usedModule = datasets.getTypeMDS().getModuleByType(usedType);
@@ -175,7 +192,7 @@ public class DatasetTypeManager extends AbstractIdleService {
   /**
    * Get dataset type information
    * @param typeName name of the type to get info for
-   * @return instance of {@link com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta} or {@code null} if type
+   * @return instance of {@link DatasetTypeMeta} or {@code null} if type
    *         does NOT exist
    */
   @Nullable

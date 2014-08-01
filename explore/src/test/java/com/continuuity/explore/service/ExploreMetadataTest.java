@@ -18,10 +18,13 @@ package com.continuuity.explore.service;
 
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.explore.client.StatementExecutionFuture;
+import com.continuuity.explore.client.ExploreExecutionResult;
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryResult;
 import com.continuuity.test.SlowTests;
 
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -54,7 +57,7 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testGetTables() throws Exception {
-    StatementExecutionFuture future;
+    ListenableFuture<ExploreExecutionResult> future;
 
     // All tables
     future = getExploreClient().tables(null, null, "%", null);
@@ -68,10 +71,10 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
                             new ColumnDesc("REMARKS", "STRING", 5, "Comments about the table.")
                           ),
                           Lists.newArrayList(
-                            new Result(Lists.<Object>newArrayList("", "default", "my_table",
-                                                                  "TABLE", "Continuuity Reactor Dataset")),
-                            new Result(Lists.<Object>newArrayList("", "default", "other_table",
-                                                                  "TABLE", "Continuuity Reactor Dataset")))
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "", "default", "my_table", "TABLE", "Continuuity Reactor Dataset")),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "", "default", "other_table", "TABLE", "Continuuity Reactor Dataset")))
     );
 
     // Pattern on table name
@@ -85,25 +88,25 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
                             new ColumnDesc("REMARKS", "STRING", 5, "Comments about the table.")
                           ),
                           Lists.newArrayList(
-                            new Result(Lists.<Object>newArrayList("", "default", "other_table",
-                                                                  "TABLE", "Continuuity Reactor Dataset")))
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "", "default", "other_table", "TABLE", "Continuuity Reactor Dataset")))
     );
   }
 
   @Test
   public void testGetCatalogs() throws Exception {
-    StatementExecutionFuture future;
+    ListenableFuture<ExploreExecutionResult> future;
     future = getExploreClient().catalogs();
     assertStatementResult(future, false,
                           Lists.newArrayList(
                             new ColumnDesc("TABLE_CAT", "STRING", 1, "Catalog name. NULL if not applicable.")
                           ),
-                          Lists.<Result>newArrayList());
+                          Lists.<QueryResult>newArrayList());
   }
 
   @Test
   public void testGetSchemas() throws Exception {
-    StatementExecutionFuture future;
+    ListenableFuture<ExploreExecutionResult> future;
 
     future = getExploreClient().schemas(null, "");
     assertStatementResult(future, true,
@@ -111,12 +114,12 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
                             new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
                             new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")
                           ),
-                          Lists.newArrayList(new Result(Lists.<Object>newArrayList("default", ""))));
+                          Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("default", ""))));
   }
 
   @Test
   public void testGetTypeInfo() throws Exception {
-    StatementExecutionFuture future;
+    ListenableFuture<ExploreExecutionResult> future;
 
     future = getExploreClient().dataTypes();
     assertStatementResult(future, true,
@@ -146,73 +149,93 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
                             new ColumnDesc("NUM_PREC_RADIX", "INT", 18, "Usually 2 or 10")
                           ),
                           Lists.newArrayList(
-                            new Result(Lists.<Object>newArrayList("VOID", 0.0, null, null, null, null, 1.0, false,
-                                                                  3.0, true, false, false, null, 0.0, 0.0,
-                                                                  null, null, null)),
-                            new Result(Lists.<Object>newArrayList("BOOLEAN", 16.0, null, null, null, null, 1.0, false,
-                                                                  3.0, true, false, false, null, 0.0, 0.0, null,
-                                                                  null, null)),
-                            new Result(Lists.<Object>newArrayList("TINYINT", -6.0, 3.0, null, null, null, 1.0, false,
-                                                                  3.0, false, false, false, null, 0.0, 0.0,
-                                                                  null, null, 10.0)),
-                            new Result(Lists.<Object>newArrayList("SMALLINT", 5.0, 5.0, null, null, null, 1.0, false,
-                                                                  3.0, false, false, false, null, 0.0, 0.0,
-                                                                  null, null, 10.0)),
-                            new Result(Lists.<Object>newArrayList("INT", 4.0, 10.0, null, null, null, 1.0, false,
-                                                                  3.0, false, false, false, null, 0.0, 0.0,
-                                                                  null, null, 10.0)),
-                            new Result(Lists.<Object>newArrayList("BIGINT", -5.0, 19.0, null, null, null, 1.0, false,
-                                                                  3.0, false, false, false, null, 0.0, 0.0,
-                                                                  null, null, 10.0)),
-                            new Result(Lists.<Object>newArrayList("FLOAT", 6.0, 7.0, null, null, null, 1.0, false,
-                                                                  3.0, false, false, false, null, 0.0, 0.0,
-                                                                  null, null, 2.0)),
-                            new Result(Lists.<Object>newArrayList("DOUBLE", 8.0, 15.0, null, null, null, 1.0, false,
-                                                                  3.0, false, false, false, null, 0.0, 0.0,
-                                                                  null, null, 2.0)),
-                            new Result(Lists.<Object>newArrayList("STRING", 12.0, null, null, null, null, 1.0, true,
-                                                                  3.0, true, false, false, null, 0.0, 0.0,
-                                                                  null, null, null)),
-                            new Result(Lists.<Object>newArrayList("CHAR", 1.0, null, null, null, null, 1.0, false,
-                                                                  3.0, true, false, false, null, 0.0, 0.0,
-                                                                  null, null, null)),
-                            new Result(Lists.<Object>newArrayList("VARCHAR", 12.0, null, null, null, null, 1.0, false,
-                                                                  3.0, true, false, false, null, 0.0, 0.0,
-                                                                  null, null, null)),
-                            new Result(Lists.<Object>newArrayList("DATE", 91.0, null, null, null, null, 1.0, false,
-                                                                  3.0, true, false, false, null, 0.0, 0.0,
-                                                                  null, null, null)),
-                            new Result(Lists.<Object>newArrayList("TIMESTAMP", 93.0, null, null, null, null, 1.0, false,
-                                                                  3.0, true, false, false, null, 0.0, 0.0,
-                                                                  null, null, null)),
-                            new Result(Lists.<Object>newArrayList("BINARY", -2.0, null, null, null, null, 1.0, false,
-                                                                  3.0, true, false, false, null, 0.0, 0.0,
-                                                                  null, null, null)),
-                            new Result(Lists.<Object>newArrayList("DECIMAL", 3.0, null, null, null, null, 1.0, false,
-                                                                  3.0, false, false, false, null, 0.0, 0.0,
-                                                                  null, null, null)),
-                            new Result(Lists.<Object>newArrayList("ARRAY", 2003.0, null, null, null, null, 1.0, false,
-                                                                  0.0, true, false, false, null, 0.0, 0.0,
-                                                                  null, null, null)),
-                            new Result(Lists.<Object>newArrayList("MAP", 2000.0, null, null, null, null, 1.0, false,
-                                                                  0.0, true, false, false, null, 0.0, 0.0,
-                                                                  null, null, null)),
-                            new Result(Lists.<Object>newArrayList("STRUCT", 2002.0, null, null, null, null, 1.0, false,
-                                                                  0.0, true, false, false, null, 0.0, 0.0,
-                                                                  null, null, null)),
-                            new Result(Lists.<Object>newArrayList("UNIONTYPE", 1111.0, null, null, null, null, 1.0,
-                                                                  false, 0.0, true, false, false, null, 0.0, 0.0,
-                                                                  null, null, null)),
-                            new Result(Lists.<Object>newArrayList("USER_DEFINED", 1111.0, null, null, null, null, 1.0,
-                                                                  false, 0.0, true, false, false, null, 0.0, 0.0,
-                                                                  null, null, null))
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "VOID", 0.0, null, null, null, null, 1.0, false,
+                              3.0, true, false, false, null, 0.0, 0.0,
+                              null, null, null)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "BOOLEAN", 16.0, null, null, null, null, 1.0, false,
+                              3.0, true, false, false, null, 0.0, 0.0, null,
+                              null, null)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "TINYINT", -6.0, 3.0, null, null, null, 1.0, false,
+                              3.0, false, false, false, null, 0.0, 0.0,
+                              null, null, 10.0)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "SMALLINT", 5.0, 5.0, null, null, null, 1.0, false,
+                              3.0, false, false, false, null, 0.0, 0.0,
+                              null, null, 10.0)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "INT", 4.0, 10.0, null, null, null, 1.0, false,
+                              3.0, false, false, false, null, 0.0, 0.0,
+                              null, null, 10.0)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "BIGINT", -5.0, 19.0, null, null, null, 1.0, false,
+                              3.0, false, false, false, null, 0.0, 0.0,
+                              null, null, 10.0)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "FLOAT", 6.0, 7.0, null, null, null, 1.0, false,
+                              3.0, false, false, false, null, 0.0, 0.0,
+                              null, null, 2.0)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "DOUBLE", 8.0, 15.0, null, null, null, 1.0, false,
+                              3.0, false, false, false, null, 0.0, 0.0,
+                              null, null, 2.0)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "STRING", 12.0, null, null, null, null, 1.0, true,
+                              3.0, true, false, false, null, 0.0, 0.0,
+                              null, null, null)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "CHAR", 1.0, null, null, null, null, 1.0, false,
+                              3.0, true, false, false, null, 0.0, 0.0,
+                              null, null, null)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "VARCHAR", 12.0, null, null, null, null, 1.0, false,
+                              3.0, true, false, false, null, 0.0, 0.0,
+                              null, null, null)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "DATE", 91.0, null, null, null, null, 1.0, false,
+                              3.0, true, false, false, null, 0.0, 0.0,
+                              null, null, null)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "TIMESTAMP", 93.0, null, null, null, null, 1.0, false,
+                              3.0, true, false, false, null, 0.0, 0.0,
+                              null, null, null)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "BINARY", -2.0, null, null, null, null, 1.0, false,
+                              3.0, true, false, false, null, 0.0, 0.0,
+                              null, null, null)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "DECIMAL", 3.0, null, null, null, null, 1.0, false,
+                              3.0, false, false, false, null, 0.0, 0.0,
+                              null, null, null)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "ARRAY", 2003.0, null, null, null, null, 1.0, false,
+                              0.0, true, false, false, null, 0.0, 0.0,
+                              null, null, null)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "MAP", 2000.0, null, null, null, null, 1.0, false,
+                              0.0, true, false, false, null, 0.0, 0.0,
+                              null, null, null)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "STRUCT", 2002.0, null, null, null, null, 1.0, false,
+                              0.0, true, false, false, null, 0.0, 0.0,
+                              null, null, null)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "UNIONTYPE", 1111.0, null, null, null, null, 1.0,
+                              false, 0.0, true, false, false, null, 0.0, 0.0,
+                              null, null, null)),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "USER_DEFINED", 1111.0, null, null, null, null, 1.0,
+                              false, 0.0, true, false, false, null, 0.0, 0.0,
+                              null, null, null))
                           )
     );
   }
 
   @Test
   public void testGetColumns() throws Exception {
-    StatementExecutionFuture future = getExploreClient().columns(null, null, "%", "%");
+    ListenableFuture<ExploreExecutionResult> future = getExploreClient().columns(null, null, "%", "%");
     assertStatementResult(future, true,
                           Lists.newArrayList(
                             new ColumnDesc("TABLE_CAT", "STRING", 1, "Catalog name. NULL if not applicable"),
@@ -254,24 +277,28 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
                           Lists.newArrayList(
                             // TODO investigate why for some fields, INT is specified but a double is returned
                             // (might be REACTOR-429)
-                            new Result(Lists.<Object>newArrayList(null, "default", "my_table", "key", 12.0, "STRING",
-                                                                  2.147483647E9, null, null, null, 1.0,
-                                                                  "from deserializer", null, null, null, null, 1.0,
-                                                                  "YES", null, null, null, null, "NO")),
-                            new Result(Lists.<Object>newArrayList(null, "default", "my_table", "value", 2002.0,
-                                                                  "struct<name:string,ints:array<int>>", null, null,
-                                                                  null, null, 1.0, "from deserializer", null, null,
-                                                                  null, null, 2.0, "YES", null, null, null, null,
-                                                                  "NO")),
-                            new Result(Lists.<Object>newArrayList(null, "default", "other_table", "key", 12.0, "STRING",
-                                                                  2.147483647E9, null, null, null, 1.0,
-                                                                  "from deserializer", null, null, null, null, 1.0,
-                                                                  "YES", null, null, null, null, "NO")),
-                            new Result(Lists.<Object>newArrayList(null, "default", "other_table", "value", 2002.0,
-                                                                  "struct<name:string,ints:array<int>>", null, null,
-                                                                  null, null, 1.0, "from deserializer", null, null,
-                                                                  null, null, 2.0, "YES", null, null, null, null,
-                                                                  "NO")))
+                            new QueryResult(Lists.<Object>newArrayList(
+                              null, "default", "my_table", "key", 12.0, "STRING",
+                              2.147483647E9, null, null, null, 1.0,
+                              "from deserializer", null, null, null, null, 1.0,
+                              "YES", null, null, null, null, "NO")),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              null, "default", "my_table", "value", 2002.0,
+                              "struct<name:string,ints:array<int>>", null, null,
+                              null, null, 1.0, "from deserializer", null, null,
+                              null, null, 2.0, "YES", null, null, null, null,
+                              "NO")),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              null, "default", "other_table", "key", 12.0, "STRING",
+                              2.147483647E9, null, null, null, 1.0,
+                              "from deserializer", null, null, null, null, 1.0,
+                              "YES", null, null, null, null, "NO")),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              null, "default", "other_table", "value", 2002.0,
+                              "struct<name:string,ints:array<int>>", null, null,
+                              null, null, 1.0, "from deserializer", null, null,
+                              null, null, 2.0, "YES", null, null, null, null,
+                              "NO")))
     );
   }
 
@@ -283,23 +310,23 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testGetTableTypes() throws Exception {
-    StatementExecutionFuture future = getExploreClient().tableTypes();
+    ListenableFuture<ExploreExecutionResult> future = getExploreClient().tableTypes();
     assertStatementResult(future, true,
                           Lists.newArrayList(
                             new ColumnDesc("TABLE_TYPE", "STRING", 1, "Table type name.")
                           ),
                           Lists.newArrayList(
-                            new Result(Lists.<Object>newArrayList("TABLE")),
-                            new Result(Lists.<Object>newArrayList("TABLE")),
-                            new Result(Lists.<Object>newArrayList("VIEW")),
-                            new Result(Lists.<Object>newArrayList("INDEX_TABLE"))
+                            new QueryResult(Lists.<Object>newArrayList("TABLE")),
+                            new QueryResult(Lists.<Object>newArrayList("TABLE")),
+                            new QueryResult(Lists.<Object>newArrayList("VIEW")),
+                            new QueryResult(Lists.<Object>newArrayList("INDEX_TABLE"))
                           )
     );
   }
 
   @Test
   public void testGetFunctions() throws Exception {
-    StatementExecutionFuture future = getExploreClient().functions(null, null, "%");
+    ListenableFuture<ExploreExecutionResult> future = getExploreClient().functions(null, null, "%");
     assertStatementResult(future, true,
                           Lists.newArrayList(
                             new ColumnDesc("FUNCTION_CAT", "STRING", 1, "Function catalog (may be null)"),
@@ -313,205 +340,205 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
                           ),
                           Lists.newArrayList(
                             // We limited the results to 100 here
-                            new Result(Lists.<Object>newArrayList(null, null, "!", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "!", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "!=", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "!=", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "%", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "%", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "&", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "&", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "*", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "*", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "+", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "+", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "-", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "-", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "/", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "/", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "<", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "<", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "<=", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "<=", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "<=>", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "<=>", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "<>", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "<>", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "=", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "=", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "==", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "==", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, ">", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, ">", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, ">=", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, ">=", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "^", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "^", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "abs", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "abs", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "acos", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "acos", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "and", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "and", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "array", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "array", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "array_contains", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "array_contains", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "ascii", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "ascii", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "asin", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "asin", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "assert_true", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "assert_true", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "atan", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "atan", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "avg", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "avg", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "base64", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "base64", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "between", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "between", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "UDFToLong", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "UDFToLong", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "bin", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "bin", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "binary", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "binary", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "UDFToBoolean", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "UDFToBoolean", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "case", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "case", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "ceil", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "ceil", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "ceiling", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "ceiling", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "char", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "char", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "coalesce", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "coalesce", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "collect_list", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "collect_list", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "collect_set", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "collect_set", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "compute_stats", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "compute_stats", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "concat", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "concat", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "concat_ws", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "concat_ws", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "context_ngrams", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "context_ngrams", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "conv", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "conv", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "corr", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "corr", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "cos", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "cos", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "count", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "count", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "covar_pop", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "covar_pop", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "covar_samp", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "covar_samp", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "create_union", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "create_union", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "cume_dist", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "cume_dist", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "current_database", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "current_database", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "date", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "date", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "date_add", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "date_add", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "date_sub", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "date_sub", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "datediff", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "datediff", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "day", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "day", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "dayofmonth", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "dayofmonth", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "decimal", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "decimal", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "decode", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "decode", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "degrees", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "degrees", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "dense_rank", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "dense_rank", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "div", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "div", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "UDFToDouble", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "UDFToDouble", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "e", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "e", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "elt", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "elt", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "encode", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "encode", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "ewah_bitmap", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "ewah_bitmap", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "ewah_bitmap_and", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "ewah_bitmap_and", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "ewah_bitmap_empty", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "ewah_bitmap_empty", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "ewah_bitmap_or", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "ewah_bitmap_or", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "exp", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "exp", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "explode", "", 2.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "explode", "", 2.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "field", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "field", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "find_in_set", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "find_in_set", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "first_value", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "first_value", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "UDFToFloat", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "UDFToFloat", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "floor", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "floor", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "format_number", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "format_number", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "from_unixtime", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "from_unixtime", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "from_utc_timestamp", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "from_utc_timestamp", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "get_json_object", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "get_json_object", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "hash", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "hash", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "hex", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "hex", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "histogram_numeric", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "histogram_numeric", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "hour", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "hour", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "if", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "if", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "in", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "in", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "in_file", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "in_file", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "index", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "index", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "inline", "", 2.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "inline", "", 2.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "instr", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "instr", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "UDFToInteger", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "UDFToInteger", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "isnotnull", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "isnotnull", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "isnull", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "isnull", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "java_method", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "java_method", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "json_tuple", "", 2.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "json_tuple", "", 2.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "lag", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "lag", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")),
-                            new Result(Lists.<Object>newArrayList(null, null, "last_value", "", 1.0,
+                            new QueryResult(Lists.<Object>newArrayList(null, null, "last_value", "", 1.0,
                                                                   "org.apache.hadoop.hive.ql.exec.FunctionInfo")))
     );
   }

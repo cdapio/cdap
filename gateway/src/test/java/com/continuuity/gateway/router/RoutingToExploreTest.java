@@ -78,8 +78,8 @@ public class RoutingToExploreTest {
     // Starting mock DataSet service
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
     mockService = new MockHttpService(discoveryService, Constants.Service.EXPLORE_HTTP_USER_SERVICE,
-                                      new MockExploreExecutorHandler(), new MockExplorePingHandler(),
-                                      new MockExploreMetadataHandler());
+                                      new MockQueryExecutorHandler(), new MockExplorePingHandler(),
+                                      new MockExploreExecutorHandler(), new MockExploreMetadataHandler());
     mockService.startAndWait();
   }
 
@@ -93,13 +93,19 @@ public class RoutingToExploreTest {
   }
 
   @Test
-  public void testExploreHandlerRequests() throws Exception {
-    Assert.assertEquals("sendQuery", doRequest("/data/queries", "POST"));
-    Assert.assertEquals("stop:fooId", doRequest("/data/queries/fooId", "DELETE"));
-    Assert.assertEquals("cancel:fooId", doRequest("/data/queries/fooId/cancel", "POST"));
-    Assert.assertEquals("status:fooId", doRequest("/data/queries/fooId/status", "GET"));
-    Assert.assertEquals("schema:fooId", doRequest("/data/queries/fooId/schema", "GET"));
-    Assert.assertEquals("nextResults:fooId", doRequest("/data/queries/fooId/nextResults", "POST"));
+  public void testExploreQueriesHandlerRequests() throws Exception {
+    Assert.assertEquals("sendQuery", doRequest("/data/explore/queries", "POST"));
+    Assert.assertEquals("stop:fooId", doRequest("/data/explore/queries/fooId", "DELETE"));
+    Assert.assertEquals("status:fooId", doRequest("/data/explore/queries/fooId/status", "GET"));
+    Assert.assertEquals("schema:fooId", doRequest("/data/explore/queries/fooId/schema", "GET"));
+    Assert.assertEquals("nextResults:fooId", doRequest("/data/explore/queries/fooId/nextResults", "POST"));
+    Assert.assertEquals("queries-list", doRequest("/data/explore/queries", "GET"));
+    Assert.assertEquals("preview:fooId", doRequest("/data/explore/queries/fooId/preview", "POST"));
+  }
+
+  @Test
+  public void testExploreExecutorHandlerRequests() throws Exception {
+    Assert.assertEquals("schema:continuuity.user.foobar", doRequest("/data/explore/datasets/foobar/schema", "GET"));
   }
 
   @Test
@@ -129,46 +135,51 @@ public class RoutingToExploreTest {
   }
 
   @Path(Constants.Gateway.GATEWAY_VERSION)
-  public static final class MockExploreExecutorHandler extends AbstractHttpHandler {
+  public static final class MockQueryExecutorHandler extends AbstractHttpHandler {
 
     @POST
-    @Path("/data/queries")
+    @Path("/data/explore/queries")
     public void query(HttpRequest request, HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "sendQuery");
     }
 
     @DELETE
-    @Path("/data/queries/{id}")
+    @Path("/data/explore/queries/{id}")
     public void closeQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                            @PathParam("id") final String id) {
       responder.sendString(HttpResponseStatus.OK, "stop:" + id);
     }
 
-    @POST
-    @Path("/data/queries/{id}/cancel")
-    public void cancelQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                            @PathParam("id") final String id) {
-      responder.sendString(HttpResponseStatus.OK, "cancel:" + id);
-    }
-
     @GET
-    @Path("/data/queries/{id}/status")
+    @Path("/data/explore/queries/{id}/status")
     public void getQueryStatus(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                                @PathParam("id") final String id) {
       responder.sendString(HttpResponseStatus.OK, "status:" + id);
     }
 
     @GET
-    @Path("/data/queries/{id}/schema")
+    @Path("/data/explore/queries/{id}/schema")
     public void getQueryResultsSchema(@SuppressWarnings("UnusedParameters") HttpRequest request,
                                       HttpResponder responder, @PathParam("id") final String id) {
       responder.sendString(HttpResponseStatus.OK, "schema:" + id);
     }
 
     @POST
-    @Path("/data/queries/{id}/nextResults")
+    @Path("/data/explore/queries/{id}/nextResults")
     public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
       responder.sendString(HttpResponseStatus.OK, "nextResults:" + id);
+    }
+
+    @GET
+    @Path("/data/explore/queries")
+    public void getQueries(HttpRequest request, HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.OK, "queries-list");
+    }
+
+    @POST
+    @Path("/data/explore/queries/{id}/preview")
+    public void previewResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+      responder.sendString(HttpResponseStatus.OK, "preview:" + id);
     }
   }
 
@@ -220,6 +231,16 @@ public class RoutingToExploreTest {
     @Path("/data/explore/jdbc/info/{type}")
     public void getInfo(HttpRequest request, HttpResponder responder, @PathParam("type") final String type) {
       responder.sendString(HttpResponseStatus.OK, "info:" + type);
+    }
+  }
+
+  @Path(Constants.Gateway.GATEWAY_VERSION)
+  public static class MockExploreExecutorHandler extends AbstractHttpHandler {
+    @GET
+    @Path("/data/explore/datasets/{dataset}/schema")
+    public void getSchema(HttpRequest request, HttpResponder responder,
+                          @PathParam("dataset") final String datasetName) {
+      responder.sendString(HttpResponseStatus.OK, "schema:" + datasetName);
     }
   }
 

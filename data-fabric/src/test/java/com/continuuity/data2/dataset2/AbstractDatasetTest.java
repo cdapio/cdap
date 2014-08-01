@@ -31,6 +31,7 @@ import org.junit.After;
 import org.junit.Before;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  *
@@ -71,7 +72,12 @@ public class AbstractDatasetTest {
   }
 
   protected <T extends Dataset> T getInstance(String datasetName) throws DatasetManagementException, IOException {
-    return framework.getDataset(datasetName, null);
+    return getInstance(datasetName, null);
+  }
+
+  protected <T extends Dataset> T getInstance(String datasetName, Map<String, String> arguments)
+    throws DatasetManagementException, IOException {
+    return framework.getDataset(datasetName, arguments, null);
   }
 
   protected TransactionExecutor newTransactionExecutor(TransactionAware...tables) {

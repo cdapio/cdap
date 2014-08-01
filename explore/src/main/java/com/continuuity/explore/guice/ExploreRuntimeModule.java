@@ -35,6 +35,7 @@ import com.continuuity.http.HttpHandler;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Files;
 import com.google.inject.Exposed;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -119,11 +120,30 @@ public class ExploreRuntimeModule extends RuntimeModule {
       expose(ExploreService.class);
 
       bind(boolean.class).annotatedWith(Names.named("explore.inmemory")).toInstance(isInMemory);
+
+      bind(File.class).annotatedWith(Names.named(Constants.Explore.PREVIEWS_DIR_NAME))
+        .toProvider(PreviewsDirProvider.class);
+    }
+
+    private static final class PreviewsDirProvider implements Provider<File> {
+      private final CConfiguration cConf;
+
+      @Inject
+      public PreviewsDirProvider(CConfiguration cConf) {
+        this.cConf = cConf;
+      }
+
+      @Override
+      public File get() {
+        String localDirStr = cConf.get(Constants.Explore.LOCAL_DATA_DIR);
+        File previewsDir = new File(localDirStr, "previewsDir");
+        previewsDir.mkdir();
+        return previewsDir;
+      }
     }
 
     @Singleton
     private static final class ExploreServiceProvider implements Provider<ExploreService> {
-
       private final CConfiguration cConf;
       private final Configuration hConf;
       private final ExploreService exploreService;
@@ -208,6 +228,9 @@ public class ExploreRuntimeModule extends RuntimeModule {
         System.setProperty("hive.server2.enable.doAs", "false");
         System.setProperty("hive.server2.enable.impersonation", "false");
 
+        File previewDir = Files.createTempDir();
+        LOG.info("Storing preview files in {}", previewDir.getAbsolutePath());
+        bind(File.class).annotatedWith(Names.named(Constants.Explore.PREVIEWS_DIR_NAME)).toInstance(previewDir);
       } catch (Throwable e) {
         throw Throwables.propagate(e);
       }

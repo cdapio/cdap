@@ -18,6 +18,9 @@ package com.continuuity.explore.service;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
@@ -29,26 +32,33 @@ import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.ExploreExecutionResult;
-import com.continuuity.explore.client.StatementExecutionFuture;
 import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-
+import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryResult;
+import com.continuuity.proto.QueryStatus;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 
 import java.io.File;
+import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Base class for tests that need explore service to be running.
@@ -58,6 +68,8 @@ public class BaseHiveExploreServiceTest {
   protected static DatasetFramework datasetFramework;
   protected static DatasetService datasetService;
   protected static ExploreExecutorService exploreExecutorService;
+  protected static EndpointStrategy datasetManagerEndpointStrategy;
+  protected static ExploreService exploreService;
 
   protected static ExploreClient exploreClient;
 
@@ -75,7 +87,12 @@ public class BaseHiveExploreServiceTest {
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
 
+    DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
+    datasetManagerEndpointStrategy = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)), 1L, TimeUnit.SECONDS);
+
     exploreClient = injector.getInstance(ExploreClient.class);
+    exploreService = injector.getInstance(ExploreService.class);
     Assert.assertTrue(exploreClient.isServiceAvailable());
   }
 
@@ -91,34 +108,51 @@ public class BaseHiveExploreServiceTest {
     return exploreClient;
   }
 
+  protected static QueryStatus waitForCompletionStatus(QueryHandle handle, long sleepTime,
+                                                       TimeUnit timeUnit, int maxTries)
+    throws ExploreException, HandleNotFoundException, InterruptedException, SQLException {
+    QueryStatus status;
+    int tries = 0;
+    do {
+      timeUnit.sleep(sleepTime);
+      status = exploreService.getStatus(handle);
+
+      if (++tries > maxTries) {
+        break;
+      }
+    } while (!status.getStatus().isDone());
+    return status;
+  }
+
   protected static void runCommand(String command, boolean expectedHasResult,
-                                   List<ColumnDesc> expectedColumnDescs, List<Result> expectedResults)
+                                   List<ColumnDesc> expectedColumnDescs, List<QueryResult> expectedResults)
     throws Exception {
 
-    StatementExecutionFuture future = exploreClient.submit(command);
+    ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(command);
     assertStatementResult(future, expectedHasResult, expectedColumnDescs, expectedResults);
   }
 
-  protected static void assertStatementResult(StatementExecutionFuture future, boolean expectedHasResult,
-                                              List<ColumnDesc> expectedColumnDescs, List<Result> expectedResults)
+  protected static void assertStatementResult(ListenableFuture<ExploreExecutionResult> future,
+                                              boolean expectedHasResult, List<ColumnDesc> expectedColumnDescs,
+                                              List<QueryResult> expectedResults)
     throws Exception {
     ExploreExecutionResult results = future.get();
 
     Assert.assertEquals(expectedHasResult, results.hasNext());
 
-    Assert.assertEquals(expectedColumnDescs, future.getResultSchema());
+    Assert.assertEquals(expectedColumnDescs, results.getResultSchema());
     Assert.assertEquals(expectedResults, trimColumnValues(results));
 
     results.close();
   }
 
-  protected static List<Result> trimColumnValues(Iterator<Result> results) {
+  protected static List<QueryResult> trimColumnValues(Iterator<QueryResult> results) {
     int i = 0;
-    List<Result> newResults = Lists.newArrayList();
+    List<QueryResult> newResults = Lists.newArrayList();
     // Max 100 results
     while (results.hasNext() && i < 100) {
       i++;
-      Result result = results.next();
+      QueryResult result = results.next();
       List<Object> newCols = Lists.newArrayList();
       for (Object obj : result.getColumns()) {
         if (obj instanceof String) {
@@ -130,7 +164,7 @@ public class BaseHiveExploreServiceTest {
           newCols.add(obj);
         }
       }
-      newResults.add(new Result(newCols));
+      newResults.add(new QueryResult(newCols));
     }
     return newResults;
   }

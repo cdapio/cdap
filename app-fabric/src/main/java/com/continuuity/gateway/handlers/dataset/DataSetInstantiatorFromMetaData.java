@@ -19,7 +19,6 @@ package com.continuuity.gateway.handlers.dataset;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.app.Id;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
@@ -28,7 +27,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
+import com.continuuity.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -79,6 +78,11 @@ public final class DataSetInstantiatorFromMetaData {
 
   public <T extends DataSet> T getDataSet(String name, OperationContext context)
     throws DataSetInstantiationException {
+    return getDataSet(name, null, context);
+  }
+
+  public <T extends DataSet> T getDataSet(String name, Map<String, String> arguments, OperationContext context)
+    throws DataSetInstantiationException {
 
     synchronized (this) {
       if (!this.instantiator.hasDataSet(name)) {
@@ -88,7 +92,7 @@ public final class DataSetInstantiatorFromMetaData {
       // this just gets passed through to the data set instantiator
       // This call needs to be inside the synchronized call, otherwise it's possible that we are adding a DataSet
       // to the instantiator while retrieving an existing one (try to access while updating the underlying map).
-      return this.instantiator.getDataSet(name, new DataFabric2Impl(locationFactory, dataSetAccessor),
+      return this.instantiator.getDataSet(name, arguments, new DataFabric2Impl(locationFactory, dataSetAccessor),
                                           // NOTE: it is fine give null as ds framework here, we access datasets V2
                                           //       differently (thru dataset manager that talks to ds service)
                                           null);

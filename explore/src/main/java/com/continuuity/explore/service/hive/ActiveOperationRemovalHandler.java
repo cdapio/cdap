@@ -16,8 +16,8 @@
 
 package com.continuuity.explore.service.hive;
 
-import com.continuuity.explore.service.Handle;
-import com.continuuity.explore.service.Status;
+import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryStatus;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import org.slf4j.Logger;
@@ -30,7 +30,7 @@ import static com.continuuity.explore.service.hive.BaseHiveExploreService.Operat
 /**
  * Takes care of closing operations after they are removed from the cache.
  */
-public class ActiveOperationRemovalHandler implements RemovalListener<Handle, OperationInfo> {
+public class ActiveOperationRemovalHandler implements RemovalListener<QueryHandle, OperationInfo> {
   private static final Logger LOG = LoggerFactory.getLogger(ActiveOperationRemovalHandler.class);
 
   private final BaseHiveExploreService exploreService;
@@ -42,16 +42,16 @@ public class ActiveOperationRemovalHandler implements RemovalListener<Handle, Op
   }
 
   @Override
-  public void onRemoval(RemovalNotification<Handle, OperationInfo> notification) {
+  public void onRemoval(RemovalNotification<QueryHandle, OperationInfo> notification) {
     LOG.trace("Got removal notification for handle {} with cause {}", notification.getKey(), notification.getCause());
     executorService.submit(new ResourceCleanup(notification.getKey(), notification.getValue()));
   }
 
   private class ResourceCleanup implements Runnable {
-    private final Handle handle;
+    private final QueryHandle handle;
     private final OperationInfo opInfo;
 
-    private ResourceCleanup(Handle handle, OperationInfo opInfo) {
+    private ResourceCleanup(QueryHandle handle, OperationInfo opInfo) {
       this.handle = handle;
       this.opInfo = opInfo;
     }
@@ -59,14 +59,14 @@ public class ActiveOperationRemovalHandler implements RemovalListener<Handle, Op
     @Override
     public void run() {
       try {
-        Status status = exploreService.fetchStatus(opInfo.getOperationHandle());
+        QueryStatus status = exploreService.fetchStatus(opInfo.getOperationHandle());
 
         // If operation is still not complete, cancel it.
-        if (status.getStatus() != Status.OpStatus.FINISHED && status.getStatus() != Status.OpStatus.CLOSED &&
-          status.getStatus() != Status.OpStatus.CANCELED && status.getStatus() != Status.OpStatus.ERROR) {
-          LOG.info("Cancelling handle {} with status {} due to timeout",
-                   handle.getHandle(), status.getStatus());
-          exploreService.cancel(handle);
+        if (status.getStatus() != QueryStatus.OpStatus.FINISHED && status.getStatus() != QueryStatus.OpStatus.CLOSED &&
+          status.getStatus() != QueryStatus.OpStatus.CANCELED && status.getStatus() != QueryStatus.OpStatus.ERROR) {
+          LOG.info("Cancelling handle {} with status {} due to timeout", handle.getHandle(), status.getStatus());
+          // This operation is aysnc, except with Hive CDH 4, in which case cancel throws an unsupported exception
+          exploreService.cancelInternal(handle);
         }
 
       } catch (Throwable e) {

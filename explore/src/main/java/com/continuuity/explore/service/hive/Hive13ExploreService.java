@@ -17,16 +17,18 @@
 package com.continuuity.explore.service.hive;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Result;
-import com.continuuity.explore.service.Status;
+import com.continuuity.proto.QueryResult;
+import com.continuuity.proto.QueryStatus;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.cli.FetchOrientation;
@@ -36,6 +38,7 @@ import org.apache.hive.service.cli.OperationStatus;
 import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.SessionHandle;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,27 +49,28 @@ public class Hive13ExploreService extends BaseHiveExploreService {
 
   @Inject
   public Hive13ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                              CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
-    super(txClient, datasetFramework, cConf, hConf, hiveConf);
+                              CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
+                              @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir) {
+    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir);
   }
 
   @Override
-  protected Status fetchStatus(OperationHandle operationHandle)
+  protected QueryStatus fetchStatus(OperationHandle operationHandle)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     OperationStatus operationStatus = getCliService().getOperationStatus(operationHandle);
-    return new Status(Status.OpStatus.valueOf(operationStatus.getState().toString()),
-                               operationHandle.hasResultSet());
+    return new QueryStatus(QueryStatus.OpStatus.valueOf(operationStatus.getState().toString()),
+                           operationHandle.hasResultSet());
   }
 
   @Override
-  protected List<Result> fetchNextResults(OperationHandle operationHandle, int size)
+  protected List<QueryResult> fetchNextResults(OperationHandle operationHandle, int size)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
 
     if (operationHandle.hasResultSet()) {
       RowSet rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
-      ImmutableList.Builder<Result> rowsBuilder = ImmutableList.builder();
+      ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
       for (Object[] objects : rowSet) {
-        rowsBuilder.add(new Result(Lists.newArrayList(objects)));
+        rowsBuilder.add(new QueryResult(Lists.newArrayList(objects)));
       }
       return rowsBuilder.build();
     } else {
