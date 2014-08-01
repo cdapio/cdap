@@ -92,8 +92,8 @@ public class HiveCDH4ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  public void cancel(QueryHandle handle) throws ExploreException, HandleNotFoundException, SQLException {
+  void cancelInternal(QueryHandle handle) throws ExploreException, HandleNotFoundException, SQLException {
     LOG.warn("Trying to cancel operation with handle {}", handle);
-    throw new ExploreException("Cancel operation is not supported with CDH4.");
+    throw new UnsupportedOperationException("Cancel operation is not supported with CDH4.");
   }
 }

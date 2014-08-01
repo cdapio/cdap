@@ -27,6 +27,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
@@ -91,36 +92,42 @@ public class ExploreDriverTest {
     connectionParams = driver.parseConnectionUrl(baseUrl);
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
-    Assert.assertEquals(ImmutableMap.of(), connectionParams.getExtraInfos());
+    Assert.assertEquals(ImmutableMultimap.of(), connectionParams.getExtraInfos());
 
     connectionParams = driver.parseConnectionUrl(baseUrl + "?reactor.auth.token=foo");
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(
-      ImmutableMap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, ImmutableList.of("foo")),
+      ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo"),
       connectionParams.getExtraInfos());
 
     connectionParams = driver.parseConnectionUrl(baseUrl + "?reactor.auth.token=foo&foo2=bar2");
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(
-      ImmutableMap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, ImmutableList.of("foo")),
+      ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo"),
       connectionParams.getExtraInfos());
 
     connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&reactor.auth.token=foo");
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(
-      ImmutableMap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, ImmutableList.of("foo")),
+      ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo"),
       connectionParams.getExtraInfos());
 
     connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&reactor.auth.token");
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
+    Assert.assertEquals(ImmutableMultimap.of(), connectionParams.getExtraInfos());
+
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&reactor.auth.token=foo,bar");
+    Assert.assertEquals("foobar", connectionParams.getHost());
+    Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(
-      ImmutableMap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, ImmutableList.of("")),
+      ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo",
+                           ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "bar"),
       connectionParams.getExtraInfos());
-  }
+ }
 
   @Test
   public void testDriverConnection() throws Exception {
@@ -258,18 +265,6 @@ public class ExploreDriverTest {
         return;
       }
       closedHandles.add(id);
-      responder.sendStatus(HttpResponseStatus.OK);
-    }
-
-    @POST
-    @Path("v2/data/explore/queries/{id}/cancel")
-    public void cancelQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                            @PathParam("id") final String id) {
-      if (closedHandles.contains(id)) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-      canceledHandles.add(id);
       responder.sendStatus(HttpResponseStatus.OK);
     }
 
