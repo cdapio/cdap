@@ -1,9 +1,0 @@
-bad_md5 = [
-        'sentinel'
-]
-
-good_md5 = [
-        '403b2e4569c6ca65918e04be71172221',
-        'sentinel'
-]
-

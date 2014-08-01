@@ -16,38 +16,38 @@
 
 package com.continuuity.data2.dataset.lib.table;
 
+import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.table.OrderedTable;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.dataset.api.DataSetManager;
-
-import java.util.Properties;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
+import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 
 /**
  * Common utility for managing system metadata tables needed by various services.
  */
 public abstract class MetaTableUtil {
 
-  protected final DataSetAccessor dataSetAccessor;
+  protected final DatasetFramework dsFramework;
 
-  public MetaTableUtil(DataSetAccessor dataSetAccessor) {
-    this.dataSetAccessor = dataSetAccessor;
+  public MetaTableUtil(DatasetFramework framework, CConfiguration conf) {
+    this.dsFramework =
+      new NamespacedDatasetFramework(framework, new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.SYSTEM));
   }
 
-  public OrderedColumnarTable getMetaTable() throws Exception {
-    DataSetManager dsManager = dataSetAccessor.getDataSetManager(OrderedColumnarTable.class,
-                                                                 DataSetAccessor.Namespace.SYSTEM);
-    String tableName = getMetaTableName();
-    if (!dsManager.exists(tableName)) {
-      dsManager.create(tableName);
-    }
-
-    return dataSetAccessor.getDataSetClient(tableName,
-                                            OrderedColumnarTable.class, DataSetAccessor.Namespace.SYSTEM);
+  public OrderedTable getMetaTable() throws Exception {
+    return DatasetsUtil.getOrCreateDataset(dsFramework, getMetaTableName(), OrderedTable.class.getName(),
+                                           DatasetProperties.EMPTY, null);
   }
 
   public void upgrade() throws Exception {
-    DataSetManager dsManager = dataSetAccessor.getDataSetManager(OrderedColumnarTable.class,
-                                                                 DataSetAccessor.Namespace.SYSTEM);
-    dsManager.upgrade(getMetaTableName(), new Properties());
+    DatasetAdmin admin = dsFramework.getAdmin(getMetaTableName(), null);
+    if (admin != null) {
+      admin.upgrade();
+    }
   }
 
   /**

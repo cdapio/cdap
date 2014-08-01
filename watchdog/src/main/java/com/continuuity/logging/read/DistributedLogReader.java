@@ -18,7 +18,7 @@ package com.continuuity.logging.read;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.kafka.KafkaTopic;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
@@ -79,7 +79,7 @@ public final class DistributedLogReader implements LogReader {
    * @param cConfig configuration object containing Kafka seed brokers and number of Kafka partitions for log topic.
    */
   @Inject
-  public DistributedLogReader(DataSetAccessor dataSetAccessor,
+  public DistributedLogReader(DatasetFramework dsFramework,
                               TransactionSystemClient txClient,
                               CConfiguration cConfig,
                               LocationFactory locationFactory) {
@@ -99,7 +99,7 @@ public final class DistributedLogReader implements LogReader {
       this.serializer = new LoggingEventSerializer();
 
       this.fileMetaDataManager =
-        new FileMetaDataManager(new LogSaverTableUtil(dataSetAccessor).getMetaTable(), txClient, locationFactory);
+        new FileMetaDataManager(new LogSaverTableUtil(dsFramework, cConfig), txClient, locationFactory);
 
       this.schema = new LogSchema().getAvroSchema();
     } catch (Exception e) {

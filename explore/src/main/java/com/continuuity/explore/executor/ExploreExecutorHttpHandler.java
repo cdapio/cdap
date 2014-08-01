@@ -64,14 +64,13 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    * Enable ad-hoc exploration of a dataset instance.
    */
   @POST
-  // TODO rename to datasets instead of instances. Also, path should be v2/data/explore/datasets/<name>/enable
-  @Path("/explore/instances/{instance}/enable")
+  @Path("data/explore/datasets/{dataset}/enable")
   public void enableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                            @PathParam("instance") final String instance) {
+                            @PathParam("dataset") final String datasetName) {
     try {
       Dataset dataset;
       try {
-        dataset = datasetFramework.getDataset(instance, null);
+        dataset = datasetFramework.getDataset(datasetName, null);
       } catch (Exception e) {
         String className = isClassNotFoundException(e);
         if (className == null) {
@@ -79,40 +78,40 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         }
         LOG.info("Cannot load dataset {} because class {} cannot be found. This is probably because class {} is a " +
                    "type parameter of dataset {} that is not present in the dataset's jar file. See the developer " +
-                   "guide for more information.", instance, className, className, instance);
+                   "guide for more information.", datasetName, className, className, datasetName);
         JsonObject json = new JsonObject();
         json.addProperty("handle", QueryHandle.NO_OP.getHandle());
         responder.sendJson(HttpResponseStatus.OK, json);
         return;
       }
       if (dataset == null) {
-        responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + instance);
+        responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
         return;
       }
 
       if (!(dataset instanceof RecordScannable)) {
         // It is not an error to get non-RecordScannable datasets, since the type of dataset may not be known where this
         // call originates from.
-        LOG.debug("Dataset {} does not implement {}", instance, RecordScannable.class.getName());
+        LOG.debug("Dataset {} does not implement {}", datasetName, RecordScannable.class.getName());
         JsonObject json = new JsonObject();
         json.addProperty("handle", QueryHandle.NO_OP.getHandle());
         responder.sendJson(HttpResponseStatus.OK, json);
         return;
       }
 
-      LOG.debug("Enabling explore for dataset instance {}", instance);
+      LOG.debug("Enabling explore for dataset instance {}", datasetName);
       RecordScannable<?> scannable = (RecordScannable) dataset;
       String createStatement;
       try {
-        createStatement = DatasetExploreFacade.generateCreateStatement(instance, scannable);
+        createStatement = DatasetExploreFacade.generateCreateStatement(datasetName, scannable);
       } catch (UnsupportedTypeException e) {
-        LOG.error("Exception while generating create statement for dataset {}", instance, e);
+        LOG.error("Exception while generating create statement for dataset {}", datasetName, e);
         responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         return;
       }
 
       LOG.debug("Running create statement for dataset {} with row scannable {} - {}",
-                instance,
+                datasetName,
                 dataset.getClass().getName(),
                 createStatement);
 
@@ -140,33 +139,30 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    * Disable ad-hoc exploration of a dataset instance.
    */
   @POST
-  // TODO rename to datasets instead of instances. Also, path should be v2/data/explore/datasets/<name>/disable
-  @Path("/explore/instances/{instance}/disable")
+  @Path("data/explore/datasets/{dataset}/disable")
   public void disableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                             @PathParam("instance") final String instance) {
+                             @PathParam("dataset") final String datasetName) {
     try {
-      LOG.debug("Disabling explore for dataset instance {}", instance);
+      LOG.debug("Disabling explore for dataset instance {}", datasetName);
 
-      Dataset dataset = datasetFramework.getDataset(instance, null);
+      Dataset dataset = datasetFramework.getDataset(datasetName, null);
       if (dataset == null) {
-        responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + instance);
+        responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
         return;
       }
 
       if (!(dataset instanceof RecordScannable)) {
         // It is not an error to get non-RecordScannable datasets, since the type of dataset may not be known where this
         // call originates from.
-        LOG.debug("Dataset {} does not implement {}", instance, RecordScannable.class.getName());
+        LOG.debug("Dataset {} does not implement {}", datasetName, RecordScannable.class.getName());
         JsonObject json = new JsonObject();
         json.addProperty("handle", QueryHandle.NO_OP.getHandle());
         responder.sendJson(HttpResponseStatus.OK, json);
         return;
       }
 
-      String deleteStatement = DatasetExploreFacade.generateDeleteStatement(instance);
-      LOG.debug("Running delete statement for dataset {} - {}",
-                instance,
-                deleteStatement);
+      String deleteStatement = DatasetExploreFacade.generateDeleteStatement(datasetName);
+      LOG.debug("Running delete statement for dataset {} - {}", datasetName, deleteStatement);
 
       QueryHandle handle = exploreService.execute(deleteStatement);
       JsonObject json = new JsonObject();

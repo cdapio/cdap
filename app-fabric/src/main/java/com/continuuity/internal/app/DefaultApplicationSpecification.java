@@ -92,6 +92,15 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                                spec.getMapReduce(), spec.getWorkflows());
   }
 
+  public static DefaultApplicationSpecification from(ApplicationSpecification spec) {
+    return new DefaultApplicationSpecification(spec.getName(), spec.getDescription(),
+                                               spec.getStreams(), spec.getDataSets(),
+                                               spec.getDatasetModules(), spec.getDatasets(),
+                                               spec.getFlows(), spec.getProcedures(),
+                                               spec.getMapReduce(), spec.getWorkflows(),
+                                               spec.getServices());
+  }
+
   @Override
   public String getName() {
     return name;
