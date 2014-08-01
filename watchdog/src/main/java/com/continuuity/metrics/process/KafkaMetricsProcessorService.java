@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Process metrics by consuming metrics being published to kafka.
@@ -48,6 +49,8 @@ public final class KafkaMetricsProcessorService extends AbstractIdleService {
   private final Set<Integer> partitions;
   private Cancellable unsubscribe;
   private final MetricsTableFactory metricsTableFactory;
+
+  private boolean stopping = false;
 
   private KafkaConsumerMetaTable metaTable;
 
@@ -73,6 +76,7 @@ public final class KafkaMetricsProcessorService extends AbstractIdleService {
 
   @Override
   protected void shutDown() {
+    stopping = true;
     LOG.info("Stopping Metrics Processing Service.");
 
     // Cancel kafka subscriptions
@@ -83,8 +87,18 @@ public final class KafkaMetricsProcessorService extends AbstractIdleService {
   }
 
   private KafkaConsumerMetaTable getMetaTable() {
-    if (metaTable == null) {
-      metaTable = metricsTableFactory.createKafkaConsumerMeta("default");
+    while (!stopping && metaTable == null) {
+      try {
+        metaTable = metricsTableFactory.createKafkaConsumerMeta("default");
+      } catch (Exception e) {
+        LOG.warn("Cannot access kafka consumer metaTable, will retry in 1 sec");
+        try {
+          TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+          break;
+        }
+      }
     }
 
     return metaTable;
