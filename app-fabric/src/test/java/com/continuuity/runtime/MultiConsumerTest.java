@@ -91,7 +91,7 @@ public class MultiConsumerTest {
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
                               datasetFramework, CConfiguration.create(),
                               getClass().getClassLoader());
-    ApplicationSpecification spec = Specifications.from(new MultiApp().configure());
+    ApplicationSpecification spec = Specifications.from(new MultiApp());
     dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
 
     final KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");

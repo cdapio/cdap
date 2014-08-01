@@ -123,7 +123,7 @@ public class StreamCompatibilityTest {
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
                               datasetFramework, CConfiguration.create(),
                               getClass().getClassLoader());
-    ApplicationSpecification spec = Specifications.from(new StreamApp().configure());
+    ApplicationSpecification spec = Specifications.from(new StreamApp());
     dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
 
     final KeyValueTable streamOut = dataSetInstantiator.getDataSet("streamout");

@@ -71,8 +71,6 @@ import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.metrics.query.MetricsQueryService;
-import com.continuuity.tephra.Transaction;
-import com.continuuity.tephra.TransactionSystemClient;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.test.internal.AppFabricClient;
 import com.continuuity.test.internal.ApplicationManagerFactory;

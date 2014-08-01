@@ -16,11 +16,10 @@
 
 package com.continuuity;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
@@ -51,20 +50,18 @@ import java.io.IOException;
  * (open/close/read/write/getsplits) are called, so the unit test can verify.
  */
 @SuppressWarnings("unused")
-public class DummyAppWithTrackingTable implements Application {
+public class DummyAppWithTrackingTable extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("dummy")
-      .setDescription("dummy app with a dataset that tracks open and close")
-      .withStreams().add(new Stream("xx"))
-      .withDataSets().add(new TrackingTable("foo")).add(new TrackingTable("bar"))
-      .withFlows().add(new DummyFlow())
-      .withProcedures().add(new DummyProcedure())
-      .withMapReduce().add(new DummyBatch())
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("dummy");
+    setDescription("dummy app with a dataset that tracks open and close");
+    addStream(new Stream("xx"));
+    createDataset("foo", TrackingTable.class);
+    createDataset("bar", TrackingTable.class);
+    addFlow(new DummyFlow());
+    addProcedure(new DummyProcedure());
+    addMapReduce(new DummyBatch());
   }
 
   /**

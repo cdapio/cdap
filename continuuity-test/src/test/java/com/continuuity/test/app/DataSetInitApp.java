@@ -15,14 +15,13 @@
  */
 package com.continuuity.test.app;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.dataset.table.Get;
-import com.continuuity.api.data.dataset.table.Put;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.app.AbstractApplication;
+import com.continuuity.api.dataset.table.Get;
+import com.continuuity.api.dataset.table.Put;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -35,22 +34,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * An app that access DataSet in initialize method.
  */
-public class DataSetInitApp implements Application {
+public class DataSetInitApp extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("DataSetInitApp")
-      .setDescription("DataSetInitApp")
-      .noStream()
-      .withDataSets()
-        .add(new Table("conf"))
-      .withFlows()
-        .add(new DataSetFlow())
-      .noProcedure()
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("DataSetInitApp");
+    setDescription("DataSetInitApp");
+    createDataset("conf", Table.class);
+    addFlow(new DataSetFlow());
   }
 
   /**

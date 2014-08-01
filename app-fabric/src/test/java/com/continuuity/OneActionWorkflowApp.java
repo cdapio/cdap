@@ -16,8 +16,7 @@
 
 package com.continuuity;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.workflow.AbstractWorkflowAction;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
@@ -25,22 +24,13 @@ import com.continuuity.api.workflow.WorkflowSpecification;
 /**
  *
  */
-public class OneActionWorkflowApp implements Application {
+public class OneActionWorkflowApp extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder
-                                   .with()
-                                   .setName("OneActionWorkflowApp")
-                                   .setDescription("Workflow with a single action")
-                                   .noStream()
-                                   .noDataSet()
-                                   .noFlow()
-                                   .noProcedure()
-                                   .noMapReduce()
-                                   .withWorkflows()
-                                      .add(new OneActionWorkflow())
-                                   .build();
+  public void configure() {
+    setName("OneActionWorkflowApp");
+    setDescription("Workflow with a single action");
+    addWorkflow(new OneActionWorkflow());
   }
 
   /**
@@ -50,11 +40,11 @@ public class OneActionWorkflowApp implements Application {
 
     @Override
     public WorkflowSpecification configure() {
-     return WorkflowSpecification.Builder.with()
-                                         .setName("OneActionWorkflow")
-                                         .setDescription("One action workflow")
-                                         .onlyWith(new EmptyAction())
-                                         .build();
+      return WorkflowSpecification.Builder.with()
+        .setName("OneActionWorkflow")
+        .setDescription("One action workflow")
+        .onlyWith(new EmptyAction())
+        .build();
     }
   }
 

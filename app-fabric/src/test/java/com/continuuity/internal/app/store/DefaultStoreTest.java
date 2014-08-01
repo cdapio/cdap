@@ -29,12 +29,12 @@ import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.app.AbstractApplication;
-import com.continuuity.api.app.Application;
 import com.continuuity.api.app.ApplicationContext;
-import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.IndexedTable;
-import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.lib.IndexedTable;
+import com.continuuity.api.dataset.lib.KeyValueTable;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
@@ -181,7 +181,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testAddApplication() throws Exception {
-    ApplicationSpecification spec = getSpec(new WordCountApp().configure());
+    ApplicationSpecification spec = Specifications.from(new WordCountApp());
     Id.Application id = new Id.Application(new Id.Account("account1"), "application1");
     store.addApplication(id, spec, new LocalLocationFactory().create("/foo/path/application1.jar"));
 
@@ -193,7 +193,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testUpdateSameApplication() throws Exception {
-    ApplicationSpecification spec = getSpec(new WordCountApp().configure());
+    ApplicationSpecification spec = Specifications.from(new WordCountApp());
     Id.Application id = new Id.Application(new Id.Account("account1"), "application1");
     store.addApplication(id, spec, new LocalLocationFactory().create("/foo/path/application1.jar"));
     // update
@@ -209,67 +209,48 @@ public class DefaultStoreTest {
   public void testUpdateChangedApplication() throws Exception {
     Id.Application id = new Id.Application(new Id.Account("account1"), "application1");
 
-    store.addApplication(id, getSpec(new FooApp().configure()), new LocalLocationFactory().create("/foo"));
+    store.addApplication(id, Specifications.from(new FooApp()), new LocalLocationFactory().create("/foo"));
     // update
-    store.addApplication(id, getSpec(new ChangedFooApp().configure()), new LocalLocationFactory().create("/foo"));
+    store.addApplication(id, Specifications.from(new ChangedFooApp()), new LocalLocationFactory().create("/foo"));
 
     ApplicationSpecification stored = store.getApplication(id);
     assertChangedFooAppSpecAndInMetadataStore(stored);
   }
 
-  private ApplicationSpecification getSpec(com.continuuity.api.ApplicationSpecification spec) {
-    return Specifications.from(spec);
-  }
-
-  private static class FooApp implements com.continuuity.api.Application {
+  private static class FooApp extends AbstractApplication {
     @Override
-    public com.continuuity.api.ApplicationSpecification configure() {
-      return com.continuuity.api.ApplicationSpecification.Builder.with()
-        .setName("FooApp")
-        .setDescription("Foo App")
-        .withStreams()
-          .add(new com.continuuity.api.data.stream.Stream("stream1"))
-          .add(new com.continuuity.api.data.stream.Stream("stream2"))
-        .withDataSets()
-          .add(new Table("dataset1"))
-          .add(new KeyValueTable("dataset2"))
-        .withFlows()
-          .add(new FlowImpl("flow1"))
-          .add(new FlowImpl("flow2"))
-        .withProcedures()
-          .add(new ProcedureImpl("procedure1"))
-          .add(new ProcedureImpl("procedure2"))
-        .withMapReduce()
-          .add(new FooMapReduceJob("mrJob1"))
-          .add(new FooMapReduceJob("mrJob2"))
-        .noWorkflow()
-        .build();
+    public void configure() {
+      setName("FooApp");
+      setDescription("Foo App");
+      addStream(new Stream("stream1"));
+      addStream(new Stream("stream2"));
+      createDataset("dataset1", Table.class);
+      createDataset("dataset2", KeyValueTable.class);
+      addFlow(new FlowImpl("flow1"));
+      addFlow(new FlowImpl("flow2"));
+      addProcedure(new ProcedureImpl("procedure1"));
+      addProcedure(new ProcedureImpl("procedure2"));
+      addMapReduce(new FooMapReduceJob("mrJob1"));
+      addMapReduce(new FooMapReduceJob("mrJob2"));
     }
   }
 
-  private static class ChangedFooApp implements com.continuuity.api.Application {
+  private static class ChangedFooApp extends AbstractApplication {
     @Override
-    public com.continuuity.api.ApplicationSpecification configure() {
-      return com.continuuity.api.ApplicationSpecification.Builder.with()
-        .setName("FooApp")
-        .setDescription("Foo App")
-        .withStreams()
-          .add(new com.continuuity.api.data.stream.Stream("stream2"))
-          .add(new com.continuuity.api.data.stream.Stream("stream3"))
-        .withDataSets()
-          .add(new KeyValueTable("dataset2"))
-          .add(new IndexedTable("dataset3", Bytes.toBytes("foo")))
-        .withFlows()
-          .add(new FlowImpl("flow2"))
-          .add(new FlowImpl("flow3"))
-        .withProcedures()
-          .add(new ProcedureImpl("procedure2"))
-          .add(new ProcedureImpl("procedure3"))
-        .withMapReduce()
-          .add(new FooMapReduceJob("mrJob2"))
-          .add(new FooMapReduceJob("mrJob3"))
-        .noWorkflow()
-        .build();
+    public void configure() {
+      setName("FooApp");
+      setDescription("Foo App");
+      addStream(new Stream("stream2"));
+      addStream(new Stream("stream3"));
+      createDataset("dataset2", KeyValueTable.class);
+
+      createDataset("dataset3", IndexedTable.class, DatasetProperties.builder().add("columnToIndex", "foo").build());
+      addFlow(new FlowImpl("flow2"));
+      addFlow(new FlowImpl("flow3"));
+      addProcedure(new ProcedureImpl("procedure2"));
+      addProcedure(new ProcedureImpl("procedure3"));
+      addMapReduce(new FooMapReduceJob("mrJob2"));
+      addMapReduce(new FooMapReduceJob("mrJob3"));
     }
   }
 
@@ -368,24 +349,18 @@ public class DefaultStoreTest {
     // Store the application specification
     AbstractApplication app = new AppWithServices();
 
-    ApplicationSpecification appSpec = getAppSpec(app);
+    ApplicationSpecification appSpec = Specifications.from(app);
     Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), appSpec.getName());
     store.addApplication(appId, appSpec, new LocalLocationFactory().create("/appwithservicestestdelete"));
 
     AbstractApplication newApp = new AppWithNoServices();
 
     // get the delete program specs after deploying AppWithNoServices
-    List<ProgramSpecification> programSpecs = store.getDeletedProgramSpecifications(appId, getAppSpec(newApp));
+    List<ProgramSpecification> programSpecs = store.getDeletedProgramSpecifications(appId, Specifications.from(newApp));
 
     //verify the result.
     Assert.assertEquals(1, programSpecs.size());
     Assert.assertEquals("NoOpService", programSpecs.get(0).getName());
-  }
-
-  private ApplicationSpecification getAppSpec(Application application) {
-    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(application);
-    application.configure(appConfigurer, new ApplicationContext());
-    return appConfigurer.createApplicationSpec();
   }
 
   @Test
@@ -420,7 +395,7 @@ public class DefaultStoreTest {
   public void testSetFlowletInstances() throws Exception {
     AppFabricTestHelper.deployApplication(WordCountApp.class);
 
-    ApplicationSpecification spec = getSpec(new WordCountApp().configure());
+    ApplicationSpecification spec = Specifications.from(new WordCountApp());
     int initialInstances = spec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances();
     Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), spec.getName());
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
@@ -444,7 +419,7 @@ public class DefaultStoreTest {
   public void testProcedureInstances() throws Exception {
 
     AppFabricTestHelper.deployApplication(AllProgramsApp.class);
-    ApplicationSpecification spec = getSpec(new AllProgramsApp().configure());
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
     Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), spec.getName());
     Id.Program programId = new Id.Program(appId, "NoOpProcedure");
@@ -461,7 +436,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testRemoveAllApplications() throws Exception {
-    ApplicationSpecification spec = getSpec(new WordCountApp().configure());
+    ApplicationSpecification spec = Specifications.from(new WordCountApp());
     Id.Account accountId = new Id.Account("account1");
     Id.Application appId = new Id.Application(accountId, spec.getName());
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
@@ -481,7 +456,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testRemoveAll() throws Exception {
-    ApplicationSpecification spec = getSpec(new WordCountApp().configure());
+    ApplicationSpecification spec = Specifications.from(new WordCountApp());
     Id.Account accountId = new Id.Account("account1");
     Id.Application appId = new Id.Application(accountId, "application1");
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
@@ -501,7 +476,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testRemoveApplication() throws Exception {
-    ApplicationSpecification spec = getSpec(new WordCountApp().configure());
+    ApplicationSpecification spec = Specifications.from(new WordCountApp());
     Id.Account accountId = new Id.Account("account1");
     Id.Application appId = new Id.Application(accountId, spec.getName());
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
@@ -521,7 +496,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testRuntimeArgsDeletion() throws Exception {
-    ApplicationSpecification spec = getSpec(new AllProgramsApp().configure());
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     Id.Account accountId = new Id.Account("testDeleteRuntimeArgs");
     Id.Application appId = new Id.Application(accountId, spec.getName());
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
@@ -577,7 +552,7 @@ public class DefaultStoreTest {
   public void testCheckDeletedProgramSpecs () throws Exception {
     //Deploy program with all types of programs.
     AppFabricTestHelper.deployApplication(AllProgramsApp.class);
-    ApplicationSpecification spec = getSpec(new AllProgramsApp().configure());
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
     Set<String> specsToBeVerified = Sets.newHashSet();
     specsToBeVerified.addAll(spec.getProcedures().keySet());
@@ -594,7 +569,7 @@ public class DefaultStoreTest {
     Assert.assertEquals(0, deletedSpecs.size());
 
     //Get the spec for app that contains no programs.
-    spec = getSpec(new NoProgramsApp().configure());
+    spec = Specifications.from(new NoProgramsApp());
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
     deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
@@ -613,7 +588,7 @@ public class DefaultStoreTest {
   public void testCheckDeletedProceduresAndWorkflow () throws Exception {
     //Deploy program with all types of programs.
     AppFabricTestHelper.deployApplication(AllProgramsApp.class);
-    ApplicationSpecification spec = getSpec(new AllProgramsApp().configure());
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
     Set<String> specsToBeDeleted = Sets.newHashSet();
     specsToBeDeleted.addAll(spec.getWorkflows().keySet());
@@ -624,7 +599,7 @@ public class DefaultStoreTest {
     Id.Application appId = Id.Application.from(DefaultId.ACCOUNT, "App");
 
     //Get the spec for app that contains only flow and mapreduce - removing procedures and workflows.
-    spec = getSpec(new FlowMapReduceApp().configure());
+    spec = Specifications.from(new FlowMapReduceApp());
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
     List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);

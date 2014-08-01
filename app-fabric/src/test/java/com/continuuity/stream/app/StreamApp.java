@@ -16,12 +16,11 @@
 
 package com.continuuity.stream.app;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -33,22 +32,15 @@ import org.slf4j.LoggerFactory;
 /**
  *
  */
-public final class StreamApp implements Application {
+public final class StreamApp extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("StreamApp")
-      .setDescription("StreamApp")
-      .withStreams()
-        .add(new Stream("stream"))
-      .withDataSets().add(new KeyValueTable("streamout"))
-      .withFlows()
-        .add(new StreamFlow())
-      .noProcedure()
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("StreamApp");
+    setDescription("StreamApp");
+    addStream(new Stream("stream"));
+    createDataset("streamout", KeyValueTable.class);
+    addFlow(new StreamFlow());
   }
 
   /**

@@ -16,11 +16,10 @@
 
 package com.continuuity.internal.app.runtime.batch;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.dataset.ObjectStore;
+import com.continuuity.api.dataset.lib.KeyValueTable;
+import com.continuuity.api.dataset.lib.ObjectStores;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.mapreduce.MapReduceContext;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
@@ -35,23 +34,15 @@ import java.io.IOException;
 /**
  *
  */
-public class AppWithMapReduceUsingObjectStore implements Application {
+public class AppWithMapReduceUsingObjectStore extends AbstractApplication {
   @Override
-  public ApplicationSpecification configure() {
+  public void configure() {
     try {
-      return ApplicationSpecification.Builder.with()
-        .setName("AppWithMapReduceObjectStore")
-        .setDescription("Application with MapReduce job using objectstore as dataset")
-        .noStream()
-        .withDataSets()
-          .add(new ObjectStore<String>("keys", String.class))
-          .add(new KeyValueTable("count"))
-        .noFlow()
-        .noProcedure()
-        .withMapReduce()
-          .add(new ComputeCounts())
-        .noWorkflow()
-        .build();
+      setName("AppWithMapReduceObjectStore");
+      setDescription("Application with MapReduce job using objectstore as dataset");
+      createDataset("count", KeyValueTable.class);
+      ObjectStores.createObjectStore(getConfigurer(), "keys", String.class);
+      addMapReduce(new ComputeCounts());
     } catch (Throwable t) {
       throw Throwables.propagate(t);
     }

@@ -16,27 +16,20 @@
 
 package com.continuuity.test.app;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.app.AbstractApplication;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.api.procedure.AbstractProcedure;
 
 /**
  * Simple app with table dataset.
  */
-public class AppWithTable implements Application {
+public class AppWithTable extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("AppWithTable")
-      .setDescription("Simple app with table dataset")
-      .noStream()
-      .withDataSets().add(new Table("my_table"))
-      .noFlow()
-      .withProcedures().add(new AbstractProcedure("fooProcedure") { })
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("AppWithTable");
+    setDescription("Simple app with table dataset");
+    createDataset("my_table", Table.class);
+    addProcedure(new AbstractProcedure("fooProcedure") { });
   }
 }

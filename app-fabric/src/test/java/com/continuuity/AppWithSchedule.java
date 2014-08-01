@@ -16,9 +16,8 @@
 
 package com.continuuity;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.data.dataset.ObjectStore;
+import com.continuuity.api.app.AbstractApplication;
+import com.continuuity.api.dataset.lib.ObjectStores;
 import com.continuuity.api.schedule.Schedule;
 import com.continuuity.api.workflow.AbstractWorkflowAction;
 import com.continuuity.api.workflow.Workflow;
@@ -31,24 +30,16 @@ import org.slf4j.LoggerFactory;
 /**
  * Application with workflow scheduling.
  */
-public class AppWithSchedule implements Application {
+public class AppWithSchedule extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
+  public void configure() {
     try {
-      return ApplicationSpecification.Builder.with()
-        .setName("AppWithSchedule")
-        .setDescription("Sample application")
-        .noStream()
-        .withDataSets()
-        .add(new ObjectStore<String>("input", String.class))
-        .add(new ObjectStore<String>("output", String.class))
-        .noFlow()
-        .noProcedure()
-        .noMapReduce()
-        .withWorkflows()
-        .add(new SampleWorkflow())
-        .build();
+      setName("AppWithSchedule");
+      setDescription("Sample application");
+      ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
+      ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
+      addWorkflow(new SampleWorkflow());
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
     }

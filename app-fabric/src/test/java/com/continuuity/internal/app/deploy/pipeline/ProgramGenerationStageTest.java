@@ -43,7 +43,7 @@ public class ProgramGenerationStageTest {
     configuration.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     LocationFactory lf = new LocalLocationFactory();
     Location appArchive = lf.create(JarFinder.getJar(ToyApp.class));
-    ApplicationSpecification appSpec = Specifications.from(new ToyApp().configure());
+    ApplicationSpecification appSpec = Specifications.from(new ToyApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     ProgramGenerationStage pgmStage = new ProgramGenerationStage(configuration, lf);

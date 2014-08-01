@@ -15,9 +15,8 @@
  */
 package com.continuuity;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Property;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.mapreduce.MapReduceContext;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
@@ -38,20 +37,14 @@ import java.util.Map;
 /**
  *
  */
-public class WorkflowApp implements Application {
+public class WorkflowApp extends AbstractApplication {
 
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("WorkflowApp")
-      .setDescription("WorkflowApp")
-      .noStream()
-      .noDataSet()
-      .noFlow()
-      .noProcedure()
-      .noMapReduce()
-      .withWorkflows().add(new FunWorkflow()).build();
+  public void configure() {
+    setName("WorkflowApp");
+    setDescription("WorkflowApp");
+    addWorkflow(new FunWorkflow());
   }
 
   /**

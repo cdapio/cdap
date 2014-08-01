@@ -127,7 +127,7 @@ public class MapReduceProgramRunnerTest {
     final ApplicationWithPrograms app =
       AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduceUsingObjectStore.class, TEMP_FOLDER_SUPPLIER);
 
-    ApplicationSpecification spec = Specifications.from(new AppWithMapReduceUsingObjectStore().configure());
+    ApplicationSpecification spec = Specifications.from(new AppWithMapReduceUsingObjectStore());
     dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
     final ObjectStore<String> input = dataSetInstantiator.getDataSet("keys");
 
@@ -169,7 +169,7 @@ public class MapReduceProgramRunnerTest {
     final String inputPath = createInput();
     final File outputDir = new File(tmpFolder.newFolder(), "output");
 
-    ApplicationSpecification spec = Specifications.from(new AppWithMapReduce().configure());
+    ApplicationSpecification spec = Specifications.from(new AppWithMapReduce());
     dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
     final KeyValueTable jobConfigTable = dataSetInstantiator.getDataSet("jobConfig");
 
@@ -222,7 +222,7 @@ public class MapReduceProgramRunnerTest {
   private void testSuccess(boolean frequentFlushing) throws Exception {
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
-    ApplicationSpecification spec = Specifications.from(new AppWithMapReduce().configure());
+    ApplicationSpecification spec = Specifications.from(new AppWithMapReduce());
     dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
@@ -293,7 +293,7 @@ public class MapReduceProgramRunnerTest {
 
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
-    ApplicationSpecification spec = Specifications.from(new AppWithMapReduce().configure());
+    ApplicationSpecification spec = Specifications.from(new AppWithMapReduce());
     dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()

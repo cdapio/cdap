@@ -17,7 +17,7 @@
 package com.continuuity.internal.app.verification;
 
 import com.continuuity.WebCrawlApp;
-import com.continuuity.api.Application;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -42,7 +42,7 @@ public class FlowVerificationTest {
 
   @Test
   public void testFlowWithMoreOutputThanWhatInputCanHandle() throws Exception {
-    ApplicationSpecification appSpec = Specifications.from(new WebCrawlApp().configure());
+    ApplicationSpecification appSpec = Specifications.from(new WebCrawlApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
@@ -61,7 +61,7 @@ public class FlowVerificationTest {
 
   @Test
   public void testValidFlow() throws Exception {
-    ApplicationSpecification appSpec = Specifications.from(new WebCrawlApp().configure());
+    ApplicationSpecification appSpec = Specifications.from(new WebCrawlApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
@@ -76,20 +76,13 @@ public class FlowVerificationTest {
   /**
    *
    */
-  public static class NoConsumerApp implements Application {
-
+  public static class NoConsumerApp extends AbstractApplication {
     @Override
-    public com.continuuity.api.ApplicationSpecification configure() {
-      return com.continuuity.api.ApplicationSpecification.Builder.with()
-        .setName("NoConsumerApp")
-        .setDescription("No consumer app")
-        .withStreams().add(new Stream("text"))
-        .noDataSet()
-        .withFlows().add(new NoConsumerFlow())
-        .noProcedure()
-        .noMapReduce()
-        .noWorkflow()
-        .build();
+    public void configure() {
+      setName("NoConsumerApp");
+      setDescription("No consumer app");
+      addStream(new Stream("text"));
+      addFlow(new NoConsumerFlow());
     }
 
     /**
@@ -140,7 +133,7 @@ public class FlowVerificationTest {
    */
   @Test
   public void testFlowMissingConnection() throws Exception {
-    ApplicationSpecification appSpec = Specifications.from(new NoConsumerApp().configure());
+    ApplicationSpecification appSpec = Specifications.from(new NoConsumerApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 

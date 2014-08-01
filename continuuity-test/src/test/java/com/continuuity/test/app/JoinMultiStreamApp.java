@@ -16,14 +16,13 @@
 
 package com.continuuity.test.app;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -41,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class JoinMultiStreamApp implements Application {
+public class JoinMultiStreamApp extends AbstractApplication {
 
   /**
    *
@@ -57,19 +56,15 @@ public class JoinMultiStreamApp implements Application {
   }
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("JoinMulti")
-      .setDescription("JoinMulti")
-      .withStreams().add(new Stream("s1"))
-                    .add(new Stream("s2"))
-                    .add(new Stream("s3"))
-      .withDataSets().add(new KeyValueTable("mytable"))
-      .withFlows().add(new JoinMultiFlow())
-      .withProcedures().add(new Query())
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("JoinMulti");
+    setDescription("JoinMulti");
+    addStream(new Stream("s1"));
+    addStream(new Stream("s2"));
+    addStream(new Stream("s3"));
+    createDataset("mytable", KeyValueTable.class);
+    addFlow(new JoinMultiFlow());
+    addProcedure(new Query());
   }
 
   /**

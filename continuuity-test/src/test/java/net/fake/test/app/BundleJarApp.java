@@ -16,14 +16,13 @@
 
 package net.fake.test.app;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -51,30 +50,23 @@ import java.io.IOException;
 /**
  * BundleJarApp contains a procedure that uses a third party library.
  */
-public class BundleJarApp implements Application {
+public class BundleJarApp extends AbstractApplication {
   private static final Logger LOG = LoggerFactory.getLogger(BundleJarApp.class);
   public static final String EXPECTED_LOAD_TEST_CLASSES_OUTPUT =
     "hello_HelloWorld__com_continuuity_api_schedule_Schedule";
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("BundleJarApp")
-      .setDescription("Demonstrates usage of bundle jar applications")
-      .withStreams()
-        .add(new Stream("simpleInputStream"))
-      .withDataSets()
-        .add(new KeyValueTable("simpleInputDataset"))
-        .add(new KeyValueTable("simpleOutputDataset"))
-      .withFlows().add(new SimpleFlow())
-      .withProcedures()
-        .add(new SimpleGetOutput())
-        .add(new SimpleGetInput())
-        .add(new PrintProcedure())
-      .withMapReduce().add(new SimpleMapReduce())
-      .noWorkflow()
-      //.withWorkflows().add(new SimpleWorkflow())
-      .build();
+  public void configure() {
+    setName("BundleJarApp");
+    setDescription("Demonstrates usage of bundle jar applications");
+    addStream(new Stream("simpleInputStream"));
+    createDataset("simpleInputDataset", KeyValueTable.class);
+    createDataset("simpleOutputDataset", KeyValueTable.class);
+    addFlow(new SimpleFlow());
+    addProcedure(new SimpleGetOutput());
+    addProcedure(new SimpleGetInput());
+    addProcedure(new PrintProcedure());
+    addMapReduce(new SimpleMapReduce());
   }
 
   public static String loadTestClasses() {

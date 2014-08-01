@@ -16,9 +16,8 @@
 
 package com.continuuity;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.Resources;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -34,27 +33,15 @@ import com.continuuity.api.procedure.ProcedureSpecification;
  * This is an Application used for only testing that sets various resources for different
  * flowlets and procedures.
  */
-public class ResourceApp implements Application {
-  /**
-   * Configures the {@link com.continuuity.api.Application} by returning an
-   * {@link com.continuuity.api.ApplicationSpecification}.
-   *
-   * @return An instance of {@code ApplicationSpecification}.
-   */
+public class ResourceApp extends AbstractApplication {
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("ResourceApp")
-      .setDescription("Resource Application")
-      .withStreams().add(new Stream("X"))
-      .noDataSet()
-      .withFlows().add(new ResourceFlow())
-      .withProcedures()
-        .add(new DummyProcedure())
-      .withMapReduce()
-        .add(new DummyBatch())
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("ResourceApp");
+    setDescription("Resource Application");
+    addStream(new Stream("X"));
+    addFlow(new ResourceFlow());
+    addProcedure(new DummyProcedure());
+    addMapReduce(new DummyBatch());
   }
 
   private class DummyProcedure extends AbstractProcedure {

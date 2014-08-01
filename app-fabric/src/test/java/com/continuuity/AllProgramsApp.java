@@ -16,12 +16,11 @@
 
 package com.continuuity;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -40,26 +39,18 @@ import java.io.IOException;
 /**
  * App that contains all program types. Used to test Metadata store.
  */
-public class AllProgramsApp implements Application {
+public class AllProgramsApp extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("App")
-      .setDescription("Application which has everything")
-      .withStreams()
-        .add(new Stream("stream"))
-      .withDataSets()
-        .add(new KeyValueTable("kvt"))
-      .withFlows()
-        .add(new NoOpFlow())
-      .withProcedures()
-        .add(new NoOpProcedure())
-      .withMapReduce()
-        .add(new NoOpMR())
-      .withWorkflows()
-        .add(new NoOpWorkflow())
-      .build();
+  public void configure() {
+    setName("App");
+    setDescription("Application which has everything");
+    addStream(new Stream("stream"));
+    createDataset("kvt", KeyValueTable.class);
+    addFlow(new NoOpFlow());
+    addProcedure(new NoOpProcedure());
+    addMapReduce(new NoOpMR());
+    addWorkflow(new NoOpWorkflow());
   }
 
   /**

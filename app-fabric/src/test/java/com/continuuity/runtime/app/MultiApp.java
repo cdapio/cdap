@@ -16,12 +16,12 @@
 
 package com.continuuity.runtime.app;
 
-import com.continuuity.api.Application;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.app.AbstractApplication;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -32,22 +32,16 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public final class MultiApp implements Application {
+public final class MultiApp extends AbstractApplication {
 
   public static final byte[] KEY = new byte[] {'k', 'e', 'y'};
 
   @Override
-  public com.continuuity.api.ApplicationSpecification configure() {
-    return com.continuuity.api.ApplicationSpecification.Builder.with()
-      .setName("MultiApp")
-      .setDescription("MultiApp")
-      .noStream()
-      .withDataSets().add(new KeyValueTable("accumulated"))
-      .withFlows().add(new MultiFlow())
-      .noProcedure()
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("MultiApp");
+    setDescription("MultiApp");
+    createDataset("accumulated", KeyValueTable.class);
+    addFlow(new MultiFlow());
   }
 
   /**
