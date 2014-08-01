@@ -42,6 +42,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -110,12 +111,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     throws HiveSQLException, ExploreException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
+                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf, File previewsDir) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.hiveConf = hiveConf;
-
-    this.previewsDir = Files.createTempDir();
+    this.previewsDir = previewsDir;
 
     this.scheduledExecutorService =
       Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("explore-handle-timeout"));
@@ -496,41 +496,42 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   public List<QueryResult> previewResults(QueryHandle handle)
     throws ExploreException, HandleNotFoundException, SQLException {
     // TODO add synchronization to this thing?
+    if (inactiveHandleCache.getIfPresent(handle) != null) {
+      throw new HandleNotFoundException("Query is inactive.", true);
+    }
+
     OperationInfo operationInfo = getOperationInfo(handle);
     File previewFile = operationInfo.getPreviewFile();
     if (previewFile != null) {
       try {
         Reader reader = new FileReader(previewFile);
-        List<QueryResult> queries;
         try {
-          queries = GSON.fromJson(reader, new TypeToken<List<QueryResult>>() { }.getType());
+          return GSON.fromJson(reader, new TypeToken<List<QueryResult>>() { }.getType());
         } finally {
-          try {
-            reader.close();
-          } catch (IOException e) {
-            LOG.error("Could not close preview file for handle {}", handle, e);
-            throw Throwables.propagate(e);
-          }
+          Closeables.closeQuietly(reader);
         }
-        return queries;
       } catch (FileNotFoundException e) {
         LOG.error("Could not retrieve preview result file {}", previewFile, e);
         throw new ExploreException(e);
       }
     }
 
+    FileWriter fileWriter = null;
     try {
       // Create preview results for query
       previewFile = new File(previewsDir, handle.getHandle());
-      FileWriter fileWriter = new FileWriter(previewFile);
+      fileWriter = new FileWriter(previewFile);
       List<QueryResult> results = nextResults(handle, PREVIEW_COUNT);
       GSON.toJson(results, fileWriter);
       operationInfo.setPreviewFile(previewFile);
-      fileWriter.close();
       return results;
     } catch (IOException e) {
       LOG.error("Could not write preview results into file", e);
       throw new ExploreException(e);
+    } finally {
+      if (fileWriter != null) {
+        Closeables.closeQuietly(fileWriter);
+      }
     }
   }
 

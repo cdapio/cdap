@@ -229,8 +229,9 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
       try {
         // All results are fetched, query should be inactive now
         exploreService.previewResults(handle);
-        Assert.fail();
+        Assert.fail("HandleNotFoundException expected - query should be inactive.");
       } catch (HandleNotFoundException e) {
+        Assert.assertTrue(e.isInactive());
         // Expected exception
       }
 
