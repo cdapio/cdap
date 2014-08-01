@@ -314,7 +314,7 @@
       <table class="table bordered-dataset-table">
         <thead>
           <th style="width: 350px">Dataset</th>
-          <th>Hive Table: {{selectedDataset.name}}</th>
+          <th>Table: {{selectedDataset.name}}</th>
         </thead>
       </table>
       <div id="query-display">        
@@ -367,16 +367,16 @@
 
   <script type="text/x-handlebars" data-template-name="DataExplore">
     <div id="title">
-      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
-        <li>{{#linkTo DataExplore.Query}}Query{{/linkTo }}</li>
-        <li>{{#linkTo DataExplore.Results}}Reults{{/linkTo}}</li>
-      </ul>
       <h1>Explore</h1>
     </div>
     <div id="panels">
       <div class="panel">
+         <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+           <li>{{#linkTo DataExplore.Query}}Query{{/linkTo }}</li>
+           <li>{{#linkTo DataExplore.Results}}Reults{{/linkTo}}</li>
+         </ul>
         <td>
-          {{view C.Embed.Injector valueBinding="controllers.SQLQueryString"}}
+          {{view C.Embed.Injector elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
           <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
         </td>
 
