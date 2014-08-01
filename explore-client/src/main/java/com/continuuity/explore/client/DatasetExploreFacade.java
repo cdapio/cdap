@@ -138,9 +138,13 @@ public class DatasetExploreFacade {
   }
 
   /**
-   * Return a list of datasets Hive table names.
+   * Return a list of datasets Hive table names. If Explore is disabled, an empty list is returned.
    */
   public List<String> getExplorableDatasetsTableNames() throws SQLException, ExploreException {
+    if (!exploreEnabled) {
+      ImmutableList.of();
+    }
+
     // NOTE: here we return all the hive tables, because, depending on the user,
     // the prefix of the table might be different. Today they all start with "continuuity_user"
     // but this might not be the case in the future.
