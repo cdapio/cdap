@@ -19,8 +19,8 @@ performance, scalability, security, metrics and log collection, service discover
 web-based management dashboard.
 
 CDAP provides abstractions over Hadoop that do not require understanding the implementation or the 
-complexity of Hadoop, HBase or Zookeeper. It provides independence of Hadoop versions, and runs on
-any distribution of Hadoop.
+complexity of Apache Hadoop |(TM)|, HBase or Zookeeper. It provides independence of Hadoop versions, 
+and runs on any distribution of Hadoop.
 
 CDAP's container model allows for the integration of different processing paradigms with these
 features. It provides a common environment, the abstraction of a unified API, the lifecycle management
