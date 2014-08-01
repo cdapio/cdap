@@ -257,6 +257,9 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendError(HttpResponseStatus.BAD_REQUEST,
                           String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
+      if (e.isInactive()) {
+        responder.sendString(HttpResponseStatus.CONFLICT, "Preview is unavailable for inactive queries.");
+      }
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
