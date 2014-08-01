@@ -22,7 +22,7 @@ import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.zookeeper.coordination.ServiceDiscoveredCodec;
+import com.continuuity.common.zookeeper.coordination.DiscoveredServicesCodec;
 import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -41,11 +41,12 @@ import com.continuuity.proto.ServiceMeta;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.api.RuntimeSpecification;
-import org.apache.twill.discovery.ServiceDiscovered;
+import org.apache.twill.discovery.Discoverable;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -70,7 +71,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   private final Store store;
   private final ProgramRuntimeService runtimeService;
   private static final Gson GSON = new GsonBuilder()
-                                      .registerTypeAdapter(ServiceDiscovered.class, new ServiceDiscoveredCodec())
+                                      .registerTypeAdapter(new TypeToken<List<Discoverable>>() { }.getType(),
+                                                           new DiscoveredServicesCodec())
                                       .create();
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceHttpHandler.class);
@@ -152,9 +154,10 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, appId, serviceId);
-      ServiceDiscovered serviceDiscovered = runtimeService.discoverService(programId,
+      List<Discoverable> discoverables = runtimeService.discoverService(programId,
                                                                            ProgramType.SERVICE, discoverableId);
-      responder.sendString(HttpResponseStatus.OK, GSON.toJson(serviceDiscovered, ServiceDiscovered.class));
+      responder.sendString(HttpResponseStatus.OK, GSON.toJson(discoverables,
+                                                              new TypeToken<List<Discoverable>>() { }.getType()));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {

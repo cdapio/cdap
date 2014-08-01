@@ -46,6 +46,8 @@ import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -142,6 +144,10 @@ public class InMemoryServiceRunner implements ProgramRunner {
       this.runnables = runnables;
       this.serviceSpec = serviceSpec;
       started();
+    }
+
+    public List<ProgramController> getProgramControllers() {
+      return new ArrayList<ProgramController>(runnables.values());
     }
 
     @Override

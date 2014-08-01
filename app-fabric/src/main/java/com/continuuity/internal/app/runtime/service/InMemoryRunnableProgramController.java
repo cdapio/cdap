@@ -18,17 +18,23 @@ package com.continuuity.internal.app.runtime.service;
 
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import org.apache.twill.api.TwillContext;
+import org.apache.twill.discovery.Discoverable;
+
+import java.util.List;
 
 /**
  * Program Controller for Service runnable
  */
 final class InMemoryRunnableProgramController extends AbstractProgramController {
   private InMemoryRunnableDriver driver;
+  private final List<Discoverable> discoverables;
 
   InMemoryRunnableProgramController(String serviceName, String runnableName,
-                                    TwillContext twillContext, InMemoryRunnableDriver driver) {
+                                    TwillContext twillContext, InMemoryRunnableDriver driver,
+                                    List<Discoverable> discoverables) {
     super(serviceName + ":" + runnableName, twillContext.getRunId());
     this.driver = driver;
+    this.discoverables = discoverables;
   }
 
   @Override
@@ -49,5 +55,9 @@ final class InMemoryRunnableProgramController extends AbstractProgramController 
   @Override
   protected void doCommand(String name, Object value) throws Exception {
     //no-op
+  }
+
+  public List<Discoverable> getDiscoverables() {
+    return this.discoverables;
   }
 }

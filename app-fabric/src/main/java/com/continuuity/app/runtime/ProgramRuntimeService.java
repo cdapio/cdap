@@ -22,8 +22,9 @@ import com.continuuity.proto.ProgramLiveInfo;
 import com.continuuity.proto.ProgramType;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
-import org.apache.twill.discovery.ServiceDiscovered;
+import org.apache.twill.discovery.Discoverable;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -81,5 +82,5 @@ public interface ProgramRuntimeService extends Service {
    * @param service Name of service.
    * @return ServiceDiscovered for the service.
    */
-  ServiceDiscovered discoverService(Id.Program programId, ProgramType type, String service);
+  List<Discoverable> discoverService(Id.Program programId, ProgramType type, String service);
 }

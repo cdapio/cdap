@@ -22,28 +22,24 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.lang.reflect.Type;
+import java.util.List;
 
 /**
- * A Gson codec for {@link org.apache.twill.discovery.ServiceDiscovered}
+ * A Gson codec for a list of discoverables.
  */
-public class ServiceDiscoveredCodec implements JsonSerializer<ServiceDiscovered> {
+public class DiscoveredServicesCodec implements JsonSerializer<List<Discoverable>> {
 
   @Override
-  public JsonElement serialize(ServiceDiscovered serviceDiscovered, Type typeOfSrc, JsonSerializationContext context) {
-    JsonObject object = new JsonObject();
-    object.addProperty("name", serviceDiscovered.getName());
-
-    JsonArray discoverables = new JsonArray();
-    for (Discoverable discoverable : serviceDiscovered) {
+  public JsonElement serialize(List<Discoverable> discoverables, Type typeOfSrc, JsonSerializationContext context) {
+    JsonArray object = new JsonArray();
+    for (Discoverable discoverable : discoverables) {
       JsonObject discoverableJson = new JsonObject();
       discoverableJson.addProperty("host", discoverable.getSocketAddress().getHostName());
       discoverableJson.addProperty("port", discoverable.getSocketAddress().getPort());
-      discoverables.add(discoverableJson);
+      object.add(discoverableJson);
     }
-    object.add("services", discoverables);
     return object;
   }
 }
