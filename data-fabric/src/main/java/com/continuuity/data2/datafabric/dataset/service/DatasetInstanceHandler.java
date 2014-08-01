@@ -221,7 +221,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     }
     if (existing == null && creationProperties.isUpdate()) {
        // update is true , but dataset instance does not exist, return 404.
-      responder.sendError(HttpResponseStatus.NOT_FOUND, "Dataset Instance does not exist");
+      responder.sendError(HttpResponseStatus.NOT_FOUND,
+                          String.format("Dataset Instance %s does not exist to update", name));
     }
     DatasetTypeMeta typeMeta = implManager.getTypeInfo(creationProperties.getTypeName());
     if (typeMeta == null) {
@@ -264,7 +265,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     //caling admin upgrade, after updating specification
     if (creationProperties.isUpdate()) {
       executeAdmin(request, responder, name, "upgrade");
-      responder.sendString(HttpResponseStatus.OK, String.format("Dataset instance %s updated", name));
     }
     responder.sendString(HttpResponseStatus.OK, String.format("Dataset instance %s created", name));
   }
