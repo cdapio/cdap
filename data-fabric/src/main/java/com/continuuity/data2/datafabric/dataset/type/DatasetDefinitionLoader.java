@@ -73,26 +73,33 @@ public class DatasetDefinitionLoader {
     ClassLoader classLoader = DatasetDefinitionLoader.class.getClassLoader();
     List<DatasetModuleMeta> modulesToLoad = meta.getModules();
     File unpackedLocation = Files.createTempDir();
-    for (DatasetModuleMeta moduleMeta : modulesToLoad) {
-      // for default "system" modules it can be null, see getJarLocation() javadoc
-      if (moduleMeta.getJarLocation() != null) {
-        BundleJarUtil.unpackProgramJar(locationFactory.create(moduleMeta.getJarLocation()), unpackedLocation);
-        classLoader =
-          ClassLoaders.newProgramClassLoaderWithoutFilter(unpackedLocation, this.getClass().getClassLoader());
-      }
-      DatasetModule module;
-      try {
-        Class<?> moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
-        module = DatasetModules.getDatasetModule(moduleClass);
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
-      module.register(registry);
-    }
+    int index = 0;
     try {
-      DirUtils.deleteDirectoryContents(unpackedLocation);
-    } catch (IOException e) {
-      LOG.warn("Failed to delete directory {}", unpackedLocation, e);
+      for (DatasetModuleMeta moduleMeta : modulesToLoad) {
+        File temp = new File(unpackedLocation, String.valueOf(index++));
+        temp.mkdir();
+        // for default "system" modules it can be null, see getJarLocation() javadoc
+        if (moduleMeta.getJarLocation() != null) {
+          BundleJarUtil.unpackProgramJar(locationFactory.create(moduleMeta.getJarLocation()), temp);
+          classLoader = ClassLoaders.newProgramClassLoaderWithoutFilter(temp, this.getClass().getClassLoader());
+        }
+        DatasetModule module;
+        try {
+          Class<?> moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
+          module = DatasetModules.getDatasetModule(moduleClass);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+        module.register(registry);
+      }
+    } catch (Exception e) {
+      LOG.warn("Exception while loading DatasetDefinition for DatasetTypeMeta : {}", meta.getName());
+    } finally {
+      try {
+        DirUtils.deleteDirectoryContents(unpackedLocation);
+      } catch (IOException e) {
+        LOG.warn("Failed to delete directory {}", unpackedLocation, e);
+      }
     }
     return registry.get(meta.getName());
   }

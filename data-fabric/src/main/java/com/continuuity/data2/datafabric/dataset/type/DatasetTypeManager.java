@@ -112,28 +112,31 @@ public class DatasetTypeManager extends AbstractIdleService {
           ClassLoader cl;
           DatasetModule module;
           File unpackedLocation = Files.createTempDir();
+          DependencyTrackingRegistry reg;
           try {
             // NOTE: we assume all classes needed to load dataset module class are available in the jar or otherwise
             //       are system classes
             // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
-            BundleJarUtil.unpackProgramJar(jarLocation, unpackedLocation);
+            if (jarLocation != null) {
+              BundleJarUtil.unpackProgramJar(jarLocation, unpackedLocation);
+            }
             cl = jarLocation == null ? this.getClass().getClassLoader() :
               ClassLoaders.newProgramClassLoaderWithoutFilter(unpackedLocation, this.getClass().getClassLoader());
             @SuppressWarnings("unchecked")
             Class clazz = ClassLoaders.loadClass(className, cl, this);
             module = DatasetModules.getDatasetModule(clazz);
+            reg = new DependencyTrackingRegistry(datasets, cl);
+            module.register(reg);
           } catch (Exception e) {
             LOG.error("Could not instantiate instance of dataset module class {} for module {} using jarLocation {}",
                       className, name, jarLocation);
             throw Throwables.propagate(e);
-          }
-
-          DependencyTrackingRegistry reg = new DependencyTrackingRegistry(datasets, cl);
-          module.register(reg);
-          try {
-            DirUtils.deleteDirectoryContents(unpackedLocation);
-          } catch (IOException e) {
-            LOG.warn("Failed to delete directory {}", unpackedLocation, e);
+          } finally {
+            try {
+              DirUtils.deleteDirectoryContents(unpackedLocation);
+            } catch (IOException e) {
+              LOG.warn("Failed to delete directory {}", unpackedLocation, e);
+            }
           }
           List<String> moduleDependencies = Lists.newArrayList();
           for (String usedType : reg.getUsedTypes()) {

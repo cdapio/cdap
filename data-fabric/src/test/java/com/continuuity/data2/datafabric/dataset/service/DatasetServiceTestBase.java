@@ -138,7 +138,6 @@ public abstract class DatasetServiceTestBase {
 
   protected int deployModule(String moduleName, Class moduleClass) throws Exception {
     String jarPath = JarFinder.getJar(moduleClass);
-
     final FileInputStream is = new FileInputStream(jarPath);
     try {
       HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
@@ -158,12 +157,10 @@ public abstract class DatasetServiceTestBase {
     JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jarPath));
     try {
       for (File embeddedJar : bundleEmbeddedJars) {
-
         JarEntry jarEntry = new JarEntry("lib/" + embeddedJar.getName());
         jarOutput.putNextEntry(jarEntry);
         Files.copy(embeddedJar, jarOutput);
       }
-
     } finally {
       jarOutput.close();
     }
