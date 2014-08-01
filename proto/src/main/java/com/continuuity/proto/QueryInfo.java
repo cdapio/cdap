@@ -14,10 +14,8 @@
  * the License.
  */
 
-package com.continuuity.explore.service;
+package com.continuuity.proto;
 
-import com.continuuity.proto.QueryHandle;
-import com.continuuity.proto.QueryStatus;
 import com.google.common.primitives.Longs;
 import com.google.gson.annotations.SerializedName;
 

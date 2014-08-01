@@ -30,6 +30,7 @@ import com.continuuity.explore.jdbc.ExploreDriver;
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.DatasetMeta;
 import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryInfo;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.proto.QueryStatus;
 import com.continuuity.tephra.Transaction;
