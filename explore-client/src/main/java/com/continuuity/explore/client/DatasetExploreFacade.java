@@ -159,7 +159,7 @@ public class DatasetExploreFacade {
       }
       ImmutableList.Builder<String> hiveTablesBuilder = ImmutableList.builder();
       while (results.hasNext()) {
-        hiveTablesBuilder.add(((String) results.next().getColumns().get(tableNameIdx)).toLowerCase());
+        hiveTablesBuilder.add(results.next().getColumns().get(tableNameIdx).toString().toLowerCase());
       }
       return hiveTablesBuilder.build();
     } catch (InterruptedException e) {
@@ -172,15 +172,17 @@ public class DatasetExploreFacade {
     }
   }
 
-  public static <ROW> String generateCreateStatement(String name, RecordScannable<ROW> scannable)
-    throws UnsupportedTypeException {
-    String hiveSchema = hiveSchemaFor(scannable);
-
+  public static String getHiveTableName(String datasetName) {
     // TODO: fix namespacing - REACTOR-264
     // Instnace name is like continuuity.user.my_table.
     // For now replace . with _ since Hive tables cannot have . in them.
-    String tableName = name.replaceAll("\\.", "_");
+    return datasetName.replaceAll("\\.", "_").toLowerCase();
+  }
 
+  public static <ROW> String generateCreateStatement(String name, RecordScannable<ROW> scannable)
+    throws UnsupportedTypeException {
+    String hiveSchema = hiveSchemaFor(scannable);
+    String tableName = getHiveTableName(name);
     return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Continuuity Reactor Dataset\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
                          tableName, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
@@ -188,12 +190,7 @@ public class DatasetExploreFacade {
   }
 
   public static String generateDeleteStatement(String name) {
-    // TODO: fix namespacing - REACTOR-264
-    // Instnace name is like continuuity.user.my_table.
-    // For now replace . with _ since Hive tables cannot have . in them.
-    String tableName = name.replaceAll("\\.", "_");
-
-    return String.format("DROP TABLE IF EXISTS %s", tableName);
+    return String.format("DROP TABLE IF EXISTS %s", getHiveTableName(name));
   }
 
   /**

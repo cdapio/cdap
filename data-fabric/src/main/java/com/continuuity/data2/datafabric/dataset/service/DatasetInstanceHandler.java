@@ -33,7 +33,6 @@ import com.continuuity.proto.DatasetInstanceConfiguration;
 import com.continuuity.proto.DatasetMeta;
 import com.continuuity.proto.DatasetTypeMeta;
 
-import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -46,7 +45,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -96,18 +94,21 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     Collection<DatasetSpecification> datasetSpecifications = instanceManager.getAll();
 
     if (explorableDatasetsOption) {
-      // Do a join of the list of datasets, and the list of Hive tables
       try {
+        // Do a join of the list of datasets, and the list of Hive tables
         List<String> hiveTables = datasetExploreFacade.getExplorableDatasetsTableNames();
         ImmutableList.Builder<?> joinBuilder = ImmutableList.builder();
 
         for (DatasetSpecification spec : datasetSpecifications) {
-          boolean isExplorable = hiveTables.contains(spec.getName().replace('.', '_').toLowerCase());
+          boolean isExplorable = hiveTables.contains(DatasetExploreFacade.getHiveTableName(spec.getName()));
           if (isExplorable && getExplorableDatasets || !isExplorable && !getExplorableDatasets) {
             if (isMeta) {
-              DatasetMeta meta = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()));
+              DatasetMeta meta;
               if (isExplorable) {
-                meta.addProperty("hive_table", meta.getSpec().getName().replace('.', '_').toLowerCase());
+                meta = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()),
+                                       DatasetExploreFacade.getHiveTableName(spec.getName()));
+              } else {
+                meta = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null);
               }
               joinBuilder.add(meta);
             } else {
@@ -126,7 +127,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     if (isMeta) {
       ImmutableList.Builder<DatasetMeta> builder = ImmutableList.builder();
       for (DatasetSpecification spec : datasetSpecifications) {
-        builder.add(new DatasetMeta(spec, implManager.getTypeInfo(spec.getType())));
+        builder.add(new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null));
       }
       responder.sendJson(HttpResponseStatus.OK, builder.build());
     } else {
@@ -169,7 +170,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      DatasetMeta info = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()));
+      DatasetMeta info = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null);
       responder.sendJson(HttpResponseStatus.OK, info);
     }
   }

@@ -45,6 +45,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -131,17 +132,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("my_table"))));
 
-    runCommand("describe my_table",
-               true,
-               Lists.newArrayList(
-                 new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
-                 new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
-                 new ColumnDesc("comment", "STRING", 3, "from deserializer")
-               ),
-               Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("key", "string", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
-                                                       "from deserializer"))
+    runCommand("describe my_table", true, Lists.newArrayList(new ColumnDesc("col_name", "STRING", 1, "from deserializer"), new ColumnDesc("data_type", "STRING", 2, "from deserializer"), new ColumnDesc("comment", "STRING", 3, "from deserializer")), Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("key", "string", "from deserializer")), new QueryResult(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>", "from deserializer"))
                )
     );
 
@@ -154,33 +145,14 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                  new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
-    runCommand("select key, value from my_table where key = '1'",
-               true,
-               Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
-                                  new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
-               Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")))
+    runCommand("select key, value from my_table where key = '1'", true, Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null), new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)), Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")))
     );
 
-    runCommand("select * from my_table",
-               true,
-               Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null),
-                                  new ColumnDesc("my_table.value",
-                                                 "struct<name:string,ints:array<int>>", 2, null)),
-               Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+    runCommand("select * from my_table", true, Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null), new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null)
+               ), Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")), new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
-    runCommand("select * from my_table where key = '2'",
-               true,
-               Lists.newArrayList(
-                 new ColumnDesc("my_table.key", "STRING", 1, null),
-                 new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null)
-               ),
-               Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
-               )
+    runCommand("select * from my_table where key = '2'", true, Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null), new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null)), Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
     List<QueryInfo> result = exploreService.getQueries();
@@ -196,8 +168,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
   @Test
   public void getDatasetSchemaTest() throws Exception {
     Map<String, String> datasetSchema = exploreClient.datasetSchema("my_table");
-    Assert.assertEquals(ImmutableMap.of("key", "string", "value", "struct<name:string,ints:array<int>>"),
-                        datasetSchema);
+    Assert.assertEquals(ImmutableMap.of("key", "string", "value", "struct<name:string,ints:array<int>>"), datasetSchema);
   }
 
   @Test
@@ -245,39 +216,35 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     ObjectResponse<List<?>> datasets;
     HttpRequest request;
     InetSocketAddress address = datasetManagerEndpointStrategy.pick().getSocketAddress();
+    URI baseURI = new URI(String.format("http://%s:%d/", address.getHostName(), address.getPort()));
 
-    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?explorable=true",
-                                                    address.getHostName(), address.getPort()))).build();
+    request = HttpRequest.get(baseURI.resolve("v2/data/datasets?explorable=true").toURL()).build();
     datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
                                            new TypeToken<List<DatasetSpecification>>() { }.getType());
     Assert.assertEquals(1, datasets.getResponseObject().size());
     Assert.assertEquals("my_table", ((DatasetSpecification) datasets.getResponseObject().get(0)).getName());
 
-    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?explorable=false",
-                                                    address.getHostName(), address.getPort()))).build();
-    datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
-                                           new TypeToken<List<DatasetSpecification>>() { }.getType());
+    request = HttpRequest.get(baseURI.resolve("v2/data/datasets?explorable=false").toURL()).build();
+    datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request), new TypeToken<List<DatasetSpecification>>() {
+    }.getType());
     Assert.assertEquals(1, datasets.getResponseObject().size());
     Assert.assertEquals("my_table_not_record_scannable",
                         ((DatasetSpecification) datasets.getResponseObject().get(0)).getName());
 
-    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?meta=true&explorable=true",
-                                                    address.getHostName(), address.getPort()))).build();
-    datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
-                                           new TypeToken<List<DatasetMeta>>() { }.getType());
+    request = HttpRequest.get(baseURI.resolve("v2/data/datasets?meta=true&explorable=true").toURL()).build();
+    datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request), new TypeToken<List<DatasetMeta>>() {
+    }.getType());
     Assert.assertEquals(1, datasets.getResponseObject().size());
     Assert.assertEquals("my_table", ((DatasetMeta) datasets.getResponseObject().get(0)).getSpec().getName());
 
-    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?meta=true&explorable=false",
-                                                    address.getHostName(), address.getPort()))).build();
+    request = HttpRequest.get(baseURI.resolve("v2/data/datasets?meta=true&explorable=false").toURL()).build();
     datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
                                            new TypeToken<List<DatasetMeta>>() { }.getType());
     Assert.assertEquals(1, datasets.getResponseObject().size());
     Assert.assertEquals("my_table_not_record_scannable",
                         ((DatasetMeta) datasets.getResponseObject().get(0)).getSpec().getName());
 
-    request = HttpRequest.get(new URL(String.format("http://%s:%d/v2/data/datasets?meta=true",
-                                                    address.getHostName(), address.getPort()))).build();
+    request = HttpRequest.get(baseURI.resolve("v2/data/datasets?meta=true").toURL()).build();
     datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
                                            new TypeToken<List<DatasetMeta>>() { }.getType());
     Assert.assertEquals(2, datasets.getResponseObject().size());
