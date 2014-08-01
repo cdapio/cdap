@@ -7,8 +7,7 @@
 Cask Data Application Platform
 ------------------------------
 
-A Platform for Data Applications 
-................................
+**A Platform for Data Applications**
 
 The Cask Data Application Platform (CDAP) is an application server providing such a
 platform for the development, deployment and management of data applications and the
