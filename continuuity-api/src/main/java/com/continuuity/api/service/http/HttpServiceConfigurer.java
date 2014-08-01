@@ -16,17 +16,29 @@
 
 package com.continuuity.api.service.http;
 
-import com.continuuity.api.RuntimeContext;
-
 import java.util.Map;
 
 /**
  *
  */
-public interface HttpServiceContext extends RuntimeContext {
+public interface HttpServiceConfigurer {
   /**
-   * @return The HttpServiceSpecification for this HttpServiceContext
+   * Sets the Http Service's name.
+   *
+   * @param name The Http Service name
    */
-  HttpServiceSpecification getSpecification();
+  void setName(String name);
 
+  /**
+   * Sets the Http Service's description.
+   *
+   * @param description The Http Service description
+   */
+  void setDescription(String description);
+
+  /**
+   * Set the runtime arguments
+   * @param arguments
+   */
+  void setArguments(Map<String, String> arguments);
 }

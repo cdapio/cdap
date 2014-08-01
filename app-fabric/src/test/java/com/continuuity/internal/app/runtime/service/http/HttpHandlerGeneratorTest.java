@@ -21,6 +21,7 @@ import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.api.service.http.HttpServiceRequest;
 import com.continuuity.api.service.http.HttpServiceResponder;
+import com.continuuity.api.service.http.HttpServiceSpecification;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Charsets;
@@ -85,14 +86,10 @@ public class HttpHandlerGeneratorTest {
       }
 
       @Override
-      public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
+      public HttpServiceSpecification getSpecification() {
         return null;
       }
 
-      @Override
-      public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
-        return null;
-      }
     });
 
     NettyHttpService service = NettyHttpService.builder().addHttpHandlers(ImmutableList.of(httpHandler)).build();

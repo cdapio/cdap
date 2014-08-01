@@ -19,6 +19,7 @@ package com.continuuity.internal.app.services;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
+import com.continuuity.api.service.http.HttpServiceSpecification;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.app.runtime.service.http.HttpHandlerFactory;
@@ -159,18 +160,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
         }
 
         @Override
-        public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
-          return null;
-        }
-
-        @Override
-        public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
-          return null;
-        }
-
-        @Override
-        public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
-          throws DataSetInstantiationException {
+        public HttpServiceSpecification getSpecification() {
           return null;
         }
       }));

@@ -23,9 +23,9 @@ import com.continuuity.api.ProgramLifecycle;
  */
 public interface HttpServiceHandler extends ProgramLifecycle<HttpServiceContext> {
 
-  @Override
+  void configure(HttpServiceConfigurer configurer, HttpServiceContext context);
+
   void initialize(HttpServiceContext context) throws Exception;
 
-  @Override
   void destroy();
 }
