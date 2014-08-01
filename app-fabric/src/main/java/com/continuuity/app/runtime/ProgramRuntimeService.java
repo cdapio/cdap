@@ -22,9 +22,7 @@ import com.continuuity.proto.ProgramLiveInfo;
 import com.continuuity.proto.ProgramType;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
-import org.apache.twill.discovery.Discoverable;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -74,13 +72,4 @@ public interface ProgramRuntimeService extends Service {
    * YARN application id and the container information for each runnable. For in-memory, it may be empty.
    */
   ProgramLiveInfo getLiveInfo(Id.Program programId, ProgramType type);
-
-  /**
-   * Get a list of discoverables for a service.
-   * @param programId ProgramId for application.
-   * @param type Type of service.
-   * @param service Name of service.
-   * @return List of discoverables for the service.
-   */
-  List<Discoverable> discoverService(Id.Program programId, ProgramType type, String service);
 }

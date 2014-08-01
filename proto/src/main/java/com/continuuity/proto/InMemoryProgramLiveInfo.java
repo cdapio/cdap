@@ -22,7 +22,7 @@ import java.util.List;
  * A live info for in-memory runtime envirnment.
  */
 public class InMemoryProgramLiveInfo extends ProgramLiveInfo {
-  List<String> discoverables;
+  private final List<String> discoverables;
 
   public InMemoryProgramLiveInfo(Id.Program programId, ProgramType type) {
     this(programId, type, null);

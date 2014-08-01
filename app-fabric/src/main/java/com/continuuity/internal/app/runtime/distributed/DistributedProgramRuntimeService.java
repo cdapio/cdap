@@ -70,7 +70,6 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunResources;
 import org.apache.twill.api.TwillRunner;
-import org.apache.twill.discovery.Discoverable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,10 +78,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -331,25 +328,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
     }
     return new NotRunningProgramLiveInfo(program, type);
-  }
-
-  @Override
-  public List<Discoverable> discoverService(Id.Program programId, ProgramType type, String service) {
-    String twillAppName = String.format("%s.%s.%s.%s", type.name().toLowerCase(),
-                                        programId.getAccountId(), programId.getApplicationId(), programId.getId());
-    Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
-    if (controllers.hasNext()) {
-      TwillController controller = controllers.next();
-      if (controllers.hasNext()) {
-        LOG.warn("Expected at most one live instance of Twill app {} but found at least two.", twillAppName);
-      }
-      List<Discoverable> discoverables = new ArrayList<Discoverable>();
-      for (Discoverable discoverable : controller.discoverService(service)) {
-        discoverables.add(discoverable);
-      }
-      return discoverables;
-    }
-    return null;
   }
 
   /**

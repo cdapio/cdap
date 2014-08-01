@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -132,28 +131,6 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
     } else {
       return new InMemoryProgramLiveInfo(programId, type);
     }
-  }
-
-  @Override
-  public List<Discoverable> discoverService(Id.Program programId, ProgramType type, String service) {
-    List<Discoverable> discoverables = new ArrayList<Discoverable>();
-
-    for (Map.Entry<RunId, RuntimeInfo> entry : list(type).entrySet()) {
-      RuntimeInfo runtimeInfo = entry.getValue();
-      InMemoryServiceRunner.ServiceProgramController controller = (InMemoryServiceRunner.ServiceProgramController)
-                                                                                           runtimeInfo.getController();
-      List<ProgramController> programControllers = controller.getProgramControllers();
-      for (ProgramController programController : programControllers) {
-        List<Discoverable> programDiscoverables = ((InMemoryRunnableProgramController)
-                                                                                  programController).getDiscoverables();
-        for (Discoverable discoverable : programDiscoverables) {
-          if (discoverable.getName().equals(service)) {
-            discoverables.add(discoverable);
-          }
-        }
-      }
-    }
-    return discoverables;
   }
 
   @Override

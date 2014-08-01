@@ -22,7 +22,7 @@ import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.zookeeper.coordination.DiscoverablesCodec;
+import com.continuuity.common.zookeeper.coordination.ServiceDiscoveredCodec;
 import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -30,6 +30,7 @@ import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.proto.Containers;
 import com.continuuity.proto.Id;
 import com.continuuity.proto.NotRunningProgramLiveInfo;
@@ -46,7 +47,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.api.RuntimeSpecification;
-import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -70,19 +71,21 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final Store store;
   private final ProgramRuntimeService runtimeService;
+  private final ProgramServiceDiscovery programServiceDiscovery;
   private static final Gson GSON = new GsonBuilder()
-                                      .registerTypeAdapter(new TypeToken<List<Discoverable>>() { }.getType(),
-                                                            new DiscoverablesCodec())
+                                      .registerTypeAdapter(new TypeToken<ServiceDiscovered>() { }.getType(),
+                                                            new ServiceDiscoveredCodec())
                                       .create();
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceHttpHandler.class);
 
   @Inject
   public ServiceHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                            ProgramRuntimeService runtimeService) {
+                            ProgramRuntimeService runtimeService, ProgramServiceDiscovery programServiceDiscovery) {
     super(authenticator);
     this.store = storeFactory.create();
     this.runtimeService = runtimeService;
+    this.programServiceDiscovery = programServiceDiscovery;
   }
 
   /**
@@ -153,11 +156,9 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
-      Id.Program programId = Id.Program.from(accountId, appId, serviceId);
-      List<Discoverable> discoverables = runtimeService.discoverService(programId,
-                                                                           ProgramType.SERVICE, discoverableId);
+      ServiceDiscovered discoverables = programServiceDiscovery.discover(accountId, appId, serviceId, discoverableId);
       responder.sendString(HttpResponseStatus.OK, GSON.toJson(discoverables,
-                                                                new TypeToken<List<Discoverable>>() { }.getType()));
+                                                                new TypeToken<ServiceDiscovered>() { }.getType()));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
