@@ -48,6 +48,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -195,8 +196,9 @@ public class AppsWithDataset {
 
     @Override
     public KeyValueTableDefinition.KeyValueTable getDataset(DatasetSpecification spec,
+                                                            Map<String, String> arguments,
                                                             ClassLoader classLoader) throws IOException {
-      return new KeyValueTable(spec, getDataset("data", Table.class, spec, classLoader));
+      return new KeyValueTable(spec, getDataset("data", Table.class, spec, arguments, classLoader));
     }
 
     /**

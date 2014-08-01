@@ -47,7 +47,7 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
     datasetFramework.addInstance("ExtensiveSchemaTable", "my_table", DatasetProperties.EMPTY);
 
     // Accessing dataset instance to perform data operations
-    ExtensiveSchemaTableDefinition.ExtensiveSchemaTable table = datasetFramework.getDataset("my_table", null);
+    ExtensiveSchemaTableDefinition.ExtensiveSchemaTable table = datasetFramework.getDataset("my_table", null, null);
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);

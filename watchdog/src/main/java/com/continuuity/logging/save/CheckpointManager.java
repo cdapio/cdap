@@ -36,12 +36,12 @@ public final class CheckpointManager {
   private static final byte [] ROW_KEY_PREFIX = Bytes.toBytes(100);
   private static final byte [] OFFSET_COLNAME = Bytes.toBytes("nextOffset");
 
-  private final Transactional<DatasetContext<OrderedTable>> mds;
+  private final Transactional<DatasetContext<OrderedTable>, OrderedTable> mds;
   private final byte [] rowKeyPrefix;
 
   public CheckpointManager(final LogSaverTableUtil tableUtil, final TransactionSystemClient txClient, String topic) {
     this.rowKeyPrefix = Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(topic));
-    this.mds = new Transactional<DatasetContext<OrderedTable>>(
+    this.mds = Transactional.of(
       new TransactionExecutorFactory() {
         @Override
         public TransactionExecutor createExecutor(Iterable<TransactionAware> txAwares) {
@@ -52,7 +52,7 @@ public final class CheckpointManager {
         @Override
         public DatasetContext<OrderedTable> get() {
           try {
-            return new DatasetContext(tableUtil.getMetaTable());
+            return DatasetContext.of(tableUtil.getMetaTable());
           } catch (Exception e) {
             // there's nothing much we can do here
             throw Throwables.propagate(e);

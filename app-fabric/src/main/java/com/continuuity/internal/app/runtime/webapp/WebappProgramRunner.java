@@ -76,10 +76,10 @@ public class WebappProgramRunner implements ProgramRunner {
     try {
 
       ProgramType processorType = program.getType();
-      Preconditions.checkNotNull(processorType, "Missing processor type.");
-      Preconditions.checkArgument(processorType == ProgramType.WEBAPP, "Only WEBAPP process type is supported.");
+      Preconditions.checkNotNull(processorType, "Missing processor type");
+      Preconditions.checkArgument(processorType == ProgramType.WEBAPP, "Only WEBAPP process type is supported");
 
-      LOG.info("Initializing web app for app {} with jar {}", program.getApplicationId(),
+      LOG.info("Initializing Webapp for app {} with jar {}", program.getApplicationId(),
                program.getJarLocation().getName());
 
       String serviceName = getServiceName(ProgramType.WEBAPP, program);
@@ -163,10 +163,10 @@ public class WebappProgramRunner implements ProgramRunner {
       Set<String> registerNames = Sets.newHashSetWithExpectedSize(hostNames.size());
       for (String hostName : hostNames) {
         if (hostName.equals(ServePathGenerator.DEFAULT_DIR_NAME)) {
-          LOG.warn("Not registering default service name. Default service needs to have a routable path");
+          LOG.warn("Not registering default service name; default service needs to have a routable path");
           continue;
         } else if (hostName.startsWith(DEFAULT_DIR_NAME_COLON)) {
-          LOG.warn("Not registering default service name with explicit port - {}.", hostName);
+          LOG.warn("Not registering default service name with explicit port - {}", hostName);
           continue;
         }
 

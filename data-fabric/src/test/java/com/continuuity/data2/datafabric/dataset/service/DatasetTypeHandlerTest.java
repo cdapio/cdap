@@ -16,12 +16,6 @@
 
 package com.continuuity.data2.datafabric.dataset.service;
 
-import com.continuuity.api.dataset.Dataset;
-import com.continuuity.api.dataset.DatasetAdmin;
-import com.continuuity.api.dataset.DatasetDefinition;
-import com.continuuity.api.dataset.DatasetProperties;
-import com.continuuity.api.dataset.DatasetSpecification;
-import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
 import com.continuuity.common.http.HttpRequest;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.ObjectResponse;
@@ -201,24 +195,5 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
     List<DatasetModuleMeta> modules = getModules().getResponseObject();
     Assert.assertEquals(0, modules.size());
-  }
-
-  public static DatasetDefinition createDefinition(String name) {
-    return new AbstractDatasetDefinition(name) {
-      @Override
-      public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-        return null;
-      }
-
-      @Override
-      public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) {
-        return null;
-      }
-
-      @Override
-      public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) {
-        return null;
-      }
-    };
   }
 }

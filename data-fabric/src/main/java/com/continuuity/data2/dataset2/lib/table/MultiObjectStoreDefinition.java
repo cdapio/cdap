@@ -31,6 +31,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * DatasetDefinition for {@link MultiObjectStoreDataset}.
@@ -66,9 +67,10 @@ public class MultiObjectStoreDefinition
   }
 
   @Override
-  public MultiObjectStoreDataset<?> getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public MultiObjectStoreDataset<?> getDataset(DatasetSpecification spec, Map<String, String> arguments,
+                                               ClassLoader classLoader) throws IOException {
     DatasetSpecification tableSpec = spec.getSpecification("multiobjects");
-    Table table = tableDef.getDataset(tableSpec, classLoader);
+    Table table = tableDef.getDataset(tableSpec, arguments, classLoader);
 
     TypeRepresentation typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
     Schema schema = GSON.fromJson(spec.getProperty("schema"), Schema.class);

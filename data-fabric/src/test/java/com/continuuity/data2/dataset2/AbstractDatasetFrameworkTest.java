@@ -56,7 +56,7 @@ public abstract class AbstractDatasetFrameworkTest {
     // Doing some admin and data ops
     DatasetAdmin admin = framework.getAdmin("my_table", null);
     Assert.assertNotNull(admin);
-    final OrderedTable table = framework.getDataset("my_table", null);
+    final OrderedTable table = framework.getDataset("my_table", null, null);
     Assert.assertNotNull(table);
 
     TransactionExecutor txnl = new DefaultTransactionExecutor(new MinimalTxSystemClient(), (TransactionAware) table);
@@ -143,7 +143,7 @@ public abstract class AbstractDatasetFrameworkTest {
     // Doing some admin and data ops
     DatasetAdmin admin = framework.getAdmin("my_table", null);
     Assert.assertNotNull(admin);
-    final KeyValueTable table = framework.getDataset("my_table", null);
+    final KeyValueTable table = framework.getDataset("my_table", null, null);
     Assert.assertNotNull(table);
 
     TransactionExecutor txnl = new DefaultTransactionExecutor(new MinimalTxSystemClient(), (TransactionAware) table);

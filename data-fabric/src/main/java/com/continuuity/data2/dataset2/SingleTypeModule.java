@@ -144,12 +144,13 @@ public class SingleTypeModule implements DatasetModule {
       }
     }
 
-    CompositeDatasetDefinition def = new CompositeDatasetDefinition(typeName, defs) {
+    CompositeDatasetDefinition<Dataset> def = new CompositeDatasetDefinition<Dataset>(typeName, defs) {
       @Override
-      public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+      public Dataset getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
+        throws IOException {
         Object[] params = new Object[ctorParams.length];
         for (int i = 0; i < ctorParams.length; i++) {
-          params[i] = ctorParams[i] != null ? ctorParams[i].getValue(defs, spec, classLoader) : null;
+          params[i] = ctorParams[i] != null ? ctorParams[i].getValue(defs, spec, arguments, classLoader) : null;
         }
 
         try {
@@ -215,13 +216,15 @@ public class SingleTypeModule implements DatasetModule {
   }
 
   private interface DatasetCtorParam {
-    Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec, ClassLoader cl)
+    Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec,
+                    Map<String, String> arguments, ClassLoader cl)
       throws IOException;
   }
 
   private static final class DatasetSpecificationParam implements DatasetCtorParam {
     @Override
-    public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec, ClassLoader cl) {
+    public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec,
+                           Map<String, String> arguments, ClassLoader cl) {
       return spec;
     }
   }
@@ -234,10 +237,11 @@ public class SingleTypeModule implements DatasetModule {
     }
 
     @Override
-    public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec, ClassLoader cl)
+    public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec,
+                           Map<String, String> arguments, ClassLoader cl)
       throws IOException {
 
-      return defs.get(name).getDataset(spec.getSpecification(name), cl);
+      return defs.get(name).getDataset(spec.getSpecification(name), arguments, cl);
     }
   }
 }

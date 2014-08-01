@@ -18,7 +18,6 @@
 
 package org.apache.hadoop.mapred;
 
-
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.ApiResourceListHolder;
 import com.continuuity.common.lang.ClassLoaders;
@@ -30,8 +29,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
@@ -49,6 +46,8 @@ import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.FSDownload;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,9 +80,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @SuppressWarnings("deprecation")
 class LocalDistributedCacheManagerWithFix {
-  public static final Log LOG =
-    LogFactory.getLog(LocalDistributedCacheManagerWithFix.class);
-
+  public static final Logger LOG = LoggerFactory.getLogger(LocalDistributedCacheManagerWithFix.class);
+  
   private List<String> localArchives = new ArrayList<String>();
   private List<String> localFiles = new ArrayList<String>();
   private List<String> localClasspaths = new ArrayList<String>();
@@ -185,7 +183,7 @@ class LocalDistributedCacheManagerWithFix {
         } catch (URISyntaxException e) {
           throw new IOException(e);
         }
-        LOG.info(String.format("Localized %s as %s", resourcePath, path));
+        LOG.info("Localized {} as {}", resourcePath, path);
         String cp = resourcePath.toUri().getPath();
         if (classpaths.keySet().contains(cp)) {
           localClasspaths.add(path.toUri().getPath().toString());
@@ -219,10 +217,9 @@ class LocalDistributedCacheManagerWithFix {
       link = workDir.toString() + Path.SEPARATOR + link;
       File flink = new File(link);
       if (!flink.exists()) {
-        LOG.info(String.format("Creating symlink: %s <- %s", target, link));
+        LOG.info("Creating symlink: {} <- {}", target, link);
         if (0 != FileUtil.symLink(target, link)) {
-          LOG.warn(String.format("Failed to create symlink: %s <- %s", target,
-                                 link));
+          LOG.warn("Failed to create symlink: {} <- {}", target, link);
         } else {
           symlinksCreated.add(new File(link));
         }
@@ -300,8 +297,7 @@ class LocalDistributedCacheManagerWithFix {
   public void close() throws IOException {
     for (File symlink : symlinksCreated) {
       if (!symlink.delete()) {
-        LOG.warn("Failed to delete symlink created by the local job runner: " +
-                   symlink);
+        LOG.warn("Failed to delete symlink created by the local job runner: {}", symlink);
       }
     }
     FileContext localFSFileContext = FileContext.getLocalFSFileContext();

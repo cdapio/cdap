@@ -26,7 +26,9 @@ import com.continuuity.api.dataset.lib.CompositeDatasetAdmin;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 
+import java.io.IOException;
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * Test dataset module
@@ -51,7 +53,7 @@ public class TestModule2 implements DatasetModule {
       }
 
       @Override
-      public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) {
+      public Dataset getDataset(DatasetSpecification spec, Map arguments, ClassLoader classLoader) throws IOException {
         return null;
       }
     };

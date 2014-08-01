@@ -31,6 +31,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * DatasetDefinition for {@link ObjectStoreDataset}.
@@ -66,9 +67,10 @@ public class ObjectStoreDefinition
   }
 
   @Override
-  public ObjectStoreDataset<?> getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public ObjectStoreDataset<?> getDataset(DatasetSpecification spec,
+                                          Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("objects");
-    KeyValueTable table = tableDef.getDataset(kvTableSpec, classLoader);
+    KeyValueTable table = tableDef.getDataset(kvTableSpec, arguments, classLoader);
 
     TypeRepresentation typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
     Schema schema = GSON.fromJson(spec.getProperty("schema"), Schema.class);

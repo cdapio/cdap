@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Custom dataset example: key-value table
@@ -50,9 +51,10 @@ public class MyKeyValueTableDefinition
 
   @Override
   public MyKeyValueTableDefinition.KeyValueTable getDataset(DatasetSpecification spec,
+                                                            Map<String, String> arguments,
                                                             ClassLoader classLoader) throws IOException {
     return new MyKeyValueTableDefinition.KeyValueTable(spec.getName(),
-                                                       getDataset("table", Table.class, spec, classLoader));
+                                                       getDataset("table", Table.class, spec, arguments, classLoader));
   }
 
   /**

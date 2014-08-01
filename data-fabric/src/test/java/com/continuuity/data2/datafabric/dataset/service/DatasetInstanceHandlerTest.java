@@ -16,15 +16,8 @@
 
 package com.continuuity.data2.datafabric.dataset.service;
 
-import com.continuuity.api.dataset.Dataset;
-import com.continuuity.api.dataset.DatasetAdmin;
-import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
-import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
-import com.continuuity.api.dataset.lib.CompositeDatasetAdmin;
-import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
-import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Put;
 import com.continuuity.api.dataset.table.Table;
@@ -169,8 +162,8 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(2, getInstances().getResponseObject().size());
 
     // we want to verify that data is also gone, so we write smth to tables first
-    final Table table1 = dsFramework.getDataset("myTable1", null);
-    final Table table2 = dsFramework.getDataset("myTable2", null);
+    final Table table1 = dsFramework.getDataset("myTable1", null, null);
+    final Table table2 = dsFramework.getDataset("myTable2", null, null);
     TransactionExecutor txExecutor =
       new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
                                      ImmutableList.of((TransactionAware) table1, (TransactionAware) table2));
