@@ -134,7 +134,8 @@ define([], function () {
           existingObj.set('inList', true);
           if (existingObj.get('status') === 'FINISHED' && existingObj.get('has_results')) {
             if (!existingObj.get('results')) {
-              self.getResults(existingObj);
+//              self.getResults(existingObj);
+              self.getPreview(existingObj);
               self.getSchema(existingObj);
             }
           }
@@ -145,6 +146,21 @@ define([], function () {
       });
 		},
 
+    getPreview: function (query) {
+      var self = this;
+      var handle = query.get('query_handle');
+      this.HTTP.post('rest/data/explore/queries/' + handle + '/preview', function (response, status) {
+        if (status != 200) {
+          console.log('Error in getPreview');
+          query.set('results', []);
+          return;
+        }
+        response = jQuery.parseJSON( response );
+        query.set('results', response);
+      });
+    },
+
+    //getResults functionality has been replaced by getPreview (and repeatable, but limited-results version).
     getResults: function (query) {
       var self = this;
       var handle = query.get('query_handle');
