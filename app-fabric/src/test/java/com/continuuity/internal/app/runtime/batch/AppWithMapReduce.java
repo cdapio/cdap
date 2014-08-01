@@ -19,7 +19,6 @@ package com.continuuity.internal.app.runtime.batch;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
 import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.dataset.lib.TimeseriesTable;
 import com.continuuity.api.dataset.table.Table;
@@ -83,7 +82,7 @@ public class AppWithMapReduce extends AbstractApplication {
     @UseDataSet("onFinish")
     private KeyValueTable onFinishTable;
     @UseDataSet("timeSeries")
-    private SimpleTimeseriesTable table;
+    private TimeseriesTable table;
 
     @Override
     public MapReduceSpecification configure() {

@@ -25,12 +25,11 @@ import com.continuuity.MultiStreamApp;
 import com.continuuity.SleepingWorkflowApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.stream.StreamSpecification;
+import com.continuuity.api.dataset.lib.KeyValueTable;
+import com.continuuity.api.dataset.lib.ObjectStore;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
@@ -575,8 +574,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       Assert.assertEquals("mydataset", map.get("id"));
       Assert.assertEquals("mydataset", map.get("name"));
       Assert.assertNotNull(map.get("specification"));
-      DataSetSpecification spec = new Gson().fromJson(map.get("specification"), DataSetSpecification.class);
-      Assert.assertNotNull(spec);
 
       // verify all datasets
       response = doGet("/v2/datasets");

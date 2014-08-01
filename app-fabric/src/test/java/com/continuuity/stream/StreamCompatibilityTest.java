@@ -16,7 +16,7 @@
 package com.continuuity.stream;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.app.ApplicationSpecification;

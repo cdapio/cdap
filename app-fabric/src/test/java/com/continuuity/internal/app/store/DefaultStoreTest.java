@@ -331,14 +331,12 @@ public class DefaultStoreTest {
 
   private void assertWordCountAppSpecAndInMetadataStore(ApplicationSpecification stored) {
     // should be enough to make sure it is stored
-    Assert.assertEquals(1, stored.getDataSets().size());
     Assert.assertEquals(WordCountApp.WordCountFlow.class.getName(),
                         stored.getFlows().get("WordCountFlow").getClassName());
   }
 
   private void assertChangedFooAppSpecAndInMetadataStore(ApplicationSpecification stored) {
     // should be enough to make sure it is stored
-    Assert.assertEquals(2, stored.getDataSets().size());
     Assert.assertEquals(FlowImpl.class.getName(),
                         stored.getFlows().get("flow2").getClassName());
   }
@@ -443,7 +441,6 @@ public class DefaultStoreTest {
 
     Assert.assertNotNull(store.getApplication(appId));
     Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
-    Assert.assertEquals(1, store.getAllDataSets(new Id.Account("account1")).size());
 
     // removing flow
     store.removeAllApplications(accountId);
@@ -451,7 +448,6 @@ public class DefaultStoreTest {
     Assert.assertNull(store.getApplication(appId));
     // Streams and DataSets should survive deletion
     Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
-    Assert.assertEquals(1, store.getAllDataSets(new Id.Account("account1")).size());
   }
 
   @Test
@@ -463,7 +459,6 @@ public class DefaultStoreTest {
 
     Assert.assertNotNull(store.getApplication(appId));
     Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
-    Assert.assertEquals(1, store.getAllDataSets(new Id.Account("account1")).size());
 
     // removing flow
     store.removeAll(accountId);
@@ -471,7 +466,6 @@ public class DefaultStoreTest {
     Assert.assertNull(store.getApplication(appId));
     // Streams and DataSets should not survive deletion
     Assert.assertEquals(0, store.getAllStreams(new Id.Account("account1")).size());
-    Assert.assertEquals(0, store.getAllDataSets(new Id.Account("account1")).size());
   }
 
   @Test
@@ -483,7 +477,6 @@ public class DefaultStoreTest {
 
     Assert.assertNotNull(store.getApplication(appId));
     Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
-    Assert.assertEquals(1, store.getAllDataSets(new Id.Account("account1")).size());
 
     // removing application
     store.removeApplication(appId);
@@ -491,7 +484,6 @@ public class DefaultStoreTest {
     Assert.assertNull(store.getApplication(appId));
     // Streams and DataSets should survive deletion
     Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
-    Assert.assertEquals(1, store.getAllDataSets(new Id.Account("account1")).size());
   }
 
   @Test

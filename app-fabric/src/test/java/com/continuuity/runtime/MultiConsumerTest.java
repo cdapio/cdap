@@ -16,7 +16,7 @@
 
 package com.continuuity.runtime;
 
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;

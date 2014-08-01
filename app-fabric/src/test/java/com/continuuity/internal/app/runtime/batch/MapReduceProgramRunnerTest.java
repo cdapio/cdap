@@ -17,12 +17,11 @@
 package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.dataset.ObjectStore;
-import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
-import com.continuuity.api.data.dataset.TimeseriesTable;
-import com.continuuity.api.data.dataset.table.Get;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.dataset.lib.KeyValueTable;
+import com.continuuity.api.dataset.lib.ObjectStore;
+import com.continuuity.api.dataset.lib.TimeseriesTable;
+import com.continuuity.api.dataset.table.Get;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
@@ -362,14 +361,14 @@ public class MapReduceProgramRunnerTest {
     byte[] tag2 = Bytes.toBytes("tag2");
     byte[] tag3 = Bytes.toBytes("tag3");
     // m1e1 = metric: 1, entity: 1
-    table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(3L), 1, tag3, tag2, tag1));
-    table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(10L), 2, tag2, tag3));
+    table.write(new TimeseriesTable.Entry(metric1, Bytes.toBytes(3L), 1, tag3, tag2, tag1));
+    table.write(new TimeseriesTable.Entry(metric1, Bytes.toBytes(10L), 2, tag2, tag3));
     // 55L will make job fail
-    table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(withBadData ? 55L : 15L), 3, tag1, tag3));
-    table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(23L), 4, tag2));
+    table.write(new TimeseriesTable.Entry(metric1, Bytes.toBytes(withBadData ? 55L : 15L), 3, tag1, tag3));
+    table.write(new TimeseriesTable.Entry(metric1, Bytes.toBytes(23L), 4, tag2));
 
 
-    table.write(new SimpleTimeseriesTable.Entry(metric2, Bytes.toBytes(4L), 3, tag1, tag3));
+    table.write(new TimeseriesTable.Entry(metric2, Bytes.toBytes(4L), 3, tag1, tag3));
   }
 
   private void runProgram(ApplicationWithPrograms app, Class<?> programClass, boolean frequentFlushing)
