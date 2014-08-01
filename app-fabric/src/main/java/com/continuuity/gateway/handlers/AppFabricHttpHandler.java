@@ -114,7 +114,9 @@ import com.google.common.io.OutputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -152,6 +154,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -467,21 +470,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       final Id.Program id = Id.Program.from(accountId, appId, runnableId);
       final ProgramType type = RUNNABLE_TYPE_MAP.get(runnableType);
-      final JsonObject statusMap = new JsonObject();
-      getStatus(id, type, statusMap);
-      // getStatus has a callback for mapreduce jobs that run in workflows
-      // wait for statuses to come back in case we are polling mapreduce status in workflow
-      // status map contains either a status or an error with a statusCode
-      while (!statusMap.has("status") && !statusMap.has("statusCode")) {
-        Thread.sleep(1);
-      }
+      Map<String, Object> statusMap = getStatus(id, type);
       // If status does not exist, then there was an error
-      if (!statusMap.has("status")) {
-        responder.sendString(HttpResponseStatus.valueOf(statusMap.get("statusCode").getAsInt()),
-                             statusMap.get("error").getAsString());
+      if (!statusMap.containsKey("status")) {
+        responder.sendString(HttpResponseStatus.valueOf((Integer) statusMap.get("statusCode")),
+                             (String) statusMap.get("error"));
         return;
       }
-      JsonObject returnObj = new JsonObject();
       responder.sendJson(HttpResponseStatus.OK, statusMap);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -492,29 +487,30 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Stores the status of the given program id with the given program type into the statusMap.
+   * Returns a map where the pairs map from status to program status (e.g. {"status" : "RUNNING"}) or
+   * in case of an error in the input (e.g. invalid id, program not found), a map from statusCode to integer and
+   * error to error message (e.g. {"statusCode": 404, "error": "Program not found"})
    *
-   * @param id
-   * @param type
-   * @param statusMap
+   * @param id The Program Id to get the status of
+   * @param type The Type of the Program to get the status of
    * @throws Throwable
    */
-  private void getStatus(final Id.Program id, final ProgramType type, final JsonObject statusMap)
-    throws Throwable {
+  private Map<String, Object> getStatus(final Id.Program id, final ProgramType type) throws Throwable {
+    final Map<String, Object> statusMap = new HashMap<String, Object>();
     // check that app exists
     ApplicationSpecification appSpec = store.getApplication(id.getApplication());
     if (appSpec == null) {
-      statusMap.addProperty("statusCode", HttpResponseStatus.NOT_FOUND.getCode());
-      statusMap.addProperty("error", "App: " + id.getApplicationId() + " not found");
-      return;
+      statusMap.put("statusCode", HttpResponseStatus.NOT_FOUND.getCode());
+      statusMap.put("error", "App: " + id.getApplicationId() + " not found");
+      return statusMap;
     }
     // must do it this way to allow anon function in workflow to modify status
     if (type == ProgramType.MAPREDUCE) {
       // check that mapreduce exists
       if (!appSpec.getMapReduce().containsKey(id.getId())) {
-        statusMap.addProperty("statusCode", HttpResponseStatus.NOT_FOUND.getCode());
-        statusMap.addProperty("error", "Program: " + id.getId() + " not found");
-        return;
+        statusMap.put("statusCode", HttpResponseStatus.NOT_FOUND.getCode());
+        statusMap.put("error", "Program: " + id.getId() + " not found");
+        return statusMap;
       }
       String workflowName = getWorkflowName(id.getId());
       if (workflowName != null) {
@@ -524,7 +520,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             @Override
             public void handle(WorkflowClient.Status status) {
               if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
-                statusMap.addProperty("status", "RUNNING");
+                statusMap.put("status", "RUNNING");
               } else {
                 //mapreduce name might follow the same format even when its not part of the workflow.
                 try {
@@ -533,8 +529,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                 } catch (Exception e) {
                   LOG.error("Got exception: ", e);
                   // error occurred so say internal server error
-                  statusMap.addProperty("statusCode", HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode());
-                  statusMap.addProperty("error", e.getMessage());
+                  statusMap.put("statusCode", HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode());
+                  statusMap.put("error", e.getMessage());
                 }
               }
             }
@@ -546,23 +542,29 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }
     } else if (type == null) {
       // invalid type does not exist
-      statusMap.addProperty("statusCode", HttpResponseStatus.BAD_REQUEST.getCode());
-      statusMap.addProperty("error", "Invalid program type provided");
+      statusMap.put("statusCode", HttpResponseStatus.BAD_REQUEST.getCode());
+      statusMap.put("error", "Invalid program type provided");
     } else {
-      //mapreduce is not part of a workflow
+      // all other programs
       storeProgramStatus(id, type, statusMap);
     }
+    // wait for status to come back in case we are polling mapreduce status in workflow
+    // status map contains either a status or an error with a statusCode
+    while (!statusMap.containsKey("status") && !statusMap.containsKey("statusCode")) {
+      Thread.sleep(1);
+    }
+    return statusMap;
   }
 
-  private void storeProgramStatus(final Id.Program id, final ProgramType type, final JsonObject statusMap)
+  private void storeProgramStatus(final Id.Program id, final ProgramType type, final Map<String, Object> statusMap)
     throws Exception {
     // getProgramStatus returns program status or http response status NOT_FOUND
     String progStatus = getProgramStatus(id, type).getStatus();
     if (progStatus.equals(HttpResponseStatus.NOT_FOUND.toString())) {
-      statusMap.addProperty("statusCode", HttpResponseStatus.NOT_FOUND.getCode());
-      statusMap.addProperty("error", "Program not found");
+      statusMap.put("statusCode", HttpResponseStatus.NOT_FOUND.getCode());
+      statusMap.put("error", "Program not found");
     } else {
-      statusMap.addProperty("status", progStatus);
+      statusMap.put("status", progStatus);
     }
   }
 
@@ -1025,11 +1027,33 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns the instances for all programs that are passed into the data. The data is an array of Json objects
-   * where each object must contain the following three elements: appId, programType, and programId
-   * (flow name/service name/etc.) Furthermore, If one of these object's programType parameter is flow or service,
-   * the object must also have another paramter, runnableId (flowlet name/twill runnable name). The runnableId
-   * parameter does not apply to Procedures.
+   * Returns the number of instances for all program runnables that are passed into the data. The data is an array of
+   * Json objects where each object must contain the following three elements: appId, programType, and programId
+   * (flow name, service name, or procedure name). Retrieving instances only applies to flows, procedures, and user
+   * services. For flows and procedures, another parameter, "runnableId", must be provided. This corresponds to the
+   * flowlet/runnable for which to retrieve the instances. This does not apply to procedures.
+   *
+   * Example input:
+   * [{"appId": "App1", "programType": "Service", "programId": "Service1", "runnableId": "Runnable1"},
+   *  {"appId": "App1", "programType": "Procedure", "programId": "Proc2"},
+   *  {"appId": "App2", "programType": "Flow", "programId": "Flow1", "runnableId": "Flowlet1"}]
+   *
+   * The response will be an array of JsonObjects each of which will contain the three input parameters
+   * as well as 3 fields:
+   * "provisioned" which maps to the number of instances actually provided for the input runnable,
+   * "requested" which maps to the number of instances the user has requested for the input runnable,
+   * "statusCode" which maps to the http status code for the data in that JsonObjects. (200, 400, 404)
+   * If an error occurs in the input (i.e. in the example above, Flowlet1 does not exist), then all JsonObjects for
+   * which the parameters have a valid instances will have the provisioned and requested fields status code fields
+   * but all JsonObjects for which the parameters are not valid will have an error message and statusCode.
+   *
+   * E.g. given the above data, if there is no Flowlet1, then the response would be 200 OK with following possible data:
+   * [{"appId": "App1", "programType": "Service", "programId": "Service1", "runnableId": "Runnable1",
+   *   "statusCode": 200, "provisioned": 2, "requested": 2},
+   *  {"appId": "App1", "programType": "Procedure", "programId": "Proc2", "statusCode": 200, "provisioned": 1,
+   *   "requested": 3},
+   *  {"appId": "App2", "programType": "Flow", "programId": "Flow1", "runnableId": "Flowlet1", "statusCode": 404,
+   *   "error": "Runnable": Flowlet1 not found"}]
    *
    * @param request
    * @param responder
@@ -1039,42 +1063,22 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getInstances(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<JsonObject> args = decodeArrayArguments(request);
+      List<JsonObject> args = decodeArrayArguments(request, responder);
+      // if args is null then the response has already been sent
       if (args == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "No data provided");
         return;
       }
       for (int i = 0; i < args.size(); ++i) {
-        JsonObject requestedObj;
-        try {
-          requestedObj = args.get(i);
-        } catch (Exception e) {
-          responder.sendString(HttpResponseStatus.BAD_REQUEST, "All elements in array must be valid JSON Objects");
-          return;
+        JsonObject requestedObj = args.get(i);
+        // if it has error, then that means there was an error when parsing the json
+        if (requestedObj.has("error")) {
+          continue;
         }
+        String appId = requestedObj.getAsJsonPrimitive(APP_ID_ARG).getAsString();
+        String programTypeStr = requestedObj.getAsJsonPrimitive(PROGRAM_TYPE_ARG).getAsString();
+        String programId = requestedObj.getAsJsonPrimitive(PROGRAM_ID_ARG).getAsString();
 
-        String appId, programTypeStr, programId, runnableId;
-        try {
-          appId = requestedObj.getAsJsonPrimitive(APP_ID_ARG).getAsString();
-          programTypeStr = requestedObj.getAsJsonPrimitive(PROGRAM_TYPE_ARG).getAsString();
-          programId = requestedObj.getAsJsonPrimitive(PROGRAM_ID_ARG).getAsString();
-        } catch (Exception e) {
-          addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                       "Must provide appId, programType, and programId as strings");
-          continue;
-        }
-        ProgramType programType;
-        try {
-          programType = ProgramType.valueOfPrettyName(programTypeStr);
-        } catch (IllegalArgumentException e) {
-          // invalid type
-          addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(), "Invalid program type provided");
-          continue;
-        }
-        if (programType == null) {
-          addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(), "Invalid program type provided");
-          continue;
-        }
+        ProgramType programType = ProgramType.valueOfPrettyName(programTypeStr);
         // these values will be overwritten later
         int requested, provisioned;
         ApplicationSpecification spec = store.getApplication(Id.Application.from(accountId, appId));
@@ -1082,6 +1086,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(), "App: " + appId + " not found");
           continue;
         }
+        String runnableId;
         if (programType == ProgramType.PROCEDURE) {
           // the "runnable" for procedures has the same id as the procedure name
           runnableId = programId;
@@ -1128,7 +1133,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
               continue;
             }
           } else {
-            // Service
+            // Services
             ServiceSpecification serviceSpec = spec.getServices().get(programId);
             if (serviceSpec != null) {
               Map<String, RuntimeSpecification> runtimeSpecs = serviceSpec.getRunnables();
@@ -1169,6 +1174,23 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * where each object must contain the following three elements: appId, programType, and programId
    * (flow name, service name, etc.).
    *
+   * Example input:
+   * [{"appId": "App1", "programType": "Service", "programId": "Service1"},
+   *  {"appId": "App1", "programType": "Procedure", "programId": "Proc2"},
+   *  {"appId": "App2", "programType": "Flow", "programId": "Flow1"}]
+   *
+   * The response will be an array of JsonObjects each of which will contain the three input parameters
+   * as well as 2 fields, "status" which maps to the status of the program and "statusCode" which maps to the
+   * status code for the data in that JsonObjects. If an error occurs in the
+   * input (i.e. in the example above, App2 does not exist), then all JsonObjects for which the parameters
+   * have a valid status will have the status field but all JsonObjects for which the parameters do not have a valid
+   * status will have an error message and statusCode.
+   *
+   * For example, if there is no App2 in the data above, then the response would be 200 OK with following possible data:
+   * [{"appId": "App1", "programType": "Service", "programId": "Service1", "statusCode": 200, "status": "RUNNING"},
+   *  {"appId": "App1", "programType": "Procedure", "programId": "Proc2"}, "statusCode": 200, "status": "STOPPED"},
+   *  {"appId":"App2", "programType":"Flow", "programId":"Flow1", "statusCode":404, "error": "App: App2 not found"}]
+   *
    * @param request
    * @param responder
    */
@@ -1177,50 +1199,35 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getStatuses(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<JsonObject> args = decodeArrayArguments(request);
-      // empty args is okay. it will return a 200 with no data
+      List<JsonObject> args = decodeArrayArguments(request, responder);
+      // if args is null, then there was an error in decoding args and response was already sent
       if (args == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "No data provided");
         return;
       }
       for (int i = 0; i < args.size(); ++i) {
-        JsonObject requestedObj;
-        try {
-          requestedObj = args.get(i);
-        } catch (Exception e) {
-          responder.sendString(HttpResponseStatus.BAD_REQUEST, "All elements in array must be valid JSON Objects");
-          return;
-        }
-
-        String appId, programTypeStr, programId;
-        try {
-          appId = requestedObj.getAsJsonPrimitive(APP_ID_ARG).getAsString();
-          programTypeStr = requestedObj.getAsJsonPrimitive(PROGRAM_TYPE_ARG).getAsString();
-          programId = requestedObj.getAsJsonPrimitive(PROGRAM_ID_ARG).getAsString();
-        } catch (Exception e) {
-          addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                       "Must provide appId, programType, and programId as strings");
+        JsonObject requestedObj = args.get(i);
+        // if it has error, then that means there was an error when parsing the json
+        if (requestedObj.has("error")) {
           continue;
         }
+        String appId = requestedObj.getAsJsonPrimitive(APP_ID_ARG).getAsString();
+        String programTypeStr = requestedObj.getAsJsonPrimitive(PROGRAM_TYPE_ARG).getAsString();
+        String programId = requestedObj.getAsJsonPrimitive(PROGRAM_ID_ARG).getAsString();
         Id.Program progId = Id.Program.from(accountId, appId, programId);
-        ProgramType programType;
-        try {
-          programType = ProgramType.valueOfPrettyName(programTypeStr);
-        } catch (IllegalArgumentException e) {
-          // invalid type
-          addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(), "Invalid program type provided");
-          continue;
-        }
-        getStatus(progId, programType, requestedObj);
-        // getStatus has a callback for mapreduce jobs that run in workflows
-        // wait for statuses to come back in case we are polling mapreduce status in workflow
-        // the map will have either status or error and statusCode
-        while (!requestedObj.has("status") && !requestedObj.has("statusCode")) {
-          Thread.sleep(1);
-        }
-        // set the status code for valid requests to 200
-        if (requestedObj.has("status")) {
-          requestedObj.addProperty("statusCode", HttpResponseStatus.OK.getCode());
+        ProgramType programType = ProgramType.valueOfPrettyName(programTypeStr);
+        // get th statuses
+        Map<String, Object> statusMap = getStatus(progId, programType);
+        for (Map.Entry<String, Object> entry : statusMap.entrySet()) {
+          // set the status code for valid requests to 200
+          if (entry.getKey().equals("status")) {
+            requestedObj.addProperty("statusCode", HttpResponseStatus.OK.getCode());
+          }
+          if (entry.getValue() instanceof Integer) {
+            requestedObj.addProperty(entry.getKey(), (Integer) entry.getValue());
+          } else {
+            requestedObj.addProperty(entry.getKey(), String.valueOf(entry.getValue()));
+          }
+
         }
         // set the program type to the pretty name in case the request originally didn't have pretty name
         requestedObj.addProperty(PROGRAM_TYPE_ARG, programType.getPrettyName());
@@ -1238,7 +1245,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Adds the status code and error to the JsonObject. The JsonObject will have 2 new properties:
-   * 'error': code, 'error': error
+   * 'statusCode': code, 'error': error
+   *
    * @param object The JsonObject to add the code and error to
    * @param code The status code to add
    * @param error The error message to add
@@ -1248,6 +1256,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     object.addProperty("error", error);
   }
 
+  /**
+   * Returns the number of instances currently running for different runnables for different programs
+   *
+   * @param accountId
+   * @param appId
+   * @param programType
+   * @param programId
+   * @param runnableId
+   * @return
+   */
   private int getRunnableCount(String accountId, String appId, ProgramType programType,
                                String programId, String runnableId) {
     ProgramLiveInfo info = runtimeService.getLiveInfo(Id.Program.from(accountId, appId, programId), programType);
@@ -1270,23 +1288,61 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Deserializes the HttpRequest data into a list of JsonObjects. Throws a JsonSyntaxException if the data is
-   * malformed JSON.
+   * Deserializes and parses the HttpRequest data into a list of JsonObjects. Checks the HttpRequest data to see that
+   * the input has valid fields corresponding to the /instances and /status endpoints. If the input data is empty or
+   * the data is not of the form of an array of json objects, it sends an appropriate response through the responder
+   * and returns null.
    *
-   * @param request
+   * @param request The HttpRequest to parse
+   * @param responder The HttpResponder used to send responses in case of errors
    * @return List of JsonObjects from the request data
    * @throws IOException Thrown in case of Exceptions when reading the http request data
    * @throws JsonSyntaxException Thrown in case of Malformed JSON
    */
   @Nullable
-  protected List<JsonObject> decodeArrayArguments(HttpRequest request) throws IOException, JsonSyntaxException {
+  private List<JsonObject> decodeArrayArguments(HttpRequest request, HttpResponder responder)
+    throws IOException, JsonSyntaxException {
     ChannelBuffer content = request.getContent();
     if (!content.readable()) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Cannot read request");
       return null;
     }
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
     try {
-      return  GSON.fromJson(reader, new TypeToken<List<JsonObject>>() { }.getType());
+      List<JsonObject> inputList = GSON.fromJson(reader, new TypeToken<List<JsonObject>>() { }.getType());
+      for (int i = 0; i < inputList.size(); ++i) {
+        JsonObject requestedObj;
+        try {
+          requestedObj = inputList.get(i);
+        } catch (ClassCastException e) {
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, "All elements in array must be valid JSON Objects");
+          return null;
+        }
+        // make sure the following args exist
+        String programTypeStr;
+        try {
+          requestedObj.getAsJsonPrimitive(APP_ID_ARG).getAsString();
+          programTypeStr = requestedObj.getAsJsonPrimitive(PROGRAM_TYPE_ARG).getAsString();
+          requestedObj.getAsJsonPrimitive(PROGRAM_ID_ARG).getAsString();
+        } catch (NullPointerException e) {
+          addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
+                       "Must provide appId, programType, and programId");
+          continue;
+        } catch (ClassCastException e) {
+          addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
+                       "appId, programType, and programId must be strings");
+          continue;
+        }
+        // invalid type
+        try {
+          if (ProgramType.valueOfPrettyName(programTypeStr) == null) {
+            addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(), "Invalid program type provided");
+          }
+        } catch (IllegalArgumentException e) {
+          addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(), "Invalid program type provided");
+        }
+      }
+      return inputList;
     } catch (JsonSyntaxException e) {
       LOG.info("Failed to parse arguments on {}", request.getUri(), e);
       throw e;
