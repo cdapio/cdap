@@ -19,7 +19,7 @@ package com.continuuity.logging.appender.file;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
-import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.LogAppender;
 import com.continuuity.logging.save.LogSaverTableUtil;
@@ -78,12 +78,13 @@ public class FileLogAppender extends LogAppender {
   private Schema logSchema;
 
   @Inject
-  public FileLogAppender(CConfiguration cConfig, DataSetAccessor dataSetAccessor,
+  public FileLogAppender(CConfiguration cConfig,
+                         DatasetFramework dsFramework,
                          TransactionSystemClient txClient,
                          LocationFactory locationFactory) {
     setName(APPENDER_NAME);
 
-    this.tableUtil = new LogSaverTableUtil(dataSetAccessor);
+    this.tableUtil = new LogSaverTableUtil(dsFramework, cConfig);
     this.txClient = txClient;
     this.locationFactory = locationFactory;
 
@@ -129,7 +130,7 @@ public class FileLogAppender extends LogAppender {
     super.start();
     try {
       logSchema = new LogSchema().getAvroSchema();
-      FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil.getMetaTable(),
+      FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil,
                                                                         txClient,
                                                                         locationFactory);
 

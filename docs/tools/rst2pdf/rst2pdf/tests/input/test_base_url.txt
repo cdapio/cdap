@@ -1,3 +1,0 @@
-This is a relative link_ it only works if you set a base url.
-
-.. _link: ../target.html

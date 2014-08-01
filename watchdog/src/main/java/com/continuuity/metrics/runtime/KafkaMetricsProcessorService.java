@@ -16,8 +16,6 @@
 package com.continuuity.metrics.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data2.OperationException;
-import com.continuuity.internal.migrate.TableMigrator;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.process.KafkaMetricsProcessorServiceFactory;
 import com.continuuity.watchdog.election.MultiLeaderElection;
@@ -41,14 +39,12 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsProcessorService.class);
 
   private final MultiLeaderElection multiElection;
-  private final TableMigrator tableMigrator;
   private final SettableFuture<?> completion;
 
   @Inject
-  public KafkaMetricsProcessorService(CConfiguration conf, TableMigrator tableMigrator,
+  public KafkaMetricsProcessorService(CConfiguration conf,
                                       ZKClientService zkClientService,
                                       KafkaMetricsProcessorServiceFactory kafkaMetricsProcessorServiceFactory) {
-    this.tableMigrator = tableMigrator;
     int partitionSize = conf.getInt(MetricsConstants.ConfigKeys.KAFKA_PARTITION_SIZE,
                                     MetricsConstants.DEFAULT_KAFKA_PARTITION_SIZE);
     multiElection = new MultiLeaderElection(
@@ -71,13 +67,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
 
   @Override
   protected void startUp() throws Exception {
-    try {
-      LOG.info("Starting Metrics Processor ...");
-      tableMigrator.migrateIfRequired();
-    } catch (OperationException e) {
-      LOG.error("Error while checking for the necessity of, or execution of, a metrics table update", e);
-      Throwables.propagate(e);
-    }
+    LOG.info("Starting Metrics Processor ...");
     multiElection.start();
   }
 
