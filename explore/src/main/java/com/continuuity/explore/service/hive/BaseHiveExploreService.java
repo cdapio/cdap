@@ -746,8 +746,18 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       this.operationHandle = operationHandle;
       this.sessionConf = sessionConf;
       this.statement = statement;
-      timestamp = System.currentTimeMillis();
+      this.timestamp = System.currentTimeMillis();
     }
+
+    OperationInfo(SessionHandle sessionHandle, OperationHandle operationHandle,
+                  Map<String, String> sessionConf, String statement, long timestamp) {
+      this.sessionHandle = sessionHandle;
+      this.operationHandle = operationHandle;
+      this.sessionConf = sessionConf;
+      this.statement = statement;
+      this.timestamp = timestamp;
+    }
+
 
     public SessionHandle getSessionHandle() {
       return sessionHandle;
@@ -776,7 +786,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     private InactiveOperationInfo(OperationInfo operationInfo, List<ColumnDesc> schema, QueryStatus status) {
       super(operationInfo.getSessionHandle(), operationInfo.getOperationHandle(),
-            operationInfo.getSessionConf(), operationInfo.getStatement());
+            operationInfo.getSessionConf(), operationInfo.getStatement(), operationInfo.getTimestamp());
       this.schema = schema;
       this.status = status;
     }
