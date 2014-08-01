@@ -253,7 +253,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  List<QueryInfo> filterQueries(List<QueryInfo> queries, final long start, final long end, final int limit) {
+  private List<QueryInfo> filterQueries(List<QueryInfo> queries, final long start, final long end, final int limit) {
     return FluentIterable.from(queries)
                          .filter(new Predicate<QueryInfo>() {
                            @Override
