@@ -130,11 +130,12 @@ public class DataSetInstantiationBase {
    *  specified by the matching data set spec, and injects the data fabric
    *  runtime into the new data set.
    *  @param dataSetName the name of the data set to instantiate
+   *  @param arguments the arguments for this dataset instance
    *  @param fabric the data fabric to inject
    *  @throws DataSetInstantiationException If failed to create the DataSet.
    */
   @SuppressWarnings("unchecked")
-  public <T extends Closeable> T getDataSet(String dataSetName, DataFabric fabric,
+  public <T extends Closeable> T getDataSet(String dataSetName, Map<String, String> arguments, DataFabric fabric,
                                             @Nullable DatasetFramework datasetFramework)
     throws DataSetInstantiationException {
 
@@ -145,7 +146,7 @@ public class DataSetInstantiationBase {
     }
 
     if (datasetFramework != null) {
-      T dataSet = (T) getDataset(dataSetName, datasetFramework);
+      T dataSet = (T) getDataset(dataSetName, arguments, datasetFramework);
       if (dataSet != null) {
         return dataSet;
       }
@@ -154,10 +155,11 @@ public class DataSetInstantiationBase {
     throw logAndException(null, "No data set named %s can be instantiated.", dataSetName);
   }
 
-  public <T extends Dataset> T getDataset(String dataSetName, DatasetFramework datasetFramework)
+  public <T extends Dataset> T getDataset(String dataSetName, Map<String, String> arguments,
+                                          DatasetFramework datasetFramework)
     throws DataSetInstantiationException {
 
-    T dataset = getOrCreateDataset(dataSetName, datasetFramework);
+    T dataset = getOrCreateDataset(dataSetName, arguments, datasetFramework);
 
     if (dataset instanceof TransactionAware) {
       txAware.add((TransactionAware) dataset);
@@ -167,7 +169,8 @@ public class DataSetInstantiationBase {
     return dataset;
   }
 
-  private <T extends Dataset> T getOrCreateDataset(String datasetName, DatasetFramework datasetFramework)
+  private <T extends Dataset> T getOrCreateDataset(String datasetName, Map<String, String> arguments,
+                                                   DatasetFramework datasetFramework)
     throws DataSetInstantiationException {
     try {
       if (!datasetFramework.hasInstance(datasetName)) {
@@ -183,7 +186,7 @@ public class DataSetInstantiationBase {
         }
       }
 
-      Dataset dataset = datasetFramework.getDataset(datasetName, classLoader);
+      Dataset dataset = datasetFramework.getDataset(datasetName, arguments, classLoader);
       if (dataset == null) {
         throw new DataSetInstantiationException("Attempted to create dataset " + datasetName +
                                                   " but still cannot access it");
@@ -401,6 +404,17 @@ public class DataSetInstantiationBase {
         }
         return (T) DataSetInstantiationBase.this.getDataSet(spec, dataFabric, metricName);
       }
+
+      @Override
+      public <T extends Closeable> T getDataSet(String dataSetName, Map<String, String> arguments)
+        throws DataSetInstantiationException {
+        DataSetSpecification spec = dataSetSpec.getSpecificationFor(dataSetName);
+        if (spec == null) {
+          throw logAndException(null, "No data set named %s declared for application.", dataSetName);
+        }
+        // old style datasets don't have arguments
+        return (T) DataSetInstantiationBase.this.getDataSet(spec, dataFabric, metricName);
+      }
     };
   }
 
@@ -415,6 +429,13 @@ public class DataSetInstantiationBase {
         // For non field injected DataSet, the name is prefixed with ".". See DataSetSpecification.
         String key = "." + name;
         return delegate.getDataSet(key);
+      }
+      @Override
+      public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
+        throws DataSetInstantiationException {
+        // For non field injected DataSet, the name is prefixed with ".". See DataSetSpecification.
+        String key = "." + name;
+        return delegate.getDataSet(key, arguments);
       }
     };
   }

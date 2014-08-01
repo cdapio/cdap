@@ -25,8 +25,12 @@ import java.util.Iterator;
  *
  * @param <T> type of the dataset
  */
-public class DatasetContext<T> implements Iterable {
+public class DatasetContext<T> implements Iterable<T> {
   private final T dataset;
+
+  public static <TYPE> DatasetContext<TYPE> of(TYPE dateset) {
+    return new DatasetContext<TYPE>(dateset);
+  }
 
   public DatasetContext(T dataset) {
     this.dataset = dataset;
@@ -37,7 +41,7 @@ public class DatasetContext<T> implements Iterable {
   }
 
   @Override
-  public Iterator iterator() {
-    return Iterators.forArray(dataset);
+  public Iterator<T> iterator() {
+    return Iterators.singletonIterator(dataset);
   }
 }

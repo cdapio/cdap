@@ -92,7 +92,7 @@ public class DatasetAccessor {
         classLoader = conf.getClassLoader();
         dataset = firstLoad(framework, datasetName, classLoader);
       } else {
-        dataset = framework.getDataset(datasetName, classLoader);
+        dataset = framework.getDataset(datasetName, null, classLoader);
       }
 
       if (!(dataset instanceof RecordScannable)) {
@@ -114,11 +114,11 @@ public class DatasetAccessor {
     ClassLoader datasetClassLoader = DATASET_CLASSLOADERS.get(datasetName);
     if (datasetClassLoader != null) {
       // Some other call in parallel may have already loaded it, so use the same classlaoder
-      return framework.getDataset(datasetName, datasetClassLoader);
+      return framework.getDataset(datasetName, null, datasetClassLoader);
     }
 
     // No classloader for dataset exists, load the dataset and save the classloader.
-    Dataset dataset = framework.getDataset(datasetName, classLoader);
+    Dataset dataset = framework.getDataset(datasetName, null, classLoader);
     if (dataset != null) {
       DATASET_CLASSLOADERS.put(datasetName, dataset.getClass().getClassLoader());
     }

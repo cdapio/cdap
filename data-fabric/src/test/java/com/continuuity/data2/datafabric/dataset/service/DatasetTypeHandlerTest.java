@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -214,8 +215,8 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     }
   }
 
-  private static DatasetDefinition createDefinition(String name) {
-    return new AbstractDatasetDefinition(name) {
+  private static <D extends Dataset> DatasetDefinition<D, DatasetAdmin> createDefinition(String name) {
+    return new AbstractDatasetDefinition<D, DatasetAdmin>(name) {
       @Override
       public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
         return null;
@@ -227,7 +228,7 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
       }
 
       @Override
-      public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) {
+      public D getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader) {
         return null;
       }
     };

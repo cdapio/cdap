@@ -155,14 +155,15 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public synchronized <T extends Dataset> T getDataset(String datasetInstanceName, ClassLoader classLoader)
+  public synchronized <T extends Dataset> T getDataset(String datasetInstanceName,
+                                                       Map<String, String> arguments, ClassLoader classLoader)
     throws IOException {
 
     DatasetSpecification spec = instances.get(datasetInstanceName);
     if (spec == null) {
       return null;
     }
-    DatasetDefinition impl = registry.get(spec.getType());
-    return (T) impl.getDataset(spec, classLoader);
+    DatasetDefinition def = registry.get(spec.getType());
+    return (T) (def.getDataset(spec, arguments, classLoader));
   }
 }

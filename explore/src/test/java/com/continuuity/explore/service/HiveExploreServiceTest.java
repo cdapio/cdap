@@ -63,7 +63,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
 
     // Accessing dataset instance to perform data operations
-    KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table", null);
+    KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table", null, null);
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);
@@ -108,7 +108,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testTable() throws Exception {
-    KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table", null);
+    KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table", null, null);
     Assert.assertNotNull(table);
     Transaction tx = transactionManager.startShort(100);
     table.startTx(tx);
@@ -237,7 +237,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
       Transaction tx1 = transactionManager.startShort(100);
 
       // Accessing dataset instance to perform data operations
-      KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table_1", null);
+      KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table_1", null, null);
       Assert.assertNotNull(table);
       table.startTx(tx1);
 
