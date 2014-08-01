@@ -58,6 +58,11 @@ public class DefaultServiceSpecification implements ServiceSpecification {
     return specification.getOrders();
   }
 
+  @Override
+  public List<PlacementPolicy> getPlacementPolicies() {
+    return specification.getPlacementPolicies();
+  }
+
   @Nullable
   @Override
   public EventHandlerSpecification getEventHandler() {
