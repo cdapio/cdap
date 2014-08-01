@@ -75,6 +75,7 @@ public class QueryInfo implements Comparable<QueryInfo> {
 
   @Override
   public int compareTo(QueryInfo queryInfo) {
-    return Longs.compare(getTimestamp(), queryInfo.getTimestamp());
+    // descending.
+    return Longs.compare(queryInfo.getTimestamp(), getTimestamp());
   }
 }
