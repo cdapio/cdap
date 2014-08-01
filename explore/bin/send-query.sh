@@ -49,7 +49,7 @@ function query_action() {
 
   # send query and parse response for status and handle
   response=`curl -sL -w "#%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X POST   \
-    http://$host:10000/v2/data/queries -d \{\"query\":\""$q"\"\}`
+    http://$host:10000/v2/data/explore/queries -d \{\"query\":\""$q"\"\}`
 
   if [ $? != "0" ]; then
     echo "Cannot connect to $host"
@@ -77,7 +77,7 @@ function query_action() {
   status="UNKNOWN"
   while [ "x$status" != "xFINISHED" ]; do
     sleep 1;
-    response=`curl -sL -w "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X GET http://$host:10000/v2/data/queries/$handle/status`
+    response=`curl -sL -w "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X GET http://$host:10000/v2/data/explore/queries/$handle/status`
     if [[ ! $response =~ 200$ ]]; then
       echo "Status got response code $response. Error."
       exit 1;
@@ -94,7 +94,7 @@ function query_action() {
   # retrieve results
   noresults=true;
   while true; do
-    response=`curl -sL -w "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X POST http://$host:10000/v2/data/queries/$handle/next -d '{"size":1}'`
+    response=`curl -sL -w "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X POST http://$host:10000/v2/data/explore/queries/$handle/next -d '{"size":1}'`
     if [[ ! $response =~ 200$ ]]; then
       echo "Next call got response code $response. Error."
       exit 1;
@@ -113,7 +113,7 @@ function query_action() {
   done
 
   # close the query
-  curl -sL -H "Authorization: Bearer $auth_token" -X DELETE http://$host:10000/v2/data/queries/$handle
+  curl -sL -H "Authorization: Bearer $auth_token" -X DELETE http://$host:10000/v2/data/explore/queries/$handle
 }
 
 host="localhost"
