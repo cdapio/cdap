@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Runs runnable-service in single-node
@@ -63,6 +64,7 @@ public class InMemoryRunnableRunner implements ProgramRunner {
   private final ProgramServiceDiscovery serviceDiscovery;
   private final DiscoveryService dsService;
   private final InMemoryElectionRegistry electionRegistry;
+  private final ConcurrentLinkedQueue<Discoverable> discoverables;
 
   @Inject
   public InMemoryRunnableRunner(MetricsCollectionService metricsCollectionService,
@@ -72,6 +74,7 @@ public class InMemoryRunnableRunner implements ProgramRunner {
     this.serviceDiscovery = serviceDiscovery;
     this.dsService = dsService;
     this.electionRegistry = electionRegistry;
+    this.discoverables = new ConcurrentLinkedQueue<Discoverable>();
   }
 
   @SuppressWarnings("unchecked")
@@ -120,6 +123,7 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       DiscoveryService dService = new DiscoveryService() {
         @Override
         public Cancellable register(final Discoverable discoverable) {
+          discoverables.add(discoverable);
           return dsService.register(new Discoverable() {
             @Override
             public String getName() {
@@ -164,7 +168,8 @@ public class InMemoryRunnableRunner implements ProgramRunner {
                                                                           serviceSpec.getName(), runnableName)));
 
       ProgramController controller = new InMemoryRunnableProgramController(program.getName(), runnableName,
-                                                                           twillContext, driver);
+                                                                           twillContext, driver,
+                                                                           discoverables);
 
       LOG.info("Starting Runnable: {}", runnableName);
       driver.start();

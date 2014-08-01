@@ -22,6 +22,7 @@ import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.zookeeper.coordination.ServiceDiscoveredCodec;
 import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -29,6 +30,7 @@ import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.proto.Containers;
 import com.continuuity.proto.Id;
 import com.continuuity.proto.NotRunningProgramLiveInfo;
@@ -40,8 +42,12 @@ import com.continuuity.proto.ServiceMeta;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.api.RuntimeSpecification;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -65,15 +71,21 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final Store store;
   private final ProgramRuntimeService runtimeService;
+  private final ProgramServiceDiscovery programServiceDiscovery;
+  private static final Gson GSON = new GsonBuilder()
+                                      .registerTypeAdapter(new TypeToken<ServiceDiscovered>() { }.getType(),
+                                                            new ServiceDiscoveredCodec())
+                                      .create();
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceHttpHandler.class);
 
   @Inject
   public ServiceHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                            ProgramRuntimeService runtimeService) {
+                            ProgramRuntimeService runtimeService, ProgramServiceDiscovery programServiceDiscovery) {
     super(authenticator);
     this.store = storeFactory.create();
     this.runtimeService = runtimeService;
+    this.programServiceDiscovery = programServiceDiscovery;
   }
 
   /**
@@ -124,6 +136,29 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
       } else {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Return a list of discoverables for this service.
+   */
+  @Path("/apps/{app-id}/services/{service-id}/discover/{discoverable-id}")
+  @GET
+  public void getDiscoverables(HttpRequest request, HttpResponder responder,
+                         @PathParam("app-id") String appId,
+                         @PathParam("service-id") String serviceId,
+                         @PathParam("discoverable-id") String discoverableId) {
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      ServiceDiscovered discoverables = programServiceDiscovery.discover(accountId, appId, serviceId, discoverableId);
+      responder.sendString(HttpResponseStatus.OK, GSON.toJson(discoverables,
+                                                              new TypeToken<ServiceDiscovered>() { }.getType()));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
