@@ -70,6 +70,11 @@ define([], function () {
 
     selectDataset: function (dataset) {
       this.set('selectedDataset', dataset);
+      var datasets = this.get('datasets');
+      datasets.forEach(function (entry) {
+        entry.set('isSelected', false);
+      });
+      dataset.set('isSelected', true);
     },
 
 		unload: function () {

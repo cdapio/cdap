@@ -471,6 +471,23 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 
 	});
 
+  var datasetListHandler = getListHandler(['Dataset']);
+  datasetListHandler.renderTemplate = function () {
+    /*
+     * Render the List Page template (i.e. the header / time selector)
+     */
+    this.render('datasets-list-page', {
+      controller: 'List'
+    });
+    /*
+     * Render a list type partial into the List Page template
+     */
+    this.render('_datasets-list', {
+      controller: 'List',
+      into: 'datasets-list-page'
+    });
+  };
+
 	$.extend(C, {
 
 		StreamsRoute: Em.Route.extend(getListHandler(['Stream'])),
@@ -479,11 +496,12 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 
 		WorkflowsRoute: Em.Route.extend(getListHandler(['Workflow'])),
 
-		DatasetsRoute: Em.Route.extend(getListHandler(['Dataset'])),
+		ProceduresRoute: Em.Route.extend(getListHandler(['Procedure'])),
 
-		ProceduresRoute: Em.Route.extend(getListHandler(['Procedure']))
+    DatasetsRoute: Em.Route.extend(datasetListHandler),
 
 	});
+
 
 	return C;
 });
