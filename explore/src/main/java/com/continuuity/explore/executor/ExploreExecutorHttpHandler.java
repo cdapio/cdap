@@ -185,7 +185,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       LOG.trace("Retrieving Explore schema for dataset {}", datasetName);
 
-      Dataset dataset = datasetFramework.getDataset(datasetName, null, null);
+      Dataset dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
       if (dataset == null) {
         responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot find dataset " + datasetName);
         return;
