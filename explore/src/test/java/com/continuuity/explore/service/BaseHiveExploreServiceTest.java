@@ -38,7 +38,9 @@ import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryHandle;
 import com.continuuity.proto.QueryResult;
+import com.continuuity.proto.QueryStatus;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 
 import com.google.common.collect.ImmutableList;
@@ -53,6 +55,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 
 import java.io.File;
+import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -103,6 +106,22 @@ public class BaseHiveExploreServiceTest {
 
   public static ExploreClient getExploreClient() {
     return exploreClient;
+  }
+
+  protected static QueryStatus waitForCompletionStatus(QueryHandle handle, long sleepTime,
+                                                       TimeUnit timeUnit, int maxTries)
+    throws ExploreException, HandleNotFoundException, InterruptedException, SQLException {
+    QueryStatus status;
+    int tries = 0;
+    do {
+      timeUnit.sleep(sleepTime);
+      status = exploreService.getStatus(handle);
+
+      if (++tries > maxTries) {
+        break;
+      }
+    } while (!status.getStatus().isDone());
+    return status;
   }
 
   protected static void runCommand(String command, boolean expectedHasResult,

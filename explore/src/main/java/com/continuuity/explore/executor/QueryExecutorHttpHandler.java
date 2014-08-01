@@ -211,6 +211,37 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
+  @POST
+  @Path("/data/explore/queries/{id}/preview")
+  public void getQueryResultPreview(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+    // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
+    try {
+      QueryHandle handle = QueryHandle.fromId(id);
+      List<QueryResult> results;
+      if (handle.equals(QueryHandle.NO_OP)) {
+        results = Lists.newArrayList();
+      } else {
+        results = exploreService.previewResults(handle);
+      }
+      responder.sendJson(HttpResponseStatus.OK, results);
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+    } catch (HandleNotFoundException e) {
+      if (e.isInactive()) {
+        responder.sendString(HttpResponseStatus.CONFLICT, "Preview is unavailable for inactive queries.");
+      }
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
     ChannelBuffer content = request.getContent();
     if (!content.readable()) {
