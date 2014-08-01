@@ -41,6 +41,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -539,7 +540,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
         if (!entry.getValue().getStatement().isEmpty()) {
           QueryStatus status = getStatus(entry.getKey());
-          result.add(new QueryInfo(entry.getValue().getStatement(), entry.getKey(), status, true));
+          result.add(new QueryInfo(entry.getValue().getTimestamp(), entry.getValue().getStatement(),
+                                   entry.getKey(), status, true));
         }
       } catch (HandleNotFoundException e) {
         // ignore the handle not found exception. this method returns all queries and handle, if the
@@ -552,13 +554,15 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
         if (!entry.getValue().getStatement().isEmpty()) {
           QueryStatus status = getStatus(entry.getKey());
-          result.add(new QueryInfo(entry.getValue().getStatement(), entry.getKey(), status, false));
+          result.add(new QueryInfo(entry.getValue().getTimestamp(),
+                                   entry.getValue().getStatement(), entry.getKey(), status, false));
         }
       } catch (HandleNotFoundException e) {
         // ignore the handle not found exception. this method returns all queries and handle, if the
         // handle is removed from the internal cache, then there is no point returning them from here.
       }
     }
+    Collections.sort(result);
     return result;
   }
 
@@ -735,6 +739,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     private final OperationHandle operationHandle;
     private final Map<String, String> sessionConf;
     private final String statement;
+    private final long timestamp;
 
     OperationInfo(SessionHandle sessionHandle, OperationHandle operationHandle,
                   Map<String, String> sessionConf, String statement) {
@@ -742,6 +747,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       this.operationHandle = operationHandle;
       this.sessionConf = sessionConf;
       this.statement = statement;
+      timestamp = System.currentTimeMillis();
     }
 
     public SessionHandle getSessionHandle() {
@@ -758,6 +764,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     public String getStatement() {
       return statement;
+    }
+
+    public long getTimestamp() {
+      return timestamp;
     }
   }
 

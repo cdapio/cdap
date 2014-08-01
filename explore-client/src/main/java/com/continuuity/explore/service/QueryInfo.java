@@ -18,13 +18,15 @@ package com.continuuity.explore.service;
 
 import com.continuuity.proto.QueryHandle;
 import com.continuuity.proto.QueryStatus;
+import com.google.common.primitives.Longs;
 import com.google.gson.annotations.SerializedName;
 
 /**
  * Information about the query.
  */
-public class QueryInfo {
+public class QueryInfo implements Comparable<QueryInfo> {
 
+  private final long timestamp;
   private final String statement;
   private final QueryStatus.OpStatus status;
 
@@ -37,7 +39,9 @@ public class QueryInfo {
   @SerializedName("is_active")
   private final boolean isActive;
 
-  public QueryInfo(String query, QueryHandle handle, QueryStatus status, boolean isActive) {
+  public QueryInfo(long timestamp, String query, QueryHandle handle,
+                   QueryStatus status, boolean isActive) {
+    this.timestamp = timestamp;
     this.statement = query;
     this.queryHandle = handle.getHandle();
     this.status = status.getStatus();
@@ -63,5 +67,14 @@ public class QueryInfo {
 
   public boolean isActive() {
     return isActive;
+  }
+
+  public long getTimestamp() {
+    return timestamp;
+  }
+
+  @Override
+  public int compareTo(QueryInfo queryInfo) {
+    return Longs.compare(getTimestamp(), queryInfo.getTimestamp());
   }
 }
