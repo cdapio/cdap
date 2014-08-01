@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -112,6 +113,12 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public void updateInstance(String datasetInstanceName, DatasetProperties props)
+    throws DatasetManagementException {
+    client.updateInstance(datasetInstanceName, props);
+  }
+
+  @Override
   public Collection<DatasetSpecification> getInstances() throws DatasetManagementException {
     return client.getAllInstances();
   }
@@ -157,8 +164,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String datasetInstanceName, ClassLoader classLoader)
-    throws DatasetManagementException, IOException {
+  public <T extends Dataset> T getDataset(String datasetInstanceName, Map<String, String> arguments,
+                                          ClassLoader classLoader) throws DatasetManagementException, IOException {
 
     DatasetMeta instanceInfo = client.getInstance(datasetInstanceName);
     if (instanceInfo == null) {
@@ -166,7 +173,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
     }
 
     DatasetType type = getDatasetType(instanceInfo.getType(), classLoader);
-    return (T) type.getDataset(instanceInfo.getSpec());
+    return (T) type.getDataset(instanceInfo.getSpec(), arguments);
   }
 
   private void addModule(String moduleName, Class<?> typeClass) throws DatasetManagementException {

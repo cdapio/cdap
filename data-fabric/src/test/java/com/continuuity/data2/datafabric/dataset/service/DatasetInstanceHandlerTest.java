@@ -49,6 +49,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Unit-test for {@link com.continuuity.data2.datafabric.dataset.service.DatasetInstanceHandler}
@@ -121,6 +122,44 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   }
 
   @Test
+  public void testUpdateInstance() throws Exception {
+
+    // nothing has been created, modules and types list is empty
+    List<DatasetSpecification> instances = getInstances().getResponseObject();
+
+    // nothing in the beginning
+    Assert.assertEquals(0, instances.size());
+
+    DatasetProperties props = DatasetProperties.builder().add("prop1", "val1").build();
+
+    // deploy modules
+    deployModule("module1", TestModule1.class);
+    deployModule("module2", TestModule2.class);
+
+    // create dataset instance
+    Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", props));
+
+    // verify instance was created
+    instances = getInstances().getResponseObject();
+    Assert.assertEquals(1, instances.size());
+
+    DatasetProperties newProps = DatasetProperties.builder().add("prop2", "val2").build();
+
+    // update dataset instance
+    Assert.assertEquals(HttpStatus.SC_OK, updateInstance("dataset1", "datasetType2", newProps));
+    Assert.assertEquals("val2", getInstance("dataset1").getResponseObject().getSpec().getProperty("prop2"));
+    Assert.assertNull(getInstance("dataset1").getResponseObject().getSpec().getProperty("prop1"));
+
+    // delete dataset instance
+    Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1"));
+    Assert.assertEquals(0, getInstances().getResponseObject().size());
+
+    // delete dataset modules
+    Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module2"));
+    Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module1"));
+  }
+
+  @Test
   public void testCreateDelete() throws Exception {
     deployModule("default-orderedTable", InMemoryOrderedTableModule.class);
     deployModule("default-core", CoreDatasetsModule.class);
@@ -131,8 +170,8 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(2, getInstances().getResponseObject().size());
 
     // we want to verify that data is also gone, so we write smth to tables first
-    final Table table1 = dsFramework.getDataset("myTable1", null);
-    final Table table2 = dsFramework.getDataset("myTable2", null);
+    final Table table1 = dsFramework.getDataset("myTable1", DatasetDefinition.NO_ARGUMENTS, null);
+    final Table table2 = dsFramework.getDataset("myTable2", DatasetDefinition.NO_ARGUMENTS, null);
     TransactionExecutor txExecutor =
       new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
                                      ImmutableList.of((TransactionAware) table1, (TransactionAware) table2));
@@ -194,12 +233,25 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
   }
 
-  private int createInstance(String instanceName, String typeName, DatasetProperties props) throws IOException {
-    DatasetInstanceConfiguration instanceConfiguration =
-      new DatasetInstanceConfiguration(typeName, props.getProperties());
+
+  private int createInstance(String instanceName, String typeName,
+                             DatasetProperties props) throws IOException {
+    return createUpdateInstance(instanceName, typeName, props, false);
+  }
+
+  private int createUpdateInstance(String instanceName, String typeName,
+                                   DatasetProperties props, boolean isUpdate) throws IOException {
+    DatasetInstanceConfiguration creationProperties =
+      new DatasetInstanceConfiguration(typeName, props.getProperties(), isUpdate);
+
     HttpRequest request = HttpRequest.put(getUrl("/data/datasets/" + instanceName))
-      .withBody(new Gson().toJson(instanceConfiguration)).build();
+      .withBody(new Gson().toJson(creationProperties)).build();
     return HttpRequests.execute(request).getResponseCode();
+  }
+
+  private int updateInstance(String instanceName, String typeName,
+                             DatasetProperties props) throws IOException {
+    return createUpdateInstance(instanceName, typeName, props, true);
   }
 
   private ObjectResponse<List<DatasetSpecification>> getInstances() throws IOException {
@@ -240,8 +292,9 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     }
   }
 
-  private static DatasetDefinition createDefinition(String name) {
-    return new AbstractDatasetDefinition(name) {
+
+  private static <D extends Dataset> DatasetDefinition<D, DatasetAdmin> createDefinition(String name) {
+    return new AbstractDatasetDefinition<D, DatasetAdmin>(name) {
       @Override
       public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
         return createSpec(instanceName, getName(), properties);
@@ -253,14 +306,14 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       }
 
       @Override
-      public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) {
+      public D getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader) {
         return null;
       }
     };
   }
 
   private static DatasetSpecification createSpec(String instanceName, String typeName,
-                                                DatasetProperties properties) {
+                                                 DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, typeName).properties(properties.getProperties()).build();
   }
 }

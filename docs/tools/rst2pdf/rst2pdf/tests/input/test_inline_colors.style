@@ -1,3 +1,0 @@
-styles:
-    red: {backColor: null, textColor: red}
-    white-on-red: {backColor: red, textColor: white}

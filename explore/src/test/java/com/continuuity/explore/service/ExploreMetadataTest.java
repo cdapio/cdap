@@ -18,12 +18,13 @@ package com.continuuity.explore.service;
 
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.explore.client.StatementExecutionFuture;
+import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.test.SlowTests;
 
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -56,7 +57,7 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testGetTables() throws Exception {
-    StatementExecutionFuture future;
+    ListenableFuture<ExploreExecutionResult> future;
 
     // All tables
     future = getExploreClient().tables(null, null, "%", null);
@@ -94,7 +95,7 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testGetCatalogs() throws Exception {
-    StatementExecutionFuture future;
+    ListenableFuture<ExploreExecutionResult> future;
     future = getExploreClient().catalogs();
     assertStatementResult(future, false,
                           Lists.newArrayList(
@@ -105,7 +106,7 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testGetSchemas() throws Exception {
-    StatementExecutionFuture future;
+    ListenableFuture<ExploreExecutionResult> future;
 
     future = getExploreClient().schemas(null, "");
     assertStatementResult(future, true,
@@ -118,7 +119,7 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testGetTypeInfo() throws Exception {
-    StatementExecutionFuture future;
+    ListenableFuture<ExploreExecutionResult> future;
 
     future = getExploreClient().dataTypes();
     assertStatementResult(future, true,
@@ -234,7 +235,7 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testGetColumns() throws Exception {
-    StatementExecutionFuture future = getExploreClient().columns(null, null, "%", "%");
+    ListenableFuture<ExploreExecutionResult> future = getExploreClient().columns(null, null, "%", "%");
     assertStatementResult(future, true,
                           Lists.newArrayList(
                             new ColumnDesc("TABLE_CAT", "STRING", 1, "Catalog name. NULL if not applicable"),
@@ -309,7 +310,7 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testGetTableTypes() throws Exception {
-    StatementExecutionFuture future = getExploreClient().tableTypes();
+    ListenableFuture<ExploreExecutionResult> future = getExploreClient().tableTypes();
     assertStatementResult(future, true,
                           Lists.newArrayList(
                             new ColumnDesc("TABLE_TYPE", "STRING", 1, "Table type name.")
@@ -325,7 +326,7 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testGetFunctions() throws Exception {
-    StatementExecutionFuture future = getExploreClient().functions(null, null, "%");
+    ListenableFuture<ExploreExecutionResult> future = getExploreClient().functions(null, null, "%");
     assertStatementResult(future, true,
                           Lists.newArrayList(
                             new ColumnDesc("FUNCTION_CAT", "STRING", 1, "Function catalog (may be null)"),

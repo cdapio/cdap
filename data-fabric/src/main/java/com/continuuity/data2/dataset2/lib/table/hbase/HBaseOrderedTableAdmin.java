@@ -40,7 +40,6 @@ import java.io.IOException;
  */
 public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
   public static final String PROPERTY_SPLITS = "hbase.splits";
-
   static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
   private static final Gson GSON = new Gson();
 
@@ -59,11 +58,6 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
     this.spec = spec;
     this.conf = conf;
     this.locationFactory = locationFactory;
-  }
-
-  @Override
-  public boolean exists() throws IOException {
-    return admin.tableExists(tableName);
   }
 
   @Override
@@ -102,27 +96,6 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
   }
 
   @Override
-  public void truncate() throws IOException {
-    byte[] tableName = Bytes.toBytes(this.tableName);
-    HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
-    admin.disableTable(tableName);
-    admin.deleteTable(tableName);
-    admin.createTable(tableDescriptor);
-  }
-
-  @Override
-  public void drop() throws IOException {
-    byte[] tableName = Bytes.toBytes(this.tableName);
-    admin.disableTable(tableName);
-    admin.deleteTable(tableName);
-  }
-
-  @Override
-  public void close() throws IOException {
-    admin.close();
-  }
-
-  @Override
   protected boolean upgradeTable(HTableDescriptor tableDescriptor) {
     HColumnDescriptor columnDescriptor = tableDescriptor.getFamily(DATA_COLUMN_FAMILY);
 
@@ -135,6 +108,16 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
       tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
       needUpgrade = true;
     }
+    if (spec.getProperty(TxConstants.PROPERTY_TTL) == null &&
+        columnDescriptor.getValue(TxConstants.PROPERTY_TTL) != null) {
+      columnDescriptor.remove(TxConstants.PROPERTY_TTL.getBytes());
+      needUpgrade = true;
+    } else if (!spec.getProperty(TxConstants.PROPERTY_TTL).equals(
+                columnDescriptor.getValue(TxConstants.PROPERTY_TTL))) {
+      columnDescriptor.setValue(TxConstants.PROPERTY_TTL, spec.getProperty(TxConstants.PROPERTY_TTL));
+      needUpgrade = true;
+    }
+
     return needUpgrade;
   }
 

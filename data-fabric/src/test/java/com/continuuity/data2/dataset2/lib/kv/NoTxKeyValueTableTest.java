@@ -25,6 +25,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  *
@@ -36,6 +37,8 @@ public abstract class NoTxKeyValueTableTest {
 
   private static final byte[] VALUE1 = Bytes.toBytes("value1");
   private static final byte[] VALUE2 = Bytes.toBytes("value2");
+
+  private static final Map<String, String> NO_ARGS = DatasetDefinition.NO_ARGUMENTS;
 
   protected abstract DatasetDefinition<? extends NoTxKeyValueTable, ? extends DatasetAdmin> getDefinition()
     throws IOException;
@@ -54,7 +57,7 @@ public abstract class NoTxKeyValueTableTest {
     Assert.assertTrue(admin.exists());
 
     // put/get
-    NoTxKeyValueTable table = def.getDataset(spec, cl);
+    NoTxKeyValueTable table = def.getDataset(spec, NO_ARGS, cl);
     Assert.assertNull(table.get(KEY1));
     table.put(KEY1, VALUE1);
     Assert.assertArrayEquals(VALUE1, table.get(KEY1));

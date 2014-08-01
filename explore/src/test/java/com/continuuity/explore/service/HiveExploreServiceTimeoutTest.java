@@ -16,6 +16,7 @@
 
 package com.continuuity.explore.service;
 
+import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -63,8 +64,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
       if (++tries > maxTries) {
         break;
       }
-    } while (status.getStatus() == QueryStatus.OpStatus.RUNNING || status.getStatus() == QueryStatus.OpStatus.PENDING ||
-      status.getStatus() == QueryStatus.OpStatus.INITIALIZED || status.getStatus() == QueryStatus.OpStatus.UNKNOWN);
+    } while (!status.getStatus().isDone());
     return status;
   }
 
@@ -86,7 +86,8 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
     datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
 
     // Accessing dataset instance to perform data operations
-    KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table", null);
+    KeyStructValueTableDefinition.KeyStructValueTable table =
+      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);
