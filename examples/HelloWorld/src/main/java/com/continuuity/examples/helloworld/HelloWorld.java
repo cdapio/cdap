@@ -25,15 +25,14 @@ import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
-import com.continuuity.http.HttpResponder;
+import com.continuuity.api.service.http.HttpServiceRequest;
+import com.continuuity.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,9 +63,9 @@ public class HelloWorld extends AbstractApplication {
   public static final class BaseHttpHandler implements HttpServiceHandler {
     @GET
     @Path("/handle")
-    public void process(HttpRequest request, HttpResponder responder) {
+    public void process(HttpServiceRequest request, HttpServiceResponder responder) {
       System.err.println("GOT TO THE HANDLER METHOD!");
-      responder.sendString(HttpResponseStatus.OK, "Hello World");
+      responder.sendString("Hello World");
     }
 
     /**
@@ -130,8 +129,9 @@ public class HelloWorld extends AbstractApplication {
         String response = doGet(hostName, port);
         LOG.debug("GOT RESPONSE: {}", response);
         responder.sendJson(ProcedureResponse.Code.SUCCESS, response);
+      } else {
+        responder.sendJson(ProcedureResponse.Code.FAILURE, "ERROR!");
       }
-      responder.sendJson(ProcedureResponse.Code.FAILURE, "ERROR!");
     }
 
     /**

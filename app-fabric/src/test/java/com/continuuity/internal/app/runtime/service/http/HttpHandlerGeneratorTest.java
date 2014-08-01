@@ -19,17 +19,15 @@ package com.continuuity.internal.app.runtime.service.http;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
-import com.continuuity.http.BodyConsumer;
+import com.continuuity.api.service.http.HttpServiceRequest;
+import com.continuuity.api.service.http.HttpServiceResponder;
 import com.continuuity.http.HttpHandler;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.ByteStreams;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -52,8 +50,8 @@ public class HttpHandlerGeneratorTest {
 
     @GET
     @Path("/handle")
-    public void process(HttpRequest request, HttpResponder responder) {
-      responder.sendString(HttpResponseStatus.OK, "Hello World");
+    public void process(HttpServiceRequest request, HttpServiceResponder responder) {
+      responder.sendString("Hello World");
     }
 
     @Override
@@ -70,28 +68,10 @@ public class HttpHandlerGeneratorTest {
   @Path("/v2")
   public static final class MyHttpHandler extends BaseHttpHandler {
 
-    @Path("/upload")
+    @Path("/echo")
     @POST
-    public BodyConsumer upload(HttpRequest request, HttpResponder responder) {
-      return new BodyConsumer() {
-
-        private final StringBuilder content = new StringBuilder();
-
-        @Override
-        public void chunk(ChannelBuffer request, HttpResponder responder) {
-          content.append(request.toString(Charsets.UTF_8));
-        }
-
-        @Override
-        public void finished(HttpResponder responder) {
-          responder.sendString(HttpResponseStatus.OK, content.toString());
-        }
-
-        @Override
-        public void handleError(Throwable cause) {
-
-        }
-      };
+    public void echo(HttpServiceRequest request, HttpServiceResponder responder) {
+      responder.send(200, request.getContent(), "application/octet-stream", ImmutableMultimap.<String, String>of());
     }
   }
 
@@ -127,7 +107,7 @@ public class HttpHandlerGeneratorTest {
       Assert.assertEquals("Hello World", new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));
 
       // Make a POST call
-      urlConn = new URL(String.format("http://%s:%d/v2/upload",
+      urlConn = new URL(String.format("http://%s:%d/v2/echo",
                                       bindAddress.getHostName(), bindAddress.getPort())).openConnection();
       urlConn.setDoOutput(true);
       ByteStreams.copy(ByteStreams.newInputStreamSupplier("Hello World Upload".getBytes(Charsets.UTF_8)),

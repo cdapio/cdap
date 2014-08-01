@@ -33,10 +33,4 @@
         <app.main.class>com.continuuity.examples.helloworld.HelloWorld</app.main.class>
     </properties>
 
-  <dependencies>
-    <dependency>
-      <groupId>com.continuuity</groupId>
-      <artifactId>http</artifactId>
-    </dependency>
-  </dependencies>
 </project>

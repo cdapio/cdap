@@ -18,11 +18,15 @@ package com.continuuity.internal.app.runtime.service.http;
 
 import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
+import com.continuuity.api.service.http.HttpServiceRequest;
+import com.continuuity.api.service.http.HttpServiceResponder;
+import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.asm.ClassDefinition;
 import com.continuuity.internal.asm.Methods;
 import com.google.common.collect.Lists;
 import com.google.common.hash.Hashing;
 import com.google.common.reflect.TypeToken;
+import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -156,16 +160,34 @@ final class HttpHandlerGenerator {
                 }
               }
 
-              if (handlerMethod) {
-                MethodVisitor methodVisitor = classWriter.visitMethod(access, name, desc, signature, exceptions);
-                final GeneratorAdapter mg = new GeneratorAdapter(methodVisitor, access, name, desc);
-
-                // Replay all annotations before generating the body.
-                for (AnnotationNode annotation : annotations) {
-                  annotation.accept(mg.visitAnnotation(annotation.desc, true));
-                }
-                generateDelegateMethodBody(mg, new Method(name, desc));
+              if (!handlerMethod) {
+                super.visitEnd();
+                return;
               }
+
+              Type returnType = Type.getReturnType(desc);
+              Type[] argTypes = Type.getArgumentTypes(desc);
+
+              if (argTypes.length < 2
+                || !argTypes[0].equals(Type.getType(HttpServiceRequest.class))
+                || !argTypes[1].equals(Type.getType(HttpServiceResponder.class))) {
+                super.visitEnd();
+                return;
+              }
+
+              argTypes[0] = Type.getType(HttpRequest.class);
+              argTypes[1] = Type.getType(HttpResponder.class);
+
+              String methodDesc = Type.getMethodDescriptor(returnType, argTypes);
+
+              MethodVisitor methodVisitor = classWriter.visitMethod(access, name, methodDesc, signature, exceptions);
+              final GeneratorAdapter mg = new GeneratorAdapter(methodVisitor, access, name, desc);
+
+              // Replay all annotations before generating the body.
+              for (AnnotationNode annotation : annotations) {
+                annotation.accept(mg.visitAnnotation(annotation.desc, true));
+              }
+              generateDelegateMethodBody(mg, new Method(name, desc));
             }
           };
         }
@@ -205,7 +227,7 @@ final class HttpHandlerGenerator {
    *
    * <pre>{@code
    *   public void handle(HttpRequest request, HttpResponder responder, ...) {
-   *     delegate.handle(request, responder, ...);
+   *     delegate.handle(new DefaultHttpServiceRequest(request), new DefaultHttpServiceResponder(responder), ...);
    *   }
    * }
    * </pre>
@@ -214,7 +236,19 @@ final class HttpHandlerGenerator {
     mg.loadThis();
     mg.getField(classType, "delegate", Type.getType(delegateType.getRawType()));
 
-    for (int i = 0; i < method.getArgumentTypes().length; i++) {
+    mg.newInstance(Type.getType(DefaultHttpServiceRequest.class));
+    mg.dup();
+    mg.loadArg(0);
+    mg.invokeConstructor(Type.getType(DefaultHttpServiceRequest.class),
+                         Methods.getMethod(void.class, "<init>", HttpRequest.class));
+
+    mg.newInstance(Type.getType(DefaultHttpServiceResponder.class));
+    mg.dup();
+    mg.loadArg(1);
+    mg.invokeConstructor(Type.getType(DefaultHttpServiceResponder.class),
+                         Methods.getMethod(void.class, "<init>", HttpResponder.class));
+
+    for (int i = 2; i < method.getArgumentTypes().length; i++) {
       mg.loadArg(i);
     }
 
