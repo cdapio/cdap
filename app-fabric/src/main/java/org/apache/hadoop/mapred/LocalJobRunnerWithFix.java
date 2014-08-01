@@ -556,7 +556,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
           outputCommitter.abortJob(jContext,
                                    org.apache.hadoop.mapreduce.JobStatus.State.FAILED);
         } catch (IOException ioe) {
-          LOG.info("Error cleaning up job:" + id);
+          LOG.info("Error cleaning up job: {}", id);
         }
         status.setCleanupProgress(1.0f);
         if (killed) {
@@ -564,7 +564,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
         } else {
           this.status.setRunState(JobStatus.FAILED);
         }
-        LOG.warn(id, t);
+        LOG.warn("Error cleaning up job: {}", id, t);
 
         JobEndNotifier.localRunnerNotification(job, status);
 
