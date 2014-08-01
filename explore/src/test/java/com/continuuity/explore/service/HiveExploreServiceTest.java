@@ -29,10 +29,12 @@ import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.jdbc.ExploreDriver;
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.DatasetMeta;
+import com.continuuity.proto.QueryHandle;
 import com.continuuity.proto.QueryResult;
+import com.continuuity.proto.QueryStatus;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.test.SlowTests;
-
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -47,7 +49,6 @@ import org.junit.experimental.categories.Category;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -55,6 +56,7 @@ import java.sql.ResultSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 
 import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyValue;
 
@@ -135,27 +137,62 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("my_table"))));
 
-    runCommand("describe my_table", true, Lists.newArrayList(new ColumnDesc("col_name", "STRING", 1, "from deserializer"), new ColumnDesc("data_type", "STRING", 2, "from deserializer"), new ColumnDesc("comment", "STRING", 3, "from deserializer")), Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("key", "string", "from deserializer")), new QueryResult(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>", "from deserializer"))
+    runCommand("describe my_table",
+               true,
+               Lists.newArrayList(
+                 new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
+                 new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
+                 new ColumnDesc("comment", "STRING", 3, "from deserializer")
+               ),
+               Lists.newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList("key", "string", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
+                                                            "from deserializer"))
                )
     );
 
     runCommand("select key, value from my_table",
                true,
                Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
-                                  new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
+                                  new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)
+               ),
                Lists.newArrayList(
                  new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
                  new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
-    runCommand("select key, value from my_table where key = '1'", true, Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null), new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)), Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")))
+    runCommand("select key, value from my_table where key = '1'",
+               true,
+               Lists.newArrayList(
+                 new ColumnDesc("key", "STRING", 1, null),
+                 new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)
+               ),
+               Lists.newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}"))
+               )
     );
 
-    runCommand("select * from my_table", true, Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null), new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null)
-               ), Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")), new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+    runCommand("select * from my_table",
+               true,
+               Lists.newArrayList(
+                 new ColumnDesc("my_table.key", "STRING", 1, null),
+                 new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null)
+               ),
+               Lists.newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
+                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
+               )
     );
 
-    runCommand("select * from my_table where key = '2'", true, Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null), new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null)), Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+    runCommand("select * from my_table where key = '2'",
+               true,
+               Lists.newArrayList(
+                 new ColumnDesc("my_table.key", "STRING", 1, null),
+                 new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null)
+               ),
+               Lists.newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
+               )
     );
 
     List<QueryInfo> result = exploreService.getQueries();
@@ -169,9 +206,61 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
   }
 
   @Test
+  public void previewResultsTest() throws Exception {
+    datasetFramework.addInstance("keyStructValueTable", "my_table_2", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", "my_table_3", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", "my_table_4", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", "my_table_5", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", "my_table_6", DatasetProperties.EMPTY);
+
+    try {
+      QueryHandle handle = exploreService.execute("show tables");
+      QueryStatus status = waitForCompletionStatus(handle, 200, TimeUnit.MILLISECONDS, 50);
+      Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
+
+      List<QueryResult> firstPreview = exploreService.previewResults(handle);
+      Assert.assertEquals(ImmutableList.of(
+        new QueryResult(ImmutableList.<Object>of("my_table")),
+        new QueryResult(ImmutableList.<Object>of("my_table_2")),
+        new QueryResult(ImmutableList.<Object>of("my_table_3")),
+        new QueryResult(ImmutableList.<Object>of("my_table_4")),
+        new QueryResult(ImmutableList.<Object>of("my_table_5"))
+      ), firstPreview);
+
+
+      List<QueryResult> endResults = exploreService.nextResults(handle, 100);
+      Assert.assertEquals(ImmutableList.of(
+        new QueryResult(ImmutableList.<Object>of("my_table_6"))
+      ), endResults);
+
+      List<QueryResult> secondPreview = exploreService.previewResults(handle);
+      Assert.assertEquals(firstPreview, secondPreview);
+
+      Assert.assertEquals(ImmutableList.of(), exploreService.nextResults(handle, 100));
+
+      try {
+        // All results are fetched, query should be inactive now
+        exploreService.previewResults(handle);
+        Assert.fail("HandleNotFoundException expected - query should be inactive.");
+      } catch (HandleNotFoundException e) {
+        Assert.assertTrue(e.isInactive());
+        // Expected exception
+      }
+
+    } finally {
+      datasetFramework.deleteInstance("my_table_2");
+      datasetFramework.deleteInstance("my_table_3");
+      datasetFramework.deleteInstance("my_table_4");
+      datasetFramework.deleteInstance("my_table_5");
+      datasetFramework.deleteInstance("my_table_6");
+    }
+  }
+
+  @Test
   public void getDatasetSchemaTest() throws Exception {
     Map<String, String> datasetSchema = exploreClient.datasetSchema("my_table");
-    Assert.assertEquals(ImmutableMap.of("key", "string", "value", "struct<name:string,ints:array<int>>"), datasetSchema);
+    Assert.assertEquals(ImmutableMap.of("key", "string", "value", "struct<name:string,ints:array<int>>"),
+                        datasetSchema);
   }
 
   @Test
