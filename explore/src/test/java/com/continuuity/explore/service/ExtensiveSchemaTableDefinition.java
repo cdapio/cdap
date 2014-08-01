@@ -66,8 +66,9 @@ public class ExtensiveSchemaTableDefinition
   }
 
   @Override
-  public ExtensiveSchemaTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("ext-schema-table"), classLoader);
+  public ExtensiveSchemaTable getDataset(DatasetSpecification spec,
+                                         Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+    Table table = tableDef.getDataset(spec.getSpecification("ext-schema-table"), arguments, classLoader);
     return new ExtensiveSchemaTable(spec.getName(), table);
   }
 
