@@ -36,11 +36,11 @@ In this API, *client* refers to an external application that is calling the Cont
 
 In this API, *Application* refers to a user Application that has been deployed into the Continuuity Reactor.
 
-All URLs referenced in this API have this base::
+All URLs referenced in this API have this base URL::
 
-  http://<gateway>:10000/v2
+  http://<host>:10000/v2
 
-where ``<gateway>`` is the URL of the Continuuity Reactor. The base URL is represented as::
+where ``<host>`` is the URL of the Continuuity Reactor. The base URL is represented as::
 
   <base-url>
 
@@ -51,7 +51,7 @@ For example::
 means
 ::
 
-  PUT http://<gateway>:10000/v2/streams/<new-stream-id>
+  PUT http://<host>:10000/v2/streams/<new-stream-id>
   
 
 Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
@@ -638,7 +638,7 @@ HTTP Responses
    * - ``200 OK``
      - All Datasets were successfully deleted
 
-:Note: This operation will only be successful if the property ``enable.unrecoverable.reset`` in ``continuuity-site.xml`` is set to ``True``. Otherwise, this operation will return "403 Forbidden".
+:Note: This operation will only be successful if the property ``enable.unrecoverable.reset`` in ``continuuity-site.xml`` is set to ``true``. Otherwise, this operation will return "403 Forbidden".
 
 Truncating a Dataset
 --------------------

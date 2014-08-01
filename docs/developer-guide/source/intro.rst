@@ -158,15 +158,16 @@ along with services and features that run inside YARN containers in Hadoop.
 
 These services and features include:
 
-- **Dataset Abstractions:** with transactions provided by using Cask Tephra, these 
+- **Dataset Abstractions:** with globally consistent transactions provided by using 
+  `Cask Tephra <https://github.com/continuuity/tephra/blob/develop/README.rst>`__, these 
   abstractions provide generic, reusable Java implementations of common data patterns;
 
-- **Streams:** the realtime means for bringing data from external systems into the Server;
+- **Streams:** the means for ingesting data from external systems in real time;
 
 - **Realtime Processing using Flows:** developer-implemented, real-time Stream processors,
   comprised of one or more *Flowlets* wired together into a directed acyclic graph;
 
-- **Batch Processing:** using MapReduce Jobs and Workflow Schedules, as in conventional
+- **Batch Processing:** using MapReduce and Workflow Schedules, as in conventional
   Hadoop systems;
 
 - **Ad-Hoc SQL Queries:** for datasets that implement methods for obtaining the schema
@@ -182,7 +183,7 @@ These services and features include:
 - **Management Dashboard:** available for deploying, querying and managing the Server;
 
 - **Different Runtimes:** single-node (useful for learning, prototyping and testing),
-  Sandbox (hosted in the cloud) and Enterprise;
+  hosted in the Cloud, and Enterprise versions;
 
 - **YARN containers:** services are run in YARN containers in Hadoop, providing access to
   HBase and HDFS, giving the scalability and performance of Hadoop without the complexity. 
@@ -254,7 +255,7 @@ Reactor functions as a middle-tier application platform, exposing simple, high-l
 abstractions to perform data collection, processing, storage and query. Logs are collected
 by `Streams <programming.html#streams>`__, while `Flows <programming.html#flows>`__
 do basic aggregation and realtime analysis. Advanced, off-line
-aggregation is performed by `Map Reduce jobs <programming.html#mapreduce>`__ and 
+aggregation is performed by `MapReduce <programming.html#mapreduce>`__ and 
 `Workflow <programming.html#workflows>`__ components. 
 `Procedures <programming.html#procedures>`__ provide
 stored queries. The application can now be scaled independent of the underlying
@@ -278,3 +279,6 @@ Now that you've had an introduction to Continuuity Reactor, take a look at:
 - `Continuuity Reactor Quick Start <quickstart.html>`_,
   which guides you through installing Continuuity Reactor and
   running and modifying an example application.
+
+.. |(TM)| unicode:: U+2122 .. trademark sign
+   :trim:

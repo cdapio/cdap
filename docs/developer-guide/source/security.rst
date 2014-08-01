@@ -8,7 +8,7 @@ Reactor Security
 Continuuity Reactor supports securing clusters using a perimeter security model.  With perimeter
 security, access to cluster nodes is restricted through a firewall.  Cluster nodes can communicate
 with each other, but outside clients can only communicate with the cluster through a secured
-gateway.  Using Reactor security, the Reactor authentication server issues credentials (access
+host.  Using Reactor security, the Reactor authentication server issues credentials (access
 tokens) to authenticated clients.  Clients then send these credentials on requests to Reactor.
 Calls that lack valid access tokens will be rejected, limiting access to only authenticated
 clients.
@@ -19,7 +19,7 @@ Authentication in Reactor consists of two components:
   backends (LDAP, JASPI plugins) using a plugin API.  Clients must first authenticate with the
   authentication server through this configured backend.  Once authenticated, clients are issued
   an access token representing their identity.
-- **Reactor Router** - the Reactor router serves as the secured gateway in the perimeter security
+- **Reactor Router** - the Reactor router serves as the secured host in the perimeter security
   model.  All client calls to the cluster go through the router, and must present a valid access
   token when security is enabled.
 
@@ -264,7 +264,7 @@ security components are working as expected:
 
 - This should return a 401 Unauthorized response. Submit a username and password to obtain an ``AccessToken``::
 
-	curl -v -u username:password http://<gateway>:10009
+	curl -v -u username:password http://<host>:10009
 
 - This should return a 200 OK response with the ``AccessToken`` string in the response body.
   Reattempt the first command, but this time include the ``AccessToken`` as a header in the command::

@@ -64,8 +64,8 @@ application projects.
 
 If you are running in an environment whose network access is mediated by a proxy server,
 look at the `Maven guide to configuring a proxy <http://maven.apache.org/guides/mini/guide-proxies.html>`__
-for instructions on how to modify ``pom.xml`` files in the SDK so that dependencies can be
-downloaded and resolved correctly.
+for instructions on how to modify your ``settings.xml`` file (usually ``${user.home}/.m2/settings.xml``)
+so that dependencies can be downloaded and resolved correctly.
 
 This Maven archetype generates a Reactor application Java project with
 the proper dependencies and sample code as a base to start writing your
@@ -76,7 +76,7 @@ following command::
     -DarchetypeCatalog=https://repository.continuuity.com/content/groups/releases/archetype-catalog.xml \
     -DarchetypeGroupId=com.continuuity \
     -DarchetypeArtifactId=reactor-app-archetype \
-    -DarchetypeVersion=2.3.0
+    -DarchetypeVersion=2.4.0
 
 In the interactive shell that appears, specify basic properties for the
 new project. For example, to create a new project called
@@ -368,7 +368,7 @@ not exactly match what the process method expects. You could now write
 another process method for ``Long`` numbers::
 
   @ProcessInput count(Long number) {
-  count(number.toString());
+    count(number.toString());
   }
 
 and you could do that for every type that you might possibly want to
@@ -594,7 +594,7 @@ declaration and (2) an injection:
        public MapReduceSpecification configure() {
          return MapReduceSpecification.Builder.with()
            ...
-         .useDataSet("catalog")
+           .useDataSet("catalog")
            ...
 
 
@@ -712,7 +712,7 @@ To use the Dataset in a Flowlet or a Procedure, instruct the runtime
 system to inject an instance of the Dataset with the ``@UseDataSet``
 annotation::
 
-  Class MyFowlet extends AbstractFlowlet {
+  class MyFowlet extends AbstractFlowlet {
     @UseDataSet("myCounters")
     private KeyValueTable counters;
     ...
@@ -797,7 +797,7 @@ There is also a convenience method to respond with an error message::
 
   @Handle("getCount")
   public void getCount(ProcedureRequest request, ProcedureResponder responder)
-                       throws IOException, InterruptedException{
+                       throws IOException, InterruptedException {
     String word = request.getArgument("word");
     if (word == null) {
       responder.error(Code.CLIENT_ERROR,

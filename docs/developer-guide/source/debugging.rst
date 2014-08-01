@@ -115,7 +115,7 @@ The ``TrafficAnalyticsTest`` class should extend from
 
   public class TrafficAnalyticsTest extends ReactorTestBase {
     @Test
-      public void test() throws Exception {
+    public void test() throws Exception {
 
 The ``TrafficAnalytics`` application can be deployed using the ``deployApplication`` 
 method from the ``ReactorTestBase`` class::
