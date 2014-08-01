@@ -18,6 +18,9 @@ package com.continuuity.explore.service;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
@@ -39,6 +42,7 @@ import com.continuuity.proto.QueryHandle;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.proto.QueryStatus;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -46,6 +50,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 
@@ -63,6 +68,7 @@ public class BaseHiveExploreServiceTest {
   protected static DatasetFramework datasetFramework;
   protected static DatasetService datasetService;
   protected static ExploreExecutorService exploreExecutorService;
+  protected static EndpointStrategy datasetManagerEndpointStrategy;
   protected static ExploreService exploreService;
 
   protected static ExploreClient exploreClient;
@@ -80,6 +86,10 @@ public class BaseHiveExploreServiceTest {
     exploreExecutorService.startAndWait();
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
+
+    DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
+    datasetManagerEndpointStrategy = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)), 1L, TimeUnit.SECONDS);
 
     exploreClient = injector.getInstance(ExploreClient.class);
     exploreService = injector.getInstance(ExploreService.class);
