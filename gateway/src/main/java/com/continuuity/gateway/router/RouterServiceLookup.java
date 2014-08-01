@@ -98,7 +98,7 @@ public class RouterServiceLookup {
       // Path lookup can be skipped for requests to webapp.
       String path = URI.create(httpRequest.getUri()).normalize().getPath();
       String host = httpRequest.getHeader(HttpHeaders.Names.HOST);
-      String destService = getDestService(port, httpRequest);
+      String destService = getDestinationService(port, httpRequest);
       CacheKey cacheKey = new CacheKey(destService, host, path);
       LOG.trace("Request was routed from {} to: {}", path, cacheKey.getService());
 
@@ -114,7 +114,7 @@ public class RouterServiceLookup {
    * @param httpRequest provides the header information for lookup.
    * @return name of the service.
    */
-  public String getDestService(int port, HttpRequest httpRequest) {
+  public String getDestinationService(int port, HttpRequest httpRequest) {
     //Get the service based on Port.
     final String service = serviceMapRef.get().get(port);
     if (service == null) {
