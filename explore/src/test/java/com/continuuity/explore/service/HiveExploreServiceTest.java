@@ -154,20 +154,45 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     runCommand("select key, value from my_table",
                true,
                Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
-                                  new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
+                                  new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)
+               ),
                Lists.newArrayList(
                  new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
                  new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
-    runCommand("select key, value from my_table where key = '1'", true, Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null), new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)), Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")))
+    runCommand("select key, value from my_table where key = '1'",
+               true,
+               Lists.newArrayList(
+                 new ColumnDesc("key", "STRING", 1, null),
+                 new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)
+               ),
+               Lists.newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}"))
+               )
     );
 
-    runCommand("select * from my_table", true, Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null), new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null)
-               ), Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")), new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+    runCommand("select * from my_table",
+               true,
+               Lists.newArrayList(
+                 new ColumnDesc("my_table.key", "STRING", 1, null),
+                 new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null)
+               ),
+               Lists.newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
+                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
+               )
     );
 
-    runCommand("select * from my_table where key = '2'", true, Lists.newArrayList(new ColumnDesc("my_table.key", "STRING", 1, null), new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null)), Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+    runCommand("select * from my_table where key = '2'",
+               true,
+               Lists.newArrayList(
+                 new ColumnDesc("my_table.key", "STRING", 1, null),
+                 new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null)
+               ),
+               Lists.newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
+               )
     );
 
     List<QueryInfo> result = exploreService.getQueries();
