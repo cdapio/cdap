@@ -147,16 +147,6 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   @Override
-  public void cancel(QueryHandle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doPost(String.format("data/explore/queries/%s/%s", handle.getHandle(), "cancel"),
-                                   null, null);
-    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return;
-    }
-    throw new ExploreException("Cannot cancel operation. Reason: " + getDetails(response));
-  }
-
-  @Override
   public void close(QueryHandle handle) throws ExploreException, HandleNotFoundException {
     HttpResponse response = doDelete(String.format("data/explore/queries/%s", handle.getHandle()));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
