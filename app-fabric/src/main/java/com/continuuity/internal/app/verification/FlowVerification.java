@@ -54,7 +54,6 @@ public class FlowVerification extends ProgramVerification<FlowSpecification> {
 
   /**
    * Verifies a single {@link FlowSpecification} for a {@link com.continuuity.api.flow.Flow}.
-   * defined within an {@link com.continuuity.api.Application}
    *
    * @param input to be verified
    * @return An instance of {@link VerifyResult} depending of status of verification.

@@ -59,12 +59,6 @@ public class WordCountApp extends AbstractApplication {
 
   private static final Logger LOG = LoggerFactory.getLogger(WordCountApp.class);
 
-  /**
-   * Configures the {@link com.continuuity.api.Application} by returning an
-   * {@link com.continuuity.api.ApplicationSpecification}.
-   *
-   * @return An instance of {@code ApplicationSpecification}.
-   */
   @Override
   public void configure() {
     setName("WordCountApp");

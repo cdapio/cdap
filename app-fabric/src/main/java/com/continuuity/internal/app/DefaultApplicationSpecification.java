@@ -85,13 +85,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this.services = ImmutableMap.copyOf(services);
   }
 
-  public static DefaultApplicationSpecification from(com.continuuity.api.ApplicationSpecification spec) {
-    return new DefaultApplicationSpecification(spec.getName(), spec.getDescription(),
-                                               spec.getStreams(), spec.getDataSets(),
-                                               spec.getFlows(), spec.getProcedures(),
-                                               spec.getMapReduce(), spec.getWorkflows());
-  }
-
   public static DefaultApplicationSpecification from(ApplicationSpecification spec) {
     return new DefaultApplicationSpecification(spec.getName(), spec.getDescription(),
                                                spec.getStreams(), spec.getDataSets(),

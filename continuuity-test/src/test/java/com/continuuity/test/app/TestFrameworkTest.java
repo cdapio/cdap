@@ -275,7 +275,7 @@ public class TestFrameworkTest extends ReactorTestBase {
   }
 
   // todo: passing stream name as a workaround for not cleaning up streams during reset()
-  private void testApp(Class<?> app, String streamName)
+  private void testApp(Class<? extends Application> app, String streamName)
     throws IOException, TimeoutException, InterruptedException {
 
     ApplicationManager applicationManager = deployApplication(app);

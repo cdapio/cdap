@@ -37,8 +37,7 @@ import com.continuuity.proto.Id;
 public class ApplicationVerification extends AbstractVerifier<ApplicationSpecification> {
 
   /**
-   * Verifies {@link ApplicationSpecification} of the {@link com.continuuity.api.Application}
-   * being provide.
+   * Verifies {@link ApplicationSpecification} being provide.
    *
    * @param input to be verified
    * @return An instance of {@link VerifyResult} depending of status of verification.

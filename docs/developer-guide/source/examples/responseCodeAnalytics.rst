@@ -33,7 +33,7 @@ The ResponseCodeAnalytics Application
 -------------------------------------
 All of the components (Streams, Flows, Datasets, and Procedures) of the Application are tied together 
 as a deployable entity by the class ``ResponseCodeAnalyticsApp``,
-an implementation of ``com.continuuity.api.Application``.
+an implementation of ``com.continuuity.api.app.AbstractApplication``.
 
 ::
 
