@@ -3249,6 +3249,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                              configuration.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
                                                MetricsConstants.DEFAULT_ENTITY_TABLE_NAME));
       }
+      // todo: cleanup this. we use hardcode since it is already done so in KafkaMetricsProcessorService
+      datasetsToKeep.add("default." + configuration.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
+                                                        MetricsConstants.DEFAULT_KAFKA_META_TABLE));
 
       // Don't truncate log table too - we would like to retain logs across resets.
       datasetsToKeep.add(LoggingConfiguration.LOG_META_DATA_TABLE);
