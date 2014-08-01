@@ -18,7 +18,6 @@ package com.continuuity.gateway.handlers;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetProperties;
-import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.app.store.ServiceStore;
 import com.continuuity.common.conf.CConfiguration;
@@ -28,7 +27,6 @@ import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
 import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 import com.continuuity.data2.dataset2.lib.kv.NoTxKeyValueTable;
@@ -51,7 +49,7 @@ public final class DatasetServiceStore implements ServiceStore {
     dsFramework.addModule("basicKVTable", datasetModule);
     table = DatasetsUtil.getOrCreateDataset(dsFramework, Constants.Service.SERVICE_INSTANCE_TABLE_NAME,
                                             NoTxKeyValueTable.class.getName(),
-                                            DatasetProperties.EMPTY, null);
+                                            DatasetProperties.EMPTY, null, null);
   }
 
   @Override
