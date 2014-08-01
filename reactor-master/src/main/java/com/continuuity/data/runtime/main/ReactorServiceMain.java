@@ -130,7 +130,7 @@ public class ReactorServiceMain extends DaemonMain {
   private boolean isExploreEnabled;
 
   public static void main(final String[] args) throws Exception {
-    LOG.info("Starting {}", ReactorServiceMain.class.getSimpleName);
+    LOG.info("Starting {}", ReactorServiceMain.class.getSimpleName());
     new ReactorServiceMain(CConfiguration.create(), HBaseConfiguration.create()).doMain(args);
   }
 

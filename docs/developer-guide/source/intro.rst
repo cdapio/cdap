@@ -60,6 +60,29 @@ Once your application is ready for production, you'll need to monitor and manage
 Operability of each of the technology frameworks presents its own set of challenges. 
 A lack of proper tools makes application operations a full-time job.
 
+Why is Apache Hadoop hard?
+--------------------------
+
+Though Apache Hadoop |(TM)| has demonstrated its value in many use-cases, developers spend too much time
+working with infrastructure issues instead of their core concerns. As a consequence,
+Hadoop will never be a mainstream technology for data applications unless that can be changed.
+
+If you are building a data application and managing enterprise-scale data, 
+you will need to address:
+
+- Consistency of data
+- Scalability of performance and storage
+- Monitoring and management
+- Security of access and modification
+- and so forth...
+
+Consistency of data can be handled by using a platform providing transactions. 
+Scalability requires elastic scale.
+Monitoring and management requires logging, metrics and a testing and debugging framework.
+Security requires authentication and the handling of credentials.
+
+To do all of this, you'll need to build an entire platform that provides an infrastructure for Hadoop.
+
 
 Continuuity Reactor Overview
 ============================

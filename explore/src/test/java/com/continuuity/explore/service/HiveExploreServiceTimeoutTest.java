@@ -85,7 +85,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
     datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
 
     // Accessing dataset instance to perform data operations
-    KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table", null);
+    KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table", null, null);
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);

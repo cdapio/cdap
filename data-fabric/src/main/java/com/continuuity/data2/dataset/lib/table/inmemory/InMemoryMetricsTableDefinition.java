@@ -24,6 +24,7 @@ import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableAdmin;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * In-memory implementation of {@link MetricsTable}.
@@ -43,7 +44,7 @@ public class InMemoryMetricsTableDefinition
   }
 
   @Override
-  public MetricsTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public MetricsTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader) {
     return new InMemoryMetricsTable(spec.getName());
   }
 

@@ -17,6 +17,7 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.common.conf.CConfiguration;
@@ -40,7 +41,7 @@ public abstract class MetaTableUtil {
 
   public OrderedTable getMetaTable() throws Exception {
     return DatasetsUtil.getOrCreateDataset(dsFramework, getMetaTableName(), OrderedTable.class.getName(),
-                                           DatasetProperties.EMPTY, null);
+                                           DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
   }
 
   public void upgrade() throws Exception {

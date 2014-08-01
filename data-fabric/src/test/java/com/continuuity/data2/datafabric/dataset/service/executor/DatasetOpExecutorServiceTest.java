@@ -166,7 +166,7 @@ public class DatasetOpExecutorServiceTest {
     testAdminOp("joe", "exists", 404, null);
 
     // check truncate
-    final Table table = dsFramework.getDataset("bob", null);
+    final Table table = dsFramework.getDataset("bob", null, null);
     TransactionExecutor txExecutor =
       new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
                                      ImmutableList.of((TransactionAware) table));

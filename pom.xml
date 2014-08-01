@@ -1153,7 +1153,8 @@
                 <excludes>
                   <exclude>build-number.txt</exclude>
                   <exclude>LICENSE*.txt</exclude>
-                  <exclude>README.md</exclude>
+                  <exclude>*.rst</exclude>
+                  <exclude>*.md</exclude>
                   <exclude>logs/**</exclude>
                   <exclude>docs/**</exclude>
                   <exclude>conf/**</exclude>

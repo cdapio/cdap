@@ -16,6 +16,7 @@
 package com.continuuity.data.stream.service;
 
 import com.continuuity.api.data.stream.StreamSpecification;
+import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.table.Table;
 import com.continuuity.common.conf.CConfiguration;
@@ -51,7 +52,7 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
   private static final String STREAM_META_TABLE = "app.meta";
   private static final String TYPE_STREAM = "stream";
 
-  private Transactional<StreamMds> txnl;
+  private Transactional<StreamMds, MetadataStoreDataset> txnl;
 
   @Inject
   public MDSStreamMetaStore(CConfiguration conf, final TransactionSystemClient txClient, DatasetFramework framework) {
@@ -59,8 +60,7 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
     final DatasetFramework dsFramework =
       new NamespacedDatasetFramework(framework, new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.SYSTEM));
 
-    txnl =
-      new Transactional<StreamMds>(
+    txnl = Transactional.of(
         new TransactionExecutorFactory() {
           @Override
           public TransactionExecutor createExecutor(Iterable<TransactionAware> transactionAwares) {
@@ -71,7 +71,8 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
           public StreamMds get() {
             try {
               Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, STREAM_META_TABLE, "table",
-                                                               DatasetProperties.EMPTY, null);
+                                                               DatasetProperties.EMPTY,
+                                                               DatasetDefinition.NO_ARGUMENTS, null);
 
               return new StreamMds(new MetadataStoreDataset(mdsTable));
             } catch (Exception e) {
@@ -123,7 +124,7 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
     return new StreamSpecification.Builder().setName(streamName).create();
   }
 
-  private static final class StreamMds implements Iterable {
+  private static final class StreamMds implements Iterable<MetadataStoreDataset> {
     private final MetadataStoreDataset streams;
 
     private StreamMds(MetadataStoreDataset metaTable) {
@@ -131,8 +132,8 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
     }
 
     @Override
-    public Iterator iterator() {
-      return Iterators.forArray(streams);
+    public Iterator<MetadataStoreDataset> iterator() {
+      return Iterators.singletonIterator(streams);
     }
   }
 }
