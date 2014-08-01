@@ -42,6 +42,7 @@ public class DatasetWithArgumentsTest extends AbstractDatasetTest {
 
   @After
   public void tearDown() throws Exception {
+    deleteInstance("pret");
     deleteModule("prefix");
     deleteModule("core");
     super.tearDown();
