@@ -167,6 +167,12 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
         public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
           return null;
         }
+
+        @Override
+        public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
+          throws DataSetInstantiationException {
+          return null;
+        }
       }));
     }
 
