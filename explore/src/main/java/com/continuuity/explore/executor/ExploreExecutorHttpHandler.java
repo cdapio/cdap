@@ -18,6 +18,7 @@ package com.continuuity.explore.executor;
 
 import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.client.DatasetExploreFacade;
@@ -70,7 +71,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       Dataset dataset;
       try {
-        dataset = datasetFramework.getDataset(datasetName, null);
+        dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
       } catch (Exception e) {
         String className = isClassNotFoundException(e);
         if (className == null) {
@@ -145,7 +146,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       LOG.debug("Disabling explore for dataset instance {}", datasetName);
 
-      Dataset dataset = datasetFramework.getDataset(datasetName, null);
+      Dataset dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
       if (dataset == null) {
         responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
         return;
@@ -184,7 +185,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       LOG.trace("Retrieving Explore schema for dataset {}", datasetName);
 
-      Dataset dataset = datasetFramework.getDataset(datasetName, null);
+      Dataset dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
       if (dataset == null) {
         responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot find dataset " + datasetName);
         return;

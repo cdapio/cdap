@@ -49,6 +49,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Unit-test for {@link com.continuuity.data2.datafabric.dataset.service.DatasetInstanceHandler}
@@ -169,8 +170,8 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(2, getInstances().getResponseObject().size());
 
     // we want to verify that data is also gone, so we write smth to tables first
-    final Table table1 = dsFramework.getDataset("myTable1", null);
-    final Table table2 = dsFramework.getDataset("myTable2", null);
+    final Table table1 = dsFramework.getDataset("myTable1", DatasetDefinition.NO_ARGUMENTS, null);
+    final Table table2 = dsFramework.getDataset("myTable2", DatasetDefinition.NO_ARGUMENTS, null);
     TransactionExecutor txExecutor =
       new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
                                      ImmutableList.of((TransactionAware) table1, (TransactionAware) table2));
@@ -291,8 +292,9 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     }
   }
 
-  private static DatasetDefinition createDefinition(String name) {
-    return new AbstractDatasetDefinition(name) {
+
+  private static <D extends Dataset> DatasetDefinition<D, DatasetAdmin> createDefinition(String name) {
+    return new AbstractDatasetDefinition<D, DatasetAdmin>(name) {
       @Override
       public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
         return createSpec(instanceName, getName(), properties);
@@ -304,7 +306,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       }
 
       @Override
-      public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) {
+      public D getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader) {
         return null;
       }
     };

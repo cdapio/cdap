@@ -16,6 +16,7 @@
 
 package com.continuuity.data2.datafabric.dataset.service.executor;
 
+import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Put;
@@ -166,7 +167,7 @@ public class DatasetOpExecutorServiceTest {
     testAdminOp("joe", "exists", 404, null);
 
     // check truncate
-    final Table table = dsFramework.getDataset("bob", null);
+    final Table table = dsFramework.getDataset("bob", DatasetDefinition.NO_ARGUMENTS, null);
     TransactionExecutor txExecutor =
       new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
                                      ImmutableList.of((TransactionAware) table));

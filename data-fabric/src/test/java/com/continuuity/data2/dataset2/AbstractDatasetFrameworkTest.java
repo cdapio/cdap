@@ -18,6 +18,7 @@ package com.continuuity.data2.dataset2;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.table.OrderedTable;
@@ -56,7 +57,7 @@ public abstract class AbstractDatasetFrameworkTest {
     // Doing some admin and data ops
     DatasetAdmin admin = framework.getAdmin("my_table", null);
     Assert.assertNotNull(admin);
-    final OrderedTable table = framework.getDataset("my_table", null);
+    final OrderedTable table = framework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
 
     TransactionExecutor txnl = new DefaultTransactionExecutor(new MinimalTxSystemClient(), (TransactionAware) table);
@@ -143,7 +144,7 @@ public abstract class AbstractDatasetFrameworkTest {
     // Doing some admin and data ops
     DatasetAdmin admin = framework.getAdmin("my_table", null);
     Assert.assertNotNull(admin);
-    final KeyValueTable table = framework.getDataset("my_table", null);
+    final KeyValueTable table = framework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
 
     TransactionExecutor txnl = new DefaultTransactionExecutor(new MinimalTxSystemClient(), (TransactionAware) table);

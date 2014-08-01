@@ -16,6 +16,7 @@
 
 package com.continuuity.explore.service;
 
+import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.proto.ColumnDesc;
@@ -47,7 +48,8 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
     datasetFramework.addInstance("ExtensiveSchemaTable", "my_table", DatasetProperties.EMPTY);
 
     // Accessing dataset instance to perform data operations
-    ExtensiveSchemaTableDefinition.ExtensiveSchemaTable table = datasetFramework.getDataset("my_table", null);
+    ExtensiveSchemaTableDefinition.ExtensiveSchemaTable table =
+      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);
