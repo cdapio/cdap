@@ -296,6 +296,7 @@
               <td style="max-width: 200px;" class="instance-col">
                 <div class="instance-wrapper">
                   <div class="instance-num left-float"><span>{{runnable.requested}}</span></div>
+                  {{#if model.isRunning}}
                   <div>
                     <a class="cursor-pointer" {{action runnableDecreaseInstance model runnable.id runnable.requested }}>
                       <span class="minus-icon"></span>
@@ -304,6 +305,7 @@
                       <span class="plus-icon"></span>
                     </a>
                   </div>
+                  {{/if}}
                 </div>
               <td class="instance-provisioned service-col">
                   <div class="instance-num auto-margin"><span>{{runnable.provisioned}}</span></div>

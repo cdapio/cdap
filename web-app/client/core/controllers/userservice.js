@@ -32,7 +32,6 @@ define(['core/controllers/services'], function (servicesController) {
 
     },
 
-
     runnableIncreaseInstance: function (service, runnableID, instanceCount) {
       this.runnableVerifyInstanceBounds(service, runnableID, ++instanceCount, "Increase");
     },

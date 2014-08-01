@@ -28,6 +28,10 @@ define(['core/models/program'], function (Program) {
       return path.replace(/\{id\}/, this.get('id')).replace(/\{app\}/, this.get('app'));
     },
 
+    isRunning: function() {
+      return this.get('currentState') === "RUNNING";
+    }.property('currentState'),
+
     updateRunnable: function (runnable, index, http) {
       var self = this;
       var url = 'apps/' + self.app + '/services/' + self.name 

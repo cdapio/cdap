@@ -13,7 +13,7 @@ define(['core/controllers/userservice'], function (Userservice) {
      */
     needs: ['Userservice'],
     init: function () {
-      this.set('expectedPath', 'Userservice.Config');
+      this.set('expectedPath', 'UserserviceStatus');
     },
 
 
