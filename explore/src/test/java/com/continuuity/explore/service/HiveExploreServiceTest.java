@@ -23,6 +23,7 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.jdbc.ExploreDriver;
 import com.continuuity.proto.ColumnDesc;
+import com.continuuity.proto.QueryInfo;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.test.SlowTests;

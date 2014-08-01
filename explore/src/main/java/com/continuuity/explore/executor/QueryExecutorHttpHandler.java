@@ -19,7 +19,7 @@ package com.continuuity.explore.executor;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.QueryInfo;
+import com.continuuity.proto.QueryInfo;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.proto.ColumnDesc;

@@ -18,6 +18,7 @@ package com.continuuity.explore.service;
 
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryInfo;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.proto.QueryStatus;
 
@@ -102,7 +103,7 @@ public interface Explore {
   /**
    * Fetch information about queries executed in Hive.
    *
-   * @return List of {@link QueryInfo}
+   * @return List of {@link com.continuuity.proto.QueryInfo}
    * @throws ExploreException
    */
   List<QueryInfo> getQueries() throws ExploreException, SQLException;

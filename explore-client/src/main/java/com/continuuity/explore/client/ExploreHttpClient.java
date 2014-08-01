@@ -25,7 +25,7 @@ import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.MetaDataInfo;
-import com.continuuity.explore.service.QueryInfo;
+import com.continuuity.proto.QueryInfo;
 import com.continuuity.explore.utils.ColumnsArgs;
 import com.continuuity.explore.utils.FunctionsArgs;
 import com.continuuity.explore.utils.SchemasArgs;
