@@ -23,7 +23,6 @@ import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.MetaDataInfo;
-import com.continuuity.explore.service.QueryInfo;
 import com.continuuity.hive.context.CConfCodec;
 import com.continuuity.hive.context.ConfigurationUtil;
 import com.continuuity.hive.context.ContextManager;
@@ -31,11 +30,11 @@ import com.continuuity.hive.context.HConfCodec;
 import com.continuuity.hive.context.TxnCodec;
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryInfo;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.proto.QueryStatus;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionSystemClient;
-
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -43,7 +42,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
-import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
@@ -600,7 +598,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
         if (!entry.getValue().getStatement().isEmpty()) {
           QueryStatus status = getStatus(entry.getKey());
-          result.add(new QueryInfo(entry.getValue().getStatement(), entry.getKey(), status, true));
+          result.add(new QueryInfo(entry.getValue().getTimestamp(), entry.getValue().getStatement(),
+                                   entry.getKey(), status, true));
         }
       } catch (HandleNotFoundException e) {
         // ignore the handle not found exception. this method returns all queries and handle, if the
@@ -613,13 +612,15 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
         if (!entry.getValue().getStatement().isEmpty()) {
           QueryStatus status = getStatus(entry.getKey());
-          result.add(new QueryInfo(entry.getValue().getStatement(), entry.getKey(), status, false));
+          result.add(new QueryInfo(entry.getValue().getTimestamp(),
+                                   entry.getValue().getStatement(), entry.getKey(), status, false));
         }
       } catch (HandleNotFoundException e) {
         // ignore the handle not found exception. this method returns all queries and handle, if the
         // handle is removed from the internal cache, then there is no point returning them from here.
       }
     }
+    Collections.sort(result);
     return result;
   }
 
@@ -799,6 +800,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     private final OperationHandle operationHandle;
     private final Map<String, String> sessionConf;
     private final String statement;
+    private final long timestamp;
 
     private File previewFile;
 
@@ -808,8 +810,19 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       this.operationHandle = operationHandle;
       this.sessionConf = sessionConf;
       this.statement = statement;
+      this.timestamp = System.currentTimeMillis();
       this.previewFile = null;
     }
+
+    OperationInfo(SessionHandle sessionHandle, OperationHandle operationHandle,
+                  Map<String, String> sessionConf, String statement, long timestamp) {
+      this.sessionHandle = sessionHandle;
+      this.operationHandle = operationHandle;
+      this.sessionConf = sessionConf;
+      this.statement = statement;
+      this.timestamp = timestamp;
+    }
+
 
     public SessionHandle getSessionHandle() {
       return sessionHandle;
@@ -827,6 +840,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return statement;
     }
 
+    public long getTimestamp() {
+      return timestamp;
+    }
+
     public File getPreviewFile() {
       return previewFile;
     }
@@ -842,7 +859,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     private InactiveOperationInfo(OperationInfo operationInfo, List<ColumnDesc> schema, QueryStatus status) {
       super(operationInfo.getSessionHandle(), operationInfo.getOperationHandle(),
-            operationInfo.getSessionConf(), operationInfo.getStatement());
+            operationInfo.getSessionConf(), operationInfo.getStatement(), operationInfo.getTimestamp());
       this.schema = schema;
       this.status = status;
     }
