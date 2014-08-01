@@ -25,13 +25,13 @@ import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.MetaDataInfo;
-import com.continuuity.explore.service.QueryInfo;
 import com.continuuity.explore.utils.ColumnsArgs;
 import com.continuuity.explore.utils.FunctionsArgs;
 import com.continuuity.explore.utils.SchemasArgs;
 import com.continuuity.explore.utils.TablesArgs;
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryInfo;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.proto.QueryStatus;
 import com.google.common.base.Charsets;
@@ -144,6 +144,17 @@ abstract class ExploreHttpClient implements Explore {
       return parseJson(response, ROW_LIST_TYPE);
     }
     throw new ExploreException("Cannot get next results. Reason: " + getDetails(response));
+  }
+
+  @Override
+  public List<QueryResult> previewResults(QueryHandle handle)
+    throws ExploreException, HandleNotFoundException, SQLException {
+    HttpResponse response = doPost(String.format("data/explore/queries/%s/%s", handle.getHandle(), "preview"),
+                                   null, null);
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return parseJson(response, ROW_LIST_TYPE);
+    }
+    throw new ExploreException("Cannot get results preview. Reason: " + getDetails(response));
   }
 
   @Override

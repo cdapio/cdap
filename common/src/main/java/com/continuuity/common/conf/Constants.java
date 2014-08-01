@@ -450,6 +450,7 @@ public final class Constants {
     public static final String DATASET_STORAGE_HANDLER_CLASS = "com.continuuity.hive.datasets.DatasetStorageHandler";
     public static final String EXPLORE_CLASSPATH = "explore.classpath";
     public static final String EXPLORE_CONF_FILES = "explore.conf.files";
+    public static final String PREVIEWS_DIR_NAME = "explore.previews.dir";
 
     public static final String SERVER_ADDRESS = "explore.service.bind.address";
 

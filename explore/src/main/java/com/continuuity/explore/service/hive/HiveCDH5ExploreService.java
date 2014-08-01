@@ -17,6 +17,7 @@
 package com.continuuity.explore.service.hive;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.HandleNotFoundException;
@@ -24,12 +25,14 @@ import com.continuuity.proto.QueryStatus;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationStatus;
 import org.apache.hive.service.cli.SessionHandle;
+import java.io.File;
 
 /**
  * Hive 13 patched for CDH5 implementation of {@link com.continuuity.explore.service.ExploreService}.
@@ -43,8 +46,9 @@ public class HiveCDH5ExploreService extends BaseHiveExploreService {
 
   @Inject
   protected HiveCDH5ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
-    super(txClient, datasetFramework, cConf, hConf, hiveConf);
+                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
+                                   @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir) {
+    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir);
   }
 
   @Override

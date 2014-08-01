@@ -19,11 +19,11 @@ package com.continuuity.explore.executor;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.QueryInfo;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryInfo;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.proto.QueryStatus;
 import com.google.common.base.Charsets;
@@ -208,6 +208,37 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     } catch (Exception e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error");
+    }
+  }
+
+  @POST
+  @Path("/data/explore/queries/{id}/preview")
+  public void getQueryResultPreview(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+    // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
+    try {
+      QueryHandle handle = QueryHandle.fromId(id);
+      List<QueryResult> results;
+      if (handle.equals(QueryHandle.NO_OP)) {
+        results = Lists.newArrayList();
+      } else {
+        results = exploreService.previewResults(handle);
+      }
+      responder.sendJson(HttpResponseStatus.OK, results);
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+    } catch (HandleNotFoundException e) {
+      if (e.isInactive()) {
+        responder.sendString(HttpResponseStatus.CONFLICT, "Preview is unavailable for inactive queries.");
+      }
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
