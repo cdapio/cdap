@@ -158,7 +158,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       ServiceDiscovered discoverables = programServiceDiscovery.discover(accountId, appId, serviceId, discoverableId);
       responder.sendString(HttpResponseStatus.OK, GSON.toJson(discoverables,
-                                                                new TypeToken<ServiceDiscovered>() { }.getType()));
+                                                              new TypeToken<ServiceDiscovered>() { }.getType()));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
