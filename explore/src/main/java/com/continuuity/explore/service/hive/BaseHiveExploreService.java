@@ -161,13 +161,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     TimeUnit.SECONDS.sleep(5);
 
     // Schedule the cache cleanup
-    scheduledExecutorService.scheduleWithFixedDelay(
-      new Runnable() {
-        @Override
-        public void run() {
-          runCacheCleanup();
-        }
-      }, cleanupJobSchedule, cleanupJobSchedule, TimeUnit.SECONDS
+    scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
+                                                      @Override
+                                                      public void run() {
+                                                        runCacheCleanup();
+                                                      }
+                                                    }, cleanupJobSchedule, cleanupJobSchedule, TimeUnit.SECONDS
     );
   }
 
@@ -563,8 +562,16 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
-  @Override
-  public void cancel(QueryHandle handle) throws ExploreException, HandleNotFoundException, SQLException {
+  /**
+   * Cancel a running Hive operation. After the operation moves into a {@link QueryStatus.OpStatus#CANCELED},
+   * {@link #close(QueryHandle)} needs to be called to release resources.
+   *
+   * @param handle handle returned by {@link #execute(String)}.
+   * @throws ExploreException on any error cancelling operation.
+   * @throws HandleNotFoundException when handle is not found.
+   * @throws SQLException if there are errors in the SQL statement.
+   */
+  void cancelInternal(QueryHandle handle) throws ExploreException, HandleNotFoundException, SQLException {
     try {
       InactiveOperationInfo inactiveOperationInfo = inactiveHandleCache.getIfPresent(handle);
       if (inactiveOperationInfo != null) {
@@ -575,9 +582,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
       LOG.trace("Cancelling operation {}", handle);
       cliService.cancelOperation(getOperationHandle(handle));
-
-      // Since operation is cancelled, we can aggressively time it out.
-      timeoutAggresively(handle, ImmutableList.<ColumnDesc>of(), new QueryStatus(QueryStatus.OpStatus.CANCELED, false));
     } catch (HiveSQLException e) {
       throw getSqlException(e);
     }

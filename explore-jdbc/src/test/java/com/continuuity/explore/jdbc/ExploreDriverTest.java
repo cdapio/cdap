@@ -261,18 +261,6 @@ public class ExploreDriverTest {
       responder.sendStatus(HttpResponseStatus.OK);
     }
 
-    @POST
-    @Path("v2/data/explore/queries/{id}/cancel")
-    public void cancelQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                            @PathParam("id") final String id) {
-      if (closedHandles.contains(id)) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-      canceledHandles.add(id);
-      responder.sendStatus(HttpResponseStatus.OK);
-    }
-
     @GET
     @Path("v2/data/explore/queries/{id}/status")
     public void getQueryStatus(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,

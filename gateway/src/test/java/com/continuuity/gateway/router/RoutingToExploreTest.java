@@ -96,7 +96,6 @@ public class RoutingToExploreTest {
   public void testExploreQueriesHandlerRequests() throws Exception {
     Assert.assertEquals("sendQuery", doRequest("/data/explore/queries", "POST"));
     Assert.assertEquals("stop:fooId", doRequest("/data/explore/queries/fooId", "DELETE"));
-    Assert.assertEquals("cancel:fooId", doRequest("/data/explore/queries/fooId/cancel", "POST"));
     Assert.assertEquals("status:fooId", doRequest("/data/explore/queries/fooId/status", "GET"));
     Assert.assertEquals("schema:fooId", doRequest("/data/explore/queries/fooId/schema", "GET"));
     Assert.assertEquals("nextResults:fooId", doRequest("/data/explore/queries/fooId/nextResults", "POST"));
@@ -149,13 +148,6 @@ public class RoutingToExploreTest {
     public void closeQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                            @PathParam("id") final String id) {
       responder.sendString(HttpResponseStatus.OK, "stop:" + id);
-    }
-
-    @POST
-    @Path("/data/explore/queries/{id}/cancel")
-    public void cancelQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                            @PathParam("id") final String id) {
-      responder.sendString(HttpResponseStatus.OK, "cancel:" + id);
     }
 
     @GET
