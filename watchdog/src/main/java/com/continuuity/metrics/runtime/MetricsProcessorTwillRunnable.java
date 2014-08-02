@@ -38,7 +38,6 @@ import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsProcessorModule;
 import com.continuuity.metrics.guice.MetricsProcessorStatusServiceModule;
-import com.continuuity.metrics.process.KafkaConsumerMetaTable;
 import com.continuuity.metrics.process.KafkaMetricsProcessorServiceFactory;
 import com.continuuity.metrics.process.MessageCallbackFactory;
 import com.continuuity.metrics.process.MetricsMessageCallbackFactory;
@@ -50,7 +49,6 @@ import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
@@ -152,13 +150,6 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
     public String providesKafkaTopicPrefix(CConfiguration cConf) {
       return cConf.get(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX,
                        MetricsConstants.DEFAULT_KAFKA_TOPIC_PREFIX);
-    }
-
-    @Provides
-    @Singleton
-    public KafkaConsumerMetaTable providesKafkaConsumerMetaTable(MetricsTableFactory
-                                                                   tableFactory) {
-      return tableFactory.createKafkaConsumerMeta("default");
     }
   }
 }

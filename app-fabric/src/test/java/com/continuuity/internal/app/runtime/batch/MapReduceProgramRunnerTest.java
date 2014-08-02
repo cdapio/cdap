@@ -118,7 +118,9 @@ public class MapReduceProgramRunnerTest {
 
   @After
   public void after() throws Exception {
-    cleanupData();
+    // drop all user data
+    dataSetAccessor.dropAll(DataSetAccessor.Namespace.USER);
+    // todo: drop datasets V2 as well
   }
 
   @Test
@@ -330,16 +332,6 @@ public class MapReduceProgramRunnerTest {
         }
     });
   }
-
-  private void cleanupData() throws Exception {
-    // quite hacky way to drop all user datasets and cleanup all system datasets
-    // todo: To be improved with DataSetService
-    dataSetAccessor.dropAll(DataSetAccessor.Namespace.USER);
-    dataSetAccessor.truncateAll(DataSetAccessor.Namespace.SYSTEM);
-
-    // todo: drop datasets V2 as well
-  }
-
 
   private void fillTestInputData(TransactionExecutorFactory txExecutorFactory,
                                  DataSetInstantiator dataSetInstantiator,

@@ -23,6 +23,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -118,12 +119,12 @@ public abstract class AbstractHBaseDataSetManager implements DataSetManager {
           needUpgrade = true;
           // Remove old one and add the new one.
           tableDescriptor.removeCoprocessor(info.getClassName());
-          addCoprocessor(tableDescriptor, coprocessor, jarLocation);
+          addCoprocessor(tableDescriptor, coprocessor, jarLocation, coprocessorJar.getPriority(coprocessor));
         }
       } else {
         // The coprocessor is missing from the table, add it.
         needUpgrade = true;
-        addCoprocessor(tableDescriptor, coprocessor, jarLocation);
+        addCoprocessor(tableDescriptor, coprocessor, jarLocation, coprocessorJar.getPriority(coprocessor));
       }
     }
 
@@ -160,8 +161,11 @@ public abstract class AbstractHBaseDataSetManager implements DataSetManager {
   }
 
   protected void addCoprocessor(HTableDescriptor tableDescriptor, Class<? extends Coprocessor> coprocessor,
-                                Location jarFile) throws IOException {
-    tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI()), Coprocessor.PRIORITY_USER, null);
+                                Location jarFile, Integer priority) throws IOException {
+    if (priority == null) {
+      priority = Coprocessor.PRIORITY_USER;
+    }
+    tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI()), priority, null);
   }
 
   protected abstract String getHBaseTableName(String name);
@@ -183,6 +187,7 @@ public abstract class AbstractHBaseDataSetManager implements DataSetManager {
                                                                   null);
 
     private final List<Class<? extends Coprocessor>> coprocessors;
+    private final Map<Class<? extends Coprocessor>, Integer> priorities = Maps.newHashMap();
     private final Location jarLocation;
 
     public CoprocessorJar(Iterable<? extends Class<? extends Coprocessor>> coprocessors, Location jarLocation) {
@@ -192,6 +197,14 @@ public abstract class AbstractHBaseDataSetManager implements DataSetManager {
 
     public Iterable<? extends Class<? extends Coprocessor>> getCoprocessors() {
       return coprocessors;
+    }
+
+    public void setPriority(Class<? extends Coprocessor> cpClass, int priority) {
+      priorities.put(cpClass, priority);
+    }
+
+    public Integer getPriority(Class<? extends Coprocessor> cpClass) {
+      return priorities.get(cpClass);
     }
 
     public Location getJarLocation() {
