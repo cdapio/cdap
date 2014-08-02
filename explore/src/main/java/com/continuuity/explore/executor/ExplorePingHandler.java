@@ -20,6 +20,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 
+import com.google.gson.JsonObject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
@@ -36,6 +37,8 @@ public class ExplorePingHandler extends AbstractHttpHandler {
   @Path("/explore/status")
   @GET
   public void status(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
-    responder.sendString(HttpResponseStatus.OK, "OK.\n");
+    JsonObject json = new JsonObject();
+    json.addProperty("status", "OK");
+    responder.sendJson(HttpResponseStatus.OK, json);
   }
 }

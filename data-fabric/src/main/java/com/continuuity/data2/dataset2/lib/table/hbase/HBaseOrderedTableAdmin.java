@@ -112,8 +112,9 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
         columnDescriptor.getValue(TxConstants.PROPERTY_TTL) != null) {
       columnDescriptor.remove(TxConstants.PROPERTY_TTL.getBytes());
       needUpgrade = true;
-    } else if (!spec.getProperty(TxConstants.PROPERTY_TTL).equals(
-                columnDescriptor.getValue(TxConstants.PROPERTY_TTL))) {
+    } else if (spec.getProperty(TxConstants.PROPERTY_TTL) != null &&
+               !spec.getProperty(TxConstants.PROPERTY_TTL).equals
+                  (columnDescriptor.getValue(TxConstants.PROPERTY_TTL))) {
       columnDescriptor.setValue(TxConstants.PROPERTY_TTL, spec.getProperty(TxConstants.PROPERTY_TTL));
       needUpgrade = true;
     }

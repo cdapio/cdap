@@ -394,6 +394,20 @@ a, a:visited {
 	text-decoration: underline;
 }
 
+#nav-collect {
+}
+
+#nav-collect span.left-nav-icon {
+	width: 38px;
+	height: 38px;
+	background-image: url('/assets/img/icn-nav.png');
+	background-repeat: no-repeat;
+	display: block;
+	background-size: 38px;
+	background-position: 0px -38px;
+	margin: 0 auto;
+}
+
 .nav-dash {
 	background-position: 0 0;
 }
@@ -463,7 +477,7 @@ a, a:visited {
 }
 
 #content {
-	min-width: 1056px;
+	min-width: 1150px;
 	background-color: #E0E1E6;
 	position: relative;
 	min-height: 100%;
@@ -471,10 +485,9 @@ a, a:visited {
 
 #content-body {
 	padding: 16px 0 0;
-	float: left;
 	padding-left: 120px;
 	padding-top: 80px;
-	width: 100%;
+	background: #E0E1E6;
 }
 
 #header {
@@ -482,8 +495,9 @@ a, a:visited {
 	background-color: #ffffff;
 	color: #0A234B;
 	position: fixed;
+	min-width: 600px;
 	width: 100%;
-	z-index: 50;
+	z-index: 51;
 	border-bottom: 1px solid #CECED0;
 }
 
@@ -713,16 +727,16 @@ ul.top-dropdown-listholder li {
 
 h1 {
 	margin: 0;
-	font-size: 22px;
+	font-size: 20px;
 	font-weight: lighter;
 	color: #4D5268;
 	line-height: 32px;
 	padding-bottom: 4px;
 	height: 36px;
-	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-h1 span {
+h1 span:first-child {
 	color: #aaa;
 	margin-left: 4px;
 }
@@ -3468,4 +3482,22 @@ div.tooltip {
 .panel table td, .panel table th {
   border-top: 0;
   border-bottom: 1px solid #EEE;
+}
+
+/**
+ *User Services stop-start
+ */
+.userServices-start {
+  background: black;
+	background-image: url('/assets/img/v2/play_active_icon.png');
+	background-size: contain;
+	width: 20px;
+	height: 20px
+}
+.userServices-stop {
+  background: black;
+	background-image: url('/assets/img/v2/stop_active_icon.png');
+	background-size: contain;
+	width: 20px;
+	height: 20px
 }

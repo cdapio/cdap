@@ -17,16 +17,19 @@
 package com.continuuity.explore.executor;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.QueryInfo;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryInfo;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.proto.QueryStatus;
 import com.google.common.base.Charsets;
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -35,8 +38,10 @@ import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +52,7 @@ import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -59,8 +65,8 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(QueryExecutorHttpHandler.class);
-
   private static final Gson GSON = new Gson();
+  private static final int DOWNLOAD_FETCH_CHUNK_SIZE = 1000;
 
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
@@ -84,8 +90,8 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s",
+                                                                        e.getSQLState(), e.getMessage()));
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -203,12 +209,123 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   @Path("/data/explore/queries")
   public void getQueryLiveHandles(HttpRequest request, HttpResponder responder) {
     try {
-      List<QueryInfo> handles = exploreService.getQueries();
-      responder.sendJson(HttpResponseStatus.OK, handles);
+      Map<String, List<String>> args = new QueryStringDecoder(request.getUri()).getParameters();
+
+      int limit = args.containsKey("limit") ? Integer.parseInt(args.get("limit").get(0)) : 50;
+      long start = args.containsKey("start") ? Long.parseLong(args.get("start").get(0)) : Long.MAX_VALUE;
+      long end = args.containsKey("end") ? Long.parseLong(args.get("end").get(0)) : Long.MIN_VALUE;
+
+      List<QueryInfo> queries = exploreService.getQueries();
+      // return the queries by after filtering (> offset) and limiting number of queries
+      responder.sendJson(HttpResponseStatus.OK, filterQueries(queries, start, end, limit));
     } catch (Exception e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error");
     }
+  }
+
+  @POST
+  @Path("/data/explore/queries/{id}/preview")
+  public void getQueryResultPreview(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+    // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
+    try {
+      QueryHandle handle = QueryHandle.fromId(id);
+      List<QueryResult> results;
+      if (handle.equals(QueryHandle.NO_OP)) {
+        results = Lists.newArrayList();
+      } else {
+        results = exploreService.previewResults(handle);
+      }
+      responder.sendJson(HttpResponseStatus.OK, results);
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST,
+                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+    } catch (HandleNotFoundException e) {
+      if (e.isInactive()) {
+        responder.sendString(HttpResponseStatus.CONFLICT, "Preview is unavailable for inactive queries.");
+      }
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @POST
+  @Path("/data/explore/queries/{id}/download")
+  public void downloadQueryResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+    // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
+    boolean responseStarted = false;
+    try {
+      QueryHandle handle = QueryHandle.fromId(id);
+      if (handle.equals(QueryHandle.NO_OP)) {
+        responder.sendStatus(HttpResponseStatus.CONFLICT);
+        return;
+      }
+
+      StringBuffer sb = new StringBuffer();
+      sb.append(getCSVHeaders(exploreService.getResultSchema(handle)));
+      sb.append('\n');
+
+      List<QueryResult> results;
+      results = exploreService.previewResults(handle);
+      if (results.isEmpty()) {
+        results = exploreService.nextResults(handle, DOWNLOAD_FETCH_CHUNK_SIZE);
+      }
+
+      try {
+        responder.sendChunkStart(HttpResponseStatus.OK, null);
+        responseStarted = true;
+        while (!results.isEmpty()) {
+          for (QueryResult result : results) {
+            appendCSVRow(sb, result);
+            sb.append('\n');
+          }
+          responder.sendChunk(ChannelBuffers.wrappedBuffer(sb.toString().getBytes("UTF-8")));
+          sb.delete(0, sb.length());
+          results = exploreService.nextResults(handle, DOWNLOAD_FETCH_CHUNK_SIZE);
+        }
+      } finally {
+        responder.sendChunkEnd();
+      }
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Got exception:", e);
+      // We can't send another response if sendChunkStart has been called
+      if (!responseStarted) {
+        responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      }
+    } catch (SQLException e) {
+      LOG.debug("Got exception:", e);
+      if (!responseStarted) {
+        responder.sendError(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s",
+                                                                          e.getSQLState(), e.getMessage()));
+      }
+    } catch (HandleNotFoundException e) {
+      if (!responseStarted) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      }
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      if (!responseStarted) {
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      }
+    }
+  }
+
+  private List<QueryInfo> filterQueries(List<QueryInfo> queries, final long start, final long end, final int limit) {
+    return FluentIterable.from(queries)
+                         .filter(new Predicate<QueryInfo>() {
+                           @Override
+                           public boolean apply(@Nullable QueryInfo queryInfo) {
+                             return queryInfo.getTimestamp() < start && queryInfo.getTimestamp() >= end;
+                           }
+                         })
+                         .limit(limit)
+                         .toImmutableList();
   }
 
   private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
@@ -226,5 +343,33 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     } finally {
       reader.close();
     }
+  }
+
+  private String getCSVHeaders(List<ColumnDesc> schema) throws HandleNotFoundException, SQLException, ExploreException {
+    StringBuffer sb = new StringBuffer();
+    boolean first = true;
+    for (ColumnDesc columnDesc : schema) {
+      if (first) {
+        first = false;
+      } else {
+        sb.append(',');
+      }
+      sb.append(columnDesc.getName());
+    }
+    return sb.toString();
+  }
+
+  private String appendCSVRow(StringBuffer sb, QueryResult result)
+    throws HandleNotFoundException, SQLException, ExploreException {
+    boolean first = true;
+    for (Object o : result.getColumns()) {
+      if (first) {
+        first = false;
+      } else {
+        sb.append(',');
+      }
+      sb.append(o.toString());
+    }
+    return sb.toString();
   }
 }

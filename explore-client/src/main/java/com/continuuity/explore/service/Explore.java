@@ -18,6 +18,7 @@ package com.continuuity.explore.service;
 
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryHandle;
+import com.continuuity.proto.QueryInfo;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.proto.QueryStatus;
 
@@ -80,6 +81,19 @@ public interface Explore {
     throws ExploreException, HandleNotFoundException, SQLException;
 
   /**
+   * Fetch a preview of the results of a Hive operation. This can be called only after the state of the operation is
+   * {@link QueryStatus.OpStatus#FINISHED}. Two subsequent calls to this methods will return the same list of results.
+   * 
+   * @param handle handle returned by {@link #execute(String)}.
+   * @return preview list of {@link QueryResult}s.
+   * @throws ExploreException on any error fetching a preview of the results.
+   * @throws HandleNotFoundException when handle is not found.
+   * @throws SQLException if there are errors in the SQL statement.
+   */
+  List<QueryResult> previewResults(QueryHandle handle)
+    throws ExploreException, HandleNotFoundException, SQLException;
+
+  /**
    * Release resources associated with a Hive operation. After this call, handle of the operation becomes invalid.
    *
    * @param handle handle returned by {@link #execute(String)}.
@@ -91,7 +105,7 @@ public interface Explore {
   /**
    * Fetch information about queries executed in Hive.
    *
-   * @return List of {@link QueryInfo}
+   * @return List of {@link com.continuuity.proto.QueryInfo}
    * @throws ExploreException
    */
   List<QueryInfo> getQueries() throws ExploreException, SQLException;

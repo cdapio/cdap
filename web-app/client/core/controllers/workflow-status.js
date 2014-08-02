@@ -54,6 +54,9 @@ define(['helpers/plumber'], function (Plumber) {
       this.interval = setInterval(function () {
         self.updateStats();
       }, C.POLLING_INTERVAL);
+      this.intervalUpdateTimeRemaining = setInterval(function () {
+        self.updateTimeRemaining();
+      }, 1000);
 
       /*
        * Give the chart Embeddables 100ms to configure
@@ -115,6 +118,7 @@ define(['helpers/plumber'], function (Plumber) {
     unload: function () {
 
       clearInterval(this.interval);
+      clearInterval(this.intervalUpdateTimeRemaining);
       this.set('elements.Action.content', []);
 
     },
@@ -204,6 +208,13 @@ define(['helpers/plumber'], function (Plumber) {
       });
 
       var next = this.get('nextRun');
+      self.updateTimeRemaining();
+
+    },
+
+    updateTimeRemaining: function () {
+      var self = this;
+      var next = this.get('nextRun');
 
       if (next !== -1) {
 
@@ -235,7 +246,6 @@ define(['helpers/plumber'], function (Plumber) {
         }
 
       }
-
     },
 
     /**
