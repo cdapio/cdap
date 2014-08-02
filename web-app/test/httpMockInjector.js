@@ -56,6 +56,10 @@ system.services['metrics.processor'].instances = require('./fixtures/system/serv
 // Metrics processor service endpoints.
 system.services.saver.instances = require('./fixtures/system/services/saver/instances.json');
 
+// Adhoc Query endpoints
+var explore = {};
+explore.queries = require('./fixtures/adhoc-queries/queryList.json');
+
 module.exports = function (nock, gatewayAddr, gatewayPort) {
 
   /**
@@ -65,6 +69,15 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
 
   var clientAddr = 'http://' + gatewayAddr + ':' + gatewayPort;
   var options = {allowUnmocked: true};
+
+
+  /**
+   * Adhoc query mocks.
+   */
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/data/explore/queries')
+    .reply(200, explore.queries);
 
   /**
    * Systems call mocks.

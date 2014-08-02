@@ -2230,6 +2230,30 @@ a strong {
 	height: 100px;
 }
 
+#query-injector-input {
+	width: 100%;
+	height: 150px;
+	background: #575F74;
+	color: white;
+	margin-top: 10px;
+	margin-bottom: 5px;
+	font-family: inherit;
+	padding: 10px;
+	box-sizing: border-box;
+}
+
+#execute-explore-query {
+	margin: 10px;
+	float: right;
+}
+
+.bordered-dataset-table {
+}
+
+.bordered-dataset-table > td {
+	padding: 0;
+}
+
 textarea {
 	font-family:monospace;
 }
@@ -3475,6 +3499,160 @@ div.tooltip {
 .btn-group.start-stop-btns .btn.stop:hover {
 	background: white;
 }
+
+.btn-custom {
+	color: #4B88E7 !important;
+	letter-spacing: 0.1em;
+	line-height: 25px;
+	font-size: 14px !important;
+	border-radius: 5px;
+	background-image: -webkit-linear-gradient(top, white, #f5f5f5);
+	display: inline-block;
+	background: white;
+	border: 1px solid #CACBCF;
+	text-transform: none;
+	min-height: 35px;
+	padding-right: 10px;
+}
+
+#explore-button {
+	margin-top: 3px;
+	margin-right: 10px;
+	background-image: url('/assets/img/v2/explore_icon.png');
+	padding-left: 30px;
+	background-repeat: no-repeat;
+	background-position: 5px 5px;
+	line-height: 2.5;
+}
+
+#explore-button {
+	text-decoration: none;
+}
+
+#explore-button:hover {
+	text-decoration: none;
+}
+
+#explore-button:visited {
+	text-decoration: none;
+}
+
+#query-display {
+	background: #666666;
+	max-height: 600px;
+	overflow: auto;
+}
+
+#query-tables {
+	width: 350px;
+	background: white;
+}
+
+#query-schema {
+	margin-left: 350px;
+	color: white;
+}
+
+#schema-table th {
+	background: #535353;
+	color: white;
+}
+
+#schema-table th, #schema-table td {
+	border-color: #515151;
+}
+
+.table-name:hover {
+	color: white;
+	background: #1751A3;
+}
+
+.table-name:hover .app-list-name a {
+	color: white;
+}
+
+.table-name.selected {
+	color: white;
+	background: #1751A3;
+}
+
+.table-name.selected .app-list-name a {
+	color: white;
+}
+
+.arrow-right {
+	width: 0;
+	height: 0;
+	border-top: 8px solid transparent;
+	border-bottom: 8px solid transparent;
+	border-left: 8px solid white;
+	float: right;
+	margin-top: -20px;
+}
+
+#query-list-table {
+	font-size: 14px;
+}
+
+.lighter-color {
+	color: #ABAFBE;
+}
+
+.query-status {
+	color: #ABAFBE;
+	font-weight: bold;
+}
+
+.query-status.FINISHED {
+	color: #3EC173; 
+}
+
+.query-status.RUNNING {
+	color: #2D65C9; 
+}
+
+.query-status.ERROR {
+	color: #E34F6A; 
+}
+
+.query-table-entry {
+	font-size: 14px;
+}
+
+.query-table-entry.selected {
+	background: #4A4A4A;
+	color: white;
+}
+
+.query-table-entry:hover {
+	background: #4A4A4A;
+	color: white;
+}
+
+.query-results-table-entry {
+	color: white !important;
+}
+
+.query-results-table-entry > thead > tr > th {
+	background: #6D6D6D;
+	color: white;
+}
+
+.query-results-table-entry > tbody > tr > td {
+	background: #888888;
+	color: white;
+	border-right: 1px solid #929292;
+	border-bottom: 1px solid #929292;
+}
+
+.query-results-table-entry > tbody > tr > td:last-child {
+	border-right: 0;
+}
+
+.query-results-table-entry > tbody > tr:last-child > td:last-child {
+	border-bottom: 0;
+}
+
 
 /**
  *Login form

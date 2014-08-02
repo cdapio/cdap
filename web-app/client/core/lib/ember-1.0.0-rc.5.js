@@ -25414,10 +25414,12 @@ function normalizeOptions(route, name, template, options) {
 
   if (options.controller) {
     controller = options.controller;
+  } else if (namedController = route.container.lookup('controller:' + route.controllerName)) {
+    controller = namedController;
   } else if (namedController = route.container.lookup('controller:' + name)) {
     controller = namedController;
   } else {
-    controller = route.routeName;
+    controller = route.routeName || route.controllerName;
   }
 
   if (typeof controller === 'string') {

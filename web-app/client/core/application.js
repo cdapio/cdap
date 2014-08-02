@@ -17,7 +17,6 @@ function(Components, Embeddables, HTTP, Util) {
 		 * Logs router transitions to the Developer Console
 		 */
 		LOG_TRANSITIONS: false,
-
 		/*
 		 * Constant: Polling interval for metrics.
 		 */

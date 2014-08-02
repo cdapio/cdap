@@ -341,6 +341,154 @@
 
   </script>
 
+  <script type="text/x-handlebars" data-template-name="DataExploreResults">
+    <table class="table" id="query-list-table">
+      <thead>
+        <th style="width: 25%">Query Handle</th>
+        <th style="width: 45%">Query</th>
+        <th style="width: 15%">Status</th>
+        <th style="width: 15%">Result</th>
+      </thead>
+    </table>
+    {{#each objArr}}
+    {{#unless deleted}}
+    <table {{bindAttr class=":table :cursor-pointer :query-table-entry this.isSelected:selected:notselected" }} {{ action showTable this }}>
+      <tbody>
+        <tr {{bindAttr data-target="query_handle_hashed"}}>
+          <td style="width: 25%">
+            <span class="lighter-color">{{query_handle}}</span>
+          </td>
+          <td style="width: 45%"><span class="bolder-font">{{statement}}</span></td>
+          <td style="width: 15%"><span {{bindAttr class=":query-status status"}}>{{status}}</span></td>
+          {{#if has_results}}
+            <td style="width: 15%">
+                <a {{bindAttr download=downloadName}} {{bindAttr href="downloadableResults"}}>
+                  Download Results
+                </a>
+            </td>
+          {{ else }}
+            <td>[No results]</td>
+          {{/if}}
+        </tr>
+      </tbody>
+    </table>
+      {{#if has_results}}
+        <div {{bindAttr id="query_handle"}} style="display:none">
+
+          <table class="table query-results-table-entry">
+            <thead>
+              {{#each schema}}
+                <th>{{name}}</th>
+              {{/each}}
+            </thead>
+            <tbody>
+            {{#each results}}
+              <tr>
+              {{#each columns}}
+                <td>{{this}}</td>
+              {{/each}}
+              </tr>
+            {{/each}}
+            </tbody>
+          </table>
+
+        </div>
+      {{ else }}
+        <div {{bindAttr id="query_handle"}}>
+          <a>This query does not have results.</a>
+        </div>
+      {{/if}}
+    {{/unless}}
+    {{/each}}
+{{!--
+    <div>
+      <div style="width:50%;">
+      <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'nextPage' on="click"}}>></button>
+      <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'prevPage' on="click"}}><</button>
+      </div>
+    </div>
+    --}}
+  </script>
+
+
+  <script type="text/x-handlebars" data-template-name="DataExploreQuery">
+    <div style="clear:both"></div>
+    {{#if datasets}}
+      <table class="table bordered-dataset-table">
+        <thead>
+          <th style="width: 350px">Dataset</th>
+          <th>Table: {{selectedDataset.name}}</th>
+        </thead>
+      </table>
+      <div id="query-display">        
+        <div class="left-float" id="query-tables">
+          <table class="table">
+            {{#each datasets}}
+            <tr {{action selectDataset this}} {{ bindAttr class=":cursor-pointer :table-name this.isSelected:selected:notselected" }} >
+              <td style="max-width: 350px; border-bottom: 0" class="app-list-name service-col">
+                <a class="none-text-decoration">{{shortName}}</a>
+                <br />
+                <span class="app-list-status">{{name}}</span>
+                {{#if this.isSelected}}
+                  <div class="arrow-right"></div>
+                {{/if}}
+              </td>
+            </tr>
+            {{/each}}
+          </table>
+        </div>
+        <div id="query-schema">
+          <table class="table" id="schema-table">
+              <thead>
+                {{#each selectedDataset.schema}}
+                  <th>{{name}}</th>
+                {{/each}}
+              </thead>
+              <tbody>
+              {{#each selectedDataset.results}}
+                <tr>
+                {{#each columns}}
+                  <td>{{this}}</td>
+                {{/each}}
+                </tr>
+              {{/each}}
+              </tbody>
+            </table>
+        </div>
+        <div style="clear:both"></div>
+      </div>
+
+  {{ else }}
+    <div class="object-list-empty" style="height:500px;padding-top:20px;">
+        <div class="object-list-empty-content">
+          <div>No discoverable dataset.</div>
+          <span>Please add a discoverable dataset before using this feature.</span>
+        </div>
+      </div>
+  {{/if}}
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="DataExplore">
+    <div id="title">
+      <h1>Explore</h1>
+    </div>
+    <div id="panels">
+      <div class="panel">
+         <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+           <li>{{#linkTo DataExplore.Query}}Query{{/linkTo }}</li>
+           <li>{{#linkTo DataExplore.Results}}Reults{{/linkTo}}</li>
+         </ul>
+        <td>
+          {{view C.Embed.Injector elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
+          <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
+        </td>
+
+        {{outlet}}
+
+      </div>
+    </div>
+  </script>
+
   <script type="text/x-handlebars" data-template-name="Userservice/History">
     <div id="panels">
       <div id="informer"></div>
@@ -1610,6 +1758,22 @@
   <script type="text/x-handlebars" data-template-name="list-page">
     <div id="title">
       {{view C.Embed.TimeSelector}}
+      <h1><span>Data</span> {{controller.title}}</h1>
+    </div>
+
+    <div id="panels">
+      <div class="panel">
+        {{outlet}}
+      </div>
+    </div>
+  </script>
+
+<script type="text/x-handlebars" data-template-name="datasets-list-page">
+    <div id="title">
+      {{view C.Embed.TimeSelector}}
+      <div class="pull-right">
+        <a class="btn-custom" id="explore-button" href="/#/dataexplore/query">Explore</a>
+      </div>
       <h1><span>Data</span> {{controller.title}}</h1>
     </div>
 
