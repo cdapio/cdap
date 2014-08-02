@@ -1173,7 +1173,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       if (args == null) {
         return;
       }
-      List<BatchEndpointStatus> retList = new ArrayList<BatchEndpointStatus>();
       for (int i = 0; i < args.size(); ++i) {
         BatchEndpointStatus requestedObj = args.get(i);
         Id.Program progId = Id.Program.from(accountId, requestedObj.getAppId(), requestedObj.getProgramId());
@@ -1189,7 +1188,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         }
         // set the program type to the pretty name in case the request originally didn't have pretty name
         requestedObj.setProgramType(programType.getPrettyName());
-        retList.add(requestedObj);
       }
       responder.sendJson(HttpResponseStatus.OK, args);
     } catch (SecurityException e) {
@@ -1296,7 +1294,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }
       return input;
     } catch (JsonSyntaxException e) {
-      LOG.info("Failed to parse arguments on {}", request.getUri(), e);
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid Json object provided");
       return null;
     } finally {
