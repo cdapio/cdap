@@ -28,6 +28,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,6 +66,9 @@ import javax.annotation.Nullable;
 // todo: return immutable maps?
 public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTable
                                              implements DataSetClient, TransactionAware, MeteredDataset {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BufferingOcTableClient.class);
+
   protected static final byte[] DELETE_MARKER = new byte[0];
 
   // name of the table
@@ -201,6 +206,11 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
 
   @Override
   public void startTx(Transaction tx) {
+    if (buff == null) {
+      String msg = "Attempted to use closed dataset " + getTransactionAwareName();
+      LOG.error(msg);
+      throw new IllegalStateException(msg);
+    }
     // starting with fresh buffer when tx starts
     buff.clear();
     toUndo = null;
