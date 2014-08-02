@@ -28,6 +28,8 @@ import com.continuuity.proto.QueryInfo;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.proto.QueryStatus;
 import com.google.common.base.Charsets;
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -39,6 +41,7 @@ import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +52,7 @@ import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -86,8 +90,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -205,8 +208,15 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   @Path("/data/explore/queries")
   public void getQueryLiveHandles(HttpRequest request, HttpResponder responder) {
     try {
-      List<QueryInfo> handles = exploreService.getQueries();
-      responder.sendJson(HttpResponseStatus.OK, handles);
+      Map<String, List<String>> args = new QueryStringDecoder(request.getUri()).getParameters();
+
+      int limit = args.containsKey("limit") ? Integer.parseInt(args.get("limit").get(0)) : 50;
+      long start = args.containsKey("start") ? Long.parseLong(args.get("start").get(0)) : Long.MAX_VALUE;
+      long end = args.containsKey("end") ? Long.parseLong(args.get("end").get(0)) : Long.MIN_VALUE;
+
+      List<QueryInfo> queries = exploreService.getQueries();
+      // return the queries by after filtering (> offset) and limiting number of queries
+      responder.sendJson(HttpResponseStatus.OK, filterQueries(queries, start, end, limit));
     } catch (Exception e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error");
@@ -290,8 +300,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
       if (!responseStarted) {
-        responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                            String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+        responder.sendError(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
       }
     } catch (HandleNotFoundException e) {
       if (!responseStarted) {
@@ -303,6 +312,18 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
     }
+  }
+
+  private List<QueryInfo> filterQueries(List<QueryInfo> queries, final long start, final long end, final int limit) {
+    return FluentIterable.from(queries)
+                         .filter(new Predicate<QueryInfo>() {
+                           @Override
+                           public boolean apply(@Nullable QueryInfo queryInfo) {
+                             return queryInfo.getTimestamp() < start && queryInfo.getTimestamp() >= end;
+                           }
+                         })
+                         .limit(limit)
+                         .toImmutableList();
   }
 
   private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
