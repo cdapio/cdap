@@ -396,6 +396,7 @@ public abstract class HBaseTableUtil {
   public abstract Class<? extends Coprocessor> getTransactionDataJanitorClassForVersion();
   public abstract Class<? extends Coprocessor> getQueueRegionObserverClassForVersion();
   public abstract Class<? extends Coprocessor> getDequeueScanObserverClassForVersion();
+  public abstract Class<? extends Coprocessor> getIncrementHandlerClassForVersion();
 
   /**
    * Carries information about coprocessor information.

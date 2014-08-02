@@ -30,13 +30,11 @@ define([], function () {
 		 * @return {Boolean} if file has uploaded.
 		 */
 		doneLoading: function () {
-			var self = this;
-			// Wait a second before executing to allow for file upload and prevent recursive checking.
-			C.Util.threadSleep(1000);
-			if (!$("#app-upload-input")[0].files.length) {
-				self.doneLoading();
-			} else {
-				return true;
+			if ($("#app-upload-input")[0].files.length) {
+				clearInterval(this.interval);
+				var file = $('#app-upload-input')[0].files[0];
+				var name = file.name;
+				C.Util.Upload.sendFiles([file], name);
 			}
 		},
 
@@ -55,11 +53,10 @@ define([], function () {
 				$('#drop-label').hide();
 				$('#drop-loading').show();
 				$('#drop-hover').fadeIn();
-				if (self.doneLoading()) {
-					var file = $('#app-upload-input')[0].files[0];
-					var name = file.name;
-					C.Util.Upload.sendFiles([file], name);
-				}
+
+				self.interval = setInterval(function () {
+				  self.doneLoading();
+				}, 1000);
 			});
 
 		}

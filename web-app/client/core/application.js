@@ -17,7 +17,6 @@ function(Components, Embeddables, HTTP, Util) {
 		 * Logs router transitions to the Developer Console
 		 */
 		LOG_TRANSITIONS: false,
-
 		/*
 		 * Constant: Polling interval for metrics.
 		 */
@@ -354,6 +353,8 @@ function(Components, Embeddables, HTTP, Util) {
 	 */
 	assignments['Modal'] = assignments['Embed'].Modal.create();
 	assignments['Modal'].append();
+	assignments['EventModal'] = assignments['Embed'].EventModal.create();
+	assignments['EventModal'].append();
 
 	/*
 	 * Generic object to store auth / env information.

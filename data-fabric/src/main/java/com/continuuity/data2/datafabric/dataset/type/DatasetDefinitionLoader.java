@@ -19,15 +19,21 @@ package com.continuuity.data2.datafabric.dataset.type;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
+import com.continuuity.common.lang.ApiResourceListHolder;
 import com.continuuity.common.lang.ClassLoaders;
-import com.continuuity.common.lang.jar.JarClassLoader;
+import com.continuuity.common.lang.jar.BundleJarUtil;
+import com.continuuity.common.utils.DirUtils;
 import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.module.lib.DatasetModules;
 import com.continuuity.proto.DatasetModuleMeta;
 import com.continuuity.proto.DatasetTypeMeta;
 import com.google.common.base.Throwables;
+import com.google.common.io.Files;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -35,6 +41,8 @@ import java.util.List;
  * Loads {@link DatasetDefinition} using its metadata info
  */
 public class DatasetDefinitionLoader {
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetDefinitionLoader.class);
+
   private final LocationFactory locationFactory;
 
   /**
@@ -64,24 +72,33 @@ public class DatasetDefinitionLoader {
    */
   public <T extends DatasetDefinition> T load(DatasetTypeMeta meta, DatasetDefinitionRegistry registry)
     throws IOException {
-
     ClassLoader classLoader = DatasetDefinitionLoader.class.getClassLoader();
     List<DatasetModuleMeta> modulesToLoad = meta.getModules();
-    for (DatasetModuleMeta moduleMeta : modulesToLoad) {
-      // for default "system" modules it can be null, see getJarLocation() javadoc
-      if (moduleMeta.getJarLocation() != null) {
-        classLoader = new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation()), classLoader);
-      }
-      DatasetModule module;
-      try {
+    File unpackedLocation = Files.createTempDir();
+    int index = 0;
+    try {
+      for (DatasetModuleMeta moduleMeta : modulesToLoad) {
+        File temp = new File(unpackedLocation, String.valueOf(index++));
+        temp.mkdir();
+        // for default "system" modules it can be null, see getJarLocation() javadoc
+        if (moduleMeta.getJarLocation() != null) {
+          BundleJarUtil.unpackProgramJar(locationFactory.create(moduleMeta.getJarLocation()), temp);
+          classLoader = ClassLoaders.newProgramClassLoader(temp, ApiResourceListHolder.getResourceList(),
+                                                           this.getClass().getClassLoader());
+        }
         Class<?> moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
-        module = DatasetModules.getDatasetModule(moduleClass);
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
+        DatasetModule module = DatasetModules.getDatasetModule(moduleClass);
+        module.register(registry);
       }
-      module.register(registry);
+    } catch (Exception e) {
+      LOG.warn("Exception while loading DatasetDefinition for DatasetTypeMeta : {}", meta.getName());
+    } finally {
+      try {
+        DirUtils.deleteDirectoryContents(unpackedLocation);
+      } catch (IOException e) {
+        LOG.warn("Failed to delete directory {}", unpackedLocation, e);
+      }
     }
-
     return registry.get(meta.getName());
   }
 }

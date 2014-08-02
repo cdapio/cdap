@@ -17,8 +17,8 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.table.Scanner;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.data2.OperationResult;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.tephra.Transaction;
@@ -35,6 +35,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -43,6 +45,8 @@ import java.util.Map;
  * @param <T> table type
  */
 public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
+  private static final Logger LOG = LoggerFactory.getLogger(OrderedColumnarTableTest.class);
+
   static final byte[] R1 = Bytes.toBytes("r1");
   static final byte[] R2 = Bytes.toBytes("r2");
   static final byte[] R3 = Bytes.toBytes("r3");
@@ -1216,6 +1220,12 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
   }
 
   void verify(byte[][] expected, Map<byte[], byte[]> rowMap) {
+    if (expected.length / 2 != rowMap.size()) {
+      LOG.info("Row Map contains:");
+      for (Map.Entry<byte[], byte[]> entry : rowMap.entrySet()) {
+        LOG.info("{} = {}", Bytes.toStringBinary(entry.getKey()), Bytes.toStringBinary(entry.getValue()));
+      }
+    }
     Assert.assertEquals(expected.length / 2, rowMap.size());
     for (int i = 0; i < expected.length; i += 2) {
       byte[] key = expected[i];
@@ -1237,10 +1247,10 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
 
   void verify(byte[][] expectedRows, byte[][][] expectedRowMaps, Scanner scan) {
     for (int i = 0; i < expectedRows.length; i++) {
-      ImmutablePair<byte[], Map<byte[], byte[]>> next = scan.next();
+      Row next = scan.next();
       Assert.assertNotNull("Missing result for row: " + Bytes.toStringBinary(expectedRows[i]), next);
-      Assert.assertArrayEquals(expectedRows[i], next.getFirst());
-      verify(expectedRowMaps[i], next.getSecond());
+      Assert.assertArrayEquals(expectedRows[i], next.getRow());
+      verify(expectedRowMaps[i], next.getColumns());
     }
 
     // nothing is left in scan

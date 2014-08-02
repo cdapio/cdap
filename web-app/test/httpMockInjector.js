@@ -14,6 +14,24 @@ system.services.servicesCompleteDefinition = require('./fixtures/system/services
 system.services.statusIncomplete = require('./fixtures/system/services/status_incomplete.json');
 system.services.statusComplete = require('./fixtures/system/services/status_complete.json');
 
+// User services endpoints.
+var apps = {};
+apps.CountCounts = {
+  services: {
+    loadgen: {}
+  }
+};
+apps.CountCounts.services.servicesCompleteDefinition  = require('./fixtures/user/services-complete.json');
+apps.CountCounts.services.loadgen                     = require('./fixtures/user/services/service-spec.json');
+apps.CountCounts.services.loadgen.instances           = require('./fixtures/user/services/instances.json');
+apps.CountCounts.services.loadgen.status              = require('./fixtures/user/services/status.json');
+apps.CountCounts.services.loadgen.runtimeargs        = require('./fixtures/user/services/runtime-args.json');
+apps.CountCounts.services.loadgen.history             = require('./fixtures/user/services/history.json');
+apps.CountCounts.services.loadgen.liveinfo           = require('./fixtures/user/services/live-info.json');
+
+var servicesinfo_countcounts = require('./fixtures/user/user-services-batch-complete-countcounts.json');
+var servicesinfo_purchasehistory = require('./fixtures/user/user-services-batch-complete-purchasehistory.json');
+
 // Appfabric service endpoints.
 system.services.appfabric.status = require('./fixtures/system/services/appfabric/status.json');
 system.services.appfabric.instances = require('./fixtures/system/services/appfabric/instances.json');
@@ -38,6 +56,10 @@ system.services['metrics.processor'].instances = require('./fixtures/system/serv
 // Metrics processor service endpoints.
 system.services.saver.instances = require('./fixtures/system/services/saver/instances.json');
 
+// Adhoc Query endpoints
+var explore = {};
+explore.queries = require('./fixtures/adhoc-queries/queryList.json');
+
 module.exports = function (nock, gatewayAddr, gatewayPort) {
 
   /**
@@ -47,6 +69,15 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
 
   var clientAddr = 'http://' + gatewayAddr + ':' + gatewayPort;
   var options = {allowUnmocked: true};
+
+
+  /**
+   * Adhoc query mocks.
+   */
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/data/explore/queries')
+    .reply(200, explore.queries);
 
   /**
    * Systems call mocks.
@@ -164,5 +195,86 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
     .persist()
     .get('/v2/system/services/metrics.processor/instances')
     .reply(200, system.services['metrics.processor'].instances);
+
+
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services-info')
+    .reply(200, servicesinfo_countcounts);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/PurchaseHistory/services-info')
+    .reply(200, servicesinfo_purchasehistory);
+
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services')
+    .reply(200, apps.CountCounts.services.servicesCompleteDefinition);
+
+  //loadgen service:
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/loadgen')
+    .reply(200, apps.CountCounts.services.loadgen);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/loadgen/runnables/streamEventGen/instances')
+    .reply(200, apps.CountCounts.services.loadgen.instances);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/loadgen/status')
+    .reply(200, apps.CountCounts.services.loadgen.status);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/loadgen/runtimeargs')
+    .reply(200, apps.CountCounts.services.loadgen.runtimeargs);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/loadgen/history')
+    .reply(200, apps.CountCounts.services.loadgen.history);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/loadgen/live-info')
+    .reply(200, apps.CountCounts.services.loadgen.liveinfo);
+
+  //simpleName service:
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/simpleName')
+    .reply(200, apps.CountCounts.services.loadgen);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/simpleName/runnables/streamEventGen/instances')
+    .reply(200, apps.CountCounts.services.loadgen.instances);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/simpleName/status')
+    .reply(200, apps.CountCounts.services.loadgen.status);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/simpleName/runtimeargs')
+    .reply(200, apps.CountCounts.services.loadgen.runetimeargs);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/simpleName/history')
+    .reply(200, apps.CountCounts.services.loadgen.history);
+
+  nock(clientAddr, options)
+    .persist()
+    .get('/v2/apps/CountCounts/services/simpleName/live-info')
+    .reply(200, apps.CountCounts.services.loadgen.liveinfo);
+
 
 };
