@@ -137,7 +137,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
       public File get() {
         String localDirStr = cConf.get(Constants.Explore.LOCAL_DATA_DIR);
         File previewsDir = new File(localDirStr, "previewsDir");
-        previewsDir.mkdir();
+        previewsDir.mkdirs();
         return previewsDir;
       }
     }

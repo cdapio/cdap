@@ -587,6 +587,67 @@ Example
 
 .. rst2pdf: PageBreak
 
+
+Updating an Existing Dataset
+----------------------------
+
+You can update an existing Dataset's table and properties by issuing an HTTP PUT request to the URL::
+
+	PUT <base-url>/data/datasets/<dataset-name>
+
+with JSON-formatted name of the dataset type and properties in the body::
+
+  {
+     "typeName":"<type-name>",
+     "properties":{<properties>},
+     "update":"true"
+  }
+
+:Note: The Dataset must exist, and the instance and type passed must match with the existing Dataset.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<dataset-name>``
+     - Name of the existing Dataset
+   * - ``<type-name>``
+     - Type of the existing Dataset
+   * - ``<properties>``
+     - Dataset properties as a map of String to String
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Requested Dataset was successfully updated
+   * - ``404 Not Found``
+     - Requested Dataset instance was not found
+   * - ``409 Conflict``
+     - Dataset Type provided for update is different from the existing Dataset Type
+
+Example
+.......
+.. list-table::
+   :widths: 25 75
+   :stub-columns: 1
+
+   * - HTTP Request
+     - ``PUT <base-url>/data/datasets/mydataset``
+   * - Body
+     - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"7200000"},"update":"true"}``
+   * - Description
+     - For the "mydataset" of type "Table", updates the Dataset and its time-to-live property to 2 hours
+
+.. rst2pdf: PageBreak
+
 Deleting a Dataset
 ------------------
 
