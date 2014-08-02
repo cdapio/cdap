@@ -55,16 +55,6 @@ public class HttpHandlerGeneratorTest {
     public void process(HttpServiceRequest request, HttpServiceResponder responder) {
       responder.sendString("Hello World");
     }
-
-    @Override
-    public void initialize(HttpServiceContext context) throws Exception {
-
-    }
-
-    @Override
-    public void destroy() {
-
-    }
   }
 
   @Path("/v2")

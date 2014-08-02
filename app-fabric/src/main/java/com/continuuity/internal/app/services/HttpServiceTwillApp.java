@@ -39,7 +39,6 @@ public class HttpServiceTwillApp implements TwillApplication {
 
   @Override
   public TwillSpecification configure() {
-    LOG.debug("GOT HTTP SERVICE APP CONFIGURE");
     return TwillSpecification.Builder.with()
       .setName(name)
       .withRunnable()

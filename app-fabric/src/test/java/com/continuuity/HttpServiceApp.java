@@ -91,11 +91,7 @@ public class HttpServiceApp extends AbstractApplication {
     @Override
     public void initialize(ProcedureContext context) {
       //Discover the UserInterestsLookup service via discovery service
-      LOG.debug("GOT INITIALIZE");
       serviceDiscovered = context.discover("HttpServiceApp", "HttpService", "HttpService");
-      LOG.debug("GOT AFTER INITIALIZE");
-      LOG.debug("SERVICE NAME: {}, SERVICE DISCOVERABLE: {}", serviceDiscovered.getName(),
-                serviceDiscovered.iterator().hasNext());
     }
 
     /**
@@ -106,19 +102,17 @@ public class HttpServiceApp extends AbstractApplication {
      */
     @Handle("noop")
     public void handle(ProcedureRequest request, ProcedureResponder responder) throws Exception {
-      LOG.debug("GOT PROCEDURE");
       Discoverable discoverable = Iterables.getFirst(serviceDiscovered, null);
-      LOG.debug("GOT BEFORE DISCOVER NULL");
       if (discoverable != null) {
-        LOG.debug("GOT AFTER DISCOVER NOT NULL");
         String hostName = discoverable.getSocketAddress().getHostName();
         int port = discoverable.getSocketAddress().getPort();
         LOG.debug("host: {}, port: {}", hostName, String.valueOf(port));
         String response = doGet(hostName, port);
         LOG.debug(response);
         responder.sendJson(ProcedureResponse.Code.SUCCESS, response);
+      } else {
+        responder.sendJson(ProcedureResponse.Code.FAILURE, "ERROR!");
       }
-      responder.sendJson(ProcedureResponse.Code.FAILURE, "ERROR!");
     }
 
     /**

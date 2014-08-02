@@ -32,5 +32,4 @@
     <properties>
         <app.main.class>com.continuuity.examples.helloworld.HelloWorld</app.main.class>
     </properties>
-
 </project>

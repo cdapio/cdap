@@ -43,7 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
 /**
- * Created by Shu on 7/30/14.
+ *
  */
 public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
@@ -59,7 +59,6 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   private ConcurrentHashMap<String, String> runnableArgs;
 
   public HttpServiceTwillRunnable(String name, Iterable<HttpServiceHandler> handlers) {
-    LOG.debug("GOT HTTP SERVICE RUNNABLE CONSTRUCTOR");
     this.name = name;
     this.handlers = (List<HttpServiceHandler>) handlers;
     this.runnableArgs = new ConcurrentHashMap<String, String>();
@@ -70,13 +69,11 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
    * @param programClassLoader classloader to instantiate the service with.
    */
   public HttpServiceTwillRunnable(ClassLoader programClassLoader) {
-    LOG.debug("GOT HTTP SERVICE RUNNABLE CONSTRUCTOR PGMLOADER");
     this.programClassLoader = programClassLoader;
   }
 
   @Override
   public void run() {
-    LOG.debug("GOT HTTP SERVICE RUNNABLE RUN");
     try {
       runLatch.await();
     } catch (InterruptedException e) {
@@ -87,11 +84,9 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public TwillRunnableSpecification configure() {
-    LOG.debug("GOT HTTP SERVICE RUNNABLE CONFIGURE");
     runnableArgs.put("service.runnable.name", name);
     List<String> handlerNames = new ArrayList<String>();
     for (HttpServiceHandler handler : handlers) {
-      LOG.debug("HANDLER CONFIGURE NAME: {}", handler.getClass().getName());
       handlerNames.add(handler.getClass().getName());
     }
     runnableArgs.put("service.runnable.handlers", GSON.toJson(handlerNames));
@@ -103,7 +98,6 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void initialize(TwillContext context) {
-    LOG.debug("GOT HTTP SERVICE RUNNABLE INITIALIZE");
     runnableArgs = new ConcurrentHashMap<String, String>(context.getSpecification().getConfigs());
     if (name == null) {
       name = runnableArgs.remove("service.runnable.name");

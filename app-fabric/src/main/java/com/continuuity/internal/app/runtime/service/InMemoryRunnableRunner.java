@@ -111,9 +111,8 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       Class<?> clz = null;
 
       String classStr = runnableSpec.getRunnableSpecification().getClassName();
-      LOG.debug("CLASS STR: {} HTTPSERVICERUNNABLE STR: {}", classStr, HttpServiceTwillRunnable.class.getName());
+      // special case for handling http service
       if (classStr.equals(HttpServiceTwillRunnable.class.getName())) {
-        LOG.debug("Got here!");
         clz = HttpServiceTwillRunnable.class;
       } else {
         clz = Class.forName(runnableSpec.getRunnableSpecification().getClassName(),
@@ -159,7 +158,6 @@ public class InMemoryRunnableRunner implements ProgramRunner {
                                               dClient, dService, instanceCount, electionRegistry);
 
       TypeToken<? extends  TwillRunnable> runnableType = TypeToken.of(runnableClass);
-//      TwillRunnable runnable = new InstantiatorFactory(false).get(runnableType).create();
 
       TwillRunnable runnable = null;
 
