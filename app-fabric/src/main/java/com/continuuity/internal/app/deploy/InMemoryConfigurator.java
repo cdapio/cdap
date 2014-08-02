@@ -27,7 +27,6 @@ import com.continuuity.app.program.ManifestFields;
 import com.continuuity.common.lang.jar.BundleJarUtil;
 import com.continuuity.common.utils.DirUtils;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
@@ -59,11 +58,6 @@ public final class InMemoryConfigurator implements Configurator {
   private final Location archive;
 
   /**
-   * Application which needs to be configured.
-   */
-  private final com.continuuity.api.Application application;
-
-  /**
    * Constructor that accepts archive file as input to invoke configure.
    *
    * @param archive name of the archive file for which configure is invoked in-memory.
@@ -72,19 +66,6 @@ public final class InMemoryConfigurator implements Configurator {
     Preconditions.checkNotNull(id);
     Preconditions.checkNotNull(archive);
     this.archive = archive;
-    this.application = null;
-  }
-
-  /**
-   * Constructor that takes an {@link com.continuuity.api.Application} to invoke configure.
-   *
-   * @param application instance for which configure needs to be invoked.
-   */
-  public InMemoryConfigurator(Id.Account id, com.continuuity.api.Application application) {
-    Preconditions.checkNotNull(id);
-    Preconditions.checkNotNull(application);
-    this.archive = null;
-    this.application = application;
   }
 
   /**
@@ -100,25 +81,26 @@ public final class InMemoryConfigurator implements Configurator {
     SettableFuture<ConfigResponse> result = SettableFuture.create();
 
     try {
-      Object app;
-      if (archive != null) {   // Provided Application JAR.
-        // Load the JAR using the JAR class load and load the manifest file.
-        Manifest manifest = BundleJarUtil.getManifest(archive);
-        Preconditions.checkArgument(manifest != null, "Failed to load manifest from %s", archive.toURI());
-        String mainClassName = manifest.getMainAttributes().getValue(ManifestFields.MAIN_CLASS);
-        Preconditions.checkArgument(mainClassName != null && !mainClassName.isEmpty(),
-                                    "Main class attribute cannot be empty");
+      // Load the JAR using the JAR class load and load the manifest file.
+      Manifest manifest = BundleJarUtil.getManifest(archive);
+      Preconditions.checkArgument(manifest != null, "Failed to load manifest from %s", archive.toURI());
+      String mainClassName = manifest.getMainAttributes().getValue(ManifestFields.MAIN_CLASS);
+      Preconditions.checkArgument(mainClassName != null && !mainClassName.isEmpty(),
+                                  "Main class attribute cannot be empty");
 
-        File unpackedJarDir = Files.createTempDir();
-        try {
-          app = new Archive(BundleJarUtil.unpackProgramJar(archive, unpackedJarDir),
-                                        mainClassName).getMainClass().newInstance();
-          result.set(createResponse(app));
-        } finally {
-          removeDir(unpackedJarDir);
+      File unpackedJarDir = Files.createTempDir();
+      try {
+        Object appMain = new Archive(BundleJarUtil.unpackProgramJar(archive, unpackedJarDir),
+                                                                  mainClassName).getMainClass().newInstance();
+        if (!(appMain instanceof Application)) {
+          throw new IllegalStateException(String.format("Application main class is of invalid type: %s",
+                                                        appMain.getClass().getName()));
         }
-      } else {
-        result.set(createResponse(application));
+
+        Application app = (Application) appMain;
+        result.set(createResponse(app));
+      } finally {
+        removeDir(unpackedJarDir);
       }
 
       return result;
@@ -128,24 +110,16 @@ public final class InMemoryConfigurator implements Configurator {
     }
   }
 
-  private ConfigResponse createResponse(Object app) {
+  private ConfigResponse createResponse(Application app) {
     return new DefaultConfigResponse(0, CharStreams.newReaderSupplier(getSpecJson(app)));
   }
 
   @VisibleForTesting
-  static final String getSpecJson(Object app) {
+  static final String getSpecJson(Application app) {
     // Now, we call configure, which returns application specification.
-    ApplicationSpecification specification;
-    if (app instanceof com.continuuity.api.Application) {
-      specification = Specifications.from(((com.continuuity.api.Application) app).configure());
-    } else if (app instanceof Application) {
-      DefaultAppConfigurer configurer = new DefaultAppConfigurer((Application) app);
-      ((Application) app).configure(configurer, new ApplicationContext());
-      specification = configurer.createApplicationSpec();
-    } else {
-      throw new IllegalStateException(String.format("Application main class is of invalid type: %s",
-                                                    app.getClass().getName()));
-    }
+    DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
+    app.configure(configurer, new ApplicationContext());
+    ApplicationSpecification specification = configurer.createApplicationSpec();
 
     // Convert the specification to JSON.
     // We write the Application specification to output file in JSON format.

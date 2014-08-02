@@ -16,8 +16,6 @@
 
 package com.continuuity.test.app;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.DisableTransaction;
 import com.continuuity.api.annotation.Output;

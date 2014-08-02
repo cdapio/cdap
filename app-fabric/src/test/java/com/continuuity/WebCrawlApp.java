@@ -39,12 +39,6 @@ import java.io.UnsupportedEncodingException;
  * </p>
  */
 public class WebCrawlApp extends AbstractApplication {
-  /**
-   * Configures the {@link com.continuuity.api.Application} by returning an
-   * {@link com.continuuity.api.ApplicationSpecification}
-   *
-   * @return An instance of {@code ApplicationSpecification}.
-   */
   @Override
   public void configure() {
     setName("WebCrawlerApp");

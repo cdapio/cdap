@@ -64,7 +64,6 @@ import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.explore.jdbc.ExploreDriver;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
-import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -117,7 +116,7 @@ import java.sql.DriverManager;
 import java.util.HashMap;
 
 /**
- * Base class to inherit from, provides testing functionality for {@link com.continuuity.api.Application}.
+ * Base class to inherit from, provides testing functionality for {@link Application}.
  */
 public class ReactorTestBase {
 
@@ -139,14 +138,14 @@ public class ReactorTestBase {
   private static InMemoryTransactionManager txService;
 
   /**
-   * Deploys an {@link com.continuuity.api.Application}. The {@link com.continuuity.api.flow.Flow Flows} and
+   * Deploys an {@link Application}. The {@link com.continuuity.api.flow.Flow Flows} and
    * {@link com.continuuity.api.procedure.Procedure Procedures} defined in the application
    * must be in the same or children package as the application.
    *
    * @param applicationClz The application class
    * @return An {@link com.continuuity.test.ApplicationManager} to manage the deployed application.
    */
-  protected ApplicationManager deployApplication(Class<?> applicationClz,
+  protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                  File...bundleEmbeddedJars) {
     
     Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
@@ -160,8 +159,6 @@ public class ReactorTestBase {
         DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
         app.configure(configurer, new ApplicationContext());
         appSpec = configurer.createApplicationSpec();
-      } else if (appInstance instanceof com.continuuity.api.Application) {
-        appSpec = Specifications.from(((com.continuuity.api.Application) appInstance).configure());
       } else {
         throw new IllegalArgumentException("Application class does not represent application: "
                                              + applicationClz.getName());
