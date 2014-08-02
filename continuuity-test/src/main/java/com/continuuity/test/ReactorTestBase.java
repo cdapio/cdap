@@ -114,6 +114,7 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.HashMap;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link com.continuuity.api.Application}.
@@ -399,7 +400,7 @@ public class ReactorTestBase {
   protected final <T> DataSetManager<T> getDataset(String datasetInstanceName)
     throws Exception {
     @SuppressWarnings("unchecked")
-    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, null);
+    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, new HashMap<String, String>(), null);
     try {
       TransactionAware txAwareDataset = (TransactionAware) dataSet;
       final TransactionContext txContext =
