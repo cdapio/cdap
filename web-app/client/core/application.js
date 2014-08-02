@@ -354,6 +354,8 @@ function(Components, Embeddables, HTTP, Util) {
 	 */
 	assignments['Modal'] = assignments['Embed'].Modal.create();
 	assignments['Modal'].append();
+	assignments['EventModal'] = assignments['Embed'].EventModal.create();
+	assignments['EventModal'].append();
 
 	/*
 	 * Generic object to store auth / env information.

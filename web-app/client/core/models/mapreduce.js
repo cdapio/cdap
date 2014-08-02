@@ -68,6 +68,18 @@ define(['core/lib/date', 'core/models/program'],
 
     },
 
+    trackMetric: function (path, kind, label, interpolate) {
+
+      path = this.interpolate(path);
+      this.get(kind).set(C.Util.enc(path), Em.Object.create({
+        path: path,
+        value: label || [],
+        interpolate: 'linear'
+      }));
+      return path;
+
+    },
+
     getStartDate: function() {
       var time = parseInt(this.get('startTime'), 10);
       return new Date(time).toString('MMM d, yyyy');

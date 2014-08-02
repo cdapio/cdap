@@ -101,6 +101,9 @@
           <br />
           Application
         </a></li>
+        <li><a class="nav-link nav-streams" id="nav-collect" href="#/streams">
+          <span class="left-nav-icon"></span>
+          Collect</a></li>
         <li><a class="nav-link nav-flows" id="nav-process" href="#/flows">
           <img class="left-nav-icon" src="/assets/img/v2/process_icon.png" />
           <br />
@@ -1036,7 +1039,6 @@
         <div class="popup-body">
           <div class="popup-close" {{action close on="click"}}>×</div>
 
-          {{#if controllers.FlowStatus.model.running}}
             <div class="btn-group pull-right" style="margin-top: 4px;">
               <button class="btn btn-blank" {{action "addOneInstance" on="click"}}>+</button>
               <button class="btn btn-blank" {{action "removeOneInstance" on="click"}}>-</button>
@@ -1046,7 +1048,6 @@
                 <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{model.containersLabel}} instance{{model.pluralInstances}} ({{model.instances}} Requested)</button>
               {{/if}}
             </div>
-          {{/if}}
 
           <div class="popup-icon"></div>
 
@@ -1304,7 +1305,6 @@
       <div class="panel">
       <div class="panel-head">
 
-        {{#if model.running}}
           <div class="btn-group pull-right">
             <button class="btn btn-blank" {{action "addOneInstance" on="click"}}>+</button>
             <button class="btn btn-blank" {{action "removeOneInstance" on="click"}}>-</button>
@@ -1316,7 +1316,6 @@
             {{/if}}
 
           </div>
-        {{/if}}
 
         <div class="panel-title">Make a Request</div></div>
 

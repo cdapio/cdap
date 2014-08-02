@@ -258,18 +258,14 @@ define([], function () {
 		startAll: function (kind) {
 
 			var elements = this.get('elements.' + kind + '.content');
-
-			C.Util.interrupt();
-			this.transition(elements, 'start', 'starting', 'running', C.Util.proceed);
+			this.transition(elements, 'start', 'starting', 'running');
 
 		},
 
 		stopAll: function (kind) {
 
 			var elements = this.get('elements.' + kind + '.content');
-
-			C.Util.interrupt();
-			this.transition(elements, 'stop', 'stopping', 'stopped', C.Util.proceed);
+			this.transition(elements, 'stop', 'stopping', 'stopped');
 
 		},
 
