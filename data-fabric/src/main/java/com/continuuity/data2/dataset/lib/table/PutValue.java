@@ -17,8 +17,8 @@
 package com.continuuity.data2.dataset.lib.table;
 
 /**
-*
-*/
+ * Represents a normal (full) write to a datastore for in-memory buffering, overwriting the previously stored value.
+ */
 public class PutValue implements Update<byte[]> {
   private final byte[] bytes;
 

@@ -26,7 +26,7 @@ import java.util.TreeMap;
 import javax.annotation.Nullable;
 
 /**
- *
+ * Utility class for working with {@link Update} instances.
  */
 public final class Updates {
 
@@ -77,9 +77,9 @@ public final class Updates {
    *   <li>Increment a + Put b = Put b</li>
    *   <li>Increment a + Increment b = new Increment(a + b)</li>
    * </ul>
-   * @param base
-   * @param modifier
-   * @return
+   * @param base The currently stored or buffered update
+   * @param modifier The new update to combine
+   * @return A new update combining the base update and modifier, according to the rules above
    */
   public static final Update mergeUpdates(Update base, Update modifier) {
     if (base == null || modifier instanceof PutValue) {

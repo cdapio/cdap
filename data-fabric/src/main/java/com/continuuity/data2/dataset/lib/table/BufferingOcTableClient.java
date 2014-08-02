@@ -327,7 +327,6 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
     // adding server cols, and then overriding with buffered values
     NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     if (persistedCols != null) {
-      // TODO: need to merge values here, accounting for delta increments
       result.putAll(persistedCols);
     }
 

@@ -19,8 +19,9 @@ package com.continuuity.data2.dataset.lib.table;
 import com.continuuity.api.common.Bytes;
 
 /**
-*
-*/
+ * Represents an incremental write to a datastore for in-memory buffering.  To read the current value, all
+ * incremental writes for a field must be summed, along with the most recent {@link PutValue}, if any.
+ */
 public class IncrementValue implements Update<Long> {
   private final Long value;
 

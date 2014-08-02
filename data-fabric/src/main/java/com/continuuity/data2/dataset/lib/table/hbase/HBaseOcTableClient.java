@@ -114,7 +114,6 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
           // TODO: hijacking timestamp... bad
           Update val = column.getValue();
           if (val instanceof IncrementValue) {
-            // TODO: handle increments
             incrementPut = getIncrementalPut(incrementPut, row.getKey());
             incrementPut.add(HBaseOcTableManager.DATA_COLUMN_FAMILY, column.getKey(), tx.getWritePointer(),
                              Bytes.toBytes(((IncrementValue) val).getValue()));
@@ -122,11 +121,9 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
             put.add(HBaseOcTableManager.DATA_COLUMN_FAMILY, column.getKey(), tx.getWritePointer(),
                     wrapDeleteIfNeeded(((PutValue) val).getValue()));
           }
-          // TODO: handle increments
         } else {
           Update val = column.getValue();
           if (val instanceof IncrementValue) {
-            // TODO: handle increments
             incrementPut = getIncrementalPut(incrementPut, row.getKey());
             incrementPut.add(HBaseOcTableManager.DATA_COLUMN_FAMILY, column.getKey(),
                              Bytes.toBytes(((IncrementValue) val).getValue()));
