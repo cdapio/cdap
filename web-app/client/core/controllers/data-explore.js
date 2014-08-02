@@ -12,14 +12,14 @@ define([], function () {
 
 		  self.start = Infinity;
 		  self.end = 0;
-		  self.limit = 4;
+		  self.limit = Infinity;
 
       self.largest = -1;
       self.smallest = -1;
 		  this.set('objArr', []);
 		  this.fetchQueries();
 		  this.interval = setInterval(function () {
-//        self.fetchQueries();
+        self.fetchQueries();
 		  }, 1000);
 		  this.set('datasets', []);
 		  this.loadDiscoverableDatasets();
