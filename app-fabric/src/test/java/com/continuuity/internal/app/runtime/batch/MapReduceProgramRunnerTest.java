@@ -30,7 +30,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
@@ -49,8 +51,8 @@ import com.google.common.collect.Maps;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -76,8 +78,9 @@ public class MapReduceProgramRunnerTest {
   private static Injector injector;
   private static TransactionExecutorFactory txExecutorFactory;
 
-  private DataSetInstantiator dataSetInstantiator;
-  private DataSetAccessor dataSetAccessor;
+  private static InMemoryTransactionManager txService;
+  private static DatasetFramework dsFramework;
+  private static DataSetInstantiator dataSetInstantiator;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -101,26 +104,30 @@ public class MapReduceProgramRunnerTest {
     conf.setInt(TxConstants.Manager.CFG_TX_TIMEOUT, 1);
     conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
     injector = AppFabricTestHelper.getInjector(conf);
+    txService = injector.getInstance(InMemoryTransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
-  }
+    dsFramework = new NamespacedDatasetFramework(injector.getInstance(DatasetFramework.class),
+                                                 new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.USER));
 
-  @Before
-  public void before() {
-    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     dataSetInstantiator =
-      new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
+      new DataSetInstantiator(new DataFabric2Impl(locationFactory, injector.getInstance(DataSetAccessor.class)),
                               datasetFramework, injector.getInstance(CConfiguration.class),
-                              getClass().getClassLoader());
+                              MapReduceProgramRunnerTest.class.getClassLoader());
+
+    txService.startAndWait();
+  }
+
+  @AfterClass
+  public static void afterClass() throws Exception {
+    txService.stopAndWait();
   }
 
   @After
   public void after() throws Exception {
-    // drop all user data
-    dataSetAccessor.dropAll(DataSetAccessor.Namespace.USER);
-    // todo: drop datasets V2 as well
+    // cleanup user data (only user datasets)
+    dsFramework.deleteAllInstances();
   }
 
   @Test
