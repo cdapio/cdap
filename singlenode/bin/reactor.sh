@@ -271,13 +271,13 @@ start() {
 
     background_process=$!
     while kill -0 $background_process >/dev/null 2>/dev/null ; do
-      if grep 'Reactor started successfully' $APP_HOME/logs/reactor.log > /dev/null 2>&1; then
+      if grep '..* started successfully' $APP_HOME/logs/reactor.log > /dev/null 2>&1; then
         if $debug ; then
           echo; echo "Remote debugger agent started on port $port."
         else
           echo
         fi
-        grep -A 1 'Reactor started successfully' $APP_HOME/logs/reactor.log
+        grep -A 1 '..* started successfully' $APP_HOME/logs/reactor.log
         break
       elif grep 'Failed to start server' $APP_HOME/logs/reactor.log > /dev/null 2>&1; then
         echo; echo "Failed to start server"

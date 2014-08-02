@@ -99,6 +99,10 @@ public abstract class AbstractDataset implements Dataset, MeteredDataset, Transa
     return instanceName;
   }
 
+  protected String getName() {
+    return instanceName;
+  }
+
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder();

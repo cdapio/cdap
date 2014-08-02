@@ -96,11 +96,11 @@ public class RoutingToExploreTest {
   public void testExploreQueriesHandlerRequests() throws Exception {
     Assert.assertEquals("sendQuery", doRequest("/data/explore/queries", "POST"));
     Assert.assertEquals("stop:fooId", doRequest("/data/explore/queries/fooId", "DELETE"));
-    Assert.assertEquals("cancel:fooId", doRequest("/data/explore/queries/fooId/cancel", "POST"));
     Assert.assertEquals("status:fooId", doRequest("/data/explore/queries/fooId/status", "GET"));
     Assert.assertEquals("schema:fooId", doRequest("/data/explore/queries/fooId/schema", "GET"));
     Assert.assertEquals("nextResults:fooId", doRequest("/data/explore/queries/fooId/nextResults", "POST"));
     Assert.assertEquals("queries-list", doRequest("/data/explore/queries", "GET"));
+    Assert.assertEquals("preview:fooId", doRequest("/data/explore/queries/fooId/preview", "POST"));
   }
 
   @Test
@@ -150,13 +150,6 @@ public class RoutingToExploreTest {
       responder.sendString(HttpResponseStatus.OK, "stop:" + id);
     }
 
-    @POST
-    @Path("/data/explore/queries/{id}/cancel")
-    public void cancelQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                            @PathParam("id") final String id) {
-      responder.sendString(HttpResponseStatus.OK, "cancel:" + id);
-    }
-
     @GET
     @Path("/data/explore/queries/{id}/status")
     public void getQueryStatus(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
@@ -181,6 +174,12 @@ public class RoutingToExploreTest {
     @Path("/data/explore/queries")
     public void getQueries(HttpRequest request, HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "queries-list");
+    }
+
+    @POST
+    @Path("/data/explore/queries/{id}/preview")
+    public void previewResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+      responder.sendString(HttpResponseStatus.OK, "preview:" + id);
     }
   }
 

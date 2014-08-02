@@ -83,7 +83,8 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
     CoprocessorJar coprocessorJar = createCoprocessorJar();
 
     for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
-      addCoprocessor(tableDescriptor, coprocessor, coprocessorJar.getJarLocation());
+      addCoprocessor(tableDescriptor, coprocessor, coprocessorJar.getJarLocation(),
+                     coprocessorJar.getPriority(coprocessor));
     }
 
     byte[][] splits = null;
@@ -112,8 +113,9 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
         columnDescriptor.getValue(TxConstants.PROPERTY_TTL) != null) {
       columnDescriptor.remove(TxConstants.PROPERTY_TTL.getBytes());
       needUpgrade = true;
-    } else if (!spec.getProperty(TxConstants.PROPERTY_TTL).equals(
-                columnDescriptor.getValue(TxConstants.PROPERTY_TTL))) {
+    } else if (spec.getProperty(TxConstants.PROPERTY_TTL) != null &&
+               !spec.getProperty(TxConstants.PROPERTY_TTL).equals
+                  (columnDescriptor.getValue(TxConstants.PROPERTY_TTL))) {
       columnDescriptor.setValue(TxConstants.PROPERTY_TTL, spec.getProperty(TxConstants.PROPERTY_TTL));
       needUpgrade = true;
     }
@@ -131,9 +133,14 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
     // create the jar for the data janitor coprocessor.
     Location jarDir = locationFactory.create(conf.get(Constants.CFG_HDFS_LIB_DIR));
     Class<? extends Coprocessor> dataJanitorClass = tableUtil.getTransactionDataJanitorClassForVersion();
+    Class<? extends Coprocessor> incrementClass = tableUtil.getIncrementHandlerClassForVersion();
     ImmutableList<Class<? extends Coprocessor>> coprocessors =
-      ImmutableList.<Class<? extends Coprocessor>>of(dataJanitorClass);
+      ImmutableList.<Class<? extends Coprocessor>>of(dataJanitorClass, incrementClass);
     Location jarFile = HBaseTableUtil.createCoProcessorJar("table", jarDir, coprocessors);
-    return new CoprocessorJar(coprocessors, jarFile);
+    CoprocessorJar cpJar = new CoprocessorJar(coprocessors, jarFile);
+    // TODO: this is hacky, the priority should come from the CP implementation
+    cpJar.setPriority(dataJanitorClass, 1);
+    cpJar.setPriority(incrementClass, 2);
+    return cpJar;
   }
 }

@@ -16,9 +16,8 @@
 
 package com.continuuity;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Property;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.workflow.AbstractWorkflowAction;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
@@ -30,19 +29,13 @@ import org.slf4j.LoggerFactory;
 /**
  *  Simple workflow, that sleeps inside a CustomAction, This class is used for testing the workflow status.
  */
-public class SleepingWorkflowApp implements Application {
+public class SleepingWorkflowApp extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("SleepWorkflowApp")
-      .setDescription("SleepWorkflowApp")
-      .noStream()
-      .noDataSet()
-      .noFlow()
-      .noProcedure()
-      .noMapReduce()
-      .withWorkflows().add(new SleepWorkflow()).build();
+  public void configure() {
+    setName("SleepWorkflowApp");
+    setDescription("SleepWorkflowApp");
+    addWorkflow(new SleepWorkflow());
   }
 
   /**

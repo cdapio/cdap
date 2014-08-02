@@ -16,42 +16,33 @@
 
 package com.continuuity.gateway.apps.wordcount;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.lib.KeyValueTable;
+import com.continuuity.api.dataset.table.Table;
 
 /**
  * Word count sample application.
  */
-public class WCount implements Application {
+public class WCount extends AbstractApplication {
   public static void main(String[] args) {
     // Main method should be defined for Application to get deployed with Eclipse IDE plugin. DO NOT REMOVE IT
   }
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("WCount")
-      .setDescription("another Word Count Application")
-      .withStreams()
-        .add(new Stream("words"))
-      .withDataSets()
-        .add(new Table("stats"))
-        // note that "wordStats" is missing, hope our code deals with that!
-        .add(new KeyValueTable("wordCounts"))
-        .add(new UniqueCountTable("uniqueCount"))
-        .add(new AssociationTable("wordAssocs"))
-        .add(new KeyValueTable("jobConfig"))
-      .withFlows()
-        .add(new WCounter())
-        .add(new WordCounter())
-      .withProcedures()
-        .add(new RCounts())
-      .withMapReduce()
-        .add(new ClassicWordCount())
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("WCount");
+    setDescription("another Word Count Application");
+    addStream(new Stream("words"));
+    createDataset("stats", Table.class);
+    createDataset("wordCounts", KeyValueTable.class);
+    createDataset("jobConfig", KeyValueTable.class);
+    createDataset("uniqueCount", UniqueCountTable.class);
+    createDataset("wordAssocs", AssociationTable.class);
+    createDataset("jobConfig", KeyValueTable.class);
+    addFlow(new WCounter());
+    addFlow(new WordCounter());
+    addProcedure(new RCounts());
+    addMapReduce(new ClassicWordCount());
   }
 }

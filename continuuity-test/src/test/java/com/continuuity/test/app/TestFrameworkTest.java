@@ -36,11 +36,9 @@ import com.continuuity.test.SlowTests;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.test.WorkflowManager;
 import com.continuuity.test.XSlowTests;
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.twill.common.Threads;
@@ -204,13 +202,7 @@ public class TestFrameworkTest extends ReactorTestBase {
   @Category(XSlowTests.class)
   @Test(timeout = 360000)
   public void testApp() throws InterruptedException, IOException, TimeoutException {
-    testApp(WordCountApp2.class, false, "text2");
-  }
-
-  @Category(XSlowTests.class)
-  @Test(timeout = 360000)
-  public void testAppWithDatasetV2() throws InterruptedException, IOException, TimeoutException {
-    testApp(WordCountAppV2.class, true, "text");
+    testApp(WordCountApp.class, "text");
   }
 
   @Category(SlowTests.class)
@@ -283,7 +275,7 @@ public class TestFrameworkTest extends ReactorTestBase {
   }
 
   // todo: passing stream name as a workaround for not cleaning up streams during reset()
-  private void testApp(Class<?> app, boolean datasetV2, String streamName)
+  private void testApp(Class<? extends Application> app, String streamName)
     throws IOException, TimeoutException, InterruptedException {
 
     ApplicationManager applicationManager = deployApplication(app);
@@ -339,18 +331,9 @@ public class TestFrameworkTest extends ReactorTestBase {
       // The stream MR only consume the body, not the header.
       Assert.assertEquals(3 * 100L, totalCount);
 
-      // Verify by looking into dataset
-      // todo: ugly workaround, refactor when datasets v1 gone
-      if (!datasetV2) {
-        DataSetManager<MyKeyValueTable> mydatasetManager = applicationManager.getDataSet("mydataset");
-        Assert.assertEquals(100L,
-                            Longs.fromByteArray(mydatasetManager.get().read("title:title".getBytes(Charsets.UTF_8))));
-      } else {
-        DataSetManager<MyKeyValueTableDefinition.KeyValueTable> mydatasetManager =
-          applicationManager.getDataSet("mydataset");
-        Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
-      }
-
+      DataSetManager<MyKeyValueTableDefinition.KeyValueTable> mydatasetManager =
+        applicationManager.getDataSet("mydataset");
+      Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
 
     } finally {
       applicationManager.stopAll();
@@ -471,10 +454,20 @@ public class TestFrameworkTest extends ReactorTestBase {
   }
 
   @Test(timeout = 60000L)
+  public void testDatasetWithoutApp() throws Exception {
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> dataSetManager = getDataset("myTable");
+    AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = dataSetManager.get();
+    kvTable.put("test", "hello");
+    dataSetManager.flush();
+    Assert.assertEquals("hello", dataSetManager.get().get("test"));
+  }
+
+  @Test(timeout = 60000L)
   public void testAppWithAutoDeployDatasetType() throws Exception {
     testAppWithDataset(AppsWithDataset.AppWithAutoDeployType.class, "MyProcedure");
   }
-
 
   @Test(timeout = 60000L)
   public void testAppWithAutoDeployDatasetTypeShortcut() throws Exception {

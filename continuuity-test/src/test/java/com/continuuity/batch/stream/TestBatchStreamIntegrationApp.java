@@ -16,13 +16,12 @@
 
 package com.continuuity.batch.stream;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.ProcessInput;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -49,27 +48,16 @@ import java.util.List;
 /**
  * Flow stream integration tests.
  */
-public class TestBatchStreamIntegrationApp implements Application {
+public class TestBatchStreamIntegrationApp extends AbstractApplication {
   private static final Logger LOG = LoggerFactory.getLogger(TestBatchStreamIntegrationApp.class);
 
-  /**
-   * Configures the {@link com.continuuity.api.Application} by returning an
-   * {@link com.continuuity.api.ApplicationSpecification}.
-   *
-   * @return An instance of {@code ApplicationSpecification}.
-   */
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("TestFlowStreamIntegrationApp")
-      .setDescription("Application for testing batch stream dequeue")
-      .withStreams().add(new Stream("s1"))
-      .withDataSets().add(new KeyValueTable("results"))
-      .withFlows().add(new StreamTestFlow())
-      .noProcedure()
-      .withMapReduce().add(new StreamTestBatch())
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("TestFlowStreamIntegrationApp");
+    addStream(new Stream("s1"));
+    createDataset("results", KeyValueTable.class);
+    addFlow(new StreamTestFlow());
+    addMapReduce(new StreamTestBatch());
   }
 
   public static class StreamTestBatch extends AbstractMapReduce {

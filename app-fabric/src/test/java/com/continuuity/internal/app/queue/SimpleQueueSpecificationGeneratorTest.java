@@ -71,7 +71,7 @@ public class SimpleQueueSpecificationGeneratorTest {
 
   @Test
   public void testQueueSpecificationGenWithToyApp() throws Exception {
-    ApplicationSpecification appSpec = Specifications.from(new ToyApp().configure());
+    ApplicationSpecification appSpec = Specifications.from(new ToyApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
@@ -108,7 +108,7 @@ public class SimpleQueueSpecificationGeneratorTest {
 
   @Test
   public void testQueueSpecificationGenWithWordCount() throws Exception {
-    ApplicationSpecification appSpec = Specifications.from(new WordCountApp().configure());
+    ApplicationSpecification appSpec = Specifications.from(new WordCountApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 

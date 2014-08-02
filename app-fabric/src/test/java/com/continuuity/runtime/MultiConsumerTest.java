@@ -16,7 +16,7 @@
 
 package com.continuuity.runtime;
 
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
@@ -91,7 +91,7 @@ public class MultiConsumerTest {
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
                               datasetFramework, CConfiguration.create(),
                               getClass().getClassLoader());
-    ApplicationSpecification spec = Specifications.from(new MultiApp().configure());
+    ApplicationSpecification spec = Specifications.from(new MultiApp());
     dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
 
     final KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");

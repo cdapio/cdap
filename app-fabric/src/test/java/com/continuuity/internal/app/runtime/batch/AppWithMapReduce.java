@@ -16,13 +16,12 @@
 
 package com.continuuity.internal.app.runtime.batch;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.dataset.lib.KeyValueTable;
+import com.continuuity.api.dataset.lib.TimeseriesTable;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.mapreduce.MapReduceContext;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
@@ -31,25 +30,19 @@ import org.apache.hadoop.mapreduce.Job;
 /**
  *
  */
-public class AppWithMapReduce implements Application {
+public class AppWithMapReduce extends AbstractApplication {
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("AppWithMapReduce")
-      .setDescription("Application with MapReduce job")
-      .noStream()
-      .withDataSets()
-        .add(new KeyValueTable("jobConfig"))
-        .add(new KeyValueTable("beforeSubmit"))
-        .add(new KeyValueTable("onFinish"))
-        .add(new SimpleTimeseriesTable("timeSeries"))
-        .add(new Table("counters"))
-        .add(new Table("countersFromContext"))
-      .noFlow()
-      .noProcedure()
-      .withMapReduce().add(new ClassicWordCount()).add(new AggregateTimeseriesByTag())
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("AppWithMapReduce");
+    setDescription("Application with MapReduce job");
+    createDataset("jobConfig", KeyValueTable.class);
+    createDataset("beforeSubmit", KeyValueTable.class);
+    createDataset("onFinish", KeyValueTable.class);
+    createDataset("timeSeries", TimeseriesTable.class);
+    createDataset("counters", Table.class);
+    createDataset("countersFromContext", Table.class);
+    addMapReduce(new ClassicWordCount());
+    addMapReduce(new AggregateTimeseriesByTag());
   }
 
   /**
@@ -89,7 +82,7 @@ public class AppWithMapReduce implements Application {
     @UseDataSet("onFinish")
     private KeyValueTable onFinishTable;
     @UseDataSet("timeSeries")
-    private SimpleTimeseriesTable table;
+    private TimeseriesTable table;
 
     @Override
     public MapReduceSpecification configure() {
@@ -110,7 +103,7 @@ public class AppWithMapReduce implements Application {
       Long startTs = Long.valueOf(context.getRuntimeArguments().get("startTs"));
       Long stopTs = Long.valueOf(context.getRuntimeArguments().get("stopTs"));
       String tag = context.getRuntimeArguments().get("tag");
-      context.setInput(table, table.getInput(2, Bytes.toBytes(metricName), startTs, stopTs, Bytes.toBytes(tag)));
+      context.setInput("timeSeries", table.getInput(2, Bytes.toBytes(metricName), startTs, stopTs, Bytes.toBytes(tag)));
       beforeSubmitTable.write(Bytes.toBytes("beforeSubmit"), Bytes.toBytes("beforeSubmit:done"));
       String frequentFlushing = context.getRuntimeArguments().get("frequentFlushing");
       if (frequentFlushing != null) {

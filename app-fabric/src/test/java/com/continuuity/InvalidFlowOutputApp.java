@@ -15,9 +15,8 @@
  */
 package com.continuuity;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Tick;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -30,21 +29,13 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class InvalidFlowOutputApp implements Application {
+public class InvalidFlowOutputApp extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("InvalidFlowOutputApp")
-      .setDescription("Invalid Flow output app")
-      .noStream()
-      .noDataSet()
-      .withFlows()
-        .add(new InvalidFlow())
-      .noProcedure()
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("InvalidFlowOutputApp");
+    setDescription("Invalid Flow output app");
+    addFlow(new InvalidFlow());
   }
 
   /**

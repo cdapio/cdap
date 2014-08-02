@@ -17,9 +17,10 @@
 package com.continuuity.data2.dataset.lib.table.inmemory;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data.table.Scanner;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
+import com.continuuity.data2.dataset.lib.table.Update;
 import com.continuuity.tephra.Transaction;
 import com.google.common.collect.Maps;
 
@@ -51,12 +52,19 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
-  protected void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> buff) {
+  public void incrementWrite(byte[] row, byte[][] columns, long[] amounts) throws Exception {
+    // for in-memory use, no need to do fancy read-less increments
+    increment(row, columns, amounts);
+  }
+
+  @Override
+  protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> buff) {
+    // split up the increments and puts
     InMemoryOcTableService.merge(getTableName(), buff, tx.getWritePointer());
   }
 
   @Override
-  protected void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted) {
+  protected void undo(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted) {
     // NOTE: we could just use merge and pass the changes with all values = null, but separate method is more efficient
     InMemoryOcTableService.undo(getTableName(), persisted, tx.getWritePointer());
   }

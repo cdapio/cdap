@@ -16,11 +16,10 @@
 
 package com.continuuity;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.Tick;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -41,22 +40,14 @@ import java.util.concurrent.TimeUnit;
  * Flow and Procedure that checks if arguments
  * are passed correctly. Only used for checking args functionality.
  */
-public class ArgumentCheckApp implements Application {
+public class ArgumentCheckApp extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("ArgumentCheckApp")
-      .setDescription("Checks if arguments are passed correctly")
-      .noStream()
-      .noDataSet()
-      .withFlows()
-        .add(new SimpleFlow())
-      .withProcedures()
-        .add(new SimpleProcedure())
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("ArgumentCheckApp");
+    setDescription("Checks if arguments are passed correctly");
+    addFlow(new SimpleFlow());
+    addProcedure(new SimpleProcedure());
   }
 
   private class SimpleFlow implements Flow {

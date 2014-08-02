@@ -16,7 +16,7 @@
 package com.continuuity.stream;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.app.ApplicationSpecification;
@@ -123,7 +123,7 @@ public class StreamCompatibilityTest {
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
                               datasetFramework, CConfiguration.create(),
                               getClass().getClassLoader());
-    ApplicationSpecification spec = Specifications.from(new StreamApp().configure());
+    ApplicationSpecification spec = Specifications.from(new StreamApp());
     dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
 
     final KeyValueTable streamOut = dataSetInstantiator.getDataSet("streamout");

@@ -23,7 +23,6 @@ import com.continuuity.app.DefaultAppConfigurer;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.security.ApplicationSecurity;
 import com.google.common.base.Charsets;
@@ -113,8 +112,8 @@ public class SandboxJVM {
     // Load the JAR using the JAR class load and load the manifest file.
     File unpackedJarDir = Files.createTempDir();
 
-    Object app;
     try {
+      Application app;
       try {
         if ("LOCAL".equals(locationFactory)) {
           lf = new LocalLocationFactory();
@@ -126,7 +125,15 @@ public class SandboxJVM {
         }
 
         Program archive = Programs.createWithUnpack(lf.create(jarFilename), unpackedJarDir);
-        app = archive.getMainClass().newInstance();
+        Object appMain = archive.getMainClass().newInstance();
+        if (!(appMain instanceof Application)) {
+          LOG.error(String.format("Application main class is of invalid type: %s",
+                                  appMain.getClass().getName()));
+          return -1;
+        }
+
+        app = (Application) appMain;
+
       } catch (Exception e) {
         LOG.error(e.getMessage());
         return -1;
@@ -140,17 +147,10 @@ public class SandboxJVM {
         .apply();
   
       // Now, we call configure, which returns application specification.
-      ApplicationSpecification specification;
-      if (app instanceof com.continuuity.api.Application) {
-        specification = Specifications.from(((com.continuuity.api.Application) app).configure());
-      } else if (app instanceof Application) {
-        DefaultAppConfigurer configurer = new DefaultAppConfigurer((Application) app);
-        ((Application) app).configure(configurer, new ApplicationContext());
-        specification = configurer.createApplicationSpec();
-      } else {
-        throw new IllegalStateException(String.format("Application main class is of invalid type: %s",
-                                                      app.getClass().getName()));
-      }
+      DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
+      app.configure(configurer, new ApplicationContext());
+      ApplicationSpecification specification = configurer.createApplicationSpec();
+
       // Convert the specification to JSON.
       // We write the Application specification to output file in JSON format.
       try {

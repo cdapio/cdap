@@ -225,6 +225,42 @@ class TableDataset extends AbstractDataset implements Table {
   }
 
   @Override
+  public void incrementWrite(byte[] row, byte[] column, long amount) {
+    try {
+      table.incrementWrite(row, column, amount);
+    } catch (Exception e) {
+      LOG.debug("incrementWrite failed for table: " + getTransactionAwareName() +
+                  ", row: " + Bytes.toStringBinary(row), e);
+      throw new DataSetException("incrementWrite failed", e);
+    }
+  }
+
+  @Override
+  public void incrementWrite(byte[] row, byte[][] columns, long[] amounts) {
+    try {
+      table.incrementWrite(row, columns, amounts);
+    } catch (Exception e) {
+      LOG.debug("incrementWrite failed for table: " + getTransactionAwareName() +
+                  ", row: " + Bytes.toStringBinary(row), e);
+      throw new DataSetException("incrementWrite failed", e);
+    }
+  }
+
+  @Override
+  public void incrementWrite(Increment increment) {
+    Preconditions.checkArgument(!increment.getValues().isEmpty(), "Increment must have at least one value");
+    byte[][] columns = new byte[increment.getValues().size()][];
+    long[] values = new long[increment.getValues().size()];
+    int i = 0;
+    for (Map.Entry<byte[], Long> columnValue : increment.getValues().entrySet()) {
+      columns[i] = columnValue.getKey();
+      values[i] = columnValue.getValue();
+      i++;
+    }
+    incrementWrite(increment.getRow(), columns, values);
+  }
+
+  @Override
   public boolean compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) {
     try {
       return table.compareAndSwap(row, column, expectedValue, newValue);

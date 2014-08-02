@@ -7,9 +7,6 @@ Continuuity Reactor Operations Guide
 
 **Introduction to Running Applications and Operating the Continuuity Reactor**
 
-.. reST Editor: .. section-numbering::
-.. reST Editor: .. contents::
-
 Putting Continuuity Reactor into Production
 ===========================================
 
@@ -462,17 +459,15 @@ The Reactor supports logging through standard
 `SLF4J (Simple Logging Facade for Java) <http://www.slf4j.org/manual.html>`__ APIs.
 For instance, in a Flowlet you can write::
 
-	private static Logger LOG = LoggerFactory.getLogger(WordCounter.class);
-	...
-	@ProcessInput
-	public void process(String line) {
-	  LOG.info(this.getContext().getTransactionAwareName() + ": Received line " + line);
-	  ... // processing
-	  LOG.info(this.getContext().getTransactionAwareName() + ": Emitting count " + wordCount);
-	  output.emit(wordCount);
-	}
-
-
+  private static Logger LOG = LoggerFactory.getLogger(WordCounter.class);
+  ...
+  @ProcessInput
+  public void process(String line) {
+    LOG.info(this.getContext().getTransactionAwareName() + ": Received line " + line);
+    ... // processing
+    LOG.info(this.getContext().getTransactionAwareName() + ": Emitting count " + wordCount);
+    output.emit(wordCount);
+  }
 
 The log messages emitted by your Application code can be viewed in two different ways.
 
@@ -507,25 +502,25 @@ should be composed only of alphanumeric characters.
 
 To add metrics to a Flowlet *NameSaver*::
 
-	public static class NameSaver extends AbstractFlowlet {
-	  static final byte[] NAME = { 'n', 'a', 'm', 'e' };
+  public static class NameSaver extends AbstractFlowlet {
+    static final byte[] NAME = { 'n', 'a', 'm', 'e' };
 
-	  @UseDataSet("whom")
-	  KeyValueTable whom;
-	  Metrics flowletMetrics; // Declare the custom metrics
+    @UseDataSet("whom")
+    KeyValueTable whom;
+    Metrics flowletMetrics; // Declare the custom metrics
 
-	  @ProcessInput
-	  public void processInput(StreamEvent event) {
-	    byte[] name = Bytes.toBytes(event.getBody());
-	    if (name != null && name.length > 0) {
-	      whom.write(NAME, name);
-	    }
-	    if (name.length > 10) {
-	      flowletMetrics.count("names.longnames", 1);
-	    }
-	    flowletMetrics.count("names.bytes", name.length);
-	  }
-	}
+    @ProcessInput
+    public void processInput(StreamEvent event) {
+      byte[] name = Bytes.toBytes(event.getBody());
+      if (name != null && name.length > 0) {
+        whom.write(NAME, name);
+      }
+      if (name.length > 10) {
+        flowletMetrics.count("names.longnames", 1);
+      }
+      flowletMetrics.count("names.bytes", name.length);
+    }
+  }
 
 An example of user-defined metrics is in the `PageViewAnalytics example <examples/PageViewAnalytics/index.html>`_.
 
@@ -553,28 +548,28 @@ The ``initialize()`` method in this example accepts a runtime argument for the
 ``HelloWorld`` Procedure. For example, we can change the greeting from
 the default “Hello” to a customized “Good Morning” by passing a runtime argument::
 
-	public static class Greeting extends AbstractProcedure {
+  public static class Greeting extends AbstractProcedure {
 
-	  @UseDataSet("whom")
-	  KeyValueTable whom;
-	  private String greeting;
+    @UseDataSet("whom")
+    KeyValueTable whom;
+    private String greeting;
 
-	  public void initialize(ProcedureContext context) {
-	    Map<String, String> args = context.getRuntimeArguments();
-	    greeting = args.get("greeting");
-	    if (greeting == null) {
-	      greeting = "Hello";
-	    }
-	  }
+    public void initialize(ProcedureContext context) {
+      Map<String, String> args = context.getRuntimeArguments();
+      greeting = args.get("greeting");
+      if (greeting == null) {
+        greeting = "Hello";
+      }
+    }
 
-	  @Handle("greet")
-	  public void greet(ProcedureRequest request,
-	                    ProcedureResponder responder) throws Exception {
-	    byte[] name = whom.read(NameSaver.NAME);
-	    String toGreet = name != null ? new String(name) : "World";
-	    responder.sendJson(greeting + " " + toGreet + "!");
-	  }
-	}
+    @Handle("greet")
+    public void greet(ProcedureRequest request,
+                      ProcedureResponder responder) throws Exception {
+      byte[] name = whom.read(NameSaver.NAME);
+      String toGreet = name != null ? new String(name) : "World";
+      responder.sendJson(greeting + " " + toGreet + "!");
+    }
+  }
 
 Scaling Instances
 =================
@@ -584,32 +579,32 @@ Scaling Flowlets
 You can query and set the number of instances executing a given Flowlet
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-	GET /v2/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
-	PUT /v2/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
+  GET /v2/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
+  PUT /v2/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
 
 with the arguments as a JSON string in the body::
 
-	{ "instances" : <quantity> }
+  { "instances" : <quantity> }
 
 Where:
-	:<app-id>: Name of the application
-	:<flow-id>: Name of the Flow
-	:<flowlet-id>: Name of the Flowlet
-	:<quantity>: Number of instances to be used
+  :<app-id>: Name of the application
+  :<flow-id>: Name of the Flow
+  :<flowlet-id>: Name of the Flowlet
+  :<quantity>: Number of instances to be used
 
 Example: Find out the number of instances of the Flowlet *saver* in
 the Flow *WhoFlow* of the application *HelloWorld*::
 
-	GET /v2/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances
+  GET /v2/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances
 
 Example: Change the number of instances of the Flowlet *saver*
 in the Flow *WhoFlow* of the application *HelloWorld*::
 
-	PUT /v2/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances
+  PUT /v2/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances
 
 with the arguments as a JSON string in the body::
 
-	{ "instances" : 2 }
+  { "instances" : 2 }
 
 
 Scaling Procedures
@@ -617,31 +612,31 @@ Scaling Procedures
 In a similar way to `Scaling Flowlets`_, you can query or change the number of instances of a Procedure
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-	GET /v2/apps/<app-id>/procedures/<procedure-id>/instances
-	PUT /v2/apps/<app-id>/procedures/<procedure-id>/instances
+  GET /v2/apps/<app-id>/procedures/<procedure-id>/instances
+  PUT /v2/apps/<app-id>/procedures/<procedure-id>/instances
 
 with the arguments as a JSON string in the body::
 
-	{ "instances" : <quantity> }
+  { "instances" : <quantity> }
 
 Where:
-	:<app-id>: Name of the application
-	:<procedure-id>: Name of the Procedure
-	:<quantity>: Number of instances to be used
+  :<app-id>: Name of the application
+  :<procedure-id>: Name of the Procedure
+  :<quantity>: Number of instances to be used
 
 Example: Find out the number of instances of the Procedure *saver*
 in the Flow *WhoFlow* of the application *HelloWorld*::
 
-	GET /v2/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances
+  GET /v2/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances
 
 Example: Change the number of instances of the Procedure *saver*
 in the Flow *WhoFlow* of the application *HelloWorld*::
 
-	PUT /v2/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances
+  PUT /v2/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances
 
 with the arguments as a JSON string in the body::
 
-	{ "instances" : 2 }
+  { "instances" : 2 }
 
 Where to Go Next
 ================

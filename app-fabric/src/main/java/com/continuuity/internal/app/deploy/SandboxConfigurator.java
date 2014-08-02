@@ -81,12 +81,6 @@ public final class SandboxConfigurator implements Configurator {
     return sc.config();
   }
 
-  /**
-   * Returns a {@link org.hsqldb.lib.StringInputStream} for the string.
-   *
-   * @param result to be converted into {@link org.hsqldb.lib.StringInputStream}
-   * @return An instance of {@link org.hsqldb.lib.StringInputStream}
-   */
   private InputSupplier<Reader> newFileStream(final File result) {
     return new InputSupplier<Reader>() {
       @Override

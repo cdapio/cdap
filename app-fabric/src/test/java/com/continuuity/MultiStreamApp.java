@@ -16,15 +16,14 @@
 
 package com.continuuity;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.dataset.table.Get;
-import com.continuuity.api.data.dataset.table.Increment;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.table.Get;
+import com.continuuity.api.dataset.table.Increment;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -41,30 +40,21 @@ import java.io.IOException;
  * This is a sample word count app that is used in testing in
  * many places.
  */
-public class MultiStreamApp implements Application {
+public class MultiStreamApp extends AbstractApplication {
 
   private static final Logger LOG = LoggerFactory.getLogger(MultiStreamApp.class);
 
-  /**
-   * Configures the {@link com.continuuity.api.Application} by returning an
-   * {@link com.continuuity.api.ApplicationSpecification}.
-   *
-   * @return An instance of {@code ApplicationSpecification}.
-   */
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("MultiStreamApp")
-      .setDescription("Application for testing changing stream-flowlet connections")
-      .withStreams()
-        .add(new Stream("stream1")).add(new Stream("stream2"))
-        .add(new Stream("stream3")).add(new Stream("stream4"))
-      .withDataSets().add(new Table("table"))
-      .withFlows().add(new CounterFlow())
-      .withProcedures().add(new CountersProcedure())
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("MultiStreamApp");
+    setDescription("Application for testing changing stream-flowlet connections");
+    addStream(new Stream("stream1"));
+    addStream(new Stream("stream2"));
+    addStream(new Stream("stream3"));
+    addStream(new Stream("stream4"));
+    createDataset("table", Table.class);
+    addFlow(new CounterFlow());
+    addProcedure(new CountersProcedure());
   }
 
   /**

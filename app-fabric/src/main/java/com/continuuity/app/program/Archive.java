@@ -16,7 +16,7 @@
 
 package com.continuuity.app.program;
 
-import com.continuuity.api.Application;
+import com.continuuity.api.app.Application;
 import com.continuuity.common.lang.ApiResourceListHolder;
 import com.continuuity.common.lang.ClassLoaders;
 import com.google.common.base.Objects;

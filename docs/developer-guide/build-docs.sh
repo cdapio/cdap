@@ -112,10 +112,14 @@ function build() {
    make_zip
 }
 
-function build_sdk() {
-  build_pdf_rest
+function build_single_node() {
   cd $PRODUCT_PATH
   mvn clean package -DskipTests -P examples && mvn package -pl singlenode -am -DskipTests -P dist,release
+}
+
+function build_sdk() {
+  build_pdf_rest
+  build_single_node
 }
 
 function build_dependencies() {
@@ -139,6 +143,7 @@ case "$1" in
   build )             build; exit 1;;
   build-javadocs )    build_javadocs; exit 1;;
   build-docs )        build_docs; exit 1;;
+  build_single_node ) build_single_node; exit 1;;
   copy_javadocs )     copy_javadocs; exit 1;;
   copy_license_pdfs ) copy_license_pdfs; exit 1;;
   javadocs )          build_javadocs; exit 1;;

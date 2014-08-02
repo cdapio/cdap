@@ -27,7 +27,7 @@ define(['core/models/program'], function (Program) {
      */
     context: function () {
 
-      return this.interpolate('/apps/{parent}/workflows/{id}');
+      return this.interpolate('apps/{parent}/workflows/{id}');
 
     }.property('app', 'name'),
 

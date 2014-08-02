@@ -18,6 +18,7 @@ package com.continuuity.api.dataset.lib;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.BatchReadable;
+import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.data.batch.Scannables;
@@ -35,7 +36,7 @@ import javax.annotation.Nullable;
  * A key/value map implementation on top of {@link Table} supporting read and write operations.
  */
 public class KeyValueTable extends AbstractDataset implements
-  BatchReadable<byte[], byte[]>,
+  BatchReadable<byte[], byte[]>, BatchWritable<byte[], byte[]>,
     RecordScannable<KeyValue<byte[], byte[]>> {
 
   // the fixed single column to use for the key

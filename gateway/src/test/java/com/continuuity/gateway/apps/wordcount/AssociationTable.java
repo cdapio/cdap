@@ -17,10 +17,12 @@
 package com.continuuity.gateway.apps.wordcount;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.dataset.table.Get;
-import com.continuuity.api.data.dataset.table.Row;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.lib.AbstractDataset;
+import com.continuuity.api.dataset.module.EmbeddedDataset;
+import com.continuuity.api.dataset.table.Get;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Table;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -31,13 +33,13 @@ import java.util.TreeSet;
 /**
  *
  */
-public class AssociationTable extends DataSet {
+public class AssociationTable extends AbstractDataset {
 
   private Table table;
 
-  public AssociationTable(String name) {
-    super(name);
-    this.table = new Table("word.assoc");
+  public AssociationTable(DatasetSpecification spec, @EmbeddedDataset("word.assoc") Table table) {
+    super(spec.getName(), table);
+    this.table = table;
   }
 
   /**
@@ -45,7 +47,6 @@ public class AssociationTable extends DataSet {
    * word in the set, an association will be stored for each of the other words
    * in the set.
    * @param words words to store associations between
-   * @throws com.continuuity.data2.OperationException
    */
   public void writeWordAssocs(Set<String> words) {
 
@@ -83,7 +84,6 @@ public class AssociationTable extends DataSet {
    * @param word the word of interest
    * @param limit the number of associations to return, at most
    * @return a map of the top associated words to their co-occurrence count
-   * @throws com.continuuity.data2.OperationException
    */
   public Map<String, Long> readWordAssocs(String word, int limit) {
 

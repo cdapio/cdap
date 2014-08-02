@@ -16,12 +16,11 @@
 
 package com.continuuity;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -39,25 +38,14 @@ import java.io.UnsupportedEncodingException;
  *   </ul>
  * </p>
  */
-public class WebCrawlApp implements Application {
-  /**
-   * Configures the {@link com.continuuity.api.Application} by returning an
-   * {@link com.continuuity.api.ApplicationSpecification}
-   *
-   * @return An instance of {@code ApplicationSpecification}.
-   */
+public class WebCrawlApp extends AbstractApplication {
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("WebCrawlerApp")
-      .setDescription("Web Crawler Application")
-      .withStreams().add(new Stream("urls"))
-      .withDataSets().add(new KeyValueTable("crawled-pages"))
-      .withFlows().add(new CrawlFlow())
-      .noProcedure()
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("WebCrawlerApp");
+    setDescription("Web Crawler Application");
+    addStream(new Stream("urls"));
+    createDataset("crawled-pages", KeyValueTable.class);
+    addFlow(new CrawlFlow());
   }
 
   /**

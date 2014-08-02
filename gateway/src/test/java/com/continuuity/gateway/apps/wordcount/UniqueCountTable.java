@@ -17,14 +17,16 @@
 package com.continuuity.gateway.apps.wordcount;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.dataset.table.Get;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.lib.AbstractDataset;
+import com.continuuity.api.dataset.module.EmbeddedDataset;
+import com.continuuity.api.dataset.table.Get;
+import com.continuuity.api.dataset.table.Table;
 
 /**
  * Counts the number of unique entries seen given any number of entries.
  */
-public class UniqueCountTable extends DataSet {
+public class UniqueCountTable extends AbstractDataset {
 
   /**
    * Row and column names used for storing the unique count.
@@ -38,10 +40,12 @@ public class UniqueCountTable extends DataSet {
   private Table uniqueCountTable;
   private Table entryCountTable;
 
-  public UniqueCountTable(String name) {
-    super(name);
-    this.uniqueCountTable = new Table("unique_count");
-    this.entryCountTable = new Table("entry_count");
+  public UniqueCountTable(DatasetSpecification spec,
+                          @EmbeddedDataset("unique_count") Table uniqueCountTable,
+                          @EmbeddedDataset("entry_count") Table entryCountTable) {
+    super(spec.getName(), uniqueCountTable, entryCountTable);
+    this.uniqueCountTable = uniqueCountTable;
+    this.entryCountTable = entryCountTable;
   }
 
   /**

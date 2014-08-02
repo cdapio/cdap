@@ -16,25 +16,16 @@
 
 package com.continuuity;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.app.AbstractApplication;
 
 /**
  * App with no programs. Used to test deleted program specifications.
  */
-public class NoProgramsApp implements Application {
+public class NoProgramsApp extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("App")
-      .setDescription("Application which has nothing")
-      .noStream()
-      .noDataSet()
-      .noFlow()
-      .noProcedure()
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("App");
+    setDescription("Application which has nothing");
   }
 }

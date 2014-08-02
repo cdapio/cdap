@@ -16,14 +16,14 @@
 
 package com.continuuity;
 
-import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetContext;
-import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.lib.AbstractDataset;
+import com.continuuity.api.dataset.lib.KeyValueTable;
+import com.continuuity.api.dataset.module.EmbeddedDataset;
 
 import java.util.Arrays;
 import java.util.List;
@@ -32,7 +32,8 @@ import javax.annotation.Nullable;
 /**
  * A key value table that tracks how often it is opened and closed, read and written.
  */
-public class TrackingTable extends DataSet implements BatchReadable<byte[], byte[]>, BatchWritable<byte[], byte[]> {
+public class TrackingTable extends AbstractDataset
+  implements BatchReadable<byte[], byte[]>, BatchWritable<byte[], byte[]> {
 
   // some counters that are incremented by the table's operations and verified by the unit test.
   // the following is ugly. but there is no way to share a static counter or similar between the unit test and the
@@ -59,17 +60,12 @@ public class TrackingTable extends DataSet implements BatchReadable<byte[], byte
     }
   }
 
-  KeyValueTable t;
+  private final KeyValueTable t;
 
-  public TrackingTable(String name) {
-    super(name);
-    t = new KeyValueTable(name);
-  }
-
-  @Override
-  public void initialize(DataSetSpecification spec, DataSetContext context) {
-    super.initialize(spec, context);
-    track(getName(), "open");
+  public TrackingTable(DatasetSpecification spec, @EmbeddedDataset("") KeyValueTable t) {
+    super(spec.getName(), t);
+    this.t = t;
+    track(spec.getName(), "open");
   }
 
   @Override

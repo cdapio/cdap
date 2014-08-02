@@ -156,9 +156,13 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       return;
     }
     if (reactorServiceManager.canCheckStatus() && reactorServiceManager.isServiceAvailable()) {
-      responder.sendString(HttpResponseStatus.OK, STATUSOK);
+      JsonObject json = new JsonObject();
+      json.addProperty("status", STATUSOK);
+      responder.sendJson(HttpResponseStatus.OK, json);
     } else if (reactorServiceManager.canCheckStatus()) {
-      responder.sendString(HttpResponseStatus.OK, STATUSNOTOK);
+      JsonObject json = new JsonObject();
+      json.addProperty("status", STATUSNOTOK);
+      responder.sendJson(HttpResponseStatus.OK, json);
     } else {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation not valid for this service");
     }

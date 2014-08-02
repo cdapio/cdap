@@ -23,8 +23,8 @@
  * Streams are used along with datasets and flows to create applications. For example:
  * <blockquote>
  *   <pre>
- *     public MyApplication implements Application {
- *       public ApplicationSpecification configure() {
+ *     public MyApplication extends AbstractApplication {
+ *       public void configure() {
  *         MyDataSet myDataset = new MyDataset("my");
  *         TimeseriesDataSet timeseriesDataset = new TimeseriesDataSet("mytimeseries");
  *         Stream clickStream = new Stream("mystream");
