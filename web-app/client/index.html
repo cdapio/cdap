@@ -275,7 +275,7 @@
     </div>
 
     <div id="panels">
-      <h2>Runnables</h2>
+      <h2>Components</h2>
       <br />
       <div class="panel">
         <table class="table">
@@ -283,7 +283,7 @@
             <tr>
               <th style="padding-left: 14px; min-width: 200px" class="service-col">Name</th>
               <th style="min-width: 200px;" class="center-align">Instances Requested</th>
-              <th style="min-width: 200px;" class="center-align">Provisioned</th>
+              <th style="min-width: 200px;" class="center-align">Instances Active</th>
             </tr>
           </thead>
           <tbody>
@@ -294,7 +294,7 @@
                 {{runnable.id}}
                 </a>
                 <br />
-                <span class="app-list-status pull-left">runnable</span>
+                <span class="app-list-status pull-left">component</span>
               </td>
               <td style="max-width: 200px;" class="instance-col">
                 <div class="instance-wrapper">
@@ -817,7 +817,7 @@
               <button {{action stopAll "Userservice" on="click"}} class="btn stop"><img src="/assets/img/v2/stop_active_icon.png" /></button>
             </div>
           {{/if}}
-          <div class="panel-title">User Services</div>
+          <div class="panel-title">Service</div>
         </div>
         {{partial "userservices-list"}}
       </div>
@@ -1948,8 +1948,8 @@
     {{#if elements.Userservice.length}}
       <table class="table">
       <thead>
-        <th style="padding-left: 14px;">Userservice</th>
-        <th style="width: 262px;">Number of Runnables</th>
+        <th style="padding-left: 14px;">Services</th>
+        <th style="width: 262px;">Number of Components</th>
       </thead>
       <tbody>
         {{#each elements.Userservice}}
