@@ -18,6 +18,8 @@ package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.conf.SConfiguration;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
@@ -143,16 +145,18 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
         SslContextFactory sslContextFactory = new SslContextFactory();
-        String keystorePath = configuration.get(Constants.Security.SSL_KEYSTORE_PATH);
-        String keyStorePassword = configuration.get(Constants.Security.SSL_KEYSTORE_PASSWORD);
-        if (keystorePath == null || keyStorePassword == null) {
-          String errorMessage = String.format("Keystore is not configured correctly. Have you configured %s and %s?",
-                                              Constants.Security.SSL_KEYSTORE_PATH,
-                                              Constants.Security.SSL_KEYSTORE_PASSWORD);
-          throw Throwables.propagate(new RuntimeException(errorMessage));
-        }
-        sslContextFactory.setKeyStorePath(keystorePath);
+        SConfiguration sslConfiguration = SConfiguration.create();
+        String keyStorePath = sslConfiguration.get(Constants.Security.SSL_KEYSTORE_PATH);
+        String keyStorePassword = sslConfiguration.get(Constants.Security.SSL_KEYSTORE_PASSWORD);
+        String keyStoreType = sslConfiguration.get(Constants.Security.SSL_KEYSTORE_TYPE);
+
+        Preconditions.checkArgument(keyStorePath != null, "Key Store Path Not Configured");
+        Preconditions.checkArgument(keyStorePassword != null, "KeyStore Password Not Configured");
+
+        sslContextFactory.setKeyStorePath(keyStorePath);
         sslContextFactory.setKeyStorePassword(keyStorePassword);
+        sslContextFactory.setKeyStoreType(keyStoreType);
+        // TODO Figure out how to pick a certificate from key store
 
         SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
         int sslPort = configuration.getInt(Constants.Security.AUTH_SERVER_SSL_PORT);

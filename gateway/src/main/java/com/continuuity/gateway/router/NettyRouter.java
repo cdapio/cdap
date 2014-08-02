@@ -18,10 +18,12 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.conf.SConfiguration;
 import com.continuuity.gateway.router.handlers.HttpRequestHandler;
 import com.continuuity.gateway.router.handlers.SecurityAuthenticationHttpHandler;
 import com.continuuity.security.auth.AccessTokenTransformer;
 import com.continuuity.security.auth.TokenValidator;
+import com.continuuity.security.tools.SSLHandlerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -57,6 +59,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -95,12 +98,22 @@ public class NettyRouter extends AbstractIdleService {
 
   private DiscoveryServiceClient discoveryServiceClient;
 
+  private final boolean sslEnabled;
+  private final SSLHandlerFactory sslHandlerFactory;
+
   @Inject
   public NettyRouter(CConfiguration cConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
                      RouterServiceLookup serviceLookup, TokenValidator tokenValidator,
                      AccessTokenTransformer accessTokenTransformer,
                      DiscoveryServiceClient discoveryServiceClient) {
+    this(cConf, hostname, serviceLookup, tokenValidator, accessTokenTransformer, discoveryServiceClient,
+         SConfiguration.create());
+  }
 
+  NettyRouter(CConfiguration cConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
+              RouterServiceLookup serviceLookup, TokenValidator tokenValidator,
+              AccessTokenTransformer accessTokenTransformer,
+              DiscoveryServiceClient discoveryServiceClient, SConfiguration sslConfiguration) {
     this.serverBossThreadPoolSize = cConf.getInt(Constants.Router.SERVER_BOSS_THREADS,
                                                  Constants.Router.DEFAULT_SERVER_BOSS_THREADS);
     this.serverWorkerThreadPoolSize = cConf.getInt(Constants.Router.SERVER_WORKER_THREADS,
@@ -125,6 +138,20 @@ public class NettyRouter extends AbstractIdleService {
     this.accessTokenTransformer = accessTokenTransformer;
     this.discoveryServiceClient = discoveryServiceClient;
     this.configuration = cConf;
+    this.sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
+    if (isSSLEnabled()) {
+      File keystore;
+      try {
+        keystore = new File(sslConfiguration.get(Constants.Security.ROUTER_SSL_KEYSTORE_PATH));
+      } catch (Exception e) {
+        throw new RuntimeException("Cannot read keystore file : " + sslConfiguration.get(Constants.Security.ROUTER_SSL_KEYSTORE_PATH));
+      }
+      this.sslHandlerFactory = new SSLHandlerFactory(keystore
+        , sslConfiguration.get(Constants.Security.ROUTER_SSL_KEYSTORE_PASSWORD)
+        , sslConfiguration.get(Constants.Security.ROUTER_SSL_KEYPASSWORD));
+    } else {
+      this.sslHandlerFactory = null;
+    }
   }
 
   @Override
@@ -163,6 +190,10 @@ public class NettyRouter extends AbstractIdleService {
     LOG.info("Stopped Netty Router.");
   }
 
+  private boolean isSSLEnabled() {
+    return sslEnabled;
+  }
+
   public RouterServiceLookup getServiceLookup() {
     return serviceLookup;
   }
@@ -191,14 +222,18 @@ public class NettyRouter extends AbstractIdleService {
         @Override
         public ChannelPipeline getPipeline() throws Exception {
           ChannelPipeline pipeline = Channels.pipeline();
+          if (isSSLEnabled()) {
+            // Add SSLHandler if SSL is enabled
+            pipeline.addLast("ssl", sslHandlerFactory.create());
+          }
           pipeline.addLast("tracker", connectionTracker);
           pipeline.addLast("http-response-encoder", new HttpResponseEncoder());
           pipeline.addLast("http-decoder", new HttpRequestDecoder());
           if (securityEnabled) {
             pipeline.addLast("access-token-authenticator", new SecurityAuthenticationHttpHandler(realm, tokenValidator,
-                                                                                    configuration,
-                                                                                    accessTokenTransformer,
-                                                                                    discoveryServiceClient));
+                                                                                                 configuration,
+                                                                                                 accessTokenTransformer,
+                                                                                                 discoveryServiceClient));
           }
           // for now there's only one hardcoded rule, but if there will be more, we may want it generic and configurable
           pipeline.addLast("http-request-handler",

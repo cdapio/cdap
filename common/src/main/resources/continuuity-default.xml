@@ -1019,4 +1019,19 @@
       <name>security.server.ssl.keystore.password</name>
       <value></value>
     </property>
+
+  <property>
+    <name>security.server.ssl.keystore.type</name>
+    <value>jks</value>
+  </property>
+
+  <property>
+    <name>security.router.ssl.keystore.type</name>
+    <value>jks</value>
+  </property>
+
+  <property>
+    <name>security.router.ssl.port</name>
+    <value>9443</value>
+  </property>
 </configuration>

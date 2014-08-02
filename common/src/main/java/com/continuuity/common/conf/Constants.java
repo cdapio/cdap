@@ -434,8 +434,20 @@ public final class Constants {
     public static final String SSL_KEYSTORE_PATH = "security.server.ssl.keystore.path";
     /** SSL keystore password */
     public static final String SSL_KEYSTORE_PASSWORD = "security.server.ssl.keystore.password";
+    /** SSL keystore type */
+    public static final String SSL_KEYSTORE_TYPE = "security.server.ssl.keystore.type";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
+    /** SSL keystore location specified in reactor-security.xml. Can be accessed through SConfiguration object */
+    public static final String ROUTER_SSL_KEYSTORE_PATH = "security.router.ssl.keystore.path";
+    /** SSL keystore type specified in reactor-security.xml. Can be accessed through SConfiguration object */
+    public static final String ROUTER_SSL_KEYSTORE_TYPE = "security.router.ssl.keystore.type";
+    /** SSL keystore key password specified in reactor-security.xml. Can be accessed through SConfiguration object */
+    public static final String ROUTER_SSL_KEYPASSWORD = "security.router.ssl.keystore.keypassword";
+    /** SSL keystore password specified in reactor-security.xml. Can be accessed through SConfiguration object */
+    public static final String ROUTER_SSL_KEYSTORE_PASSWORD = "security.router.ssl.keystore.password";
+    /** SSL port for Router */
+    public static final String ROUTER_SSL_PORT = "security.router.ssl.port";
   }
 
   /**
