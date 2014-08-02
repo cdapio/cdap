@@ -33,6 +33,7 @@ import com.continuuity.proto.DatasetInstanceConfiguration;
 import com.continuuity.proto.DatasetMeta;
 import com.continuuity.proto.DatasetTypeMeta;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -198,33 +199,87 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
 
     DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
-    String operation = (creationProperties.isUpdate() == true) ? "update" : "create";
 
-    LOG.info("{} dataset {}, type name: {}, typeAndProps: {}",
-             operation, name, creationProperties.getTypeName(), creationProperties.getProperties());
+    LOG.info("Creating dataset {}, type name: {}, typeAndProps: {}",
+             name, creationProperties.getTypeName(), creationProperties.getProperties());
+
+    DatasetSpecification existing = instanceManager.get(name);
+    if (existing != null) {
+      String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
+                                     name, existing);
+      LOG.warn(message);
+      responder.sendError(HttpResponseStatus.CONFLICT, message);
+      return;
+    }
+
+    createDatasetInstance(creationProperties, name, responder, "create");
+
+    // Enable ad-hoc exploration of dataset
+    // Note: today explore enable is not transactional with dataset create - REACTOR-314
+    try {
+      datasetExploreFacade.enableExplore(name);
+    } catch (Exception e) {
+      String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
+                                 name, creationProperties.getProperties(), e.getMessage());
+      LOG.error(msg, e);
+      // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
+      //responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
+      //return;
+    }
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  /**
+   * Updates an existing Dataset specification properties  {@link DatasetInstanceConfiguration}
+   * is constructed based on request and the Dataset instance is updated.
+   */
+  @PUT
+  @Path("/data/datasets/{name}/properties")
+  public void update(HttpRequest request, final HttpResponder responder,
+                     @PathParam("name") String name) {
+    Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
+
+    DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
+
+    LOG.info("Update dataset {}, type name: {}, typeAndProps: {}",
+             name, creationProperties.getTypeName(), creationProperties.getProperties());
     DatasetSpecification existing = instanceManager.get(name);
 
-    if (existing != null) {
-      String message = null;
-      if (!creationProperties.isUpdate()) {
-        message = String.format("Cannot create dataset %s: instance with same name already exists %s",
-                                name, existing);
-      } else if (!existing.getType().equals(creationProperties.getTypeName())) {
-        message = String.format("Cannot update dataset %s instance with a different type, old type is %s",
-                                name, existing.getType());
-      }
-      if (message != null) {
-        LOG.warn(message);
-        responder.sendError(HttpResponseStatus.CONFLICT, message);
-        return;
-      }
-    }
-    if (existing == null && creationProperties.isUpdate()) {
-       // update is true , but dataset instance does not exist, return 404.
+    if (existing == null) {
+      // update is true , but dataset instance does not exist, return 404.
       responder.sendError(HttpResponseStatus.NOT_FOUND,
                           String.format("Dataset Instance %s does not exist to update", name));
       return;
     }
+
+    if (!existing.getType().equals(creationProperties.getTypeName())) {
+      String  message = String.format("Cannot update dataset %s instance with a different type, existing type is %s",
+                                      name, existing.getType());
+      LOG.warn(message);
+      responder.sendError(HttpResponseStatus.CONFLICT, message);
+      return;
+    }
+    createDatasetInstance(creationProperties, name, responder, "update");
+    // Enable ad-hoc exploration of dataset
+    // Note: today explore enable is not transactional with dataset create - REACTOR-314
+
+    try {
+      datasetExploreFacade.disableExplore(name);
+      datasetExploreFacade.enableExplore(name);
+    } catch (Exception e) {
+      String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
+                                 name, creationProperties.getProperties(), e.getMessage());
+      LOG.error(msg, e);
+      // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
+      //responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
+      //return;
+    }
+    //caling admin upgrade, after updating specification
+    executeAdmin(request, responder, name, "upgrade");
+  }
+
+  private void createDatasetInstance(DatasetInstanceConfiguration creationProperties,
+                                     String name, HttpResponder responder, String operation) {
     DatasetTypeMeta typeMeta = implManager.getTypeInfo(creationProperties.getTypeName());
     if (typeMeta == null) {
       String message = String.format("Cannot %s dataset %s: unknown type %s",
@@ -246,28 +301,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       throw new RuntimeException(msg, e);
     }
     instanceManager.add(spec);
-
-    // Enable ad-hoc exploration of dataset
-    // Note: today explore enable is not transactional with dataset create - REACTOR-314
-
-    try {
-      if (creationProperties.isUpdate()) {
-        datasetExploreFacade.disableExplore(name);
-      }
-      datasetExploreFacade.enableExplore(name);
-    } catch (Exception e) {
-      String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
-                                 name, creationProperties.getProperties(), e.getMessage());
-      LOG.error(msg, e);
-      // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
-//      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
-//      return;
-    }
-    //caling admin upgrade, after updating specification
-    if (creationProperties.isUpdate()) {
-      executeAdmin(request, responder, name, "upgrade");
-    }
-    responder.sendString(HttpResponseStatus.OK, String.format("Dataset instance %s created", name));
   }
 
   @DELETE
