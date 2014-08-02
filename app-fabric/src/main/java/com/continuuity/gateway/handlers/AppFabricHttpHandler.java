@@ -118,9 +118,7 @@ import com.google.common.io.OutputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -158,7 +156,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -474,14 +471,14 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       final Id.Program id = Id.Program.from(accountId, appId, runnableId);
       final ProgramType type = RUNNABLE_TYPE_MAP.get(runnableType);
-      Map<String, Object> statusMap = getStatus(id, type);
-      // If status does not exist, then there was an error
-      if (!statusMap.containsKey("status")) {
-        responder.sendString(HttpResponseStatus.valueOf((Integer) statusMap.get("statusCode")),
-                             (String) statusMap.get("error"));
+      StatusMap statusMap = getStatus(id, type);
+      // If status is null, then there was an error
+      if (statusMap.getStatus() == null) {
+        responder.sendString(HttpResponseStatus.valueOf(statusMap.getStatusCode()), statusMap.getError());
         return;
       }
-      responder.sendJson(HttpResponseStatus.OK, statusMap);
+      Map<String, String> status = ImmutableMap.of("status", statusMap.getStatus());
+      responder.sendJson(HttpResponseStatus.OK, status);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -499,22 +496,19 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * @param type The Type of the Program to get the status of
    * @throws Throwable
    */
-  private Map<String, Object> getStatus(final Id.Program id, final ProgramType type) throws Throwable {
-    final Map<String, Object> statusMap = new HashMap<String, Object>();
+  private StatusMap getStatus(final Id.Program id, final ProgramType type) throws Throwable {
     // check that app exists
+    final StatusMap statusMap = new StatusMap();
     ApplicationSpecification appSpec = store.getApplication(id.getApplication());
     if (appSpec == null) {
-      statusMap.put("statusCode", HttpResponseStatus.NOT_FOUND.getCode());
-      statusMap.put("error", "App: " + id.getApplicationId() + " not found");
-      return statusMap;
+      return new StatusMap(null, "App: " + id.getApplicationId() + " not found",
+                                     HttpResponseStatus.NOT_FOUND.getCode());
     }
     // must do it this way to allow anon function in workflow to modify status
     if (type == ProgramType.MAPREDUCE) {
       // check that mapreduce exists
       if (!appSpec.getMapReduce().containsKey(id.getId())) {
-        statusMap.put("statusCode", HttpResponseStatus.NOT_FOUND.getCode());
-        statusMap.put("error", "Program: " + id.getId() + " not found");
-        return statusMap;
+        return new StatusMap(null, "Program: " + id.getId() + " not found", HttpResponseStatus.NOT_FOUND.getCode());
       }
       String workflowName = getWorkflowName(id.getId());
       if (workflowName != null) {
@@ -524,7 +518,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             @Override
             public void handle(WorkflowClient.Status status) {
               if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
-                statusMap.put("status", "RUNNING");
+                statusMap.setStatus("RUNNING");
+                statusMap.setStatusCode(HttpResponseStatus.OK.getCode());
               } else {
                 //mapreduce name might follow the same format even when its not part of the workflow.
                 try {
@@ -533,42 +528,42 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                 } catch (Exception e) {
                   LOG.error("Got exception: ", e);
                   // error occurred so say internal server error
-                  statusMap.put("statusCode", HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode());
-                  statusMap.put("error", e.getMessage());
+                  statusMap.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode());
+                  statusMap.setError(e.getMessage());
                 }
               }
             }
           }
         );
+        // wait for status to come back in case we are polling mapreduce status in workflow
+        // status map contains either a status or an error
+        while (statusMap.getStatus().isEmpty() && statusMap.getError().isEmpty()) {
+          Thread.sleep(1);
+        }
       } else {
         //mapreduce is not part of a workflow
         storeProgramStatus(id, type, statusMap);
       }
     } else if (type == null) {
       // invalid type does not exist
-      statusMap.put("statusCode", HttpResponseStatus.BAD_REQUEST.getCode());
-      statusMap.put("error", "Invalid program type provided");
+      return new StatusMap(null, "Invalid program type provided", HttpResponseStatus.BAD_REQUEST.getCode());
     } else {
       // all other programs
       storeProgramStatus(id, type, statusMap);
     }
-    // wait for status to come back in case we are polling mapreduce status in workflow
-    // status map contains either a status or an error with a statusCode
-    while (!statusMap.containsKey("status") && !statusMap.containsKey("statusCode")) {
-      Thread.sleep(1);
-    }
     return statusMap;
   }
 
-  private void storeProgramStatus(final Id.Program id, final ProgramType type, final Map<String, Object> statusMap)
+  private void storeProgramStatus(final Id.Program id, final ProgramType type, final StatusMap statusMap)
     throws Exception {
     // getProgramStatus returns program status or http response status NOT_FOUND
     String progStatus = getProgramStatus(id, type).getStatus();
     if (progStatus.equals(HttpResponseStatus.NOT_FOUND.toString())) {
-      statusMap.put("statusCode", HttpResponseStatus.NOT_FOUND.getCode());
-      statusMap.put("error", "Program not found");
+      statusMap.setStatusCode(HttpResponseStatus.NOT_FOUND.getCode());
+      statusMap.setError("Program not found");
     } else {
-      statusMap.put("status", progStatus);
+      statusMap.setStatus(progStatus);
+      statusMap.setStatusCode(HttpResponseStatus.OK.getCode());
     }
   }
 
@@ -1067,22 +1062,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getInstances(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<JsonObject> args = decodeArrayArguments(request, responder);
+      List<BatchEndpointInstances> args = InstancesFromBatchArgs(decodeArrayArguments(request, responder));
       // if args is null then the response has already been sent
       if (args == null) {
         return;
       }
       for (int i = 0; i < args.size(); ++i) {
-        JsonObject requestedObj = args.get(i);
-        // if it has error, then that means there was an error when parsing the json
-        if (requestedObj.has("error")) {
-          continue;
-        }
-        String appId = requestedObj.getAsJsonPrimitive(APP_ID_ARG).getAsString();
-        String programTypeStr = requestedObj.getAsJsonPrimitive(PROGRAM_TYPE_ARG).getAsString();
-        String programId = requestedObj.getAsJsonPrimitive(PROGRAM_ID_ARG).getAsString();
-
-        ProgramType programType = ProgramType.valueOfPrettyName(programTypeStr);
+        BatchEndpointInstances requestedObj = (BatchEndpointInstances) args.get(i);
+        String appId = requestedObj.getAppId();
+        String programTypeStr = requestedObj.getProgramType();
+        String programId = requestedObj.getProgramId();
         // these values will be overwritten later
         int requested, provisioned;
         ApplicationSpecification spec = store.getApplication(Id.Application.from(accountId, appId));
@@ -1090,6 +1079,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(), "App: " + appId + " not found");
           continue;
         }
+        ProgramType programType = ProgramType.valueOfPrettyName(programTypeStr);
         String runnableId;
         if (programType == ProgramType.PROCEDURE) {
           // the "runnable" for procedures has the same id as the procedure name
@@ -1105,21 +1095,15 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           // cant get instances for things that are not flows, services, or procedures
           if (programType != ProgramType.FLOW && programType != ProgramType.SERVICE) {
             addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                         programTypeStr + " is not a valid program type to get instances");
+                         "Program type: " + programType + " is not a valid program type to get instances");
             continue;
           }
           // services and flows must have runnable id
-          try {
-            runnableId = requestedObj.get(RUNNABLE_ID_ARG).getAsString();
-          } catch (NullPointerException e) {
-            addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                         "Must provide runnableId for flows/services");
-            continue;
-          } catch (ClassCastException e) {
-            addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                         "runnableId must be a string");
-            continue;
+          if (requestedObj.getRunnableId() == null) {
+            responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Must provide a string runnableId for flows/services");
+            return;
           }
+          runnableId = requestedObj.getRunnableId();
           if (programType == ProgramType.FLOW) {
             FlowSpecification flowSpec = spec.getFlows().get(programId);
             if (flowSpec != null) {
@@ -1132,8 +1116,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                 continue;
               }
             } else {
-              addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                           "Flow: " + programId + " not found");
+              addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(), "Flow: " + programId + " not found");
               continue;
             }
           } else {
@@ -1156,11 +1139,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           }
         }
         // use the pretty name of program types to be consistent
-        requestedObj.addProperty(PROGRAM_TYPE_ARG, programType.getPrettyName());
+        requestedObj.setProgramType(programType.getPrettyName());
         provisioned = getRunnableCount(accountId, appId, programType, programId, runnableId);
-        requestedObj.addProperty("statusCode", HttpResponseStatus.OK.getCode());
-        requestedObj.addProperty("requested", requested);
-        requestedObj.addProperty("provisioned", provisioned);
+        requestedObj.setStatusCode(HttpResponseStatus.OK.getCode());
+        requestedObj.setRequested(requested);
+        requestedObj.setProvisioned(provisioned);
       }
       responder.sendJson(HttpResponseStatus.OK, args);
     } catch (SecurityException e) {
@@ -1177,23 +1160,23 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns the status for all programs that are passed into the data. The data is an array of Json objects
    * where each object must contain the following three elements: appId, programType, and programId
    * (flow name, service name, etc.).
-   *
+   * <p/>
    * Example input:
    * [{"appId": "App1", "programType": "Service", "programId": "Service1"},
-   *  {"appId": "App1", "programType": "Procedure", "programId": "Proc2"},
-   *  {"appId": "App2", "programType": "Flow", "programId": "Flow1"}]
-   *
+   * {"appId": "App1", "programType": "Procedure", "programId": "Proc2"},
+   * {"appId": "App2", "programType": "Flow", "programId": "Flow1"}]
+   * <p/>
    * The response will be an array of JsonObjects each of which will contain the three input parameters
    * as well as 2 fields, "status" which maps to the status of the program and "statusCode" which maps to the
    * status code for the data in that JsonObjects. If an error occurs in the
    * input (i.e. in the example above, App2 does not exist), then all JsonObjects for which the parameters
    * have a valid status will have the status field but all JsonObjects for which the parameters do not have a valid
    * status will have an error message and statusCode.
-   *
+   * <p/>
    * For example, if there is no App2 in the data above, then the response would be 200 OK with following possible data:
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "statusCode": 200, "status": "RUNNING"},
-   *  {"appId": "App1", "programType": "Procedure", "programId": "Proc2"}, "statusCode": 200, "status": "STOPPED"},
-   *  {"appId":"App2", "programType":"Flow", "programId":"Flow1", "statusCode":404, "error": "App: App2 not found"}]
+   * {"appId": "App1", "programType": "Procedure", "programId": "Proc2"}, "statusCode": 200, "status": "STOPPED"},
+   * {"appId":"App2", "programType":"Flow", "programId":"Flow1", "statusCode":404, "error": "App: App2 not found"}]
    *
    * @param request
    * @param responder
@@ -1203,44 +1186,32 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getStatuses(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<JsonObject> args = decodeArrayArguments(request, responder);
+      List<BatchEndpointStatus> args = StatusFromBatchArgs(decodeArrayArguments(request, responder));
       // if args is null, then there was an error in decoding args and response was already sent
       if (args == null) {
         return;
       }
+      List<BatchEndpointStatus> retList = new ArrayList<BatchEndpointStatus>();
       for (int i = 0; i < args.size(); ++i) {
-        JsonObject requestedObj = args.get(i);
-        // if it has error, then that means there was an error when parsing the json
-        if (requestedObj.has("error")) {
-          continue;
-        }
-        String appId = requestedObj.getAsJsonPrimitive(APP_ID_ARG).getAsString();
-        String programTypeStr = requestedObj.getAsJsonPrimitive(PROGRAM_TYPE_ARG).getAsString();
-        String programId = requestedObj.getAsJsonPrimitive(PROGRAM_ID_ARG).getAsString();
-        Id.Program progId = Id.Program.from(accountId, appId, programId);
-        ProgramType programType = ProgramType.valueOfPrettyName(programTypeStr);
+        BatchEndpointStatus requestedObj = args.get(i);
+        Id.Program progId = Id.Program.from(accountId, requestedObj.getAppId(), requestedObj.getProgramId());
+        ProgramType programType = ProgramType.valueOfPrettyName(requestedObj.getProgramType());
         // get th statuses
-        Map<String, Object> statusMap = getStatus(progId, programType);
-        for (Map.Entry<String, Object> entry : statusMap.entrySet()) {
-          // set the status code for valid requests to 200
-          if (entry.getKey().equals("status")) {
-            requestedObj.addProperty("statusCode", HttpResponseStatus.OK.getCode());
-          }
-          if (entry.getValue() instanceof Integer) {
-            requestedObj.addProperty(entry.getKey(), (Integer) entry.getValue());
-          } else {
-            requestedObj.addProperty(entry.getKey(), String.valueOf(entry.getValue()));
-          }
-
+        StatusMap statusMap = getStatus(progId, programType);
+        if (statusMap.getStatus() != null) {
+          requestedObj.setStatusCode(HttpResponseStatus.OK.getCode());
+          requestedObj.setStatus(statusMap.getStatus());
+        } else {
+          requestedObj.setStatusCode(statusMap.getStatusCode());
+          requestedObj.setError(statusMap.getError());
         }
         // set the program type to the pretty name in case the request originally didn't have pretty name
-        requestedObj.addProperty(PROGRAM_TYPE_ARG, programType.getPrettyName());
+        requestedObj.setProgramType(programType.getPrettyName());
+        retList.add(requestedObj);
       }
       responder.sendJson(HttpResponseStatus.OK, args);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (JsonSyntaxException e) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -1255,9 +1226,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * @param code The status code to add
    * @param error The error message to add
    */
-  private void addCodeError(JsonObject object, int code, String error) {
-    object.addProperty("statusCode", code);
-    object.addProperty("error", error);
+  private void addCodeError(BatchEndpointArgs object, int code, String error) {
+    object.setStatusCode(code);
+    object.setError(error);
   }
 
   /**
@@ -1279,7 +1250,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } else if (info instanceof Containers) {
       Containers containers = (Containers) info;
       for (Containers.ContainerInfo container : containers.getContainers()) {
-        System.err.println(container.getName());
         if (container.getName().equals(runnableId)) {
           count++;
         }
@@ -1301,11 +1271,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * @param responder The HttpResponder used to send responses in case of errors
    * @return List of JsonObjects from the request data
    * @throws IOException Thrown in case of Exceptions when reading the http request data
-   * @throws JsonSyntaxException Thrown in case of Malformed JSON
    */
   @Nullable
-  private List<JsonObject> decodeArrayArguments(HttpRequest request, HttpResponder responder)
-    throws IOException, JsonSyntaxException {
+  private List<BatchEndpointArgs> decodeArrayArguments(HttpRequest request, HttpResponder responder)
+    throws IOException {
     ChannelBuffer content = request.getContent();
     if (!content.readable()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Cannot read request");
@@ -1313,43 +1282,41 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
     try {
-      List<JsonObject> inputList = GSON.fromJson(reader, new TypeToken<List<JsonObject>>() { }.getType());
-      for (int i = 0; i < inputList.size(); ++i) {
-        JsonObject requestedObj;
+      List<BatchEndpointArgs> input = GSON.fromJson(reader, new TypeToken<List<BatchEndpointArgs>>() { }.getType());
+      for (int i = 0; i < input.size(); ++i) {
+        BatchEndpointArgs requestedObj;
         try {
-          requestedObj = inputList.get(i);
+          requestedObj = input.get(i);
         } catch (ClassCastException e) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, "All elements in array must be valid JSON Objects");
           return null;
         }
         // make sure the following args exist
-        String programTypeStr;
-        try {
-          requestedObj.getAsJsonPrimitive(APP_ID_ARG).getAsString();
-          programTypeStr = requestedObj.getAsJsonPrimitive(PROGRAM_TYPE_ARG).getAsString();
-          requestedObj.getAsJsonPrimitive(PROGRAM_ID_ARG).getAsString();
-        } catch (NullPointerException e) {
-          addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                       "Must provide appId, programType, and programId");
-          continue;
-        } catch (ClassCastException e) {
-          addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                       "appId, programType, and programId must be strings");
-          continue;
+        if (requestedObj.getAppId() == null || requestedObj.getProgramId() == null ||
+          requestedObj.getProgramType() == null) {
+          responder.sendJson(HttpResponseStatus.BAD_REQUEST,
+                             "Must provide appId, programType, and programId as strings for each object");
+          return null;
         }
         // invalid type
         try {
-          if (ProgramType.valueOfPrettyName(programTypeStr) == null) {
-            addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(), "Invalid program type provided");
+          if (ProgramType.valueOfPrettyName(requestedObj.getProgramType()) == null) {
+            responder.sendJson(HttpResponseStatus.BAD_REQUEST,
+                               "Invalid program type provided: " + requestedObj.getProgramType());
+            return null;
           }
         } catch (IllegalArgumentException e) {
-          addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(), "Invalid program type provided");
+          responder.sendJson(HttpResponseStatus.BAD_REQUEST,
+                             "Invalid program type provided: " + requestedObj.getProgramType());
+          return null;
         }
+
       }
-      return inputList;
+      return input;
     } catch (JsonSyntaxException e) {
       LOG.info("Failed to parse arguments on {}", request.getUri(), e);
-      throw e;
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid Json object provided");
+      return null;
     } finally {
       reader.close();
     }
@@ -3681,6 +3648,176 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.warn(e.getMessage(), e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            String.format(UserMessages.getMessage(UserErrors.RESET_FAIL), e.getMessage()));
+    }
+  }
+
+  /**
+   * Convenience class for representing the necessary components in the batch endpoint.
+   */
+  private class BatchEndpointArgs {
+    private String appId = null;
+    private String programType = null;
+    private String programId = null;
+    private String runnableId = null;
+    private String error = null;
+    private Integer statusCode = null;
+
+    private BatchEndpointArgs(String appId, String programType, String programId, String runnableId, String error,
+                              Integer statusCode) {
+      this.appId = appId;
+      this.programType = programType;
+      this.programId = programId;
+      this.runnableId = runnableId;
+      this.error = error;
+      this.statusCode = statusCode;
+    }
+
+    public BatchEndpointArgs(BatchEndpointArgs arg) {
+      this(arg.appId, arg.programType, arg.programId, arg.runnableId, arg.error, arg.statusCode);
+    }
+
+    public String getRunnableId() {
+      return runnableId;
+    }
+
+    public void setRunnableId(String runnableId) {
+      this.runnableId = runnableId;
+    }
+
+    public void setError(String error) {
+      this.error = error;
+    }
+
+    public void setStatusCode(Integer statusCode) {
+      this.statusCode = statusCode;
+    }
+
+    public int getStatusCode() {
+      return statusCode;
+    }
+
+    public String getError() {
+      return error;
+    }
+
+    public String getProgramId() {
+      return programId;
+    }
+
+    public String getProgramType() {
+      return programType;
+    }
+
+    public String getAppId() {
+      return appId;
+    }
+
+    public void setProgramType(String programType) {
+      this.programType = programType;
+    }
+  }
+
+  private class BatchEndpointInstances extends BatchEndpointArgs {
+    private Integer requested = null;
+    private Integer provisioned = null;
+
+    public BatchEndpointInstances(BatchEndpointArgs arg) {
+      super(arg);
+    }
+
+    public Integer getProvisioned() {
+      return provisioned;
+    }
+
+    public void setProvisioned(Integer provisioned) {
+      this.provisioned = provisioned;
+    }
+
+    public Integer getRequested() {
+      return requested;
+    }
+
+    public void setRequested(Integer requested) {
+      this.requested = requested;
+    }
+  }
+
+  private class BatchEndpointStatus extends BatchEndpointArgs {
+    private String status = null;
+
+    public BatchEndpointStatus(BatchEndpointArgs arg) {
+      super(arg);
+    }
+
+    public String getStatus() {
+      return status;
+    }
+
+    public void setStatus(String status) {
+      this.status = status;
+    }
+  }
+
+  private List<BatchEndpointInstances> InstancesFromBatchArgs(List<BatchEndpointArgs> args) {
+    if (args == null) {
+      return null;
+    }
+    List<BatchEndpointInstances> retVal = new ArrayList<BatchEndpointInstances>(args.size());
+    for (BatchEndpointArgs arg: args) {
+      retVal.add(new BatchEndpointInstances(arg));
+    }
+    return retVal;
+  }
+
+  private List<BatchEndpointStatus> StatusFromBatchArgs(List<BatchEndpointArgs> args) {
+    if (args == null) {
+      return null;
+    }
+    List<BatchEndpointStatus> retVal = new ArrayList<BatchEndpointStatus>(args.size());
+    for (BatchEndpointArgs arg: args) {
+      retVal.add(new BatchEndpointStatus(arg));
+    }
+    return retVal;
+  }
+
+  /**
+   * Convenience class for representing the necessary components for retrieving status
+   */
+  private class StatusMap {
+    private String status = null;
+    private String error = null;
+    private Integer statusCode = null;
+
+    private StatusMap(String status, String error, int statusCode) {
+      this.status = status;
+      this.error = error;
+      this.statusCode = statusCode;
+    }
+
+    public StatusMap() { }
+
+    public int getStatusCode() {
+      return statusCode;
+    }
+
+    public String getError() {
+      return error;
+    }
+
+    public String getStatus() {
+      return status;
+    }
+
+    public void setStatusCode(int statusCode) {
+      this.statusCode = statusCode;
+    }
+
+    public void setError(String error) {
+      this.error = error;
+    }
+
+    public void setStatus(String status) {
+      this.status = status;
     }
   }
 }
