@@ -90,13 +90,6 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void addDataSet(DataSet dataSet) {
-    Preconditions.checkArgument(dataSet != null, "DataSet cannot be null.");
-    DataSetSpecification spec = dataSet.configure();
-    dataSets.put(spec.getName(), spec);
-  }
-
-  @Override
   public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
     Preconditions.checkArgument(moduleName != null, "Dataset module name cannot be null.");
     Preconditions.checkArgument(moduleClass != null, "Dataset module class cannot be null.");

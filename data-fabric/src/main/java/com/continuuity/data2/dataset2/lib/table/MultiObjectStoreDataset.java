@@ -158,7 +158,6 @@ public class MultiObjectStoreDataset<T> extends AbstractDataset implements Multi
     });
   }
 
-  // TODO: duplicate code in RuntimeObjectStore
   private byte[] encode(T object) {
     // encode T using schema
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -172,7 +171,6 @@ public class MultiObjectStoreDataset<T> extends AbstractDataset implements Multi
     return bos.toByteArray();
   }
 
-  // TODO: duplicate code in RuntimeObjectStore
   private T decode(byte[] bytes) {
     if (bytes == null) {
       return null;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.continuuity.api.data.dataset;
+package com.continuuity.api.dataset.lib;
 
 import java.util.List;
 

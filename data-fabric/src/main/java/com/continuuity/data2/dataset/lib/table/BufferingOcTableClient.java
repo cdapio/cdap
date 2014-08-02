@@ -18,12 +18,12 @@ package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.Split;
-import com.continuuity.data.table.RuntimeTable;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionAware;
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -448,7 +448,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
       @Nullable
       @Override
       public Split apply(@Nullable KeyRange input) {
-        return new RuntimeTable.TableSplit(input == null ? null : input.getStart(),
+        return new TableSplit(input == null ? null : input.getStart(),
                                            input == null ? null : input.getStop());
       }
     });
@@ -516,6 +516,34 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
       }
     }
     return unwrapDeletes(result);
+  }
+
+  /**
+   * Table splits are simply a start and stop key.
+   */
+  public static class TableSplit extends Split {
+    private final byte[] start, stop;
+
+    public TableSplit(byte[] start, byte[] stop) {
+      this.start = start;
+      this.stop = stop;
+    }
+
+    public byte[] getStart() {
+      return start;
+    }
+
+    public byte[] getStop() {
+      return stop;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("start", Bytes.toString(start))
+        .add("stop", Bytes.toString(stop))
+        .toString();
+    }
   }
 
   // utilities useful for underlying implementations

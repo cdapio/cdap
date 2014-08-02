@@ -93,15 +93,6 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @see ApplicationConfigurer#addDataSet(DataSet)
-   * @deprecated As of Reactor 2.3.0
-   */
-  @Deprecated
-  protected void addDataSet(DataSet dataSet) {
-    configurer.addDataSet(dataSet);
-  }
-
-  /**
    * @see ApplicationConfigurer#addDatasetModule(String, Class)
    */
   @Beta

@@ -102,9 +102,9 @@ import java.util.Map;
  *   </li>
  *   <li>
  *    The current implementation (incl. the format of the stored data) is heavily affected by
- *    {@link com.continuuity.api.data.dataset.table.Table} API which
+ *    {@link com.continuuity.api.dataset.table.Table} API which
  *       is used under the hood. In particular the implementation is constrained by the absence of
- *       <code>readHigherOrEq()</code> method in {@link com.continuuity.api.data.dataset.table.Table} API,
+ *       <code>readHigherOrEq()</code> method in {@link Table} API,
  *       which would  return next row with key greater or equals to the given.<br/>
  *   </li>
  *   <li>
@@ -196,7 +196,6 @@ public class TimeseriesTable extends AbstractDataset
 
   /**
    * Reads entries of a time range.
-   * See {@link com.continuuity.api.data.dataset.TimeseriesTable#read} for more details
    * on usage.<br/>
    * NOTE: There's a hard limit on the max number of time intervals to be scanned during read. Defined in
    * MAX_ROWS_TO_SCAN_PER_READ parameter.
