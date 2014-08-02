@@ -28,6 +28,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,6 +66,9 @@ import javax.annotation.Nullable;
 // todo: return immutable maps?
 public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTable
                                              implements DataSetClient, TransactionAware, MeteredDataset {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BufferingOcTableClient.class);
+
   protected static final byte[] DELETE_MARKER = new byte[0];
 
   // name of the table
@@ -116,13 +121,6 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
    */
   public String getTableName() {
     return name;
-  }
-
-  /**
-   * @return conflict resolution level
-   */
-  public ConflictDetection getConflictLevel() {
-    return conflictLevel;
   }
 
   @Override
@@ -208,6 +206,11 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
 
   @Override
   public void startTx(Transaction tx) {
+    if (buff == null) {
+      String msg = "Attempted to use closed dataset " + getTransactionAwareName();
+      LOG.error(msg);
+      throw new IllegalStateException(msg);
+    }
     // starting with fresh buffer when tx starts
     buff.clear();
     toUndo = null;
@@ -556,7 +559,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
    * @param buffered The buffered values to overlay on the persisted map.
    */
   private void mergeToPersisted(Map<byte[], byte[]> persisted, Map<byte[], Update> buffered, byte[][] columns) {
-    Iterable<byte[]> columnKeys = null;
+    Iterable<byte[]> columnKeys;
     if (columns != null) {
       columnKeys = Arrays.asList(columns);
     } else {
@@ -582,14 +585,6 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
         persisted.put(key, ((PutValue) val).getValue());
       }
       // unknown type?!
-    }
-  }
-
-  private void mergeToBuffered(Map<byte[], Update> base,
-                                              Map<byte[], Update> buffered) {
-    // overlay buffered values on persisted, applying increments where necessary
-    for (Map.Entry<byte[], ? extends Update> entry : buffered.entrySet()) {
-      base.put(entry.getKey(), Updates.mergeUpdates(base.get(entry.getKey()), entry.getValue()));
     }
   }
 

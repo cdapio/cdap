@@ -56,15 +56,6 @@ public interface ApplicationConfigurer {
   void addStream(Stream stream);
 
   /**
-   * Adds a {@link DataSet} to the Application.
-   *
-   * @param dataset The {@link DataSet} to include in the Application
-   * @deprecated As of Reactor 2.3.0
-   */
-  @Deprecated
-  void addDataSet(DataSet dataset);
-
-  /**
    * Adds a {@link DatasetModule} to be deployed automatically (if absent in the Reactor) during application 
    * deployment.
    *

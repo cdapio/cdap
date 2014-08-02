@@ -17,7 +17,6 @@
 package com.continuuity.api.dataset.lib;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.Feed;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;

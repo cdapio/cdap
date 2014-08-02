@@ -16,6 +16,7 @@
 
 package com.continuuity.gateway.router;
 
+import com.continuuity.AllProgramsApp;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.common.conf.CConfiguration;
@@ -23,7 +24,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.lang.jar.JarFinder;
-import com.continuuity.gateway.apps.wordcount.WordCount;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.BodyConsumer;
@@ -31,7 +31,6 @@ import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.security.auth.AccessTokenTransformer;
 import com.continuuity.security.guice.SecurityModules;
-
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
@@ -177,9 +176,9 @@ public class NettyRouterPipelineTests {
                                 ROUTER.getServiceMap().get(gatewayService));
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, WordCount.class.getName());
+    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, AllProgramsApp.class.getName());
 
-    String appPath = JarFinder.getJar(WordCount.class, manifest);
+    String appPath = JarFinder.getJar(AllProgramsApp.class, manifest);
     File file = new File(appPath);
     applicationJarInBytes = Files.toByteArray(file);
     for (int i = 0; i < num; i++) {

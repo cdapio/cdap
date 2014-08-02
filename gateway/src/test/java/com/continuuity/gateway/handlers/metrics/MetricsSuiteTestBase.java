@@ -15,7 +15,6 @@
  */
 package com.continuuity.gateway.handlers.metrics;
 
-import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
@@ -33,17 +32,13 @@ import com.continuuity.data2.OperationException;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.gateway.MockMetricsCollectionService;
 import com.continuuity.gateway.MockedPassportClient;
-import com.continuuity.gateway.apps.wordcount.WCount;
-import com.continuuity.gateway.apps.wordcount.WordCount;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.handlers.log.MockLogReader;
-import com.continuuity.internal.app.Specifications;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
-import com.continuuity.proto.Id;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.collect.ImmutableList;
@@ -66,7 +61,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -101,8 +95,6 @@ public abstract class MetricsSuiteTestBase {
   private static int port;
 
   private static File dataDir;
-  private static Id.Application wordCountAppId;
-  private static Id.Application wCountAppId;
 
   protected static MetricsCollectionService collectionService;
   protected static Store store;
@@ -185,8 +177,6 @@ public abstract class MetricsSuiteTestBase {
   public static void stop() throws OperationException {
     dsService.startAndWait();
     collectionService.stopAndWait();
-    store.removeApplication(wordCountAppId);
-    store.removeApplication(wCountAppId);
 
     Deque<File> files = Lists.newLinkedList();
     files.add(dataDir);
@@ -259,20 +249,6 @@ public abstract class MetricsSuiteTestBase {
 
   // write WordCount app to metadata store
   public static void setupMeta() throws OperationException {
-
-    String account = Constants.DEVELOPER_ACCOUNT_ID;
-    Location appArchiveLocation = locationFactory.getHomeLocation();
-
-    // write WordCount application to meta store
-    ApplicationSpecification appSpec = Specifications.from(new WordCount());
-    wordCountAppId = new Id.Application(new Id.Account(account), appSpec.getName());
-    store.addApplication(wordCountAppId, appSpec, appArchiveLocation);
-
-    // write WCount application to meta store
-    appSpec = Specifications.from(new WCount());
-    wCountAppId = new Id.Application(new Id.Account(account), appSpec.getName());
-    store.addApplication(wCountAppId, appSpec, appArchiveLocation);
-
     validResources = ImmutableList.of(
       "/reactor/reads?aggregate=true",
       "/reactor/apps/WordCount/reads?aggregate=true",
