@@ -37,8 +37,6 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.common.utils.OSDetector;
-import com.continuuity.data.DataFabric;
-import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
@@ -282,8 +280,6 @@ public class ReactorTestBase {
     exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     exploreExecutorService.startAndWait();
     exploreClient = injector.getInstance(ExploreClient.class);
-    DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
-    DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
   }
 
