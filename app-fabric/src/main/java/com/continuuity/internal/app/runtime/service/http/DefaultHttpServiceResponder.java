@@ -31,11 +31,11 @@ import java.nio.charset.Charset;
 /**
  *
  */
-public final class DefaultHttpServiceResponder implements HttpServiceResponder {
+final class DefaultHttpServiceResponder implements HttpServiceResponder {
 
   private final HttpResponder responder;
 
-  public DefaultHttpServiceResponder(HttpResponder responder) {
+  DefaultHttpServiceResponder(HttpResponder responder) {
     this.responder = responder;
   }
 

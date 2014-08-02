@@ -27,7 +27,6 @@ import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.ByteStreams;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.junit.Assert;
@@ -41,6 +40,7 @@ import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  *
@@ -70,10 +70,10 @@ public class HttpHandlerGeneratorTest {
   @Path("/v2")
   public static final class MyHttpHandler extends BaseHttpHandler {
 
-    @Path("/echo")
+    @Path("/echo/{name}")
     @POST
-    public void echo(HttpServiceRequest request, HttpServiceResponder responder) {
-      responder.send(200, request.getContent(), "application/octet-stream", ImmutableMultimap.<String, String>of());
+    public void echo(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("name") String name) {
+      responder.sendString(Charsets.UTF_8.decode(request.getContent()).toString() + " " + name);
     }
 
     @Override
@@ -106,17 +106,19 @@ public class HttpHandlerGeneratorTest {
       // Make a GET call
       URLConnection urlConn = new URL(String.format("http://%s:%d/v2/handle",
                                                     bindAddress.getHostName(), bindAddress.getPort())).openConnection();
+      urlConn.setReadTimeout(2000);
 
       Assert.assertEquals("Hello World", new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));
 
       // Make a POST call
-      urlConn = new URL(String.format("http://%s:%d/v2/echo",
+      urlConn = new URL(String.format("http://%s:%d/v2/echo/test",
                                       bindAddress.getHostName(), bindAddress.getPort())).openConnection();
+      urlConn.setReadTimeout(2000);
       urlConn.setDoOutput(true);
-      ByteStreams.copy(ByteStreams.newInputStreamSupplier("Hello World Upload".getBytes(Charsets.UTF_8)),
+      ByteStreams.copy(ByteStreams.newInputStreamSupplier("Hello".getBytes(Charsets.UTF_8)),
                        urlConn.getOutputStream());
 
-      Assert.assertEquals("Hello World Upload",
+      Assert.assertEquals("Hello test",
                           new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));
     } finally {
       service.stopAndWait();

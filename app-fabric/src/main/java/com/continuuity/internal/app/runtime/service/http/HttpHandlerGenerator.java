@@ -24,6 +24,7 @@ import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.asm.ClassDefinition;
 import com.continuuity.internal.asm.Methods;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
 import com.google.common.reflect.TypeToken;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -36,12 +37,16 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
+import org.objectweb.asm.signature.SignatureReader;
+import org.objectweb.asm.signature.SignatureWriter;
 import org.objectweb.asm.tree.AnnotationNode;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.util.List;
+import java.util.Map;
+import javax.annotation.concurrent.NotThreadSafe;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
@@ -58,14 +63,16 @@ import javax.ws.rs.Path;
  *
  * Also, the generated class can impose transaction boundary for every call those {@link Path @Path} methods.
  */
+@NotThreadSafe
 final class HttpHandlerGenerator {
+
+  public static final Type SUPER_CLASS_TYPE = Type.getType(AbstractHttpHandlerDelegator.class);
 
   private ClassWriter classWriter;
   private Type classType;
   private TypeToken<?> delegateType;
-  private boolean useClassAnnotation;
 
-  ClassDefinition generate(final TypeToken<?> delegateType) throws IOException {
+  ClassDefinition generate(TypeToken<?> delegateType) throws IOException {
     Class<?> rawType = delegateType.getRawType();
 
     this.classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
@@ -81,10 +88,11 @@ final class HttpHandlerGenerator {
                       Type.getInternalName(AbstractHttpHandlerDelegator.class), null);
 
     // Inspect the delegate class hierarchy to generate public handler methods.
-    useClassAnnotation = true;
+    boolean firstVisit = true;
     for (TypeToken<?> type : delegateType.getTypes().classes()) {
       if (!Object.class.equals(type.getRawType())) {
-        inspectHandler(type);
+        inspectHandler(type, firstVisit);
+        firstVisit = false;
       }
     }
 
@@ -102,21 +110,28 @@ final class HttpHandlerGenerator {
     return classDefinition;
   }
 
-  private void inspectHandler(final TypeToken<?> type) throws IOException {
+  /**
+   * Inspects the given type and copy/rewrite handler methods from it into the newly generated class.
+   */
+  private void inspectHandler(TypeToken<?> type, final boolean firstVisit) throws IOException {
     Class<?> rawType = type.getRawType();
 
-    // Visit the delegate class, copy class @Path annotations and methods annotated with @Path
+    // Visit the delegate class, copy and rewrite handler method, with method body just do delegation
     InputStream sourceBytes = rawType.getClassLoader().getResourceAsStream(Type.getInternalName(rawType) + ".class");
     try {
       ClassReader classReader = new ClassReader(sourceBytes);
       classReader.accept(new ClassVisitor(Opcodes.ASM4) {
 
         @Override
+        public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+          super.visit(version, access, name, signature, superName, interfaces);
+        }
+
+        @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-          // Copy the class annotation if it is @Path. Only do it for one time.
+          // Copy the class annotation if it is @Path. Only do it for one time
           Type type = Type.getType(desc);
-          if (useClassAnnotation && type.equals(Type.getType(Path.class))) {
-            useClassAnnotation = false;
+          if (firstVisit && type.equals(Type.getType(Path.class))) {
             return classWriter.visitAnnotation(desc, visible);
           } else {
             return super.visitAnnotation(desc, visible);
@@ -124,72 +139,13 @@ final class HttpHandlerGenerator {
         }
 
         @Override
-        public MethodVisitor visitMethod(final int access, final String name,
-                                         final String desc, final String signature, final String[] exceptions) {
-
-          // Copy the method if it is public and annotated with @Path
+        public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+          // Copy the method if it is public and annotated with one of the HTTP request method
           MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
           if (!Modifier.isPublic(access)) {
             return mv;
           }
-
-          return new MethodVisitor(Opcodes.ASM4, mv) {
-
-            private final List<AnnotationNode> annotations = Lists.newArrayList();
-
-            @Override
-            public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-              // Memorize all visible annotations
-              if (visible) {
-                AnnotationNode annotationNode = new AnnotationNode(Opcodes.ASM4, desc);
-                annotations.add(annotationNode);
-                return annotationNode;
-              }
-              return super.visitAnnotation(desc, visible);
-            }
-
-            @Override
-            public void visitEnd() {
-              // If any annotations of the method is one of those HttpMethod,
-              // this is a handler process, hence need to copy.
-              boolean handlerMethod = false;
-              for (AnnotationNode annotation : annotations) {
-                if (isHandlerMethod(Type.getType(annotation.desc))) {
-                  handlerMethod = true;
-                  break;
-                }
-              }
-
-              if (!handlerMethod) {
-                super.visitEnd();
-                return;
-              }
-
-              Type returnType = Type.getReturnType(desc);
-              Type[] argTypes = Type.getArgumentTypes(desc);
-
-              if (argTypes.length < 2
-                || !argTypes[0].equals(Type.getType(HttpServiceRequest.class))
-                || !argTypes[1].equals(Type.getType(HttpServiceResponder.class))) {
-                super.visitEnd();
-                return;
-              }
-
-              argTypes[0] = Type.getType(HttpRequest.class);
-              argTypes[1] = Type.getType(HttpResponder.class);
-
-              String methodDesc = Type.getMethodDescriptor(returnType, argTypes);
-
-              MethodVisitor methodVisitor = classWriter.visitMethod(access, name, methodDesc, signature, exceptions);
-              final GeneratorAdapter mg = new GeneratorAdapter(methodVisitor, access, name, desc);
-
-              // Replay all annotations before generating the body.
-              for (AnnotationNode annotation : annotations) {
-                annotation.accept(mg.visitAnnotation(annotation.desc, true));
-              }
-              generateDelegateMethodBody(mg, new Method(name, desc));
-            }
-          };
+          return new HandlerMethodVisitor(mv, desc, signature, access, name, exceptions);
         }
       }, ClassReader.SKIP_DEBUG);
     } finally {
@@ -210,7 +166,7 @@ final class HttpHandlerGenerator {
     mg.loadThis();
     mg.loadArg(0);
     mg.loadArg(1);
-    mg.invokeConstructor(Type.getType(AbstractHttpHandlerDelegator.class),
+    mg.invokeConstructor(SUPER_CLASS_TYPE,
                          Methods.getMethod(void.class, "<init>", HttpServiceHandler.class, HttpServiceContext.class));
 
     // this.delegate = delegate;
@@ -227,7 +183,7 @@ final class HttpHandlerGenerator {
    *
    * <pre>{@code
    *   public void handle(HttpRequest request, HttpResponder responder, ...) {
-   *     delegate.handle(new DefaultHttpServiceRequest(request), new DefaultHttpServiceResponder(responder), ...);
+   *     delegate.handle(wrapRequest(request), wrapResponder(responder), ...);
    *   }
    * }
    * </pre>
@@ -236,17 +192,15 @@ final class HttpHandlerGenerator {
     mg.loadThis();
     mg.getField(classType, "delegate", Type.getType(delegateType.getRawType()));
 
-    mg.newInstance(Type.getType(DefaultHttpServiceRequest.class));
-    mg.dup();
+    mg.loadThis();
     mg.loadArg(0);
-    mg.invokeConstructor(Type.getType(DefaultHttpServiceRequest.class),
-                         Methods.getMethod(void.class, "<init>", HttpRequest.class));
+    mg.invokeVirtual(SUPER_CLASS_TYPE,
+                     Methods.getMethod(HttpServiceRequest.class, "wrapRequest", HttpRequest.class));
 
-    mg.newInstance(Type.getType(DefaultHttpServiceResponder.class));
-    mg.dup();
+    mg.loadThis();
     mg.loadArg(1);
-    mg.invokeConstructor(Type.getType(DefaultHttpServiceResponder.class),
-                         Methods.getMethod(void.class, "<init>", HttpResponder.class));
+    mg.invokeVirtual(SUPER_CLASS_TYPE,
+                     Methods.getMethod(HttpServiceResponder.class, "wrapResponder", HttpResponder.class));
 
     for (int i = 2; i < method.getArgumentTypes().length; i++) {
       mg.loadArg(i);
@@ -277,5 +231,135 @@ final class HttpHandlerGenerator {
       return true;
     }
     return false;
+  }
+
+  /**
+   * The ASM MethodVisitor for visiting handler class methods and optionally copy them if it is a handler
+   * method.
+   */
+  private class HandlerMethodVisitor extends MethodVisitor {
+
+    private final List<AnnotationNode> annotations;
+    private final Map<Integer, AnnotationNode> paramAnnotations;
+    private final String desc;
+    private final String signature;
+    private final int access;
+    private final String name;
+    private final String[] exceptions;
+
+    public HandlerMethodVisitor(MethodVisitor mv, String desc, String signature,
+                                int access, String name, String[] exceptions) {
+      super(Opcodes.ASM4, mv);
+      this.desc = desc;
+      this.signature = signature;
+      this.access = access;
+      this.name = name;
+      this.exceptions = exceptions;
+      annotations = Lists.newArrayList();
+      paramAnnotations = Maps.newLinkedHashMap();
+    }
+
+    @Override
+    public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+      // Memorize all visible annotations
+      if (visible) {
+        AnnotationNode annotationNode = new AnnotationNode(Opcodes.ASM4, desc);
+        annotations.add(annotationNode);
+        return annotationNode;
+      }
+      return super.visitAnnotation(desc, visible);
+    }
+
+    @Override
+    public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
+      if (visible) {
+        AnnotationNode annotationNode = new AnnotationNode(Opcodes.ASM4, desc);
+        paramAnnotations.put(parameter, annotationNode);
+        return annotationNode;
+      }
+      return super.visitParameterAnnotation(parameter, desc, visible);
+    }
+
+    @Override
+    public void visitEnd() {
+      // If any annotations of the method is one of those HttpMethod,
+      // this is a handler process, hence need to copy.
+      boolean handlerMethod = false;
+      for (AnnotationNode annotation : annotations) {
+        if (isHandlerMethod(Type.getType(annotation.desc))) {
+          handlerMethod = true;
+          break;
+        }
+      }
+
+      if (!handlerMethod) {
+        super.visitEnd();
+        return;
+      }
+
+      Type returnType = Type.getReturnType(desc);
+      Type[] argTypes = Type.getArgumentTypes(desc);
+
+      // If the first two parameters are not HttpServiceRequest and HttpServiceResponder, don't copy
+      if (argTypes.length < 2
+        || !argTypes[0].equals(Type.getType(HttpServiceRequest.class))
+        || !argTypes[1].equals(Type.getType(HttpServiceResponder.class))) {
+        super.visitEnd();
+        return;
+      }
+
+      argTypes[0] = Type.getType(HttpRequest.class);
+      argTypes[1] = Type.getType(HttpResponder.class);
+
+      // Copy the method signature with the first two parameter types changed
+      String methodDesc = Type.getMethodDescriptor(returnType, argTypes);
+      MethodVisitor methodVisitor = classWriter.visitMethod(access, name, methodDesc,
+                                                            rewriteMethodSignature(signature), exceptions);
+      final GeneratorAdapter mg = new GeneratorAdapter(methodVisitor, access, name, desc);
+
+      // Replay all annotations before generating the body.
+      for (AnnotationNode annotation : annotations) {
+        annotation.accept(mg.visitAnnotation(annotation.desc, true));
+      }
+      // Replay all parameter annotations
+      for (Map.Entry<Integer, AnnotationNode> entry : paramAnnotations.entrySet()) {
+        AnnotationNode annotation = entry.getValue();
+        annotation.accept(mg.visitParameterAnnotation(entry.getKey(), annotation.desc, true));
+      }
+
+      generateDelegateMethodBody(mg, new Method(name, desc));
+
+      super.visitEnd();
+    }
+
+    /**
+     * Rewrite the handler method signature to have the first two parameters rewritten from
+     * {@link HttpServiceRequest} and {@link HttpServiceResponder} into
+     * {@link HttpRequest} and {@link HttpResponder}.
+     */
+    private String rewriteMethodSignature(String signature) {
+      if (signature == null) {
+        return null;
+      }
+
+      SignatureReader reader = new SignatureReader(signature);
+      SignatureWriter writer = new SignatureWriter() {
+        @Override
+        public void visitClassType(String name) {
+          if (name.equals(Type.getInternalName(HttpServiceRequest.class))) {
+            super.visitClassType(Type.getInternalName(HttpRequest.class));
+            return;
+          }
+          if (name.equals(Type.getInternalName(HttpServiceResponder.class))) {
+            super.visitClassType(Type.getInternalName(HttpResponder.class));
+            return;
+          }
+          super.visitClassType(name);
+        }
+      };
+      reader.accept(writer);
+
+      return writer.toString();
+    }
   }
 }
