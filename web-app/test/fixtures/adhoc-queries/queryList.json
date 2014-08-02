@@ -1,0 +1,23 @@
+[
+    {
+        "has_results": true,
+        "is_active": true,
+        "query_handle": "25abfd03-38ac-41d2-bda2-473c71339151",
+        "statement": "SELECT * FROM continuuity_user_history",
+        "status": "FINISHED"
+    },
+    {
+        "has_results": false,
+        "is_active": true,
+        "query_handle": "16weoi01-21bx-87s8-knk2-211d98203959",
+        "statement": "SELECT * FROM continuuity_user_purchases",
+        "status": "FINISHED"
+    },
+    {
+        "has_results": true,
+        "is_active": true,
+        "query_handle": "75kmfd98-12ka-32q1-kjk2-982x98128735",
+        "statement": "SELECT * FROM continuuity_user_frequentCustomers",
+        "status": "FINISHED"
+    }
+]

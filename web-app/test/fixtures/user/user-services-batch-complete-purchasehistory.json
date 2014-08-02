@@ -1,0 +1,37 @@
+[
+  {
+      "type":"Service",
+      "app":"PurchaseHistory",
+      "id":"NoOpService",
+      "name":"NoOpService",
+      "description":"NoOp",
+      "runnables":[
+        {
+            "id":"DummyService",
+            "requested":1,
+            "provisioned":0
+        }
+      ],
+      "status":"STOPPED"
+  },
+  {
+      "type":"Service",
+      "app":"PurchaseHistory",
+      "id":"CatalogLookupService",
+      "name":"CatalogLookupService",
+      "description":"Does a catalog lookup.",
+      "runnables":[
+        {
+            "id":"CatalogService",
+            "requested":1,
+            "provisioned":1
+        },
+        {
+            "id":"DummyService",
+            "requested":1,
+            "provisioned":1
+        }
+      ],
+      "status":"RUNNING"
+  }
+]

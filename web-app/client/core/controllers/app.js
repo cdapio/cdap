@@ -13,9 +13,9 @@ define([], function () {
 
 			/*
 			 * This is decremented to know when loading is complete.
-			 * There are 4 things to load. See __loaded below.
+			 * There are 6 things to load. See __loaded below.
 			 */
-			this.__remaining = 5;
+			this.__remaining = 6;
 
 			this.set('elements.Flow', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Mapreduce', Em.ArrayProxy.create({content: []}));
@@ -23,6 +23,7 @@ define([], function () {
 			this.set('elements.Stream', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Procedure', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Dataset', Em.ArrayProxy.create({content: []}));
+			this.set('elements.Userservice', Em.ArrayProxy.create({content: []}));
 			this.clearTriggers(true);
 
 			var self = this;
@@ -116,6 +117,20 @@ define([], function () {
 
 			});
 
+			/*
+			 * Load Userservices
+			 */
+			this.HTTP.rest('apps', model.id, 'services', function (objects) {
+
+				var i = objects.length;
+				while (i--) {
+					objects[i] = C.Userservice.create(objects[i]);
+					objects[i].populateRunnablesAndUpdate(self.HTTP);
+				}
+				self.get('elements.Userservice').pushObjects(objects);
+				self.__loaded();
+			});
+
 		},
 
 		__loaded: function () {
@@ -160,7 +175,7 @@ define([], function () {
 				return;
 			}
 
-			var self = this, types = ['Flow', 'Mapreduce', 'Workflow', 'Stream', 'Procedure', 'Dataset'];
+			var self = this, types = ['Flow', 'Mapreduce', 'Workflow', 'Stream', 'Procedure', 'Dataset', 'Userservice'];
 
 			if (this.get('model')) {
 
@@ -206,7 +221,6 @@ define([], function () {
 		}.property('elements.Flow', 'elements.Mapreduce', 'elements.Procedure'),
 
 		transition: function (elements, action, transition, endState, done) {
-
 			var i = elements.length, model, appId = this.get('model.id');
 			var remaining = i;
 
@@ -214,8 +228,8 @@ define([], function () {
 
 			while (i--) {
 
-				if (elements[i].get('currentState') === transition ||
-					elements[i].get('currentState') === endState) {
+				if (elements[i].get('currentState').toLowerCase() === transition.toLowerCase() ||
+					elements[i].get('currentState').toLowerCase() === endState.toLowerCase()) {
 					remaining --;
 					continue;
 				}
@@ -235,23 +249,23 @@ define([], function () {
 
 			}
 
+			if (!remaining  && typeof done === 'function') {
+			  done();
+			}
+
 		},
 
 		startAll: function (kind) {
 
 			var elements = this.get('elements.' + kind + '.content');
-
-			C.Util.interrupt();
-			this.transition(elements, 'start', 'starting', 'running', C.Util.proceed);
+			this.transition(elements, 'start', 'starting', 'running');
 
 		},
 
 		stopAll: function (kind) {
 
 			var elements = this.get('elements.' + kind + '.content');
-
-			C.Util.interrupt();
-			this.transition(elements, 'stop', 'stopping', 'stopped', C.Util.proceed);
+			this.transition(elements, 'stop', 'stopping', 'stopped');
 
 		},
 

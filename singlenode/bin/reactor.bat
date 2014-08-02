@@ -231,7 +231,7 @@ attrib +h %~dsp0MyProg.pid >NUL
 findstr /R /C:".*Failed to start server.*" %CONTINUUITY_HOME%\logs\reactor-process.log >NUL 2>&1
 if %errorlevel% == 0 GOTO :ServerError
 
-findstr /R /C:".*Continuuity Reactor started successfully.*" %CONTINUUITY_HOME%\logs\reactor-process.log >NUL 2>&1
+findstr /R /C:"..* started successfully.*" %CONTINUUITY_HOME%\logs\reactor-process.log >NUL 2>&1
 if not %errorlevel% == 0 GOTO :SearchLogs
 if %errorlevel% == 0 GOTO :ServerSuccess
 :EndSearchLogs

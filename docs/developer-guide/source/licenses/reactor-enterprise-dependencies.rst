@@ -1,8 +1,8 @@
 .. :author: Continuuity, Inc.
-   :version: 2.3.0
+   :version: 2.4.0
 
 ============================================
-Continuuity Reactor 2.3.0
+Continuuity Reactor 2.4.0
 ============================================
 
 Continuuity Reactor Distributed Dependencies

@@ -5,9 +5,6 @@
 Introduction
 ===================================
 
-.. reST Editor: .. section-numbering::
-.. reST Editor: .. contents::
-
 The Challenge of Big Data Applications
 ======================================
 
@@ -151,6 +148,46 @@ deployed and running, you can easily interact with it from virtually any externa
 by accessing the Streams, Datasets, and Procedures using the Java APIs, REST or other 
 network protocols.
 
+Reactor functions as a middle-tier application platform. As seen in the diagram below,
+it provides an interface (using either HTTP REST or Java APIs) to clients through a Router 
+along with services and features that run inside YARN containers in Hadoop.
+
+.. image:: _images/Arch_Diagram.png
+   :width: 6in
+   :align: center
+
+These services and features include:
+
+- **Dataset Abstractions:** with globally consistent transactions provided by using 
+  `Cask Tephra <https://github.com/continuuity/tephra/blob/develop/README.rst>`__, these 
+  abstractions provide generic, reusable Java implementations of common data patterns;
+
+- **Streams:** the means for ingesting data from external systems in real time;
+
+- **Realtime Processing using Flows:** developer-implemented, real-time Stream processors,
+  comprised of one or more *Flowlets* wired together into a directed acyclic graph;
+
+- **Batch Processing:** using MapReduce and Workflow Schedules, as in conventional
+  Hadoop systems;
+
+- **Ad-Hoc SQL Queries:** for datasets that implement methods for obtaining the schema
+  and scanning the data record by record, you can access and query data using SQL;
+
+- **Stored Procedures:** allowing synchronous calls into the Server from an external system
+  and the performance of server-side processing on-demand, similar to a stored procedure in
+  a traditional database;
+
+- **Metrics, Logging and Monitoring:** system and user-defined metrics, along with standard
+  SLF4J logs, a testing framework and the ability to attach a remote debugger;
+
+- **Management Dashboard:** available for deploying, querying and managing the Server;
+
+- **Different Runtimes:** single-node (useful for learning, prototyping and testing),
+  hosted in the Cloud, and Enterprise versions;
+
+- **YARN containers:** services are run in YARN containers in Hadoop, providing access to
+  HBase and HDFS, giving the scalability and performance of Hadoop without the complexity. 
+
 In the next section, we will compare three application architectures and their pros and cons.
 This will give you a good understanding of the benefit of architecting
 Big Data applications using Continuuity Reactor.
@@ -174,6 +211,8 @@ a log collector to extract data, transformation of the logs with simple filterin
 normalization, and performs the loading into the database of the events.
 
 .. image:: _images/ArchitectureDiagram_1.png
+   :width: 6in
+   :align: center
 
 The disadvantages of this approach include:
 
@@ -196,6 +235,8 @@ This is just a summary of the many components required to implement this solutio
 (Don’t worry if you are not familiar with these technology frameworks.)
 
 .. image:: _images/ArchitectureDiagram_2.png
+   :width: 6in
+   :align: center
 
 The disadvantages of this approach include:
 
@@ -214,13 +255,15 @@ Reactor functions as a middle-tier application platform, exposing simple, high-l
 abstractions to perform data collection, processing, storage and query. Logs are collected
 by `Streams <programming.html#streams>`__, while `Flows <programming.html#flows>`__
 do basic aggregation and realtime analysis. Advanced, off-line
-aggregation is performed by `Map Reduce jobs <programming.html#mapreduce>`__ and 
+aggregation is performed by `MapReduce <programming.html#mapreduce>`__ and 
 `Workflow <programming.html#workflows>`__ components. 
 `Procedures <programming.html#procedures>`__ provide
 stored queries. The application can now be scaled independent of the underlying
 infrastructure.
 
 .. image:: _images/ArchitectureDiagram_3.png
+   :width: 6in
+   :align: center
 
 The advantages of this approach include:
 
@@ -236,3 +279,6 @@ Now that you've had an introduction to Continuuity Reactor, take a look at:
 - `Continuuity Reactor Quick Start <quickstart.html>`_,
   which guides you through installing Continuuity Reactor and
   running and modifying an example application.
+
+.. |(TM)| unicode:: U+2122 .. trademark sign
+   :trim:
