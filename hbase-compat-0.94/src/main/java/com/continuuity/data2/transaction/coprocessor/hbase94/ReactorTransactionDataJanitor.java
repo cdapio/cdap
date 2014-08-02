@@ -16,11 +16,15 @@
 
 package com.continuuity.data2.transaction.coprocessor.hbase94;
 
+import com.continuuity.data2.increment.hbase94.IncrementFilter;
 import com.continuuity.data2.transaction.coprocessor.ReactorTransactionStateCacheSupplier;
+import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.coprocessor.TransactionStateCache;
 import com.continuuity.tephra.coprocessor.hbase94.TransactionDataJanitor;
+import com.continuuity.tephra.coprocessor.hbase94.TransactionVisibilityFilter;
 import com.google.common.base.Supplier;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
+import org.apache.hadoop.hbase.filter.Filter;
 
 /**
  * Implementation of the {@link com.continuuity.tephra.coprocessor.hbase94.TransactionDataJanitor}
@@ -38,5 +42,10 @@ public class ReactorTransactionDataJanitor extends TransactionDataJanitor {
       tableNamespace = parts[0];
     }
     return new ReactorTransactionStateCacheSupplier(tableNamespace, env.getConfiguration());
+  }
+
+  @Override
+  protected Filter getTransactionFilter(Transaction tx) {
+    return new TransactionVisibilityFilter(tx, ttlByFamily, allowEmptyValues, new IncrementFilter());
   }
 }

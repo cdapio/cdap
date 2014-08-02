@@ -11,6 +11,18 @@ define([
 			template: Em.Handlebars.compile(Template),
 			classNames: ['modal', 'hide', 'fade'],
 			elementId: 'modal-from-dom',
+			
+			didInsertElement: function () {
+				var self = this;
+				
+				// Hide on escape.
+				$(document).keyup(function (e) {
+					if(e.which == 27) {
+						self.hide();
+					}
+				});
+			},
+			
 			show: function (title, body, callback, nocancel) {
 				this.set('title', title);
 				this.set('body', body);
@@ -31,9 +43,13 @@ define([
 				});
 
 				var el = $(this.get('element'));
-				el.modal('show');
+				el.modal({
+					show: true,
+					backdrop: "static"
+				});
 
 			},
+
 			hide: function (callback) {
 
 				var el = $(this.get('element'));

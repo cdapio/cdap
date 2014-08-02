@@ -25,8 +25,10 @@ import com.continuuity.explore.service.UnexpectedQueryStatusException;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.UnsupportedTypeException;
+import com.continuuity.proto.ColumnDesc;
 
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -36,6 +38,7 @@ import java.io.StringWriter;
 import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -134,15 +137,56 @@ public class DatasetExploreFacade {
     }
   }
 
-  public static <ROW> String generateCreateStatement(String name, RecordScannable<ROW> scannable)
-    throws UnsupportedTypeException {
-    String hiveSchema = hiveSchemaFor(scannable);
+  /**
+   * Return a list of datasets Hive table names. If Explore is disabled, an empty list is returned.
+   */
+  public List<String> getExplorableDatasetsTableNames() throws SQLException, ExploreException {
+    if (!exploreEnabled) {
+      ImmutableList.of();
+    }
 
+    // NOTE: here we return all the hive tables, because, depending on the user,
+    // the prefix of the table might be different. Today they all start with "continuuity_user"
+    // but this might not be the case in the future.
+    ListenableFuture<ExploreExecutionResult> tablesFuture = exploreClient.tables(null, null, "%", null);
+    try {
+      ExploreExecutionResult results = tablesFuture.get();
+      int tableNameIdx = -1;
+      for (ColumnDesc columnDesc : results.getResultSchema()) {
+        if (columnDesc.getName().equals("TABLE_NAME")) {
+          tableNameIdx = columnDesc.getPosition() - 1;
+          break;
+        }
+      }
+      if (tableNameIdx == -1) {
+        throw new ExploreException("Could not find TABLE_NAME column in getTables request.");
+      }
+      ImmutableList.Builder<String> hiveTablesBuilder = ImmutableList.builder();
+      while (results.hasNext()) {
+        hiveTablesBuilder.add(results.next().getColumns().get(tableNameIdx).toString().toLowerCase());
+      }
+      return hiveTablesBuilder.build();
+    } catch (InterruptedException e) {
+      LOG.error("Caught exception", e);
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
+    } catch (ExecutionException e) {
+      LOG.error("Error executing query", e);
+      throw new SQLException(e);
+    }
+  }
+
+  public static String getHiveTableName(String datasetName) {
     // TODO: fix namespacing - REACTOR-264
     // Instnace name is like continuuity.user.my_table.
     // For now replace . with _ since Hive tables cannot have . in them.
-    String tableName = name.replaceAll("\\.", "_");
+    return datasetName.replaceAll("\\.", "_").toLowerCase();
+  }
 
+  public static <ROW> String generateCreateStatement(String name, RecordScannable<ROW> scannable)
+    throws UnsupportedTypeException {
+    String hiveSchema = hiveSchemaFor(scannable);
+    String tableName = getHiveTableName(name);
     return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Continuuity Reactor Dataset\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
                          tableName, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
@@ -150,12 +194,7 @@ public class DatasetExploreFacade {
   }
 
   public static String generateDeleteStatement(String name) {
-    // TODO: fix namespacing - REACTOR-264
-    // Instnace name is like continuuity.user.my_table.
-    // For now replace . with _ since Hive tables cannot have . in them.
-    String tableName = name.replaceAll("\\.", "_");
-
-    return String.format("DROP TABLE IF EXISTS %s", tableName);
+    return String.format("DROP TABLE IF EXISTS %s", getHiveTableName(name));
   }
 
   /**

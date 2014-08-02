@@ -8,6 +8,9 @@ define([], function () {
 
 	var AJAX_TIMEOUT = 30000;
 
+	// Don't show warnings for these calls.
+	var WARN_EXCLUDE = ['status', 'metrics'];
+
 	var Resource = Em.Object.extend({
 
 		// Callable methods on HTTP resource.
@@ -51,17 +54,13 @@ define([], function () {
 				callback(result, jqXhr.status);
 
 			}).fail(function (xhr, status, error) {
-
 				var error = xhr.responseText || '';
-
-				if (error) {
-
-          C.Util.showWarning(error);
-
-				} else {
-
-          C.Util.showWarning('Encountered a connection problem.');
-
+				if (self.isWarn(path)) {
+					if (error) {
+	          C.Util.showWarning(error);
+					} else {
+	          C.Util.showWarning('Encountered a connection problem.');
+					}	
 				}
 				callback(error, xhr.status);
 
@@ -94,7 +93,7 @@ define([], function () {
 				options['contentType'] = 'application/json';
 			}
 			$.ajax(options).done(function (response, statusText, xhr) {
-				if (response.error && response.error.fatal) {
+				if (response.error && response.error.fatal && self.isWarn(path)) {
           C.Util.showWarning(response.error.fatal);
 				} else {
 					callback(response, xhr.status, statusText);
@@ -231,6 +230,18 @@ define([], function () {
 			return (typeof callback === 'function' ? callback : function () {
 				Em.debug('No callback provided for HTTP response.');
 			});
+		},
+
+		/**
+		 * Determine show warning.
+		 */
+		isWarn: function(path) {
+      for (var i = 0, len = WARN_EXCLUDE.length; i < len; i++) {
+      	if (path.indexOf(WARN_EXCLUDE[i]) !== -1) {
+      		return false;
+      	}
+      }
+      return true;
 		}
 
 	});

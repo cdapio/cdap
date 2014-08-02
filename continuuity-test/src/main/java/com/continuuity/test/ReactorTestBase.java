@@ -70,6 +70,10 @@ import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.metrics.query.MetricsQueryService;
+import com.continuuity.tephra.TransactionAware;
+import com.continuuity.tephra.TransactionContext;
+import com.continuuity.tephra.TransactionFailureException;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.test.internal.AppFabricClient;
 import com.continuuity.test.internal.ApplicationManagerFactory;
@@ -82,6 +86,7 @@ import com.continuuity.test.internal.StreamWriterFactory;
 import com.continuuity.test.internal.TestMetricsCollectionService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -108,6 +113,7 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.HashMap;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link Application}.
@@ -125,6 +131,7 @@ public class ReactorTestBase {
   private static SchedulerService schedulerService;
   private static DatasetService datasetService;
   private static DatasetFramework datasetFramework;
+  private static TransactionSystemClient txSystemClient;
   private static DiscoveryServiceClient discoveryClient;
   private static ExploreExecutorService exploreExecutorService;
   private static ExploreClient exploreClient;
@@ -271,6 +278,7 @@ public class ReactorTestBase {
     exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     exploreExecutorService.startAndWait();
     exploreClient = injector.getInstance(ExploreClient.class);
+    txSystemClient = injector.getInstance(TransactionSystemClient.class);
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
@@ -377,6 +385,43 @@ public class ReactorTestBase {
 
     datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
     return datasetFramework.getAdmin(datasetInstanceName, null);
+  }
+
+  /**
+   * Gets Dataset manager of Dataset instance of type <T>
+   * @param datasetInstanceName - instance name of dataset
+   * @return Dataset Manager of Dataset instance of type <T>
+   * @throws Exception
+   */
+  @Beta
+  protected final <T> DataSetManager<T> getDataset(String datasetInstanceName)
+    throws Exception {
+    @SuppressWarnings("unchecked")
+    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, new HashMap<String, String>(), null);
+    try {
+      TransactionAware txAwareDataset = (TransactionAware) dataSet;
+      final TransactionContext txContext =
+        new TransactionContext(txSystemClient, Lists.newArrayList(txAwareDataset));
+      txContext.start();
+      return new DataSetManager<T>() {
+        @Override
+        public T get() {
+          return dataSet;
+        }
+
+        @Override
+        public void flush() {
+          try {
+            txContext.finish();
+            txContext.start();
+          } catch (TransactionFailureException e) {
+            throw Throwables.propagate(e);
+          }
+        }
+      };
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**

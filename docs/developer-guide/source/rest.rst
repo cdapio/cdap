@@ -1,13 +1,10 @@
 .. :author: Continuuity, Inc.
-   :version: 2.3.0
+   :version: 2.4.0
    :description: HTTP Interface to the Continuuity Reactor
 
 =================================
 Continuuity Reactor HTTP REST API
 =================================
-
-.. reST Editor: .. section-numbering::
-.. reST Editor: .. contents::
 
 .. rst2pdf: .. contents::
 .. rst2pdf: config _templates/pdf-config
@@ -39,32 +36,32 @@ In this API, *client* refers to an external application that is calling the Cont
 
 In this API, *Application* refers to a user Application that has been deployed into the Continuuity Reactor.
 
-All URLs referenced in this API have this base::
+All URLs referenced in this API have this base URL::
 
-	http://<gateway>:10000/v2
+  http://<host>:10000/v2
 
-where ``<gateway>`` is the URL of the Continuuity Reactor. The base URL is represented as::
+where ``<host>`` is the URL of the Continuuity Reactor. The base URL is represented as::
 
-	<base-url>
+  <base-url>
 
 For example::
 
-	PUT <base-url>/streams/<new-stream-id>
+  PUT <base-url>/streams/<new-stream-id>
 
 means
 ::
 
-	PUT http://<gateway>:10000/v2/streams/<new-stream-id>
-	
+  PUT http://<host>:10000/v2/streams/<new-stream-id>
+  
 
 Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
 
-	PUT <base-url>/streams/<new-stream-id>
+  PUT <base-url>/streams/<new-stream-id>
 
 indicates that—in addition to the ``<base-url>``—the text ``<new-stream-id>`` is a variable
 and that you are to replace it with your value, perhaps in this case *mystream*::
 
-	PUT <base-url>/streams/mystream
+  PUT <base-url>/streams/mystream
 
 .. rst2pdf: PageBreak
 
@@ -119,7 +116,7 @@ When you interact with a Sandboxed Continuuity Reactor,
 the Continuuity HTTP APIs require that you use SSL for the connection
 and that you authenticate your request by sending your API key in an HTTP header::
 
-	X-Continuuity-ApiKey: <api-key>
+  X-Continuuity-ApiKey: <api-key>
 
 .. list-table::
    :widths: 15 85
@@ -158,7 +155,7 @@ Creating a Stream
 -----------------
 A Stream can be created with an HTTP PUT method to the URL::
 
-	PUT <base-url>/streams/<new-stream-id>
+  PUT <base-url>/streams/<new-stream-id>
 
 .. list-table::
    :widths: 20 80
@@ -202,7 +199,7 @@ Sending Events to a Stream
 --------------------------
 An event can be sent to a Stream by sending an HTTP POST method to the URL of the Stream::
 
-	POST <base-url>/streams/<stream-id>
+  POST <base-url>/streams/<stream-id>
 
 .. list-table::
    :widths: 20 80
@@ -244,7 +241,7 @@ Comments
 - The body of the request must contain the event in binary form.
 - You can pass headers for the event as HTTP headers by prefixing them with the *stream-id*::
 
-	<stream-id>.<property>:<string value>
+  <stream-id>.<property>:<string value>
 
   After receiving the request, the HTTP handler transforms it into a Stream event:
 
@@ -260,7 +257,7 @@ Reading Events from a Stream: Getting a Consumer-ID
 ---------------------------------------------------
 Get a *Consumer-ID* for a Stream by sending an HTTP POST method to the URL::
 
-	POST <base-url>/streams/<stream-id>/consumer-id
+  POST <base-url>/streams/<stream-id>/consumer-id
 
 .. list-table::
    :widths: 20 80
@@ -303,7 +300,7 @@ Comments
   first obtain a consumer (group) id, which is then passed to subsequent read requests.
 - The ``Consumer-ID`` is returned in a response header and—for convenience—also in the body of the response::
 
-	X-Continuuity-ConsumerId: <consumer-id>
+    X-Continuuity-ConsumerId: <consumer-id>
 
   Once you have the ``Consumer-ID``, single events can be read from the Stream.
 
@@ -313,7 +310,7 @@ Reading Events from a Stream: Using the Consumer-ID
 ---------------------------------------------------
 A read is performed as an HTTP POST method to the URL::
 
-	POST <base-url>/streams/<stream-id>/dequeue
+  POST <base-url>/streams/<stream-id>/dequeue
 
 .. list-table::
    :widths: 20 80
@@ -326,7 +323,7 @@ A read is performed as an HTTP POST method to the URL::
 
 The request must pass the ``Consumer-ID`` in a header of the form::
 
-	X-Continuuity-ConsumerId: <consumer-id>
+  X-Continuuity-ConsumerId: <consumer-id>
 
 HTTP Responses
 ..............
@@ -367,7 +364,7 @@ You can always start reading from the first event by getting a new ``Consumer-ID
 The response will contain the binary body of the event in its body and a header for each header of the Stream event,
 analogous to how you send headers when posting an event to the Stream::
 
-	<stream-id>.<property>:<value>
+  <stream-id>.<property>:<value>
 
 .. rst2pdf: PageBreak
 
@@ -377,7 +374,7 @@ Truncation means the deletion of all events that were written to the Stream.
 This is permanent and cannot be undone.
 A Stream can be truncated with an HTTP POST method to the URL::
 
-	POST <base-url>/streams/<stream-id>/truncate
+  POST <base-url>/streams/<stream-id>/truncate
 
 .. list-table::
    :widths: 20 80
@@ -421,7 +418,7 @@ it was written to the Stream.
 The default TTL for all Streams is infinite, meaning that events will never expire.
 The TTL property of a Stream can be changed with an HTTP PUT method to the URL::
 
-	PUT <base-url>/streams/<stream-id>/config
+  PUT <base-url>/streams/<stream-id>/config
 
 .. list-table::
    :widths: 20 80
@@ -434,7 +431,7 @@ The TTL property of a Stream can be changed with an HTTP PUT method to the URL::
 
 The new TTL value is passed in the request body as::
 
-	{ "ttl" : <ttl-in-seconds> }
+  { "ttl" : <ttl-in-seconds> }
 
 .. list-table::
    :widths: 20 80
@@ -471,7 +468,7 @@ Example
 
        with the new TTL value as a JSON string in the body::
 
-	  { "ttl" : 86400 }
+         { "ttl" : 86400 }
      
    * - Description
      - Change the TTL property of the Stream named *mystream* to 1 day
@@ -487,7 +484,7 @@ Continuuity Reactor SDK distribution.
 
 For usage and documentation of options, run at the command line::
 
-	$ stream-client --help
+  $ stream-client --help
 
 
 .. rst2pdf: PageBreak
@@ -500,13 +497,13 @@ The Dataset API allows you to interact with Datasets through HTTP. You can list,
 
 .. only:: html
 
-	`Continuuity Reactor Advanced Features, Datasets section <advanced.html#datasets-system>`__
+  `Continuuity Reactor Advanced Features, Datasets section <advanced.html#datasets-system>`__
 
 .. only:: pdf
 
 .. rst2pdf: CutStop
 
-	`Continuuity Reactor Advanced Features, Datasets section <http://continuuity.com/docs/reactor/current/en/advanced.html#datasets-system>`__
+  `Continuuity Reactor Advanced Features, Datasets section <http://continuuity.com/docs/reactor/current/en/advanced.html#datasets-system>`__
 
 
 Listing all Datasets
@@ -514,21 +511,21 @@ Listing all Datasets
 
 You can list all Datasets in the Continuuity Reactor by issuing an HTTP GET request to the URL::
 
-	GET <base-url>/data/datasets
+  GET <base-url>/data/datasets
 
 The response body will contain a JSON-formatted list of the existing Datasets::
 
-	{
-	   "name":"continuuity.user.purchases",
-	   "type":"com.continuuity.api.dataset.lib.ObjectStore",
-	   "properties":{
-	      "schema":"...",
-	      "type":"..."
-	   },
-	   "datasetSpecs":{
-	      ...
-	   }
-	 }
+  {
+     "name":"continuuity.user.purchases",
+     "type":"com.continuuity.api.dataset.lib.ObjectStore",
+     "properties":{
+        "schema":"...",
+        "type":"..."
+     },
+     "datasetSpecs":{
+        ...
+     }
+   }
 
 .. rst2pdf: PageBreak
 
@@ -537,7 +534,7 @@ Creating a Dataset
 
 You can create a Dataset by issuing an HTTP PUT request to the URL::
 
-	PUT <base-url>/data/datasets/<dataset-name>
+  PUT <base-url>/data/datasets/<dataset-name>
   
 with JSON-formatted name of the dataset type and properties in a body::
 
@@ -590,6 +587,67 @@ Example
 
 .. rst2pdf: PageBreak
 
+
+Updating an Existing Dataset
+----------------------------
+
+You can update an existing Dataset's table and properties by issuing an HTTP PUT request to the URL::
+
+	PUT <base-url>/data/datasets/<dataset-name>
+
+with JSON-formatted name of the dataset type and properties in the body::
+
+  {
+     "typeName":"<type-name>",
+     "properties":{<properties>},
+     "update":"true"
+  }
+
+:Note: The Dataset must exist, and the instance and type passed must match with the existing Dataset.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<dataset-name>``
+     - Name of the existing Dataset
+   * - ``<type-name>``
+     - Type of the existing Dataset
+   * - ``<properties>``
+     - Dataset properties as a map of String to String
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Requested Dataset was successfully updated
+   * - ``404 Not Found``
+     - Requested Dataset instance was not found
+   * - ``409 Conflict``
+     - Dataset Type provided for update is different from the existing Dataset Type
+
+Example
+.......
+.. list-table::
+   :widths: 25 75
+   :stub-columns: 1
+
+   * - HTTP Request
+     - ``PUT <base-url>/data/datasets/mydataset``
+   * - Body
+     - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"7200000"},"update":"true"}``
+   * - Description
+     - For the "mydataset" of type "Table", updates the Dataset and its time-to-live property to 2 hours
+
+.. rst2pdf: PageBreak
+
 Deleting a Dataset
 ------------------
 
@@ -626,7 +684,7 @@ Example
 Deleting all Datasets
 ---------------------
 
-You can delete all Datasets by issuing an HTTP DELETE request to the URL::
+You can delete all Datasets (see **Note** below) by issuing an HTTP DELETE request to the URL::
 
   DELETE <base-url>/data/unrecoverable/datasets
 
@@ -640,6 +698,8 @@ HTTP Responses
      - Description
    * - ``200 OK``
      - All Datasets were successfully deleted
+
+:Note: This operation will only be successful if the property ``enable.unrecoverable.reset`` in ``continuuity-site.xml`` is set to ``true``. Otherwise, this operation will return "403 Forbidden".
 
 Truncating a Dataset
 --------------------
@@ -677,7 +737,7 @@ Creating a new Table
 
 To create a new table, issue an HTTP PUT method to the URL::
 
-	PUT <base-url>/tables/<table-name>
+  PUT <base-url>/tables/<table-name>
 
 .. list-table::
    :widths: 20 80
@@ -728,7 +788,7 @@ Writing Data to a Table
 -----------------------
 To write to a table, send an HTTP PUT method to the table’s URI::
 
-	PUT <base-url>/tables/<table-name>/rows/<row-key>
+  PUT <base-url>/tables/<table-name>/rows/<row-key>
 
 .. list-table::
    :widths: 20 80
@@ -772,7 +832,7 @@ Comments
 In the body of the request, you must specify the columns and values
 that you want to write to the Table as a JSON String map. For example::
 
-	{ "x":"y", "y":"a", "z":"1" }
+  { "x":"y", "y":"a", "z":"1" }
 
 This writes three columns named *x*, *y*, and *z* with values *y*, *a*, and *1*, respectively.
 
@@ -783,7 +843,7 @@ Reading Data from a Table
 To read data from a Table, address the row that you want to read directly
 in an HTTP GET method to the table’s URI::
 
-	GET <base-url>/tables/<table-name>/rows/<row-key>[?<column-identifier>]
+  GET <base-url>/tables/<table-name>/rows/<row-key>[?<column-identifier>]
 
 .. list-table::
    :widths: 20 80
@@ -832,7 +892,7 @@ Comments
 The response will be a JSON String representing a map from column name to value.
 For example, reading the row that was written in the `Writing Data to a Table`_, the response is::
 
-	{"x":"y","y":"a","z":"1"}
+  {"x":"y","y":"a","z":"1"}
 
 If you are only interested in selected columns,
 you can specify a list of columns explicitly or give a range of columns.
@@ -841,19 +901,19 @@ For example:
 
 To return only columns *x* and *y*::
 
-	GET ... /rows/<row-key>?columns=x,y
+  GET ... /rows/<row-key>?columns=x,y
 
 To return all columns equal to or greater than (inclusive) *c5*::
 
-	GET ... /rows/<row-key>?start=c5
+  GET ... /rows/<row-key>?start=c5
 
 To return all columns less than (exclusive, not including) *c5*::
 
-	GET ... /rows/<row-key>?stop=c5
+  GET ... /rows/<row-key>?stop=c5
 
 To return all columns equal to or greater than (inclusive) *c2* and less than (exclusive, not including) *c5*::
 
-	GET .../rows/<row-key>?start=c2&stop=c5
+  GET .../rows/<row-key>?start=c2&stop=c5
 
 
 .. rst2pdf: PageBreak
@@ -863,7 +923,7 @@ Increment Data in a Table
 You can perform an atomic increment of cells of a Table's row, and receive back the incremented values,
 by issue an HTTP POST method to the row’s URL::
 
-	POST <base-url>/tables/<table-name>/rows/<row-key>/increment
+  POST <base-url>/tables/<table-name>/rows/<row-key>/increment
 
 .. list-table::
    :widths: 20 80
@@ -908,7 +968,7 @@ Comments
 In the body of the method, you must specify the columns and values that you want to increment them by
 as a JSON map from Strings to Long numbers, such as::
 
-	{ "x": 1, "y": 7 }
+  { "x": 1, "y": 7 }
 
 This HTTP call has the same effect as the corresponding Java Table Increment method.
 
@@ -916,7 +976,7 @@ If successful, the response contains a JSON String map from the column keys to t
 
 For example, if the existing value of column *x* was 4, and column *y* did not exist, then the response would be::
 
-	{"x":5,"y":7}
+  {"x":5,"y":7}
 
 Column *y* is newly created.
 
@@ -926,7 +986,7 @@ Delete Data from a Table
 ------------------------
 To delete from a table, submit an HTTP DELETE method::
 
-	DELETE <base-url>/tables/<table-name>/rows/<row-key>[?<column-identifier>]
+  DELETE <base-url>/tables/<table-name>/rows/<row-key>[?<column-identifier>]
 
 .. list-table::
    :widths: 20 80
@@ -941,7 +1001,7 @@ To delete from a table, submit an HTTP DELETE method::
    * - ``<column-identifiers>``
      - An optional combination of attributes and values such as::
 
-       	start=<column-id> | stop=<column-id> | columns=<column-id>,<column-id>
+         start=<column-id> | stop=<column-id> | columns=<column-id>,<column-id>
 
 ..
 
@@ -982,7 +1042,7 @@ Deleting Data from a Dataset
 
 To clear a Dataset of all data, submit an HTTP POST request::
 
-	POST <base-url>/datasets/<dataset-name>/truncate
+  POST <base-url>/datasets/<dataset-name>/truncate
 
 .. list-table::
    :widths: 20 80
@@ -1042,15 +1102,15 @@ Be aware that the same encoding applies to all keys and values involved in a req
 
 For example, suppose you incremented table *counters*, row *a*, column *x* by 42::
 
-	POST <base-url>/tables/counters/rows/a/increment {"x":42}
+  POST <base-url>/tables/counters/rows/a/increment {"x":42}
 
 Now the value of column *x* is the 8-byte number 42. If you query for the value of this column::
 
-	GET <base-url>/tables/counters/rows/a?columns=x
+  GET <base-url>/tables/counters/rows/a?columns=x
 
 The returned JSON String map will contain a non-printable string for the value of column *x*::
 
-	{"x":"\u0000\u0000\u0000\u0000\u0000\u0000\u0000*"}
+  {"x":"\u0000\u0000\u0000\u0000\u0000\u0000\u0000*"}
 
 Note the Unicode escapes in the string, and the asterisk at the end (which is the character at code point 42).
 
@@ -1059,11 +1119,11 @@ that will require that you also encode the row key
 (*a*, encoded as *61*)
 and the column key (*x*, encoded as *78*) in your request as hexadecimal::
 
-	GET <base-url>/tables/counters/rows/61?columns=78&encoding=hex
+  GET <base-url>/tables/counters/rows/61?columns=78&encoding=hex
 
 The response now contains both the column key and the value as hexadecimal strings::
 
-	{"78":"000000000000002a"}
+  {"78":"000000000000002a"}
 
 The supported encodings are:
 
@@ -1097,11 +1157,11 @@ Your Table values may frequently be counters (numbers), whereas the row and colu
 In such cases, it is more convenient to represent your Table values as numeric strings,
 by specifying ``counter=true``. For example::
 
-	GET <base-url>/tables/counters/rows/a?columns=x&counter=true
+  GET <base-url>/tables/counters/rows/a?columns=x&counter=true
 
 The response now contains the column key as text and the row value as a numeric string::
 
-	{"x":"42"}
+  {"x":"42"}
 
 Note that you can also specify the ``counter=true`` parameter when writing to a Table.
 This allows you to specify values as numeric strings while using a different encoding for row and column keys.
@@ -1149,7 +1209,7 @@ Comments
 If the query execution was successfully initiated, the body will contain a handle 
 used to identify the query in subsequent requests::
 
-	{ "handle":"<query-handle>" }
+  { "handle":"<query-handle>" }
 
 .. rst2pdf: PageBreak
 
@@ -1177,10 +1237,10 @@ Comments
 If the query exists, the body will contain the status of its execution
 and whether the query has a results set::
 
-	{
-	  "status":"<status-code>",
-	  "hasResults":<boolean>
-	 }
+  {
+    "status":"<status-code>",
+    "hasResults":<boolean>
+   }
 
 Status codes include ``INITIALIZED``, ``RUNNING``, ``FINISHED``, ``CANCELED``, ``CLOSED``,
 ``ERROR``, ``UNKNOWN``, and ``PENDING``.
@@ -1210,10 +1270,10 @@ Comments
 The query's result schema is returned in a JSON body as a list of columns,
 each given by its name, type and position; if the query has no result set, this list is empty::
 
-	[
-	  {"name":"<name>", "type":"<type>", "position":<int>},
-	  ...
-	]
+  [
+    {"name":"<name>", "type":"<type>", "position":<int>},
+    ...
+  ]
 
 The type of each column is a data type as defined in the `Hive language manual
 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL>`_.
@@ -1252,10 +1312,10 @@ Comments
 The results are returned in a JSON body as a list of columns,
 each given as a structure containing a list of column values.::
 
-	[
-	  { "columns": [ <value_1>, <value_2>, ..., ] },
-	  ...
-	]
+  [
+    { "columns": [ <value_1>, <value_2>, ..., ] },
+    ...
+  ]
 
 The value at each position has the type that was returned in the result schema for that position.
 For example, if the returned type was ``INT``, then the value will be an integer literal,
@@ -1331,7 +1391,7 @@ and the arguments as a JSON string in the body of the request.
 
 The request is an HTTP POST::
 
-	POST <base-url>/apps/<app-id>/procedures/<procedure-id>/methods/<method-id>
+  POST <base-url>/apps/<app-id>/procedures/<procedure-id>/methods/<method-id>
 
 .. list-table::
    :widths: 20 80
@@ -1388,22 +1448,22 @@ Deploy an Application
 ---------------------
 To deploy an Application from your local file system, submit an HTTP POST request::
 
-	POST <base-url>/apps
+  POST <base-url>/apps
 
 with the name of the JAR file as a header::
 
-	X-Archive-Name: <JAR filename>
+  X-Archive-Name: <JAR filename>
 
 and its content as the body of the request::
 
-	<JAR binary content>
+  <JAR binary content>
 
 Invoke the same command to update an Application to a newer version.
 However, be sure to stop all of its Flows, Procedures and MapReduce jobs before updating the Application.
 
 To list all of the deployed applications, issue an HTTP GET request::
 
-	GET <base-url>/apps
+  GET <base-url>/apps
 
 This will return a JSON String map that lists each Application with its name and description.
 
@@ -1411,7 +1471,7 @@ Delete an Application
 ---------------------
 To delete an Application together with all of its Flows, Procedures and MapReduce jobs, submit an HTTP DELETE::
 
-	DELETE <base-url>/apps/<application-name>
+  DELETE <base-url>/apps/<application-name>
 
 .. list-table::
    :widths: 25 75
@@ -1435,8 +1495,8 @@ Start, Stop, Status, and Runtime Arguments
 After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce 
 jobs, Workflows, and Custom Services, and query for their status using HTTP POST and GET methods::
 
-	POST <base-url>/apps/<app-id>/<element-type>/<element-id>/<operation>
-	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/status
+  POST <base-url>/apps/<app-id>/<element-type>/<element-id>/<operation>
+  GET <base-url>/apps/<app-id>/<element-type>/<element-id>/status
 
 .. list-table::
    :widths: 20 80
@@ -1473,28 +1533,28 @@ Examples
 
 When starting an element, you can optionally specify runtime arguments as a JSON map in the request body::
 
-	POST <base-url>/apps/HelloWorld/flows/WhoFlow/start
+  POST <base-url>/apps/HelloWorld/flows/WhoFlow/start
 
 with the arguments as a JSON string in the body::
 
-	{"foo":"bar","this":"that"}
+  {"foo":"bar","this":"that"}
 
 The Continuuity Reactor will use these these runtime arguments only for this single invocation of the
 element. To save the runtime arguments so that the Reactor will use them every time you start the element,
 issue an HTTP PUT with the parameter ``runtimeargs``::
 
-	PUT <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
+  PUT <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
 with the arguments as a JSON string in the body::
 
-	{"foo":"bar","this":"that"}
+  {"foo":"bar","this":"that"}
 
 .. rst2pdf: PageBreak
 
 To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET 
 request to the element's URL using the same parameter ``runtimeargs``::
 
-	GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
+  GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
 This will return the saved runtime arguments in JSON format.
 
@@ -1504,7 +1564,7 @@ Container Information
 To find out the address of an element's container host and the container’s debug port, you can query
 the Reactor for a Procedure, Flow or Service’s live info via an HTTP GET method::
 
-	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/live-info
+  GET <base-url>/apps/<app-id>/<element-type>/<element-id>/live-info
 
 .. list-table::
    :widths: 20 80
@@ -1521,7 +1581,7 @@ the Reactor for a Procedure, Flow or Service’s live info via an HTTP GET metho
 
 Example::
 
-	GET <base-url>/apps/WordCount/flows/WordCounter/live-info
+  GET <base-url>/apps/WordCount/flows/WordCounter/live-info
 
 The response is formatted in JSON; an example of this is shown in: 
 
@@ -1529,13 +1589,13 @@ The response is formatted in JSON; an example of this is shown in:
 
 .. only:: html
 
-	`Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`__
+  `Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`__
 
 .. only:: pdf
 
 .. rst2pdf: CutStop
 
-	`Continuuity Reactor Testing and Debugging Guide <http://continuuity.com/docs/reactor/current/en/debugging.html#debugging-reactor-applications>`__
+  `Continuuity Reactor Testing and Debugging Guide <http://continuuity.com/docs/reactor/current/en/debugging.html#debugging-reactor-applications>`__
 
 .. rst2pdf: PageBreak
 
@@ -1547,12 +1607,12 @@ Scaling Flowlets
 You can query and set the number of instances executing a given Flowlet
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-	GET <base-url>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
-	PUT <base-url>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
+  GET <base-url>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
+  PUT <base-url>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
 
 with the arguments as a JSON string in the body::
 
-	{ "instances" : <quantity> }
+  { "instances" : <quantity> }
 
 .. list-table::
    :widths: 20 80
@@ -1592,7 +1652,8 @@ Examples
 
        with the arguments as a JSON string in the body::
 
-	  { "instances" : 2 }
+         { "instances" : 2 }
+
    * - Description
      - Change the number of instances of the Flowlet *saver*
        in the Flow *WhoFlow* of the Application *HelloWorld*
@@ -1604,12 +1665,12 @@ Scaling Procedures
 In a similar way to `Scaling Flowlets`_, you can query or change the number of instances 
 of a Procedure by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-	GET <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
-	PUT <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
+  GET <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
+  PUT <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
 
 with the arguments as a JSON string in the body::
 
-	{ "instances" : <quantity> }
+  { "instances" : <quantity> }
 
 .. list-table::
    :widths: 20 80
@@ -1644,12 +1705,12 @@ Scaling Services
 You can query or change the number of instances of a Service's runnable
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-	GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
-	PUT <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
+  GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
+  PUT <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
 
 with the arguments as a JSON string in the body::
 
-	{ "instances" : <quantity> }
+  { "instances" : <quantity> }
 
 .. list-table::
    :widths: 20 80
@@ -1687,7 +1748,7 @@ Services), issue an HTTP GET to the element’s URL with the ``history`` paramet
 This will return a JSON list of all completed runs, each with a start time,
 end time and termination status::
 
-	GET <base-url>/apps/<app-id>/<element>/<element-id>/history
+  GET <base-url>/apps/<app-id>/<element>/<element-id>/history
 
 .. list-table::
    :widths: 20 80
@@ -1741,11 +1802,11 @@ For Workflows, you can also retrieve:
 
 - the schedules defined for a workflow (using the parameter ``schedules``)::
 
-	  GET <base-url>/apps/<app-id>/workflows/<workflow-id>/schedules
+    GET <base-url>/apps/<app-id>/workflows/<workflow-id>/schedules
 
 - the next time that the workflow is scheduled to run (using the parameter ``nextruntime``)::
 
-	  GET <base-url>/apps/<app-id>/workflows/<workflow-id>/nextruntime
+    GET <base-url>/apps/<app-id>/workflows/<workflow-id>/nextruntime
 
 .. rst2pdf: PageBreak
 
@@ -1759,11 +1820,11 @@ Example
 .......
 Promote the Application *HelloWorld* from your Local Reactor to your Sandbox::
 
-	POST <base-url>/apps/HelloWorld/promote
+  POST <base-url>/apps/HelloWorld/promote
 
 with the API Key in the header::
 
-	X-Continuuity-ApiKey: <api-key> {"hostname":"<sandbox>.continuuity.net"}
+  X-Continuuity-ApiKey: <api-key> {"hostname":"<sandbox>.continuuity.net"}
 
 .. list-table::
    :widths: 20 80
@@ -1786,7 +1847,7 @@ Downloading Logs
 You can download the logs that are emitted by any of the *Flows*, *Procedures*, *MapReduce* jobs,
 or *Services* running in the Continuuity Reactor. To do that, send an HTTP GET request::
 
-	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
+  GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
 
 .. list-table::
    :widths: 20 80
@@ -1822,7 +1883,7 @@ Comments
 ........
 The output is formatted as HTML-embeddable text; that is, characters that have a special meaning in HTML will be escaped. A line of the log may look like this::
 
-	2013-10-23 18:03:09,793 - INFO [FlowletProcessDriver-source-0-
+  2013-10-23 18:03:09,793 - INFO [FlowletProcessDriver-source-0-
         executor:c.c.e.c.StreamSource@-1] – source: Emitting line: this is an &amp; character
 
 Note how the context of the log line shows the name of the Flowlet (*source*), its instance number (0) as well as the original line in the Application code. The character *&* is escaped as ``&amp;``; if you don’t desire this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
@@ -1840,20 +1901,20 @@ the Developer Guide:
 
 .. only:: html
 
-	`Continuuity Reactor Operations Guide <operations.html>`__
+  `Continuuity Reactor Operations Guide <operations.html>`__
 
 .. only:: pdf
 
 .. rst2pdf: CutStop
 
-	`Continuuity Reactor Operations Guide <http://continuuity.com/docs/reactor/current/en/operations.html>`__
+  `Continuuity Reactor Operations Guide <http://continuuity.com/docs/reactor/current/en/operations.html>`__
 
 
 Metrics Requests
 ----------------
 The general form of a metrics request is::
 
-	GET <base-url>/metrics/<scope>/<context>/<metric>?<time-range>
+  GET <base-url>/metrics/<scope>/<context>/<metric>?<time-range>
 
 .. list-table::
    :widths: 20 80
@@ -1908,50 +1969,50 @@ User metrics are always in the Application context.
 
 For example, to retrieve the number of input data objects (“events”) processed by a Flowlet named *splitter*, in the Flow *CountRandomFlow* of the Application *CountRandom*, over the last 5 seconds, you can issue an HTTP GET method::
 
-	GET <base-url>/metrics/reactor/apps/CountRandom/flows/CountRandomFlow/flowlets/
+  GET <base-url>/metrics/reactor/apps/CountRandom/flows/CountRandomFlow/flowlets/
           splitter/process.events?start=now-5s&count=5
 
 This returns a JSON response that has one entry for every second in the requested time interval. It will have values only for the times where the metric was actually emitted (shown here "pretty-printed", unlike the actual responses)::
 
-	HTTP/1.1 200 OK
-	Content-Type: application/json
-	{"start":1382637108,"end":1382637112,"data":[
-	{"time":1382637108,"value":6868},
-	{"time":1382637109,"value":6895},
-	{"time":1382637110,"value":6856},
-	{"time":1382637111,"value":6816},
-	{"time":1382637112,"value":6765}]}
+  HTTP/1.1 200 OK
+  Content-Type: application/json
+  {"start":1382637108,"end":1382637112,"data":[
+  {"time":1382637108,"value":6868},
+  {"time":1382637109,"value":6895},
+  {"time":1382637110,"value":6856},
+  {"time":1382637111,"value":6816},
+  {"time":1382637112,"value":6765}]}
 
 If you want the number of input objects processed across all Flowlets of a Flow, you address the metrics API at the Flow context::
 
-	GET <base-url>/metrics/reactor/apps/CountRandom/flows/
-		CountRandomFlow/process.events?start=now-5s&count=5
+  GET <base-url>/metrics/reactor/apps/CountRandom/flows/
+    CountRandomFlow/process.events?start=now-5s&count=5
 
 Similarly, you can address the context of all flows of an Application, an entire Application, or the entire Reactor::
 
-	GET <base-url>/metrics/reactor/apps/CountRandom/
-		flows/process.events?start=now-5s&count=5
-	GET <base-url>/metrics/reactor/apps/CountRandom/
-		process.events?start=now-5s&count=5
-	GET <base-url>/metrics/reactor/process.events?start=now-5s&count=5
+  GET <base-url>/metrics/reactor/apps/CountRandom/
+    flows/process.events?start=now-5s&count=5
+  GET <base-url>/metrics/reactor/apps/CountRandom/
+    process.events?start=now-5s&count=5
+  GET <base-url>/metrics/reactor/process.events?start=now-5s&count=5
 
 To request user-defined metrics instead of system metrics, specify ``user`` instead of ``reactor`` in the URL
 and specify the user-defined metric at the end of the request.
 
 For example, to request a user-defined metric for the *HelloWorld* Application's *WhoFlow* Flow::
 
-	GET <base-url>/metrics/user/apps/HelloWorld/flows/
-		WhoFlow/flowlets/saver/names.bytes?aggregate=true
+  GET <base-url>/metrics/user/apps/HelloWorld/flows/
+    WhoFlow/flowlets/saver/names.bytes?aggregate=true
 
 To retrieve multiple metrics at once, instead of a GET, issue an HTTP POST, with a JSON list as the request body that enumerates the name and attributes for each metrics. For example::
 
-	POST <base-url>/metrics
+  POST <base-url>/metrics
 
 with the arguments as a JSON string in the body::
 
-	Content-Type: application/json
-	[ "/reactor/collect.events?aggregate=true",
-	"/reactor/apps/HelloWorld/process.events?start=1380323712&count=6000" ]
+  Content-Type: application/json
+  [ "/reactor/collect.events?aggregate=true",
+  "/reactor/apps/HelloWorld/process.events?start=1380323712&count=6000" ]
 
 If the context of the requested metric or metric itself doesn't exist the system returns status 200 (OK) with JSON formed as per above description and with values being zeroes.
 
@@ -1981,7 +2042,7 @@ The time range of a metric query can be specified in various ways:
 Instead of getting the values for each second of a time range, you can also retrieve the
 aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that the Reactor has not been stopped or restarted (you cannot specify a time range for aggregates)::
 
-	GET <base-url>/metrics/reactor/apps/CountRandom/process.events?aggregate=true
+  GET <base-url>/metrics/reactor/apps/CountRandom/process.events?aggregate=true
 
 .. rst2pdf: PageBreak
 
@@ -2160,7 +2221,7 @@ Details of All Available System Services
 
 For the detailed information of all available System Services, use::
 
-	GET <base-url>/system/services
+  GET <base-url>/system/services
 
 HTTP Responses
 ..............
@@ -2177,7 +2238,7 @@ Checking Status of All Reactor System Services
 ----------------------------------------------
 To check the status of all the System Services, use::
 
-	GET <base-url>/system/services/status
+  GET <base-url>/system/services/status
 
 HTTP Responses
 ..............
@@ -2196,13 +2257,13 @@ Checking Status of a Specific Reactor System Service
 ----------------------------------------------------
 To check the status of a specific System Service, use::
 
-	GET <base-url>/system/services/<service-name>/status
+  GET <base-url>/system/services/<service-name>/status
 
 The status of these Reactor System Servcies can be checked:
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 20 60
+   :widths: 25 25 50
    
    * - Service 
      - Service-Name
@@ -2262,10 +2323,11 @@ HTTP Responses
 
 Scaling System Services
 -----------------------
-The number of instances for system services can be queried and changed by using these commands::
+In distributed Continuuity Reactor installations, the number of instances for system services 
+can be queried and changed by using these commands::
 
-	GET <base-url>/system/services/<service-name>/instances
-	PUT <base-url>/system/services/<service-name>/instances
+  GET <base-url>/system/services/<service-name>/instances
+  PUT <base-url>/system/services/<service-name>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -2281,6 +2343,8 @@ with the arguments as a JSON string in the body::
      - Name of the system service 
    * - ``<quantity>``
      - Number of instances to be used
+     
+:Note: In single-node Reactor, these commands will return a Status Code ``400 Bad Request``.
 
 Examples
 ........
@@ -2307,6 +2371,36 @@ Examples
           { "instances" : 2 }
    * - Description
      - Sets the number of instances of the metrics HTTP service to 2
+
+Details of A Deployed Application
+---------------------------------
+
+For detailed information on an application that has been deployed, use::
+
+  GET <base-url>/apps/<app-id>
+
+The information will be returned in the body of the response.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application 
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The event successfully called the method, and the body contains the results
+
 
 .. rst2pdf: CutStart
 

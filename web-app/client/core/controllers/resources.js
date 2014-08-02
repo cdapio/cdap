@@ -103,7 +103,7 @@ define([], function () {
                   for (var i = 0; i < programs[type].length; i ++) {
 
                     program = programs[type][i];
-                    context = '/reactor' + program.get('context') + '/';
+                    context = '/reactor/' + program.get('context') + '/';
 
                     program.trackMetric(context + 'resources.used.memory', 'timeseries', null, true);
                     program.trackMetric(context + 'resources.used.containers', 'currents', 'containers');

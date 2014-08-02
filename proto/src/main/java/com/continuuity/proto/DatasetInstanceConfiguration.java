@@ -24,16 +24,10 @@ import java.util.Map;
 public final class DatasetInstanceConfiguration {
   private final String typeName;
   private final Map<String, String> properties;
-  private final boolean update;
-
-  public DatasetInstanceConfiguration(String typeName, Map<String, String> properties, boolean update) {
-    this.typeName = typeName;
-    this.properties = properties;
-    this.update = update;
-  }
 
   public DatasetInstanceConfiguration(String typeName, Map<String, String> properties) {
-    this(typeName, properties, false);
+    this.typeName = typeName;
+    this.properties = properties;
   }
 
   public String getTypeName() {
@@ -44,7 +38,4 @@ public final class DatasetInstanceConfiguration {
     return properties;
   }
 
-  public boolean isUpdate() {
-    return update;
-  }
 }
