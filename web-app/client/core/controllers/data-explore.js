@@ -12,7 +12,7 @@ define([], function () {
 
 		  self.start = Infinity;
 		  self.end = 0;
-		  self.limit = Infinity;
+		  self.limit = 10000;
 
       self.largest = -1;
       self.smallest = -1;
