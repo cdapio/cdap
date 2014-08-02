@@ -23,7 +23,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Default implementation of {@link com.continuuity.api.data.dataset.table.Row}
+ * Default implementation of {@link com.continuuity.api.dataset.table.Row}
  */
 public class Result implements Row {
   private final byte[] row;

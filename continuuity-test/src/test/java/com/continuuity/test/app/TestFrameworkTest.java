@@ -17,10 +17,10 @@
 package com.continuuity.test.app;
 
 import com.continuuity.api.app.Application;
-import com.continuuity.api.data.dataset.table.Get;
-import com.continuuity.api.data.dataset.table.Put;
-import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.table.Get;
+import com.continuuity.api.dataset.table.Put;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.proto.RunRecord;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;

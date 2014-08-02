@@ -22,15 +22,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to declare that a method uses a {@link com.continuuity.api.data.DataSet}.
+ * Annotation to declare that a method uses a {@link com.continuuity.api.dataset.Dataset}.
  *
  * <p>
- * Example: Store the incoming Purchase objects in the purchases dataset:
+ * Example:
  *
  * <pre>
  *   <code>
  *     public class PurchaseStore extends AbstractFlowlet {
- *     {@literal @}UseDataSet("purchases")
+ *     {@literal @}UseDataSet("myTable")
  *     private ObjectStore{@literal <}Purchase> store;
  *
  *     {@literal @}ProcessInput

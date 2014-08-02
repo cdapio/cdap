@@ -76,10 +76,14 @@ final class FlowletProgramController extends AbstractProgramController {
   @Override
   protected void doStop() throws Exception {
     LOG.info("Stopping flowlet: " + flowletContext);
-    driver.stopAndWait();
-    // Close all consumers
-    for (ConsumerSupplier consumerSupplier : consumerSuppliers) {
-      Closeables.closeQuietly(consumerSupplier);
+    try {
+      driver.stopAndWait();
+    } finally {
+      // Close all consumers
+      for (ConsumerSupplier consumerSupplier : consumerSuppliers) {
+        Closeables.closeQuietly(consumerSupplier);
+      }
+      flowletContext.close();
     }
     LOG.info("Flowlet stopped: " + flowletContext);
   }

@@ -73,6 +73,14 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
+    <!-- We want to re-use test apps -->
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>app-fabric</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
