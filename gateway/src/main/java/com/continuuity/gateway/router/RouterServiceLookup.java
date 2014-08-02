@@ -122,31 +122,6 @@ public class RouterServiceLookup {
     }
   }
 
-  /**
-   * Get the destination service to look-up for the given port and the httpRequest.
-   * @param port port to lookup.
-   * @param httpRequest provides the header information for lookup.
-   * @return name of the service.
-   */
-  public String getDestinationService(int port, HttpRequest httpRequest) {
-    //Get the service based on Port.
-    final String service = serviceMapRef.get().get(port);
-    if (service == null) {
-      LOG.debug("No service found for port {}", port);
-      return null;
-    }
-
-    // Normalize the path once and strip off any query string. Just keep the URI path.
-    String path = URI.create(httpRequest.getUri()).normalize().getPath();
-    String host = httpRequest.getHeader(HttpHeaders.Names.HOST);
-
-    if (host == null) {
-      LOG.debug("Cannot find host header for service {} on port {}", service, port);
-      return null;
-    }
-    return routerPathLookup.getRoutingService(service, path, httpRequest);
-  }
-
   public void updateServiceMap(Map<Integer, String> serviceMap) {
     serviceMapRef.set(serviceMap);
   }
