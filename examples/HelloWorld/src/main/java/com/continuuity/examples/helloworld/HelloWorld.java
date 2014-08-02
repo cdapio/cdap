@@ -23,12 +23,14 @@ import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
+import com.continuuity.api.service.http.AbstractHttpServiceHandler;
 import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.api.service.http.HttpServiceRequest;
 import com.continuuity.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
 import org.apache.twill.discovery.Discoverable;
@@ -60,30 +62,16 @@ public class HelloWorld extends AbstractApplication {
    *
    */
   @Path("/v1")
-  public static final class BaseHttpHandler implements HttpServiceHandler {
+  public static final class BaseHttpHandler extends AbstractHttpServiceHandler {
     @GET
     @Path("/handle")
     public void process(HttpServiceRequest request, HttpServiceResponder responder) {
-      System.err.println("GOT TO THE HANDLER METHOD!");
       responder.sendString("Hello World");
     }
 
-    /**
-     *
-     * @param context
-     * @throws Exception
-     */
     @Override
-    public void initialize(HttpServiceContext context) throws Exception {
-
-    }
-
-    /**
-     *
-     */
-    @Override
-    public void destroy() {
-
+    public void configure() {
+      setArguments(ImmutableMap.of("Test", "Runtime"));
     }
   }
 

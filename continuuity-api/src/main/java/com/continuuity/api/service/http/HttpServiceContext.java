@@ -21,12 +21,17 @@ import com.continuuity.api.RuntimeContext;
 import java.util.Map;
 
 /**
- *
+ * TODO: Extend runtime context later for transactions and dataset
  */
-public interface HttpServiceContext extends RuntimeContext {
+public interface HttpServiceContext {
   /**
    * @return The HttpServiceSpecification for this HttpServiceContext
    */
   HttpServiceSpecification getSpecification();
+
+  /**
+   * @return A map of argument key and value.
+   */
+  Map<String, String> getRuntimeArguments();
 
 }

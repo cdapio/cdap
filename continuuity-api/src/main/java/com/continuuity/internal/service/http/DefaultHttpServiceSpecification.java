@@ -18,7 +18,10 @@ package com.continuuity.internal.service.http;
 
 import com.continuuity.api.service.http.HttpServiceSpecification;
 
+import com.google.common.collect.ImmutableMap;
+
 import java.util.Map;
+import javax.annotation.concurrent.Immutable;
 
 /**
  *
@@ -29,16 +32,15 @@ public class DefaultHttpServiceSpecification implements HttpServiceSpecification
   private final String description;
   private final Map<String, String> properties;
 
-  public DefaultHttpServiceSpecification(String className, String name, String description, Map<String, String>
-    properties) {
+  public DefaultHttpServiceSpecification(String className, String name,
+                                         String description, Map<String, String> properties) {
     this.className = className;
     this.name = name;
     this.description = description;
-    this.properties = properties;
+    this.properties = ImmutableMap.copyOf(properties);
   }
 
-  public DefaultHttpServiceSpecification(String name, String description, Map<String, String>
-    properties) {
+  public DefaultHttpServiceSpecification(String name, String description, Map<String, String> properties) {
     this(null, name, description, properties);
   }
 

@@ -25,14 +25,13 @@ import java.util.Map;
  *
  */
 public abstract class AbstractHttpServiceHandler implements HttpServiceHandler {
-  HttpServiceConfigurer configurer;
-  HttpServiceContext context;
+  private HttpServiceConfigurer configurer;
+  private HttpServiceContext context;
 
   public abstract void configure();
 
   @Override
-  public final void configure(HttpServiceConfigurer configurer, HttpServiceContext context) {
-    this.context = context;
+  public final void configure(HttpServiceConfigurer configurer) {
     this.configurer = configurer;
 
     configure();
@@ -51,28 +50,28 @@ public abstract class AbstractHttpServiceHandler implements HttpServiceHandler {
   /**
    * @return
    */
-  protected HttpServiceContext getContext() {
+  protected final HttpServiceContext getContext() {
     return context;
   }
 
   /**
    * @return The {@link ApplicationConfigurer} used to configure the {@link com.continuuity.api.app.Application}
    */
-  protected HttpServiceConfigurer getConfigurer() {
+  protected final HttpServiceConfigurer getConfigurer() {
     return configurer;
   }
 
   /**
    * @see ApplicationConfigurer#setName(String)
    */
-  protected void setName(String name) {
+  protected final void setName(String name) {
     configurer.setName(name);
   }
 
   /**
    * @see ApplicationConfigurer#setDescription(String)
    */
-  protected void setDescription(String description) {
+  protected final void setDescription(String description) {
     configurer.setDescription(description);
   }
 
@@ -80,7 +79,7 @@ public abstract class AbstractHttpServiceHandler implements HttpServiceHandler {
    *
    * @param arguments
    */
-  protected void setArguments(Map<String, String> arguments) {
+  protected final void setArguments(Map<String, String> arguments) {
     configurer.setArguments(arguments);
   }
 }

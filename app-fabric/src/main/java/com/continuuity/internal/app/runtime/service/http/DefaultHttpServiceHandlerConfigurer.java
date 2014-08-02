@@ -21,6 +21,7 @@ import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.api.service.http.HttpServiceSpecification;
 import com.continuuity.internal.service.http.DefaultHttpServiceSpecification;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -34,6 +35,7 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
   public DefaultHttpServiceHandlerConfigurer(HttpServiceHandler handler) {
     this.name = handler.getClass().getSimpleName();
     this.description = "";
+    this.arguments = Collections.emptyMap();
   }
 
   @Override

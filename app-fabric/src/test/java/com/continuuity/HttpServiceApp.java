@@ -23,6 +23,7 @@ import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
+import com.continuuity.api.service.http.AbstractHttpServiceHandler;
 import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.http.HttpResponder;
@@ -61,28 +62,15 @@ public class HttpServiceApp extends AbstractApplication {
    *
    */
   @Path("/v1")
-  public static final class BaseHttpHandler implements HttpServiceHandler {
+  public static final class BaseHttpHandler extends AbstractHttpServiceHandler {
     @GET
     @Path("/handle")
     public void process(HttpRequest request, HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "Hello World");
     }
 
-    /**
-     *
-     * @param context
-     * @throws Exception
-     */
     @Override
-    public void initialize(HttpServiceContext context) throws Exception {
-
-    }
-
-    /**
-     *
-     */
-    @Override
-    public void destroy() {
+    public void configure() {
 
     }
   }

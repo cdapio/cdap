@@ -17,6 +17,7 @@
 package com.continuuity.internal.app.runtime.service.http;
 
 import com.continuuity.api.data.DataSetInstantiationException;
+import com.continuuity.api.service.http.AbstractHttpServiceHandler;
 import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.api.service.http.HttpServiceRequest;
@@ -47,7 +48,7 @@ import javax.ws.rs.Path;
 public class HttpHandlerGeneratorTest {
 
   @Path("/v1")
-  public static class BaseHttpHandler implements HttpServiceHandler {
+  public abstract static class BaseHttpHandler extends AbstractHttpServiceHandler {
 
     @GET
     @Path("/handle")
@@ -73,6 +74,11 @@ public class HttpHandlerGeneratorTest {
     @POST
     public void echo(HttpServiceRequest request, HttpServiceResponder responder) {
       responder.send(200, request.getContent(), "application/octet-stream", ImmutableMultimap.<String, String>of());
+    }
+
+    @Override
+    public void configure() {
+
     }
   }
 

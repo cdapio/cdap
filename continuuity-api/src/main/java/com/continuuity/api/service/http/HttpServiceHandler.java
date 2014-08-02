@@ -16,14 +16,13 @@
 
 package com.continuuity.api.service.http;
 
-import com.continuuity.api.ProgramLifecycle;
 
 /**
  *
  */
-public interface HttpServiceHandler extends ProgramLifecycle<HttpServiceContext> {
+public interface HttpServiceHandler {
 
-  void configure(HttpServiceConfigurer configurer, HttpServiceContext context);
+  void configure(HttpServiceConfigurer configurer);
 
   void initialize(HttpServiceContext context) throws Exception;
 
