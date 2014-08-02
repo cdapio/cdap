@@ -37,7 +37,6 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(GuavaServiceTwillRunnable.class);
   private Service service;
   private String name;
-  private Map<String, String> runnableArgs;
   private ClassLoader programClassLoader;
 
   /**
@@ -48,7 +47,6 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
    */
   public GuavaServiceTwillRunnable(String name, Service service) {
     this.service = service;
-    this.runnableArgs = Maps.newHashMap();
     this.name = name;
   }
 
@@ -62,6 +60,7 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public TwillRunnableSpecification configure() {
+    Map<String, String> runnableArgs = Maps.newHashMap();
     runnableArgs.put("service.class.name", service.getClass().getName());
     runnableArgs.put("service.runnable.name", name);
     return TwillRunnableSpecification.Builder.with()
@@ -72,7 +71,7 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void initialize(TwillContext context) {
-    runnableArgs = context.getSpecification().getConfigs();
+    Map<String, String> runnableArgs = context.getSpecification().getConfigs();
     String serviceClassName = runnableArgs.get("service.class.name");
     name = runnableArgs.get("service.runnable.name");
 
