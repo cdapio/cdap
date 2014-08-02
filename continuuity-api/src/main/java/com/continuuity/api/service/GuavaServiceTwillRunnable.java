@@ -18,6 +18,7 @@ package com.continuuity.api.service;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.TwillContext;
@@ -26,7 +27,6 @@ import org.apache.twill.api.TwillRunnableSpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -49,7 +49,7 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
    */
   public GuavaServiceTwillRunnable(String name, Service service, Map<String, String> runnableArgs) {
     this.service = service;
-    this.runnableArgs = new HashMap<String, String>(runnableArgs);
+    this.runnableArgs = Maps.newHashMap(runnableArgs);
     this.name = name;
   }
 
@@ -73,9 +73,9 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void initialize(TwillContext context) {
-    runnableArgs = new HashMap<String, String>(context.getSpecification().getConfigs());
-    String serviceClassName = runnableArgs.remove("service.class.name");
-    name = runnableArgs.remove("service.runnable.name");
+    runnableArgs = context.getSpecification().getConfigs();
+    String serviceClassName = runnableArgs.get("service.class.name");
+    name = runnableArgs.get("service.runnable.name");
 
     try {
       Class<?> serviceClass = programClassLoader.loadClass(serviceClassName);
