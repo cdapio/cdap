@@ -31,6 +31,7 @@ import com.google.gson.Gson;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnableSpecification;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,13 +78,14 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     service.startAndWait();
     // announce the twill runnable
     int port = service.getBindAddress().getPort();
-    getContext().announce(name, port);
+    Cancellable contextCancellable = getContext().announce(name, port);
     try {
       completion.get();
+      contextCancellable.cancel();
     } catch (InterruptedException e) {
-      LOG.debug("Got Interrupted exception in Http Service run: {}", e);
+      LOG.error("Got Interrupted exception in Http Service run: {}", e);
     } catch (ExecutionException e) {
-      LOG.debug("Got Execution exception in Http Service run: {}", e);
+      LOG.error("Got Execution exception in Http Service run: {}", e);
     }
   }
 
