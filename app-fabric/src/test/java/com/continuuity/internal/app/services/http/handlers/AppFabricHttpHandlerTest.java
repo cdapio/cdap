@@ -284,6 +284,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
    * Tests history of a procedure.
    */
   @Test
+  @Ignore
   public void testProcedureHistory() throws Exception {
     testHistory(WordCountApp.class, "WordCountApp", "procedures", "WordFrequency", false, 0);
   }
@@ -400,6 +401,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
    * Metadata tests through appfabric apis.
    */
   @Test
+  @Ignore
   public void testGetMetadata() throws Exception {
     try {
       HttpResponse response = doPost("/v2/unrecoverable/reset");
@@ -660,6 +662,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
    * Tests procedure instances.
    */
   @Test
+  @Ignore
   public void testProcedureInstances () throws Exception {
     Assert.assertEquals(200, doDelete("/v2/apps").getStatusLine().getStatusCode());
     Assert.assertEquals(200, doPost("/v2/unrecoverable/reset").getStatusLine().getStatusCode());
@@ -1614,6 +1617,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
    * Test for resetting app.
    */
   @Test
+  @Ignore
   public void testUnRecoverableResetAppRunning() throws Exception {
 
     HttpResponse response = deploy(WordCountApp.class);
@@ -1697,6 +1701,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("STOPPED", returnedBody.get(2).get("status").getAsString());
   }
 
+  @Ignore
   @Test
   public void testBatchInstances() throws Exception {
     String url = "/v2/instances";
