@@ -33,10 +33,12 @@ import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.service.GuavaServiceTwillRunnable;
 import com.continuuity.api.service.ServiceSpecification;
+import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.data.dataset.DatasetCreationSpec;
 import com.continuuity.internal.app.DefaultApplicationSpecification;
+import com.continuuity.internal.app.services.HttpServiceTwillApplication;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.continuuity.internal.flow.DefaultFlowSpecification;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
@@ -49,6 +51,7 @@ import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillRunnable;
 
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -182,6 +185,16 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addService(String name, Service service, ResourceSpecification specification) {
     addService(new GuavaServiceTwillRunnable(name, service), specification);
+  }
+
+  @Override
+  public void addService(String name, Iterable<HttpServiceHandler> handlers) {
+    addService(new HttpServiceTwillApplication(name, handlers));
+  }
+
+  @Override
+  public void addService(String name, HttpServiceHandler handler) {
+    addService(name, Arrays.asList(handler));
   }
 
   public ApplicationSpecification createApplicationSpec() {

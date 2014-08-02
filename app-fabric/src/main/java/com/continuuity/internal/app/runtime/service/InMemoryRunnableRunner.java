@@ -31,6 +31,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
+import com.continuuity.internal.app.services.HttpServiceTwillRunnable;
 import com.continuuity.internal.lang.Reflections;
 import com.continuuity.logging.context.UserServiceLoggingContext;
 import com.continuuity.proto.ProgramType;
@@ -109,8 +110,15 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       Preconditions.checkNotNull(runnableSpec, "RuntimeSpecification missing for Runnable \"%s\"", runnableName);
 
       Class<?> clz = null;
-      clz = Class.forName(runnableSpec.getRunnableSpecification().getClassName(),
-                          true, program.getClassLoader());
+
+      String classStr = runnableSpec.getRunnableSpecification().getClassName();
+      // special case for handling http service
+      if (classStr.equals(HttpServiceTwillRunnable.class.getName())) {
+        clz = HttpServiceTwillRunnable.class;
+      } else {
+        clz = Class.forName(runnableSpec.getRunnableSpecification().getClassName(),
+                            true, program.getClassLoader());
+      }
 
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
 
@@ -153,10 +161,13 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       TypeToken<? extends  TwillRunnable> runnableType = TypeToken.of(runnableClass);
       TwillRunnable runnable = null;
 
-      // Special case for running Guava services since we need to instantiate the Guava service
-      // using the program classloader.
       if (runnableClass.isAssignableFrom(GuavaServiceTwillRunnable.class)) {
+        // Special case for running Guava services since we need to instantiate the Guava service
+        // using the program classloader.
         runnable = new GuavaServiceTwillRunnable(program.getClassLoader());
+      } else if (runnableClass.isAssignableFrom(HttpServiceTwillRunnable.class)) {
+        // Special case for running HTTP services
+        runnable = new HttpServiceTwillRunnable(program.getClassLoader());
       } else {
         runnable = new InstantiatorFactory(false).get(runnableType).create();
       }

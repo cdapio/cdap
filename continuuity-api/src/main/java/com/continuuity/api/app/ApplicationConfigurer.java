@@ -24,6 +24,7 @@ import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.procedure.Procedure;
+import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.api.workflow.Workflow;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.ResourceSpecification;
@@ -157,4 +158,16 @@ public interface ApplicationConfigurer {
    * @param specification ResourceSpecification for Twill container.
    */
   void addService(String name, Service service, ResourceSpecification specification);
+
+  /**
+   * Adds a list of {@link HttpServiceHandler} as a Custom Service to the Application.
+   * @param handlers
+   */
+  void addService(String name, Iterable<HttpServiceHandler> handlers);
+
+  /**
+   * Adds a {@link HttpServiceHandler} as a Custom Service to the Application.
+   * @param handler
+   */
+  void addService(String name, HttpServiceHandler handler);
 }
