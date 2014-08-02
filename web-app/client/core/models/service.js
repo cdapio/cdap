@@ -2,9 +2,9 @@
  * Service Model
  */
 
-define(['core/models/element'], function (Element) {
+define(['core/models/program'], function (Program) {
 
-  var Model = Element.extend({
+  var Model = Program.extend({
     type: 'Service',
     plural: 'Services',
 

@@ -9,7 +9,8 @@ define(['core/models/element'], function (Element) {
 		plural: 'Datasets',
 		href: function () {
 			return '#/datasets/' + this.get('id');
-		}.property(),
+		}.property('id'),
+
 		init: function() {
 
 			this._super();

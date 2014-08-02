@@ -1,0 +1,6 @@
+{
+  "id":"loadgen",
+  "name":"loadgen",
+  "description":"Load generator",
+  "runnables": [ "streamEventGen"]
+}
