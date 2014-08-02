@@ -51,6 +51,10 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
 
   private final String sql;
 
+  private String lastUpdatedSql = null;
+  private ResultSet lastResultSet = null;
+  private boolean lastResultSuccess = false;
+
   // Save the SQL parameters {paramLoc:paramValue}
   private final Map<Integer, String> parameters = Maps.newHashMap();
 
@@ -64,12 +68,24 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
 
   @Override
   public boolean execute() throws SQLException {
-    return super.execute(updateSql());
+    if (isClosed()) {
+      throw new SQLException("Can't execute after statement has been closed");
+    }
+    String updatedSql = updateSql();
+    if (lastUpdatedSql == null || !lastUpdatedSql.equals(updatedSql)) {
+      lastUpdatedSql = updatedSql;
+      lastResultSuccess = super.execute(lastUpdatedSql);
+      lastResultSet = getResultSet();
+    }
+    return lastResultSuccess;
   }
 
   @Override
   public ResultSet executeQuery() throws SQLException {
-    return super.executeQuery(updateSql());
+    if (!execute()) {
+      throw new SQLException("The query did not generate a result set!");
+    }
+    return lastResultSet;
   }
 
   @Override
@@ -209,7 +225,12 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
 
   @Override
   public ResultSetMetaData getMetaData() throws SQLException {
-    throw new SQLFeatureNotSupportedException();
+    if (lastResultSet != null) {
+      // If the query has already been run, we return the metadata of the existing result set
+      return lastResultSet.getMetaData();
+    }
+    // Otherwise we first run the query and return the metadata, making it expensive to call this method
+    return executeQuery().getMetaData();
   }
 
   @Override
