@@ -17,7 +17,6 @@
 package com.continuuity.api.app;
 
 import com.continuuity.api.annotation.Beta;
-import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetProperties;
@@ -27,6 +26,7 @@ import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.api.workflow.Workflow;
+import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillRunnable;
@@ -145,10 +145,19 @@ public interface ApplicationConfigurer {
 
   /**
    * Adds {@link TwillRunnable} TwillRunnable as a Custom Service {@link TwillApplication} to the Application.
-   * @param runnable
-   * @param specification
+   * @param runnable TwillRunnable to run as service
+   * @param specification ResourceSpecification for Twill container.
    */
   void addService(TwillRunnable runnable, ResourceSpecification specification);
+
+  /**
+   * Adds {@link com.google.common.util.concurrent.Service} as a Custom Service {@link TwillApplication}
+   * to the Application.
+   * @param name Name of runnable.
+   * @param service Guava service to be added.
+   * @param specification ResourceSpecification for Twill container.
+   */
+  void addService(String name, Service service, ResourceSpecification specification);
 
   /**
    * Adds a list of {@link HttpServiceHandler} as a Custom Service to the Application.

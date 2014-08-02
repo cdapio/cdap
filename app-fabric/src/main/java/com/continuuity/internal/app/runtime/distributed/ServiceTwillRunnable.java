@@ -17,6 +17,7 @@
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.api.common.RuntimeArguments;
+import com.continuuity.api.service.GuavaServiceTwillRunnable;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.metrics.ServiceRunnableMetrics;
@@ -181,16 +182,20 @@ public class ServiceTwillRunnable implements TwillRunnable {
       runnableName = programOpts.getName();
 
       ServiceSpecification serviceSpec = appSpec.getServices().get(processorName);
-      RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnableName);
+      final RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnableName);
 
       String className = runtimeSpec.getRunnableSpecification().getClassName();
       LOG.info("Getting class : {}", program.getMainClass().getName());
       Class<?> clz = Class.forName(className, true, program.getClassLoader());
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
 
-      // Special case for running http services since we need to instantiate the http service
-      // using the program classloader.
-      if (clz.isAssignableFrom(HttpServiceTwillRunnable.class)) {
+      if (clz.isAssignableFrom(GuavaServiceTwillRunnable.class)) {
+        // Special case for running Guava services since we need to instantiate the Guava service
+        // using the program classloader.
+        delegate = new GuavaServiceTwillRunnable(program.getClassLoader());
+      } else if (clz.isAssignableFrom(HttpServiceTwillRunnable.class)) {
+        // Special case for running http services since we need to instantiate the http service
+        // using the program classloader.
         delegate = new HttpServiceTwillRunnable(program.getClassLoader());
       } else {
         delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
@@ -208,6 +213,11 @@ public class ServiceTwillRunnable implements TwillRunnable {
         @Override
         public String[] getApplicationArguments() {
           return argArray;
+        }
+
+        @Override
+        public TwillRunnableSpecification getSpecification() {
+          return runtimeSpec.getRunnableSpecification();
         }
       });
 

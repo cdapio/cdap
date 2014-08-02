@@ -17,7 +17,6 @@
 package com.continuuity.api.app;
 
 import com.continuuity.api.annotation.Beta;
-import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetProperties;
@@ -27,6 +26,7 @@ import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.api.workflow.Workflow;
+import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillRunnable;
@@ -207,6 +207,24 @@ public abstract class AbstractApplication implements Application {
    */
   protected void addService(TwillRunnable runnable) {
     configurer.addService(runnable, ResourceSpecification.BASIC);
+  }
+
+  /**
+   * @see ApplicationConfigurer#addService(String name, com.google.common.util.concurrent.Service,
+   *                                        org.apache.twill.api.ResourceSpecification)
+   */
+  protected void addService(String name, Service service, ResourceSpecification specification) {
+    configurer.addService(name, service, specification);
+  }
+
+  /**
+   * @see ApplicationConfigurer#addService(String name, com.google.common.util.concurrent.Service,
+   *                                        org.apache.twill.api.ResourceSpecification)
+   * ResourceSpecification is defaulted to ResourceSpecification.BASIC
+   * Args is defaulted to an empty Map.
+   */
+  protected void addService(String name, Service service) {
+    addService(name, service, ResourceSpecification.BASIC);
   }
 
   /**
