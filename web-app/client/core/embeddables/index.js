@@ -7,7 +7,7 @@ define([
   'core/embeddables/key-val', 'core/embeddables/create-dialogue', 'core/embeddables/textfield',
   'core/embeddables/dagnode', 'core/embeddables/dropzone', 'core/embeddables/injector',
   'core/embeddables/modal', 'core/embeddables/timeselector', 'core/embeddables/visualizer',
-  'core/embeddables/dash-chart', 'core/embeddables/analyze',
+  'core/embeddables/dash-chart', 'core/embeddables/analyze', 'core/embeddables/eventmodal',
   'core/embeddables/empty-dagnode', 'core/embeddables/login'
   ], function () {
 

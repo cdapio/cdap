@@ -35,7 +35,7 @@ define(['core/models/element'], function (Element) {
 		 */
 		context: function () {
 
-			return this.interpolate('/apps/{id}');
+			return this.interpolate('apps/{id}');
 
 		}.property('id'),
 

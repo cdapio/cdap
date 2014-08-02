@@ -76,6 +76,32 @@ public class JdbcColumn {
       this.displaySize = displaySize;
     }
 
+    public boolean isNumber() {
+      switch (this) {
+        case FLOAT:
+        case DOUBLE:
+        case SMALLINT:
+        case INT:
+        case BIGINT:
+        case DECIMAL:
+        case TINYINT:
+          return true;
+        case STRING:
+        case VARCHAR:
+        case CHAR:
+        case BOOLEAN:
+        case TIMESTAMP:
+        case DATE:
+        case BINARY:
+        case MAP:
+        case ARRAY:
+        case STRUCT:
+          return false;
+        default:
+          return false;
+      }
+    }
+
     public String getTypeName() {
       return typeName;
     }
@@ -158,5 +184,14 @@ public class JdbcColumn {
       }
     }
     throw new SQLException("Unrecognized column type: " + type);
+  }
+
+  static boolean isNumber(int columnType) throws SQLException {
+    for (SqlTypes t : SqlTypes.values()) {
+      if (t.getSqlType() == columnType) {
+        return t.isNumber();
+      }
+    }
+    throw new SQLException("Invalid column type: " + columnType);
   }
 }
