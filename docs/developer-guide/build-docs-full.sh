@@ -41,7 +41,8 @@ if [ "x$2" == "x" ]; then
 else
   REACTOR_PATH="$2"
 fi
-REACTOR_JAVADOCS="$REACTOR_PATH/continuuity-api/target/site/apidocs"
+# REACTOR_JAVADOCS="$REACTOR_PATH/continuuity-api/target/site/apidocs"
+REACTOR_JAVADOCS="$REACTOR_PATH/target/site/apidocs"
 
 ZIP_FILE_NAME=$HTML
 ZIP="$ZIP_FILE_NAME.zip"
@@ -77,7 +78,8 @@ function clean() {
 
 function build_javadocs() {
   cd $REACTOR_PATH
-  mvn clean package site -pl continuuity-api -am -Pjavadocs -DskipTests
+#   mvn clean package site -pl continuuity-api -am -Pjavadocs -DskipTests
+  mvn clean site -DskipTests
 }
 
 function build_docs() {
@@ -115,11 +117,6 @@ function build_license_pdfs() {
   LIC3_SOURCE="$SOURCE_PATH/licenses/reactor-singlenode-dependencies.rst"
   LIC3_PDF="$SCRIPT_PATH/$LICENSES_PDF/reactor-singlenode-dependencies.pdf"
   python $DOCS_PY -g pdf -o $LIC3_PDF $LIC3_SOURCE
-  
-# python docs.py -g pdf -o ../../../developer-guide/licenses-pdf/reactor-enterprise-dependencies.pdf ../../developer-guide/source/licenses/reactor-enterprise-dependencies.rst
-# python docs.py -g pdf -o ../../../developer-guide/licenses-pdf/reactor-level-1-dependencies.pdf    ../../developer-guide/source/licenses/reactor-level-1-dependencies.rst
-# python docs.py -g pdf -o ../../../developer-guide/licenses-pdf/reactor-singlenode-dependencies.pdf ../../developer-guide/source/licenses/reactor-singlenode-dependencies.rst
-
 }
 
 function copy_javadocs() {
@@ -187,7 +184,6 @@ function build_single_node() {
 }
 
 function build_sdk() {
-  build_pdf_rest
   build_single_node
 }
 
