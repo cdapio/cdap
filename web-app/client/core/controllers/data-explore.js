@@ -5,15 +5,14 @@
 define([], function () {
   var url = "data/explore/queries";
   //TODO: replace with real largest number:
-  var inf = 999999999999999999;
 	var Controller = Em.Controller.extend({
 
 		load: function () {
 		  var self = this;
 
-		  self.start = inf;
+		  self.start = Infinity;
 		  self.end = 0;
-		  self.limit = 3;
+		  self.limit = 4;
 
       self.largest = -1;
       self.smallest = -1;
@@ -120,7 +119,7 @@ define([], function () {
     prevPage: function () {
       var self = this;
       self.set('objArr', []);
-      self.start = inf;
+      self.start = Infinity;
       self.end = self.largest;
       self.fetchQueries();
     },
@@ -130,7 +129,7 @@ define([], function () {
 		  var objArr = this.get('objArr');
 		  var url = 'data/explore/queries';
 		  url += '?limit=' + self.limit;
-		  if(self.start != inf){
+		  if(self.start != Infinity){
 		    url += '&start=' + self.start;
 		  }
 		  if(self.end != 0){
