@@ -90,7 +90,8 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s",
+                                                                        e.getSQLState(), e.getMessage()));
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -300,7 +301,8 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
       if (!responseStarted) {
-        responder.sendError(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+        responder.sendError(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s",
+                                                                          e.getSQLState(), e.getMessage()));
       }
     } catch (HandleNotFoundException e) {
       if (!responseStarted) {
