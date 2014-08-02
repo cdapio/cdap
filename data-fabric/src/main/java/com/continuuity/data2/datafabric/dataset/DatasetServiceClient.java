@@ -130,21 +130,15 @@ class DatasetServiceClient {
     DatasetInstanceConfiguration creationProperties = new DatasetInstanceConfiguration(datasetType,
                                                                                        props.getProperties());
 
-    createUpdateInstance(datasetInstanceName, creationProperties, "add");
-  }
-
-  private void createUpdateInstance(String datasetInstanceName,
-                                    DatasetInstanceConfiguration creationProperties, String op)
-    throws DatasetManagementException {
     HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(creationProperties));
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
-      throw new InstanceConflictException(String.format("Failed to %s instance %s due to conflict, details: %s",
-                                                        op, datasetInstanceName, getDetails(response)));
+      throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
+                                                         datasetInstanceName, getDetails(response)));
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to %s instance %s, details: %s",
-                                                         op, datasetInstanceName, getDetails(response)));
+      throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
+                                                          datasetInstanceName, getDetails(response)));
     }
   }
 
@@ -152,8 +146,18 @@ class DatasetServiceClient {
     throws DatasetManagementException {
     DatasetMeta meta = getInstance(datasetInstanceName);
     DatasetInstanceConfiguration creationProperties =
-      new DatasetInstanceConfiguration(meta.getSpec().getType(), props.getProperties(), true);
-    createUpdateInstance(datasetInstanceName, creationProperties, "update");
+      new DatasetInstanceConfiguration(meta.getSpec().getType(), props.getProperties());
+
+    HttpResponse response = doPut("datasets/" + datasetInstanceName + "/properties", GSON.toJson(creationProperties));
+
+    if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
+      throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
+                                                        datasetInstanceName, getDetails(response)));
+    }
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
+                                                         datasetInstanceName, getDetails(response)));
+    }
   }
 
   public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
