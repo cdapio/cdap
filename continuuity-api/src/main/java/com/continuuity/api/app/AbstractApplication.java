@@ -25,6 +25,7 @@ import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.procedure.Procedure;
+import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.api.workflow.Workflow;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
@@ -206,5 +207,19 @@ public abstract class AbstractApplication implements Application {
    */
   protected void addService(TwillRunnable runnable) {
     configurer.addService(runnable, ResourceSpecification.BASIC);
+  }
+
+  /**
+   * @see ApplicationConfigurer#addService(TwillApplication)
+   */
+  protected void addService(String name, Iterable<HttpServiceHandler> handlers) {
+    configurer.addService(name, handlers);
+  }
+
+  /**
+   * @see ApplicationConfigurer#addService(TwillApplication)
+   */
+  protected void addService(String name, HttpServiceHandler handler) {
+    configurer.addService(name, handler);
   }
 }

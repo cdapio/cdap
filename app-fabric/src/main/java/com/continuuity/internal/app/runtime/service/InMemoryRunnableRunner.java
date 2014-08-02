@@ -30,6 +30,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
+import com.continuuity.internal.app.services.HttpServiceTwillRunnable;
 import com.continuuity.internal.lang.Reflections;
 import com.continuuity.logging.context.UserServiceLoggingContext;
 import com.continuuity.proto.ProgramType;
@@ -108,8 +109,15 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       Preconditions.checkNotNull(runnableSpec, "RuntimeSpecification missing for Runnable \"%s\"", runnableName);
 
       Class<?> clz = null;
-      clz = Class.forName(runnableSpec.getRunnableSpecification().getClassName(),
-                          true, program.getClassLoader());
+
+      String classStr = runnableSpec.getRunnableSpecification().getClassName();
+      // special case for handling http service
+      if (classStr.equals(HttpServiceTwillRunnable.class.getName())) {
+        clz = HttpServiceTwillRunnable.class;
+      } else {
+        clz = Class.forName(runnableSpec.getRunnableSpecification().getClassName(),
+                            true, program.getClassLoader());
+      }
 
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
 
@@ -150,7 +158,16 @@ public class InMemoryRunnableRunner implements ProgramRunner {
                                               dClient, dService, instanceCount, electionRegistry);
 
       TypeToken<? extends  TwillRunnable> runnableType = TypeToken.of(runnableClass);
-      TwillRunnable runnable = new InstantiatorFactory(false).get(runnableType).create();
+
+      TwillRunnable runnable = null;
+
+      // Special case for running HTTP services
+      if (runnableClass.isAssignableFrom(HttpServiceTwillRunnable.class)) {
+        runnable = new HttpServiceTwillRunnable(program.getClassLoader());
+      } else {
+        runnable = new InstantiatorFactory(false).get(runnableType).create();
+      }
+
       InMemoryRunnableDriver driver = new
         InMemoryRunnableDriver(runnable, twillContext, new UserServiceLoggingContext(program.getAccountId(),
                                                                                      program.getApplicationId(),

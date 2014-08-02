@@ -42,6 +42,7 @@ import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.internal.app.services.HttpServiceTwillRunnable;
 import com.continuuity.internal.lang.Reflections;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.context.UserServiceLoggingContext;
@@ -186,7 +187,15 @@ public class ServiceTwillRunnable implements TwillRunnable {
       LOG.info("Getting class : {}", program.getMainClass().getName());
       Class<?> clz = Class.forName(className, true, program.getClassLoader());
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
-      delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
+
+      // Special case for running http services since we need to instantiate the http service
+      // using the program classloader.
+      if (clz.isAssignableFrom(HttpServiceTwillRunnable.class)) {
+        delegate = new HttpServiceTwillRunnable(program.getClassLoader());
+      } else {
+        delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
+      }
+
       Reflections.visit(delegate, TypeToken.of(delegate.getClass()),
                         new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
                                                                           program.getApplicationId(),
