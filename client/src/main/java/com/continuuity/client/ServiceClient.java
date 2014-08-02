@@ -29,11 +29,13 @@ import com.google.gson.JsonParser;
 import org.apache.twill.discovery.Discoverable;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
+import javax.management.ServiceNotFoundException;
 
 /**
  * Provides ways to interact with Reactor User Services.
@@ -63,9 +65,13 @@ public class ServiceClient {
     return ObjectResponse.fromJsonBody(response, ServiceMeta.class).getResponseObject();
   }
 
-  public List<Discoverable> discover(String appId, String serviceId, final String discoverableId) throws IOException {
+  public List<Discoverable> discover(String appId, String serviceId, final String discoverableId) throws Exception {
     URL url = config.resolveURL(String.format("apps/%s/services/%s/discover/%s", appId, serviceId, discoverableId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url);
+    
+    if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
+      throw new ServiceNotFoundException(discoverableId);
+    }
     List<Discoverable> discoverables = new ArrayList<Discoverable>();
     JsonParser parser = new JsonParser();
     JsonArray array = (JsonArray) parser.parse(response.getResponseBodyAsString());
