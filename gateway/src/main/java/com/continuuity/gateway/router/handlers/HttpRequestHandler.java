@@ -90,8 +90,10 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
 
     if (msg instanceof HttpChunk) {
       // This case below should never happen this would mean we get Chunks before HTTPMessage.
-      raiseExceptionIfNull(chunkSender, HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                           "Chunk received and event sender is null");
+      if (chunkSender == null) {
+        throw new HandlerException(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                   "Chunk received and event sender is null");
+      }
       chunkSender.send(msg);
 
     } else if (msg instanceof HttpRequest) {
@@ -172,13 +174,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     if (ch.isConnected()) {
       ch.write(ChannelBuffers.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
     }
-  }
-
-  private static <T> T raiseExceptionIfNull(T reference, HttpResponseStatus status, String message, Object... args) {
-    if (reference == null) {
-      throw new HandlerException(status, String.format(message, args));
-    }
-    return reference;
   }
 
   private WrappedDiscoverable getDiscoverable(final HttpRequest httpRequest,
