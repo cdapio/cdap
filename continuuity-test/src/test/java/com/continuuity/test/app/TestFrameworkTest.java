@@ -471,10 +471,20 @@ public class TestFrameworkTest extends ReactorTestBase {
   }
 
   @Test(timeout = 60000L)
+  public void testDatasetWithoutApp() throws Exception {
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> dataSetManager = getDataset("myTable");
+    AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = dataSetManager.get();
+    kvTable.put("test", "hello");
+    dataSetManager.flush();
+    Assert.assertEquals("hello", dataSetManager.get().get("test"));
+  }
+
+  @Test(timeout = 60000L)
   public void testAppWithAutoDeployDatasetType() throws Exception {
     testAppWithDataset(AppsWithDataset.AppWithAutoDeployType.class, "MyProcedure");
   }
-
 
   @Test(timeout = 60000L)
   public void testAppWithAutoDeployDatasetTypeShortcut() throws Exception {
