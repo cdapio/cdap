@@ -166,7 +166,7 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props)
     throws DatasetManagementException, IOException {
 
-    return DatasetsUtil.getOrCreateDataset(dsFramework, tableName, MetricsTable.class.getName(), props, null);
+    return DatasetsUtil.getOrCreateDataset(dsFramework, tableName, MetricsTable.class.getName(), props, null, null);
   }
 
   private int getRollTime(int resolution) {

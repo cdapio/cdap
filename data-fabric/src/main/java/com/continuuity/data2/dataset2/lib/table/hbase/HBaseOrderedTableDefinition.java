@@ -29,6 +29,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  *
@@ -58,7 +59,8 @@ public class HBaseOrderedTableDefinition
   }
 
   @Override
-  public OrderedTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public OrderedTable getDataset(DatasetSpecification spec,
+                                 Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     // -1 means no purging, keep data "forever"

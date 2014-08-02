@@ -17,6 +17,7 @@
 package com.continuuity.explore.service.hive;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.HandleNotFoundException;
@@ -27,6 +28,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.cli.FetchOrientation;
@@ -36,6 +38,7 @@ import org.apache.hive.service.cli.OperationStatus;
 import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.SessionHandle;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,8 +49,9 @@ public class Hive13ExploreService extends BaseHiveExploreService {
 
   @Inject
   public Hive13ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                              CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
-    super(txClient, datasetFramework, cConf, hConf, hiveConf);
+                              CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
+                              @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir) {
+    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir);
   }
 
   @Override
@@ -55,7 +59,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     OperationStatus operationStatus = getCliService().getOperationStatus(operationHandle);
     return new QueryStatus(QueryStatus.OpStatus.valueOf(operationStatus.getState().toString()),
-                               operationHandle.hasResultSet());
+                           operationHandle.hasResultSet());
   }
 
   @Override

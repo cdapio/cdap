@@ -52,13 +52,13 @@ public class DatasetMetaTableUtil {
   public DatasetTypeMDS getTypeMetaTable() throws DatasetManagementException, IOException {
     return (DatasetTypeMDS) DatasetsUtil.getOrCreateDataset(framework, META_TABLE_NAME,
                                                             DatasetTypeMDS.class.getName(),
-                                                            DatasetProperties.EMPTY, null);
+                                                            DatasetProperties.EMPTY, null, null);
   }
 
   public DatasetInstanceMDS getInstanceMetaTable() throws DatasetManagementException, IOException {
     return (DatasetInstanceMDS) DatasetsUtil.getOrCreateDataset(framework, INSTANCE_TABLE_NAME,
                                                                 DatasetInstanceMDS.class.getName(),
-                                                                DatasetProperties.EMPTY, null);
+                                                                DatasetProperties.EMPTY, null, null);
   }
 
   public void upgrade() throws Exception {

@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 
 import java.io.IOException;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -67,7 +68,8 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   }
 
   @Override
-  public NoTxKeyValueTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public NoTxKeyValueTable getDataset(DatasetSpecification spec,
+                                      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     return new KVTableImpl(spec.getName(), hConf);
   }
 

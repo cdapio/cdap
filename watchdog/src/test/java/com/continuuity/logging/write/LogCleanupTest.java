@@ -16,7 +16,6 @@
 
 package com.continuuity.logging.write;
 
-import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.io.Locations;
 import com.continuuity.common.logging.LoggingContext;
@@ -77,14 +76,13 @@ public class LogCleanupTest {
 
     CConfiguration cConf = CConfiguration.create();
 
-    OrderedTable metaTable = new LogSaverTableUtil(dsFramework, cConf).getMetaTable();
-
     Configuration conf = HBaseConfiguration.create();
     cConf.copyTxProperties(conf);
     InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf);
     txManager.startAndWait();
     TransactionSystemClient txClient = new InMemoryTxSystemClient(txManager);
-    FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(metaTable, txClient, locationFactory);
+    FileMetaDataManager fileMetaDataManager =
+      new FileMetaDataManager(new LogSaverTableUtil(dsFramework, cConf), txClient, locationFactory);
 
     // Create base dir
     Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());

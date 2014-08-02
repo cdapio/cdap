@@ -17,10 +17,21 @@
 package com.continuuity.explore.service;
 
 /**
- * Exception thrown when {@link com.continuuity.api.metadata.QueryHandle} is not found.
+ * Exception thrown when {@link com.continuuity.proto.QueryHandle} is not found.
  */
 public class HandleNotFoundException extends Exception {
+  private final boolean isInactive;
+
   public HandleNotFoundException(String s) {
+    this(s, false);
+  }
+
+  public HandleNotFoundException(String s, boolean isInactive) {
     super(s);
+    this.isInactive = isInactive;
+  }
+
+  public boolean isInactive() {
+    return isInactive;
   }
 }

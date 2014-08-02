@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Build script for Reactor docs
+# Build script for Product docs
 # Builds the docs
 # Copies the javadocs into place
 # Zips everything up so it can be staged
@@ -16,7 +16,8 @@ APIDOCS="apidocs"
 JAVADOCS="javadocs"
 LICENSES="licenses"
 LICENSES_PDF="licenses-pdf"
-REACTOR="reactor"
+PRODUCT="reactor"
+PRODUCT_INIT_CAP="Reactor"
 
 SCRIPT_PATH=`pwd`
 SOURCE_PATH="$SCRIPT_PATH/$SOURCE"
@@ -31,43 +32,36 @@ DOCS_INDEX="$SCRIPT_PATH/../tools/staging/$DOCS_INDEX_PAGE"
 REST_SOURCE="$SOURCE_PATH/rest.rst"
 REST_PDF="$SCRIPT_PATH/$BUILD_PDF/rest.pdf"
 
-INSTALL_GUIDE="$SCRIPT_PATH/../install-guide"
-INSTALL_SOURCE="$INSTALL_GUIDE/source/install.rst"
-
 WWW_PATH="/var/www/website-docs"
 
 if [ "x$2" == "x" ]; then
-  REACTOR_PATH="$SCRIPT_PATH/../../"
+  PRODUCT_PATH="$SCRIPT_PATH/../../"
 else
-  REACTOR_PATH="$2"
+  PRODUCT_PATH="$2"
 fi
-REACTOR_JAVADOCS="$REACTOR_PATH/continuuity-api/target/site/apidocs"
+PRODUCT_JAVADOCS="$PRODUCT_PATH/continuuity-api/target/site/apidocs"
 
 ZIP_FILE_NAME=$HTML
 ZIP="$ZIP_FILE_NAME.zip"
-STAGING_SERVER="stg-web101.sw.joyent.continuuity.net"
 
 function usage() {
-  cd $REACTOR_PATH
-  REACTOR_PATH=`pwd`
-  echo "Build script for Reactor docs"
-  echo "Usage: $SCRIPT < option > [reactor]"
+  cd $PRODUCT_PATH
+  PRODUCT_PATH=`pwd`
+  echo "Build script for '$PRODUCT' docs"
+  echo "Usage: $SCRIPT < option > [source]"
   echo ""
   echo "  Options (select one)"
   echo "    build        Clean build of javadocs, docs (HTML and PDF), copy javadocs and pdfs, zip results"
-  echo "    stage        Stages docs and logins to server"
-  echo "    stage_index  Stages the index page and logins to server"
   echo "  or "
   echo "    build-docs   Clean build of docs"
   echo "    javadocs     Clean build of javadocs"
   echo "    pdf-rest     Clean build of REST PDF"
-  echo "    pdf-install  Clean build of Install Guide PDF"
-  echo "    login        Logs you into $STAGING_SERVER"
-  echo "    reactor      Path to Reactor source for javadocs, if not $REACTOR_PATH"
   echo "    zip          Zips docs into $ZIP"
-  echo "  or "
+  echo "  or"
   echo "    depends      Build Site listing dependencies"  
-  echo "    sdk          Build SDK"  
+  echo "    sdk          Build SDK"
+  echo "  with"
+  echo "    source       Path to $PRODUCT source for javadocs, if not $PRODUCT_PATH"
   echo " "
   exit 1
 }
@@ -77,7 +71,7 @@ function clean() {
 }
 
 function build_javadocs() {
-  cd $REACTOR_PATH
+  cd $PRODUCT_PATH
   mvn clean package site -pl continuuity-api -am -Pjavadocs -DskipTests
 }
 
@@ -93,18 +87,10 @@ function build_pdf_rest() {
   python $DOCS_PY -g pdf -o $REST_PDF $REST_SOURCE
 }
 
-function build_pdf_install() {
-  version
-  INSTALL_PDF="$INSTALL_GUIDE/$BUILD_PDF/Reactor-Installation-Guide-v$REACTOR_VERSION.pdf"
-  rm -rf $INSTALL_GUIDE/$BUILD_PDF
-  mkdir $INSTALL_GUIDE/$BUILD_PDF
-  python $DOCS_PY -g pdf -o $INSTALL_PDF $INSTALL_SOURCE
-}
-
 function copy_javadocs() {
   cd $BUILD_PATH/$HTML
   rm -rf $JAVADOCS
-  cp -r $REACTOR_JAVADOCS .
+  cp -r $PRODUCT_JAVADOCS .
   mv -f $APIDOCS $JAVADOCS
 }
 
@@ -118,61 +104,6 @@ function make_zip() {
   zip -r $ZIP_FILE_NAME $HTML/*
 }
 
-function stage_docs() {
-  echo "Deploying docs..."
-  echo "rsync -vz $SCRIPT_PATH/$BUILD/$ZIP \"$USER@$STAGING_SERVER:$ZIP\""
-  rsync -vz $SCRIPT_PATH/$BUILD/$ZIP "$USER@$STAGING_SERVER:$ZIP"
-  version
-  cd_cmd="cd $WWW_PATH/$REACTOR; ls"
-  remove_cmd="sudo rm -rf $REACTOR_VERSION"
-  unzip_cmd="sudo unzip ~/$ZIP; sudo mv $HTML $REACTOR_VERSION"
-  echo ""
-  echo "To install on server:"
-  echo ""
-  echo "  $cd_cmd"
-  echo "  $remove_cmd; ls"
-  echo "  $unzip_cmd; ls"
-  echo ""
-  echo "or, on one line:"
-  echo ""
-  echo "  $cd_cmd; $remove_cmd; ls; $unzip_cmd; ls"
-  echo ""
-  echo "or, using current branch:"
-  echo ""
-  echo "  $cd_cmd"
-  echo "  $remove_cmd-$GIT_BRANCH; ls"
-  echo "  $unzip_cmd-$GIT_BRANCH; ls"
-  echo ""
-  login_staging_server
-}
-
-function stage_doc_index() {
-  echo "Deploying docs index page..."
-  echo "rsync -vz $DOCS_INDEX \"$USER@$STAGING_SERVER:$DOCS_INDEX_PAGE\""
-  rsync -vz $DOCS_INDEX "$USER@$STAGING_SERVER:$DOCS_INDEX_PAGE"
-  cd_cmd="cd $WWW_PATH; ls"
-  remove_cmd="sudo rm -rf $DOCS_INDEX_PAGE"
-  mv_cmd="sudo mv ~/$DOCS_INDEX_PAGE $DOCS_INDEX_PAGE"
-  echo ""
-  echo "To install on server:"
-  echo ""
-  echo "  $cd_cmd"
-  echo "  $remove_cmd; ls"
-  echo "  $mv_cmd; ls"
-  echo ""
-  echo "or, on one line:"
-  echo ""
-  echo "  $cd_cmd; $remove_cmd; ls; $mv_cmd; ls"
-  echo ""
-  login_staging_server
-}
-
-function login_staging_server() {
-  echo "Logging into:"
-  echo "ssh \"$USER@$STAGING_SERVER\""
-  ssh "$USER@$STAGING_SERVER"
-}
-
 function build() {
    build_docs
    build_javadocs
@@ -183,18 +114,18 @@ function build() {
 
 function build_sdk() {
   build_pdf_rest
-  cd $REACTOR_PATH
+  cd $PRODUCT_PATH
   mvn clean package -DskipTests -P examples && mvn package -pl singlenode -am -DskipTests -P dist,release
 }
 
 function build_dependencies() {
-  cd $REACTOR_PATH
+  cd $PRODUCT_PATH
   mvn clean package site -am -Pjavadocs -DskipTests
 }
 
 function version() {
-  cd $REACTOR_PATH
-  REACTOR_VERSION=`mvn help:evaluate -o -Dexpression=project.version | grep -v '^\['`
+  cd $PRODUCT_PATH
+  PRODUCT_VERSION=`mvn help:evaluate -o -Dexpression=project.version | grep -v '^\['`
   IFS=/ read -a branch <<< "`git rev-parse --abbrev-ref HEAD`"
   GIT_BRANCH="${branch[1]}"
 }
@@ -212,12 +143,8 @@ case "$1" in
   copy_license_pdfs ) copy_license_pdfs; exit 1;;
   javadocs )          build_javadocs; exit 1;;
   depends )           build_dependencies; exit 1;;
-  login )             login_staging_server; exit 1;;
-  pdf-install )       build_pdf_install; exit 1;;
   pdf-rest )          build_pdf_rest; exit 1;;
   sdk )               build_sdk; exit 1;;
-  stage )             stage_docs; exit 1;;
-  stage_index )       stage_doc_index; exit 1;;
   version )           version; exit 1;;
   zip )               make_zip; exit 1;;
   * )                 usage; exit 1;;

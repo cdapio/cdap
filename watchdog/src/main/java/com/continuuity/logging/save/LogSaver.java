@@ -89,9 +89,8 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     LOG.info(String.format("Kafka topic is %s", this.topic));
     this.serializer = new LoggingEventSerializer();
 
-    OrderedTable metaTable = tableUtil.getMetaTable();
-    this.checkpointManager = new CheckpointManager(metaTable, txClient, topic);
-    FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(metaTable, txClient, locationFactory);
+    this.checkpointManager = new CheckpointManager(tableUtil, txClient, topic);
+    FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil, txClient, locationFactory);
     this.messageTable = HashBasedTable.create();
 
     this.kafkaClient = kafkaClient;

@@ -28,8 +28,6 @@ import com.continuuity.data2.transaction.queue.inmemory.InMemoryStreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.data2.transaction.stream.inmemory.InMemoryStreamConsumerFactory;
-import com.continuuity.metadata.MetaDataTable;
-import com.continuuity.metadata.SerializingMetaDataTable;
 import com.continuuity.tephra.runtime.TransactionModules;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
@@ -41,8 +39,6 @@ public class DataFabricInMemoryModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(MetaDataTable.class).to(SerializingMetaDataTable.class).in(Singleton.class);
-
     // Bind TxDs2 stuff
 
     bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);

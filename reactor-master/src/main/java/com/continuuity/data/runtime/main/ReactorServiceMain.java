@@ -43,6 +43,7 @@ import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.services.AppFabricServer;
+import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Charsets;
@@ -129,7 +130,7 @@ public class ReactorServiceMain extends DaemonMain {
   private boolean isExploreEnabled;
 
   public static void main(final String[] args) throws Exception {
-    LOG.info("Starting Reactor Service Main...");
+    LOG.info("Starting {}", ReactorServiceMain.class.getSimpleName());
     new ReactorServiceMain(CConfiguration.create(), HBaseConfiguration.create()).doMain(args);
   }
 
@@ -200,6 +201,9 @@ public class ReactorServiceMain extends DaemonMain {
 
   @Override
   public void start() {
+    LogAppenderInitializer logAppenderInitializer = baseInjector.getInstance(LogAppenderInitializer.class);
+    logAppenderInitializer.initialize();
+
     Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService);
 
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
@@ -211,7 +215,7 @@ public class ReactorServiceMain extends DaemonMain {
           throw new IllegalArgumentException("TwillApplication cannot be null");
         }
 
-        LOG.info("Became leader.");
+        LOG.info("Became leader");
         Injector injector = baseInjector.createChildInjector();
 
         twillRunnerService = injector.getInstance(TwillRunnerService.class);
@@ -227,7 +231,7 @@ public class ReactorServiceMain extends DaemonMain {
 
       @Override
       public void follower() {
-        LOG.info("Became follower.");
+        LOG.info("Became follower");
 
         dsService.stopAndWait();
         if (twillRunnerService != null) {
@@ -330,7 +334,7 @@ public class ReactorServiceMain extends DaemonMain {
         instanceCountMap.put(service, savedCount);
         LOG.info("Setting instance count of {} Service to {}", service, savedCount);
       } catch (Exception e) {
-        LOG.error("Couldn't retrieve instance count {} : {}", service, e.getMessage(), e);
+        LOG.error("Couldn't retrieve instance count {}: {}", service, e.getMessage(), e);
       }
     }
     return instanceCountMap;
@@ -367,13 +371,13 @@ public class ReactorServiceMain extends DaemonMain {
       twillController = iterator.next();
 
       if (iterator.hasNext()) {
-        LOG.warn("Found more than one instance of {} running. Stopping the others...", serviceName);
+        LOG.warn("Found more than one instance of {} running; stopping the others", serviceName);
         for (; iterator.hasNext(); ) {
           TwillController controller = iterator.next();
           LOG.warn("Stopping one extra instance of {}", serviceName);
           controller.stopAndWait();
         }
-        LOG.warn("Done stopping extra instances of {}", serviceName);
+        LOG.warn("Stopped extra instances of {}", serviceName);
       }
     } else {
       LOG.info("Starting {} application", serviceName);
@@ -385,20 +389,20 @@ public class ReactorServiceMain extends DaemonMain {
         @Override
         public void running() {
           if (!dsService.isRunning()) {
-            LOG.info("Starting dataset service");
+            LOG.info("Starting Dataset service");
             dsService.startAndWait();
           }
         }
 
         @Override
         public void failed(Service.State from, Throwable failure) {
-          LOG.error("{} failed with exception... restarting with back-off.", serviceName, failure);
+          LOG.error("{} failed with exception; restarting with back-off", serviceName, failure);
           backOffRun();
         }
 
         @Override
         public void terminated(Service.State from) {
-          LOG.warn("{} got terminated... restarting with back-off", serviceName);
+          LOG.warn("{} was terminated; restarting with back-off", serviceName);
           backOffRun();
         }
       }, MoreExecutors.sameThreadExecutor());
@@ -434,7 +438,7 @@ public class ReactorServiceMain extends DaemonMain {
         TimeUnit.MILLISECONDS.sleep(20);
       }
     } catch (InterruptedException e) {
-      LOG.warn("Got interrupted exception: ", e);
+      LOG.warn("Caught interrupted exception", e);
       Thread.currentThread().interrupt();
     }
 
@@ -468,7 +472,7 @@ public class ReactorServiceMain extends DaemonMain {
     String hiveConfFiles = System.getProperty(Constants.Explore.EXPLORE_CONF_FILES);
     LOG.debug("Hive conf files = {}", hiveConfFiles);
     if (hiveConfFiles == null) {
-      throw new RuntimeException("System property " + Constants.Explore.EXPLORE_CONF_FILES + " is not set.");
+      throw new RuntimeException("System property " + Constants.Explore.EXPLORE_CONF_FILES + " is not set");
     }
 
     // Add all the conf files needed by hive as resources available to containers
@@ -514,11 +518,11 @@ public class ReactorServiceMain extends DaemonMain {
     try {
 
       long sleepMs = Math.min(500 * (long) Math.pow(2, currentRun), MAX_BACKOFF_TIME_MS);
-      LOG.info("Current restart run = {}. Backing off for {} ms...", currentRun, sleepMs);
+      LOG.info("Current restart run = {}; backing off for {} ms", currentRun, sleepMs);
       TimeUnit.MILLISECONDS.sleep(sleepMs);
 
     } catch (InterruptedException e) {
-      LOG.warn("Got interrupted exception: ", e);
+      LOG.warn("Caught interrupted exception", e);
       Thread.currentThread().interrupt();
     }
 

@@ -30,7 +30,7 @@ public class ExploreServiceManager extends AbstractDistributedReactorServiceMana
 
   @Inject
   public ExploreServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
-                              DiscoveryServiceClient discoveryServiceClient) {
+                               DiscoveryServiceClient discoveryServiceClient) {
     super(cConf, Constants.Service.EXPLORE_HTTP_USER_SERVICE, twillRunnerService, discoveryServiceClient);
     this.discoveryServiceClient = discoveryServiceClient;
   }

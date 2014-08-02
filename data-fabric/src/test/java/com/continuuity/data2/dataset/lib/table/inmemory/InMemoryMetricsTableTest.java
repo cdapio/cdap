@@ -65,6 +65,6 @@ public class InMemoryMetricsTableTest extends MetricsTableTest {
   @Override
   protected MetricsTable getTable(String name) throws Exception {
     return DatasetsUtil.getOrCreateDataset(dsFramework, name, MetricsTable.class.getName(),
-                                           DatasetProperties.EMPTY, null);
+                                           DatasetProperties.EMPTY, null, null);
   }
 }

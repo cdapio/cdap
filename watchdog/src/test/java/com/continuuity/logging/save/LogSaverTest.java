@@ -165,8 +165,7 @@ public class LogSaverTest extends KafkaTestBase {
 
   @AfterClass
   public static void testCheckpoint() throws Exception {
-    CheckpointManager checkpointManager = new CheckpointManager(tableUtil.getMetaTable(),
-                                                                txClient, KafkaTopic.getTopic());
+    CheckpointManager checkpointManager = new CheckpointManager(tableUtil, txClient, KafkaTopic.getTopic());
     Assert.assertEquals(60, checkpointManager.getCheckpoint(0));
     Assert.assertEquals(120, checkpointManager.getCheckpoint(1));
   }

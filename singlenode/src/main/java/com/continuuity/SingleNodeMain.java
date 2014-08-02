@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.continuuity;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
@@ -144,8 +145,9 @@ public class SingleNodeMain {
   /**
    * Start the service.
    */
-  protected void startUp(String[] args) throws Exception {
-    logAppenderInitializer.initialize();
+  public void startUp() throws Exception {
+    // todo: REACTOR-682
+//    logAppenderInitializer.initialize();
 
     // Start all the services.
     txService.startAndWait();
@@ -154,7 +156,7 @@ public class SingleNodeMain {
 
     Service.State state = appFabricServer.startAndWait();
     if (state != Service.State.RUNNING) {
-      throw new Exception("Failed to start Application Fabric.");
+      throw new Exception("Failed to start Application Fabric");
     }
 
     gatewayV2.startAndWait();
@@ -173,7 +175,7 @@ public class SingleNodeMain {
     }
 
     String hostname = InetAddress.getLocalHost().getHostName();
-    System.out.println("Continuuity Reactor started successfully");
+    System.out.println("Application Server started successfully");
     System.out.println("Connect to dashboard at http://" + hostname + ":9999");
   }
 
@@ -181,7 +183,7 @@ public class SingleNodeMain {
    * Shutdown the service.
    */
   public void shutDown() {
-    LOG.info("Shutting down reactor...");
+    LOG.info("Shutting down the Application Server");
 
     try {
       // order matters: first shut down web app 'cause it will stop working after router is down
@@ -206,7 +208,8 @@ public class SingleNodeMain {
       if (externalAuthenticationServer != null) {
         externalAuthenticationServer.stopAndWait();
       }
-      logAppenderInitializer.close();
+      // todo: REACTOR-682
+//      logAppenderInitializer.close();
 
     } catch (Throwable e) {
       LOG.error("Exception during shutdown", e);
@@ -241,7 +244,7 @@ public class SingleNodeMain {
     }
     out.println("");
     out.println("Additional options:");
-    out.println("  --web-app-path  Path to web-app");
+    out.println("  --web-app-path  Path to Webapp");
     out.println("  --in-memory     To run everything in memory");
     out.println("  --help          To print this message");
     out.println("");
@@ -251,14 +254,7 @@ public class SingleNodeMain {
     }
   }
 
-  /**
-   * The root of all goodness!
-   *
-   * @param args Our cmdline arguments
-   */
   public static void main(String[] args) {
-    CConfiguration cConf = CConfiguration.create();
-
     // Single node use persistent data fabric by default
     boolean inMemory = false;
     String webAppPath = WebCloudAppService.WEB_APP;
@@ -276,6 +272,34 @@ public class SingleNodeMain {
       }
     }
 
+    SingleNodeMain main = null;
+
+    try {
+      main = createSingleNodeMain(inMemory, webAppPath);
+      main.startUp();
+    } catch (Throwable e) {
+      System.err.println("Failed to start server. " + e.getMessage());
+      LOG.error("Failed to start server", e);
+      if (main != null) {
+        main.shutDown();
+      }
+      System.exit(-2);
+    }
+  }
+
+
+  public static SingleNodeMain createSingleNodeMain(boolean inMemory) {
+    return createSingleNodeMain(inMemory, WebCloudAppService.WEB_APP);
+  }
+
+  /**
+   * The root of all goodness!
+   *
+   * @param inMemory
+   * @param webAppPath
+   */
+  public static SingleNodeMain createSingleNodeMain(boolean inMemory, String webAppPath) {
+    CConfiguration cConf = CConfiguration.create();
 
     // This is needed to use LocalJobRunner with fixes (we have it in app-fabric).
     // For the modified local job runner
@@ -303,20 +327,9 @@ public class SingleNodeMain {
 
     //Run dataset service on random port
     List<Module> modules = inMemory ? createInMemoryModules(cConf, hConf)
-                                    : createPersistentModules(cConf, hConf);
+      : createPersistentModules(cConf, hConf);
 
-    SingleNodeMain main = null;
-    try {
-      main = new SingleNodeMain(modules, cConf, webAppPath);
-      main.startUp(args);
-    } catch (Throwable e) {
-      System.err.println("Failed to start server. " + e.getMessage());
-      LOG.error("Failed to start server", e);
-      if (main != null) {
-        main.shutDown();
-      }
-      System.exit(-2);
-    }
+    return new SingleNodeMain(modules, cConf, webAppPath);
   }
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
@@ -353,14 +366,14 @@ public class SingleNodeMain {
     String environment =
       configuration.get(Constants.CFG_APPFABRIC_ENVIRONMENT, Constants.DEFAULT_APPFABRIC_ENVIRONMENT);
     if (environment.equals("vpc")) {
-      System.err.println("Reactor Environment : " + environment);
+      System.err.println("Application Server Environment: " + environment);
     }
 
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
 
     String passportUri = configuration.get(Constants.Gateway.CFG_PASSPORT_SERVER_URI);
     final PassportClient client = passportUri == null || passportUri.isEmpty() ? new PassportClient()
-                                                                               : PassportClient.create(passportUri);
+      : PassportClient.create(passportUri);
 
     return ImmutableList.of(
       new AbstractModule() {

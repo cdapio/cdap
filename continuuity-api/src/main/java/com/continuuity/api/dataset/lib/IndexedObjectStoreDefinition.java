@@ -26,6 +26,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * DatasetDefinition for {@link IndexedObjectStore}.
@@ -65,12 +66,13 @@ public class IndexedObjectStoreDefinition
   }
 
   @Override
-  public IndexedObjectStore<?> getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public IndexedObjectStore<?> getDataset(DatasetSpecification spec,
+                                          Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     DatasetSpecification tableSpec = spec.getSpecification("index");
     DatasetSpecification objectStoreSpec = spec.getSpecification("data");
 
-    Table index = tableDef.getDataset(tableSpec, classLoader);
-    ObjectStore<?> objectStore = objectStoreDef.getDataset(objectStoreSpec, classLoader);
+    Table index = tableDef.getDataset(tableSpec, arguments, classLoader);
+    ObjectStore<?> objectStore = objectStoreDef.getDataset(objectStoreSpec, arguments, classLoader);
 
     return new IndexedObjectStore(spec.getName(), objectStore, index);
   }
