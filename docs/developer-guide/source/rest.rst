@@ -598,7 +598,7 @@ You can update an existing Dataset's table and properties by issuing an HTTP PUT
 
 	PUT <base-url>/data/datasets/<dataset-name>
 
-with JSON-formatted name of the dataset type and properties in a body::
+with JSON-formatted name of the dataset type and properties in the body::
 
   {
      "typeName":"<type-name>",
@@ -606,6 +606,7 @@ with JSON-formatted name of the dataset type and properties in a body::
      "update":"true"
   }
 
+:Note: The Dataset must exist, and the instance and type passed must match with the existing Dataset.
 
 .. list-table::
    :widths: 20 80
@@ -631,7 +632,7 @@ HTTP Responses
    * - ``200 OK``
      - Requested Dataset was successfully updated
    * - ``404 Not Found``
-     - Requested Dataset type was not found
+     - Requested Dataset instance was not found
    * - ``409 Conflict``
      - Dataset Type provided for update is different from the existing Dataset Type
 
@@ -646,7 +647,7 @@ Example
    * - Body
      - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"7200000"},"update":"true"}``
    * - Description
-     - For the "mydataset" of type "Table", updates the Dataset and its time-to-live property to 2 hours.
+     - For the "mydataset" of type "Table", updates the Dataset and its time-to-live property to 2 hours
 
 .. rst2pdf: PageBreak
 
