@@ -62,10 +62,24 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 
 		this.resource('Loading', { path: '/loading' } );
     this.resource('ConnectionError', { path: '/connectionerror' } );
-		this.resource('Services', { path: '/services' } );
-    this.resource('Service', { path: '/services/:service_id' }, function() {
+
+    /**
+     * Services routes.
+     */
+		this.resource('Services', { path: '/services' });
+
+    this.resource('Service', { path: '/services/system/:service_id' }, function() {
       this.route('Log', { path: '/log' });
     });
+
+    this.resource('Userservice', { path: '/services/user/:userservice_id' }, function () {
+      this.resource('UserserviceStatus', { path: '/' } , function () {
+        this.route('Config', { path: '/config' } );
+      });
+      this.route('Log', { path: '/log' } );
+      this.route('History', { path: '/history' });
+    });
+
 
 		this.resource('Login', { path: '/login' } );
 		this.resource('AccessToken', { path: '/accesstoken' } );
@@ -187,7 +201,6 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 				}
 			}
 
-			window.scrollTo(0, 0);
 		},
 		/*
 		 * Override to unload the Controller once the Route has been deactivated.
@@ -215,6 +228,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
        */
       activate: function() {
         var routeHandler = this;
+        window.scrollTo(0, 0);
+
         if (C.Env.security_enabled) {
           C.setupAuth(routeHandler)
         }
@@ -270,7 +285,9 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
       }
     }),
 
-    ServicesRoute: basicRouter.extend(),
+    ServicesRoute: basicRouter.extend({
+      model: modelFinder
+    }),
 
     ServiceRoute: Ember.Route.extend({
       model: modelFinder
@@ -284,6 +301,46 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
         this.render('Runnable/Log');
       }
     }),
+
+    UserserviceRoute: basicRouter.extend({
+      model: modelFinder
+    }),
+
+    UserserviceStatusRoute: basicRouter.extend({
+      model: function () {
+        return this.modelFor('Userservice');
+      },
+      setupController: function(controller, model) {
+        this.controllerFor('Userservice').setProperties({isNew:true,content:model});
+      },
+      renderTemplate: function () {
+        this.render({controller: 'Userservice'});
+      },
+      unload: function() {
+
+      }
+    }),
+
+    UserserviceStatusConfigRoute: basicRouter.extend({
+      renderTemplate: function () {
+        this.render('Runnable/Config', {outlet: "config"});
+      }
+    }),
+
+    UserserviceLogRoute: basicRouter.extend({
+      model: function () {
+        return this.modelFor('Userservice');
+      },
+      renderTemplate: function () {
+        this.render('Runnable/Log');
+      }
+    }),
+
+		UserserviceHistoryRoute: basicRouter.extend({
+			model: function () {
+				return this.modelFor('Userservice');
+			}
+		}),
 
     LoginRoute: basicRouter.extend(),
 
@@ -452,8 +509,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		}),
 
 		/*
-		 * This will use the FlowStatusConfigController with the RunnableConfig template.
-		 * FlowStatusConfigController extends RunnableConfigController.
+		 * This will use the ProcedureStatusConfigController with the RunnableConfig template.
+		 * ProcedureStatusConfigController extends RunnableConfigController.
 		 */
 		ProcedureStatusConfigRoute: basicRouter.extend({
 			renderTemplate: function () {

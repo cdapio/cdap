@@ -142,7 +142,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
           var context = model.get('context');
           var metrics = self.get('metricsList');
 
-          self.HTTP.rest('metrics/user' + model.get('context'), function (response, status) {
+          self.HTTP.rest('metrics/user/' + model.get('context'), function (response, status) {
 
             if (response.error) {
 
@@ -155,7 +155,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
                 var userMetrics = [], result = response.result, i = result.length;
                 while (i--) {
 
-                  var path = '/user' + context + '/' + window.encodeURIComponent(result[i].metric);
+                  var path = '/user/' + context + '/' + window.encodeURIComponent(result[i].metric);
                   var j = metrics.length, found = false;
 
                   while (j--) {

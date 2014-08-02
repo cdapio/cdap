@@ -20,6 +20,9 @@
 #
 # PDF generation
 # python docs.py -g pdf -o ../../install-guide/build-pdf/install.pdf ../../install-guide/source/install.rst
+# python docs.py -g pdf -o ../../../developer-guide/licenses-pdf/reactor-enterprise-dependencies.pdf ../../developer-guide/source/licenses/reactor-enterprise-dependencies.rst
+# python docs.py -g pdf -o ../../../developer-guide/licenses-pdf/reactor-level-1-dependencies.pdf    ../../developer-guide/source/licenses/reactor-level-1-dependencies.rst
+# python docs.py -g pdf -o ../../../developer-guide/licenses-pdf/reactor-singlenode-dependencies.pdf ../../developer-guide/source/licenses/reactor-singlenode-dependencies.rst
 #
 
 VERSION = "0.0.1"

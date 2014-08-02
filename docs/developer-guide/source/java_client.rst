@@ -1,4 +1,4 @@
-..mirror of client/README.rst
+.. mirror of client/README.rst
 
 =================
  Java Client API
