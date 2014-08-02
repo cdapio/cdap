@@ -17,18 +17,26 @@
 package com.continuuity.internal.app.runtime.service;
 
 import com.continuuity.internal.app.runtime.AbstractProgramController;
+import com.google.common.collect.ImmutableList;
 import org.apache.twill.api.TwillContext;
+import org.apache.twill.discovery.Discoverable;
+
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Program Controller for Service runnable
  */
 final class InMemoryRunnableProgramController extends AbstractProgramController {
   private InMemoryRunnableDriver driver;
+  private final ConcurrentLinkedQueue<Discoverable> discoverables;
 
   InMemoryRunnableProgramController(String serviceName, String runnableName,
-                                    TwillContext twillContext, InMemoryRunnableDriver driver) {
+                                    TwillContext twillContext, InMemoryRunnableDriver driver,
+                                    ConcurrentLinkedQueue<Discoverable> discoverables) {
     super(serviceName + ":" + runnableName, twillContext.getRunId());
     this.driver = driver;
+    this.discoverables = discoverables;
   }
 
   @Override
@@ -49,5 +57,9 @@ final class InMemoryRunnableProgramController extends AbstractProgramController 
   @Override
   protected void doCommand(String name, Object value) throws Exception {
     //no-op
+  }
+
+  public List<Discoverable> getDiscoverables() {
+    return ImmutableList.copyOf(this.discoverables);
   }
 }

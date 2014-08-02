@@ -321,12 +321,14 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
                                                     resources.getDebugPort()));
           }
         }
+
+        // Add a list of announced services and their discoverables to the liveInfo.
+        liveInfo.addServices(report.getServices());
         return liveInfo;
       }
     }
     return new NotRunningProgramLiveInfo(program, type);
   }
-
 
   /**
    * Reports resource usage of the cluster and all the app masters of running twill programs.

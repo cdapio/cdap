@@ -16,12 +16,20 @@
 
 package com.continuuity.proto;
 
+import java.util.List;
+
 /**
  * A live info for in-memory runtime envirnment.
  */
 public class InMemoryProgramLiveInfo extends ProgramLiveInfo {
+  private final List<String> discoverables;
 
   public InMemoryProgramLiveInfo(Id.Program programId, ProgramType type) {
+    this(programId, type, null);
+  }
+
+  public InMemoryProgramLiveInfo(Id.Program programId, ProgramType type, List<String> discoverables) {
     super(programId, type, "in-memory");
+    this.discoverables = discoverables;
   }
 }

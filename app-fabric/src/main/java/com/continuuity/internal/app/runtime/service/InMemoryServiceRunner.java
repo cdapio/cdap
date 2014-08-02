@@ -33,6 +33,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -46,6 +47,7 @@ import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -142,6 +144,10 @@ public class InMemoryServiceRunner implements ProgramRunner {
       this.runnables = runnables;
       this.serviceSpec = serviceSpec;
       started();
+    }
+
+    public List<ProgramController> getProgramControllers() {
+      return ImmutableList.copyOf(runnables.values());
     }
 
     @Override
