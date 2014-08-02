@@ -1650,8 +1650,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     deploy(WordCountApp.class);
     deploy(AppWithServices.class);
     // data requires appId, programId, and programType. Test missing fields/invalid programType
-    Assert.assertEquals(400, doPost(url,
-                                    "[{'appId':'WordCountApp', 'programType':'Flow'}]").getStatusLine().getStatusCode());
+    Assert.assertEquals(400, doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow'}]")
+      .getStatusLine().getStatusCode());
     Assert.assertEquals(400, doPost(url, "[{'appId':'WordCountApp', 'programId':'WordCountFlow'}]")
       .getStatusLine().getStatusCode());
     Assert.assertEquals(400, doPost(url, "[{'programType':'Flow', 'programId':'WordCountFlow'}, {'appId':" +

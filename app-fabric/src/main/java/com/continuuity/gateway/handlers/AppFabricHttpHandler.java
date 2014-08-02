@@ -1062,7 +1062,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getInstances(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<BatchEndpointInstances> args = InstancesFromBatchArgs(decodeArrayArguments(request, responder));
+      List<BatchEndpointInstances> args = instancesFromBatchArgs(decodeArrayArguments(request, responder));
       // if args is null then the response has already been sent
       if (args == null) {
         return;
@@ -1186,7 +1186,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getStatuses(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<BatchEndpointStatus> args = StatusFromBatchArgs(decodeArrayArguments(request, responder));
+      List<BatchEndpointStatus> args = statusFromBatchArgs(decodeArrayArguments(request, responder));
       // if args is null, then there was an error in decoding args and response was already sent
       if (args == null) {
         return;
@@ -3758,7 +3758,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private List<BatchEndpointInstances> InstancesFromBatchArgs(List<BatchEndpointArgs> args) {
+  private List<BatchEndpointInstances> instancesFromBatchArgs(List<BatchEndpointArgs> args) {
     if (args == null) {
       return null;
     }
@@ -3769,7 +3769,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     return retVal;
   }
 
-  private List<BatchEndpointStatus> StatusFromBatchArgs(List<BatchEndpointArgs> args) {
+  private List<BatchEndpointStatus> statusFromBatchArgs(List<BatchEndpointArgs> args) {
     if (args == null) {
       return null;
     }
