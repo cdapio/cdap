@@ -67,9 +67,9 @@ for %%a in (%*) do (
 )
 
 if "%tokenFileProvided%" == "false" if exist %auth_file% (
-  %JAVACMD% -classpath %CLASSPATH% com.continuuity.data2.transaction.TransactionManagerDebuggerMain %* --token-file %auth_file%
+  %JAVACMD% -classpath %CLASSPATH% co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain %* --token-file %auth_file%
   GOTO :FINALLY
 )
-%JAVACMD% -classpath %CLASSPATH% com.continuuity.data2.transaction.TransactionManagerDebuggerMain %*
+%JAVACMD% -classpath %CLASSPATH% co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain %*
 :FINALLY
 

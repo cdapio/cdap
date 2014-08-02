@@ -67,10 +67,10 @@ for %%a in (%*) do (
 )
 
 if "%tokenFileProvided%" == "true" (
-  %JAVACMD% -classpath %CLASSPATH% com.continuuity.security.tools.AccessTokenClient %*
+  %JAVACMD% -classpath %CLASSPATH% co.cask.cdap.security.tools.AccessTokenClient %*
 )
 if "%tokenFileProvided%" == "false" (
-  %JAVACMD% -classpath %CLASSPATH% com.continuuity.security.tools.AccessTokenClient %* --file %auth_file%
+  %JAVACMD% -classpath %CLASSPATH% co.cask.cdap.security.tools.AccessTokenClient %* --file %auth_file%
 )
 
 :FINALLY

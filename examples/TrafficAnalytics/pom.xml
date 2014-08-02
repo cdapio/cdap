@@ -29,7 +29,7 @@
   <name>TrafficAnalytics App</name>
 
   <properties>
-    <app.main.class>com.continuuity.examples.traffic.TrafficAnalyticsApp</app.main.class>
+    <app.main.class>co.cask.cdap.examples.traffic.TrafficAnalyticsApp</app.main.class>
   </properties>
 
   <dependencies>

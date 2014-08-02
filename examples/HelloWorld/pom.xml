@@ -30,6 +30,6 @@
     <packaging>jar</packaging>
 
     <properties>
-        <app.main.class>com.continuuity.examples.helloworld.HelloWorld</app.main.class>
+        <app.main.class>co.cask.cdap.examples.helloworld.HelloWorld</app.main.class>
     </properties>
 </project>

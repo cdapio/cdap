@@ -29,7 +29,7 @@
   <name>PageViewAnalytics App</name>
 
   <properties>
-    <app.main.class>com.continuuity.examples.analytics.PageViewAnalyticsApp</app.main.class>
+    <app.main.class>co.cask.cdap.examples.analytics.PageViewAnalyticsApp</app.main.class>
   </properties>
 
   <dependencies>

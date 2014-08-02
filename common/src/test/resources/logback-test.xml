@@ -44,7 +44,7 @@
         </encoder>
     </appender>
 
-    <logger name="com.continuuity" level="DEBUG" />
+    <logger name="co.cask.cdap" level="DEBUG" />
 
     <root level="INFO">
         <appender-ref ref="Console"/>

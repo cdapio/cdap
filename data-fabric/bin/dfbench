@@ -31,4 +31,4 @@ SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.."
 APP_HOME="`pwd -P`"
 
-java -cp @classpath@ com.continuuity.performance.benchmark.BenchmarkRunner "$@"
+java -cp @classpath@ co.cask.cdap.performance.benchmark.BenchmarkRunner "$@"

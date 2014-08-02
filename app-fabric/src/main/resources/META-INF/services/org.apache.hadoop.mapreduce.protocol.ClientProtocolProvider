@@ -14,4 +14,4 @@
 # the License.
 #
 
-com.continuuity.internal.app.runtime.batch.inmemory.LocalClientProtocolProvider
+co.cask.cdap.internal.app.runtime.batch.inmemory.LocalClientProtocolProvider

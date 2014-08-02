@@ -34,7 +34,7 @@
   <dependencies>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>continuuity-api</artifactId>
+      <artifactId>api</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

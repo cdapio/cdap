@@ -67,4 +67,4 @@ if [ $containsTokenFileArg -eq 0 ]; then
   set -- "$@" "--file" "$auth_file"
 fi
 
-java -cp ${CLASSPATH} -Dscript=$script com.continuuity.security.tools.AccessTokenClient "$@"
+java -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.security.tools.AccessTokenClient "$@"

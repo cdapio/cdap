@@ -67,4 +67,4 @@ if [ $containsTokenFileArg -eq 0 ] && [ -f $auth_file ]; then
   set -- "$@" "--token-file" "$auth_file"
 fi
 
-java -cp ${CLASSPATH} -Dscript=$script com.continuuity.gateway.tools.DataSetClient "$@"
+java -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.gateway.tools.DataSetClient "$@"

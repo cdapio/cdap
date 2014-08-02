@@ -60,7 +60,7 @@ fi
 
 ARG_COUNT=$#
 if [[ "X${ARG_COUNT}" != "X0" ]]; then
- $JAVA ${JAVA_HEAP_MAX} -cp ${CLASSPATH} -Dscript=$script com.continuuity.app.services.ReactorClient "$@"
+ $JAVA ${JAVA_HEAP_MAX} -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.app.services.ReactorClient "$@"
 else
- $JAVA ${JAVA_HEAP_MAX} -cp ${CLASSPATH} -Dscript=$script com.continuuity.app.services.ReactorClient help 2>/dev/null
+ $JAVA ${JAVA_HEAP_MAX} -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.app.services.ReactorClient help 2>/dev/null
 fi

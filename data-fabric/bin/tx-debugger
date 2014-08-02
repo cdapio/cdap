@@ -65,4 +65,4 @@ if [ $containsTokenFileArg -eq 0 ] && [ -f $auth_file ]; then
   set -- "$@" "--token-file" "$auth_file"
 fi
 
-java -cp ${CLASSPATH} -Dscript=$script com.continuuity.data2.transaction.TransactionManagerDebuggerMain "$@"
+java -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain "$@"

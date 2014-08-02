@@ -22,8 +22,8 @@
     <logger name="org.apache.hive" level="INFO"/>
     <logger name="org.mortbay.log" level="INFO"/>
 
-    <logger name="com.continuuity.explore" level="TRACE"/>
-    <logger name="com.continuuity.hive" level="DEBUG"/>
+    <logger name="co.cask.cdap.explore" level="TRACE"/>
+    <logger name="co.cask.cdap.hive" level="DEBUG"/>
 
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

@@ -261,7 +261,7 @@ start() {
     rotate_log $APP_HOME/logs/reactor.log
     rotate_log $APP_HOME/logs/reactor-debug.log
 
-    nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" com.continuuity.SingleNodeMain \
+    nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" co.cask.cdap.SingleNodeMain \
         --web-app-path ${WEB_APP_PATH} \
         >> $APP_HOME/logs/reactor.log 2>&1 < /dev/null &
     echo $! > $pid

@@ -115,7 +115,7 @@
 
   <modules>
     <module>common-unit-test</module>
-    <module>continuuity-api</module>
+    <module>api</module>
     <module>common</module>
     <module>watchdog-api</module>
     <module>kafka</module>
@@ -131,7 +131,7 @@
     <module>explore-client</module>
     <module>explore-jdbc</module>
     <module>explore</module>
-    <module>continuuity-test</module>
+    <module>unit-test</module>
     <module>reactor-master</module>
     <module>web-app</module>
     <module>proto</module>
@@ -1252,7 +1252,7 @@
     <profile>
       <id>test-fast</id>
       <properties>
-        <testcase.groups>!com.continuuity.test.SlowTests</testcase.groups>
+        <testcase.groups>!co.cask.cdap.test.SlowTests</testcase.groups>
       </properties>
       <build>
         <pluginManagement>
@@ -1274,7 +1274,7 @@
     <profile>
       <id>test-slow</id>
       <properties>
-        <testcase.groups>!com.continuuity.test.XSlowTests</testcase.groups>
+        <testcase.groups>!co.cask.cdap.test.XSlowTests</testcase.groups>
       </properties>
       <build>
         <pluginManagement>
@@ -1545,10 +1545,10 @@
                   <source>
                     if (project.version.endsWith("-SNAPSHOT")){
                       project.properties['deploy.url'] = project.distributionManagement.snapshotRepository.url;
-                      project.properties['dist.deploy.groupId'] = "com.continuuity.distributions.snapshots";
+                      project.properties['dist.deploy.groupId'] = "co.cask.cdap.distributions.snapshots";
                     } else {
                       project.properties['deploy.url'] = project.distributionManagement.repository.url;
-                      project.properties['dist.deploy.groupId'] = "com.continuuity.distributions.release";
+                      project.properties['dist.deploy.groupId'] = "co.cask.cdap.distributions.release";
                     }
                   </source>
                 </configuration>

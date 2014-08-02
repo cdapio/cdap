@@ -18,12 +18,12 @@
 
 package org.apache.hadoop.mapred;
 
-import com.continuuity.common.conf.Constants;
-import com.continuuity.common.lang.ApiResourceListHolder;
-import com.continuuity.common.lang.ClassLoaders;
-import com.continuuity.common.lang.CombineClassLoader;
-import com.continuuity.common.lang.jar.BundleJarUtil;
-import com.continuuity.common.utils.DirUtils;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.ApiResourceListHolder;
+import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

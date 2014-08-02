@@ -15,7 +15,7 @@
 # Set environment variables here.
 
 # Main class to be invoked.
-MAIN_CLASS=com.continuuity.security.runtime.AuthenticationServerMain
+MAIN_CLASS=co.cask.cdap.security.runtime.AuthenticationServerMain
 
 # Arguments for main class.
 MAIN_CLASS_ARGS=

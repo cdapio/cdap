@@ -53,4 +53,4 @@ if [ -d "$conf" ]; then
   CLASSPATH=$CLASSPATH:"$conf"/
 fi
 
-java -cp ${CLASSPATH} -Dscript=$script com.continuuity.gateway.tools.FlumeClient "$@"
+java -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.gateway.tools.FlumeClient "$@"

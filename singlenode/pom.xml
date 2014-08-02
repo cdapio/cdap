@@ -49,7 +49,7 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>continuuity-api</artifactId>
+      <artifactId>api</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -257,24 +257,24 @@
                       <targetPath>libexec</targetPath>
                     </resource>
                     <resource>
-                      <directory>${project.parent.basedir}/continuuity-test/src/main/resources</directory>
+                      <directory>${project.parent.basedir}/unit-test/src/main/resources</directory>
                       <targetPath>libexec/bin</targetPath>
                       <includes>
                         <include>*.exe</include>
                       </includes>
                     </resource>
                     <resource>
-                      <directory>${project.parent.basedir}/continuuity-test/src/main/resources</directory>
+                      <directory>${project.parent.basedir}/unit-test/src/main/resources</directory>
                       <targetPath>lib/native</targetPath>
                       <includes>
                         <include>*.dll</include>
                       </includes>
                     </resource>
-                    <!-- Copy continuuity-api jars -->
+                    <!-- Copy api jars -->
                     <resource>
-                      <directory>${project.parent.basedir}/continuuity-api/target</directory>
+                      <directory>${project.parent.basedir}/api/target</directory>
                       <includes>
-                        <include>continuuity-api-${project.version}*.jar</include>
+                        <include>api-${project.version}*.jar</include>
                       </includes>
                     </resource>
                     <!-- Copy web-app -->
@@ -282,9 +282,9 @@
                       <directory>${project.parent.basedir}/web-app/target/local</directory>
                       <targetPath>web-app/local</targetPath>
                     </resource>
-                    <!-- Copy continuuity-api javadocs -->
+                    <!-- Copy api javadocs -->
                     <resource>
-                      <directory>${project.parent.basedir}/continuuity-api/target/apidocs</directory>
+                      <directory>${project.parent.basedir}/api/target/apidocs</directory>
                       <targetPath>javadocs</targetPath>
                     </resource>
                     <!-- Copy examples. The assume the example is already built -->

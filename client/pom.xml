@@ -48,7 +48,7 @@
 
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>continuuity-test</artifactId>
+      <artifactId>unit-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

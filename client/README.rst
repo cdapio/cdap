@@ -13,7 +13,7 @@ Maven Dependency
 To use the Java Client API in your project, add this Maven dependency::
 
   <dependency>
-    <groupId>com.continuuity</groupId>
+    <groupId>co.cask.cdap</groupId>
     <artifactId>client</artifactId>
     <version>${reactor.version}</version>
   </dependency>

@@ -29,7 +29,7 @@
   <name>ResponseCodeAnalytics App</name>
 
   <properties>
-    <app.main.class>com.continuuity.examples.logger.ResponseCodeAnalyticsApp</app.main.class>
+    <app.main.class>co.cask.cdap.examples.logger.ResponseCodeAnalyticsApp</app.main.class>
   </properties>
 
   <dependencies>

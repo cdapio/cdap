@@ -30,6 +30,6 @@
   <packaging>jar</packaging>
 
   <properties>
-    <app.main.class>com.continuuity.examples.countrandom.CountRandom</app.main.class>
+    <app.main.class>co.cask.cdap.examples.countrandom.CountRandom</app.main.class>
   </properties>
 </project>

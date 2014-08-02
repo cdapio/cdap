@@ -145,7 +145,7 @@
   <dependencies>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>continuuity-api</artifactId>
+      <artifactId>api</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
@@ -171,7 +171,7 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>continuuity-test</artifactId>
+      <artifactId>unit-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -194,7 +194,7 @@
         <version>1.3.2</version>
       </dependency>
       <dependency>
-        <groupId>com.continuuity</groupId>
+        <groupId>co.cask.cdap</groupId>
         <artifactId>power-pack</artifactId>
         <version>${power.pack.version}</version>
         <exclusions>

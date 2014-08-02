@@ -67,9 +67,9 @@ for %%a in (%*) do (
 )
 
 if "%tokenFileProvided%" == "false" if exist %auth_file% (
-  %JAVACMD% -classpath %CLASSPATH% com.continuuity.gateway.tools.StreamClient %* --token-file %auth_file%
+  %JAVACMD% -classpath %CLASSPATH% co.cask.cdap.gateway.tools.StreamClient %* --token-file %auth_file%
   GOTO :FINALLY
 )
-%JAVACMD% -classpath %CLASSPATH% com.continuuity.gateway.tools.StreamClient %*
+%JAVACMD% -classpath %CLASSPATH% co.cask.cdap.gateway.tools.StreamClient %*
 :FINALLY
 

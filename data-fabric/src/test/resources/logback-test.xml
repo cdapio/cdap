@@ -41,7 +41,7 @@
      <!--Supressing some chatty loggers -->
     <logger name="org.apache.hadoop" level="WARN"/>
     <logger name="org.mortbay.log" level="WARN"/>
-    <logger name="com.continuuity" level="DEBUG" />
+    <logger name="co.cask.cdap" level="DEBUG" />
 
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

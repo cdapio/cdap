@@ -91,7 +91,7 @@
         </exclusion>
         <exclusion>
           <groupId>co.cask.cdap</groupId>
-          <artifactId>continuuity-api</artifactId>
+          <artifactId>api</artifactId>
         </exclusion>
         <exclusion>
           <groupId>co.cask.cdap</groupId>
