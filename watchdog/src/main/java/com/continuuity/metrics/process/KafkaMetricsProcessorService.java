@@ -50,7 +50,7 @@ public final class KafkaMetricsProcessorService extends AbstractIdleService {
   private Cancellable unsubscribe;
   private final MetricsTableFactory metricsTableFactory;
 
-  private boolean stopping = false;
+  private volatile boolean stopping = false;
 
   private KafkaConsumerMetaTable metaTable;
 
