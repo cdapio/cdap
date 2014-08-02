@@ -14,28 +14,27 @@
  * the License.
  */
 
-package com.continuuity.data2.increment.hbase96;
+package com.continuuity.data2.increment.hbase94;
 
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableClient;
-import com.continuuity.data2.util.hbase.MockRegionServerServices;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.regionserver.HRegion;
-import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.hadoop.hbase.regionserver.wal.HLog;
-import org.apache.hadoop.hbase.regionserver.wal.HLogFactory;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.MockRegionServerServices;
+import org.apache.hadoop.hbase.util.Pair;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -47,7 +46,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Tests for {@link IncrementSummingScanner} implementation.
+ *
  */
 public class IncrementSummingScannerTest {
   private static final byte[] TRUE = Bytes.toBytes(true);
@@ -68,7 +67,7 @@ public class IncrementSummingScannerTest {
 
   @Test
   public void testIncrementScanning() throws Exception {
-    TableName tableName = TableName.valueOf("TestIncrementSummingScanner");
+    byte[] tableName = Bytes.toBytes("TestIncrementSummingScanner");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
     HTableDescriptor htd = new HTableDescriptor(tableName);
@@ -78,37 +77,36 @@ public class IncrementSummingScannerTest {
     htd.addCoprocessor(IncrementHandler.class.getName());
     Path tablePath = new Path("/tmp/" + tableName);
     Path hlogPath = new Path("/tmp/hlog");
+    Path oldPath = new Path("/tmp/.oldLogs");
     Configuration hConf = conf;
     FileSystem fs = FileSystem.get(hConf);
     assertTrue(fs.mkdirs(tablePath));
-    HLog hLog = HLogFactory.createHLog(fs, hlogPath, "testRegionScanner", hConf);
-    HRegionInfo regionInfo = new HRegionInfo(tableName);
-    HRegionFileSystem regionFS = HRegionFileSystem.createRegionOnFileSystem(hConf, fs, tablePath, regionInfo);
-    HRegion region = new HRegion(regionFS, hLog, hConf, htd,
-                                 new MockRegionServerServices(hConf, null));
+    HLog hlog = new HLog(fs, hlogPath, oldPath, hConf);
+    HRegion region = new HRegion(tablePath, hlog, fs, hConf,
+                                 new HRegionInfo(tableName), htd, new MockRegionServerServices());
     try {
       region.initialize();
-      
+
       // test handling of a single increment value alone
       Put p = new Put(Bytes.toBytes("r1"));
       p.add(familyBytes, columnBytes, Bytes.toBytes(3L));
       p.setAttribute(HBaseOcTableClient.DELTA_WRITE, TRUE);
-      region.put(p);
+      doPut(region, p);
 
       Scan scan = new Scan();
       RegionScanner scanner = new IncrementSummingScanner(region, -1, region.getScanner(scan));
-      List<Cell> results = Lists.newArrayList();
+      List<KeyValue> results = Lists.newArrayList();
       scanner.next(results);
 
       assertEquals(1, results.size());
-      Cell cell = results.get(0);
+      KeyValue cell = results.get(0);
       assertNotNull(cell);
       assertEquals(3L, Bytes.toLong(cell.getValue()));
 
       // test handling of a single total sum
       p = new Put(Bytes.toBytes("r2"));
       p.add(familyBytes, columnBytes, Bytes.toBytes(5L));
-      region.put(p);
+      doPut(region, p);
 
       scan = new Scan(Bytes.toBytes("r2"));
 
@@ -128,7 +126,7 @@ public class IncrementSummingScannerTest {
         p.add(familyBytes, columnBytes, now - i, Bytes.toBytes((long) (i + 1)));
       }
       p.setAttribute(HBaseOcTableClient.DELTA_WRITE, TRUE);
-      region.put(p);
+      doPut(region, p);
 
       scan = new Scan(Bytes.toBytes("r3"));
       scan.setMaxVersions();
@@ -148,12 +146,12 @@ public class IncrementSummingScannerTest {
         p.add(familyBytes, columnBytes, now - i, Bytes.toBytes(1L));
       }
       p.setAttribute(HBaseOcTableClient.DELTA_WRITE, TRUE);
-      region.put(p);
+      doPut(region, p);
 
       // this put will appear as a "total" sum prior to all the delta puts
       p = new Put(Bytes.toBytes("r4"));
       p.add(familyBytes, columnBytes, now - 5, Bytes.toBytes(5L));
-      region.put(p);
+      doPut(region, p);
 
       scan = new Scan(Bytes.toBytes("r4"));
       scan.setMaxVersions();
@@ -169,7 +167,7 @@ public class IncrementSummingScannerTest {
       // test handling of an increment column followed by a non-increment column
       p = new Put(Bytes.toBytes("r4"));
       p.add(familyBytes, Bytes.toBytes("c2"), Bytes.toBytes("value"));
-      region.put(p);
+      doPut(region, p);
 
       scan = new Scan(Bytes.toBytes("r4"));
       scan.setMaxVersions();
@@ -189,5 +187,12 @@ public class IncrementSummingScannerTest {
       region.close();
     }
 
+  }
+
+  /**
+   * Work around a bug in HRegion.internalPut(), where RegionObserver.prePut() modifications are not applied.
+   */
+  private void doPut(HRegion region, Put p) throws Exception {
+    region.batchMutate(new Pair[]{ new Pair<Mutation, Integer>(p, null) });
   }
 }

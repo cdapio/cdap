@@ -14,16 +14,15 @@
  * the License.
  */
 
-package com.continuuity.data2.increment.hbase96;
+package com.continuuity.data2.increment.hbase94;
 
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableClient;
 import com.continuuity.test.SlowTests;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -41,7 +40,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
 /**
- * Tests for the HBase 0.96+ version of the {@link IncrementHandler} coprocessor.
+ * Tests for the HBase 0.94 version of the {@link IncrementHandler} coprocessor.
  */
 @Category(SlowTests.class)
 public class IncrementHandlerTest {
@@ -66,14 +65,14 @@ public class IncrementHandlerTest {
 
   @Test
   public void testIncrements() throws Exception {
-    TableName tableName = TableName.valueOf("incrementTest");
+    byte[] tableName = Bytes.toBytes("incrementTest");
     HTableDescriptor tableDesc = new HTableDescriptor(tableName);
     HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
     columnDesc.setMaxVersions(Integer.MAX_VALUE);
     tableDesc.addFamily(columnDesc);
     tableDesc.addCoprocessor(IncrementHandler.class.getName());
     testUtil.getHBaseAdmin().createTable(tableDesc);
-    testUtil.waitUntilAllRegionsAssigned(tableName, 5000);
+    testUtil.waitTableAvailable(tableName, 5000);
 
     HTable table = new HTable(conf, tableName);
     try {
@@ -127,7 +126,7 @@ public class IncrementHandlerTest {
       Result scanRes = scanner.next();
       assertNotNull(scanRes);
       assertFalse(scanRes.isEmpty());
-      Cell scanResCell = scanRes.getColumnLatestCell(FAMILY, colA);
+      KeyValue scanResCell = scanRes.getColumnLatest(FAMILY, colA);
       assertArrayEquals(row1, scanResCell.getRow());
       assertEquals(7L, Bytes.toLong(scanResCell.getValue()));
 
@@ -135,10 +134,10 @@ public class IncrementHandlerTest {
       scanRes = scanner.next();
       assertNotNull(scanRes);
       assertFalse(scanRes.isEmpty());
-      scanResCell = scanRes.getColumnLatestCell(FAMILY, colA);
+      scanResCell = scanRes.getColumnLatest(FAMILY, colA);
       assertArrayEquals(row2, scanResCell.getRow());
       assertEquals(3L, Bytes.toLong(scanResCell.getValue()));
-      scanResCell = scanRes.getColumnLatestCell(FAMILY, colB);
+      scanResCell = scanRes.getColumnLatest(FAMILY, colB);
       assertArrayEquals(row2, scanResCell.getRow());
       assertEquals(10L, Bytes.toLong(scanResCell.getValue()));
     } finally {
@@ -148,7 +147,7 @@ public class IncrementHandlerTest {
 
   private void assertColumn(HTable table, byte[] row, byte[] col, long expected) throws Exception {
     Result res = table.get(new Get(row));
-    Cell resA = res.getColumnLatestCell(FAMILY, col);
+    KeyValue resA = res.getColumnLatest(FAMILY, col);
     assertFalse(res.isEmpty());
     assertNotNull(resA);
     assertEquals(expected, Bytes.toLong(resA.getValue()));
@@ -159,7 +158,7 @@ public class IncrementHandlerTest {
     Result scanRes = scanner.next();
     assertNotNull(scanRes);
     assertFalse(scanRes.isEmpty());
-    Cell scanResA = scanRes.getColumnLatestCell(FAMILY, col);
+    KeyValue scanResA = scanRes.getColumnLatest(FAMILY, col);
     assertArrayEquals(row, scanResA.getRow());
     assertEquals(expected, Bytes.toLong(scanResA.getValue()));
   }
@@ -178,7 +177,7 @@ public class IncrementHandlerTest {
     Result res = table.get(get);
     assertFalse(res.isEmpty());
     for (int i = 0; i < cols.length; i++) {
-      Cell resCell = res.getColumnLatestCell(FAMILY, cols[i]);
+      KeyValue resCell = res.getColumnLatest(FAMILY, cols[i]);
       assertNotNull(resCell);
       assertEquals(expected[i], Bytes.toLong(resCell.getValue()));
     }
@@ -189,7 +188,7 @@ public class IncrementHandlerTest {
     assertNotNull(scanRes);
     assertFalse(scanRes.isEmpty());
     for (int i = 0; i < cols.length; i++) {
-      Cell scanResCell = scanRes.getColumnLatestCell(FAMILY, cols[i]);
+      KeyValue scanResCell = scanRes.getColumnLatest(FAMILY, cols[i]);
       assertArrayEquals(row, scanResCell.getRow());
       assertEquals(expected[i], Bytes.toLong(scanResCell.getValue()));
     }

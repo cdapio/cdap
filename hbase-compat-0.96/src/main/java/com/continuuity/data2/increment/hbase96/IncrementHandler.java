@@ -51,7 +51,19 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 
 /**
+ * HBase coprocessor that handles reading and writing read-less increment operations.
  *
+ * <p>Writes of incremental values are performed as normal {@code Put}s, flagged with a special attribute
+ * {@link HBaseOcTableClient#DELTA_WRITE}.  The coprocessor intercepts these writes and rewrites the cell value
+ * to use a special marker prefix.</p>
+ *
+ * <p>For read (for {@code Get} and {@code Scan}) operations, all of the delta values are summed up for a column,
+ * up to and including the most recent "full" (non-delta) value.  The sum of these delta values, plus the full value
+ * (if found) is returned for the column.</p>
+ *
+ * <p>To mitigate the performance impact on reading, this coprocessor also overrides the scanner used in flush and
+ * compaction operations, using {@link IncrementSummingScanner} to generate a new "full" value aggregated from
+ * all the successfully committed delta values.</p>
  */
 public class IncrementHandler extends BaseRegionObserver {
   // prefix bytes used to mark values that are deltas vs. full sums
@@ -112,6 +124,8 @@ public class IncrementHandler extends BaseRegionObserver {
       for (Map.Entry<byte[], List<Cell>> entry : put.getFamilyCellMap().entrySet()) {
         List<Cell> newCells = new ArrayList<Cell>(entry.getValue().size());
         for (Cell cell : entry.getValue()) {
+          // rewrite the cell value with a special prefix to identify it as a delta
+          // for 0.98 we can update this to use cell tags
           byte[] newValue = Bytes.add(DELTA_MAGIC_PREFIX, CellUtil.cloneValue(cell));
           newCells.add(CellUtil.createCell(CellUtil.cloneRow(cell), CellUtil.cloneFamily(cell),
                                            CellUtil.cloneQualifier(cell), cell.getTimestamp(), cell.getTypeByte(),
@@ -121,7 +135,7 @@ public class IncrementHandler extends BaseRegionObserver {
       }
       put.setFamilyCellMap(newFamilyMap);
     }
-    // put completes normally with overridden column qualifiers
+    // put completes normally with value prefix marker
   }
 
   @Override
