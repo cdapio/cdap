@@ -19,6 +19,7 @@ package com.continuuity.internal.app.services.http.handlers;
 import com.continuuity.AppWithDataset;
 import com.continuuity.AppWithDatasetDuplicate;
 import com.continuuity.AppWithSchedule;
+import com.continuuity.AppWithServices;
 import com.continuuity.AppWithWorkflow;
 import com.continuuity.DummyAppWithTrackingTable;
 import com.continuuity.MultiStreamApp;
@@ -58,6 +59,7 @@ import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.entity.ByteArrayEntity;
@@ -70,6 +72,7 @@ import org.junit.experimental.categories.Category;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.URL;
@@ -1236,5 +1239,138 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       TimeUnit.SECONDS.sleep(1);
     }
     Assert.assertTrue(trials < 5);
+  }
+  @Test
+  public void testBatchStatus() throws Exception {
+    String url = "/v2/status";
+    Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
+    Assert.assertEquals(400, doPost(url, "").getStatusLine().getStatusCode());
+    // empty array is valid args
+    Assert.assertEquals(200, doPost(url, "[]").getStatusLine().getStatusCode());
+    deploy(WordCountApp.class);
+    deploy(AppWithServices.class);
+    // data requires appId, programId, and programType. Test missing fields/invalid programType
+    Assert.assertEquals(400, doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow'}]")
+      .getStatusLine().getStatusCode());
+    Assert.assertEquals(400, doPost(url, "[{'appId':'WordCountApp', 'programId':'WordCountFlow'}]")
+      .getStatusLine().getStatusCode());
+    Assert.assertEquals(400, doPost(url, "[{'programType':'Flow', 'programId':'WordCountFlow'}, {'appId':" +
+      "'AppWithServices', 'programType': 'service', 'programId': 'NoOpService'}]").getStatusLine().getStatusCode());
+    Assert.assertEquals(400,
+                        doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow' 'programId':'WordCountFlow'}]")
+      .getStatusLine().getStatusCode());
+    // Test missing app, programType, etc
+    List<JsonObject> returnedBody = readResponse(
+      doPost(url, "[{'appId':'NotExist', 'programType':'Flow', 'programId':'WordCountFlow'}]"), typeToken);
+    Assert.assertEquals("App: NotExist not found", returnedBody.get(0).get("error").getAsString());
+    returnedBody = readResponse(
+      doPost(url, "[{'appId':'WordCountApp', 'programType':'flow', 'programId':'NotExist'}," +
+        "{'appId':'WordCountApp', 'programType':'flow', 'programId':'WordCountFlow'}]"), typeToken);
+    Assert.assertEquals("Program not found", returnedBody.get(0).get("error").getAsString());
+    // The programType should be consistent. Second object should have proper status
+    Assert.assertEquals("Flow", returnedBody.get(1).get("programType").getAsString());
+    Assert.assertEquals("STOPPED", returnedBody.get(1).get("status").getAsString());
+    HttpResponse response = doPost(url,
+                                   "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'}," +
+      "{'appId': 'WordCountApp', 'programType': 'Procedure', 'programId': 'WordFrequency'}," +
+      "{'appId': 'WordCountApp', 'programType': 'Mapreduce', 'programId': 'VoidMapReduceJob'}]");
+    // test valid cases
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    returnedBody = readResponse(response, typeToken);
+    for (JsonObject obj : returnedBody) {
+      Assert.assertEquals(200, obj.get("statusCode").getAsInt());
+      Assert.assertEquals("STOPPED", obj.get("status").getAsString());
+    }
+    // start the flow
+    doPost("/v2/apps/WordCountApp/flows/WordCountFlow/start");
+    response = doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'}]");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    returnedBody = readResponse(response, typeToken);
+    Assert.assertEquals("RUNNING", returnedBody.get(0).get("status").getAsString());
+    // start the service
+    doPost("/v2/apps/AppWithServices/services/NoOpService/start");
+    response = doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'}," +
+      "{'appId': 'AppWithServices', 'programType': 'Service', 'programId': 'NoOpService'}," +
+      "{'appId': 'WordCountApp', 'programType': 'Mapreduce', 'programId': 'VoidMapReduceJob'}]");
+    // test valid cases
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    returnedBody = readResponse(response, typeToken);
+    Assert.assertEquals("RUNNING", returnedBody.get(0).get("status").getAsString());
+    Assert.assertEquals("RUNNING", returnedBody.get(1).get("status").getAsString());
+    Assert.assertEquals("STOPPED", returnedBody.get(2).get("status").getAsString());
+  }
+
+  @Test
+  public void testBatchInstances() throws Exception {
+    String url = "/v2/instances";
+    Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
+    Assert.assertEquals(400, doPost(url, "").getStatusLine().getStatusCode());
+    // empty array is valid args
+    Assert.assertEquals(200, doPost(url, "[]").getStatusLine().getStatusCode());
+    deploy(WordCountApp.class);
+    deploy(AppWithServices.class);
+    // data requires appId, programId, and programType. Test missing fields/invalid programType
+    Assert.assertEquals(400, doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow'}]")
+      .getStatusLine().getStatusCode());
+    Assert.assertEquals(400, doPost(url, "[{'appId':'WordCountApp', 'programId':'WordCountFlow'}]")
+      .getStatusLine().getStatusCode());
+    Assert.assertEquals(400, doPost(url, "[{'programType':'Flow', 'programId':'WordCountFlow'}," +
+      "{'appId': 'WordCountApp', 'programType': 'procedure', 'programId': 'WordFrequency'}]")
+      .getStatusLine().getStatusCode());
+    Assert.assertEquals(400, doPost(url, "[{'appId':'WordCountApp', 'programType':'NotExist', " +
+      "'programId':'WordCountFlow'}]").getStatusLine().getStatusCode());
+    // Test malformed json
+    Assert.assertEquals(400,
+                        doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow' 'programId':'WordCountFlow'}]")
+                          .getStatusLine().getStatusCode());
+    // Test missing app, programType, etc
+    List<JsonObject> returnedBody = readResponse(
+      doPost(url, "[{'appId':'NotExist', 'programType':'Flow', 'programId':'WordCountFlow'}]"), typeToken);
+    Assert.assertEquals(404, returnedBody.get(0).get("statusCode").getAsInt());
+    returnedBody = readResponse(
+      doPost(url, "[{'appId':'WordCountApp', 'programType':'flow', 'programId':'WordCountFlow', 'runnableId': " +
+        "NotExist'}]"), typeToken);
+    Assert.assertEquals(404, returnedBody.get(0).get("statusCode").getAsInt());
+    HttpResponse response = doPost(url,
+      "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow', 'runnableId': 'StreamSource'}," +
+      "{'appId': 'WordCountApp', 'programType': 'Procedure', 'programId': 'WordFrequency'}," +
+      "{'appId': 'AppWithServices', 'programType':'Service', 'programId':'NoOpService', 'runnableId':'DummyService'}]");
+    // test valid cases
+    returnedBody = readResponse(response, typeToken);
+    for (JsonObject obj : returnedBody) {
+      Assert.assertEquals(200, obj.get("statusCode").getAsInt());
+      Assert.assertEquals(1, obj.get("requested").getAsInt());
+      Assert.assertEquals(0, obj.get("provisioned").getAsInt());
+    }
+    // start the flow
+    doPost("/v2/apps/WordCountApp/flows/WordCountFlow/start");
+    response = doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'," +
+      "'runnableId': 'StreamSource'}]");
+    returnedBody = readResponse(response, typeToken);
+    Assert.assertEquals(1, returnedBody.get(0).get("provisioned").getAsInt());
+    // start the service
+    doPost("/v2/apps/AppWithServices/services/NoOpService/start");
+    response = doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow','programId':'WordCountFlow','runnableId':" +
+      "'StreamSource'}, {'appId':'AppWithServices', 'programType':'Service','programId':'NoOpService', 'runnableId':" +
+      "'DummyService'}, {'appId': 'WordCountApp', 'programType': 'Procedure','programId': 'VoidMapReduceJob'}]");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    returnedBody = readResponse(response, typeToken);
+    Assert.assertEquals(1, returnedBody.get(0).get("provisioned").getAsInt());
+    Assert.assertEquals(1, returnedBody.get(1).get("provisioned").getAsInt());
+    // does not exist
+    Assert.assertEquals(404, returnedBody.get(2).get("statusCode").getAsInt());
+    doPut("/v2/apps/WordCountApp/flows/WordCountFlow/flowlets/StreamSource/instances", "{'instances': 2}");
+    returnedBody = readResponse(doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow'," +
+      "'programId':'WordCountFlow', 'runnableId': 'StreamSource'}]"), typeToken);
+    Assert.assertEquals(2, returnedBody.get(0).get("requested").getAsInt());
+  }
+
+  private String readResponse(HttpResponse response) throws IOException {
+    HttpEntity entity = response.getEntity();
+    return EntityUtils.toString(entity, "UTF-8");
+  }
+
+  private <T> T readResponse(HttpResponse response, Type type) throws IOException {
+    return GSON.fromJson(readResponse(response), type);
   }
 }
