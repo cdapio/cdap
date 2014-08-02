@@ -1,0 +1,19 @@
+{
+  "app": "CountCounts",
+  "containers": [
+    {
+      "container": "container_1397069870124_0010_01_000005",
+      "debugPort": 37205,
+      "host": "node-1003.my.cluster.net",
+      "instance": 0,
+      "memory": 512,
+      "name": "eventSender",
+      "type": "runnable",
+      "virtualCores": 1
+    }
+  ],
+  "id": "LoadGenService",
+  "runtime": "distributed",
+  "type": "Service",
+  "yarnAppId": "application_1397069870124_0010"
+}

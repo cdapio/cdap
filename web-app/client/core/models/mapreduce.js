@@ -95,7 +95,7 @@ define(['core/lib/date', 'core/models/program'],
      */
     context: function () {
 
-      return this.interpolate('/apps/{parent}/mapreduce/{id}');
+      return this.interpolate('apps/{parent}/mapreduce/{id}');
 
     }.property('app', 'name'),
 
@@ -225,6 +225,8 @@ define(['core/lib/date', 'core/models/program'],
         var model = self.transformModel(model);
         model.app = app_id;
         model = C.Mapreduce.create(model);
+        model.id = mapreduce_id;
+        model.name = mapreduce_id;
 
         http.rest('apps', app_id, 'mapreduce', mapreduce_id, 'status', function (response) {
 

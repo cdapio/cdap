@@ -174,63 +174,70 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="Services">
-  <div id="reactor-services">
-    <div id="panels">
-
-      <div class="panel">
-        <table class="table">
-          <thead>
-            <th style="padding-left: 14px; min-width: 350px" class="service-col">Name</th>
-            <th style="min-width: 100px;" class="status-col center-align">Status
-            </th>
-            <th style="min-width: 100px;" class="logs-col center-align">Logs</th>
-            <th style="min-width: 200px;" class="instance-col center-align">Instances Requested</th>
-            <th style="min-width: 200px;" class="instance-col center-align">Provisioned</th>
-          </thead>
-          <tbody>
-          {{#each services}}
-            <tr>
-              <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
-                {{this.name}}
-              </a>
-                <br />
-                <span class="app-list-status">{{this.description}}</span>
-              </td>
-              <td style="max-width: 100px;" class="status-col center-align">
-                <span {{ bindAttr class=":service-icon this.imgClass" }} ></span>
-              </td>
-              <td style="max-width: 100px;" class="status-col center-align">
-
-                {{#if this.logsStatusOk}}
-                {{#linkTo 'Service.Log' this}}<span {{ bindAttr class=":log-icon this.logClass" }} ></span>{{/linkTo}}
-                {{ else }}
-                  <span data-toggle="tooltip" data-placement="right" title="Please contact your system admistrator for logs.">NA</span>
-                {{/if}}
-              </td>
-              <td style="max-width: 200px;" class="instance-col">
-                <div class="instance-wrapper">
-                  <div class="instance-num"><span>{{this.requested}}</span></div>
-                  <div>
-                    <a class="cursor-pointer" {{action decreaseInstance this.name this.requested }}>
-                      <span class="minus-icon"></span>
-                    </a>
-                    <a class="cursor-pointer" {{action increaseInstance this.name this.requested }}>
-                      <span class="plus-icon"></span>
-                    </a>
-                  </div>
-                </div>
-              <td style="max-width: 350px;" class="instance-provisioned service-col">
-                  <div class="instance-num auto-margin"><span>{{this.provisioned}}</span></div>
-              </td>
-            </tr>
-          {{/each}}
-          </tbody>
-        </table>
-      </div>
-
-
+    <div id="title">
+      <h1><span>Services</span></h1>
     </div>
-  </div>
+
+    <div id="reactor-services">
+      <div id="panels">
+
+
+        {{#if systemServices}}
+        <div class="panel">
+          <table class="table">
+            <thead>
+              <th style="padding-left: 14px; min-width: 350px" class="service-col">Name</th>
+              <th style="min-width: 100px;" class="status-col center-align">Status
+              </th>
+              <th style="min-width: 100px;" class="logs-col center-align">Logs</th>
+              <th style="min-width: 200px;" class="instance-col center-align">Instances Requested</th>
+              <th style="min-width: 200px;" class="instance-col center-align">Provisioned</th>
+            </thead>
+            <tbody>
+            {{#each systemServices}}
+              <tr>
+                <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
+                  {{this.name}}
+                  </a>
+                  <br />
+                  <span class="app-list-status">{{this.description}}</span>
+                </td>
+                <td style="max-width: 100px;" class="status-col center-align">
+                  <span {{ bindAttr class=":service-icon this.imgClass" }} ></span>
+                </td>
+                <td style="max-width: 100px;" class="status-col center-align">
+                  {{#if this.logsStatusOk}}
+                    {{#linkTo 'Service.Log' this}}<span {{ bindAttr class=":log-icon this.logClass" }} ></span>{{/linkTo}}
+                  {{ else }}
+                    <span data-toggle="tooltip" data-placement="right" title="Please contact your system admistrator for logs.">NA</span>
+                  {{/if}}
+                </td>
+                <td style="max-width: 200px;" class="instance-col">
+                  <div class="instance-wrapper">
+                    <div class="instance-num"><span>{{this.requested}}</span></div>
+                    <div>
+                      <a class="cursor-pointer" {{action decreaseInstance this this.requested }}>
+                        <span class="minus-icon"></span>
+                      </a>
+                      <a class="cursor-pointer" {{action increaseInstance this this.requested }}>
+                        <span class="plus-icon"></span>
+                      </a>
+                    </div>
+                  </div>
+                <td style="max-width: 350px;" class="instance-provisioned service-col">
+                    <div class="instance-num auto-margin"><span>{{this.provisioned}}</span></div>
+                </td>
+              </tr>
+            {{/each}}
+            </tbody>
+          </table>
+        </div>
+      {{/if}}
+
+      </div>
+    </div>
+
+    {{outlet}}
   </script>
 
   <script type="text/x-handlebars" data-template-name="Service">
@@ -242,8 +249,129 @@
       <h1><span>Service</span> {{model.name}}</h1>
     </div>
 
+
     {{outlet}}
 
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="UserserviceStatus">
+{{#if model}}
+    <div id="info">
+      <div class="info-box">
+        <div class="flow-state">
+            <strong>{{model.name}}</strong>
+        </div>
+      </div>
+      <div class="info-box" style="float: right; border: 0;">
+          <div id="action-buttons" class="btn-group pull-right">
+            <button class="btn btn-blank start-stop" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+            <button class="btn btn-blank btn-icon" {{action "config"}}><span class="btn-config"></span></button>
+          </div>
+          <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+      </div>
+    </div>
+
+    <div id="panels">
+      <h2>Runnables</h2>
+      <br />
+      <div class="panel">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="padding-left: 14px; min-width: 200px" class="service-col">Name</th>
+              <th style="min-width: 200px;" class="center-align">Instances Requested</th>
+              <th style="min-width: 200px;" class="center-align">Provisioned</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{!--  RUNNABLES ROWS --}}
+              {{#each runnable in model.runnablesList}}
+              <tr>
+              <td class="app-list-name service-col"><a class="none-text-decoration">
+                {{runnable.id}}
+                </a>
+                <br />
+                <span class="app-list-status pull-left">runnable</span>
+              </td>
+              <td style="max-width: 200px;" class="instance-col">
+                <div class="instance-wrapper">
+                  <div class="instance-num left-float"><span>{{runnable.requested}}</span></div>
+                  {{#if model.isRunning}}
+                  <div>
+                    <a class="cursor-pointer" {{action runnableDecreaseInstance model runnable.id runnable.requested }}>
+                      <span class="minus-icon"></span>
+                    </a>
+                    <a class="cursor-pointer" {{action runnableIncreaseInstance model runnable.id runnable.requested }}>
+                      <span class="plus-icon"></span>
+                    </a>
+                  </div>
+                  {{/if}}
+                </div>
+              <td class="instance-provisioned service-col">
+                  <div class="instance-num auto-margin"><span>{{runnable.provisioned}}</span></div>
+              </td>
+            </tr>
+            {{/each}}
+            {{!--  RUNNABLES ROWS --}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  {{outlet config}}
+
+{{/if}}
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Userservice">
+
+    <div id="title">
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;"> 
+        <li>{{#linkTo UserserviceStatus model}}Status{{/linkTo }}</li>
+        <li>{{#linkTo Userservice.History model}}History{{/linkTo}}</li>        
+        <li>{{#linkTo Userservice.Log model}}Log{{/linkTo}}</li>
+      </ul>
+      <h1><span>Service</span> <a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}</h1>
+    </div>
+
+    {{outlet}}
+
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Userservice/History">
+    <div id="panels">
+      <div id="informer"></div>
+      <div class="panel">
+        <div id="object-list">
+          {{#if runs.length}}
+            <table class="table table-condensed">
+            <thead>
+              <tr><th style="width: 300px;">Started</th>
+              <th>Ended</th>
+              <th style="width:250px;">Result</th>
+              </tr>
+            </thead>
+            <tbody>
+            {{#each runs}}
+              <tr class="run-list">
+                <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
+                <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
+                <td>{{detail}}</td>
+              </tr>
+            {{/each}}
+            </tbody>
+            </table>
+          {{else}}
+            <div class="object-list-empty">
+            <div class="object-list-empty-content">
+            <div>No History.</div>
+            <span>This Userservice has not completed a run yet.</span>
+            </div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="Login">
@@ -490,12 +618,13 @@
     </div>
 
     <div id="panels">
+
       <div class="panel" id="collect-panel">
         <div class="panel-head"><div class="panel-title">Collect</div></div>
         {{partial "streams-list"}}
       </div>
-      <div class="panel" id="process-panel">
 
+      <div class="panel" id="process-panel">
         <div class="panel-head">
           {{#if elements.Flow.length}}
             <div class="btn-group pull-right start-stop-btns" style="margin-top:2px;text-align:center;">
@@ -507,12 +636,13 @@
           <div class="panel-title">Process</div>
         </div>
         {{partial "flows-list"}}
-
       </div>
+
       <div class="panel" id="store-panel">
         <div class="panel-head"><div class="panel-title">Store</div></div>
         {{partial "datasets-list"}}
       </div>
+
       <div class="panel" id ="query-panel">
         <div class="panel-head">
           {{#if elements.Procedure.length}}
@@ -525,6 +655,20 @@
           <div class="panel-title">Query</div>
         </div>
         {{partial "procedures-list"}}
+      </div>
+
+      <div class="panel" id="userservice-panel">
+        <div class="panel-head">
+          {{#if elements.Userservice.length}}
+            <div class="btn-group pull-right start-stop-btns" style="margin-top:2px;text-align:center;">
+              <button {{action startAll "Userservice" on="click"}} class="btn start"><img src="/assets/img/v2/play_icon.png" /></button>
+              <img style="display: none;margin-top: 3px;" src="/assets/img/start-all-load-white.gif" />
+              <button {{action stopAll "Userservice" on="click"}} class="btn stop"><img src="/assets/img/v2/stop_active_icon.png" /></button>
+            </div>
+          {{/if}}
+          <div class="panel-title">User Services</div>
+        </div>
+        {{partial "userservices-list"}}
       </div>
     </div>
 
@@ -574,7 +718,7 @@
         <li>{{#linkTo WorkflowStatus model}}Status{{/linkTo}}</li>
         <li>{{#linkTo Workflow.History model}}History{{/linkTo}}</li>
       </ul>
-      <h1><span>Workflow</span> {{model.name}}</h1>
+      <h1><span>Workflow</span> <a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}</h1>
     </div>
 
     {{outlet}}
@@ -710,7 +854,11 @@
         <li>{{#linkTo Mapreduce.Log model}}Log{{/linkTo}}</li>
         <li>{{#linkTo Mapreduce.History model}}History{{/linkTo}}</li>
       </ul>
-      <h1><span>Mapreduce</span> {{model.name}}</h1>
+      <h1>
+        <span>Mapreduce</span> 
+        <span class="breadcrumb-app-name"><a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}
+        </span>
+      </h1>
     </div>
 
     {{outlet}}
@@ -819,7 +967,7 @@
         <li>{{#linkTo Flow.Log model}}Log{{/linkTo}}</li>
         <li>{{#linkTo Flow.History model}}History{{/linkTo}}</li>
       </ul>
-      <h1><span>Flow</span> {{model.meta.name}}</h1>
+      <h1><span>Flow</span> <a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.meta.name}}</h1>
     </div>
 
     {{outlet}}
@@ -893,9 +1041,9 @@
               <button class="btn btn-blank" {{action "addOneInstance" on="click"}}>+</button>
               <button class="btn btn-blank" {{action "removeOneInstance" on="click"}}>-</button>
               {{#if C.isLocal}}
-                <button disabled="disabled" class="btn btn-blank" style="width: 200px;text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
+                <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
               {{else}}
-                <button disabled="disabled" class="btn btn-blank" style="width: 200px;text-align:left;">{{model.containersLabel}} instance{{model.pluralInstances}} ({{model.instances}} Requested)</button>
+                <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{model.containersLabel}} instance{{model.pluralInstances}} ({{model.instances}} Requested)</button>
               {{/if}}
             </div>
           {{/if}}
@@ -1114,11 +1262,12 @@
     <div id="panels">
 
       <div class="panel">
-      <div class="panel-head"><div class="panel-title">Attached Flows</div></div>
+        <div class="panel-head"><div class="panel-title">Attached Flows</div>
+      </div>
 
         {{partial "flows-list"}}
 
-      </div>
+    </div>
   </script>
 
 <script type="text/x-handlebars" data-template-name="Procedure">
@@ -1129,7 +1278,7 @@
         <li>{{#linkTo ProcedureStatus model}}Status{{/linkTo}}</li>
         <li>{{#linkTo Procedure.Log model}}Log{{/linkTo}}</li>
       </ul>
-      <h1><span>Procedure</span> {{model.name}}</h1>
+      <h1><span>Procedure</span> <a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}</h1>
     </div>
 
     {{outlet}}
@@ -1584,7 +1733,7 @@
         {{#each elements.Dataset }}
           <tr>
             <td class="app-list-name">
-            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{classname}}</span>
+              <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{classname}}</span>
             </td>
             <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
             <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Dataset" mode="singular" metrics="/reactor/datasets/{id}/dataset.store.bytes"}}</td>
@@ -1627,6 +1776,34 @@
     <div class="object-list-empty-content">
     <div>No Procedures.</div>
     <span>Add Procedures by uploading an Application JAR.</span>
+    </div>
+    </div>
+    {{/if}}
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="_userservices-list">
+    {{#if elements.Userservice.length}}
+      <table class="table">
+      <thead>
+        <th style="padding-left: 14px;">Userservice</th>
+        <th style="width: 262px;">Number of Runnables</th>
+      </thead>
+      <tbody>
+        {{#each elements.Userservice}}
+          <tr>
+            <td class="app-list-name">
+            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
+            </td>
+            <td class="app-list-count">{{numRunnables}}</td>
+          </tr>
+        {{/each}}
+      </tbody>
+      </table>
+    {{else}}
+    <div class="object-list-empty">
+    <div class="object-list-empty-content">
+    <div>No Userservices.</div>
+    <span>Add Userservices by uploading an Application JAR.</span>
     </div>
     </div>
     {{/if}}
