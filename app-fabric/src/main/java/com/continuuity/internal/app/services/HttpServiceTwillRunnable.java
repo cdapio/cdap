@@ -53,7 +53,6 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   private static final Type HANDLER_NAMES_TYPE = new TypeToken<List<String>>() { }.getType();
   private static final Logger LOG = LoggerFactory.getLogger(HttpServiceTwillRunnable.class);
   private ClassLoader programClassLoader;
-  private TwillContext context;
 
   private String name;
   private List<HttpServiceHandler> handlers;
@@ -75,16 +74,16 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void run() {
     Future<Service.State> completion = Services.getCompletionFuture(service);
-    service.start();
+    service.startAndWait();
     // announce the twill runnable
     int port = service.getBindAddress().getPort();
-    context.announce(name, port);
+    getContext().announce(name, port);
     try {
       completion.get();
     } catch (InterruptedException e) {
-      LOG.debug("Got Interrupted exception in Http Service run: {}", e.getMessage());
+      LOG.debug("Got Interrupted exception in Http Service run: {}", e);
     } catch (ExecutionException e) {
-      LOG.debug("Got Execution exception in Http Service run: {}", e.getMessage());
+      LOG.debug("Got Execution exception in Http Service run: {}", e);
     }
   }
 
@@ -105,7 +104,6 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void initialize(TwillContext context) {
-    this.context = context;
     Map<String, String> runnableArgs = new HashMap<String, String>(context.getSpecification().getConfigs());
     name = runnableArgs.get("service.runnable.name");
     handlers = new ArrayList<HttpServiceHandler>();
