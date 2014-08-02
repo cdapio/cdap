@@ -17,7 +17,6 @@
 package com.continuuity.api.app;
 
 import com.continuuity.api.annotation.Beta;
-import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetProperties;
@@ -30,8 +29,6 @@ import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillRunnable;
-
-import java.util.Map;
 
 /**
  * Configures a Reactor Application.
@@ -157,8 +154,7 @@ public interface ApplicationConfigurer {
    * to the Application.
    * @param name Name of runnable.
    * @param service Guava service to be added.
-   * @param runnableArgs Runnable arguments.
    * @param specification ResourceSpecification for Twill container.
    */
-  void addService(String name, Service service, Map<String, String> runnableArgs, ResourceSpecification specification);
+  void addService(String name, Service service, ResourceSpecification specification);
 }

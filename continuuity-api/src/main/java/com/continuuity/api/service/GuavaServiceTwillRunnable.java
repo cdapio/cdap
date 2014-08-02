@@ -45,11 +45,10 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
    * a {@link com.google.common.util.concurrent.Service}
    * @param name Name of runnable.
    * @param service Guava service to be run.
-   * @param runnableArgs Arguments for the runnable.
    */
-  public GuavaServiceTwillRunnable(String name, Service service, Map<String, String> runnableArgs) {
+  public GuavaServiceTwillRunnable(String name, Service service) {
     this.service = service;
-    this.runnableArgs = Maps.newHashMap(runnableArgs);
+    this.runnableArgs = Maps.newHashMap();
     this.name = name;
   }
 

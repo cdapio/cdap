@@ -19,7 +19,6 @@ package com.continuuity.app;
 import com.continuuity.api.SingleRunnableApplication;
 import com.continuuity.api.app.Application;
 import com.continuuity.api.app.ApplicationConfigurer;
-import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.data.stream.StreamSpecification;
@@ -181,9 +180,8 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void addService(String name, Service service, Map<String, String> runnableArgs,
-                         ResourceSpecification specification) {
-    addService(new GuavaServiceTwillRunnable(name, service, runnableArgs), specification);
+  public void addService(String name, Service service, ResourceSpecification specification) {
+    addService(new GuavaServiceTwillRunnable(name, service), specification);
   }
 
   public ApplicationSpecification createApplicationSpec() {

@@ -17,7 +17,6 @@
 package com.continuuity.api.app;
 
 import com.continuuity.api.annotation.Beta;
-import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetProperties;
@@ -30,9 +29,6 @@ import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillRunnable;
-
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * A support class for {@link Application Applications} which reduces repetition and results in
@@ -213,30 +209,20 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @see ApplicationConfigurer#addService(String name, com.google.common.util.concurrent.Service, java.util.Map,
+   * @see ApplicationConfigurer#addService(String name, com.google.common.util.concurrent.Service,
    *                                        org.apache.twill.api.ResourceSpecification)
    */
-  protected void addService(String name, Service service, Map<String, String> runnableArgs,
-                            ResourceSpecification specification) {
-    configurer.addService(name, service, runnableArgs, specification);
+  protected void addService(String name, Service service, ResourceSpecification specification) {
+    configurer.addService(name, service, specification);
   }
 
   /**
-   * @see ApplicationConfigurer#addService(String name, com.google.common.util.concurrent.Service, java.util.Map,
-   *                                        org.apache.twill.api.ResourceSpecification)
-   * ResourceSpecification is defaulted to ResourceSpecification.BASIC
-   */
-  protected void addService(String name, Service service, Map<String, String> runnableArgs) {
-    addService(name, service, runnableArgs, ResourceSpecification.BASIC);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addService(String name, com.google.common.util.concurrent.Service, java.util.Map,
+   * @see ApplicationConfigurer#addService(String name, com.google.common.util.concurrent.Service,
    *                                        org.apache.twill.api.ResourceSpecification)
    * ResourceSpecification is defaulted to ResourceSpecification.BASIC
    * Args is defaulted to an empty Map.
    */
   protected void addService(String name, Service service) {
-    addService(name, service, Collections.<String, String>emptyMap(), ResourceSpecification.BASIC);
+    addService(name, service, ResourceSpecification.BASIC);
   }
 }
