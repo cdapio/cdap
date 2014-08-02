@@ -16,12 +16,11 @@
 
 package com.continuuity;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.app.AbstractApplication;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -33,19 +32,13 @@ import java.util.concurrent.TimeUnit;
 /**
  * Count random app for testing.
  */
-public class TestCountRandomApp implements Application {
+public class TestCountRandomApp extends AbstractApplication {
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("CountRandomApp")
-      .setDescription("Count Random Application")
-      .noStream()
-      .withDataSets().add(new Table("counters"))
-      .withFlows().add(new CountRandom())
-      .noProcedure()
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("CountRandomApp");
+    setDescription("Count Random Application");
+    createDataset("counters", Table.class);
+    addFlow(new CountRandom());
   }
 
 

@@ -17,12 +17,11 @@
 package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.dataset.ObjectStore;
-import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
-import com.continuuity.api.data.dataset.TimeseriesTable;
-import com.continuuity.api.data.dataset.table.Get;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.dataset.lib.KeyValueTable;
+import com.continuuity.api.dataset.lib.ObjectStore;
+import com.continuuity.api.dataset.lib.TimeseriesTable;
+import com.continuuity.api.dataset.table.Get;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
@@ -31,7 +30,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
@@ -50,8 +51,8 @@ import com.google.common.collect.Maps;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -77,8 +78,9 @@ public class MapReduceProgramRunnerTest {
   private static Injector injector;
   private static TransactionExecutorFactory txExecutorFactory;
 
-  private DataSetInstantiator dataSetInstantiator;
-  private DataSetAccessor dataSetAccessor;
+  private static InMemoryTransactionManager txService;
+  private static DatasetFramework dsFramework;
+  private static DataSetInstantiator dataSetInstantiator;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -102,26 +104,30 @@ public class MapReduceProgramRunnerTest {
     conf.setInt(TxConstants.Manager.CFG_TX_TIMEOUT, 1);
     conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
     injector = AppFabricTestHelper.getInjector(conf);
+    txService = injector.getInstance(InMemoryTransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
-  }
+    dsFramework = new NamespacedDatasetFramework(injector.getInstance(DatasetFramework.class),
+                                                 new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.USER));
 
-  @Before
-  public void before() {
-    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     dataSetInstantiator =
-      new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
+      new DataSetInstantiator(new DataFabric2Impl(locationFactory, injector.getInstance(DataSetAccessor.class)),
                               datasetFramework, injector.getInstance(CConfiguration.class),
-                              getClass().getClassLoader());
+                              MapReduceProgramRunnerTest.class.getClassLoader());
+
+    txService.startAndWait();
+  }
+
+  @AfterClass
+  public static void afterClass() throws Exception {
+    txService.stopAndWait();
   }
 
   @After
   public void after() throws Exception {
-    // drop all user data
-    dataSetAccessor.dropAll(DataSetAccessor.Namespace.USER);
-    // todo: drop datasets V2 as well
+    // cleanup user data (only user datasets)
+    dsFramework.deleteAllInstances();
   }
 
   @Test
@@ -129,7 +135,7 @@ public class MapReduceProgramRunnerTest {
     final ApplicationWithPrograms app =
       AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduceUsingObjectStore.class, TEMP_FOLDER_SUPPLIER);
 
-    ApplicationSpecification spec = Specifications.from(new AppWithMapReduceUsingObjectStore().configure());
+    ApplicationSpecification spec = Specifications.from(new AppWithMapReduceUsingObjectStore());
     dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
     final ObjectStore<String> input = dataSetInstantiator.getDataSet("keys");
 
@@ -171,7 +177,7 @@ public class MapReduceProgramRunnerTest {
     final String inputPath = createInput();
     final File outputDir = new File(tmpFolder.newFolder(), "output");
 
-    ApplicationSpecification spec = Specifications.from(new AppWithMapReduce().configure());
+    ApplicationSpecification spec = Specifications.from(new AppWithMapReduce());
     dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
     final KeyValueTable jobConfigTable = dataSetInstantiator.getDataSet("jobConfig");
 
@@ -224,7 +230,7 @@ public class MapReduceProgramRunnerTest {
   private void testSuccess(boolean frequentFlushing) throws Exception {
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
-    ApplicationSpecification spec = Specifications.from(new AppWithMapReduce().configure());
+    ApplicationSpecification spec = Specifications.from(new AppWithMapReduce());
     dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
@@ -295,7 +301,7 @@ public class MapReduceProgramRunnerTest {
 
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
-    ApplicationSpecification spec = Specifications.from(new AppWithMapReduce().configure());
+    ApplicationSpecification spec = Specifications.from(new AppWithMapReduce());
     dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
@@ -354,14 +360,14 @@ public class MapReduceProgramRunnerTest {
     byte[] tag2 = Bytes.toBytes("tag2");
     byte[] tag3 = Bytes.toBytes("tag3");
     // m1e1 = metric: 1, entity: 1
-    table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(3L), 1, tag3, tag2, tag1));
-    table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(10L), 2, tag2, tag3));
+    table.write(new TimeseriesTable.Entry(metric1, Bytes.toBytes(3L), 1, tag3, tag2, tag1));
+    table.write(new TimeseriesTable.Entry(metric1, Bytes.toBytes(10L), 2, tag2, tag3));
     // 55L will make job fail
-    table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(withBadData ? 55L : 15L), 3, tag1, tag3));
-    table.write(new SimpleTimeseriesTable.Entry(metric1, Bytes.toBytes(23L), 4, tag2));
+    table.write(new TimeseriesTable.Entry(metric1, Bytes.toBytes(withBadData ? 55L : 15L), 3, tag1, tag3));
+    table.write(new TimeseriesTable.Entry(metric1, Bytes.toBytes(23L), 4, tag2));
 
 
-    table.write(new SimpleTimeseriesTable.Entry(metric2, Bytes.toBytes(4L), 3, tag1, tag3));
+    table.write(new TimeseriesTable.Entry(metric2, Bytes.toBytes(4L), 3, tag1, tag3));
   }
 
   private void runProgram(ApplicationWithPrograms app, Class<?> programClass, boolean frequentFlushing)

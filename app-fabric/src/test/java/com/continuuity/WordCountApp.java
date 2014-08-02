@@ -16,15 +16,14 @@
 
 package com.continuuity;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.Property;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -56,7 +55,7 @@ import javax.annotation.Nullable;
  * This is a sample word count app that is used in testing in
  * many places.
  */
-public class WordCountApp implements Application {
+public class WordCountApp extends AbstractApplication {
 
   private static final Logger LOG = LoggerFactory.getLogger(WordCountApp.class);
 
@@ -67,17 +66,14 @@ public class WordCountApp implements Application {
    * @return An instance of {@code ApplicationSpecification}.
    */
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("WordCountApp")
-      .setDescription("Application for counting words")
-      .withStreams().add(new Stream("text"))
-      .withDataSets().add(new KeyValueTable("mydataset"))
-      .withFlows().add(new WordCountFlow())
-      .withProcedures().add(new WordFrequency("word"))
-      .withMapReduce().add(new VoidMapReduceJob())
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("WordCountApp");
+    setDescription("Application for counting words");
+    addStream(new Stream("text"));
+    createDataset("mydataset", KeyValueTable.class);
+    addFlow(new WordCountFlow());
+    addProcedure(new WordFrequency("word"));
+    addMapReduce(new VoidMapReduceJob());
   }
 
   /**

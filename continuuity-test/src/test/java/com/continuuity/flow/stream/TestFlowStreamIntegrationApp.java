@@ -16,10 +16,9 @@
 
 package com.continuuity.flow.stream;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.ProcessInput;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -38,27 +37,15 @@ import java.util.List;
 /**
  * Flow stream integration tests.
  */
-public class TestFlowStreamIntegrationApp implements Application {
+public class TestFlowStreamIntegrationApp extends AbstractApplication {
   private static final Logger LOG = LoggerFactory.getLogger(TestFlowStreamIntegrationApp.class);
 
-  /**
-   * Configures the {@link com.continuuity.api.Application} by returning an
-   * {@link com.continuuity.api.ApplicationSpecification}.
-   *
-   * @return An instance of {@code ApplicationSpecification}.
-   */
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("TestFlowStreamIntegrationApp")
-      .setDescription("Application for testing batch stream dequeue")
-      .withStreams().add(new Stream("s1"))
-      .noDataSet()
-      .withFlows().add(new StreamTestFlow())
-      .noProcedure()
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("TestFlowStreamIntegrationApp");
+    setDescription("Application for testing batch stream dequeue");
+    addStream(new Stream("s1"));
+    addFlow(new StreamTestFlow());
   }
 
   /**

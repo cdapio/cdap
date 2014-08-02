@@ -15,7 +15,6 @@
  */
 package com.continuuity.gateway.handlers.metrics;
 
-import com.continuuity.api.Application;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
@@ -265,14 +264,12 @@ public abstract class MetricsSuiteTestBase {
     Location appArchiveLocation = locationFactory.getHomeLocation();
 
     // write WordCount application to meta store
-    Application app = new WordCount();
-    ApplicationSpecification appSpec = Specifications.from(app.configure());
+    ApplicationSpecification appSpec = Specifications.from(new WordCount());
     wordCountAppId = new Id.Application(new Id.Account(account), appSpec.getName());
     store.addApplication(wordCountAppId, appSpec, appArchiveLocation);
 
     // write WCount application to meta store
-    app = new WCount();
-    appSpec = Specifications.from(app.configure());
+    appSpec = Specifications.from(new WCount());
     wCountAppId = new Id.Application(new Id.Account(account), appSpec.getName());
     store.addApplication(wCountAppId, appSpec, appArchiveLocation);
 

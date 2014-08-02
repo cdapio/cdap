@@ -16,14 +16,13 @@
 
 package com.continuuity.test.app;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -41,21 +40,17 @@ import java.util.Map;
  * App that filters based on a threshold.
  * To test runtimeArgs.
  */
-public class FilterApp implements Application {
+public class FilterApp extends AbstractApplication {
   private static final byte[] highPass = Bytes.toBytes("h");
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("FilterApp")
-      .setDescription("Application for filtering numbers. Test runtimeargs.")
-      .withStreams().add(new Stream("input"))
-      .withDataSets().add(new KeyValueTable("count"))
-      .withFlows().add(new FilterFlow())
-      .withProcedures().add(new Count())
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("FilterApp");
+    setDescription("Application for filtering numbers. Test runtimeargs.");
+    addStream(new Stream("input"));
+    createDataset("count", KeyValueTable.class);
+    addFlow(new FilterFlow());
+    addProcedure(new Count());
   }
 
   /**

@@ -16,15 +16,15 @@
 
 package com.continuuity.test.app;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.data.stream.StreamBatchReadable;
+import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -44,15 +44,12 @@ import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.Longs;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -62,33 +59,20 @@ import java.util.StringTokenizer;
 import javax.annotation.Nullable;
 
 /**
- * This is a sample word count app that is used in testing in
- * many places.
+ *
  */
-public class WordCountApp2 implements Application {
-
-  private static final Logger LOG = LoggerFactory.getLogger(WordCountApp2.class);
-
-  /**
-   * Configures the {@link com.continuuity.api.Application} by returning an
-   * {@link com.continuuity.api.ApplicationSpecification}.
-   *
-   * @return An instance of {@code ApplicationSpecification}.
-   */
+public class WordCountApp extends AbstractApplication {
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("WordCountApp")
-      .setDescription("Application for counting words")
-      .withStreams().add(new Stream("text2"))
-      .withDataSets().add(new MyKeyValueTable("mydataset"))
-                     .add(new MyKeyValueTable("totals"))
-      .withFlows().add(new WordCountFlow())
-      .withProcedures().add(new WordFrequency())
-      .withMapReduce().add(new CountTotal())
-                      .add(new CountFromStream())
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("WordCountApp");
+    addStream(new Stream("text"));
+    addDatasetModule("my-kv", MyKeyValueTableDefinition.Module.class);
+    createDataset("mydataset", "myKeyValueTable", DatasetProperties.EMPTY);
+    createDataset("totals", "myKeyValueTable", DatasetProperties.EMPTY);
+    addFlow(new WordCountFlow());
+    addProcedure(new WordFrequency());
+    addMapReduce(new CountTotal());
+    addMapReduce(new CountFromStream());
   }
 
   /**
@@ -140,7 +124,7 @@ public class WordCountApp2 implements Application {
         .withFlowlets().add(new StreamSource())
                        .add(new Tokenizer())
                        .add(new CountByField())
-        .connect().fromStream("text2").to("StreamSource")
+        .connect().fromStream("text").to("StreamSource")
                   .from("StreamSource").to("Tokenizer")
                   .from("Tokenizer").to("CountByField")
         .build();
@@ -156,7 +140,7 @@ public class WordCountApp2 implements Application {
 
     @ProcessInput
     public void process(StreamEvent event, InputContext context) throws CharacterCodingException {
-      if (!"text2".equals(context.getOrigin())) {
+      if (!"text".equals(context.getOrigin())) {
         return;
       }
 
@@ -182,7 +166,7 @@ public class WordCountApp2 implements Application {
     @ProcessInput
     public void foo(MyRecord data) {
       tokenize(data.getTitle(), "title");
-      tokenize(data.getText(), "text2");
+      tokenize(data.getText(), "text");
       if (error) {
         error = false;
         throw new IllegalStateException(data.toString());
@@ -205,7 +189,7 @@ public class WordCountApp2 implements Application {
    */
   public static class CountByField extends AbstractFlowlet implements Callback {
     @UseDataSet("mydataset")
-    private MyKeyValueTable counters;
+    private MyKeyValueTableDefinition.KeyValueTable counters;
 
     @ProcessInput("field")
     public void process(Map<String, String> fieldToken) {
@@ -219,7 +203,8 @@ public class WordCountApp2 implements Application {
         token = field + ":" + token;
       }
 
-      this.counters.increment(token.getBytes(Charsets.UTF_8), 1L);
+      Long current = Long.valueOf(counters.get(token, "0"));
+      counters.put(token, String.valueOf(current + 1));
     }
 
     @Override
@@ -237,29 +222,28 @@ public class WordCountApp2 implements Application {
    */
   public static class WordFrequency extends AbstractProcedure {
     @UseDataSet("mydataset")
-    private MyKeyValueTable counters;
+    private MyKeyValueTableDefinition.KeyValueTable counters;
 
     @UseDataSet("totals")
-    private MyKeyValueTable totals;
+    private MyKeyValueTableDefinition.KeyValueTable totals;
 
     @Handle("wordfreq")
     private void wordfreq(ProcedureRequest request, ProcedureResponder responder)
       throws IOException {
       String word = request.getArgument("word");
-      Map<String, Long> result = ImmutableMap.of(word,
-        Longs.fromByteArray(this.counters.read(word.getBytes(Charsets.UTF_8))));
+      Map<String, Long> result = ImmutableMap.of(word, Long.valueOf(this.counters.get(word, "0")));
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), result);
     }
 
     @Handle("total")
     private void total(ProcedureRequest request, ProcedureResponder responder) throws IOException {
-      long result = Bytes.toLong(this.totals.read(Bytes.toBytes("total_words_count")));
+      long result = Long.valueOf(this.totals.get("total_words_count"));
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), result);
     }
 
     @Handle("stream_total")
     public void streamTotal(ProcedureRequest request, ProcedureResponder responder) throws IOException {
-      long result = Bytes.toLong(this.totals.read(Bytes.toBytes("stream_total_words_count")));
+      long result = Long.valueOf(this.totals.get("stream_total_words_count"));
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), result);
     }
   }
@@ -290,17 +274,17 @@ public class WordCountApp2 implements Application {
     /**
      * Mapper for map reduce job.
      */
-    public static class MyMapper extends Mapper<byte[], byte[], BytesWritable, LongWritable> {
+    public static class MyMapper extends Mapper<String, String, BytesWritable, LongWritable> {
       @Override
-      protected void map(byte[] key, byte[] value, Context context) throws IOException, InterruptedException {
-        context.write(new BytesWritable(Bytes.toBytes("total")), new LongWritable(Bytes.toLong(value)));
+      protected void map(String key, String value, Context context) throws IOException, InterruptedException {
+        context.write(new BytesWritable(Bytes.toBytes("total")), new LongWritable(Long.valueOf(value)));
       }
     }
 
     /**
      * Reducer for map reduce job.
      */
-    public static class MyReducer extends Reducer<BytesWritable, LongWritable, byte[], byte[]> {
+    public static class MyReducer extends Reducer<BytesWritable, LongWritable, String, String> {
       @Override
       protected void reduce(BytesWritable key, Iterable<LongWritable> values, Context context)
         throws IOException, InterruptedException {
@@ -310,7 +294,7 @@ public class WordCountApp2 implements Application {
           total += longWritable.get();
         }
 
-        context.write(Bytes.toBytes("total_words_count"), Bytes.toBytes(total));
+        context.write("total_words_count", String.valueOf(total));
       }
     }
   }
@@ -331,7 +315,7 @@ public class WordCountApp2 implements Application {
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      context.setInput(new StreamBatchReadable("text2"), null);
+      context.setInput(new StreamBatchReadable("text"), null);
 
       Job job = context.getHadoopJob();
       job.setMapperClass(StreamMapper.class);
@@ -362,7 +346,7 @@ public class WordCountApp2 implements Application {
     /**
      * Reducer for the count from stream.
      */
-    public static final class StreamReducer extends Reducer<Text, LongWritable, byte[], byte[]> {
+    public static final class StreamReducer extends Reducer<Text, LongWritable, String, String> {
 
       @Override
       protected void reduce(Text key, Iterable<LongWritable> values,
@@ -371,7 +355,7 @@ public class WordCountApp2 implements Application {
         for (LongWritable val : values) {
           sum += val.get();
         }
-        context.write(Bytes.toBytes("stream_total_words_count"), Bytes.toBytes(sum));
+        context.write("stream_total_words_count", String.valueOf(sum));
       }
     }
   }
