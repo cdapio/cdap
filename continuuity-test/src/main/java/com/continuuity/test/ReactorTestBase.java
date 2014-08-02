@@ -40,7 +40,6 @@ import com.continuuity.common.utils.OSDetector;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.runtime.DataSetsModules;
@@ -74,6 +73,7 @@ import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.metrics.query.MetricsQueryService;
+import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionContext;
 import com.continuuity.tephra.TransactionFailureException;
 import com.continuuity.tephra.TransactionSystemClient;
@@ -89,6 +89,7 @@ import com.continuuity.test.internal.StreamWriterFactory;
 import com.continuuity.test.internal.TestMetricsCollectionService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -132,7 +133,6 @@ public class ReactorTestBase {
   private static SchedulerService schedulerService;
   private static DatasetService datasetService;
   private static DatasetFramework datasetFramework;
-  private static DataSetInstantiator dataSetInstantiator;
   private static TransactionSystemClient txSystemClient;
   private static DiscoveryServiceClient discoveryClient;
   private static ExploreExecutorService exploreExecutorService;
@@ -285,7 +285,6 @@ public class ReactorTestBase {
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
-    dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework, cConf, null);
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
@@ -406,8 +405,9 @@ public class ReactorTestBase {
     @SuppressWarnings("unchecked")
     final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, null);
     try {
+      TransactionAware txAwareDataset = (TransactionAware) dataSet;
       final TransactionContext txContext =
-        new TransactionContext(txSystemClient, dataSetInstantiator.getTransactionAware());
+        new TransactionContext(txSystemClient, Lists.newArrayList(txAwareDataset));
       txContext.start();
       return new DataSetManager<T>() {
         @Override
