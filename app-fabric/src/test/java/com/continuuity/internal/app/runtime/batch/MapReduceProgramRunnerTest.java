@@ -105,11 +105,13 @@ public class MapReduceProgramRunnerTest {
   }
 
   @Before
-  public void before() {
+  public void before() throws Exception {
+    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
+    datasetFramework.deleteAllInstances();
+
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     dataSetAccessor = injector.getInstance(DataSetAccessor.class);
-    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     dataSetInstantiator =
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
                               datasetFramework, injector.getInstance(CConfiguration.class),
