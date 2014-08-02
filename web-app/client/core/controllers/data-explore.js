@@ -4,19 +4,26 @@
 
 define([], function () {
   var url = "data/explore/queries";
+  //TODO: replace with real largest number:
+  var inf = 999999999999999999;
 	var Controller = Em.Controller.extend({
-
 
 		load: function () {
 		  var self = this;
+
+		  self.start = inf;
+		  self.end = 0;
+		  self.limit = 3;
+
+      self.largest = -1;
+      self.smallest = -1;
 		  this.set('objArr', []);
 		  this.fetchQueries();
 		  this.interval = setInterval(function () {
-        self.fetchQueries();
+//        self.fetchQueries();
 		  }, 1000);
 		  this.set('datasets', []);
 		  this.loadDiscoverableDatasets();
-
 		},
 
 
@@ -102,19 +109,37 @@ define([], function () {
 		unload: function () {
 		},
 
+    nextPage: function () {
+      var self = this;
+      self.set('objArr', []);
+      self.start = self.smallest;
+      self.end = 0;
+      self.fetchQueries();
+    },
+
+    prevPage: function () {
+      var self = this;
+      self.set('objArr', []);
+      self.start = inf;
+      self.end = self.largest;
+      self.fetchQueries();
+    },
+
 		fetchQueries: function () {
 		  var self = this;
 		  var objArr = this.get('objArr');
-		  C.clearQueries = function(){objArr.forEach(function(query){query.set('deleted',true)});};
-		  if(C.debug){ //TODO: remove this block (is/was for debugging purposes only).
-		    C.debug = false;
-		    debugger;
+		  var url = 'data/explore/queries';
+		  url += '?limit=' + self.limit;
+		  if(self.start != inf){
+		    url += '&start=' + self.start;
 		  }
-      this.HTTP.rest('data/explore/queries', function (queries, status) {
-        if(status != 200) {
-          console.log('error in fetchQueries in data-explore.js');
-          return;
-        }
+		  if(self.end != 0){
+        url += '&end=' + self.end;
+      }
+      console.log(self.start + ' --> ' + self.end);
+      console.log(url);
+      this.HTTP.rest(url, function (queries, status) {
+        if(status != 200) { return console.log('error in fetchQueries in data-explore.js'); } //TODO: remove this line, or replace with notification to user.
 
         objArr.forEach(function(query){
           query.set('inList', false);
@@ -134,7 +159,6 @@ define([], function () {
           existingObj.set('inList', true);
           if (existingObj.get('status') === 'FINISHED' && existingObj.get('has_results')) {
             if (!existingObj.get('results')) {
-//              self.getResults(existingObj);
               self.getPreview(existingObj);
               self.getSchema(existingObj);
             }
@@ -143,6 +167,13 @@ define([], function () {
         objArr.forEach(function(query){
           query.set('deleted', !query.get('inList'));
         });
+
+        if(objArr.length){
+          self.largest = objArr[0].timestamp;
+          objArr.forEach(function(query){
+            self.smallest = query.timestamp;
+          });
+        }
       });
 		},
 

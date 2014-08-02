@@ -275,36 +275,43 @@
             <td>[No results]</td>
           {{/if}}
         </tr>
-        </tbody>
-      </table>
-        {{#if has_results}}
-          <div {{bindAttr id="query_handle"}} style="display:none">
+      </tbody>
+    </table>
+      {{#if has_results}}
+        <div {{bindAttr id="query_handle"}} style="display:none">
 
-            <table class="table query-results-table-entry">
-              <thead>
-                {{#each schema}}
-                  <th>{{name}}</th>
-                {{/each}}
-              </thead>
-              <tbody>
-              {{#each results}}
-                <tr>
-                {{#each columns}}
-                  <td>{{this}}</td>
-                {{/each}}
-                </tr>
+          <table class="table query-results-table-entry">
+            <thead>
+              {{#each schema}}
+                <th>{{name}}</th>
               {{/each}}
-              </tbody>
-            </table>
+            </thead>
+            <tbody>
+            {{#each results}}
+              <tr>
+              {{#each columns}}
+                <td>{{this}}</td>
+              {{/each}}
+              </tr>
+            {{/each}}
+            </tbody>
+          </table>
 
-          </div>
-        {{ else }}
-          <div {{bindAttr id="query_handle"}}>
-            <a>This query does not have results.</a>
-          </div>
-        {{/if}}
+        </div>
+      {{ else }}
+        <div {{bindAttr id="query_handle"}}>
+          <a>This query does not have results.</a>
+        </div>
+      {{/if}}
     {{/unless}}
     {{/each}}
+
+    <div>
+      <div style="width:50%;">
+      <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'nextPage' on="click"}}>></button>
+      <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'prevPage' on="click"}}><</button>
+      </div>
+    </div>
   </script>
 
 
