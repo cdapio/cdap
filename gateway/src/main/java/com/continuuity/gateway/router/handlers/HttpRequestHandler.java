@@ -90,8 +90,10 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
 
     if (msg instanceof HttpChunk) {
       // This case below should never happen this would mean we get Chunks before HTTPMessage.
-      raiseExceptionIfNull(chunkSender, HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                           "Chunk received and event sender is null");
+      if (chunkSender == null) {
+        throw new HandlerException(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                   "Chunk received and event sender is null");
+      }
       chunkSender.send(msg);
 
     } else if (msg instanceof HttpRequest) {
@@ -174,22 +176,20 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     }
   }
 
-  private static <T> T raiseExceptionIfNull(T reference, HttpResponseStatus status, String message) {
-    if (reference == null) {
-      throw new HandlerException(status, message);
-    }
-    return reference;
-  }
-
   private WrappedDiscoverable getDiscoverable(final HttpRequest httpRequest,
                                               final InetSocketAddress address) {
     EndpointStrategy strategy = serviceLookup.getDiscoverable(address.getPort(), httpRequest);
-    raiseExceptionIfNull(strategy, HttpResponseStatus.SERVICE_UNAVAILABLE,
-                         "Router cannot forward this request to any service");
+    if (strategy == null) {
+      throw  new HandlerException(HttpResponseStatus.SERVICE_UNAVAILABLE,
+                                  String.format("No endpoint strategy found for request : %s",
+                                  httpRequest.getUri()));
+    }
     Discoverable discoverable = strategy.pick();
-    raiseExceptionIfNull(discoverable, HttpResponseStatus.SERVICE_UNAVAILABLE,
-                         "Router cannot forward this request to any service");
-
+    if (discoverable == null) {
+      throw  new HandlerException(HttpResponseStatus.SERVICE_UNAVAILABLE,
+                                  String.format("No discoverable found for request : %s",
+                                                httpRequest.getUri()));
+    }
     return new WrappedDiscoverable(discoverable);
   }
 
