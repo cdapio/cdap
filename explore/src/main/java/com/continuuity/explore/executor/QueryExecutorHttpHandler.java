@@ -62,7 +62,7 @@ import javax.ws.rs.PathParam;
 public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(QueryExecutorHttpHandler.class);
   private static final Gson GSON = new Gson();
-  private static final int DOWNLOAD_FETCH_CHUNK_SIZE = 1;
+  private static final int DOWNLOAD_FETCH_CHUNK_SIZE = 1000;
 
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
@@ -252,7 +252,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     try {
       QueryHandle handle = QueryHandle.fromId(id);
       if (handle.equals(QueryHandle.NO_OP)) {
-        responder.sendString(HttpResponseStatus.OK, "");
+        responder.sendStatus(HttpResponseStatus.CONFLICT);
         return;
       }
 
@@ -275,7 +275,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
             sb.append('\n');
           }
           responder.sendChunk(ChannelBuffers.wrappedBuffer(sb.toString().getBytes("UTF-8")));
-          sb = new StringBuffer();
+          sb.delete(0, sb.length());
           results = exploreService.nextResults(handle, DOWNLOAD_FETCH_CHUNK_SIZE);
         }
       } finally {
