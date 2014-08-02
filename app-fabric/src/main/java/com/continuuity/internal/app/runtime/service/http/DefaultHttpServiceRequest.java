@@ -23,6 +23,7 @@ import com.google.common.collect.Multimap;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -73,7 +74,7 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
 
   @Override
   public String getHeader(String key) {
-    final List<String> values = getHeaders(key);
+    Collection<String> values = headers.get(key);
     return values.isEmpty() ? null : values.iterator().next();
   }
 }

@@ -26,10 +26,12 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnableSpecification;
+import org.apache.twill.common.Services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +41,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  *
@@ -49,16 +53,15 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   private static final Type HANDLER_NAMES_TYPE = new TypeToken<List<String>>() { }.getType();
   private static final Logger LOG = LoggerFactory.getLogger(HttpServiceTwillRunnable.class);
   private ClassLoader programClassLoader;
+  private TwillContext context;
 
   private String name;
   private List<HttpServiceHandler> handlers;
   private NettyHttpService service;
-  private HashMap<String, String> runnableArgs;
 
   public HttpServiceTwillRunnable(String name, Iterable<? extends HttpServiceHandler> handlers) {
     this.name = name;
     this.handlers = ImmutableList.copyOf(handlers);
-    this.runnableArgs = new HashMap<String, String>();
   }
 
   /**
@@ -71,11 +74,23 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void run() {
-    service.startAndWait();
+    Future<Service.State> completion = Services.getCompletionFuture(service);
+    service.start();
+    // announce the twill runnable
+    int port = service.getBindAddress().getPort();
+    context.announce(name, port);
+    try {
+      completion.get();
+    } catch (InterruptedException e) {
+      LOG.debug("Got Interrupted exception in Http Service run: {}", e.getMessage());
+    } catch (ExecutionException e) {
+      LOG.debug("Got Execution exception in Http Service run: {}", e.getMessage());
+    }
   }
 
   @Override
   public TwillRunnableSpecification configure() {
+    Map<String, String> runnableArgs = new HashMap<String, String>();
     runnableArgs.put("service.runnable.name", name);
     List<String> handlerNames = new ArrayList<String>();
     for (HttpServiceHandler handler : handlers) {
@@ -90,7 +105,8 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void initialize(TwillContext context) {
-    runnableArgs = new HashMap<String, String>(context.getSpecification().getConfigs());
+    this.context = context;
+    Map<String, String> runnableArgs = new HashMap<String, String>(context.getSpecification().getConfigs());
     name = runnableArgs.get("service.runnable.name");
     handlers = new ArrayList<HttpServiceHandler>();
     List<String> handlerNames = GSON.fromJson(runnableArgs.get("service.runnable.handlers"), HANDLER_NAMES_TYPE);
@@ -104,9 +120,6 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
       }
     }
     service = createNettyHttpService(context.getHost().getCanonicalHostName());
-    // announce the twill runnable
-    int port = service.getBindAddress().getPort();
-    context.announce(name, port);
   }
 
   @Override
@@ -115,7 +128,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void stop() {
-    service.startAndWait();
+    service.stop();
   }
 
   private NettyHttpService createNettyHttpService(String host) {
