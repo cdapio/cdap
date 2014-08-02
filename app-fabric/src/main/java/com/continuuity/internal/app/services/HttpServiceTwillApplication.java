@@ -25,14 +25,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Twill Application which runs a Netty Http Service with the handlers passed into the constructor.
  */
-public class HttpServiceTwillApp implements TwillApplication {
+public class HttpServiceTwillApplication implements TwillApplication {
+  private final String name;
+  private final Iterable<HttpServiceHandler> handlers;
 
-  private static final Logger LOG = LoggerFactory.getLogger(HttpServiceTwillRunnable.class);
-
-  String name;
-  Iterable<HttpServiceHandler> handlers;
-
-  public HttpServiceTwillApp(String name, Iterable<HttpServiceHandler> handlers) {
+  public HttpServiceTwillApplication(String name, Iterable<HttpServiceHandler> handlers) {
     this.name = name;
     this.handlers = handlers;
   }

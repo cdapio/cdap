@@ -212,7 +212,7 @@ final class HttpHandlerGenerator {
   }
 
   /**
-   * Returns true if the annotation is of type {@link Path} or on of those {@link javax.ws.rs.HttpMethod} annotations.
+   * Returns true if the annotation is of type {@link javax.ws.rs.HttpMethod} annotations.
    */
   private boolean isHandlerMethod(Type annotationType) {
     if (annotationType.equals(Type.getType(GET.class))) {

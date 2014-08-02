@@ -16,7 +16,6 @@
 
 package com.continuuity.internal.app.services;
 
-import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.api.service.http.HttpServiceSpecification;
@@ -24,23 +23,22 @@ import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.app.runtime.service.http.HttpHandlerFactory;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnableSpecification;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 
 /**
  *
@@ -48,20 +46,19 @@ import java.util.concurrent.CountDownLatch;
 public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   private static final Gson GSON = new Gson();
-  private static final Type typeToken = new TypeToken<Iterable<HttpServiceHandler>>() { }.getType();
+  private static final Type HANDLER_NAMES_TYPE = new TypeToken<List<String>>() { }.getType();
   private static final Logger LOG = LoggerFactory.getLogger(HttpServiceTwillRunnable.class);
   private ClassLoader programClassLoader;
 
   private String name;
   private List<HttpServiceHandler> handlers;
   private NettyHttpService service;
-  private CountDownLatch runLatch;
-  private ConcurrentHashMap<String, String> runnableArgs;
+  private HashMap<String, String> runnableArgs;
 
-  public HttpServiceTwillRunnable(String name, Iterable<HttpServiceHandler> handlers) {
+  public HttpServiceTwillRunnable(String name, Iterable<? extends HttpServiceHandler> handlers) {
     this.name = name;
-    this.handlers = (List<HttpServiceHandler>) handlers;
-    this.runnableArgs = new ConcurrentHashMap<String, String>();
+    this.handlers = ImmutableList.copyOf(handlers);
+    this.runnableArgs = new HashMap<String, String>();
   }
 
   /**
@@ -74,12 +71,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void run() {
-    try {
-      runLatch.await();
-    } catch (InterruptedException e) {
-      LOG.error("Caught exception in await {}", e.getCause(), e);
-      Throwables.propagate(e);
-    }
+    service.startAndWait();
   }
 
   @Override
@@ -98,50 +90,35 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void initialize(TwillContext context) {
-    runnableArgs = new ConcurrentHashMap<String, String>(context.getSpecification().getConfigs());
-    if (name == null) {
-      name = runnableArgs.remove("service.runnable.name");
-    }
-    if (handlers == null) {
-      handlers = new ArrayList<HttpServiceHandler>();
-      List<String> handlerNames = GSON.fromJson(runnableArgs.remove("service.runnable.handlers"),
-                                                new TypeToken<List<String>>() { }.getType());
-      for (String handlerName : handlerNames) {
-        try {
-          HttpServiceHandler handler = (HttpServiceHandler) programClassLoader.loadClass(handlerName).newInstance();
-          handlers.add(handler);
-        } catch (Exception e) {
-          LOG.error("Could not initialize Http Service");
-          Throwables.propagate(e);
-        }
+    runnableArgs = new HashMap<String, String>(context.getSpecification().getConfigs());
+    name = runnableArgs.get("service.runnable.name");
+    handlers = new ArrayList<HttpServiceHandler>();
+    List<String> handlerNames = GSON.fromJson(runnableArgs.get("service.runnable.handlers"), HANDLER_NAMES_TYPE);
+    for (String handlerName : handlerNames) {
+      try {
+        HttpServiceHandler handler = (HttpServiceHandler) programClassLoader.loadClass(handlerName).newInstance();
+        handlers.add(handler);
+      } catch (Exception e) {
+        LOG.error("Could not initialize Http Service");
+        Throwables.propagate(e);
       }
     }
-    service = setupNettyHttpService(context.getHost().getCanonicalHostName());
-    service.startAndWait();
-
-    String runnableName = name;
-    if (name == null) {
-      runnableName = runnableArgs.remove("service.runnable.name");
-    }
-
-    // announce the twillrunnable
+    service = createNettyHttpService(context.getHost().getCanonicalHostName());
+    // announce the twill runnable
     int port = service.getBindAddress().getPort();
-    runLatch = new CountDownLatch(1);
     context.announce(name, port);
-    LOG.debug(runnableName, name, port);
   }
 
   @Override
   public void destroy() {
-    service.stopAndWait();
   }
 
   @Override
   public void stop() {
-    runLatch.countDown();
+    service.startAndWait();
   }
 
-  private NettyHttpService setupNettyHttpService(String host) {
+  private NettyHttpService createNettyHttpService(String host) {
     // Create HttpHandlers which delegate to the HttpServiceHandlers
     HttpHandlerFactory factory = new HttpHandlerFactory();
     List<HttpHandler> nettyHttpHandlers = new ArrayList<HttpHandler>();

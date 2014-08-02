@@ -62,7 +62,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   @Override
   public void sendString(int status, String data, Charset charset) {
     responder.sendContent(HttpResponseStatus.valueOf(status), ChannelBuffers.wrappedBuffer(charset.encode(data)),
-                          "text/plain; charset=" + charset.toString(), ImmutableMultimap.<String, String>of());
+                          "text/plain; charset=" + charset.name(), ImmutableMultimap.<String, String>of());
   }
 
   @Override

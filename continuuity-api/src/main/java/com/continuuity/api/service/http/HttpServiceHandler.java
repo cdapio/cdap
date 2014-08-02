@@ -18,13 +18,27 @@ package com.continuuity.api.service.http;
 
 
 /**
- *
+ * Interface for user to handle HTTP requests.
  */
 public interface HttpServiceHandler {
 
+  /**
+   * Configures this HttpServiceHandler with the given {@link HttpServiceConfigurer}.
+   * This method is invoked at deployment time
+   * @param configurer The {@link HttpServiceConfigurer} which is used to configure this Handler
+   */
   void configure(HttpServiceConfigurer configurer);
 
+  /**
+   * Initializes this HttpServiceHandler at runtime. This method is invoked only once during the startup of
+   * the HttpServiceHandler.This method can be used to initialize any user related resources.
+   * @param context http service runtime context
+   * @throws Exception
+   */
   void initialize(HttpServiceContext context) throws Exception;
 
+  /**
+   * 
+   */
   void destroy();
 }
