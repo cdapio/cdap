@@ -16,14 +16,14 @@
 
 package com.continuuity.data2.datafabric.dataset.service.executor;
 
+import co.cask.http.HttpHandler;
+import co.cask.http.NettyHttpService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.hooks.MetricsReporterHook;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.http.HttpHandler;
-import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;

@@ -20,7 +20,6 @@ import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryResult;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

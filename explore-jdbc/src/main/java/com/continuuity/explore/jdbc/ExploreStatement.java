@@ -21,7 +21,6 @@ import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.UnexpectedQueryStatusException;
 import com.continuuity.proto.QueryStatus;
-
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;

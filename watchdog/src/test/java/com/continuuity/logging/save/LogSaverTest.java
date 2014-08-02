@@ -16,6 +16,8 @@
 
 package com.continuuity.logging.save;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.core.util.StatusPrinter;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.AccountLoggingContext;
 import com.continuuity.common.logging.ApplicationLoggingContext;
@@ -43,8 +45,6 @@ import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.continuuity.test.SlowTests;
 import com.continuuity.watchdog.election.MultiLeaderElection;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.core.util.StatusPrinter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;

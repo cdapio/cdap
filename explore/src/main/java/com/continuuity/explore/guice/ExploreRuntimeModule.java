@@ -16,6 +16,7 @@
 
 package com.continuuity.explore.guice;
 
+import co.cask.http.HttpHandler;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
@@ -31,7 +32,6 @@ import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.explore.service.hive.Hive13ExploreService;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.hive.datasets.DatasetStorageHandler;
-import com.continuuity.http.HttpHandler;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;

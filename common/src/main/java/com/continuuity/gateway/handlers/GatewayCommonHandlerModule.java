@@ -16,7 +16,7 @@
 
 package com.continuuity.gateway.handlers;
 
-import com.continuuity.http.HttpHandler;
+import co.cask.http.HttpHandler;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 

@@ -16,10 +16,10 @@
 
 package com.continuuity.test.internal;
 
+import co.cask.http.BodyConsumer;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
-import com.continuuity.http.BodyConsumer;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.proto.RunRecord;
 import com.google.common.base.Charsets;

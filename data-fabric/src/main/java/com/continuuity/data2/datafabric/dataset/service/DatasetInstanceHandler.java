@@ -16,6 +16,8 @@
 
 package com.continuuity.data2.datafabric.dataset.service;
 
+import co.cask.http.AbstractHttpHandler;
+import co.cask.http.HttpResponder;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.CConfiguration;
@@ -27,13 +29,9 @@ import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecut
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.explore.client.DatasetExploreFacade;
 import com.continuuity.explore.service.ExploreException;
-import com.continuuity.http.AbstractHttpHandler;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.proto.DatasetInstanceConfiguration;
 import com.continuuity.proto.DatasetMeta;
 import com.continuuity.proto.DatasetTypeMeta;
-
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.inject.Inject;

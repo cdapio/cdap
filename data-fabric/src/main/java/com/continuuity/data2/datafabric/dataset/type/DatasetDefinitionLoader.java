@@ -27,7 +27,6 @@ import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.module.lib.DatasetModules;
 import com.continuuity.proto.DatasetModuleMeta;
 import com.continuuity.proto.DatasetTypeMeta;
-import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;

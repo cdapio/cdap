@@ -19,8 +19,6 @@ package com.continuuity.internal.app.services;
 import com.continuuity.api.service.http.HttpServiceHandler;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Twill Application which runs a Netty Http Service with the handlers passed into the constructor.

@@ -17,7 +17,6 @@
 package com.continuuity.api;
 
 import com.continuuity.api.data.DataSetContext;
-
 import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.util.Map;

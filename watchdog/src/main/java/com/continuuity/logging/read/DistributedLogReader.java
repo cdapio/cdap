@@ -16,6 +16,7 @@
 
 package com.continuuity.logging.read;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.data2.dataset2.DatasetFramework;
@@ -31,7 +32,6 @@ import com.continuuity.logging.save.LogSaverTableUtil;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.logging.write.FileMetaDataManager;
 import com.continuuity.tephra.TransactionSystemClient;
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;

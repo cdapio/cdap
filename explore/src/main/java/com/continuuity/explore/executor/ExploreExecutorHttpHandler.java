@@ -16,6 +16,8 @@
 
 package com.continuuity.explore.executor;
 
+import co.cask.http.AbstractHttpHandler;
+import co.cask.http.HttpResponder;
 import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetDefinition;
@@ -25,11 +27,8 @@ import com.continuuity.explore.client.DatasetExploreFacade;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.hive.objectinspector.ObjectInspectorFactory;
 import com.continuuity.hive.objectinspector.ReflectionStructObjectInspector;
-import com.continuuity.http.AbstractHttpHandler;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.proto.QueryHandle;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;

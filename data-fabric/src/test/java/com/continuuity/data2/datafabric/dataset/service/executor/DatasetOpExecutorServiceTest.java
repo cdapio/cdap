@@ -16,6 +16,7 @@
 
 package com.continuuity.data2.datafabric.dataset.service.executor;
 
+import co.cask.http.HttpHandler;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.table.Get;
@@ -44,7 +45,6 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.guice.ExploreClientModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.PingHandler;
-import com.continuuity.http.HttpHandler;
 import com.continuuity.tephra.DefaultTransactionExecutor;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;

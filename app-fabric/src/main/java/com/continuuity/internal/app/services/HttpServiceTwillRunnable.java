@@ -16,11 +16,11 @@
 
 package com.continuuity.internal.app.services;
 
+import co.cask.http.HttpHandler;
+import co.cask.http.NettyHttpService;
 import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.api.service.http.HttpServiceSpecification;
-import com.continuuity.http.HttpHandler;
-import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.app.runtime.service.http.HttpHandlerFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 

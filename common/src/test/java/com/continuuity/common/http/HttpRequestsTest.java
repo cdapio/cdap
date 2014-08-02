@@ -16,9 +16,9 @@
 
 package com.continuuity.common.http;
 
-import com.continuuity.http.AbstractHttpHandler;
-import com.continuuity.http.HttpResponder;
-import com.continuuity.http.NettyHttpService;
+import co.cask.http.AbstractHttpHandler;
+import co.cask.http.HttpResponder;
+import co.cask.http.NettyHttpService;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;

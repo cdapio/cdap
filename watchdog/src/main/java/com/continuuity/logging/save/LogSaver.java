@@ -16,7 +16,6 @@
 
 package com.continuuity.logging.save;
 
-import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.kafka.KafkaTopic;

@@ -16,6 +16,8 @@
 
 package com.continuuity.gateway.handlers;
 
+import co.cask.http.BodyConsumer;
+import co.cask.http.HttpResponder;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
@@ -57,8 +59,6 @@ import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import com.continuuity.http.BodyConsumer;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.deploy.ProgramTerminator;

@@ -16,8 +16,8 @@
 
 package com.continuuity.gateway.router;
 
-import com.continuuity.http.HttpHandler;
-import com.continuuity.http.NettyHttpService;
+import co.cask.http.HttpHandler;
+import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.twill.common.Cancellable;

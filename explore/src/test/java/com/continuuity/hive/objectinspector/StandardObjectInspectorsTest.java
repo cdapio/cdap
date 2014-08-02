@@ -17,8 +17,6 @@
  */
 package com.continuuity.hive.objectinspector;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.hive.serde2.SerDeUtils;

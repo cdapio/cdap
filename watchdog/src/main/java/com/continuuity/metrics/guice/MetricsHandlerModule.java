@@ -16,9 +16,9 @@
 
 package com.continuuity.metrics.guice;
 
+import co.cask.http.HttpHandler;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.handlers.PingHandler;
-import com.continuuity.http.HttpHandler;
 import com.continuuity.logging.gateway.handlers.LogHandler;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
 import com.continuuity.metrics.data.MetricsTableFactory;

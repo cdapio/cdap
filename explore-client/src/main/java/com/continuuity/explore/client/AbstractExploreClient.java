@@ -24,7 +24,6 @@ import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryHandle;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.proto.QueryStatus;
-
 import com.google.common.base.Functions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;

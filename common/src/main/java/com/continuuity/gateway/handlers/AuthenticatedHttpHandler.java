@@ -16,8 +16,8 @@
 
 package com.continuuity.gateway.handlers;
 
+import co.cask.http.AbstractHttpHandler;
 import com.continuuity.gateway.auth.Authenticator;
-import com.continuuity.http.AbstractHttpHandler;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;

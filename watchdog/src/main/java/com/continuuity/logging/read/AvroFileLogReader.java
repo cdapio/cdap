@@ -16,10 +16,10 @@
 
 package com.continuuity.logging.read;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.io.SeekableInputStream;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.serialize.LoggingEvent;
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;

@@ -16,11 +16,11 @@
 
 package com.continuuity.internal.app.runtime.service.http;
 
+import co.cask.http.HttpResponder;
 import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.api.service.http.HttpServiceRequest;
 import com.continuuity.api.service.http.HttpServiceResponder;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.asm.ClassDefinition;
 import com.continuuity.internal.asm.Methods;
 import com.google.common.collect.Lists;
@@ -55,11 +55,11 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
 /**
- * A bytecode generator for generating class that implements {@link com.continuuity.http.HttpHandler} interface and
+ * A bytecode generator for generating class that implements {@link co.cask.http.HttpHandler} interface and
  * copy public methods annotated with {@link Path} of a delegating class by delegating to the delegation instance.
  *
  * It is needed for wrapping user class that annotated with {@link Path} into a class that implements
- * {@link com.continuuity.http.HttpHandler} for the netty http service to inspect.
+ * {@link co.cask.http.HttpHandler} for the netty http service to inspect.
  *
  * Also, the generated class can impose transaction boundary for every call those {@link Path @Path} methods.
  */

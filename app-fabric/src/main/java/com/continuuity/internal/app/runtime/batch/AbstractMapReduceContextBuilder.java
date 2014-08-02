@@ -35,7 +35,6 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.workflow.WorkflowMapReduceProgram;
-import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
@@ -48,7 +47,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;

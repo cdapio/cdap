@@ -21,8 +21,8 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.continuuity</groupId>
-    <artifactId>reactor</artifactId>
+    <groupId>co.cask.cdap</groupId>
+    <artifactId>cdap</artifactId>
     <version>2.4.0-SNAPSHOT</version>
   </parent>
 
@@ -31,12 +31,12 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>common</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>proto</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -47,13 +47,13 @@
     </dependency>
 
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>continuuity-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>singlenode</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>

@@ -16,12 +16,12 @@
 
 package com.continuuity.gateway.handlers;
 
+import co.cask.http.HttpResponder;
 import com.continuuity.app.store.ServiceStore;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.ReactorServiceManager;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.proto.SystemServiceMeta;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;

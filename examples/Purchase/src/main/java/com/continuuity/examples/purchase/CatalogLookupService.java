@@ -16,18 +16,14 @@
 
 package com.continuuity.examples.purchase;
 
+import co.cask.http.HttpHandler;
+import co.cask.http.NettyHttpService;
 import com.continuuity.api.metrics.Metrics;
-import com.continuuity.http.AbstractHttpHandler;
-import com.continuuity.http.HttpHandler;
-import com.continuuity.http.HttpResponder;
-import com.continuuity.http.NettyHttpService;
 import com.google.common.collect.Lists;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillSpecification;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

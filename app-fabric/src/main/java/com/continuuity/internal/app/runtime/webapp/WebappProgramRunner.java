@@ -16,13 +16,13 @@
 
 package com.continuuity.internal.app.runtime.webapp;
 
+import co.cask.http.NettyHttpService;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.http.NettyHttpService;
 import com.continuuity.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;

@@ -22,7 +22,6 @@ import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.MetaDataInfo;
 import com.continuuity.proto.QueryHandle;
-
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;

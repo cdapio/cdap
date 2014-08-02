@@ -16,9 +16,9 @@
 
 package com.continuuity.explore.jdbc;
 
+import co.cask.http.AbstractHttpHandler;
+import co.cask.http.HttpResponder;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.http.AbstractHttpHandler;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryHandle;
 import com.continuuity.proto.QueryResult;

@@ -42,7 +42,6 @@ import com.continuuity.proto.QueryHandle;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.proto.QueryStatus;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;

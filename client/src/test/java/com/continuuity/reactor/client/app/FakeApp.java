@@ -18,7 +18,6 @@ package com.continuuity.reactor.client.app;
 
 import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
-import com.continuuity.api.flow.FlowSpecification;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 

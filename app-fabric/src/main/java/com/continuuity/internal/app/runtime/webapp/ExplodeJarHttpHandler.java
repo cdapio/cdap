@@ -16,10 +16,10 @@
 
 package com.continuuity.internal.app.runtime.webapp;
 
+import co.cask.http.AbstractHttpHandler;
+import co.cask.http.HandlerContext;
+import co.cask.http.HttpResponder;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.http.AbstractHttpHandler;
-import com.continuuity.http.HandlerContext;
-import com.continuuity.http.HttpResponder;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;

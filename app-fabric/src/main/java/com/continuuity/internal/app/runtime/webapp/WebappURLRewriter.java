@@ -16,8 +16,8 @@
 
 package com.continuuity.internal.app.runtime.webapp;
 
-import com.continuuity.http.HttpResponder;
-import com.continuuity.http.URLRewriter;
+import co.cask.http.HttpResponder;
+import co.cask.http.URLRewriter;
 import com.google.common.collect.ImmutableMultimap;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;

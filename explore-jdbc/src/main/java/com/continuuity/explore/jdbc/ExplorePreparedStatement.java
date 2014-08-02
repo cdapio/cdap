@@ -17,7 +17,6 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
-
 import com.google.common.collect.Maps;
 
 import java.io.InputStream;

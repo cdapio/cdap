@@ -15,6 +15,9 @@
  */
 package com.continuuity.data.stream.service;
 
+import co.cask.http.HandlerContext;
+import co.cask.http.HttpHandler;
+import co.cask.http.HttpResponder;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -34,9 +37,6 @@ import com.continuuity.data2.transaction.stream.StreamConsumer;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
-import com.continuuity.http.HandlerContext;
-import com.continuuity.http.HttpHandler;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.TransactionExecutorFactory;

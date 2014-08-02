@@ -20,8 +20,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.continuuity</groupId>
-  <artifactId>reactor</artifactId>
+  <groupId>co.cask.cdap</groupId>
+  <artifactId>cdap</artifactId>
   <version>2.4.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Continuuity Reactor</name>
@@ -79,7 +79,6 @@
     <avro.version>1.6.2</avro.version>
     <commons.codec.version>1.6</commons.codec.version>
     <continuuity.hive.version>0.13.0-continuuity-2.4.0-SNAPSHOT</continuuity.hive.version>
-    <continuuity.http.version>0.2.0</continuuity.http.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
     <geronimo.version>2.0.0</geronimo.version>
@@ -100,6 +99,7 @@
     <logback.version>1.0.9</logback.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
+    <netty.http.version>0.4.0-SNAPSHOT</netty.http.version>
     <rs-api.version>2.0</rs-api.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
@@ -163,9 +163,9 @@
         <version>${twill.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.continuuity</groupId>
-        <artifactId>http</artifactId>
-        <version>${continuuity.http.version}</version>
+        <groupId>co.cask.http</groupId>
+        <artifactId>netty-http</artifactId>
+        <version>${netty.http.version}</version>
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>

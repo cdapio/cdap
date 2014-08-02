@@ -16,13 +16,13 @@
 
 package com.continuuity.logging.gateway.handlers;
 
+import co.cask.http.HandlerContext;
+import co.cask.http.HttpResponder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
-import com.continuuity.http.HandlerContext;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.filter.Filter;

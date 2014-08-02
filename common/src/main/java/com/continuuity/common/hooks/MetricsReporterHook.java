@@ -16,12 +16,12 @@
 
 package com.continuuity.common.hooks;
 
+import co.cask.http.AbstractHandlerHook;
+import co.cask.http.HandlerInfo;
+import co.cask.http.HttpResponder;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
-import com.continuuity.http.AbstractHandlerHook;
-import com.continuuity.http.HandlerInfo;
-import com.continuuity.http.HttpResponder;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;

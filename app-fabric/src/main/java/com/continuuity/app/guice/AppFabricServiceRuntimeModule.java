@@ -15,6 +15,7 @@
  */
 package com.continuuity.app.guice;
 
+import co.cask.http.HttpHandler;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
@@ -31,7 +32,6 @@ import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.gateway.handlers.MonitorHandler;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.gateway.handlers.ServiceHttpHandler;
-import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;

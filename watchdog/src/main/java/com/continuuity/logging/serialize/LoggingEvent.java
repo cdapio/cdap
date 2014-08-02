@@ -16,13 +16,13 @@
 
 package com.continuuity.logging.serialize;
 
-import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.common.logging.LoggingContextAccessor;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import ch.qos.logback.classic.spi.ThrowableProxyVO;
+import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.common.logging.LoggingContextAccessor;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;

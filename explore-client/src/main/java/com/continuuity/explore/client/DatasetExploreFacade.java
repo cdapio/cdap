@@ -26,7 +26,6 @@ import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.proto.ColumnDesc;
-
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -38,7 +37,6 @@ import java.io.StringWriter;
 import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;

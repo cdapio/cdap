@@ -15,7 +15,7 @@
  */
 package com.continuuity.test.internal;
 
-import com.continuuity.http.HttpResponder;
+import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;

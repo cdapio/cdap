@@ -22,8 +22,8 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.continuuity</groupId>
-    <artifactId>reactor</artifactId>
+    <groupId>co.cask.cdap</groupId>
+    <artifactId>cdap</artifactId>
     <version>2.4.0-SNAPSHOT</version>
   </parent>
 
@@ -41,33 +41,33 @@
       <artifactId>logback-classic</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>common</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>data-fabric</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>watchdog</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>security</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>app-fabric</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
-      <artifactId>http</artifactId>
+      <groupId>co.cask.http</groupId>
+      <artifactId>netty-http</artifactId>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -75,7 +75,7 @@
     </dependency>
     <!-- We want to re-use test apps -->
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>app-fabric</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>

@@ -15,6 +15,7 @@
  */
 package com.continuuity.internal.app.runtime.workflow;
 
+import co.cask.http.NettyHttpService;
 import com.continuuity.api.workflow.WorkflowAction;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
@@ -23,7 +24,6 @@ import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.workflow.WorkflowStatus;
 import com.continuuity.common.lang.InstantiatorFactory;
-import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
 import com.google.common.base.Preconditions;

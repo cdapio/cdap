@@ -25,15 +25,12 @@ import com.continuuity.internal.app.runtime.DataSetFieldSetter;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.lang.Reflections;
 import com.google.common.base.Throwables;
-import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.map.WrappedMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 

@@ -20,7 +20,6 @@ import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.data.Interpolators;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;

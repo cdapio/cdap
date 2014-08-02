@@ -16,7 +16,7 @@
 
 package com.continuuity.internal.app.runtime.webapp;
 
-import com.continuuity.http.HttpHandler;
+import co.cask.http.HttpHandler;
 
 /**
  * Interface to serve files from a jar.

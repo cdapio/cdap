@@ -16,6 +16,8 @@
 
 package com.continuuity.explore.executor;
 
+import co.cask.http.AbstractHttpHandler;
+import co.cask.http.HttpResponder;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.ExploreService;
@@ -24,8 +26,6 @@ import com.continuuity.explore.utils.ColumnsArgs;
 import com.continuuity.explore.utils.FunctionsArgs;
 import com.continuuity.explore.utils.SchemasArgs;
 import com.continuuity.explore.utils.TablesArgs;
-import com.continuuity.http.AbstractHttpHandler;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.proto.QueryHandle;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;

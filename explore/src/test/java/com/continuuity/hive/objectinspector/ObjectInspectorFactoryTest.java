@@ -17,7 +17,6 @@
 package com.continuuity.hive.objectinspector;
 
 import com.continuuity.common.utils.ImmutablePair;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;

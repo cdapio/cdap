@@ -16,8 +16,8 @@
 
 package com.continuuity.internal.app.runtime.service.http;
 
+import co.cask.http.HttpResponder;
 import com.continuuity.api.service.http.HttpServiceResponder;
-import com.continuuity.http.HttpResponder;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.gson.Gson;

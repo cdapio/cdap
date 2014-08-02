@@ -16,12 +16,12 @@
 
 package com.continuuity.explore.executor;
 
+import co.cask.http.AbstractHttpHandler;
+import co.cask.http.HttpResponder;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.http.AbstractHttpHandler;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryHandle;
 import com.continuuity.proto.QueryInfo;

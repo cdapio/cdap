@@ -17,7 +17,6 @@
 package com.continuuity.api.service.http;
 
 import com.continuuity.api.app.ApplicationConfigurer;
-import com.continuuity.api.app.ApplicationContext;
 
 import java.util.Map;
 

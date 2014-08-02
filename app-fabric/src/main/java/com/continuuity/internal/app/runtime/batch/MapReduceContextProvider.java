@@ -26,9 +26,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import javax.annotation.Nullable;
-
 /**
  * Provides access to MapReduceContext for mapreduce job tasks.
  */

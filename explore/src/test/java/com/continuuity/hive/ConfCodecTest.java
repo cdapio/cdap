@@ -21,7 +21,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.hive.context.CConfCodec;
 import com.continuuity.hive.context.ConfigurationUtil;
 import com.continuuity.hive.context.HConfCodec;
-
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;

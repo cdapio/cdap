@@ -18,7 +18,6 @@ package com.continuuity.common.http;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.google.common.base.Charsets;
 import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;

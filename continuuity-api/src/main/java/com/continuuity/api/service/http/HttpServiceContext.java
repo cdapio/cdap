@@ -16,8 +16,6 @@
 
 package com.continuuity.api.service.http;
 
-import com.continuuity.api.RuntimeContext;
-
 import java.util.Map;
 
 /**

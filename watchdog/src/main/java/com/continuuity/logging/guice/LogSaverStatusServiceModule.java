@@ -16,9 +16,9 @@
 
 package com.continuuity.logging.guice;
 
+import co.cask.http.HttpHandler;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.handlers.PingHandler;
-import com.continuuity.http.HttpHandler;
 import com.continuuity.logging.service.LogSaverStatusService;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;

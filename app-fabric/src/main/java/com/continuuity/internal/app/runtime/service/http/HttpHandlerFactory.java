@@ -16,10 +16,10 @@
 
 package com.continuuity.internal.app.runtime.service.http;
 
+import co.cask.http.HttpHandler;
 import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.common.lang.ClassLoaders;
-import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.asm.ByteCodeClassLoader;
 import com.continuuity.internal.asm.ClassDefinition;
 import com.google.common.base.Preconditions;
@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Constructor;
 
 /**
- * A factory for creating {@link com.continuuity.http.HttpHandler} from user provided instance of
+ * A factory for creating {@link co.cask.http.HttpHandler} from user provided instance of
  * {@link HttpServiceHandler}.
  */
 public final class HttpHandlerFactory {

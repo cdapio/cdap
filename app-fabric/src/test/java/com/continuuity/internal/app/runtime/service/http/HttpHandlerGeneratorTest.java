@@ -16,23 +16,19 @@
 
 package com.continuuity.internal.app.runtime.service.http;
 
-import com.continuuity.api.data.DataSetInstantiationException;
+import co.cask.http.HttpHandler;
+import co.cask.http.NettyHttpService;
 import com.continuuity.api.service.http.AbstractHttpServiceHandler;
 import com.continuuity.api.service.http.HttpServiceContext;
-import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.api.service.http.HttpServiceRequest;
 import com.continuuity.api.service.http.HttpServiceResponder;
 import com.continuuity.api.service.http.HttpServiceSpecification;
-import com.continuuity.http.HttpHandler;
-import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.Closeable;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.net.URLConnection;

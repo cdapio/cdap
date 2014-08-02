@@ -17,11 +17,9 @@
 package com.continuuity.internal.service.http;
 
 import com.continuuity.api.service.http.HttpServiceSpecification;
-
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
-import javax.annotation.concurrent.Immutable;
 
 /**
  *

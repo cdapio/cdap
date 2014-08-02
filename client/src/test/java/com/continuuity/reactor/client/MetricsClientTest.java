@@ -17,9 +17,7 @@
 package com.continuuity.reactor.client;
 
 import com.continuuity.client.MetricsClient;
-import com.continuuity.client.MonitorClient;
 import com.continuuity.client.config.ReactorClientConfig;
-import com.continuuity.proto.SystemServiceMeta;
 import com.continuuity.reactor.client.common.ClientTestBase;
 import com.google.gson.JsonObject;
 import org.junit.Assert;
@@ -27,8 +25,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 /**
  * Test for {@link MetricsClient}.

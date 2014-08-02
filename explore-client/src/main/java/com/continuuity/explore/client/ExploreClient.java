@@ -18,7 +18,6 @@ package com.continuuity.explore.client;
 
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.MetaDataInfo;
-
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.Closeable;

@@ -16,6 +16,10 @@
 
 package com.continuuity.gateway.router;
 
+import co.cask.http.AbstractHttpHandler;
+import co.cask.http.BodyConsumer;
+import co.cask.http.HttpResponder;
+import co.cask.http.NettyHttpService;
 import com.continuuity.AllProgramsApp;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.app.program.ManifestFields;
@@ -25,10 +29,6 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.gateway.auth.NoAuthenticator;
-import com.continuuity.http.AbstractHttpHandler;
-import com.continuuity.http.BodyConsumer;
-import com.continuuity.http.HttpResponder;
-import com.continuuity.http.NettyHttpService;
 import com.continuuity.security.auth.AccessTokenTransformer;
 import com.continuuity.security.guice.SecurityModules;
 import com.google.common.base.Supplier;

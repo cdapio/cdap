@@ -16,6 +16,8 @@
 
 package com.continuuity.logging.appender.kafka;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.core.util.StatusPrinter;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
@@ -33,8 +35,6 @@ import com.continuuity.logging.read.DistributedLogReader;
 import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.continuuity.test.SlowTests;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.core.util.StatusPrinter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.filesystem.LocalLocationFactory;

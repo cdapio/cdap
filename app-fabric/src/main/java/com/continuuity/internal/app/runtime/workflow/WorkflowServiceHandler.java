@@ -15,10 +15,10 @@
  */
 package com.continuuity.internal.app.runtime.workflow;
 
+import co.cask.http.AbstractHttpHandler;
+import co.cask.http.HttpResponder;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.app.runtime.workflow.WorkflowStatus;
-import com.continuuity.http.AbstractHttpHandler;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.app.WorkflowActionSpecificationCodec;
 import com.google.common.base.Supplier;
 import com.google.gson.Gson;

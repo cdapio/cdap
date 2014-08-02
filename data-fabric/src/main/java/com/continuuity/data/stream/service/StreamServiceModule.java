@@ -15,9 +15,9 @@
  */
 package com.continuuity.data.stream.service;
 
+import co.cask.http.HttpHandler;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.handlers.PingHandler;
-import com.continuuity.http.HttpHandler;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;

@@ -22,7 +22,6 @@ import com.continuuity.explore.client.ExploreExecutionResult;
 import com.continuuity.proto.ColumnDesc;
 import com.continuuity.proto.QueryResult;
 import com.continuuity.test.SlowTests;
-
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.AfterClass;

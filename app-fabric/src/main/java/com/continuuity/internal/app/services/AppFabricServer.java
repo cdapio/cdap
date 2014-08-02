@@ -16,6 +16,8 @@
 
 package com.continuuity.internal.app.services;
 
+import co.cask.http.HttpHandler;
+import co.cask.http.NettyHttpService;
 import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -23,8 +25,6 @@ import com.continuuity.common.hooks.MetricsReporterHook;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.http.HttpHandler;
-import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;

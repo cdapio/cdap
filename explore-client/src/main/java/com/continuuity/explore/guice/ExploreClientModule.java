@@ -18,7 +18,6 @@ package com.continuuity.explore.guice;
 
 import com.continuuity.explore.client.DiscoveryExploreClient;
 import com.continuuity.explore.client.ExploreClient;
-
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 

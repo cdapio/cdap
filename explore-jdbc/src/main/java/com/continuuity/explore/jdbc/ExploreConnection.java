@@ -17,8 +17,6 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
-import com.continuuity.explore.service.ExploreException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

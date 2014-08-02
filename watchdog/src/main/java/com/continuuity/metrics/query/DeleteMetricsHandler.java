@@ -15,14 +15,14 @@
  */
 package com.continuuity.metrics.query;
 
+import co.cask.http.HandlerContext;
+import co.cask.http.HttpResponder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
-import com.continuuity.http.HandlerContext;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.data.AggregatesTable;
 import com.continuuity.metrics.data.MetricsScanQuery;

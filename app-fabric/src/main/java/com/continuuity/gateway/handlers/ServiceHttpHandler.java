@@ -16,6 +16,7 @@
 
 package com.continuuity.gateway.handlers;
 
+import co.cask.http.HttpResponder;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.runtime.ProgramRuntimeService;
@@ -26,7 +27,6 @@ import com.continuuity.common.zookeeper.coordination.ServiceDiscoveredCodec;
 import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;

@@ -16,6 +16,7 @@
 
 package com.continuuity.data.runtime;
 
+import co.cask.http.HttpHandler;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.conf.Constants;
@@ -39,7 +40,6 @@ import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableMo
 import com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
 import com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule;
 import com.continuuity.gateway.handlers.PingHandler;
-import com.continuuity.http.HttpHandler;
 import com.google.common.collect.Maps;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;

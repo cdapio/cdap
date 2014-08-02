@@ -16,11 +16,11 @@
 
 package com.continuuity.gateway.handlers;
 
+import co.cask.http.AbstractHttpHandler;
+import co.cask.http.HttpResponder;
+import co.cask.http.NettyHttpService;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.GatewayTestBase;
-import com.continuuity.http.AbstractHttpHandler;
-import com.continuuity.http.HttpResponder;
-import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
@@ -44,14 +44,12 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.internal.runners.TestMethod;
 
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;

@@ -16,13 +16,13 @@
 
 package com.continuuity.data2.datafabric.dataset.service;
 
+import co.cask.http.AbstractHttpHandler;
+import co.cask.http.HandlerContext;
+import co.cask.http.HttpResponder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleConflictException;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
-import com.continuuity.http.AbstractHttpHandler;
-import com.continuuity.http.HandlerContext;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.proto.DatasetModuleMeta;
 import com.continuuity.proto.DatasetTypeMeta;
 import com.google.common.base.Preconditions;

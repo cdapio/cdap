@@ -16,6 +16,7 @@
 
 package com.continuuity;
 
+import co.cask.http.HttpResponder;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.procedure.AbstractProcedure;
@@ -24,9 +25,7 @@ import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.api.service.http.AbstractHttpServiceHandler;
-import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
-import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;

@@ -16,12 +16,11 @@
 
 package com.continuuity.logging.gateway.handlers;
 
-import com.continuuity.http.HttpResponder;
-import com.continuuity.logging.read.Callback;
-import com.continuuity.logging.read.LogEvent;
-
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
+import co.cask.http.HttpResponder;
+import com.continuuity.logging.read.Callback;
+import com.continuuity.logging.read.LogEvent;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.apache.commons.lang.StringEscapeUtils;

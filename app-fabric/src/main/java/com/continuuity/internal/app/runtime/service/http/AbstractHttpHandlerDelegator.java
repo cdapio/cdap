@@ -16,13 +16,13 @@
 
 package com.continuuity.internal.app.runtime.service.http;
 
+import co.cask.http.HandlerContext;
+import co.cask.http.HttpHandler;
+import co.cask.http.HttpResponder;
 import com.continuuity.api.service.http.HttpServiceContext;
 import com.continuuity.api.service.http.HttpServiceHandler;
 import com.continuuity.api.service.http.HttpServiceRequest;
 import com.continuuity.api.service.http.HttpServiceResponder;
-import com.continuuity.http.HandlerContext;
-import com.continuuity.http.HttpHandler;
-import com.continuuity.http.HttpResponder;
 import com.google.common.base.Throwables;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 

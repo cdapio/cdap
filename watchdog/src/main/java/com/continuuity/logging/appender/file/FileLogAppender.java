@@ -16,6 +16,7 @@
 
 package com.continuuity.logging.appender.file;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
@@ -32,7 +33,6 @@ import com.continuuity.logging.write.LogFileWriter;
 import com.continuuity.logging.write.LogWriteEvent;
 import com.continuuity.logging.write.SimpleLogFileWriter;
 import com.continuuity.tephra.TransactionSystemClient;
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;

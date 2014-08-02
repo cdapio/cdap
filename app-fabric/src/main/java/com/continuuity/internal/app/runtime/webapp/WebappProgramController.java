@@ -16,7 +16,7 @@
 
 package com.continuuity.internal.app.runtime.webapp;
 
-import com.continuuity.http.NettyHttpService;
+import co.cask.http.NettyHttpService;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;

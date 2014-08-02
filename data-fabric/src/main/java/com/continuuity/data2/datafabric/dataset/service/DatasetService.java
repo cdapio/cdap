@@ -16,6 +16,7 @@
 
 package com.continuuity.data2.datafabric.dataset.service;
 
+import co.cask.http.NettyHttpService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.hooks.MetricsReporterHook;
@@ -25,7 +26,6 @@ import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecut
 import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.explore.client.DatasetExploreFacade;
-import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
