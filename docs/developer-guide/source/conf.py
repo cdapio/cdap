@@ -128,7 +128,7 @@ highlight_language = 'java'
 #html_theme = 'default'
 #html_theme = 'nature'
 #html_style = 'style.css'
-html_theme = 'continuuity'
+html_theme = 'cdap'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
