@@ -50,6 +50,11 @@ public abstract class ForwardingTwillSpecification implements TwillSpecification
     return delegate.getOrders();
   }
 
+  @Override
+  public List<PlacementPolicy> getPlacementPolicies() {
+    return delegate.getPlacementPolicies();
+  }
+
   @Nullable
   @Override
   public EventHandlerSpecification getEventHandler() {

@@ -60,14 +60,4 @@ public abstract class ForwardingResourceSpecification implements ResourceSpecifi
   public int getInstances() {
     return delegate.getInstances();
   }
-
-  @Override
-  public List<String> getHosts() {
-    return delegate.getHosts();
-  }
-
-  @Override
-  public List<String> getRacks() {
-    return delegate.getRacks();
-  }
 }
