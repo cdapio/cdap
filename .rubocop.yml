@@ -1,0 +1,10 @@
+Encoding:
+  Enabled: False
+LineLength:
+  Max: 250
+Documentation:
+  Enabled: False
+HashSyntax:
+  Enabled: False
+SingleSpaceBeforeFirstArg:
+  Enabled: false
