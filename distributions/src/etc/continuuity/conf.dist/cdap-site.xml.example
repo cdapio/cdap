@@ -22,22 +22,22 @@
   -->
 
   <property>
-    <name>reactor.namespace</name>
-    <value>continuuity</value>
-    <description>Specifies the namespace for this instance of reactor.</description>
+    <name>root.namespace</name>
+    <value>cdap</value>
+    <description>Specifies the root namespace</description>
   </property>
 
-  <!-- Substitute the zookeeper quorum for Continuuity components here -->
+  <!-- Substitute the zookeeper quorum for components here -->
   <property>
     <name>zookeeper.quorum</name>
-    <value>FQDN1:2181,FQDN2:2181/${reactor.namespace}</value>
+    <value>FQDN1:2181,FQDN2:2181/${root.namespace}</value>
     <description>Specifies the zookeeper host:port</description>
   </property>
 
   <property>
     <name>hdfs.namespace</name>
-    <value>/${reactor.namespace}</value>
-    <description>Specifies the namespace for this instance of reactor</description>
+    <value>/${root.namespace}</value>
+    <description>Namespace for HDFS files</description>
   </property>
 
   <property>
@@ -81,11 +81,11 @@
   -->
   <property>
     <name>kafka.log.dir</name>
-    <value>/data/continuuity/kafka-logs</value>
+    <value>/data/cdap/kafka-logs</value>
     <description>Directory to store Kafka logs</description>
   </property>
 
-  <!-- Substitute with a list of all machines which will run the Continuuity Kafka component -->
+  <!-- Substitute with a list of all machines which will run the Kafka component -->
   <property>
     <name>kafka.seed.brokers</name>
     <value>FQDN1:9092,FQDN2:9092</value>
@@ -118,17 +118,17 @@
     <description>Specifies the port on which dashboard listens</description>
   </property>
 
-  <!-- Substitute the IP of the Continuuity Router service to which the UI should connect -->
+  <!-- Substitute the IP of the Router service to which the UI should connect -->
   <property>
     <name>gateway.server.address</name>
     <value>ROUTER-HOST-IP</value>
-    <description>Specifies the destination IP where Continuuity Router service is running</description>
+    <description>Specifies the destination IP where Router service is running</description>
   </property>
 
   <property>
     <name>gateway.server.port</name>
     <value>10000</value>
-    <description>Specifies the destination Port where Countinuuity Router service is listening</description>
+    <description>Specifies the destination Port where Router service is listening</description>
   </property>
 
 </configuration>

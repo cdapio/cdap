@@ -17,7 +17,7 @@
   -->
 <configuration>
     <property>
-        <name>continuuity.test.B</name>
+        <name>conf.test.B</name>
         <value>B+</value>
         <description>
             B

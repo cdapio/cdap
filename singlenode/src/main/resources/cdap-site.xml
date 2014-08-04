@@ -84,7 +84,7 @@
     </property>
 
     <property>
-        <name>reactor.explore.enabled</name>
+        <name>explore.enabled</name>
         <value>true</value>
         <description>Enable Explore functionality</description>
     </property>
