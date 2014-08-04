@@ -1,7 +1,26 @@
+#
+# Cookbook Name:: cdap
+# Attribute:: config
+#
+# Copyright (C) 2013-2014 Continuuity, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 # Default: conf.chef
 default['cdap']['conf_dir'] = 'conf.chef'
 # cdap-site.xml
-default['cdap']['cdap_site']['cdap.namespace'] = 'cdap'
+default['cdap']['cdap_site']['root.namespace'] = 'cdap'
 # ideally we could put the macro '/${cdap.namespace}' here but this attribute is used elsewhere in the cookbook
 default['cdap']['cdap_site']['hdfs.namespace'] = "/#{node['cdap']['cdap_site']['cdap.namespace']}"
 default['cdap']['cdap_site']['hdfs.user'] = 'yarn'
