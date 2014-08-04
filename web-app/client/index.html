@@ -363,7 +363,7 @@
           
           <td style="width: 15%" class="center-align">
           {{#if has_results}}
-            <a {{bindAttr download="downloadName"}} {{action download this}} class="downlad-query-results-btn"></a>
+            <a {{action download this bubbles=false}} class="downlad-query-results-btn"></a>
           {{ else }}
             No results
           {{/if}}
@@ -479,7 +479,7 @@
          <hr style="margin-top: 0px"/>
         <td>
           <div class="text-area-container">
-          {{view C.Embed.Injector placeholder="SHOW TABLES" elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
+          {{view C.Embed.Injector elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
           </div>
           <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
         </td>

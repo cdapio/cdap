@@ -13,8 +13,6 @@ define([], function () {
 		  self.offset = null;
 		  self.direction = null;
 
-      self.largest = -1;
-      self.smallest = -1;
 		  this.set('objArr', []);
 		  this.fetchQueries();
 		  this.interval = setInterval(function () {
@@ -42,6 +40,10 @@ define([], function () {
               }
             }
             datasets.pushObject(Ember.Object.create({name:name, shortName:shortName, schema:schema, results:results}));
+
+            if(datasets.length == 1){
+              self.selectDataset(datasets[0]);
+            }
           });
 		    });
 		  });
@@ -49,9 +51,6 @@ define([], function () {
 
 		showTable: function (obj) {
       var self = this;
-      if (self.get('downloadActive')) {
-        return;
-      }
       obj.set('isSelected', !obj.get('isSelected'));
       $("#" + obj.query_handle).slideToggle(200, function () {
         var objArr = self.get('objArr');
@@ -183,15 +182,11 @@ define([], function () {
     download: function (query) {
       var self = this;
       var handle = query.get('query_handle');
-      // Prevent opening.
-      self.set('downloadActive', true);
-
       var url = 'rest/data/explore/queries/' + handle + '/download';
 
       var handle = query.get('query_handle');
       self.HTTP.post(url, function (response) {
         self.downloadFile('results_' + handle + '.txt', response);
-        self.set('downloadActive', false);
       });
     },
 
