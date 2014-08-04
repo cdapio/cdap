@@ -37,7 +37,6 @@ import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
-import co.cask.cdap.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
@@ -1095,8 +1094,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     String queueName = "doobee2";
 
     // create a stream, a queue, a table
-    DataSetInstantiatorFromMetaData instantiator =
-      AppFabricTestBase.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
     createStream(streamName);
     createQueue(queueName);
 

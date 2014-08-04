@@ -16,10 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.data.DataSet;
-import co.cask.cdap.api.data.DataSetSpecification;
 import co.cask.cdap.api.data.batch.BatchReadable;
-import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.mapreduce.MapReduce;
@@ -181,12 +178,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
     DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework,
                                                                       cConf, program.getClassLoader());
-    Map<String, DataSetSpecification> dataSetSpecs = program.getSpecification().getDataSets();
     Map<String, DatasetCreationSpec> datasetSpecs = program.getSpecification().getDatasets();
-    dataSetInstantiator.setDataSets(dataSetSpecs.values(), datasetSpecs.values());
+    dataSetInstantiator.setDataSets(datasetSpecs.values());
 
-    Map<String, Closeable> dataSets = DataSets.createDataSets(dataSetInstantiator,
-                                                              Sets.union(dataSetSpecs.keySet(), datasetSpecs.keySet()));
+    Map<String, Closeable> dataSets = DataSets.createDataSets(dataSetInstantiator, datasetSpecs.keySet());
 
     final BasicMapReduceContext context =
       new BasicMapReduceContext(program, null, runId, options.getUserArguments(),
@@ -491,17 +486,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
   }
 
   private void setOutputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) {
-    String outputDataSetName = null;
-    BatchWritable outputDataset;
+    String outputDataSetName;
     // whatever was set into mapReduceContext e.g. during beforeSubmit(..) takes precedence
-
     if (mapReduceContext.getOutputDatasetName() != null) {
       outputDataSetName = mapReduceContext.getOutputDatasetName();
-    } else if (mapReduceContext.getOutputDataset() != null) {
-      outputDataset = mapReduceContext.getOutputDataset();
-      if (outputDataset instanceof DataSet) {
-        outputDataSetName = ((DataSet) outputDataset).getName();
-      }
     } else {
       // trying to init output dataset from spec
       outputDataSetName = mapReduceContext.getSpecification().getOutputDataSet();
@@ -509,9 +497,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     if (outputDataSetName != null) {
       LOG.debug("Using Dataset {} as output for MapReduce Job", outputDataSetName);
-      // We checked on validation phase that it implements BatchWritable
-      outputDataset = (BatchWritable) mapReduceContext.getDataSet(outputDataSetName);
-      mapReduceContext.setOutput(outputDataset);
       DataSetOutputFormat.setOutput(jobConf, outputDataSetName);
     }
   }
@@ -519,13 +504,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
   @SuppressWarnings("unchecked")
   private void setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) throws IOException {
     String inputDataSetName;
-    // whatever was set into mapReduceJob e.g. during beforeSubmit(..) takes precedence
-    BatchReadable batchReadable = mapReduceContext.getInputDataset();
-
     if (mapReduceContext.getInputDatasetName() != null) {
       inputDataSetName = mapReduceContext.getInputDatasetName();
-    } else if (batchReadable != null && batchReadable instanceof DataSet) {
-      inputDataSetName = ((DataSet) batchReadable).getName();
     } else  {
       // trying to init input dataset from spec
       inputDataSetName = mapReduceContext.getSpecification().getInputDataSet();
@@ -534,7 +514,18 @@ public class MapReduceProgramRunner implements ProgramRunner {
     if (inputDataSetName != null) {
       // TODO: It's a hack for stream
       if (inputDataSetName.startsWith("stream://")) {
-        batchReadable = new StreamBatchReadable(inputDataSetName.substring("stream://".length()));
+        StreamBatchReadable stream = new StreamBatchReadable(inputDataSetName.substring("stream://".length()));
+        StreamConfig streamConfig = streamAdmin.getConfig(stream.getStreamName());
+        Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
+                                                                   StreamUtils.getGeneration(streamConfig));
+
+        LOG.info("Using Stream as input from {}", streamPath.toURI());
+
+        TextStreamInputFormat.setTTL(jobConf, streamConfig.getTTL());
+        TextStreamInputFormat.setStreamPath(jobConf, streamPath.toURI());
+        TextStreamInputFormat.setTimeRange(jobConf, stream.getStartTime(), stream.getEndTime());
+        jobConf.setInputFormatClass(TextStreamInputFormat.class);
+
       } else {
         // We checked on validation phase that it implements BatchReadable
         BatchReadable inputDataSet = (BatchReadable) mapReduceContext.getDataSet(inputDataSetName);
@@ -542,26 +533,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
         if (inputSplits == null) {
           inputSplits = inputDataSet.getSplits();
         }
-        mapReduceContext.setInput(inputDataSet, inputSplits);
+        mapReduceContext.setInput(inputDataSetName, inputSplits);
+
+        LOG.debug("Using Dataset {} as input for MapReduce Job", inputDataSetName);
+        DataSetInputFormat.setInput(jobConf, inputDataSetName);
       }
-    }
-
-    if (inputDataSetName != null) {
-      LOG.debug("Using Dataset {} as input for MapReduce Job", inputDataSetName);
-      DataSetInputFormat.setInput(jobConf, inputDataSetName);
-    } else if (batchReadable instanceof StreamBatchReadable) {
-      // TODO: It's a hack for stream
-      StreamBatchReadable stream = (StreamBatchReadable) batchReadable;
-      StreamConfig streamConfig = streamAdmin.getConfig(stream.getStreamName());
-      Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
-                                                                 StreamUtils.getGeneration(streamConfig));
-
-      LOG.info("Using Stream as input from {}", streamPath.toURI());
-
-      TextStreamInputFormat.setTTL(jobConf, streamConfig.getTTL());
-      TextStreamInputFormat.setStreamPath(jobConf, streamPath.toURI());
-      TextStreamInputFormat.setTimeRange(jobConf, stream.getStartTime(), stream.getEndTime());
-      jobConf.setInputFormatClass(TextStreamInputFormat.class);
     }
   }
 

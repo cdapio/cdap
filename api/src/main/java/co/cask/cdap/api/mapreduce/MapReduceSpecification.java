@@ -47,7 +47,7 @@ import java.util.Set;
 public interface MapReduceSpecification extends ProgramSpecification, PropertyProvider {
 
   /**
-   * @return An immutable set of {@link co.cask.cdap.api.data.DataSet DataSets} that
+   * @return An immutable set of {@link co.cask.cdap.api.dataset.Dataset DataSets} that
    *         are used by the {@link MapReduce}.
    */
   Set<String> getDataSets();
@@ -136,7 +136,7 @@ public interface MapReduceSpecification extends ProgramSpecification, PropertyPr
     public final class AfterDescription {
 
       /**
-       * Adds the names of {@link co.cask.cdap.api.data.DataSet DataSets} used by the MapReduce job.
+       * Adds the names of {@link co.cask.cdap.api.dataset.Dataset DataSets} used by the MapReduce job.
        *
        * @param dataSet DataSet name.
        * @param moreDataSets More DataSet names.
@@ -154,7 +154,7 @@ public interface MapReduceSpecification extends ProgramSpecification, PropertyPr
        * <p>
        *   Usually, in this case whole dataset will be fed into mapreduce job. Alternatively, you can specify the
        *   dataset (and its data selection) to be fed into mapreduce job using
-       *   {@link MapReduceContext#setInput(co.cask.cdap.api.data.batch.BatchReadable, java.util.List)} in
+       *   {@link MapReduceContext#setInput(String, java.util.List)} in
        *   {@link MapReduce#beforeSubmit(MapReduceContext)}.
        * </p>
        * @param dataSet Name of the dataset

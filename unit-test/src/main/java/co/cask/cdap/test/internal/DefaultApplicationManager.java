@@ -107,7 +107,7 @@ public class DefaultApplicationManager implements ApplicationManager {
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
-    this.dataSetInstantiator.setDataSets(appSpec.getDataSets().values(), appSpec.getDatasets().values());
+    this.dataSetInstantiator.setDataSets(appSpec.getDatasets().values());
   }
 
   @Override

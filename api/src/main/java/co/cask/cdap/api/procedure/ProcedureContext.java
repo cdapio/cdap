@@ -17,11 +17,9 @@
 package co.cask.cdap.api.procedure;
 
 import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.data.DataSet;
 
 /**
- * This interface represents the Procedure context, which consists of set of methods for
- * acquiring instances of {@link DataSet}.
+ * This interface represents the Procedure context.
  */
 public interface ProcedureContext extends RuntimeContext {
   /**

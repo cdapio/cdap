@@ -92,7 +92,7 @@ public class MultiConsumerTest {
                               datasetFramework, CConfiguration.create(),
                               getClass().getClassLoader());
     ApplicationSpecification spec = Specifications.from(new MultiApp());
-    dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
+    dataSetInstantiator.setDataSets(spec.getDatasets().values());
 
     final KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");
     TransactionExecutorFactory txExecutorFactory =

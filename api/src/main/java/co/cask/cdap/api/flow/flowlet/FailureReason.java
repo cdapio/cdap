@@ -35,7 +35,7 @@ public final class FailureReason {
     USER,
 
     /**
-     * Error related to read/write of {@link co.cask.cdap.api.data.DataSet DataSet} or writing output.
+     * Error related to read/write of {@link co.cask.cdap.api.dataset.Dataset DataSet} or writing output.
      */
     IO_ERROR,
   }

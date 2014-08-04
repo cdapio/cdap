@@ -18,7 +18,6 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.DataSetInstantiationException;
-import co.cask.cdap.api.data.DataSetSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -55,7 +54,6 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
@@ -340,7 +338,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               StreamConsumerFactory streamConsumerFactory,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                              DataSetInstantiatorFromMetaData datasetInstantiator,
                               DatasetFramework dsFramework) {
 
     super(authenticator);
@@ -2870,18 +2867,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Id.Account account = new Id.Account(programId.getAccountId());
       if (type == Data.DATASET) {
-        DataSetSpecification spec = store.getDataSet(account, name);
+        DatasetSpecification dsSpec = getDatasetSpec(name);
         String typeName = null;
-        if (spec != null) {
-          typeName = spec.getType();
-        } else {
-          // trying to see if that is Dataset V2
-          DatasetSpecification dsSpec = getDatasetSpec(name);
-          if (dsSpec != null) {
-            typeName = dsSpec.getType();
-          }
+        if (dsSpec != null) {
+          typeName = dsSpec.getType();
         }
-        return GSON.toJson(makeDataSetRecord(name, typeName, spec));
+        return GSON.toJson(makeDataSetRecord(name, typeName));
       } else if (type == Data.STREAM) {
         StreamSpecification spec = store.getStream(account, name);
         return spec == null ? "" : GSON.toJson(makeStreamRecord(spec.getName(), spec));
@@ -2896,15 +2887,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private String listDataEntities(Id.Program programId, Data type) throws Exception {
     try {
       if (type == Data.DATASET) {
-        Collection<DataSetSpecification> specs = store.getAllDataSets(new Id.Account(programId.getAccountId()));
-        List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(specs.size());
-        for (DataSetSpecification spec : specs) {
-          result.add(makeDataSetRecord(spec.getName(), spec.getType(), null));
-        }
-        // also add datasets2 instances
         Collection<DatasetSpecification> instances = dsFramework.getInstances();
+        List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(instances.size());
         for (DatasetSpecification instance : instances) {
-          result.add(makeDataSetRecord(instance.getName(), instance.getType(), null));
+          result.add(makeDataSetRecord(instance.getName(), instance.getType()));
         }
         return GSON.toJson(result);
       } else if (type == Data.STREAM) {
@@ -2931,23 +2917,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         Set<String> dataSetsUsed = dataSetsUsedBy(appSpec);
         List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
         for (String dsName : dataSetsUsed) {
-          DataSetSpecification spec = appSpec.getDataSets().get(dsName);
           String typeName = null;
-          if (spec == null) {
-            spec = store.getDataSet(account, dsName);
+          DatasetSpecification dsSpec = getDatasetSpec(dsName);
+          if (dsSpec != null) {
+            typeName = dsSpec.getType();
           }
-
-          if (spec != null) {
-            // Dataset V1
-            typeName = spec.getType();
-          } else {
-            // trying to see if that is Dataset V2
-            DatasetSpecification dsSpec = getDatasetSpec(dsName);
-            if (dsSpec != null) {
-              typeName = dsSpec.getType();
-            }
-          }
-          result.add(makeDataSetRecord(dsName, typeName, null));
+          result.add(makeDataSetRecord(dsName, typeName));
         }
         return GSON.toJson(result);
       }
@@ -2995,7 +2970,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
       result.addAll(mrSpec.getDataSets());
     }
-    result.addAll(appSpec.getDataSets().keySet());
     return result;
   }
 
@@ -3128,8 +3102,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     return new ProgramRecord(type, appId, spec.getName(), spec.getName(), spec.getDescription());
   }
 
-  private static DatasetRecord makeDataSetRecord(String name, String classname, DataSetSpecification specification) {
-    return new DatasetRecord("Dataset", name, name, classname, GSON.toJson(specification));
+  private static DatasetRecord makeDataSetRecord(String name, String classname) {
+    return new DatasetRecord("Dataset", name, name, classname);
   }
 
   private static StreamRecord makeStreamRecord(String name, StreamSpecification specification) {

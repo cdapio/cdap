@@ -134,8 +134,7 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
       DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
       DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework, configuration,
                                                                         program.getClassLoader());
-      dataSetInstantiator.setDataSets(program.getSpecification().getDataSets().values(),
-                                      program.getSpecification().getDatasets().values());
+      dataSetInstantiator.setDataSets(program.getSpecification().getDatasets().values());
       return dataSetInstantiator;
     } catch (Exception e) {
       throw Throwables.propagate(e);

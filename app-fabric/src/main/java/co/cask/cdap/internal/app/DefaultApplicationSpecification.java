@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.data.DataSetSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -26,7 +25,6 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
 import java.util.Map;
 
@@ -38,7 +36,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final String name;
   private final String description;
   private final Map<String, StreamSpecification> streams;
-  private final Map<String, DataSetSpecification> datasets;
   private final Map<String, String> datasetModules;
   private final Map<String, DatasetCreationSpec> datasetInstances;
   private final Map<String, FlowSpecification> flows;
@@ -50,21 +47,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
 
   public DefaultApplicationSpecification(String name, String description,
                                          Map<String, StreamSpecification> streams,
-                                         Map<String, DataSetSpecification> datasets,
-                                         Map<String, FlowSpecification> flows,
-                                         Map<String, ProcedureSpecification> procedures,
-                                         Map<String, MapReduceSpecification> mapReduces,
-                                         Map<String, WorkflowSpecification> workflows) {
-    this(name, description, streams, datasets,
-         Maps.<String, String>newHashMap(),
-         Maps.<String, DatasetCreationSpec>newHashMap(),
-         flows, procedures, mapReduces, workflows, Maps.<String, ServiceSpecification>newHashMap());
-
-  }
-
-  public DefaultApplicationSpecification(String name, String description,
-                                         Map<String, StreamSpecification> streams,
-                                         Map<String, DataSetSpecification> datasets,
                                          Map<String, String> datasetModules,
                                          Map<String, DatasetCreationSpec> datasetInstances,
                                          Map<String, FlowSpecification> flows,
@@ -75,7 +57,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this.name = name;
     this.description = description;
     this.streams = ImmutableMap.copyOf(streams);
-    this.datasets = ImmutableMap.copyOf(datasets);
     this.datasetModules = ImmutableMap.copyOf(datasetModules);
     this.datasetInstances = ImmutableMap.copyOf(datasetInstances);
     this.flows = ImmutableMap.copyOf(flows);
@@ -87,7 +68,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
 
   public static DefaultApplicationSpecification from(ApplicationSpecification spec) {
     return new DefaultApplicationSpecification(spec.getName(), spec.getDescription(),
-                                               spec.getStreams(), spec.getDataSets(),
+                                               spec.getStreams(),
                                                spec.getDatasetModules(), spec.getDatasets(),
                                                spec.getFlows(), spec.getProcedures(),
                                                spec.getMapReduce(), spec.getWorkflows(),
@@ -107,11 +88,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   @Override
   public Map<String, StreamSpecification> getStreams() {
     return streams;
-  }
-
-  @Override
-  public Map<String, DataSetSpecification> getDataSets() {
-    return datasets;
   }
 
   @Override

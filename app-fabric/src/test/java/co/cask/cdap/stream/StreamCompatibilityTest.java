@@ -124,7 +124,7 @@ public class StreamCompatibilityTest {
                               datasetFramework, CConfiguration.create(),
                               getClass().getClassLoader());
     ApplicationSpecification spec = Specifications.from(new StreamApp());
-    dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
+    dataSetInstantiator.setDataSets(spec.getDatasets().values());
 
     final KeyValueTable streamOut = dataSetInstantiator.getDataSet("streamout");
     TransactionExecutorFactory txExecutorFactory =

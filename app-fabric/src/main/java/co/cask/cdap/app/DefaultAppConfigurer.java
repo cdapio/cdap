@@ -19,7 +19,6 @@ package co.cask.cdap.app;
 import co.cask.cdap.api.SingleRunnableApplication;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
-import co.cask.cdap.api.data.DataSetSpecification;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.Dataset;
@@ -61,8 +60,6 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   private String name;
   private String description;
   private final Map<String, StreamSpecification> streams = Maps.newHashMap();
-  // TODO: to be removed after datasets API v1 is abandoned
-  private final Map<String, DataSetSpecification> dataSets = Maps.newHashMap();
   private final Map<String, String> dataSetModules = Maps.newHashMap();
   private final Map<String, DatasetCreationSpec> dataSetInstances = Maps.newHashMap();
   private final Map<String, FlowSpecification> flows = Maps.newHashMap();
@@ -198,7 +195,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   public ApplicationSpecification createApplicationSpec() {
-    return new DefaultApplicationSpecification(name, description, streams, dataSets,
+    return new DefaultApplicationSpecification(name, description, streams,
                                                dataSetModules, dataSetInstances,
                                                flows, procedures, mapReduces, workflows, services);
   }

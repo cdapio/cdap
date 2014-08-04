@@ -16,7 +16,6 @@
 package co.cask.cdap.internal.specification;
 
 import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.data.DataSet;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.internal.lang.FieldVisitor;
 import com.google.common.reflect.TypeToken;
@@ -33,7 +32,7 @@ public final class DataSetFieldExtractor extends FieldVisitor {
 
   /**
    * Constructs a {@link DataSetFieldExtractor} that store DataSet names extracted from fields.
-   * @param dataSets
+   * @param dataSets set to store datasets
    */
   public DataSetFieldExtractor(Set<String> dataSets) {
     this.dataSets = dataSets;
@@ -41,7 +40,7 @@ public final class DataSetFieldExtractor extends FieldVisitor {
 
   @Override
   public void visit(Object instance, TypeToken<?> inspectType, TypeToken<?> declareType, Field field) {
-    if (DataSet.class.isAssignableFrom(field.getType()) || Dataset.class.isAssignableFrom(field.getType())) {
+    if (Dataset.class.isAssignableFrom(field.getType())) {
       UseDataSet dataset = field.getAnnotation(UseDataSet.class);
       if (dataset == null || dataset.value().isEmpty()) {
         return;
