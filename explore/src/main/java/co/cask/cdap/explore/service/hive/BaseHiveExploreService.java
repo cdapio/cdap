@@ -620,7 +620,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         // handle is removed from the internal cache, then there is no point returning them from here.
       }
     }
-    Collections.sort(result);
     return result;
   }
 
