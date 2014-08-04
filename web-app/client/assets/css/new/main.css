@@ -3546,11 +3546,14 @@ div.tooltip {
 #query-tables {
 	width: 350px;
 	background: white;
+	min-height: 600px;
 }
 
 #query-schema {
 	margin-left: 350px;
 	color: white;
+	max-height: 600px;
+	overflow: auto;
 }
 
 #schema-table th {
@@ -3560,6 +3563,8 @@ div.tooltip {
 
 #schema-table th, #schema-table td {
 	border-color: #515151;
+	max-width: 400px;
+	word-wrap: break-word;
 }
 
 .table-name:hover {
@@ -3651,6 +3656,15 @@ div.tooltip {
 
 .query-results-table-entry > tbody > tr:last-child > td:last-child {
 	border-bottom: 0;
+}
+
+#explore-sub-menu {
+	margin: 15px;
+}
+
+.text-area-container {
+	padding-left: 10px;
+	padding-right: 10px;
 }
 
 

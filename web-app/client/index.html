@@ -474,12 +474,16 @@
     </div>
     <div id="panels">
       <div class="panel">
-         <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+         <ul class="nav nav-pills pull-right" id="explore-sub-menu">
            <li>{{#linkTo DataExplore.Query}}Query{{/linkTo }}</li>
            <li>{{#linkTo DataExplore.Results}}Reults{{/linkTo}}</li>
          </ul>
+         <div style="clear:both"></div>
+         <hr style="margin-top: 0px"/>
         <td>
+          <div class="text-area-container">
           {{view C.Embed.Injector placeholder="SHOW TABLES" elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
+          </div>
           <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
         </td>
 
