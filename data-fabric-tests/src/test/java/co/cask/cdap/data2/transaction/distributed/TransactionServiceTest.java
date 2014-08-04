@@ -16,6 +16,7 @@
 package co.cask.cdap.data2.transaction.distributed;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -23,14 +24,12 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.data.DataSetAccessor;
-import co.cask.cdap.data.InMemoryDataSetAccessor;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.dataset.api.DataSetManager;
-import co.cask.cdap.data2.dataset.lib.table.OrderedColumnarTable;
+import co.cask.cdap.data2.dataset.lib.table.inmemory.InMemoryOcTableClient;
+import co.cask.cdap.data2.dataset.lib.table.inmemory.InMemoryOcTableService;
 import com.continuuity.tephra.DefaultTransactionExecutor;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
@@ -98,7 +97,7 @@ public class TransactionServiceTest {
       ZKClientService zkClient = injector.getInstance(ZKClientService.class);
       zkClient.startAndWait();
 
-      final OrderedColumnarTable table = createTable("myTable", cConf);
+      final OrderedTable table = createTable("myTable");
       try {
         // tx service client
         // NOTE: we can init it earlier than we start services, it should pick them up when they are available
@@ -155,7 +154,7 @@ public class TransactionServiceTest {
     }
   }
 
-  private void verifyGetAndPut(final OrderedColumnarTable table, TransactionExecutor txExecutor,
+  private void verifyGetAndPut(final OrderedTable table, TransactionExecutor txExecutor,
                                final String verifyGet, final String toPut)
     throws TransactionFailureException, InterruptedException {
 
@@ -170,19 +169,13 @@ public class TransactionServiceTest {
     });
   }
 
-  private OrderedColumnarTable createTable(String tableName, CConfiguration cConf) throws Exception {
-    DataSetAccessor dsAccessor = new InMemoryDataSetAccessor(cConf);
-    DataSetManager dsManager =
-      dsAccessor.getDataSetManager(OrderedColumnarTable.class, DataSetAccessor.Namespace.USER);
-    dsManager.create(tableName);
-    return dsAccessor.getDataSetClient(tableName, OrderedColumnarTable.class, DataSetAccessor.Namespace.USER);
+  private OrderedTable createTable(String tableName) throws Exception {
+    InMemoryOcTableService.create(tableName);
+    return new InMemoryOcTableClient(tableName);
   }
 
   private void dropTable(String tableName, CConfiguration cConf) throws Exception {
-    DataSetAccessor dsAccessor = new InMemoryDataSetAccessor(cConf);
-    DataSetManager dsManager =
-      dsAccessor.getDataSetManager(OrderedColumnarTable.class, DataSetAccessor.Namespace.USER);
-    dsManager.drop(tableName);
+    InMemoryOcTableService.drop(tableName);
   }
 
   static TransactionService createTxService(String zkConnectionString, int txServicePort,

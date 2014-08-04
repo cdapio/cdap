@@ -17,7 +17,6 @@ package co.cask.cdap.data2.transaction.stream.leveldb;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.DataSetAccessor;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.stream.StreamEventOffset;
@@ -56,11 +55,11 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
   private final ConcurrentMap<String, Object> dbLocks;
 
   @Inject
-  LevelDBStreamFileConsumerFactory(DataSetAccessor dataSetAccessor, StreamAdmin streamAdmin,
+  LevelDBStreamFileConsumerFactory(StreamAdmin streamAdmin,
                                    StreamConsumerStateStoreFactory stateStoreFactory,
                                    CConfiguration cConf, LevelDBOcTableService tableService,
                                    QueueClientFactory queueClientFactory, LevelDBStreamAdmin oldStreamAdmin) {
-    super(dataSetAccessor, streamAdmin, stateStoreFactory, queueClientFactory, oldStreamAdmin);
+    super(cConf, streamAdmin, stateStoreFactory, queueClientFactory, oldStreamAdmin);
     this.cConf = cConf;
     this.tableService = tableService;
     this.dbLocks = Maps.newConcurrentMap();

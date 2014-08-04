@@ -15,8 +15,6 @@
  */
 package co.cask.cdap.data.runtime;
 
-import co.cask.cdap.data.DataSetAccessor;
-import co.cask.cdap.data.InMemoryDataSetAccessor;
 import co.cask.cdap.data.stream.InMemoryStreamCoordinator;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -41,7 +39,6 @@ public class DataFabricInMemoryModule extends AbstractModule {
   protected void configure() {
     // Bind TxDs2 stuff
 
-    bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(InMemoryQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
     bind(StreamAdmin.class).to(InMemoryStreamAdmin.class).in(Singleton.class);

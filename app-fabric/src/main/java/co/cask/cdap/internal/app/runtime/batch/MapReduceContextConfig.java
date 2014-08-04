@@ -73,7 +73,7 @@ public final class MapReduceContextConfig {
     setProgramJarName(programJarName);
     setConf(conf);
     setTx(tx);
-    if (context.getInputDataset() != null && context.getInputDataSelection() != null) {
+    if (context.getInputDataSelection() != null) {
       setInputSelection(context.getInputDataSelection());
     }
   }

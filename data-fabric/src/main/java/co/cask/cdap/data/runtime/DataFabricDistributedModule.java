@@ -17,8 +17,6 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.DataSetAccessor;
-import co.cask.cdap.data.DistributedDataSetAccessor;
 import co.cask.cdap.data.stream.DistributedStreamCoordinator;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -62,7 +60,6 @@ public class DataFabricDistributedModule extends AbstractModule {
   @Override
   public void configure() {
     bind(ThriftClientProvider.class).toProvider(ThriftClientProviderSupplier.class);
-    bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
     bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);

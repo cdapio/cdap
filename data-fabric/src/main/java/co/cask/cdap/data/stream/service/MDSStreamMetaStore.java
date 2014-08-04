@@ -20,7 +20,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.DataSetAccessor;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -58,7 +58,7 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
   public MDSStreamMetaStore(CConfiguration conf, final TransactionSystemClient txClient, DatasetFramework framework) {
 
     final DatasetFramework dsFramework =
-      new NamespacedDatasetFramework(framework, new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.SYSTEM));
+      new NamespacedDatasetFramework(framework, new ReactorDatasetNamespace(conf, Namespace.SYSTEM));
 
     txnl = Transactional.of(
         new TransactionExecutorFactory() {

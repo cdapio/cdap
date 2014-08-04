@@ -33,7 +33,6 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.gateway.MockMetricsCollectionService;
 import co.cask.cdap.gateway.MockedPassportClient;
 import co.cask.cdap.gateway.auth.AuthModule;
-import co.cask.cdap.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -217,7 +216,6 @@ public abstract class MetricsSuiteTestBase {
                // these bindings out as it overlaps with
                // AppFabricServiceModule
                bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-               bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
 
                MockMetricsCollectionService metricsCollectionService =
                  new MockMetricsCollectionService();
