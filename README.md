@@ -2,10 +2,9 @@
 
 # Requirements
 
-This cookbook assumes that you have several things completed prior to use:
-* a working Oracle Java JRE/JDK installed (tested using java cookbook 1.21.2)
-* a working Hadoop HDFS and YARN, ZooKeeper, and HBase (tested using hadoop cookbook 1.0.0)
-* For `web_app`, node.JS must be installed and `node` must be in the PATH (tested using nodejs cookbook 1.3.0)
+* Oracle Java JDK 6+ (provided by `java` cookbook)
+* Hadoop 2.0+ HDFS, YARN, ZooKeeper, and HBase (provided by `hadoop` cookbook)
+* Node.JS 0.8.16+ (provided by `nodejs` cookbook)
 
 # Usage
 
