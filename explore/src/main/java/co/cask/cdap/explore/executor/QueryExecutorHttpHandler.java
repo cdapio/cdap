@@ -329,19 +329,22 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
      queries =  Lists.reverse(queries);
     }
 
-    return FluentIterable.from(queries)
-                         .filter(new Predicate<QueryInfo>() {
-                           @Override
-                           public boolean apply(@Nullable QueryInfo queryInfo) {
-                             if (isForward) {
-                               return queryInfo.getTimestamp() < offset;
-                             } else {
-                               return queryInfo.getTimestamp() > offset;
-                             }
-                           }
-                         })
-                         .limit(limit)
-                         .toImmutableList();
+    queries =  FluentIterable.from(queries)
+                             .filter(new Predicate<QueryInfo>() {
+                               @Override
+                               public boolean apply(@Nullable QueryInfo queryInfo) {
+                                 if (isForward) {
+                                   return queryInfo.getTimestamp() < offset;
+                                 } else {
+                                   return queryInfo.getTimestamp() > offset;
+                                 }
+                               }
+                             })
+                             .limit(limit)
+                             .toImmutableList();
+
+    Collections.sort(queries);
+    return queries;
   }
 
   private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
