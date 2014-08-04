@@ -17,7 +17,7 @@
 package co.cask.cdap.reactor.client;
 
 import co.cask.cdap.client.MonitorClient;
-import co.cask.cdap.client.config.ReactorClientConfig;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.SystemServiceMeta;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
 import org.junit.Assert;
@@ -41,7 +41,7 @@ public class MonitorClientTest extends ClientTestBase {
   public void setUp() throws Throwable {
     super.setUp();
 
-    monitorClient = new MonitorClient(new ReactorClientConfig("localhost"));
+    monitorClient = new MonitorClient(new ClientConfig("localhost"));
   }
 
   @Test

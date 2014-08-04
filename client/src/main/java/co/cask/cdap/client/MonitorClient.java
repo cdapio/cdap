@@ -16,7 +16,7 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.client.config.ReactorClientConfig;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.BadRequestException;
 import co.cask.cdap.client.exception.NotFoundException;
 import co.cask.cdap.client.exception.ServiceNotEnabledException;
@@ -45,10 +45,10 @@ public class MonitorClient {
   private static final Gson GSON = new Gson();
 
   private final RESTClient restClient;
-  private final ReactorClientConfig config;
+  private final ClientConfig config;
 
   @Inject
-  public MonitorClient(ReactorClientConfig config) {
+  public MonitorClient(ClientConfig config) {
     this.config = config;
     this.restClient = RESTClient.create(config);
   }

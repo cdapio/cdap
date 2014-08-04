@@ -17,7 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.client.config.ReactorClientConfig;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.DatasetAlreadyExistsException;
 import co.cask.cdap.client.exception.DatasetNotFoundException;
 import co.cask.cdap.client.exception.DatasetTypeNotFoundException;
@@ -46,10 +46,10 @@ public class DatasetClient {
   private static final Gson GSON = new Gson();
 
   private final RESTClient restClient;
-  private final ReactorClientConfig config;
+  private final ClientConfig config;
 
   @Inject
-  public DatasetClient(ReactorClientConfig config) {
+  public DatasetClient(ClientConfig config) {
     this.config = config;
     this.restClient = RESTClient.create(config);
   }
