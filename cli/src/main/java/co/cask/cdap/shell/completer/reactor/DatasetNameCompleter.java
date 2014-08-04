@@ -45,12 +45,9 @@ public class DatasetNameCompleter extends StringsCompleter {
             Iterables.transform(list, new Function<DatasetSpecification, String>() {
               @Override
               public String apply(DatasetSpecification input) {
-                // TODO: hack to handle namespaced dataset names
-                if (input.getName().startsWith("continuuity.user.")) {
-                  return input.getName().substring("continuuity.user.".length());
-                } else {
-                  return input.getName();
-                }
+                // TODO: hack to handle namespaced dataset names -- assumes there are no periods in dataset names
+                String[] tokens = input.getName().split("\\.");
+                return tokens[tokens.length - 1];
               }
             })
           );
