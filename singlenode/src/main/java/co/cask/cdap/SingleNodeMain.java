@@ -97,8 +97,8 @@ public class SingleNodeMain {
   private ExploreExecutorService exploreExecutorService;
   private final ExploreClient exploreClient;
 
-  public SingleNodeMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
-    this.webCloudAppService = new WebCloudAppService(webAppPath);
+  private SingleNodeMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
+    this.webCloudAppService = (webAppPath == null) ? null : new WebCloudAppService(webAppPath);
 
     Injector injector = Guice.createInjector(modules);
     txService = injector.getInstance(InMemoryTransactionService.class);
@@ -163,7 +163,9 @@ public class SingleNodeMain {
     metricsQueryService.startAndWait();
     router.startAndWait();
     flumeCollector.startAndWait();
-    webCloudAppService.startAndWait();
+    if (webCloudAppService != null) {
+      webCloudAppService.startAndWait();
+    }
     streamHttpService.startAndWait();
 
     if (externalAuthenticationServer != null) {
@@ -187,7 +189,9 @@ public class SingleNodeMain {
 
     try {
       // order matters: first shut down web app 'cause it will stop working after router is down
-      webCloudAppService.stopAndWait();
+      if (webCloudAppService != null) {
+        webCloudAppService.stopAndWait();
+      }
       //  shut down router, gateway and flume, to stop all incoming traffic
       router.stopAndWait();
       gatewayV2.stopAndWait();
@@ -299,11 +303,17 @@ public class SingleNodeMain {
    * @param webAppPath
    */
   public static SingleNodeMain createSingleNodeMain(boolean inMemory, String webAppPath) {
-    CConfiguration cConf = CConfiguration.create();
+    return createSingleNodeMain(inMemory, webAppPath, CConfiguration.create(), new Configuration());
+  }
 
+  public static SingleNodeMain createSingleNodeMain(boolean inMemory, CConfiguration cConf, Configuration hConf) {
+    return createSingleNodeMain(inMemory, WebCloudAppService.WEB_APP, cConf, hConf);
+  }
+
+  public static SingleNodeMain createSingleNodeMain(boolean inMemory, String webAppPath,
+                                                    CConfiguration cConf, Configuration hConf) {
     // This is needed to use LocalJobRunner with fixes (we have it in app-fabric).
     // For the modified local job runner
-    Configuration hConf = new Configuration();
     hConf.addResource("mapred-site-local.xml");
     hConf.reloadConfiguration();
     // Due to incredibly stupid design of Limits class, once it is initialized, it keeps its settings. We

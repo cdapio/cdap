@@ -40,6 +40,7 @@ public class FakeDataset extends AbstractDataset
 
   public FakeDataset(String instanceName, KeyValueTable table) {
     super(instanceName, table);
+    this.table = table;
   }
 
   public byte[] get(byte[] key) {
