@@ -137,37 +137,24 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     return response.getStatusLine().getStatusCode();
   }
 
-  private void testHistory(Class<?> app, String appId, String runnableType, String runnableId,
-                           boolean waitStop, int duration)
+  private void testHistory(Class<?> app, String appId, String runnableType, String runnableId)
       throws Exception {
     try {
       deploy(app);
-      Assert.assertEquals(200,
-          doPost("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/start", null)
-              .getStatusLine().getStatusCode()
-      );
-      if (waitStop) {
-        TimeUnit.SECONDS.sleep(duration);
-      } else {
-        Assert.assertEquals(200,
-            doPost("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/stop", null)
-                .getStatusLine().getStatusCode()
-        );
-      }
+      // first run
+      Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "start"));
+      waitState(runnableType, appId, runnableId, "RUNNING");
+      Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "stop"));
+      waitState(runnableType, appId, runnableId, "STOPPED");
+
       // Sleep to let stop states settle down (for MapReduce).
       TimeUnit.SECONDS.sleep(5);
-      Assert.assertEquals(200,
-          doPost("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/start", null)
-              .getStatusLine().getStatusCode()
-      );
-      if (waitStop) {
-        TimeUnit.SECONDS.sleep(duration);
-      } else {
-        Assert.assertEquals(200,
-            doPost("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/stop", null)
-                .getStatusLine().getStatusCode()
-        );
-      }
+
+      // second run
+      Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "start"));
+      waitState(runnableType, appId, runnableId, "RUNNING");
+      Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "stop"));
+      waitState(runnableType, appId, runnableId, "STOPPED");
 
       String url = String.format("/v2/apps/%s/%s/%s/history", appId, runnableType, runnableId);
       historyStatusWithRetry(url, 2);
@@ -262,7 +249,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   @Category(SlowTests.class)
   @Test
   public void testFlowHistory() throws Exception {
-    testHistory(WordCountApp.class, "WordCountApp", "flows", "WordCountFlow", false, 0);
+    testHistory(WordCountApp.class, "WordCountApp", "flows", "WordCountFlow");
   }
 
   /**
@@ -270,7 +257,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testProcedureHistory() throws Exception {
-    testHistory(WordCountApp.class, "WordCountApp", "procedures", "WordFrequency", false, 0);
+    testHistory(WordCountApp.class, "WordCountApp", "procedures", "WordFrequency");
   }
 
   /**
@@ -279,7 +266,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testMapreduceHistory() throws Exception {
-    testHistory(DummyAppWithTrackingTable.class, "dummy", "mapreduce", "dummy-batch", false, 0);
+    testHistory(DummyAppWithTrackingTable.class, "dummy", "mapreduce", "dummy-batch");
   }
 
   /**
@@ -288,7 +275,26 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testWorkflowHistory() throws Exception {
-    testHistory(SleepingWorkflowApp.class, "SleepWorkflowApp", "workflows", "SleepWorkflow", true, 2);
+    try {
+      deploy(SleepingWorkflowApp.class);
+      // first run
+      Assert.assertEquals(200, getRunnableStartStop("workflows", "SleepWorkflowApp", "SleepWorkflow", "start"));
+      waitState("workflows", "SleepWorkflowApp", "SleepWorkflow", "RUNNING");
+      // workflow stops by itself after actions are done
+      waitState("workflows", "SleepWorkflowApp", "SleepWorkflow", "STOPPED");
+
+      // second run
+      Assert.assertEquals(200, getRunnableStartStop("workflows", "SleepWorkflowApp", "SleepWorkflow", "start"));
+      waitState("workflows", "SleepWorkflowApp", "SleepWorkflow", "RUNNING");
+      // workflow stops by itself after actions are done
+      waitState("workflows", "SleepWorkflowApp", "SleepWorkflow", "STOPPED");
+
+      String url = String.format("/v2/apps/%s/%s/%s/history", "SleepWorkflowApp", "workflows", "SleepWorkflow");
+      historyStatusWithRetry(url, 2);
+
+    } finally {
+      Assert.assertEquals(200, doDelete("/v2/apps/SleepWorkflowApp").getStatusLine().getStatusCode());
+    }
   }
 
   @Test
@@ -379,6 +385,13 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     deploy(SleepingWorkflowApp.class);
     Assert.assertEquals(200, getRunnableStartStop("workflows", "SleepWorkflowApp", "SleepWorkflow", "start"));
     waitState("workflows", "SleepWorkflowApp", "SleepWorkflow", "RUNNING");
+    // workflow will stop itself
+    waitState("workflows", "SleepWorkflowApp", "SleepWorkflow", "STOPPED");
+
+    // removing apps
+    Assert.assertEquals(200, doDelete("/v2/apps/WordCountApp").getStatusLine().getStatusCode());
+    Assert.assertEquals(200, doDelete("/v2/apps/dummy").getStatusLine().getStatusCode());
+    Assert.assertEquals(200, doDelete("/v2/apps/SleepWorkflowApp").getStatusLine().getStatusCode());
   }
 
   /**
@@ -561,7 +574,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       Assert.assertNotNull(map);
       Assert.assertEquals("mydataset", map.get("id"));
       Assert.assertEquals("mydataset", map.get("name"));
-      Assert.assertNotNull(map.get("specification"));
 
       // verify all datasets
       response = doGet("/v2/datasets");
@@ -1227,7 +1239,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
   private void waitState(String runnableType, String appId, String runnableId, String state) throws Exception {
     int trials = 0;
-    while (trials++ < 5) {
+    // it may take a while for workflow/mr to start...
+    while (trials++ < 20) {
       HttpResponse response = doGet(String.format("/v2/apps/%s/%s/%s/status", appId, runnableType, runnableId));
       JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
       if (status != null && status.has("status") && state.equals(status.get("status").getAsString())) {
@@ -1235,8 +1248,9 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       }
       TimeUnit.SECONDS.sleep(1);
     }
-    Assert.assertTrue(trials < 5);
+    Assert.assertTrue(trials < 20);
   }
+
   @Test
   public void testBatchStatus() throws Exception {
     String url = "/v2/status";
