@@ -60,7 +60,7 @@ public class ReactorTwillApplication implements TwillApplication {
 
   @Override
   public TwillSpecification configure() {
-    // It is always present in continuuity-default.xml
+    // It is always present in cdap-default.xml
     final long noContainerTimeout = cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE);
 
     TwillSpecification.Builder.RunnableSetter runnableSetter =
