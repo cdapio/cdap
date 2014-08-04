@@ -18,8 +18,8 @@ package co.cask.cdap.metrics.data;
 
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.dataset.lib.table.MetricsTable;
-import co.cask.cdap.data2.dataset.lib.table.inmemory.InMemoryMetricsTable;
-import co.cask.cdap.data2.dataset.lib.table.inmemory.InMemoryOcTableService;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableService;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,7 +30,7 @@ public class MetricsEntityCodecTest {
 
   @Test
   public void testCodec() throws OperationException {
-    InMemoryOcTableService.create("MetricEntityCodecTest");
+    InMemoryOrderedTableService.create("MetricEntityCodecTest");
     MetricsTable table = new InMemoryMetricsTable("MetricEntityCodecTest");
     MetricsEntityCodec codec = new MetricsEntityCodec(new EntityTable(table), 4, 2, 2);
 

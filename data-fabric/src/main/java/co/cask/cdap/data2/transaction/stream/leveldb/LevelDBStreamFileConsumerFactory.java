@@ -23,8 +23,8 @@ import co.cask.cdap.data.stream.StreamEventOffset;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableCore;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBStreamAdmin;
@@ -51,13 +51,13 @@ import javax.annotation.Nullable;
 public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileConsumerFactory {
 
   private final CConfiguration cConf;
-  private final LevelDBOcTableService tableService;
+  private final LevelDBOrderedTableService tableService;
   private final ConcurrentMap<String, Object> dbLocks;
 
   @Inject
   LevelDBStreamFileConsumerFactory(StreamAdmin streamAdmin,
                                    StreamConsumerStateStoreFactory stateStoreFactory,
-                                   CConfiguration cConf, LevelDBOcTableService tableService,
+                                   CConfiguration cConf, LevelDBOrderedTableService tableService,
                                    QueueClientFactory queueClientFactory, LevelDBStreamAdmin oldStreamAdmin) {
     super(cConf, streamAdmin, stateStoreFactory, queueClientFactory, oldStreamAdmin);
     this.cConf = cConf;
@@ -74,7 +74,7 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
 
     tableService.ensureTableExists(tableName);
 
-    LevelDBOcTableCore tableCore = new LevelDBOcTableCore(tableName, tableService);
+    LevelDBOrderedTableCore tableCore = new LevelDBOrderedTableCore(tableName, tableService);
     Object dbLock = getDBLock(tableName);
     return new LevelDBStreamFileConsumer(cConf, streamConfig, consumerConfig, reader,
                                          stateStore, beginConsumerState, extraFilter,

@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.data2.dataset.lib.table.inmemory.InMemoryOcTableService;
 
 import java.io.IOException;
 
@@ -33,22 +32,22 @@ public class InMemoryOrderedTableAdmin implements DatasetAdmin {
 
   @Override
   public boolean exists() {
-    return InMemoryOcTableService.exists(name);
+    return InMemoryOrderedTableService.exists(name);
   }
 
   @Override
   public void create() {
-    InMemoryOcTableService.create(name);
+    InMemoryOrderedTableService.create(name);
   }
 
   @Override
   public void truncate() {
-    InMemoryOcTableService.truncate(name);
+    InMemoryOrderedTableService.truncate(name);
   }
 
   @Override
   public void drop() {
-    InMemoryOcTableService.drop(name);
+    InMemoryOrderedTableService.drop(name);
   }
 
   @Override

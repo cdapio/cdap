@@ -19,9 +19,8 @@ package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
+import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.OrderedTable;
-import co.cask.cdap.data2.dataset.lib.table.ConflictDetection;
-import co.cask.cdap.data2.dataset.lib.table.inmemory.InMemoryOcTableClient;
 
 import java.io.IOException;
 import java.util.Map;
@@ -48,7 +47,7 @@ public class InMemoryOrderedTableDefinition
                                  Map<String, String> arguments, ClassLoader classLoader) {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
-    return new InMemoryOcTableClient(spec.getName(), conflictDetection);
+    return new InMemoryOrderedTable(spec.getName(), conflictDetection);
   }
 
   @Override
