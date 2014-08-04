@@ -10,16 +10,16 @@ define([], function () {
 		load: function () {
 		  var self = this;
 
-		  self.start = Infinity;
-		  self.end = 0;
-		  self.limit = 10000;
+		  self.limit = null;
+		  self.offset = null;
+		  self.direction = null;
 
       self.largest = -1;
       self.smallest = -1;
 		  this.set('objArr', []);
 		  this.fetchQueries();
 		  this.interval = setInterval(function () {
-        self.fetchQueries();
+//        self.fetchQueries();
 		  }, 1000);
 		  this.set('datasets', []);
 		  this.loadDiscoverableDatasets();
@@ -64,7 +64,6 @@ define([], function () {
                 datasets.pushObject(dataset);
                 self.HTTP.post('rest/data/explore/queries', {data: { "query": "describe " + dataset.name }},
                     function (response, status) {
-
                       C.Util.threadSleep(200);
                       response = jQuery.parseJSON( response );
                       self.HTTP.post('rest/data/explore/queries/' + response.handle + '/next', function (response) {
@@ -74,7 +73,6 @@ define([], function () {
                       self.HTTP.rest('data/explore/queries/' + response.handle + '/schema', function (response) {
                         dataset.set('schema', response);
                       });
-
                     }
                 );
               });
@@ -98,6 +96,7 @@ define([], function () {
 
     selectDataset: function (dataset) {
       this.set('selectedDataset', dataset);
+      $("#query-injector-input").attr('placeholder','SELECT * FROM ' + dataset.name + ' LIMIT 5');
       var datasets = this.get('datasets');
       datasets.forEach(function (entry) {
         entry.set('isSelected', false);
@@ -128,11 +127,13 @@ define([], function () {
 		  var self = this;
 		  var objArr = this.get('objArr');
 		  var url = 'data/explore/queries';
-		  url += '?limit=' + self.limit;
-		  if(self.start != Infinity){
+		  if(self.limit){
+		    url += '?limit=' + self.limit;
+		  }
+		  if(self.start){
 		    url += '&start=' + self.start;
 		  }
-		  if(self.end != 0){
+		  if(self.end){
         url += '&end=' + self.end;
       }
       console.log(self.start + ' --> ' + self.end);
@@ -190,11 +191,35 @@ define([], function () {
       });
     },
 
+    downloadFile: function(filename, content) {
+      var blob = new Blob([content]);
+      var evt = document.createEvent("HTMLEvents");
+      evt.initEvent("click");
+      $("<a>", {
+        download: filename,
+        href: webkitURL.createObjectURL(blob)
+      }).get(0).dispatchEvent(evt);
+    },
+
+    download: function (query) {
+      var self = this;
+      console.log('yes');
+      var handle = query.get('query_handle');
+      var url = 'rest/data/explore/queries/' + handle + '/download';
+
+      var handle = query.get('query_handle');
+      self.HTTP.post(url, function (response) {
+        self.downloadFile('simpleName.txt', response);
+      });
+    },
+
     //getResults functionality has been replaced by getPreview (and repeatable, but limited-results version).
     getResults: function (query) {
       var self = this;
       var handle = query.get('query_handle');
-      this.HTTP.post('rest/data/explore/queries/' + handle + '/next', function (response) {
+      var url = 'rest/data/explore/queries/' + handle + '/next';
+
+      this.HTTP.post(url, function (response) {
         query.set('downloadableResults', "data:text/plain;charset=UTF-8," + response);
         query.set('downloadName', "results_" + handle + ".txt");
         response = jQuery.parseJSON( response );
@@ -222,7 +247,7 @@ define([], function () {
     submitSQLQuery: function () {
       var self = this;
       var controller = this.get('controllers');
-      var sqlString = controller.get("SQLQueryString");
+      var sqlString = controller.get("SQLQueryString") || $("#query-injector-input").attr('placeholder');
       this.HTTP.post('rest/data/explore/queries', {data: { "query": sqlString }},
         function (response, status) {
           if(status != 200) {

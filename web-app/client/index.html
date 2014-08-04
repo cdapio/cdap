@@ -362,7 +362,7 @@
           <td style="width: 15%"><span {{bindAttr class=":query-status status"}}>{{status}}</span></td>
           {{#if has_results}}
             <td style="width: 15%">
-                <a {{bindAttr download=downloadName}} {{bindAttr href="downloadableResults"}}>
+                <a {{bindAttr download="downloadName"}} {{action download this}}>
                   Download Results
                 </a>
             </td>
@@ -479,7 +479,7 @@
            <li>{{#linkTo DataExplore.Results}}Reults{{/linkTo}}</li>
          </ul>
         <td>
-          {{view C.Embed.Injector elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
+          {{view C.Embed.Injector placeholder="SHOW TABLES" elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
           <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
         </td>
 
