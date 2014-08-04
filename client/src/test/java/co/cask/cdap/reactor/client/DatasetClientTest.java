@@ -58,7 +58,6 @@ public class DatasetClientTest extends ClientTestBase {
   public void testAll() throws Exception {
     int numBaseModules = moduleClient.list().size();
     int numBaseTypes = typeClient.list().size();
-    Assert.assertEquals(0, datasetClient.list().size());
 
     LOG.info("Adding Dataset module");
     File moduleJarFile = createAppJarFile(FakeDatasetModule.class);
@@ -81,20 +80,24 @@ public class DatasetClientTest extends ClientTestBase {
     Assert.assertEquals(FakeDataset.class.getName(), datasetTypeMeta.getName());
 
     LOG.info("Creating, truncating, and deleting dataset of new Dataset type");
-    Assert.assertEquals(0, datasetClient.list().size());
+    // Before creating dataset, there are some system datasets already exist
+    int numBaseDataset = datasetClient.list().size();
+
     datasetClient.create("testDataset", FakeDataset.TYPE_NAME);
-    Assert.assertEquals(1, datasetClient.list().size());
+    Assert.assertEquals(numBaseDataset + 1, datasetClient.list().size());
     datasetClient.truncate("testDataset");
     datasetClient.delete("testDataset");
-    Assert.assertEquals(0, datasetClient.list().size());
+    Assert.assertEquals(numBaseDataset, datasetClient.list().size());
 
     LOG.info("Creating and deleting multiple Datasets");
-    datasetClient.create("testDataset1", FakeDataset.TYPE_NAME);
-    datasetClient.create("testDataset2", FakeDataset.TYPE_NAME);
-    datasetClient.create("testDataset3", FakeDataset.TYPE_NAME);
-    Assert.assertEquals(3, datasetClient.list().size());
-    datasetClient.deleteAll();
-    Assert.assertEquals(0, datasetClient.list().size());
+    for (int i = 1; i <= 3; i++) {
+      datasetClient.create("testDataset" + i, FakeDataset.TYPE_NAME);
+    }
+    Assert.assertEquals(numBaseDataset + 3, datasetClient.list().size());
+    for (int i = 1; i <= 3; i++) {
+      datasetClient.delete("testDataset" + i);
+    }
+    Assert.assertEquals(numBaseDataset, datasetClient.list().size());
 
     LOG.info("Deleting Dataset module");
     moduleClient.delete(FakeDatasetModule.NAME);

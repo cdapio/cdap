@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.data.DataSetSpecification;
 import co.cask.cdap.api.data.dataset.DataSetException;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -28,7 +27,6 @@ import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.verification.ApplicationVerification;
-import co.cask.cdap.internal.app.verification.DataSetVerification;
 import co.cask.cdap.internal.app.verification.DatasetCreationSpecVerifier;
 import co.cask.cdap.internal.app.verification.FlowVerification;
 import co.cask.cdap.internal.app.verification.ProgramVerification;
@@ -74,13 +72,6 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
     VerifyResult result = getVerifier(ApplicationSpecification.class).verify(appId, specification);
     if (!result.isSuccess()) {
       throw new RuntimeException(result.getMessage());
-    }
-
-    for (DataSetSpecification spec : specification.getDataSets().values()) {
-      result = getVerifier(DataSetSpecification.class).verify(appId, spec);
-      if (!result.isSuccess()) {
-        throw new RuntimeException(result.getMessage());
-      }
     }
 
     // NOTE: no special restrictions on dataset module names, etc
@@ -133,8 +124,6 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
       verifiers.put(clz, new ApplicationVerification());
     } else if (StreamSpecification.class.isAssignableFrom(clz)) {
       verifiers.put(clz, new StreamVerification());
-    } else if (DataSetSpecification.class.isAssignableFrom(clz)) {
-      verifiers.put(clz, new DataSetVerification());
     } else if (FlowSpecification.class.isAssignableFrom(clz)) {
       verifiers.put(clz, new FlowVerification());
     } else if (ProgramSpecification.class.isAssignableFrom(clz)) {

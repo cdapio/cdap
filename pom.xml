@@ -24,11 +24,11 @@
   <artifactId>cdap</artifactId>
   <version>2.4.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Continuuity Reactor</name>
+  <name>Cask CDAP Reactor</name>
 
   <organization>
-    <name>Continuuity</name>
-    <url>http://www.continuuity.com</url>
+    <name>Cask</name>
+    <url>http://www.cask.co</url>
   </organization>
 
   <repositories>
@@ -132,7 +132,7 @@
     <module>explore-jdbc</module>
     <module>explore</module>
     <module>unit-test</module>
-    <module>reactor-master</module>
+    <module>master</module>
     <module>web-app</module>
     <module>proto</module>
     <module>client</module>

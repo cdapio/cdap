@@ -17,7 +17,6 @@ package co.cask.cdap.app.guice;
 
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.DataSetAccessor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -88,14 +87,13 @@ public final class DataFabricFacadeModule extends PrivateModule {
     @Inject
     public TransactionDataFabricFacade(TransactionSystemClient txSystemClient,
                                        TransactionExecutorFactory txExecutorFactory,
-                                       DataSetAccessor dataSetAccessor,
                                        DatasetFramework datasetFramework,
                                        QueueClientFactory queueClientFactory,
                                        StreamConsumerFactory streamConsumerFactory,
                                        LocationFactory locationFactory,
                                        CConfiguration configuration,
                                        @Assisted Program program) {
-      super(txSystemClient, txExecutorFactory, dataSetAccessor, datasetFramework,
+      super(txSystemClient, txExecutorFactory, datasetFramework,
             queueClientFactory, streamConsumerFactory, locationFactory, program, configuration);
     }
   }
@@ -108,14 +106,13 @@ public final class DataFabricFacadeModule extends PrivateModule {
     @Inject
     public DetachedDataFabricFacade(@Named("transaction.off") TransactionSystemClient txSystemClient,
                                     @Named("transaction.off") TransactionExecutorFactory txExecutorFactory,
-                                    DataSetAccessor dataSetAccessor,
                                     DatasetFramework datasetFramework,
                                     QueueClientFactory queueClientFactory,
                                     StreamConsumerFactory streamConsumerFactory,
                                     LocationFactory locationFactory,
                                     CConfiguration configuration,
                                     @Assisted Program program) {
-      super(txSystemClient, txExecutorFactory, dataSetAccessor, datasetFramework,
+      super(txSystemClient, txExecutorFactory, datasetFramework,
             queueClientFactory, streamConsumerFactory, locationFactory, program, configuration);
     }
   }

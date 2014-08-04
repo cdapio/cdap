@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>cli</artifactId>
-  <name>CDAP CLI</name>
+  <name>Cask CDAP CLI</name>
 
   <properties>
     <main.class>co.cask.cdap.shell.CLIMain</main.class>
