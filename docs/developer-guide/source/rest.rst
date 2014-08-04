@@ -1349,16 +1349,45 @@ HTTP Responses
    * - ``404 Not Found``
      - The query handle does not match any current query
 
-Canceling a Query
------------------
-Execution of a query can be canceled before it is finished with an HTTP POST::
+List of Queries
+--------------
+Return list of queries 
 
-  POST <base-url>/data/explore/queries/<query-handle>/cancel
+   GET <base-url>/data/explore/queries?limit=<limit>&cursor=<cursor>&offset=<offset>
 
-After this, the query can only be closed.
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
 
-**Note:** This operation is not supported with CDH 4.x distributions. It will return a
-``500 Internal Server Error`` status code.
+   * - Parameter
+     - Description
+   * - ``<limit>``
+     - Number of results to return in the response. By default 50 results will be returned.
+   * - ``<cursor>``
+     - Specifies if the results returned should be in the forward or reverse direction by specifying "next" or "prev".
+   * - ``<offset>``
+     - Offset for pagination, returns the results that are greater than offset if the cursor is "next" or results that are less than offset if cursor is "prev".
+
+Comments
+........
+The results are returned as a JSON array, with each element containing information about the query::
+
+  [
+    {"timestamp":1407192465183,"statement":"SHOW TABLES","status":"FINISHED","query_handle":"319d9438-903f-49b8-9fff-ac71cf5d173d","has_results":true,"is_active":false},
+    ...
+  ]
+
+Download query results
+----------------------
+Download the results of a query.
+  
+   GET <base-url>/data/explore/queries/<query-handle>
+
+Returns the results of query in csv format.
+
+Comments
+........
+The query results can be downloaded only once. The REST API will return a HTTP Code - 409 if results for the query handle is attempted to be downloaded again.
 
 HTTP Responses
 ..............
@@ -1369,11 +1398,38 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The query was canceled
-   * - ``400 Bad Request``
-     - The query was not in a state that can be canceled
+     - The HTTP call was successful.
    * - ``404 Not Found``
-     - The query handle does not match any current query
+     - The query handle does not match any current query.
+   * - ``409 Conflict``
+     - The query results was already downloaded.
+
+Hive table schema
+-----------------
+Get the schema of the underlying Hive Table
+
+  GET <base-url>/data/explore/datasets/<dataset-name>/schema
+
+Comments
+........
+The results are returned as a JSON Map, with key as the name of the column of the underlying table and value as the type of the column of the underlying table.
+{
+    "key": "array<tinyint>",
+    "value": "array<tinyint>"
+}
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The HTTP call was successful.
+   * - ``404 Not Found``
+     - The dataset was not found.
 
 
 Procedure HTTP API
