@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>explore</artifactId>
-  <name>Continuuity Explore</name>
+  <name>Cask CDAP Explore</name>
   <packaging>jar</packaging>
 
   <dependencies>
