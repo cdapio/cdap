@@ -4,7 +4,6 @@
 
 define([], function () {
   var url = "data/explore/queries";
-  //TODO: replace with real largest number:
 	var Controller = Em.Controller.extend({
 
 		load: function () {
@@ -48,40 +47,7 @@ define([], function () {
 		  });
 		},
 
-		loadDiscoverableDatasetsOld: function () {
-		  var self = this;
-      var datasets = self.get('datasets');
-		  //TODO: hit the endpoint that Julien will provide.
-      self.HTTP.post('rest/data/explore/queries', {data: { "query": "show tables" }},
-          function (response) {
-            response = jQuery.parseJSON( response );
-            self.HTTP.post('rest/data/explore/queries/' + response.handle + '/next', function (response) {
-              response = jQuery.parseJSON( response );
-              response.forEach(function(data){
-                var name = data.columns[0];
-                var shortName = name.replace(/.*_/,'');
-                var dataset = Ember.Object.create({name:name, shortName:shortName});
-                datasets.pushObject(dataset);
-                self.HTTP.post('rest/data/explore/queries', {data: { "query": "describe " + dataset.name }},
-                    function (response, status) {
-                      C.Util.threadSleep(200);
-                      response = jQuery.parseJSON( response );
-                      self.HTTP.post('rest/data/explore/queries/' + response.handle + '/next', function (response) {
-                        response = jQuery.parseJSON( response );
-                        dataset.set('results', response);
-                      });
-                      self.HTTP.rest('data/explore/queries/' + response.handle + '/schema', function (response) {
-                        dataset.set('schema', response);
-                      });
-                    }
-                );
-              });
-            });
-          }
-      );
-		},
-
-    showTable: function (obj) {
+		showTable: function (obj) {
       var self = this;
       obj.set('isSelected', !obj.get('isSelected'));
       $("#" + obj.query_handle).slideToggle(200, function () {
@@ -104,8 +70,7 @@ define([], function () {
       dataset.set('isSelected', true);
     },
 
-		unload: function () {
-		},
+		unload: function () {},
 
     getLargestSmallest: function () {
       var self = this;
@@ -152,10 +117,9 @@ define([], function () {
 		  if(self.cursor){
         url += '&cursor=' + self.cursor;
       }
-      console.log(self.start + ' --> ' + self.end);
       console.log(url);
       this.HTTP.rest(url, function (queries, status) {
-        if(status != 200) { return console.log('error in fetchQueries in data-explore.js'); } //TODO: remove this line, or replace with notification to user.
+        if(status != 200) { return console.log('error in fetchQueries in data-explore.js'); }
 
         if(queries.length == 0){
           return;
@@ -178,16 +142,12 @@ define([], function () {
             existingObj.set('is_active', query.is_active);
           }
 
-          existingObj.set('inList', true);
           if (existingObj.get('status') === 'FINISHED' && existingObj.get('has_results') && existingObj.get('is_active')) {
             if (!existingObj.get('results')) {
               self.getPreview(existingObj);
               self.getSchema(existingObj);
             }
           }
-        });
-        objArr.forEach(function(query){
-          query.set('deleted', !query.get('inList'));
         });
 
       });
@@ -219,7 +179,6 @@ define([], function () {
 
     download: function (query) {
       var self = this;
-      console.log('yes');
       var handle = query.get('query_handle');
       var url = 'rest/data/explore/queries/' + handle + '/download';
 
@@ -229,24 +188,6 @@ define([], function () {
       });
     },
 
-    //getResults functionality has been replaced by getPreview (and repeatable, but limited-results version).
-    getResults: function (query) {
-      var self = this;
-      var handle = query.get('query_handle');
-      var url = 'rest/data/explore/queries/' + handle + '/next';
-
-      this.HTTP.post(url, function (response) {
-        query.set('downloadableResults', "data:text/plain;charset=UTF-8," + response);
-        query.set('downloadName', "results_" + handle + ".txt");
-        response = jQuery.parseJSON( response );
-        query.set('results', response);
-      });
-    },
-
-    cancelQuery: function (query) {
-      var handle = query.get('query_handle');
-      this.HTTP.post('rest/data/explore/queries/' + handle + '/cancel');
-    },
     deleteQuery: function (query) {
       var handle = query.get('query_handle');
       this.HTTP.del('rest/data/explore/queries/' + handle);
