@@ -362,12 +362,10 @@
           <td style="width: 15%"><span {{bindAttr class=":query-status status"}}>{{status}}</span></td>
           {{#if has_results}}
             <td style="width: 15%">
-                <a {{bindAttr download="downloadName"}} {{action download this}}>
-                  Download Results
-                </a>
+                <a {{bindAttr download="downloadName"}} {{action download this}} class="downlad-query-results-btn"></a>
             </td>
           {{ else }}
-            <td>[No results]</td>
+            <td>No results</td>
           {{/if}}
         </tr>
       </tbody>

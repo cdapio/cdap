@@ -3641,13 +3641,14 @@ div.tooltip {
 .query-results-table-entry > thead > tr > th {
 	background: #6D6D6D;
 	color: white;
+	border-bottom: 1px solid #787878;
 }
 
 .query-results-table-entry > tbody > tr > td {
 	background: #888888;
 	color: white;
-	border-right: 1px solid #929292;
-	border-bottom: 1px solid #929292;
+	border-right: 1px solid #787878;
+	border-bottom: 1px solid #787878;
 }
 
 .query-results-table-entry > tbody > tr > td:last-child {
@@ -3665,6 +3666,18 @@ div.tooltip {
 .text-area-container {
 	padding-left: 10px;
 	padding-right: 10px;
+}
+
+.downlad-query-results-btn {
+	width: 32px;
+	height: 32px;
+	background-image: url('/assets/img/v2/download_inactive.png');
+	background-repeat: no-repeat;
+	display: block;
+}
+
+.downlad-query-results-btn:hover {
+	background-image: url('/assets/img/v2/download_active.png');
 }
 
 
