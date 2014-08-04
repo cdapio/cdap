@@ -26,10 +26,14 @@ import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClients;
+import org.apache.zookeeper.data.ACL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -68,7 +72,12 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
       conf.getLong(Constants.Security.EXTENDED_TOKEN_EXPIRATION),
       conf.getLong(Constants.Security.TOKEN_EXPIRATION));
     this.zookeeper = ZKClients.namespace(zookeeper, parentZNode);
-    this.keyCache = new SharedResourceCache<KeyIdentifier>(zookeeper, codec, "/keys");
+    try {
+      List<ACL> acl = Constants.Security.ZooKeeper.Ids.getReactorAllACL(InetAddress.getLocalHost().getHostName());
+      this.keyCache = new SharedResourceCache<KeyIdentifier>(zookeeper, codec, "/keys", acl);
+    } catch (UnknownHostException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override

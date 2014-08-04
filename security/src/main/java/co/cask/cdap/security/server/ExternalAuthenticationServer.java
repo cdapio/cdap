@@ -18,10 +18,13 @@ package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.commons.io.FileUtils;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -36,6 +39,9 @@ import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -58,6 +64,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
   private Server server;
   private InetAddress address;
+
+  private File tmpDir;
 
   /**
    * Constants for a valid JSON response.
@@ -164,6 +172,10 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         server.setConnectors(new Connector[]{connector});
       }
 
+      // initialize system properties for kerberos
+      File reactorKeytabFile = new File(configuration.get(Constants.Security.CFG_REACTOR_KEYTAB_PATH));
+      enableKerberos(reactorKeytabFile);
+
       server.setHandler(context);
     } catch (Exception e) {
       LOG.error("Error while starting server.");
@@ -200,6 +212,50 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
     } catch (Exception e) {
       LOG.error("Error stopping ExternalAuthenticationServer.");
       LOG.error(e.getMessage());
+    }
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    if (tmpDir != null && tmpDir.exists()) {
+      FileUtils.deleteDirectory(tmpDir);
+    }
+  }
+
+  private void enableKerberos(File keyTabFile) {
+    Preconditions.checkArgument(keyTabFile != null, "Kerberos keytab file is required");
+    Preconditions.checkArgument(keyTabFile.exists(),
+                                "Kerberos keytab file does not exist: " + keyTabFile.getAbsolutePath());
+    Preconditions.checkArgument(keyTabFile.isFile(),
+                                "Kerberos keytab file should be a file: " + keyTabFile.getAbsolutePath());
+    Preconditions.checkArgument(keyTabFile.canRead(),
+                                "Kerberos keytab file cannot be read: " + keyTabFile.getAbsolutePath());
+
+    System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
+    System.setProperty("zookeeper.allowSaslFailedClients", "true");
+
+    try {
+      tmpDir = Files.createTempDir();
+
+      File saslConfFile = new File(tmpDir, "jaas.conf");
+      FileWriter fwriter = new FileWriter(saslConfFile);
+      String hostname = InetAddress.getLocalHost().getHostName();
+      String domain = "CONTINUUITY.NET";
+
+      fwriter.write(
+        "Client {\n" +
+        "  com.sun.security.auth.module.Krb5LoginModule required\n" +
+        "  useKeyTab=true\n" +
+        "  keyTab=\"" + keyTabFile.getAbsolutePath() + "\"\n" +
+        "  useTicketCache=false\n" +
+        "  principal=\"reactor/" + hostname + "@" + domain + "\";\n" +
+        "};\n");
+
+      fwriter.close();
+      System.setProperty("java.security.auth.login.config", saslConfFile.getAbsolutePath());
+    } catch (IOException e) {
+      // could not create tmp directory to hold JAAS conf file.
+      throw Throwables.propagate(e);
     }
   }
 }
