@@ -18,8 +18,12 @@ package co.cask.cdap.test.internal;
 
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.lang.jar.JarClassLoader;
+import co.cask.cdap.common.lang.ApiResourceListHolder;
+import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.lang.jar.ProgramClassLoader;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.DataFabric;
 import co.cask.cdap.data.DataFabric2Impl;
 import co.cask.cdap.data.DataSetAccessor;
@@ -46,6 +50,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -53,6 +58,7 @@ import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -98,14 +104,24 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.appFabricClient = new AppFabricClient(httpHandler, locationFactory);
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
-
+    File unpackedLocation = Files.createTempDir();
     try {
       // Since we expose the DataSet class, it has to be loaded using ClassLoader delegation.
       // The drawback is we'll not be able to instrument DataSet classes using ASM.
+      ProgramClassLoader classLoader;
+      BundleJarUtil.unpackProgramJar(deployedJar, unpackedLocation);
+      classLoader = ClassLoaders.newProgramClassLoader(unpackedLocation, ApiResourceListHolder.getResourceList(),
+                                                       this.getClass().getClassLoader());
       this.dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework, configuration,
-                                                         new DataSetClassLoader(new JarClassLoader(deployedJar)));
+                                                         new DataSetClassLoader(classLoader));
     } catch (IOException e) {
       throw Throwables.propagate(e);
+    } finally {
+      try {
+        DirUtils.deleteDirectoryContents(unpackedLocation);
+      } catch (IOException e) {
+        Throwables.propagate(e);
+      }
     }
     this.dataSetInstantiator.setDataSets(appSpec.getDataSets().values(), appSpec.getDatasets().values());
   }
