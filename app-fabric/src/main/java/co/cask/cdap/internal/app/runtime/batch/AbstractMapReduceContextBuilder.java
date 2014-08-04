@@ -27,7 +27,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.DataFabric;
 import co.cask.cdap.data.DataFabric2Impl;
-import co.cask.cdap.data.DataSetAccessor;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.DataSets;
@@ -105,11 +104,10 @@ public abstract class AbstractMapReduceContextBuilder {
 
     // Initializing dataset context and hooking it up with mapreduce job transaction
 
-    DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     CConfiguration configuration = injector.getInstance(CConfiguration.class);
 
-    DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
+    DataFabric dataFabric = new DataFabric2Impl(locationFactory);
     DataSetInstantiator dataSetContext = new DataSetInstantiator(dataFabric, datasetFramework,
                                                                  configuration, classLoader);
     ApplicationSpecification programSpec = program.getSpecification();

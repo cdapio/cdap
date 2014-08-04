@@ -21,7 +21,7 @@ import co.cask.cdap.api.data.DataSetInstantiationException;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.DataFabric;
-import co.cask.cdap.data.DataSetAccessor;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
@@ -58,7 +58,7 @@ public class DataSetInstantiator extends DataSetInstantiationBase implements Dat
     this.fabric = fabric;
     this.datasetFramework =
       new NamespacedDatasetFramework(datasetFramework,
-                                     new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER));
+                                     new ReactorDatasetNamespace(configuration, Namespace.USER));
   }
 
   @Override

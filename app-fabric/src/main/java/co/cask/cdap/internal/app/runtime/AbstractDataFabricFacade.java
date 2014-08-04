@@ -22,7 +22,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.DataFabric;
 import co.cask.cdap.data.DataFabric2Impl;
-import co.cask.cdap.data.DataSetAccessor;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.queue.ConsumerConfig;
@@ -57,7 +56,7 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
   private final Id.Program programId;
 
   public AbstractDataFabricFacade(TransactionSystemClient txSystemClient, TransactionExecutorFactory txExecutorFactory,
-                                  DataSetAccessor dataSetAccessor, DatasetFramework datasetFramework,
+                                  DatasetFramework datasetFramework,
                                   QueueClientFactory queueClientFactory, StreamConsumerFactory streamConsumerFactory,
                                   LocationFactory locationFactory, Program program,
                                   CConfiguration configuration) {
@@ -65,7 +64,7 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
     this.queueClientFactory = queueClientFactory;
     this.streamConsumerFactory = streamConsumerFactory;
     this.txExecutorFactory = txExecutorFactory;
-    this.dataSetContext = createDataSetContext(program, locationFactory, dataSetAccessor,
+    this.dataSetContext = createDataSetContext(program, locationFactory,
                                                datasetFramework, configuration);
     this.programId = program.getId();
   }
@@ -127,11 +126,10 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
 
   private DataSetInstantiator createDataSetContext(Program program,
                                                    LocationFactory locationFactory,
-                                                   DataSetAccessor dataSetAccessor,
                                                    DatasetFramework datasetFramework,
                                                    CConfiguration configuration) {
     try {
-      DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
+      DataFabric dataFabric = new DataFabric2Impl(locationFactory);
       DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework, configuration,
                                                                         program.getClassLoader());
       dataSetInstantiator.setDataSets(program.getSpecification().getDatasets().values());

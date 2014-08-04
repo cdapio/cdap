@@ -44,10 +44,9 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.DataSetAccessor;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
-import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -68,8 +67,6 @@ import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.filesystem.LocationCodec;
-import co.cask.cdap.logging.LoggingConfiguration;
-import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DatasetRecord;
@@ -182,26 +179,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
 
   /**
-   * Used for getting the app id in batch endpoints
-   */
-  private static final String APP_ID_ARG = "appId";
-
-  /**
-   * Used for getting the program type in batch endpoints
-   */
-  private static final String PROGRAM_TYPE_ARG = "programType";
-
-  /**
-   * Used for getting the program id in batch endpoints
-   */
-  private static final String PROGRAM_ID_ARG = "programId";
-
-  /**
-   * Used for getting the runnable id in batch endpoints
-   */
-  private static final String RUNNABLE_ID_ARG = "runnableId";
-
-  /**
    * Timeout to upload to remote app fabric.
    */
   private static final long UPLOAD_TIMEOUT = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
@@ -263,8 +240,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private final DiscoveryServiceClient discoveryServiceClient;
 
   private final QueueAdmin queueAdmin;
-
-  private final DataSetAccessor dataSetAccessor;
 
   private final StreamAdmin streamAdmin;
 
@@ -331,7 +306,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
-                              DataSetAccessor dataSetAccessor, LocationFactory locationFactory,
+                              LocationFactory locationFactory,
                               ManagerFactory<Location, ApplicationWithPrograms> managerFactory,
                               StoreFactory storeFactory,
                               ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
@@ -358,8 +333,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.txClient = txClient;
     this.dsFramework =
       new NamespacedDatasetFramework(dsFramework,
-                                     new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER));
-    this.dataSetAccessor = dataSetAccessor;
+                                     new ReactorDatasetNamespace(configuration, Namespace.USER));
   }
 
   /**
@@ -3138,6 +3112,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         throw new Exception("App Still Running");
       }
 
+      LOG.info("Deleting all data for account '" + account + "'.");
+
       // NOTE: deleting new datasets stuff first because old datasets system deletes all blindly by prefix
       //       which may damage metadata
       // TODO: instead of looping thru on client side, dataset service should understand namespacing, see REACTOR-217
@@ -3149,32 +3125,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       deleteMetrics(account, null);
       // delete all meta data
       store.removeAll(accountId);
+      // todo: delete only for specified account
       // delete queues and streams data
       queueAdmin.dropAll();
       streamAdmin.dropAll();
-
-      LOG.info("Deleting all data for account '" + account + "'.");
-      dataSetAccessor.dropAll(DataSetAccessor.Namespace.USER);
-      // Can't truncate metric entity tables because they are cached in memory by anybody who touches the metric
-      // tables, and truncating will cause metrics to get incorrectly mapped to other random metrics.
-      Set<String> datasetsToKeep = Sets.newHashSet();
-      for (MetricsScope scope : MetricsScope.values()) {
-        datasetsToKeep.add(scope.name().toLowerCase() + "." +
-                             configuration.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
-                                               MetricsConstants.DEFAULT_ENTITY_TABLE_NAME));
-      }
-      // todo: cleanup this. we use hardcode since it is already done so in KafkaMetricsProcessorService
-      datasetsToKeep.add("default." + configuration.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
-                                                        MetricsConstants.DEFAULT_KAFKA_META_TABLE));
-
-      // Don't truncate log table too - we would like to retain logs across resets.
-      datasetsToKeep.add(LoggingConfiguration.LOG_META_DATA_TABLE);
-      // Don't remove datasets
-      datasetsToKeep.add(DatasetMetaTableUtil.META_TABLE_NAME);
-      datasetsToKeep.add(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
-
-      // NOTE: there could be services running at the moment that rely on the system datasets to be available.
-      dataSetAccessor.truncateAllExceptBlacklist(DataSetAccessor.Namespace.SYSTEM, datasetsToKeep);
 
       LOG.info("All data for account '" + account + "' deleted.");
       responder.sendStatus(HttpResponseStatus.OK);

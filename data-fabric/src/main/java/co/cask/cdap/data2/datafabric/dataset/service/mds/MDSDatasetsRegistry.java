@@ -19,7 +19,7 @@ package co.cask.cdap.data2.datafabric.dataset.service.mds;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.DataSetAccessor;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -52,7 +52,7 @@ public class MDSDatasetsRegistry extends TransactionalDatasetRegistry<MDSDataset
     super(txClient);
     this.defaultModules = defaultModules;
     this.dsFramework =
-      new NamespacedDatasetFramework(framework, new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.SYSTEM));
+      new NamespacedDatasetFramework(framework, new ReactorDatasetNamespace(conf, Namespace.SYSTEM));
   }
 
   @Override

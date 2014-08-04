@@ -36,7 +36,6 @@ import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.DataFabric;
 import co.cask.cdap.data.DataFabric2Impl;
-import co.cask.cdap.data.DataSetAccessor;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.data.stream.StreamUtils;
@@ -110,7 +109,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private final Configuration hConf;
   private final LocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
-  private final DataSetAccessor dataSetAccessor;
   private final DatasetFramework datasetFramework;
 
   private final TransactionSystemClient txSystemClient;
@@ -124,7 +122,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
   public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
                                 LocationFactory locationFactory,
                                 StreamAdmin streamAdmin,
-                                DataSetAccessor dataSetAccessor,
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
@@ -135,7 +132,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.locationFactory = locationFactory;
     this.streamAdmin = streamAdmin;
     this.metricsCollectionService = metricsCollectionService;
-    this.dataSetAccessor = dataSetAccessor;
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.txExecutorFactory = txExecutorFactory;
@@ -175,7 +171,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
 
-    DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
+    DataFabric dataFabric = new DataFabric2Impl(locationFactory);
     DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework,
                                                                       cConf, program.getClassLoader());
     Map<String, DatasetCreationSpec> datasetSpecs = program.getSpecification().getDatasets();

@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.datafabric;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.DataSetAccessor;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
 
 import javax.annotation.Nullable;
@@ -26,11 +26,13 @@ import javax.annotation.Nullable;
  * Reactor's dataset namespace.
  */
 public class ReactorDatasetNamespace implements DatasetNamespace {
+  public static final String DEFAULT_TABLE_PREFIX = "continuuity";
+  public static final String CFG_TABLE_PREFIX = "data.table.prefix";
   private final String namespacePrefix;
-  private final DataSetAccessor.Namespace namespace;
+  private final Namespace namespace;
 
-  public ReactorDatasetNamespace(CConfiguration conf, DataSetAccessor.Namespace namespace) {
-    String reactorNameSpace = conf.get(DataSetAccessor.CFG_TABLE_PREFIX, DataSetAccessor.DEFAULT_TABLE_PREFIX);
+  public ReactorDatasetNamespace(CConfiguration conf, Namespace namespace) {
+    String reactorNameSpace = conf.get(CFG_TABLE_PREFIX, DEFAULT_TABLE_PREFIX);
     this.namespacePrefix = reactorNameSpace + ".";
     this.namespace = namespace;
   }

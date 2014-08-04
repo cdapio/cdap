@@ -31,7 +31,6 @@ import co.cask.cdap.common.stream.DefaultStreamEvent;
 import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.common.stream.StreamEventDataCodec;
 import co.cask.cdap.data.DataFabric2Impl;
-import co.cask.cdap.data.DataSetAccessor;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data.operation.StatusCode;
 import co.cask.cdap.data2.OperationException;
@@ -116,11 +115,10 @@ public class StreamCompatibilityTest {
 
     // Read the data from dataset
     LocationFactory locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
-    DataSetAccessor dataSetAccessor = AppFabricTestHelper.getInjector().getInstance(DataSetAccessor.class);
     DatasetFramework datasetFramework = AppFabricTestHelper.getInjector().getInstance(DatasetFramework.class);
 
     DataSetInstantiator dataSetInstantiator =
-      new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
+      new DataSetInstantiator(new DataFabric2Impl(locationFactory),
                               datasetFramework, CConfiguration.create(),
                               getClass().getClassLoader());
     ApplicationSpecification spec = Specifications.from(new StreamApp());

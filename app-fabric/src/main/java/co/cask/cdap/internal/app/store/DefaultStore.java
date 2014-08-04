@@ -34,7 +34,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.DataSetAccessor;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -107,7 +107,7 @@ public class DefaultStore implements Store {
     this.locationFactory = locationFactory;
     this.configuration = conf;
     this.dsFramework =
-      new NamespacedDatasetFramework(framework, new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.SYSTEM));
+      new NamespacedDatasetFramework(framework, new ReactorDatasetNamespace(conf, Namespace.SYSTEM));
 
     txnl =
       Transactional.of(
