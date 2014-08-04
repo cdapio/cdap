@@ -53,7 +53,7 @@ import java.io.IOException;
 public class BundleJarApp extends AbstractApplication {
   private static final Logger LOG = LoggerFactory.getLogger(BundleJarApp.class);
   public static final String EXPECTED_LOAD_TEST_CLASSES_OUTPUT =
-    "hello_HelloWorld__co.cask.cdap_api_schedule_Schedule";
+    "hello_HelloWorld__co_cask_cdap_api_schedule_Schedule";
 
   @Override
   public void configure() {
