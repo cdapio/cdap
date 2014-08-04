@@ -1,6 +1,6 @@
 #
 # Cookbook Name:: cdap
-# Attribute:: repo
+# Attribute:: security
 #
 # Copyright (C) 2013-2014 Continuuity, Inc.
 #
@@ -17,7 +17,6 @@
 # limitations under the License.
 #
 
-# URL to repository
-default['cdap']['repo']['url'] = 'https://<username>:<password>@server.address/path/to/repository'
-# Repository components to use
-default['cdap']['repo']['components'] = ['release']
+default['cdap']['cdap_site']['security.server.ssl.keystore.password'] = 'defaultpassword'
+default['cdap']['cdap_site']['security.server.ssl.keystore.path'] = '/opt/cdap/security/conf/keystore.jks'
+default['cdap']['cdap_site']['security.auth.server.address'] = node['fqdn']

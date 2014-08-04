@@ -1,6 +1,6 @@
 #
 # Cookbook Name:: cdap
-# Attribute:: repo
+# Attribute:: java
 #
 # Copyright (C) 2013-2014 Continuuity, Inc.
 #
@@ -17,7 +17,6 @@
 # limitations under the License.
 #
 
-# URL to repository
-default['cdap']['repo']['url'] = 'https://<username>:<password>@server.address/path/to/repository'
-# Repository components to use
-default['cdap']['repo']['components'] = ['release']
+default['java']['install_flavor'] = 'oracle'
+default['java']['jdk_version'] = 6
+default['java']['oracle']['accept_oracle_download_terms'] = true
