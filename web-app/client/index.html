@@ -347,7 +347,7 @@
         <th style="width: 25%">Query Handle</th>
         <th style="width: 45%">Query</th>
         <th style="width: 15%">Status</th>
-        <th style="width: 15%">Result</th>
+        <th style="width: 15%" class="center-align">Result</th>
       </thead>
     </table>
     {{#each objArr}}
@@ -361,7 +361,7 @@
           <td style="width: 45%"><span class="bolder-font">{{statement}}</span></td>
           <td style="width: 15%"><span {{bindAttr class=":query-status status"}}>{{status}}</span></td>
           {{#if has_results}}
-            <td style="width: 15%">
+            <td style="width: 15%" class="center-align">
                 <a {{bindAttr download="downloadName"}} {{action download this}} class="downlad-query-results-btn"></a>
             </td>
           {{ else }}
