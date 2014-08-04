@@ -83,6 +83,9 @@ define([], function () {
 
     showTable: function (obj) {
       var self = this;
+      if (self.get('downloadActive')) {
+        return;
+      }
       obj.set('isSelected', !obj.get('isSelected'));
       $("#" + obj.query_handle).slideToggle(200, function () {
         var objArr = self.get('objArr');
@@ -221,11 +224,15 @@ define([], function () {
       var self = this;
       console.log('yes');
       var handle = query.get('query_handle');
+      // Prevent opening.
+      self.set('downloadActive', true);
+
       var url = 'rest/data/explore/queries/' + handle + '/download';
 
       var handle = query.get('query_handle');
       self.HTTP.post(url, function (response) {
         self.downloadFile('results_' + handle + '.txt', response);
+        self.set('downloadActive', false);
       });
     },
 

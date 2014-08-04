@@ -360,13 +360,14 @@
           </td>
           <td style="width: 45%"><span class="bolder-font">{{statement}}</span></td>
           <td style="width: 15%"><span {{bindAttr class=":query-status status"}}>{{status}}</span></td>
+          
+          <td style="width: 15%" class="center-align">
           {{#if has_results}}
-            <td style="width: 15%" class="center-align">
-                <a {{bindAttr download="downloadName"}} {{action download this}} class="downlad-query-results-btn"></a>
-            </td>
+            <a {{bindAttr download="downloadName"}} {{action download this}} class="downlad-query-results-btn"></a>
           {{ else }}
-            <td>No results</td>
+            No results
           {{/if}}
+          </td>
         </tr>
       </tbody>
     </table>

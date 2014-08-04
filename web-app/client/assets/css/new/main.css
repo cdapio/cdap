@@ -3674,6 +3674,7 @@ div.tooltip {
 	background-image: url('/assets/img/v2/download_inactive.png');
 	background-repeat: no-repeat;
 	display: block;
+	margin: 0px auto;
 }
 
 .downlad-query-results-btn:hover {
