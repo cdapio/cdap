@@ -10,7 +10,7 @@ define([], function () {
 		load: function () {
 		  var self = this;
 
-		  self.limit = null;
+		  self.limit = 4;
 		  self.offset = null;
 		  self.direction = null;
 
@@ -107,39 +107,61 @@ define([], function () {
 		unload: function () {
 		},
 
+    getLargestSmallest: function () {
+      var self = this;
+      var objArr = self.get('objArr');
+        if(objArr.length){
+          self.largest = objArr[0].timestamp;
+          self.smallest = objArr[0].timestamp;
+          objArr.forEach(function(query){
+            if(query.timestamp > self.largest){
+              self.largest = query.timestamp;
+            }
+            if(query.timestamp < self.smallest){
+              self.smallest = query.timestamp;
+            }
+          });
+        }
+    },
+
     nextPage: function () {
       var self = this;
-      self.set('objArr', []);
-      self.start = self.smallest;
-      self.end = 0;
+      self.getLargestSmallest();
+      self.offset = self.smallest;
+      self.cursor = "next";
       self.fetchQueries();
     },
 
     prevPage: function () {
       var self = this;
-      self.set('objArr', []);
-      self.start = Infinity;
-      self.end = self.largest;
+      self.getLargestSmallest();
+      self.offset = self.largest;
+      self.cursor = "prev";
       self.fetchQueries();
     },
 
 		fetchQueries: function () {
 		  var self = this;
-		  var objArr = this.get('objArr');
 		  var url = 'data/explore/queries';
 		  if(self.limit){
 		    url += '?limit=' + self.limit;
 		  }
-		  if(self.start){
-		    url += '&start=' + self.start;
+		  if(self.offset){
+		    url += '&offset=' + self.offset;
 		  }
-		  if(self.end){
-        url += '&end=' + self.end;
+		  if(self.cursor){
+        url += '&cursor=' + self.cursor;
       }
       console.log(self.start + ' --> ' + self.end);
       console.log(url);
       this.HTTP.rest(url, function (queries, status) {
         if(status != 200) { return console.log('error in fetchQueries in data-explore.js'); } //TODO: remove this line, or replace with notification to user.
+
+        if(queries.length == 0){
+          return;
+        }
+        self.set('objArr', []);
+		    var objArr = self.get('objArr');
 
         objArr.forEach(function(query){
           query.set('inList', false);
@@ -157,7 +179,7 @@ define([], function () {
           }
 
           existingObj.set('inList', true);
-          if (existingObj.get('status') === 'FINISHED' && existingObj.get('has_results')) {
+          if (existingObj.get('status') === 'FINISHED' && existingObj.get('has_results') && existingObj.get('is_active')) {
             if (!existingObj.get('results')) {
               self.getPreview(existingObj);
               self.getSchema(existingObj);
@@ -168,12 +190,6 @@ define([], function () {
           query.set('deleted', !query.get('inList'));
         });
 
-        if(objArr.length){
-          self.largest = objArr[0].timestamp;
-          objArr.forEach(function(query){
-            self.smallest = query.timestamp;
-          });
-        }
       });
 		},
 
@@ -209,7 +225,7 @@ define([], function () {
 
       var handle = query.get('query_handle');
       self.HTTP.post(url, function (response) {
-        self.downloadFile('simpleName.txt', response);
+        self.downloadFile('results_' + handle + '.txt', response);
       });
     },
 
