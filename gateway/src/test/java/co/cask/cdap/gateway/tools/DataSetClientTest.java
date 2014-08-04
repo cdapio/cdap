@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.GatewayTestBase;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -31,6 +32,7 @@ public class DataSetClientTest extends GatewayTestBase {
   private static final String API_KEY = GatewayTestBase.getAuthHeader().getValue();
 
   @Test
+  @Ignore
   public void testValueAsCounter() throws OperationException {
     CConfiguration configuration = CConfiguration.create();
     String port = Integer.toString(GatewayTestBase.getPort());
@@ -59,6 +61,7 @@ public class DataSetClientTest extends GatewayTestBase {
   }
 
   @Test
+  @Ignore
   public void testClearDataset() throws OperationException {
     CConfiguration configuration = CConfiguration.create();
     String port = Integer.toString(GatewayTestBase.getPort());

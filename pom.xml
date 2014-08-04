@@ -132,7 +132,7 @@
     <module>explore-jdbc</module>
     <module>explore</module>
     <module>unit-test</module>
-    <module>reactor-master</module>
+    <module>master</module>
     <module>web-app</module>
     <module>proto</module>
     <module>client</module>

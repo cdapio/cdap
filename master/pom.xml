@@ -27,7 +27,7 @@
     <version>2.4.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>reactor-master</artifactId>
+  <artifactId>master</artifactId>
   <name>Continuuity Reactor Master</name>
   <packaging>jar</packaging>
 

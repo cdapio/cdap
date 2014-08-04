@@ -46,15 +46,6 @@ public interface MapReduceContext extends RuntimeContext {
   <T> T getHadoopJob();
 
   /**
-   * Overrides the input configuration of this MapReduce job to use the specified dataset and data selection splits.
-   *
-   * @param dataset Input dataset.
-   * @param splits Data selection splits.
-   */
-  @Deprecated
-  void setInput(BatchReadable dataset, List<Split> splits);
-
-  /**
    * Overrides the input configuration of this MapReduce job to use
    * the specified dataset by its name and data selection splits.
    *
@@ -62,14 +53,6 @@ public interface MapReduceContext extends RuntimeContext {
    * @param splits Data selection splits.
    */
   void setInput(String datasetName, List<Split> splits);
-
-  /**
-   * Overrides the output configuration of this MapReduce job to write to the specified dataset.
-   *
-   * @param dataset Output dataset.
-   */
-  @Deprecated
-  void setOutput(BatchWritable dataset);
 
   /**
    * Overrides the output configuration of this MapReduce job to write to the specified dataset by its name.

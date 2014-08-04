@@ -20,20 +20,15 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.data.DataSetAccessor;
-import co.cask.cdap.data.LocalDataSetAccessor;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.dataset.api.DataSetManager;
 import co.cask.cdap.data2.dataset.lib.table.BufferingOcTableClientTest;
 import co.cask.cdap.data2.dataset.lib.table.ConflictDetection;
-import co.cask.cdap.data2.dataset.lib.table.OrderedColumnarTable;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
@@ -71,29 +66,4 @@ public class LevelDBOcTableClientTest extends BufferingOcTableClientTest<LevelDB
   protected DataSetManager getTableManager() throws IOException {
     return new LevelDBOcTableManager(service);
   }
-
-  @Test
-  public void testListTablesAcrossRestart() throws Exception {
-    // todo make this test run for hbase, too - requires refactoring of their injection
-    // test on ASCII table name but also on some non-ASCII ones
-    final String[] tableNames = { "table", "t able", "t\u00C3ble", "100%" };
-
-    DataSetAccessor accessor = injector.getInstance(DataSetAccessor.class);
-    DataSetManager manager = accessor.getDataSetManager(OrderedColumnarTable.class, DataSetAccessor.Namespace.USER);
-    // create a table and verify it is in the list of tables
-    for (String tableName : tableNames) {
-      manager.create(tableName);
-      Assert.assertTrue(accessor.list(DataSetAccessor.Namespace.USER).containsKey(tableName));
-    }
-
-    // create an new instance of the table service
-    LevelDBOcTableService newService = new LevelDBOcTableService();
-    newService.setConfiguration(injector.getInstance(CConfiguration.class));
-    newService.clearTables();
-    LocalDataSetAccessor newAccessor = new LocalDataSetAccessor(injector.getInstance(CConfiguration.class), newService);
-    for (String tableName : tableNames) {
-      Assert.assertTrue(newAccessor.list(DataSetAccessor.Namespace.USER).containsKey(tableName));
-    }
-  }
-
 }

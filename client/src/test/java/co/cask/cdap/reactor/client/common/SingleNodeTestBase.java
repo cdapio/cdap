@@ -17,9 +17,14 @@
 package co.cask.cdap.reactor.client.common;
 
 import co.cask.cdap.SingleNodeMain;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,15 +37,21 @@ public class SingleNodeTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(SingleNodeTestBase.class);
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   private SingleNodeMain singleNodeMain;
 
   @Before
   public void setUp() throws Throwable {
     try {
-      singleNodeMain = SingleNodeMain.createSingleNodeMain(true);
+      CConfiguration cConf = CConfiguration.create();
+      cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+
+      // Start singlenode without UI
+      singleNodeMain = SingleNodeMain.createSingleNodeMain(true, null, cConf, new Configuration());
       singleNodeMain.startUp();
     } catch (Throwable e) {
-      System.err.println("Failed to start singlenode. " + e.getMessage());
       LOG.error("Failed to start singlenode", e);
       if (singleNodeMain != null) {
         singleNodeMain.shutDown();

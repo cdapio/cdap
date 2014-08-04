@@ -23,11 +23,11 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.data.DataSetAccessor;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
@@ -106,7 +106,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
     cConf.set(TxConstants.Service.CFG_DATA_TX_BIND_PORT,
               Integer.toString(Networks.getRandomPort()));
-    cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
+    cConf.set(ReactorDatasetNamespace.CFG_TABLE_PREFIX, "test");
     cConf.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, false);
     cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     cConf.setLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY, 1L);

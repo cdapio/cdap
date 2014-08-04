@@ -65,7 +65,7 @@ public interface FlowletSpecification extends PropertyProvider {
   FailurePolicy getFailurePolicy();
 
   /**
-   * @return An immutable set of {@link co.cask.cdap.api.data.DataSet DataSets} name that
+   * @return An immutable set of {@link co.cask.cdap.api.dataset.Dataset DataSets} name that
    *         used by the {@link Flowlet}.
    */
   Set<String> getDataSets();
@@ -144,7 +144,7 @@ public interface FlowletSpecification extends PropertyProvider {
       }
 
       /**
-       * Adds the names of {@link co.cask.cdap.api.data.DataSet DataSets} used by the flowlet.
+       * Adds the names of {@link co.cask.cdap.api.dataset.Dataset DataSets} used by the flowlet.
        *
        * @param dataSet DataSet name.
        * @param moreDataSets More DataSet names.

@@ -17,7 +17,6 @@
 package co.cask.cdap.data.dataset;
 
 import co.cask.cdap.api.data.DataSetInstantiationException;
-import co.cask.cdap.api.data.DataSetSpecification;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -57,45 +56,17 @@ public class DataSetInstantiationBase {
   // in this collection we have only datasets initialized with getDataSet() which is OK for now...
   private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
 
-  public DataSetInstantiationBase(CConfiguration configuration) {
-    this(configuration, null);
-  }
-
   public DataSetInstantiationBase(CConfiguration configuration, ClassLoader classLoader) {
     this.configuration = configuration;
     this.classLoader = classLoader;
   }
 
-  /**
-   * Set the data set spec for all data sets that this instantiator can
-   * create. This should be a list of DataSetSpecification's obtained from actual
-   * data sets' configure() method.
-   * @param specs The list of DataSetSpecification's
-   */
-  public void setDataSets(Iterable<DataSetSpecification> specs,
-                          Iterable<DatasetCreationSpec> creationSpec) {
+  public void setDataSets(Iterable<DatasetCreationSpec> creationSpec) {
     for (DatasetCreationSpec spec : creationSpec) {
       if (spec != null) {
         this.datasetsV2.put(spec.getInstanceName(), spec);
       }
     }
-  }
-
-  /**
-   * Add one data set spec to this instantiator.
-   * @param spec the data set specification
-   */
-  public void addDataSet(DataSetSpecification spec) {
-    // todo: remove this method
-  }
-
-  /**
-   * Find out whether the instantiator has a spec for a named data set.
-   * @param name the name of the data set
-   * @return whether the instantiator knows the spec for the data set
-   */
-  public boolean hasDataSet(String name) {
-    return this.datasetsV2.containsKey(name);
   }
 
   /**

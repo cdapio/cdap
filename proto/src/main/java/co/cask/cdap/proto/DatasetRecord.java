@@ -25,14 +25,12 @@ public class DatasetRecord {
   private final String id;
   private final String name;
   private final String classname;
-  private final String specification;
 
-  public DatasetRecord(String type, String id, String name, String classname, String specification) {
+  public DatasetRecord(String type, String id, String name, String classname) {
     this.type = type;
     this.id = id;
     this.name = name;
     this.classname = classname;
-    this.specification = specification;
   }
 
   public String getType() {
@@ -49,9 +47,5 @@ public class DatasetRecord {
 
   public String getClassname() {
     return classname;
-  }
-
-  public String getSpecification() {
-    return specification;
   }
 }

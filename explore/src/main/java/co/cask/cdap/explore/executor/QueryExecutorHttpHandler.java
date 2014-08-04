@@ -50,6 +50,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -212,12 +213,14 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       Map<String, List<String>> args = new QueryStringDecoder(request.getUri()).getParameters();
 
       int limit = args.containsKey("limit") ? Integer.parseInt(args.get("limit").get(0)) : 50;
-      long start = args.containsKey("start") ? Long.parseLong(args.get("start").get(0)) : Long.MAX_VALUE;
-      long end = args.containsKey("end") ? Long.parseLong(args.get("end").get(0)) : Long.MIN_VALUE;
+      long offset = args.containsKey("offset") ? Long.parseLong(args.get("offset").get(0)) : Long.MAX_VALUE;
+      String cursor = args.containsKey("cursor") ? args.get("cursor").get(0).toLowerCase() : "next";
+
+      boolean isForward = "next".equals(cursor) ? true : false;
 
       List<QueryInfo> queries = exploreService.getQueries();
       // return the queries by after filtering (> offset) and limiting number of queries
-      responder.sendJson(HttpResponseStatus.OK, filterQueries(queries, start, end, limit));
+      responder.sendJson(HttpResponseStatus.OK, filterQueries(queries, offset, isForward, limit));
     } catch (Exception e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error");
@@ -316,12 +319,25 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private List<QueryInfo> filterQueries(List<QueryInfo> queries, final long start, final long end, final int limit) {
+  private List<QueryInfo> filterQueries(List<QueryInfo> queries, final long offset,
+                                        final boolean isForward, final int limit) {
+    // sort will sort with latest queries first
+    Collections.sort(queries);
+
+    // Reverse the list if the pagination is in the reverse from the offset until the max limit
+    if (!isForward) {
+     queries =  Lists.reverse(queries);
+    }
+
     return FluentIterable.from(queries)
                          .filter(new Predicate<QueryInfo>() {
                            @Override
                            public boolean apply(@Nullable QueryInfo queryInfo) {
-                             return queryInfo.getTimestamp() < start && queryInfo.getTimestamp() >= end;
+                             if (isForward) {
+                               return queryInfo.getTimestamp() < offset;
+                             } else {
+                               return queryInfo.getTimestamp() > offset;
+                             }
                            }
                          })
                          .limit(limit)

@@ -15,8 +15,6 @@
  */
 package co.cask.cdap.data.runtime;
 
-import co.cask.cdap.data.DataSetAccessor;
-import co.cask.cdap.data.LocalDataSetAccessor;
 import co.cask.cdap.data.stream.InMemoryStreamCoordinator;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -44,7 +42,6 @@ public class DataFabricLevelDBModule extends AbstractModule {
   public void configure() {
     bind(LevelDBOcTableService.class).toInstance(LevelDBOcTableService.getInstance());
 
-    bind(DataSetAccessor.class).to(LocalDataSetAccessor.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(LevelDBQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(LevelDBQueueAdmin.class).in(Singleton.class);
 
