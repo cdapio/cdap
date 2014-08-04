@@ -1,12 +1,12 @@
-.. :author: Continuuity, Inc.
+.. :author: Cask, Inc.
    :version: 2.4.0
 
 ============================================
-Continuuity Reactor 2.4.0
+Cask Data Application Platform 2.4.0
 ============================================
 
-Continuuity Reactor Level 1 Dependencies
---------------------------------------------
+Cask Data Application Platform Level 1 Dependencies
+---------------------------------------------------
 
 .. rst2pdf: PageBreak
 .. rst2pdf: .. contents::
@@ -15,7 +15,7 @@ Continuuity Reactor Level 1 Dependencies
 .. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
 .. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
 
-.. csv-table:: **Continuuity Reactor Level 1 Dependencies**
+.. csv-table:: **Cask Data Application Platform Level 1 Dependencies**
    :header: "Package","Artifact","License","License URL"
    :widths: 20, 20, 20, 40
 

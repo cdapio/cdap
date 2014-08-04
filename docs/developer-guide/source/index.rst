@@ -1,6 +1,6 @@
-=================================
-Continuuity Reactor Documentation
-=================================
+============================================
+Cask Data Application Platform Documentation
+============================================
 
 .. toctree::
    :maxdepth: 2
@@ -41,6 +41,6 @@ Examples
    /examples/responseCodeAnalytics
    /examples/trafficAnalytics
    /examples/purchase
-   /licenses/reactor-enterprise-dependencies
-   /licenses/reactor-level-1-dependencies
-   /licenses/reactor-singlenode-dependencies	
+   /licenses/cdap-enterprise-dependencies
+   /licenses/cdap-level-1-dependencies
+   /licenses/cdap-singlenode-dependencies	

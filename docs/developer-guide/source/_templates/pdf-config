@@ -1,7 +1,7 @@
 # This is an example config file. Modify and place in ~/.rst2pdf/config
 
 [general]
-# author="Continuuity, Inc."
+# author="Cask, Inc."
 
 # A comma-separated list of custom stylesheets. Example:
 # stylesheets="fruity.json,a4paper.json,verasans.json"

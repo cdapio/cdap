@@ -1438,10 +1438,10 @@ Example
 
 .. rst2pdf: PageBreak
 
-Reactor Client HTTP API
+CDAP Client HTTP API
 =======================
 
-Use the Reactor Client HTTP API to deploy or delete Applications and manage the life cycle of 
+Use the CDAP Client HTTP API to deploy or delete Applications and manage the life cycle of 
 Flows, Procedures, MapReduce jobs, Workflows, and Custom Services.
 
 Deploy an Application

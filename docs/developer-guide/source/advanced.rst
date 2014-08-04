@@ -1,17 +1,17 @@
-.. :Author: Continuuity, Inc.
-   :Description: Advanced Reactor Features
+.. :Author: Cask, Inc.
+   :Description: Advanced Cask Data Application Platform Features
 
-=====================================
-Advanced Continuuity Reactor Features
-=====================================
+================================================
+Advanced Cask Data Application Platform Features
+================================================
 
 **Custom Services, Flow, Dataset, and Transaction Systems, 
-with Best Practices for the Continuuity Reactor**
+with Best Practices for the Cask Data Application Platform**
 
 Custom Services
 ===============
 In addition to Flows, MapReduce jobs, and Procedures, additional Services can be run in a 
-Reactor Application. Developers can implement Custom Services that run in program containers,
+Cask Data Application Platform (CDAP) Application. Developers can implement Custom Services that run in program containers,
 to interface with a legacy system and perform additional processing beyond the Continuuity processing
 paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
 
@@ -90,7 +90,7 @@ methods:
 
 Services Integration with Metrics and Logging
 ---------------------------------------------
-Services are integrated with the Reactor Metrics and Logging framework. Programs 
+Services are integrated with the CDAP Metrics and Logging framework. Programs 
 implementing Custom Services can declare Metrics and Logger (SLF4J) member variables and 
 the appropriate implementation will be injected by the run-time.
 
@@ -109,7 +109,7 @@ the appropriate implementation will be injected by the run-time.
 
 The metrics and logs that are emitted by the service are aggregated and accessed similar 
 to other program types. See the sections in the 
-`Continuuity Reactor Operations Guide <operations.html>`__ on accessing 
+`CDAP Operations Guide <operations.html>`__ on accessing 
 `logs <operations.html#logging>`__ and `metrics <operations.html#metrics>`__. 
 
 
@@ -183,9 +183,9 @@ In MapReduce Mapper/Reducer jobs::
 
 Using Services
 -----------------
-Custom Services are not displayed in the Continuuity Reactor Dashboard. To control their
-lifecycle, use the `Reactor Client API <rest.html#reactor-client-http-api>`__ as described
-in the `Continuuity Reactor HTTP REST API <rest.html#reactor-client-http-api>`__.
+Custom Services are not displayed in the CDAP Console. To control their
+lifecycle, use the `CDAP Client API <rest.html#cdap-client-http-api>`__ as described
+in the `CDAP HTTP REST API <rest.html#cdap-client-http-api>`__.
 
 
 Flow System
@@ -232,11 +232,11 @@ Flowlets and Instances
 ----------------------
 You can have one or more instances of any given Flowlet, each consuming a disjoint
 partition of each input. You can control the number of instances programmatically via the
-`REST interfaces <rest.html>`__ or via the Continuuity Reactor Dashboard. This enables you
+`REST interfaces <rest.html>`__ or via the CDAP Console. This enables you
 to scale your application to meet capacity at runtime.
 
-In the Local Reactor, multiple Flowlet instances are run in threads, so in some cases
-actual performance may not be improved. However, in the Hosted and Enterprise Reactors
+In the Local DAP, multiple Flowlet instances are run in threads, so in some cases
+actual performance may not be improved. However, in the Distributed DAP,
 each Flowlet instance runs in its own Java Virtual Machine (JVM) with independent compute
 resources. Scaling the number of Flowlets can improve performance and have a major impact
 depending on your implementation.
@@ -349,10 +349,10 @@ one holding the data and one holding the index.
 
 We distinguish three categories of Datasets: *core*, *system*, and *custom* Datasets:
 
-- The **core** Dataset of the Reactor is a Table. Its implementation may use internal
+- The **core** Dataset of the CDAP is a Table. Its implementation may use internal
   Continuuity classes hidden from developers.
 
-- A **system** Dataset is bundled with the Reactor and is built around
+- A **system** Dataset is bundled with the CDAP and is built around
   one or more underlying core or system Datasets to implement a specific data pattern.
 
 - A **custom** Dataset is implemented by you and can have arbitrary code and methods.
@@ -549,7 +549,7 @@ passing all of them will make the deletion faster.
 
 System Datasets
 ---------------
-The Continuuity Reactor comes with several system-defined Datasets, including key/value Tables, 
+The Cask Data Application Platform comes with several system-defined Datasets, including key/value Tables, 
 indexed Tables and time series. Each of them is defined with the help of one or more embedded 
 Tables, but defines its own interface. For example:
 
@@ -645,7 +645,7 @@ Application components can access created Dataset via ``@UseDataSet``::
 A complete application demonstrating the use of a custom Dataset is included in our
 `PageViewAnalytics </examples/PageViewAnalytics/index.html>`__ example.
 
-You can also create/drop/truncate Datasets using `Continuuity Reactor HTTP REST API <rest.html>`__. Please refer to the
+You can also create/drop/truncate Datasets using `Cask Data Application Platform HTTP REST API <rest.html>`__. Please refer to the
 REST APIs guide for more details on how to do that.
 
 
@@ -735,7 +735,7 @@ object can be reattempted. This ensures "exactly-once" processing of each object
 OCC: Optimistic Concurrency Control
 -----------------------------------
 
-The Continuuity Reactor uses *Optimistic Concurrency Control* (OCC) to implement 
+The Cask Data Application Platform uses *Optimistic Concurrency Control* (OCC) to implement 
 transactions. Unlike most relational databases that use locks to prevent conflicting 
 operations between transactions, under OCC we allow these conflicting writes to happen. 
 When the transaction is committed, we can detect whether it has any conflicts: namely, if 
@@ -755,7 +755,7 @@ conflicts wherever possible.
 
 Here are some rules to follow for Flows, Flowlets and Procedures:
 
-- Keep transactions short. The Continuuity Reactor attempts to delay the beginning of each
+- Keep transactions short. The Cask Data Application Platform attempts to delay the beginning of each
   transaction as long as possible. For instance, if your Flowlet only performs write
   operations, but no read operations, then all writes are deferred until the process
   method returns. They are then performed and transacted, together with the
@@ -900,7 +900,7 @@ boxed types (e.g. ``Integer``), ``String`` and ``enum``.
 
 Where to Go Next
 ================
-Now that you've looked at the advanced features of Continuuity Reactor, take a look at:
+Now that you've looked at the advanced features of Cask Data Application Platform, take a look at:
 
 - `Querying Datasets with SQL <query.html>`__,
-  which covers ad-hoc querying of Continuuity Reactor Datasets using SQL.
+  which covers ad-hoc querying of Cask Data Application Platform Datasets using SQL.
