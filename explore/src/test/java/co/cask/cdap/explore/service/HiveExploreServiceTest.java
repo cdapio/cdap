@@ -46,7 +46,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -133,7 +132,6 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     transactionManager.abort(tx);
   }
 
-  @Ignore
   @Test
   public void testHiveIntegration() throws Exception {
     runCommand("show tables",
