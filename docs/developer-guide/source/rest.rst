@@ -1374,7 +1374,7 @@ HTTP Responses
      - The query handle does not match any current query
 
 List of Queries
---------------
+----------------
 To return a list of queries, use::
 
    GET <base-url>/data/explore/queries?limit=<limit>&cursor=<cursor>&offset=<offset>
@@ -1691,6 +1691,46 @@ The response is formatted in JSON; an example of this is shown in:
 .. rst2pdf: CutStop
 
   `Continuuity Reactor Testing and Debugging Guide <http://continuuity.com/docs/reactor/current/en/debugging.html#debugging-reactor-applications>`__
+
+Service Discovery
+------------------
+To find a list of the host and ports of an announced discoverable, you can query the Service's ``discover`` method via
+an HTTP GET method::
+
+  GET <base-url>/apps/<app-id>/services/<service-name>/discover/<discoverable-id>
+
+.. list-table::
+    :widths: 20 80
+    :header-rows: 1
+
+    * - Parameter
+      - Description
+    * - ``<app-id>``
+      - Name of the Application being called
+    * - ``<service-name>``
+      - Name of the Custom Service
+    * - ``<discoverable-id>``
+      - ID of service to be discovered
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/apps/PurchaseHistory/services/CatalogLookupService/discover/LookupByProductId``
+   * - Description
+     - Find the host and port of ``LookupByProductId`` announced from ``CatalogLookupService``.
+   * - Result
+     - ::
+
+         [
+          {
+            "host": "node-1003.my.cluster.net",
+            "port": 40324
+          }
+         ]
 
 .. rst2pdf: PageBreak
 
