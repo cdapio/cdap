@@ -184,7 +184,7 @@ public interface Explore {
 
 
   /**
-   * Get information about Reactor as a database.
+   * Get information about CDAP as a database.
    *
    * @param infoType information type we are interested about.
    * @return {@link QueryHandle} representing the operation.
