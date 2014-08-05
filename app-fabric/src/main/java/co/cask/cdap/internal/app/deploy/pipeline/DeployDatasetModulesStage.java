@@ -62,11 +62,10 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLoca
     ApplicationSpecification specification = input.getSpecification();
     File unpackedLocation = Files.createTempDir();
     try {
-      ProgramClassLoader classLoader;
       BundleJarUtil.unpackProgramJar(input.getArchive(), unpackedLocation);
-      classLoader = ClassLoaders.newProgramClassLoader(unpackedLocation, ApiResourceListHolder.getResourceList(),
-                                                       this.getClass().getClassLoader());
-
+      ProgramClassLoader classLoader = ClassLoaders.newProgramClassLoader(unpackedLocation,
+                                                                          ApiResourceListHolder.getResourceList(),
+                                                                          this.getClass().getClassLoader());
       for (Map.Entry<String, String> moduleEntry : specification.getDatasetModules().entrySet()) {
         // note: using app class loader to load module class
         @SuppressWarnings("unchecked")
@@ -78,11 +77,9 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLoca
           //       isolated user's environment (e.g. separate yarn container)
           if (DatasetModule.class.isAssignableFrom(clazz)) {
             datasetFramework.addModule(moduleName, (DatasetModule) clazz.newInstance());
-          } else if (Dataset.class.isAssignableFrom(clazz)) {
+          } else if (Dataset.class.isAssignableFrom(clazz) && !datasetFramework.hasType(clazz.getName())) {
             // checking if type is in already
-            if (!datasetFramework.hasType(clazz.getName())) {
-              datasetFramework.addModule(moduleName, new SingleTypeModule((Class<Dataset>) clazz));
-            }
+            datasetFramework.addModule(moduleName, new SingleTypeModule((Class<Dataset>) clazz));
           } else {
             String msg = String.format(
               "Cannot use class %s to add dataset module: it must be of type DatasetModule or Dataset",

@@ -23,7 +23,6 @@ import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.lang.jar.ProgramClassLoader;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
@@ -47,13 +46,14 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import com.google.inject.name.Named;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,6 +87,7 @@ public class DefaultApplicationManager implements ApplicationManager {
                                    CConfiguration configuration,
                                    DiscoveryServiceClient discoveryServiceClient,
                                    AppFabricHttpHandler httpHandler,
+                                   @Named("temp.test.dir")TemporaryFolder tempFolder,
                                    @Assisted("accountId") String accountId,
                                    @Assisted("applicationId") String applicationId,
                                    @Assisted Location deployedJar,
@@ -98,25 +99,17 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txSystemClient = txSystemClient;
     this.appFabricClient = new AppFabricClient(httpHandler, locationFactory);
-
-    File unpackedLocation = Files.createTempDir();
+    // Since we expose the DataSet class, it has to be loaded using ClassLoader delegation.
+    // The drawback is we'll not be able to instrument DataSet classes using ASM.
     try {
-      // Since we expose the DataSet class, it has to be loaded using ClassLoader delegation.
-      // The drawback is we'll not be able to instrument DataSet classes using ASM.
-      ProgramClassLoader classLoader;
-      BundleJarUtil.unpackProgramJar(deployedJar, unpackedLocation);
-      classLoader = ClassLoaders.newProgramClassLoader(unpackedLocation, ApiResourceListHolder.getResourceList(),
-                                                       this.getClass().getClassLoader());
+      File tempDir = tempFolder.newFolder();
+      BundleJarUtil.unpackProgramJar(deployedJar, tempDir);
+      ProgramClassLoader classLoader = ClassLoaders.newProgramClassLoader
+        (tempDir, ApiResourceListHolder.getResourceList(), this.getClass().getClassLoader());
       this.dataSetInstantiator = new DataSetInstantiator(datasetFramework, configuration,
                                                          new DataSetClassLoader(classLoader));
     } catch (IOException e) {
       throw Throwables.propagate(e);
-    } finally {
-      try {
-        DirUtils.deleteDirectoryContents(unpackedLocation);
-      } catch (IOException e) {
-        Throwables.propagate(e);
-      }
     }
     this.dataSetInstantiator.setDataSets(appSpec.getDatasets().values());
   }

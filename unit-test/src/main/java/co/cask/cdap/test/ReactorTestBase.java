@@ -95,6 +95,7 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.Discoverable;
@@ -254,6 +255,7 @@ public class ReactorTestBase {
           install(new FactoryModuleBuilder()
                     .implement(ProcedureClient.class, DefaultProcedureClient.class)
                     .build(ProcedureClientFactory.class));
+          bind(TemporaryFolder.class).annotatedWith(Names.named("temp.test.dir")).toInstance(tmpFolder);
         }
       }
     );
