@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data.runtime;
 
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.metrics.TxMetricsCollector;
 import com.continuuity.tephra.persist.TransactionStateStorage;
 import com.google.inject.Inject;
@@ -24,16 +24,16 @@ import com.google.inject.Provider;
 import org.apache.hadoop.conf.Configuration;
 
 /**
- * Google Guice Provider for {@link InMemoryTransactionManager} instances.  Each call to {@link #get()} will
- * return a new {@link InMemoryTransactionManager} instance.
+ * Google Guice Provider for {@link TransactionManager} instances.  Each call to {@link #get()} will
+ * return a new {@link TransactionManager} instance.
  */
-public class InMemoryTransactionManagerProvider implements Provider<InMemoryTransactionManager> {
+public class TransactionManagerProvider implements Provider<TransactionManager> {
   private final Configuration conf;
   private final Provider<TransactionStateStorage> storageProvider;
   private final TxMetricsCollector txMetricsCollector;
 
   @Inject
-  public InMemoryTransactionManagerProvider(Configuration config, Provider<TransactionStateStorage> storageProvider,
+  public TransactionManagerProvider(Configuration config, Provider<TransactionStateStorage> storageProvider,
                                             TxMetricsCollector txMetricsCollector) {
     this.conf = config;
     this.storageProvider = storageProvider;
@@ -41,7 +41,7 @@ public class InMemoryTransactionManagerProvider implements Provider<InMemoryTran
   }
 
   @Override
-  public InMemoryTransactionManager get() {
-    return new InMemoryTransactionManager(conf, storageProvider.get(), txMetricsCollector);
+  public TransactionManager get() {
+    return new TransactionManager(conf, storageProvider.get(), txMetricsCollector);
   }
 }

@@ -23,8 +23,8 @@ import co.cask.cdap.data2.OperationResult;
 import co.cask.cdap.data2.dataset.api.DataSetManager;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionAware;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -83,7 +83,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
   @Before
   public void before() {
     Configuration txConf = HBaseConfiguration.create();
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager(txConf);
+    TransactionManager txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
   }

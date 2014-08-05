@@ -33,7 +33,7 @@ import co.cask.cdap.logging.appender.LoggingTester;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.test.SlowTests;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -61,7 +61,7 @@ public class TestKafkaLogging extends KafkaTestBase {
     dsFramework.addModule("table", new InMemoryOrderedTableModule());
 
     Configuration txConf = HBaseConfiguration.create();
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager(txConf);
+    TransactionManager txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
 

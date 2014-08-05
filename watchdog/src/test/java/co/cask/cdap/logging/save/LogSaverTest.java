@@ -43,7 +43,7 @@ import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.watchdog.election.MultiLeaderElection;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -121,7 +121,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     Configuration conf = HBaseConfiguration.create();
     cConf.copyTxProperties(conf);
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf);
+    TransactionManager txManager = new TransactionManager(conf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
 

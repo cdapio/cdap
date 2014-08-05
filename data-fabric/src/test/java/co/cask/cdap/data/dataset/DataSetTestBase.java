@@ -29,8 +29,8 @@ import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import com.continuuity.tephra.TransactionContext;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -81,7 +81,7 @@ public class DataSetTestBase {
                              }
                            });
     configuration = injector.getInstance(CConfiguration.class);
-    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
+    injector.getInstance(TransactionManager.class).startAndWait();
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
