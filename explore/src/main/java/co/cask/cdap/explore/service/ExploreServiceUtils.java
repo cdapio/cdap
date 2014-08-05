@@ -230,7 +230,7 @@ public class ExploreServiceUtils {
   }
 
   /**
-   * Return the list of absolute paths of thecdacd     bootstrap classes.
+   * Return the list of absolute paths of the bootstrap classes.
    */
   public static Set<String> getBoostrapClasses() {
     ImmutableSet.Builder<String> builder = ImmutableSet.builder();

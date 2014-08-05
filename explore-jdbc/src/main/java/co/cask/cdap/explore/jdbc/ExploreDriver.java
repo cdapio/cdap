@@ -174,7 +174,7 @@ public class ExploreDriver implements Driver {
      * Extra Explore connection parameter.
      */
     public enum Info {
-      EXPLORE_AUTH_TOKEN("cdap.auth.token");
+      EXPLORE_AUTH_TOKEN("auth.token");
 
       private String name;
 

@@ -185,7 +185,7 @@ public class DatasetExploreFacade {
     throws UnsupportedTypeException {
     String hiveSchema = hiveSchemaFor(scannable);
     String tableName = getHiveTableName(name);
-    return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"CASK DAP Dataset\" " +
+    return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Cask CDAP Dataset\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
                          tableName, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
                          Constants.Explore.DATASET_NAME, name);

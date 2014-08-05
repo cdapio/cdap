@@ -94,33 +94,33 @@ public class ExploreDriverTest {
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(ImmutableMultimap.of(), connectionParams.getExtraInfos());
 
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?cdap.auth.token=foo");
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?auth.token=foo");
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(
       ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo"),
       connectionParams.getExtraInfos());
 
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?cdap.auth.token=foo&foo2=bar2");
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?auth.token=foo&foo2=bar2");
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(
       ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo"),
       connectionParams.getExtraInfos());
 
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&cdap.auth.token=foo");
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&auth.token=foo");
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(
       ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo"),
       connectionParams.getExtraInfos());
 
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&cdap.auth.token");
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&auth.token");
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(ImmutableMultimap.of(), connectionParams.getExtraInfos());
 
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&cdap.auth.token=foo,bar");
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&auth.token=foo,bar");
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(
@@ -148,10 +148,10 @@ public class ExploreDriverTest {
     Assert.assertNotNull(driver.connect(exploreServiceUrl, null));
 
     // Correct host and extra parameter
-    Assert.assertNotNull(driver.connect(exploreServiceUrl + "?cdap.auth.token=bar", null));
+    Assert.assertNotNull(driver.connect(exploreServiceUrl + "?auth.token=bar", null));
 
     // Correct host and extra parameter
-    Assert.assertNotNull(driver.connect(exploreServiceUrl + "?cdap.auth.token", null));
+    Assert.assertNotNull(driver.connect(exploreServiceUrl + "?auth.token", null));
   }
 
   @Test
