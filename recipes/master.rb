@@ -52,6 +52,7 @@ if node['cdap'].key?('security') && node['cdap']['security'].key?('cdap_keytab')
     members [ 'cdap' ]
     action :modify
   end
+  include_recipe 'krb5_utils'
 end
 
 service 'cdap-master' do
