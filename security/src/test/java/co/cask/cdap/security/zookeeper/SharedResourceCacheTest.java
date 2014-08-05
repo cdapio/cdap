@@ -105,7 +105,8 @@ public class SharedResourceCacheTest {
 
     ZKClientService zkClient2 = injector2.getInstance(ZKClientService.class);
     zkClient2.startAndWait();
-    SharedResourceCache<String> cache2 = new SharedResourceCache<String>(zkClient2, new StringCodec(), parentZNode, acls);
+    SharedResourceCache<String> cache2 = new SharedResourceCache<String>(
+      zkClient2, new StringCodec(), parentZNode, acls);
     cache2.init();
 
     waitForEntry(cache2, key1, value1, 10000);
