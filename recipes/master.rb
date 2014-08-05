@@ -42,8 +42,15 @@ if node['cdap'].key?('security') && node['cdap']['security'].key?('cdap_keytab')
     group 'root'
     action :create
     variables my_vars
+  end # End /etc/default/cdap-master
+
+  package 'kstart'
+  group 'hadoop' do
+    append true
+    members [ 'cdap' ]
+    action :modify
   end
-end # End /etc/default/cdap-master
+end
 
 service 'cdap-master' do
   status_command 'service cdap-master status'
