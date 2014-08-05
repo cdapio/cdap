@@ -32,6 +32,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -50,7 +51,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.sql.SQLException;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -321,30 +322,30 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
 
   private List<QueryInfo> filterQueries(List<QueryInfo> queries, final long offset,
                                         final boolean isForward, final int limit) {
-    // sort will sort with latest queries first
-    Collections.sort(queries);
-
     // Reverse the list if the pagination is in the reverse from the offset until the max limit
     if (!isForward) {
      queries =  Lists.reverse(queries);
     }
 
-    queries =  FluentIterable.from(queries)
-                             .filter(new Predicate<QueryInfo>() {
-                               @Override
-                               public boolean apply(@Nullable QueryInfo queryInfo) {
-                                 if (isForward) {
-                                   return queryInfo.getTimestamp() < offset;
-                                 } else {
-                                   return queryInfo.getTimestamp() > offset;
-                                 }
-                               }
-                             })
-                             .limit(limit)
-                             .toImmutableList();
-
-    Collections.sort(queries);
-    return queries;
+    return FluentIterable.from(queries)
+                         .filter(new Predicate<QueryInfo>() {
+                           @Override
+                           public boolean apply(@Nullable QueryInfo queryInfo) {
+                             if (isForward) {
+                               return queryInfo.getTimestamp() < offset;
+                             } else {
+                               return queryInfo.getTimestamp() > offset;
+                             }
+                           }
+                         })
+                         .limit(limit)
+                         .toSortedImmutableList(new Comparator<QueryInfo>() {
+                           @Override
+                           public int compare(QueryInfo first, QueryInfo second) {
+                             //sort descending.
+                             return Longs.compare(second.getTimestamp(), first.getTimestamp());
+                           }
+                         });
   }
 
   private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
