@@ -57,7 +57,6 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   private String name;
   private List<HttpServiceHandler> handlers;
   private NettyHttpService service;
-  private TwillContext context;
 
   public HttpServiceTwillRunnable(String name, Iterable<? extends HttpServiceHandler> handlers) {
     this.name = name;
@@ -79,10 +78,11 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     service.startAndWait();
     // announce the twill runnable
     int port = service.getBindAddress().getPort();
-    Cancellable contextCancellable = context.announce(name, port);
+    Cancellable contextCancellable = getContext().announce(name, port);
     LOG.info("Announced Http Service");
     try {
       completion.get();
+      // once the service has been stopped, don't announe it anymore.
       contextCancellable.cancel();
     } catch (InterruptedException e) {
       LOG.error("Got Interrupted exception in Http Service run: {}", e);
@@ -110,8 +110,8 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void initialize(TwillContext context) {
     LOG.info("Got initialize in HttpServiceTwillRunnable");
-    // must store this context in order to announce the service in run.
-    this.context = context;
+    // initialize the base class so that we can use this context later
+    super.initialize(context);
     Map<String, String> runnableArgs = new HashMap<String, String>(context.getSpecification().getConfigs());
     name = runnableArgs.get("service.runnable.name");
     handlers = new ArrayList<HttpServiceHandler>();
