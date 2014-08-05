@@ -1721,7 +1721,7 @@ Example
    * - HTTP Method
      - ``GET <base-url>/apps/PurchaseHistory/services/CatalogLookupService/discover/LookupByProductId``
    * - Description
-     - Find the host and port of ``LookupByProductId`` announced from ``CatalogLookupService``.
+     - Find the host and port of ``LookupByProductId`` service announced from ``CatalogLookupService``.
    * - Result
      - ::
 
