@@ -77,9 +77,11 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLoca
           //       isolated user's environment (e.g. separate yarn container)
           if (DatasetModule.class.isAssignableFrom(clazz)) {
             datasetFramework.addModule(moduleName, (DatasetModule) clazz.newInstance());
-          } else if (Dataset.class.isAssignableFrom(clazz) && !datasetFramework.hasType(clazz.getName())) {
+          } else if (Dataset.class.isAssignableFrom(clazz)) {
             // checking if type is in already
-            datasetFramework.addModule(moduleName, new SingleTypeModule((Class<Dataset>) clazz));
+            if(!datasetFramework.hasType(clazz.getName())) {
+              datasetFramework.addModule(moduleName, new SingleTypeModule((Class<Dataset>) clazz));
+            }
           } else {
             String msg = String.format(
               "Cannot use class %s to add dataset module: it must be of type DatasetModule or Dataset",
