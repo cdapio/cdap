@@ -17,7 +17,7 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.DataSetAccessor;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
 import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -31,7 +31,7 @@ public class DatasetsProxyRule implements ProxyRule {
   private final ReactorDatasetNamespace namespace;
 
   public DatasetsProxyRule(CConfiguration conf) {
-    this.namespace = new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.USER);
+    this.namespace = new ReactorDatasetNamespace(conf, Namespace.USER);
   }
 
   @Override

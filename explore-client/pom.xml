@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>explore-client</artifactId>
-  <name>Continuuity Explore Client</name>
+  <name>Cask CDAP Explore Client</name>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -36,6 +36,12 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>common</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>common-unit-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>

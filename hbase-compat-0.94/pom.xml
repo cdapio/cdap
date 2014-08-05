@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>hbase-compat-0.94</artifactId>
-  <name>Continuuity HBase 0.94 Compatibility</name>
+  <name>Cask CDAP HBase 0.94 Compatibility</name>
   <packaging>jar</packaging>
 
   <dependencies>

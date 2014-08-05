@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>gateway</artifactId>
-  <name>Continuuity Gateway</name>
+  <name>Cask CDAP Gateway</name>
   <packaging>jar</packaging>
 
   <dependencies>

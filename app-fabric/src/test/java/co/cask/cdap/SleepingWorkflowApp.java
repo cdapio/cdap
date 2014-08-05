@@ -94,7 +94,7 @@ public class SleepingWorkflowApp extends AbstractApplication {
     public void run() {
       LOG.info("Custom action run");
       try {
-        Thread.sleep(100);
+        Thread.sleep(2000);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }

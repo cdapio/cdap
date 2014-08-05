@@ -17,7 +17,6 @@ package co.cask.cdap.data2.dataset.lib.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.data2.dataset.api.DataSetManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -44,7 +43,7 @@ import java.util.Set;
 /**
  * Base class for writing HBase DataSetManager.
  */
-public abstract class AbstractHBaseDataSetManager implements DataSetManager {
+public abstract class AbstractHBaseDataSetManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractHBaseDataSetManager.class);
 
@@ -75,7 +74,6 @@ public abstract class AbstractHBaseDataSetManager implements DataSetManager {
     return admin;
   }
 
-  @Override
   public void upgrade(String name, Properties properties) throws Exception {
     upgradeTable(getHBaseTableName(name), properties);
   }

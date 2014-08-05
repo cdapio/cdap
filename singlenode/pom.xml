@@ -29,7 +29,7 @@
 
 
   <artifactId>singlenode</artifactId>
-  <name>Continuuity Singlenode</name>
+  <name>Cask CDAP Singlenode</name>
   <packaging>jar</packaging>
 
   <dependencies>

@@ -18,7 +18,6 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.DataSetInstantiationException;
-import co.cask.cdap.api.data.DataSetSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -45,17 +44,15 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.DataSetAccessor;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
-import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
@@ -70,8 +67,6 @@ import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.filesystem.LocationCodec;
-import co.cask.cdap.logging.LoggingConfiguration;
-import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DatasetRecord;
@@ -184,26 +179,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
 
   /**
-   * Used for getting the app id in batch endpoints
-   */
-  private static final String APP_ID_ARG = "appId";
-
-  /**
-   * Used for getting the program type in batch endpoints
-   */
-  private static final String PROGRAM_TYPE_ARG = "programType";
-
-  /**
-   * Used for getting the program id in batch endpoints
-   */
-  private static final String PROGRAM_ID_ARG = "programId";
-
-  /**
-   * Used for getting the runnable id in batch endpoints
-   */
-  private static final String RUNNABLE_ID_ARG = "runnableId";
-
-  /**
    * Timeout to upload to remote app fabric.
    */
   private static final long UPLOAD_TIMEOUT = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
@@ -265,8 +240,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private final DiscoveryServiceClient discoveryServiceClient;
 
   private final QueueAdmin queueAdmin;
-
-  private final DataSetAccessor dataSetAccessor;
 
   private final StreamAdmin streamAdmin;
 
@@ -333,14 +306,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
-                              DataSetAccessor dataSetAccessor, LocationFactory locationFactory,
+                              LocationFactory locationFactory,
                               ManagerFactory<Location, ApplicationWithPrograms> managerFactory,
                               StoreFactory storeFactory,
                               ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
                               StreamConsumerFactory streamConsumerFactory,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                              DataSetInstantiatorFromMetaData datasetInstantiator,
                               DatasetFramework dsFramework) {
 
     super(authenticator);
@@ -361,8 +333,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.txClient = txClient;
     this.dsFramework =
       new NamespacedDatasetFramework(dsFramework,
-                                     new ReactorDatasetNamespace(configuration, DataSetAccessor.Namespace.USER));
-    this.dataSetAccessor = dataSetAccessor;
+                                     new ReactorDatasetNamespace(configuration, Namespace.USER));
   }
 
   /**
@@ -2870,18 +2841,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Id.Account account = new Id.Account(programId.getAccountId());
       if (type == Data.DATASET) {
-        DataSetSpecification spec = store.getDataSet(account, name);
+        DatasetSpecification dsSpec = getDatasetSpec(name);
         String typeName = null;
-        if (spec != null) {
-          typeName = spec.getType();
-        } else {
-          // trying to see if that is Dataset V2
-          DatasetSpecification dsSpec = getDatasetSpec(name);
-          if (dsSpec != null) {
-            typeName = dsSpec.getType();
-          }
+        if (dsSpec != null) {
+          typeName = dsSpec.getType();
         }
-        return GSON.toJson(makeDataSetRecord(name, typeName, spec));
+        return GSON.toJson(makeDataSetRecord(name, typeName));
       } else if (type == Data.STREAM) {
         StreamSpecification spec = store.getStream(account, name);
         return spec == null ? "" : GSON.toJson(makeStreamRecord(spec.getName(), spec));
@@ -2896,15 +2861,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private String listDataEntities(Id.Program programId, Data type) throws Exception {
     try {
       if (type == Data.DATASET) {
-        Collection<DataSetSpecification> specs = store.getAllDataSets(new Id.Account(programId.getAccountId()));
-        List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(specs.size());
-        for (DataSetSpecification spec : specs) {
-          result.add(makeDataSetRecord(spec.getName(), spec.getType(), null));
-        }
-        // also add datasets2 instances
         Collection<DatasetSpecification> instances = dsFramework.getInstances();
+        List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(instances.size());
         for (DatasetSpecification instance : instances) {
-          result.add(makeDataSetRecord(instance.getName(), instance.getType(), null));
+          result.add(makeDataSetRecord(instance.getName(), instance.getType()));
         }
         return GSON.toJson(result);
       } else if (type == Data.STREAM) {
@@ -2931,23 +2891,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         Set<String> dataSetsUsed = dataSetsUsedBy(appSpec);
         List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
         for (String dsName : dataSetsUsed) {
-          DataSetSpecification spec = appSpec.getDataSets().get(dsName);
           String typeName = null;
-          if (spec == null) {
-            spec = store.getDataSet(account, dsName);
+          DatasetSpecification dsSpec = getDatasetSpec(dsName);
+          if (dsSpec != null) {
+            typeName = dsSpec.getType();
           }
-
-          if (spec != null) {
-            // Dataset V1
-            typeName = spec.getType();
-          } else {
-            // trying to see if that is Dataset V2
-            DatasetSpecification dsSpec = getDatasetSpec(dsName);
-            if (dsSpec != null) {
-              typeName = dsSpec.getType();
-            }
-          }
-          result.add(makeDataSetRecord(dsName, typeName, null));
+          result.add(makeDataSetRecord(dsName, typeName));
         }
         return GSON.toJson(result);
       }
@@ -2995,7 +2944,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
       result.addAll(mrSpec.getDataSets());
     }
-    result.addAll(appSpec.getDataSets().keySet());
     return result;
   }
 
@@ -3128,8 +3076,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     return new ProgramRecord(type, appId, spec.getName(), spec.getName(), spec.getDescription());
   }
 
-  private static DatasetRecord makeDataSetRecord(String name, String classname, DataSetSpecification specification) {
-    return new DatasetRecord("Dataset", name, name, classname, GSON.toJson(specification));
+  private static DatasetRecord makeDataSetRecord(String name, String classname) {
+    return new DatasetRecord("Dataset", name, name, classname);
   }
 
   private static StreamRecord makeStreamRecord(String name, StreamSpecification specification) {
@@ -3164,6 +3112,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         throw new Exception("App Still Running");
       }
 
+      LOG.info("Deleting all data for account '" + account + "'.");
+
       // NOTE: deleting new datasets stuff first because old datasets system deletes all blindly by prefix
       //       which may damage metadata
       // TODO: instead of looping thru on client side, dataset service should understand namespacing, see REACTOR-217
@@ -3175,32 +3125,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       deleteMetrics(account, null);
       // delete all meta data
       store.removeAll(accountId);
+      // todo: delete only for specified account
       // delete queues and streams data
       queueAdmin.dropAll();
       streamAdmin.dropAll();
-
-      LOG.info("Deleting all data for account '" + account + "'.");
-      dataSetAccessor.dropAll(DataSetAccessor.Namespace.USER);
-      // Can't truncate metric entity tables because they are cached in memory by anybody who touches the metric
-      // tables, and truncating will cause metrics to get incorrectly mapped to other random metrics.
-      Set<String> datasetsToKeep = Sets.newHashSet();
-      for (MetricsScope scope : MetricsScope.values()) {
-        datasetsToKeep.add(scope.name().toLowerCase() + "." +
-                             configuration.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
-                                               MetricsConstants.DEFAULT_ENTITY_TABLE_NAME));
-      }
-      // todo: cleanup this. we use hardcode since it is already done so in KafkaMetricsProcessorService
-      datasetsToKeep.add("default." + configuration.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
-                                                        MetricsConstants.DEFAULT_KAFKA_META_TABLE));
-
-      // Don't truncate log table too - we would like to retain logs across resets.
-      datasetsToKeep.add(LoggingConfiguration.LOG_META_DATA_TABLE);
-      // Don't remove datasets
-      datasetsToKeep.add(DatasetMetaTableUtil.META_TABLE_NAME);
-      datasetsToKeep.add(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
-
-      // NOTE: there could be services running at the moment that rely on the system datasets to be available.
-      dataSetAccessor.truncateAllExceptBlacklist(DataSetAccessor.Namespace.SYSTEM, datasetsToKeep);
 
       LOG.info("All data for account '" + account + "' deleted.");
       responder.sendStatus(HttpResponseStatus.OK);

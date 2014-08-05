@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.DataSetSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -49,7 +48,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   private static final String TYPE_APP_META = "appMeta";
-  private static final String TYPE_DATASET = "dataset";
   private static final String TYPE_STREAM = "stream";
   private static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
   private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
@@ -71,8 +69,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   @Nullable
   public ApplicationMeta getApplication(String accountId, String appId) {
-    ApplicationMeta meta = get(new Key.Builder().add(TYPE_APP_META, accountId, appId).build(), ApplicationMeta.class);
-    return meta;
+    return get(new Key.Builder().add(TYPE_APP_META, accountId, appId).build(), ApplicationMeta.class);
   }
 
   public List<ApplicationMeta> getAllApplications(String accountId) {
@@ -112,10 +109,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
     LOG.trace("Application exists in mds: id: {}, spec: {}", existing);
     ApplicationMeta updated = ApplicationMeta.updateSpec(existing, spec);
     write(key, updated);
-
-    for (DataSetSpecification dsSpec : spec.getDataSets().values()) {
-      writeDataset(accountId, dsSpec);
-    }
 
     for (StreamSpecification stream : spec.getStreams().values()) {
       writeStream(accountId, stream);
@@ -158,26 +151,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   private long getInvertedTsKeyPart(long endTime) {
     return Long.MAX_VALUE - endTime;
-  }
-
-  public void writeDataset(String accountId, DataSetSpecification spec) {
-    write(new Key.Builder().add(TYPE_DATASET, accountId, spec.getName()).build(), spec);
-  }
-
-  public DataSetSpecification getDataset(String accountId, String name) {
-    return get(new Key.Builder().add(TYPE_DATASET, accountId, name).build(), DataSetSpecification.class);
-  }
-
-  public List<DataSetSpecification> getAllDatasets(String accountId) {
-    return list(new Key.Builder().add(TYPE_DATASET, accountId).build(), DataSetSpecification.class);
-  }
-
-  public void deleteDataset(String accountId, String name) {
-    deleteAll(new Key.Builder().add(TYPE_DATASET, accountId, name).build());
-  }
-
-  public void deleteAllDatasets(String accountId) {
-    deleteAll(new Key.Builder().add(TYPE_DATASET, accountId).build());
   }
 
   public void writeStream(String accountId, StreamSpecification spec) {

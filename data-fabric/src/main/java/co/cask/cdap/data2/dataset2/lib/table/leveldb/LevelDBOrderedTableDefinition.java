@@ -19,10 +19,8 @@ package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
+import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.OrderedTable;
-import co.cask.cdap.data2.dataset.lib.table.ConflictDetection;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableClient;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.google.inject.Inject;
 
 import java.io.IOException;
@@ -35,7 +33,7 @@ public class LevelDBOrderedTableDefinition
   extends AbstractDatasetDefinition<OrderedTable, LevelDBOrderedTableAdmin> {
 
   @Inject
-  private LevelDBOcTableService service;
+  private LevelDBOrderedTableService service;
 
   public LevelDBOrderedTableDefinition(String name) {
     super(name);
@@ -53,7 +51,7 @@ public class LevelDBOrderedTableDefinition
                                         Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
-    return new LevelDBOcTableClient(spec.getName(), conflictDetection, service);
+    return new LevelDBOrderedTable(spec.getName(), conflictDetection, service);
   }
 
   @Override
