@@ -16,13 +16,12 @@
 
 package co.cask.cdap.common.conf;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -444,27 +443,10 @@ public final class Constants {
     public static final String SSL_KEYSTORE_PASSWORD = "security.server.ssl.keystore.password";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
-    /** Path to the keytab file for Reactor */
-    public static final String CFG_REACTOR_KEYTAB_PATH = "security.kerberos.keytab.reactor.path";
-
-    /**
-     * ZooKeeper security-related configuration
-     */
-    public static final class ZooKeeper {
-
-      /**
-       * Preset ACLs
-       */
-      public static final class Ids {
-        public static final Id getReactorId(String hostname) {
-          return new Id("sasl", "reactor/" + hostname + "@CONTINUUITY.NET");
-        }
-
-        public static final List<ACL> getReactorAllACL(String hostname) {
-          return Lists.newArrayList(new ACL(ZooDefs.Perms.ALL, getReactorId(hostname)));
-        }
-      }
-    }
+    /** Path to the Kerberos keytab file by auth server and router */
+    public static final String CFG_KRB_KEYTAB_PATH = "security.kerberos.keytab.path";
+    /** Path to the Kerberos principal used by auth server and router */
+    public static final String CFG_KRB_SECURITY_PRINCIPAL = "security.kerberos.principal";
   }
 
   /**

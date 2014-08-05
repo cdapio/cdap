@@ -909,14 +909,6 @@
     </property>
 
     <!--
-        Kerberos-related security settings
-    -->
-    <property>
-      <name>security.kerberos.keytab.reactor.path</name>
-      <value>/etc/security/keytabs/reactor.keytab</value>
-    </property>
-
-    <!--
         External Authentication Settings
     -->
     <property>
