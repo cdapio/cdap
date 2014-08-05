@@ -17,6 +17,8 @@
 package co.cask.cdap.shell.command.get;
 
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.proto.Containers;
+import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.ProgramIdCompleterFactory;
@@ -24,6 +26,7 @@ import co.cask.cdap.shell.command.AbstractCommand;
 import co.cask.cdap.shell.completer.Completable;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import jline.console.completer.Completer;
 
@@ -57,18 +60,33 @@ public class GetProgramLiveInfoCommand extends AbstractCommand implements Comple
     String appId = programIdParts[0];
     String programId = programIdParts[1];
 
-    ProgramLiveInfo liveInfo = programClient.getLiveInfo(appId, elementType.getProgramType(), programId);
+    DistributedProgramLiveInfo liveInfo = programClient.getLiveInfo(appId, elementType.getProgramType(), programId);
 
-    new AsciiTable<ProgramLiveInfo>(
-      new String[] { "app", "type", "id", "runtime" },
+    new AsciiTable<DistributedProgramLiveInfo>(
+      new String[] { "app", "type", "id", "runtime", "yarn app id"},
       Lists.newArrayList(liveInfo),
-      new RowMaker<ProgramLiveInfo>() {
+      new RowMaker<DistributedProgramLiveInfo>() {
         @Override
-        public Object[] makeRow(ProgramLiveInfo object) {
-          return new Object[] { object.getApp(), object.getType(), object.getId(), object.getRuntime() };
+        public Object[] makeRow(DistributedProgramLiveInfo object) {
+          return new Object[] { object.getApp(), object.getType(), object.getId(), object.getRuntime(),
+            object.getYarnAppId() };
         }
       }
     ).print(output);
+
+    if (liveInfo.getContainers() != null) {
+      new AsciiTable<Containers.ContainerInfo>(
+        new String[] { "containers", "instance", "host", "container", "memory", "virtual cores", "debug port" },
+        liveInfo.getContainers(),
+        new RowMaker<Containers.ContainerInfo>() {
+          @Override
+          public Object[] makeRow(Containers.ContainerInfo object) {
+            return new Object[] { "", object.getInstance(), object.getHost(), object.getContainer(), object.getMemory(),
+              object.getVirtualCores(), object.getDebugPort() };
+          }
+        }
+      ).print(output);
+    }
   }
 
   @Override
