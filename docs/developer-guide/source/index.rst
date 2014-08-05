@@ -43,4 +43,4 @@ Examples
    /examples/purchase
    /licenses/cdap-enterprise-dependencies
    /licenses/cdap-level-1-dependencies
-   /licenses/cdap-singlenode-dependencies	
+   /licenses/cdap-singlenode-dependencies

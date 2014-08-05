@@ -127,7 +127,7 @@ skip the tests by using the command::
 
 Deploying and Starting the Application
 --------------------------------------
-Make sure an instance of the DAP is running and available.
+Make sure an instance of the CDAP is running and available.
 From within the SDK root directory, this command will start CDAP in local mode::
 
 	$ ./bin/cdap.sh start

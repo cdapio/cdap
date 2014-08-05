@@ -222,14 +222,15 @@ There are two ways to query the *history* ObjectStore through the ``PurchaseProc
 Exploring the Results Using SQL
 ...............................
 You can use SQL to formulate ad-hoc queries over the *history* Dataset. This is done by a series of
-``curl`` calls, as described in the REST API section of the Developer Guide. For your convenience, the SDK
+``curl`` calls, as described in the RESTful API section of the Developer Guide. For your convenience, the SDK
 includes a script, ``bin/send-query.sh``, that will execute a series of calls.
 
 From within the SDK root directory::
 
-  send-query.sh --query  "SELECT * FROM cask_user_history WHERE customer IN ('Alice','Bob')"
+  send-query.sh --query  "SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"
 
-This will submit the query, wait for its completion and then retrieve and print all results, one by one::
+This will submit the query, using the *History* table in the ``cdap_user`` namespace, wait for its completion and 
+then retrieve and print all results, one by one::
 
   Query handle is ad004d63-7e8d-44f8-b53a-33f3cf3bd5c8.
   ["Alice","[{\"customer\":\"Alice\",\"product\":\"grapefruit\",\"quantity\":12,\"price\":10

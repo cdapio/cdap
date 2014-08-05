@@ -69,7 +69,7 @@ Streams for Data Collection
 -------------------------------
 Streams are the primary means for bringing data from external systems into CDAP in real-time.
 
-Data can be written to streams using REST. In this example, a Stream named *logEventStream* is used to 
+Data can be written to streams using the RESTful API. In this example, a Stream named *logEventStream* is used to 
 ingest Apache access logs.
 
 The Stream is configured to ingest data using the Apache Common Log Format. Here is a sample event from a log::
