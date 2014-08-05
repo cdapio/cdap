@@ -82,8 +82,8 @@ import co.cask.cdap.test.internal.TestMetricsCollectionService;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionContext;
 import com.continuuity.tephra.TransactionFailureException;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -135,7 +135,7 @@ public class ReactorTestBase {
   private static DiscoveryServiceClient discoveryClient;
   private static ExploreExecutorService exploreExecutorService;
   private static ExploreClient exploreClient;
-  private static InMemoryTransactionManager txService;
+  private static TransactionManager txService;
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
@@ -257,7 +257,7 @@ public class ReactorTestBase {
         }
       }
     );
-    txService = injector.getInstance(InMemoryTransactionManager.class);
+    txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();

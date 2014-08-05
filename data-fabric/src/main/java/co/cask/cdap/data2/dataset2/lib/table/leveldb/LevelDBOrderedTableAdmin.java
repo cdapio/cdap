@@ -18,7 +18,6 @@ package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 
 import java.io.IOException;
 
@@ -27,10 +26,10 @@ import java.io.IOException;
  */
 public class LevelDBOrderedTableAdmin implements DatasetAdmin {
 
-  private final LevelDBOcTableService service;
+  private final LevelDBOrderedTableService service;
   private final String name;
 
-  public LevelDBOrderedTableAdmin(DatasetSpecification spec, LevelDBOcTableService service) throws IOException {
+  public LevelDBOrderedTableAdmin(DatasetSpecification spec, LevelDBOrderedTableService service) throws IOException {
     this.service = service;
     this.name = spec.getName();
   }

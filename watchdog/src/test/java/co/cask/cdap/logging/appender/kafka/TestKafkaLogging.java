@@ -33,7 +33,7 @@ import co.cask.cdap.logging.appender.LoggingTester;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.test.SlowTests;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -61,7 +61,7 @@ public class TestKafkaLogging extends KafkaTestBase {
     dsFramework.addModule("table", new InMemoryOrderedTableModule());
 
     Configuration txConf = HBaseConfiguration.create();
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager(txConf);
+    TransactionManager txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
 
@@ -118,7 +118,6 @@ public class TestKafkaLogging extends KafkaTestBase {
     CConfiguration conf = new CConfiguration();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-    conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "TFL_ACCT_1");
 
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     DistributedLogReader logReader =
@@ -133,7 +132,6 @@ public class TestKafkaLogging extends KafkaTestBase {
     CConfiguration conf = new CConfiguration();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-    conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "TFL_ACCT_1");
 
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     DistributedLogReader logReader =

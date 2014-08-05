@@ -17,9 +17,9 @@
 package co.cask.cdap.data2.transaction;
 
 import co.cask.cdap.common.conf.Constants;
+import com.continuuity.tephra.ChangeId;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TxConstants;
-import com.continuuity.tephra.inmemory.ChangeId;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.tephra.persist.TransactionSnapshot;
 import com.continuuity.tephra.snapshot.SnapshotCodecProvider;
 import com.google.gson.Gson;
@@ -344,7 +344,7 @@ public class TransactionManagerDebuggerMain {
   private void searchTransactionID(TransactionSnapshot snapshot) {
     System.out.println("Looking for transaction ID " + txId);
 
-    InMemoryTransactionManager.InProgressTx txInfo = snapshot.getInProgress().get(txId);
+    TransactionManager.InProgressTx txInfo = snapshot.getInProgress().get(txId);
     if (txInfo != null) {
       System.out.println("Transaction found in In-progress transactions:");
       System.out.println("\t" + txIdToString(txId) + " - " +
@@ -560,16 +560,16 @@ public class TransactionManagerDebuggerMain {
    * Print basic information and statistics about in-progress transactions.
    * @param inProgress in progress transaction IDs mapped to information about those
    */
-  private void printInProgressInfo(Map<Long, InMemoryTransactionManager.InProgressTx> inProgress) {
+  private void printInProgressInfo(Map<Long, TransactionManager.InProgressTx> inProgress) {
     System.out.println("==============================");
     System.out.println("== In progress transactions ==");
     System.out.println("Number of in-progress transactions: " + inProgress.size());
 
-    Map.Entry<Long, InMemoryTransactionManager.InProgressTx> oldestLong = null, oldestShort = null;
+    Map.Entry<Long, TransactionManager.InProgressTx> oldestLong = null, oldestShort = null;
 
     int longTxCount = 0;
     long avgLongAge = 0, avgShortAge = 0;
-    for (Map.Entry<Long, InMemoryTransactionManager.InProgressTx> tx : inProgress.entrySet()) {
+    for (Map.Entry<Long, TransactionManager.InProgressTx> tx : inProgress.entrySet()) {
       // Gather some statistics about in-progress transactions
       if (tx.getValue().isLongRunning()) {
         longTxCount++;
@@ -619,7 +619,7 @@ public class TransactionManagerDebuggerMain {
     System.out.println("======== All transaction Ids =========");
 
     System.out.println("=== In progress transactions ===");
-    for (Map.Entry<Long, InMemoryTransactionManager.InProgressTx> tx : snapshot.getInProgress().entrySet()) {
+    for (Map.Entry<Long, TransactionManager.InProgressTx> tx : snapshot.getInProgress().entrySet()) {
       System.out.println(txIdToString(tx.getKey()) + " - " +
           (tx.getValue().isLongRunning() ? "Long" : "Short"));
     }

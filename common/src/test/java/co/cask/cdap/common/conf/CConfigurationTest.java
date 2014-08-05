@@ -31,22 +31,22 @@ public class CConfigurationTest {
   public void testConfiguration() throws Exception {
     // first test empty config object
     CConfiguration conf = CConfiguration.create();
-    String a = conf.get("continuuity.test.A");
-    String b = conf.get("continuuity.test.B");
+    String a = conf.get("conf.test.A");
+    String b = conf.get("conf.test.B");
     Assert.assertNull(a);
     Assert.assertNull(b);
     // load some defaults and make sure they work
     conf.addResource("test-default.xml");
-    a = conf.get("continuuity.test.A");
-    b = conf.get("continuuity.test.B");
+    a = conf.get("conf.test.A");
+    b = conf.get("conf.test.B");
     Assert.assertNotNull(a);
     Assert.assertNotNull(b);
     assertEquals("A", a);
     assertEquals("B", b);
     // override one of the defaults and verify
     conf.addResource("test-override.xml");
-    a = conf.get("continuuity.test.A");
-    b = conf.get("continuuity.test.B");
+    a = conf.get("conf.test.A");
+    b = conf.get("conf.test.B");
     Assert.assertNotNull(a);
     Assert.assertNotNull(b);
     assertEquals("A", a);
@@ -57,16 +57,16 @@ public class CConfigurationTest {
   public void testAddedConfiguration() throws Exception {
     CConfiguration conf = CConfiguration.create();
     conf.addResource("test-default.xml");
-    conf.set("continuuity.test.addedA", "AddedA");
-    conf.set("continuuity.test.addedB", "AddedB");
-    conf.set("continuuity.test.A", "A+");
-    Assert.assertNotNull(conf.get("continuuity.test.A"));
-    Assert.assertNotNull(conf.get("continuuity.test.B"));
-    Assert.assertNotNull(conf.get("continuuity.test.addedA"));
-    Assert.assertNotNull(conf.get("continuuity.test.addedB"));
-    assertEquals("A+", conf.get("continuuity.test.A"));
-    assertEquals("AddedA", conf.get("continuuity.test.addedA"));
-    assertEquals("AddedB", conf.get("continuuity.test.addedB"));
+    conf.set("conf.test.addedA", "AddedA");
+    conf.set("conf.test.addedB", "AddedB");
+    conf.set("conf.test.A", "A+");
+    Assert.assertNotNull(conf.get("conf.test.A"));
+    Assert.assertNotNull(conf.get("conf.test.B"));
+    Assert.assertNotNull(conf.get("conf.test.addedA"));
+    Assert.assertNotNull(conf.get("conf.test.addedB"));
+    assertEquals("A+", conf.get("conf.test.A"));
+    assertEquals("AddedA", conf.get("conf.test.addedA"));
+    assertEquals("AddedB", conf.get("conf.test.addedB"));
   }
 
   @Test

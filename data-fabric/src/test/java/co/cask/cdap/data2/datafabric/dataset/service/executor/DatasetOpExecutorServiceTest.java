@@ -48,7 +48,7 @@ import co.cask.http.HttpHandler;
 import com.continuuity.tephra.DefaultTransactionExecutor;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -91,7 +91,7 @@ public class DatasetOpExecutorServiceTest {
   private DatasetService managerService;
   private DatasetFramework dsFramework;
   private TimeLimitEndpointStrategy endpointStrategy;
-  private InMemoryTransactionManager txManager;
+  private TransactionManager txManager;
 
   @Before
   public void setUp() throws IOException {
@@ -132,7 +132,7 @@ public class DatasetOpExecutorServiceTest {
       new TransactionMetricsModule(),
       new ExploreClientModule());
 
-    txManager = injector.getInstance(InMemoryTransactionManager.class);
+    txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 
     managerService = injector.getInstance(DatasetService.class);

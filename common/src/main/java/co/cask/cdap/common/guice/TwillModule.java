@@ -63,14 +63,14 @@ public class TwillModule extends AbstractModule {
                                                                YarnConfiguration yarnConfiguration,
                                                                LocationFactory locationFactory) {
     String zkConnectStr = configuration.get(Constants.Zookeeper.QUORUM) +
-                          configuration.get(Constants.CFG_TWILL_ZK_NAMESPACE, "/weave");
+                          configuration.get(Constants.CFG_TWILL_ZK_NAMESPACE);
 
     // Copy the yarn config and set the max heap ratio.
     YarnConfiguration yarnConfig = new YarnConfiguration(yarnConfiguration);
     yarnConfig.set(Constants.CFG_TWILL_RESERVED_MEMORY_MB, configuration.get(Constants.CFG_TWILL_RESERVED_MEMORY_MB));
     YarnTwillRunnerService runner = new YarnTwillRunnerService(yarnConfig,
                                                                zkConnectStr,
-                                                               LocationFactories.namespace(locationFactory, "weave"));
+                                                               LocationFactories.namespace(locationFactory, "twill"));
 
     // Set JVM options based on configuration
     runner.setJVMOptions(configuration.get(Constants.AppFabric.PROGRAM_JVM_OPTS));

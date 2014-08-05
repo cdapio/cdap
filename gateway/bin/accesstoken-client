@@ -54,7 +54,7 @@ if [ -d "$conf" ]; then
   CLASSPATH=$CLASSPATH:"$conf"/
 fi
 
-auth_file="$HOME/.continuuity.accesstoken"
+auth_file="$HOME/.cdap.accesstoken"
 containsTokenFileArg=0
 for var in "$@"
 do

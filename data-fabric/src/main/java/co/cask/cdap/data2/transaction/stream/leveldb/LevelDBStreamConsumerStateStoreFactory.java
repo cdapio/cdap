@@ -18,8 +18,8 @@ package co.cask.cdap.data2.transaction.stream.leveldb;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableCore;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
@@ -33,12 +33,12 @@ import java.io.IOException;
  */
 public final class LevelDBStreamConsumerStateStoreFactory implements StreamConsumerStateStoreFactory {
 
-  private final LevelDBOcTableService tableService;
+  private final LevelDBOrderedTableService tableService;
   private final String tableName;
-  private LevelDBOcTableCore coreTable;
+  private LevelDBOrderedTableCore coreTable;
 
   @Inject
-  LevelDBStreamConsumerStateStoreFactory(CConfiguration conf, LevelDBOcTableService tableService) {
+  LevelDBStreamConsumerStateStoreFactory(CConfiguration conf, LevelDBOrderedTableService tableService) {
     this.tableService = tableService;
     this.tableName = new ReactorDatasetNamespace(conf, Namespace.SYSTEM)
       .namespace(QueueConstants.STREAM_TABLE_PREFIX + ".state.store");
@@ -49,7 +49,7 @@ public final class LevelDBStreamConsumerStateStoreFactory implements StreamConsu
   public synchronized StreamConsumerStateStore create(StreamConfig streamConfig) throws IOException {
     if (coreTable == null) {
       tableService.ensureTableExists(tableName);
-      coreTable = new LevelDBOcTableCore(tableName, tableService);
+      coreTable = new LevelDBOrderedTableCore(tableName, tableService);
     }
     return new LevelDBStreamConsumerStateStore(streamConfig, coreTable);
   }
