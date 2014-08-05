@@ -99,8 +99,6 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txSystemClient = txSystemClient;
     this.appFabricClient = new AppFabricClient(httpHandler, locationFactory);
-    // Since we expose the DataSet class, it has to be loaded using ClassLoader delegation.
-    // The drawback is we'll not be able to instrument DataSet classes using ASM.
     try {
       File tempDir = tempFolder.newFolder();
       BundleJarUtil.unpackProgramJar(deployedJar, tempDir);
