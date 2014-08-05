@@ -27,8 +27,10 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.continuuity.tephra.TransactionExecutorFactory;
 import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
+import com.continuuity.tephra.runtime.ConfigModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.BeforeClass;
 
 /**
@@ -41,11 +43,13 @@ public class InMemoryQueueTest extends QueueTest {
   @BeforeClass
   public static void init() throws Exception {
 
-    injector = Guice.createInjector(new LocationRuntimeModule().getInMemoryModules(),
-                                    new DiscoveryRuntimeModule().getInMemoryModules(),
-                                    new DataFabricModules().getInMemoryModules(),
-                                    new DataSetsModules().getInMemoryModule(),
-                                    new TransactionMetricsModule());
+    injector = Guice.createInjector(
+      new ConfigModule(new Configuration()),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new DataFabricModules().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModule(),
+      new TransactionMetricsModule());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();

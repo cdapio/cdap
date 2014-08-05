@@ -30,10 +30,12 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
+import com.continuuity.tephra.runtime.ConfigModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.BeforeClass;
 
 /**
@@ -44,19 +46,21 @@ public class InMemoryMetricsTableTest extends MetricsTableTest {
 
   @BeforeClass
   public static void setup() throws Exception {
-    Injector injector = Guice.createInjector(new LocationRuntimeModule().getInMemoryModules(),
-                                             new DiscoveryRuntimeModule().getInMemoryModules(),
-                                             new DataFabricModules().getInMemoryModules(),
-                                             new TransactionMetricsModule(),
-                                             new AbstractModule() {
-                                               @Override
-                                               protected void configure() {
-                                                 install(new FactoryModuleBuilder()
-                                                           .implement(DatasetDefinitionRegistry.class,
-                                                                      DefaultDatasetDefinitionRegistry.class)
-                                                           .build(DatasetDefinitionRegistryFactory.class));
-                                               }
-                                             });
+    Injector injector = Guice.createInjector(
+      new ConfigModule(new Configuration()),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new DataFabricModules().getInMemoryModules(),
+      new TransactionMetricsModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          install(new FactoryModuleBuilder()
+                    .implement(DatasetDefinitionRegistry.class,
+                               DefaultDatasetDefinitionRegistry.class)
+                    .build(DatasetDefinitionRegistryFactory.class));
+        }
+      });
 
     dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
     dsFramework.addModule("metrics-inmemory", new InMemoryMetricsTableModule());
