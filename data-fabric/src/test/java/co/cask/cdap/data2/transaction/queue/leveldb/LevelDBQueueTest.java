@@ -27,8 +27,8 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.continuuity.tephra.TransactionExecutorFactory;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
@@ -53,7 +53,7 @@ public class LevelDBQueueTest extends QueueTest {
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule());
     // transaction manager is a "service" and must be started
-    transactionManager = injector.getInstance(InMemoryTransactionManager.class);
+    transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);

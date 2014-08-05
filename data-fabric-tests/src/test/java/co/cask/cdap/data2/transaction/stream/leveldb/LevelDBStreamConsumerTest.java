@@ -26,8 +26,8 @@ import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerTestBase;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -47,7 +47,7 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
   private static StreamConsumerFactory consumerFactory;
   private static StreamAdmin streamAdmin;
   private static TransactionSystemClient txClient;
-  private static InMemoryTransactionManager txManager;
+  private static TransactionManager txManager;
   private static QueueClientFactory queueClientFactory;
   private static StreamFileWriterFactory fileWriterFactory;
 
@@ -66,7 +66,7 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
     consumerFactory = injector.getInstance(StreamConsumerFactory.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     txClient = injector.getInstance(TransactionSystemClient.class);
-    txManager = injector.getInstance(InMemoryTransactionManager.class);
+    txManager = injector.getInstance(TransactionManager.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
 
