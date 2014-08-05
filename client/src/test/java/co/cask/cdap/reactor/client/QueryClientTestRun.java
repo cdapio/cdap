@@ -38,9 +38,9 @@ import java.util.List;
  *
  */
 @Category(XSlowTests.class)
-public class QueryClientTest extends ClientTestBase {
+public class QueryClientTestRun extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(QueryClientTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(QueryClientTestRun.class);
 
   private ApplicationClient appClient;
   private QueryClient queryClient;

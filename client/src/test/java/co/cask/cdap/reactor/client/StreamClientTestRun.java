@@ -31,9 +31,9 @@ import org.slf4j.LoggerFactory;
  *
  */
 @Category(XSlowTests.class)
-public class StreamClientTest extends ClientTestBase {
+public class StreamClientTestRun extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(StreamClientTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(StreamClientTestRun.class);
 
   private StreamClient streamClient;
 

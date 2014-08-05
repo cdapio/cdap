@@ -40,9 +40,9 @@ import java.io.File;
  *
  */
 @Category(XSlowTests.class)
-public class ProcedureClientTest extends ClientTestBase {
+public class ProcedureClientTestRun extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ProcedureClientTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ProcedureClientTestRun.class);
   private static final Gson GSON = new Gson();
 
   private ApplicationClient appClient;

@@ -27,9 +27,9 @@ import org.junit.runners.Suite;
  */
 @Category(XSlowTests.class)
 @RunWith(Suite.class)
-@Suite.SuiteClasses({ ApplicationClientTest.class, DatasetClientTest.class, MetricsClientTest.class,
-                      MonitorClientTest.class, ProcedureClientTest.class, ProgramClientTest.class,
-                      /*QueryClientTest.class, */StreamClientTest.class })
+@Suite.SuiteClasses({ ApplicationClientTestRun.class, DatasetClientTestRun.class, MetricsClientTestRun.class,
+                      MonitorClientTestRun.class, ProcedureClientTestRun.class, ProgramClientTestRun.class,
+                      /*QueryClientTestRun.class, */StreamClientTestRun.class })
 public class ClientTestSuite extends SingleNodeTestBase {
 
 }

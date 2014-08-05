@@ -40,9 +40,9 @@ import java.io.File;
  * Test for {@link DatasetClient}, {@link DatasetModuleClient}, and {@link DatasetTypeClient}.
  */
 @Category(XSlowTests.class)
-public class DatasetClientTest extends ClientTestBase {
+public class DatasetClientTestRun extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetClientTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetClientTestRun.class);
 
   private DatasetClient datasetClient;
   private DatasetModuleClient moduleClient;

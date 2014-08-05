@@ -16,11 +16,11 @@
 
 package co.cask.cdap.reactor.client;
 
-import co.cask.cdap.client.MetricsClient;
+import co.cask.cdap.client.MonitorClient;
 import co.cask.cdap.client.config.ReactorClientConfig;
+import co.cask.cdap.proto.SystemServiceMeta;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
-import com.google.gson.JsonObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,24 +28,33 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 /**
- * Test for {@link MetricsClient}.
+ * Test for {@link MonitorClient}.
  */
 @Category(XSlowTests.class)
-public class MetricsClientTest extends ClientTestBase {
+public class MonitorClientTestRun extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MetricsClientTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MonitorClientTestRun.class);
 
-  private MetricsClient metricsClient;
+  private MonitorClient monitorClient;
 
   @Before
   public void setUp() throws Throwable {
-    metricsClient = new MetricsClient(new ReactorClientConfig("localhost"));
+    monitorClient = new MonitorClient(new ReactorClientConfig("localhost"));
   }
 
   @Test
   public void testAll() throws Exception {
-    JsonObject metric = metricsClient.getMetric("user", "/apps/FakeApp/flows", "process.events", "aggregate=true");
-    Assert.assertEquals(0, metric.get("data").getAsInt());
+    List<SystemServiceMeta> services = monitorClient.listSystemServices();
+    Assert.assertTrue(services.size() > 0);
+
+    String someService = services.get(0).getName();
+    String serviceStatus = monitorClient.getSystemServiceStatus(someService);
+    Assert.assertEquals("OK", serviceStatus);
+
+    int systemServiceInstances = monitorClient.getSystemServiceInstances(someService);
+    monitorClient.setSystemServiceInstances(someService, 1);
   }
 }

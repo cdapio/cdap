@@ -33,7 +33,7 @@ import java.util.Map;
 /**
  *
  */
-public abstract class ClientTestBase {
+public abstract class ClientTestBase extends SingleNodeTestBase {
 
   protected void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {
     Assert.assertEquals(expected.size(), actual.size());

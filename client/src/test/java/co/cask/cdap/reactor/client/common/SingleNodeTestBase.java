@@ -46,19 +46,21 @@ public class SingleNodeTestBase {
 
   @BeforeClass
   public static void setUpClass() throws Throwable {
-    try {
-      CConfiguration cConf = CConfiguration.create();
-      cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    if (singleNodeMain != null) {
+      try {
+        CConfiguration cConf = CConfiguration.create();
+        cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
-      // Start singlenode without UI
-      singleNodeMain = SingleNodeMain.createSingleNodeMain(true, null, cConf, new Configuration());
-      singleNodeMain.startUp();
-    } catch (Throwable e) {
-      LOG.error("Failed to start singlenode", e);
-      if (singleNodeMain != null) {
-        singleNodeMain.shutDown();
+        // Start singlenode without UI
+        singleNodeMain = SingleNodeMain.createSingleNodeMain(true, null, cConf, new Configuration());
+        singleNodeMain.startUp();
+      } catch (Throwable e) {
+        LOG.error("Failed to start singlenode", e);
+        if (singleNodeMain != null) {
+          singleNodeMain.shutDown();
+        }
+        throw e;
       }
-      throw e;
     }
   }
 
@@ -66,6 +68,7 @@ public class SingleNodeTestBase {
   public static void tearDownClass() {
     if (singleNodeMain != null) {
       singleNodeMain.shutDown();
+      singleNodeMain = null;
     }
   }
 }

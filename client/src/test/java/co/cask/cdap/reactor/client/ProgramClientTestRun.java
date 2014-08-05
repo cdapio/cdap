@@ -37,9 +37,9 @@ import org.slf4j.LoggerFactory;
  *
  */
 @Category(XSlowTests.class)
-public class ProgramClientTest extends ClientTestBase {
+public class ProgramClientTestRun extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ProgramClientTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramClientTestRun.class);
 
   private ApplicationClient appClient;
   private ProcedureClient procedureClient;

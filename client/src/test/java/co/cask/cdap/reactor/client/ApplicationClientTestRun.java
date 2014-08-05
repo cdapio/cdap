@@ -37,9 +37,9 @@ import java.util.Map;
  * Test for {@link ApplicationClient}.
  */
 @Category(XSlowTests.class)
-public class ApplicationClientTest extends ClientTestBase {
+public class ApplicationClientTestRun extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ApplicationClientTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ApplicationClientTestRun.class);
 
   private ApplicationClient appClient;
 
