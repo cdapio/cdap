@@ -88,13 +88,13 @@ set_hbase()
   if [ $retvalue == 0 ]; then
     case "$HBASE_VERSION" in
       0.94*)
-        hbasecompat="$CONTINUUITY_HOME/hbase-compat-0.94/lib/*"
+        hbasecompat="$CDAP_HOME/hbase-compat-0.94/lib/*"
         ;;
       0.96*)
-        hbasecompat="$CONTINUUITY_HOME/hbase-compat-0.96/lib/*"
+        hbasecompat="$CDAP_HOME/hbase-compat-0.96/lib/*"
         ;;
       0.98*)
-        hbasecompat="$CONTINUUITY_HOME/hbase-compat-0.96/lib/*"
+        hbasecompat="$CDAP_HOME/hbase-compat-0.96/lib/*"
         ;;
       *)
         echo "ERROR: Unknown/unsupported version of HBase found: $HBASE_VERSION"
@@ -184,7 +184,7 @@ set_hive_classpath() {
     HIVE_EXEC=`ls $HIVE_HOME/lib/hive-exec-*`
     OTHER_HIVE_JARS=`ls $HIVE_HOME/lib/*.jar | tr '\n' ':'`
 
-    # We put in the explore classpath all the jars that are not in the regular reactor classpath.
+    # We put in the explore classpath all the jars that are not in the regular classpath.
     EXPLORE_CLASSPATH=$HIVE_EXEC:$OTHER_HIVE_JARS
 
     export EXPLORE_CLASSPATH

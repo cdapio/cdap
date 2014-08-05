@@ -16,8 +16,8 @@
 
 package co.cask.cdap.data2.transaction.snapshot;
 
-import com.continuuity.tephra.inmemory.ChangeId;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.ChangeId;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.persist.TransactionSnapshot;
 import com.continuuity.tephra.snapshot.BinaryDecoder;
 import com.continuuity.tephra.snapshot.BinaryEncoder;
@@ -47,11 +47,11 @@ public abstract class AbstractSnapshotCodec implements SnapshotCodec {
 
   public abstract int getVersion();
 
-  protected abstract NavigableMap<Long, InMemoryTransactionManager.InProgressTx>
+  protected abstract NavigableMap<Long, TransactionManager.InProgressTx>
   decodeInProgress(BinaryDecoder decoder) throws IOException;
 
   protected abstract void encodeInProgress(BinaryEncoder encoder,
-                                           Map<Long, InMemoryTransactionManager.InProgressTx> inProgress)
+                                           Map<Long, TransactionManager.InProgressTx> inProgress)
     throws IOException;
 
   //--------- helpers to encode or decode the transaction state --------------
@@ -88,7 +88,7 @@ public abstract class AbstractSnapshotCodec implements SnapshotCodec {
       // to skip them
       decodeObsoleteAttributes(decoder);
       Collection<Long> invalid = decodeInvalid(decoder);
-      NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress = decodeInProgress(decoder);
+      NavigableMap<Long, TransactionManager.InProgressTx> inProgress = decodeInProgress(decoder);
       NavigableMap<Long, Set<ChangeId>> committing = decodeChangeSets(decoder);
       NavigableMap<Long, Set<ChangeId>> committed = decodeChangeSets(decoder);
 

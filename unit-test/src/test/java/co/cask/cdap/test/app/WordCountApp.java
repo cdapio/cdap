@@ -23,7 +23,6 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -310,13 +309,12 @@ public class WordCountApp extends AbstractApplication {
         .setName("countFromStream")
         .setDescription("Word count from stream")
         .useOutputDataSet("totals")
+        .useInputDataSet("stream://text")
         .build();
     }
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      context.setInput(new StreamBatchReadable("text"), null);
-
       Job job = context.getHadoopJob();
       job.setMapperClass(StreamMapper.class);
       job.setMapOutputKeyClass(Text.class);

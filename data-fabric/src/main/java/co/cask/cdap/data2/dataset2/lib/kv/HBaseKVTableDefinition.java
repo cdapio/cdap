@@ -41,7 +41,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Simple implementation of in-memory non-tx {@link NoTxKeyValueTable}.
+ * Simple implementation of hbase non-tx {@link NoTxKeyValueTable}.
  */
 public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin> {
   private static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");

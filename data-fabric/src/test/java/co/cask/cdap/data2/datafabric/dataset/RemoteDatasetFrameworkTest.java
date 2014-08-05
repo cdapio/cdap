@@ -33,7 +33,7 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.conf.Configuration;
@@ -74,7 +74,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     // Tx Manager to support working with datasets
     Configuration txConf = HBaseConfiguration.create();
     cConf.copyTxProperties(txConf);
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager(txConf);
+    TransactionManager txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 

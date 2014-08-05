@@ -16,7 +16,7 @@
 package co.cask.cdap.data2.transaction.stream.leveldb;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableCore;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import com.google.common.collect.ImmutableSortedMap;
@@ -31,9 +31,9 @@ import java.util.Set;
  */
 public final class LevelDBStreamConsumerStateStore extends StreamConsumerStateStore {
 
-  private final LevelDBOcTableCore tableCore;
+  private final LevelDBOrderedTableCore tableCore;
 
-  protected LevelDBStreamConsumerStateStore(StreamConfig streamConfig, LevelDBOcTableCore tableCore) {
+  protected LevelDBStreamConsumerStateStore(StreamConfig streamConfig, LevelDBOrderedTableCore tableCore) {
     super(streamConfig);
     this.tableCore = tableCore;
   }

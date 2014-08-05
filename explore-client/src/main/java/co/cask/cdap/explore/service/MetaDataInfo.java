@@ -31,7 +31,7 @@ public class MetaDataInfo {
     FETCH_DIRECTION(null),
     SERVER_NAME(null),
     SEARCH_PATTERN_ESCAPE(null),
-    DBMS_NAME(new MetaDataInfo("Continuuity Reactor")),
+    DBMS_NAME(new MetaDataInfo("Cask CDAP")),
     DBMS_VER(new MetaDataInfo("2.4.0")),  // TODO make it dynamic [REACTOR-319]
     ACCESSIBLE_TABLES(null),
     ACCESSIBLE_PROCEDURES(null),

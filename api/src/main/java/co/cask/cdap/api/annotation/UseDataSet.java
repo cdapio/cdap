@@ -54,7 +54,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface UseDataSet {
   /**
-   * Returns name of the {@link co.cask.cdap.api.data.DataSet}.
+   * Returns name of the {@link co.cask.cdap.api.dataset.Dataset}.
    */
   String value();
 }

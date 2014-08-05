@@ -26,16 +26,16 @@ import co.cask.cdap.data.runtime.DataFabricLocalModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueProducer;
 import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBQueueProducer;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.continuuity.tephra.TransactionExecutorFactory;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.continuuity.tephra.TxConstants;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -68,14 +68,14 @@ public class LocalQueueTest extends QueueTest {
       new TransactionMetricsModule(),
       new DataFabricLocalModule());
     // transaction manager is a "service" and must be started
-    transactionManager = injector.getInstance(InMemoryTransactionManager.class);
+    transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    LevelDBOcTableService.getInstance().clearTables();
+    LevelDBOrderedTableService.getInstance().clearTables();
   }
 
   @Test

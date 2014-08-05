@@ -32,7 +32,7 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.test.SlowTests;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -54,7 +54,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Category(SlowTests.class)
 public class InMemoryExploreServiceTest {
-  private static InMemoryTransactionManager transactionManager;
+  private static TransactionManager transactionManager;
   private static ExploreService exploreService;
 
   @BeforeClass
@@ -75,7 +75,7 @@ public class InMemoryExploreServiceTest {
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new AuthModule(),
         new ExploreRuntimeModule().getInMemoryModules());
-    transactionManager = injector.getInstance(InMemoryTransactionManager.class);
+    transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
 
     exploreService = injector.getInstance(ExploreService.class);

@@ -16,8 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.data.batch.BatchReadable;
-import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -63,19 +61,9 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final MetricsCollectionService metricsCollectionService;
   private final ProgramServiceDiscovery serviceDiscovery;
 
-  /**
-   * Input dataset for the MapReduce job. Either inputDataset or inputDatasetName is set.
-   */
-  @Deprecated
-  private BatchReadable inputDataset;
   private String inputDatasetName;
   private List<Split> inputDataSelection;
 
-  /**
-   * Output dataset for the MapReduce job. Either outputDataset or outputDatasetName is set.
-   */
-  @Deprecated
-  private BatchWritable outputDataset;
   private String outputDatasetName;
   private Job job;
 
@@ -176,31 +164,14 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     return (T) job;
   }
 
-  @Deprecated
-  @Override
-  public void setInput(BatchReadable dataset, List<Split> splits) {
-    this.inputDataset = dataset;
-    this.inputDatasetName = null;
-    this.inputDataSelection = splits;
-  }
-
   @Override
   public void setInput(String datasetName, List<Split> splits) {
-    this.inputDataset = null;
     this.inputDatasetName = datasetName;
     this.inputDataSelection = splits;
   }
 
-  @Deprecated
-  @Override
-  public void setOutput(BatchWritable dataset) {
-    this.outputDataset = dataset;
-    this.outputDatasetName = null;
-  }
-
   @Override
   public void setOutput(String datasetName) {
-    this.outputDataset = null;
     this.outputDatasetName = datasetName;
   }
 
@@ -257,22 +228,12 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   @Nullable
-  public BatchReadable getInputDataset() {
-    return inputDataset;
-  }
-
-  @Nullable
   public String getInputDatasetName() {
     return inputDatasetName;
   }
 
   public List<Split> getInputDataSelection() {
     return inputDataSelection;
-  }
-
-  @Nullable
-  public BatchWritable getOutputDataset() {
-    return outputDataset;
   }
 
   @Nullable

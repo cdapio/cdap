@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>hbase-compat-0.94</artifactId>
-  <name>Continuuity HBase 0.94 Compatibility</name>
+  <name>Cask CDAP HBase 0.94 Compatibility</name>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -206,10 +206,10 @@
                 <configuration>
                   <version>${project.version}</version>
                   <groupId>${dist.deploy.groupId}</groupId>
-                  <artifactId>continuuity-${project.artifactId}</artifactId>
+                  <artifactId>cdap-${project.artifactId}</artifactId>
                   <packaging>noarch.rpm</packaging>
                   <generatePom>false</generatePom>
-                  <file>${project.build.directory}/continuuity-${project.artifactId}-${package.version}-1.noarch.rpm</file>
+                  <file>${project.build.directory}/cdap-${project.artifactId}-${package.version}-1.noarch.rpm</file>
                   <classifier>1</classifier>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
@@ -247,10 +247,10 @@
                 <configuration>
                   <version>${project.version}</version>
                   <groupId>${dist.deploy.groupId}</groupId>
-                  <artifactId>continuuity-${project.artifactId}</artifactId>
+                  <artifactId>cdap-${project.artifactId}</artifactId>
                   <packaging>deb</packaging>
                   <generatePom>false</generatePom>
-                  <file>${project.build.directory}/continuuity-${project.artifactId}_${package.version}-1_all.deb</file>
+                  <file>${project.build.directory}/cdap-${project.artifactId}_${package.version}-1_all.deb</file>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
                 </configuration>
@@ -287,10 +287,10 @@
                 <configuration>
                   <version>${project.version}</version>
                   <groupId>${dist.deploy.groupId}</groupId>
-                  <artifactId>continuuity-${project.artifactId}</artifactId>
+                  <artifactId>cdap-${project.artifactId}</artifactId>
                   <packaging>tar.gz</packaging>
                   <generatePom>false</generatePom>
-                  <file>${project.build.directory}/continuuity-${project.artifactId}-${package.version}.tar.gz</file>
+                  <file>${project.build.directory}/cdap-${project.artifactId}-${package.version}.tar.gz</file>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
                 </configuration>

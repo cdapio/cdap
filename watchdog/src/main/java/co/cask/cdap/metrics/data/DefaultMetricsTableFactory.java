@@ -19,14 +19,14 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.DataSetAccessor;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset.lib.table.MetricsTable;
-import co.cask.cdap.data2.dataset.lib.table.hbase.HBaseMetricsTable;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseMetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import com.google.common.base.Throwables;
@@ -61,7 +61,7 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
       this.cConf = cConf;
       this.dsFramework =
         new NamespacedDatasetFramework(dsFramework,
-                                       new ReactorDatasetNamespace(cConf, DataSetAccessor.Namespace.SYSTEM));
+                                       new ReactorDatasetNamespace(cConf, Namespace.SYSTEM));
 
       this.entityCodecs = CacheBuilder.newBuilder().build(new CacheLoader<String, MetricsEntityCodec>() {
         @Override

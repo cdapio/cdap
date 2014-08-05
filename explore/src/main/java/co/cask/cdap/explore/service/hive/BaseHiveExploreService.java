@@ -620,6 +620,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         // handle is removed from the internal cache, then there is no point returning them from here.
       }
     }
+    Collections.sort(result);
     return result;
   }
 
@@ -649,7 +650,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   /**
    * Starts a long running transaction, and also sets up session configuration.
-   * @return configuration for a hive session that contains a transaction, and serialized reactor configuration and
+   * @return configuration for a hive session that contains a transaction, and serialized CDAP configuration and
    * HBase configuration. This will be used by the map-reduce tasks started by Hive.
    * @throws IOException
    */

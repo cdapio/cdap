@@ -45,7 +45,7 @@ public class DatasetAccessor {
   /**
    * Returns a RecordScannable. The returned object will have to be closed by the caller.
    *
-   * @param conf Configuration that contains RecordScannable name to load, Reactor and HBase configuration.
+   * @param conf Configuration that contains RecordScannable name to load, CDAP and HBase configuration.
    * @return RecordScannable.
    * @throws IOException
    */
@@ -63,7 +63,7 @@ public class DatasetAccessor {
   /**
    * Returns record type of the RecordScannable.
    *
-   * @param conf Configuration that contains RecordScannable name to load, Reactor and HBase configuration.
+   * @param conf Configuration that contains RecordScannable name to load, CDAP and HBase configuration.
    * @return Record type of RecordScannable.
    * @throws IOException
    */

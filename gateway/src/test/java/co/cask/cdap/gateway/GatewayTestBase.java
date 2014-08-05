@@ -32,7 +32,6 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
-import co.cask.cdap.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.runtime.GatewayModule;
@@ -42,7 +41,7 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.passport.http.client.PassportClient;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -92,7 +91,7 @@ public abstract class GatewayTestBase {
   private static EndpointStrategy endpointStrategy;
   private static MetricsQueryService metrics;
   private static StreamHttpService streamHttpService;
-  private static InMemoryTransactionManager txService;
+  private static TransactionManager txService;
   private static DatasetService dsService;
 
   @ClassRule
@@ -160,7 +159,6 @@ public abstract class GatewayTestBase {
           // bindings out as it overlaps with
           // AppFabricServiceModule
           bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-          bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
 
           MockMetricsCollectionService metricsCollectionService = new
             MockMetricsCollectionService();
@@ -177,7 +175,7 @@ public abstract class GatewayTestBase {
     );
 
     gateway = injector.getInstance(Gateway.class);
-    txService = injector.getInstance(InMemoryTransactionManager.class);
+    txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     metrics = injector.getInstance(MetricsQueryService.class);
