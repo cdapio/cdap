@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>common-unit-test</artifactId>
-  <name>Continuuity Build Common</name>
+  <name>Cask CDAP Build Common</name>
   <packaging>jar</packaging>
 
 </project>

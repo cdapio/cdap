@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>web-app</artifactId>
-  <name>Continuuity Web-App</name>
+  <name>Cask CDAP Web-App</name>
 
   <build>
     <plugins>

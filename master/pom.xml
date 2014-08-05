@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>master</artifactId>
-  <name>Continuuity Reactor Master</name>
+  <name>Cask CDAP Reactor Master</name>
   <packaging>jar</packaging>
 
   <dependencies>

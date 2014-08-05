@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>common</artifactId>
-  <name>Continuuity Common</name>
+  <name>Cask CDAP Common</name>
   <packaging>jar</packaging>
 
   <properties>
