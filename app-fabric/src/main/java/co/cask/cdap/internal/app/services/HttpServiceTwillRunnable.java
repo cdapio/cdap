@@ -45,7 +45,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
- *
+ * A Twill Runnable which runs a {@link NettyHttpService} with a list of {@link HttpServiceHandler}
+ * as the HTTP request handlers. This is the runnable which is run in the {@link HttpServiceTwillApplication}
+ * as a custom user service.
  */
 public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
@@ -58,6 +60,12 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   private List<HttpServiceHandler> handlers;
   private NettyHttpService service;
 
+  /**
+   * Instantiates this class with a name which will be used when this service is announced
+   * and a list of {@link HttpServiceHandler} which will be used to to handle the HTTP requests.
+   * @param name The name which will be used to announce the service.
+   * @param handlers The handlers which will be used to handle the HttpRequests.
+   */
   public HttpServiceTwillRunnable(String name, Iterable<? extends HttpServiceHandler> handlers) {
     this.name = name;
     this.handlers = ImmutableList.copyOf(handlers);
@@ -71,6 +79,9 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     this.programClassLoader = programClassLoader;
   }
 
+  /**
+   * Starts the {@link NettyHttpService} and announces this runnable as well.
+   */
   @Override
   public void run() {
     Future<Service.State> completion = Services.getCompletionFuture(service);
@@ -88,6 +99,10 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     }
   }
 
+  /**
+   * Configures this runnable with the name and handler names as configs.
+   * @return The specification for this runnable.
+   */
   @Override
   public TwillRunnableSpecification configure() {
     Map<String, String> runnableArgs = new HashMap<String, String>();
@@ -103,6 +118,10 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
       .build();
   }
 
+  /**
+   * Initializes this runnable from the given context.
+   * @param context
+   */
   @Override
   public void initialize(TwillContext context) {
     Map<String, String> runnableArgs = new HashMap<String, String>(context.getSpecification().getConfigs());
@@ -121,15 +140,27 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     service = createNettyHttpService(context.getHost().getCanonicalHostName());
   }
 
+  /**
+   * Called when this runnable is destroyed.
+   */
   @Override
   public void destroy() {
+    // no-op
   }
 
+  /**
+   * Stops the {@link NettyHttpService} tied with this runnable.
+   */
   @Override
   public void stop() {
     service.stop();
   }
 
+  /**
+   * Creates a {@link NettyHttpService} from the given host.
+   * @param host The host which the service will run on.
+   * @return A HTTP Service which uses the {@link HttpServiceHandler}s to handle the HTTP requests.
+   */
   private NettyHttpService createNettyHttpService(String host) {
     // Create HttpHandlers which delegate to the HttpServiceHandlers
     HttpHandlerFactory factory = new HttpHandlerFactory();

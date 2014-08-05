@@ -28,7 +28,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * Implementation of {@link HttpServiceRequest} which binds the methods
+ * to the appropriate methods for a {@link HttpRequest}.
  */
 final class DefaultHttpServiceRequest implements HttpServiceRequest {
 
@@ -36,6 +37,10 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
   private final ByteBuffer content;
   private final Multimap<String, String> headers;
 
+  /**
+   * Instantiates this class from a {@link HttpRequest}
+   * @param request
+   */
   DefaultHttpServiceRequest(HttpRequest request) {
     this.request = request;
     this.content = request.getContent().toByteBuffer();
@@ -47,31 +52,53 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
     this.headers = builder.build();
   }
 
+  /**
+   * @return The method of the request.
+   */
   @Override
   public String getMethod() {
     return request.getMethod().toString();
   }
 
+  /**
+   * @return The URI of the request.
+   */
   @Override
   public String getRequestURI() {
     return request.getUri();
   }
 
+  /**
+   * @return the data content of the request as a ByteBuffer.
+   */
   @Override
   public ByteBuffer getContent() {
     return content.duplicate().asReadOnlyBuffer();
   }
 
+  /**
+   * @return The headers of this request. Where each header name can map to multiple values
+   */
   @Override
   public Multimap<String, String> getHeaders() {
     return headers;
   }
 
+  /**
+   * Returns all of the values for a specified header.
+   * @param key The header to find
+   * @return List of all of the values for that header.
+   */
   @Override
   public List<String> getHeaders(String key) {
     return ImmutableList.copyOf(headers.get(key));
   }
 
+  /**
+   * @param key The header to find
+   * @return The value of the specified header. If the header maps to multiple values,
+   * then the first value should be returned.
+   */
   @Override
   public String getHeader(String key) {
     Collection<String> values = headers.get(key);

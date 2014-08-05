@@ -29,9 +29,9 @@ import java.nio.charset.Charset;
 public interface HttpServiceResponder {
 
   /**
-   * Send json response back to the client with some default status.
+   * Send json response back to the client with a default status.
    *
-   * @param object The object to send.
+   * @param object Object that will be serialized into Json and sent back as content.
    */
   void sendJson(Object object);
 
@@ -44,7 +44,7 @@ public interface HttpServiceResponder {
   void sendJson(int status, Object object);
 
   /**
-   * Sends json response back to the client using the given gson object.
+   * Sends json response back to the client using the given {@link Gson} object.
    *
    * @param status Status of the response.
    * @param object Object that will be serialized into Json and sent back as content.
@@ -54,7 +54,7 @@ public interface HttpServiceResponder {
   void sendJson(int status, Object object, Type type, Gson gson);
 
   /**
-   * Send a UTF-8 encoded string response back to the http client with response status of 200 OK.
+   * Send a UTF-8 encoded string response back to the http client with a default response status.
    * @param data string data to be sent back.
    */
   void sendString(String data);
@@ -64,6 +64,7 @@ public interface HttpServiceResponder {
    *
    * @param status status of the Http response.
    * @param data string data to be sent back.
+   * @param charset The Charset used to encode the string.
    */
   void sendString(int status, String data, Charset charset);
 
@@ -75,7 +76,7 @@ public interface HttpServiceResponder {
   void sendStatus(int status);
 
   /**
-   * Send only a status code back to client without any content.
+   * Send a status code and headers back to client without any content.
    *
    * @param status status of the Http response.
    * @param headers Headers to send.
@@ -83,7 +84,7 @@ public interface HttpServiceResponder {
   void sendStatus(int status, Multimap<String, String> headers);
 
   /**
-   * Sends error message back to the client.
+   * Send error message back to the client with the specified status code.
    *
    * @param status Status of the response.
    * @param errorMessage Error message sent back to the client.

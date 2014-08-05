@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
- *
+ * This class is a simple implementation of {@link HttpServiceSpecification}.
  */
 public class DefaultHttpServiceSpecification implements HttpServiceSpecification {
   private final String className;
@@ -30,6 +30,13 @@ public class DefaultHttpServiceSpecification implements HttpServiceSpecification
   private final String description;
   private final Map<String, String> properties;
 
+  /**
+   * Instantiate this class with the following parameters.
+   * @param className
+   * @param name
+   * @param description
+   * @param properties
+   */
   public DefaultHttpServiceSpecification(String className, String name,
                                          String description, Map<String, String> properties) {
     this.className = className;
@@ -38,30 +45,52 @@ public class DefaultHttpServiceSpecification implements HttpServiceSpecification
     this.properties = ImmutableMap.copyOf(properties);
   }
 
+  /**
+   * Instantiate this class with the following parammeters.
+   * @param name
+   * @param description
+   * @param properties
+   */
   public DefaultHttpServiceSpecification(String name, String description, Map<String, String> properties) {
     this(null, name, description, properties);
   }
 
+  /**
+   * @return The class name
+   */
   @Override
   public String getClassName() {
     return className;
   }
 
+  /**
+   * @return The name
+   */
   @Override
   public String getName() {
     return name;
   }
 
+  /**
+   * @return The description
+   */
   @Override
   public String getDescription() {
     return description;
   }
 
+  /**
+   * @return The properties
+   */
   @Override
   public Map<String, String> getProperties() {
     return properties;
   }
 
+  /**
+   * @param key for getting specific property value.
+   * @return The property value.
+   */
   @Override
   public String getProperty(String key) {
     return properties.get(key);
