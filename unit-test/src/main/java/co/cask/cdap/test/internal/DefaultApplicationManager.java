@@ -48,7 +48,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-import com.google.inject.name.Named;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
@@ -87,7 +86,7 @@ public class DefaultApplicationManager implements ApplicationManager {
                                    CConfiguration configuration,
                                    DiscoveryServiceClient discoveryServiceClient,
                                    AppFabricHttpHandler httpHandler,
-                                   @Named("temp.test.dir")TemporaryFolder tempFolder,
+                                   TemporaryFolder tempFolder,
                                    @Assisted("accountId") String accountId,
                                    @Assisted("applicationId") String applicationId,
                                    @Assisted Location deployedJar,
