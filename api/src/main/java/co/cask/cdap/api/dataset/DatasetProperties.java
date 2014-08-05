@@ -60,7 +60,7 @@ public final class DatasetProperties {
   }
 
   /**
-   * A Builder to construct DataSetSpecification instances.
+   * A Builder to construct DatasetSpecification instances.
    */
   public static final class Builder {
     private Map<String, String> properties = Maps.newHashMap();

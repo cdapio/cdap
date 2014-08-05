@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>common</artifactId>
-  <name>Continuuity Common</name>
+  <name>Cask CDAP Common</name>
   <packaging>jar</packaging>
 
   <properties>
@@ -41,6 +41,12 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>api</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>common-unit-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>co.cask.http</groupId>

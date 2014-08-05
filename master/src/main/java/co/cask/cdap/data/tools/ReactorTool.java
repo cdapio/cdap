@@ -24,10 +24,8 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.data.DataSetAccessor;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
-import co.cask.cdap.data2.dataset.api.DataSetManager;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
@@ -47,9 +45,6 @@ import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-
-import java.util.Map;
-import java.util.Properties;
 
 /**
  * Reactor command line tool.
@@ -160,7 +155,6 @@ public class ReactorTool {
   }
 
   private void performUpgrade(Injector injector) throws Exception {
-    DataSetAccessor accessor = injector.getInstance(DataSetAccessor.class);
     QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
     MetricsTableFactory metricsTableFactory = injector.getInstance(MetricsTableFactory.class);
@@ -171,12 +165,7 @@ public class ReactorTool {
     DatasetMetaTableUtil datasetTableUtil = new DatasetMetaTableUtil(framework);
     datasetTableUtil.init();
 
-    // Upgrade all user tables.
-    Properties properties = new Properties();
-    for (Map.Entry<String, Class<?>> entry : accessor.list(DataSetAccessor.Namespace.USER).entrySet()) {
-      DataSetManager manager = accessor.getDataSetManager(entry.getValue(), DataSetAccessor.Namespace.USER);
-      manager.upgrade(entry.getKey(), properties);
-    }
+    // todo: upgrade all user tables.
 
     // Upgrade all queue and stream tables.
     queueAdmin.upgrade();

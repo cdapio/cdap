@@ -15,7 +15,9 @@
  */
 package co.cask.cdap.data2.transaction.stream.leveldb;
 
-import co.cask.cdap.data.DataSetAccessor;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data.Namespace;
+import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
 import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
 import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
@@ -36,10 +38,10 @@ public final class LevelDBStreamConsumerStateStoreFactory implements StreamConsu
   private LevelDBOcTableCore coreTable;
 
   @Inject
-  LevelDBStreamConsumerStateStoreFactory(DataSetAccessor dataSetAccessor, LevelDBOcTableService tableService) {
+  LevelDBStreamConsumerStateStoreFactory(CConfiguration conf, LevelDBOcTableService tableService) {
     this.tableService = tableService;
-    this.tableName = dataSetAccessor.namespace(QueueConstants.STREAM_TABLE_PREFIX,
-                                               DataSetAccessor.Namespace.SYSTEM) + ".state.store";
+    this.tableName = new ReactorDatasetNamespace(conf, Namespace.SYSTEM)
+      .namespace(QueueConstants.STREAM_TABLE_PREFIX + ".state.store");
 
   }
 

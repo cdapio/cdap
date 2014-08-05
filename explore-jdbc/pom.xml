@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>explore-jdbc</artifactId>
-  <name>Continuuity Explore JDBC Driver</name>
+  <name>Cask CDAP Explore JDBC Driver</name>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -106,6 +106,12 @@
           <artifactId>netty-http</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>common-unit-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.data.DataSetSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -52,11 +51,6 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   @Override
   public Map<String, StreamSpecification> getStreams() {
     return delegate.getStreams();
-  }
-
-  @Override
-  public Map<String, DataSetSpecification> getDataSets() {
-    return delegate.getDataSets();
   }
 
   @Override

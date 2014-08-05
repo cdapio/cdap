@@ -57,7 +57,7 @@ public class DatasetClient {
   /**
    * Lists all datasets.
    *
-   * @return list of {@link DatasetMeta}s.
+   * @return list of {@link DatasetSpecification}.
    * @throws IOException if a network error occurred
    */
   public List<DatasetSpecification> list() throws IOException {
@@ -117,16 +117,6 @@ public class DatasetClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new DatasetNotFoundException(datasetName);
     }
-  }
-
-  /**
-   * Deletes all datasets. WARNING: This is an unrecoverable operation.
-   *
-   * @throws IOException if a network error occurred
-   */
-  public void deleteAll() throws IOException {
-    URL url = config.resolveURL("data/unrecoverable/datasets");
-    restClient.execute(HttpMethod.DELETE, url);
   }
 
   /**

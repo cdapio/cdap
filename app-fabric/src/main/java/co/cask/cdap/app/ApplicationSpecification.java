@@ -16,8 +16,6 @@
 
 package co.cask.cdap.app;
 
-import co.cask.cdap.api.data.DataSet;
-import co.cask.cdap.api.data.DataSetSpecification;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.Flow;
@@ -53,12 +51,6 @@ public interface ApplicationSpecification {
    *         for {@link Stream}s configured for the Application.
    */
   Map<String, StreamSpecification> getStreams();
-
-  /**
-   * @return An immutable {@link Map} from {@link DataSet} name to {@link DataSetSpecification}
-   *         for {@link DataSet}s configured for the Application.
-   */
-  Map<String, DataSetSpecification> getDataSets();
 
   /**
    * @return An immutable {@link Map} from {@link co.cask.cdap.api.dataset.module.DatasetModule} name

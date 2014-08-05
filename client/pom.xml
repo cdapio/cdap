@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>client</artifactId>
-  <name>Continuuity Reactor Java Client</name>
+  <name>Cask CDAP Reactor Java Client</name>
 
   <dependencies>
     <dependency>

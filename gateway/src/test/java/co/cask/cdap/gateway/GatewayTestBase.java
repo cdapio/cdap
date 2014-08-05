@@ -32,7 +32,6 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
-import co.cask.cdap.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.runtime.GatewayModule;
@@ -160,7 +159,6 @@ public abstract class GatewayTestBase {
           // bindings out as it overlaps with
           // AppFabricServiceModule
           bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-          bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
 
           MockMetricsCollectionService metricsCollectionService = new
             MockMetricsCollectionService();

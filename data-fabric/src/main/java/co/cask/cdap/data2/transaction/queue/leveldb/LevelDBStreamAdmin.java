@@ -16,8 +16,8 @@
 
 package co.cask.cdap.data2.transaction.queue.leveldb;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.DataSetAccessor;
 import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -38,8 +38,8 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBStreamAdmin.class);
 
   @Inject
-  public LevelDBStreamAdmin(DataSetAccessor dataSetAccessor, LevelDBOcTableService service) {
-    super(dataSetAccessor, service, QueueConstants.QueueType.STREAM);
+  public LevelDBStreamAdmin(CConfiguration conf, LevelDBOcTableService service) {
+    super(conf, service, QueueConstants.QueueType.STREAM);
   }
 
   @Override
