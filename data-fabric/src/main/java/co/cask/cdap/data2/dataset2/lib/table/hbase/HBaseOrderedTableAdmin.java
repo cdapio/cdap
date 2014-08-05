@@ -92,7 +92,7 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
       splits = GSON.fromJson(splitsProperty, byte[][].class);
     }
 
-    tableUtil.createTableIfNotExists(admin, name, tableDescriptor, splits);
+    tableUtil.createTableIfNotExists(getAdmin(), name, tableDescriptor, splits);
   }
 
   @Override
