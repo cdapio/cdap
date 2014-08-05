@@ -142,7 +142,7 @@ public class ExploreServiceUtils {
 
   /**
    * Check that Hive is in the class path - with a right version. Use a separate class loader to load Hive classes,
-   * built using the explore classpath passed as a system property to reactor-master.
+   * built using the explore classpath passed as a system property to master.
    */
   public static HiveSupport checkHiveSupportWithoutSecurity() {
     ClassLoader classLoader = getExploreClassLoader();
@@ -188,19 +188,21 @@ public class ExploreServiceUtils {
         && getStatusMethod.getReturnType() == usingCL.loadClass("org.apache.hive.service.cli.OperationState")) {
         return HiveSupport.HIVE_12;
       }
-      throw new RuntimeException("Hive distribution not supported. Set the configuration reactor.explore.enabled " +
-                                   "to false to start up Reactor without Explore.");
+      throw new RuntimeException("Hive distribution not supported. Set the configuration '" +
+                                 Constants.Explore.EXPLORE_ENABLED +
+                                 "' to false to start up without Explore.");
     } catch (RuntimeException e) {
       throw e;
     } catch (Throwable e) {
-      throw new RuntimeException("Hive jars not present in classpath. Set the configuration reactor.explore.enabled " +
-                                   "to false to start up Reactor without Explore.", e);
+      throw new RuntimeException("Hive jars not present in classpath. Set the configuration '" +
+                                 Constants.Explore.EXPLORE_ENABLED +
+                                 "' to false to start up without Explore.", e);
     }
   }
 
   /**
    * Check that Hive is in the class path - with a right version. Use a separate class loader to load Hive classes,
-   * built using the explore classpath passed as a system property to reactor-master. Also check that Hadoop cluster is
+   * built using the explore classpath passed as a system property to master. Also check that Hadoop cluster is
    * not secure, as it is not supported by Explore yet.
    *
    * @param hConf HBase configuration used to check if Hadoop cluster is secure.
@@ -220,8 +222,9 @@ public class ExploreServiceUtils {
    */
   public static HiveSupport checkHiveSupportWithSecurity(Configuration hConf, ClassLoader hiveClassLoader) {
     if (User.isHBaseSecurityEnabled(hConf)) {
-      throw new RuntimeException("Explore is not supported on secure Hadoop clusters. Set the configuration " +
-                                   "reactor.explore.enabled to false to start up Reactor without Explore.");
+      throw new RuntimeException("Explore is not supported on secure Hadoop clusters. Set the configuration '" +
+                                 Constants.Explore.EXPLORE_ENABLED +
+                                 "' to false to start without Explore.");
     }
     return checkHiveSupportWithoutSecurity(hiveClassLoader);
   }
@@ -245,7 +248,7 @@ public class ExploreServiceUtils {
 
   /**
    * Trace the jar dependencies needed by the Explore container. Uses a separate class loader to load Hive classes,
-   * built using the explore classpath passed as a system property to reactor-master.
+   * built using the explore classpath passed as a system property to master.
    *
    * @return an ordered set of jar files.
    */

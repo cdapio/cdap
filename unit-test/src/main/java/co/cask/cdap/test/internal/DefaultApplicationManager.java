@@ -24,8 +24,6 @@ import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.lang.jar.ProgramClassLoader;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data.DataFabric;
-import co.cask.cdap.data.DataFabric2Impl;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
@@ -102,8 +100,6 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.appFabricClient = new AppFabricClient(httpHandler, locationFactory);
 
     File unpackedLocation = Files.createTempDir();
-    DataFabric dataFabric = new DataFabric2Impl(locationFactory);
-
     try {
       // Since we expose the DataSet class, it has to be loaded using ClassLoader delegation.
       // The drawback is we'll not be able to instrument DataSet classes using ASM.
@@ -111,7 +107,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       BundleJarUtil.unpackProgramJar(deployedJar, unpackedLocation);
       classLoader = ClassLoaders.newProgramClassLoader(unpackedLocation, ApiResourceListHolder.getResourceList(),
                                                        this.getClass().getClassLoader());
-      this.dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework, configuration,
+      this.dataSetInstantiator = new DataSetInstantiator(datasetFramework, configuration,
                                                          new DataSetClassLoader(classLoader));
     } catch (IOException e) {
       throw Throwables.propagate(e);

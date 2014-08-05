@@ -23,8 +23,8 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.KeyValue;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.KeyValue;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.iq80.leveldb.DB;
@@ -34,11 +34,11 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Simple implementation of in-memory non-tx {@link NoTxKeyValueTable}.
+ * Simple implementation of leveldb non-tx {@link NoTxKeyValueTable}.
  */
 public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin> {
   @Inject
-  private LevelDBOcTableService service;
+  private LevelDBOrderedTableService service;
 
   public LevelDBKVTableDefinition(String name) {
     super(name);
@@ -64,9 +64,9 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
 
   private static final class DatasetAdminImpl implements DatasetAdmin {
     private final String tableName;
-    protected final LevelDBOcTableService service;
+    protected final LevelDBOrderedTableService service;
 
-    private DatasetAdminImpl(String tableName, LevelDBOcTableService service) throws IOException {
+    private DatasetAdminImpl(String tableName, LevelDBOrderedTableService service) throws IOException {
       this.tableName = tableName;
       this.service = service;
     }
@@ -113,9 +113,9 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
     private static final byte[] DEFAULT_COLUMN = Bytes.toBytes("c");
 
     private final String tableName;
-    private final LevelDBOcTableService service;
+    private final LevelDBOrderedTableService service;
 
-    public KVTableImpl(String tableName, LevelDBOcTableService service) throws IOException {
+    public KVTableImpl(String tableName, LevelDBOrderedTableService service) throws IOException {
       this.tableName = tableName;
       this.service = service;
     }
