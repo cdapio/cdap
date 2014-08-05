@@ -103,7 +103,7 @@
         <version>1.1.0</version>
         <configuration>
           <flags>-Xmx1G</flags>
-          <programFile>cdap</programFile>
+          <programFile>cdap-cli</programFile>
         </configuration>
         <executions>
           <execution>

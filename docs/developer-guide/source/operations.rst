@@ -458,7 +458,8 @@ Introduction
 ------------
 
 The Command-Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
-similar to HBase shell or ``bash``. It is located within the SDK, at ``bin/cdap``.
+similar to HBase shell or ``bash``. It is located within the SDK, at ``bin/cdap-cli`` as a bash script. It is also
+packaged in the SDK as a JAR file, at ``bin/cdap-cli.jar``.
 
 Usage
 -----
@@ -468,7 +469,7 @@ The CLI may be used in two ways: interactive mode and non-interactive mode.
 Interactive Mode
 ----------------
 
-To run the CLI in interactive mode, run the ``cdap`` executable with no arguments from the terminal.
+To run the CLI in interactive mode, run the ``cdap-cli`` executable with no arguments from the terminal.
 The executable should bring you into a shell, with this prompt::
 
   cdap (localhost:10000)>
@@ -491,7 +492,7 @@ To list all of the available commands, enter ``help``::
 Non-Interactive Mode
 --------------------
 
-To run the CLI in non-interactive mode, run the ``cdap`` executable, passing the command you want executed
+To run the CLI in non-interactive mode, run the ``cdap-cli`` executable, passing the command you want executed
 as the argument. For example, to list all applications currently deployed to Reactor, execute this::
 
   cdap list apps
