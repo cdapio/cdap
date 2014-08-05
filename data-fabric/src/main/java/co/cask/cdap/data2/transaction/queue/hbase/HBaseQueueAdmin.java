@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
-import co.cask.cdap.data2.dataset.lib.hbase.AbstractHBaseDataSetManager;
+import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
@@ -75,7 +75,7 @@ import static co.cask.cdap.data2.transaction.queue.QueueConstants.QueueType.QUEU
  * admin for queues in hbase.
  */
 @Singleton
-public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements QueueAdmin {
+public class HBaseQueueAdmin implements QueueAdmin {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueAdmin.class);
 
@@ -85,11 +85,15 @@ public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements Queu
     new RowKeyDistributorByHashPrefix(
       new RowKeyDistributorByHashPrefix.OneByteSimpleHash(ROW_KEY_DISTRIBUTION_BUCKETS));
 
+  protected final HBaseTableUtil tableUtil;
   private final CConfiguration cConf;
+  private final Configuration hConf;
   private final LocationFactory locationFactory;
   private final String tableNamePrefix;
   private final String configTableName;
   private final QueueConstants.QueueType type;
+
+  private HBaseAdmin admin;
 
   @Inject
   public HBaseQueueAdmin(Configuration hConf,
@@ -104,8 +108,9 @@ public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements Queu
                             QueueConstants.QueueType type,
                             LocationFactory locationFactory,
                             HBaseTableUtil tableUtil) throws IOException {
-    super(hConf, tableUtil);
+    this.hConf = hConf;
     this.cConf = cConf;
+    this.tableUtil = tableUtil;
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
     String unqualifiedTableNamePrefix =
       type == QUEUE ? QueueConstants.QUEUE_TABLE_PREFIX : QueueConstants.STREAM_TABLE_PREFIX;
@@ -116,6 +121,13 @@ public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements Queu
     this.configTableName =
       HBaseTableUtil.getHBaseTableName(namespace.namespace(QueueConstants.QUEUE_CONFIG_TABLE_NAME));
     this.locationFactory = locationFactory;
+  }
+
+  protected final synchronized HBaseAdmin getHBaseAdmin() throws IOException {
+    if (admin == null) {
+      admin = new HBaseAdmin(hConf);
+    }
+    return admin;
   }
 
   /**
@@ -264,6 +276,18 @@ public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements Queu
     deleteConsumerConfigurations(queueName);
   }
 
+  @Override
+  public void upgrade(String name, Properties properties) throws Exception {
+    QueueName queueName = QueueName.from(URI.create(name));
+    String hBaseTableName = getActualTableName(queueName);
+    AbstractHBaseDataSetAdmin dsAdmin = new DatasetAdmin(hBaseTableName, hConf, tableUtil);
+    try {
+      dsAdmin.upgrade();
+    } finally {
+      dsAdmin.close();
+    }
+  }
+
   private void drop(byte[] tableName) throws IOException {
     HBaseAdmin admin = getHBaseAdmin();
     if (admin.tableExists(tableName)) {
@@ -320,62 +344,20 @@ public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements Queu
     }
   }
 
-  @Override
-  protected String getHBaseTableName(String name) {
-    QueueName queueName = QueueName.from(URI.create(name));
-    return getActualTableName(queueName);
-  }
-
-  @Override
-  protected CoprocessorJar createCoprocessorJar() throws IOException {
-    List<? extends Class<? extends Coprocessor>> coprocessors = getCoprocessors();
-    if (coprocessors.isEmpty()) {
-      return CoprocessorJar.EMPTY;
-    }
-
-    Location jarDir = locationFactory.create(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
-                                                       QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
-    Location jarFile = HBaseTableUtil.createCoProcessorJar(type.name().toLowerCase(), jarDir, coprocessors);
-    return new CoprocessorJar(coprocessors, jarFile);
-  }
-
-  @Override
-  protected boolean upgradeTable(HTableDescriptor tableDescriptor, Properties properties) {
-    HColumnDescriptor columnDescriptor = tableDescriptor.getFamily(QueueEntryRow.COLUMN_FAMILY);
-    if (columnDescriptor.getMaxVersions() != 1) {
-      columnDescriptor.setMaxVersions(1);
-      return true;
-    }
-    return false;
-  }
-
   public void create(QueueName queueName) throws IOException {
-    // Queue Config needs to be on separate table, otherwise disabling the queue table would makes queue config
+    // Queue Config need s to be on separate table, otherwise disabling the queue table would makes queue config
     // not accessible by the queue region coprocessor for doing eviction.
 
     // Create the config table first so that in case the queue table coprocessor runs, it can access the config table.
     createConfigTable();
 
-    // Create the queue table
-    byte[] tableName = Bytes.toBytes(getActualTableName(queueName));
-    HTableDescriptor htd = new HTableDescriptor(tableName);
-
-    HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
-    htd.addFamily(hcd);
-    hcd.setMaxVersions(1);
-
-    // Add coprocessors
-    CoprocessorJar coprocessorJar = createCoprocessorJar();
-    for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
-      addCoprocessor(htd, coprocessor, coprocessorJar.getJarLocation(), coprocessorJar.getPriority(coprocessor));
+    String hBaseTableName = getActualTableName(queueName);
+    AbstractHBaseDataSetAdmin dsAdmin = new DatasetAdmin(hBaseTableName, hConf, tableUtil);
+    try {
+      dsAdmin.create();
+    } finally {
+      dsAdmin.close();
     }
-
-    // Create queue table with splits.
-    int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
-                              QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
-    byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits);
-
-    tableUtil.createTableIfNotExists(getHBaseAdmin(), tableName, htd, splitKeys);
   }
 
   private void createConfigTable() throws IOException {
@@ -525,7 +507,7 @@ public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements Queu
       String tableName = Bytes.toString(desc.getName());
       // It's important to skip config table enabled.
       if (tableName.startsWith(tableNamePrefix) && !tableName.equals(configTableName)) {
-        upgradeTable(tableName, properties);
+        upgrade(tableName, properties);
       }
     }
   }
@@ -598,5 +580,59 @@ public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements Queu
 
   public String getConfigTableName() {
     return configTableName;
+  }
+
+  // only used for create & upgrade of data table
+  private final class DatasetAdmin extends AbstractHBaseDataSetAdmin {
+    private DatasetAdmin(String name, Configuration hConf, HBaseTableUtil tableUtil) {
+      super(name, hConf, tableUtil);
+    }
+
+    @Override
+    protected CoprocessorJar createCoprocessorJar() throws IOException {
+      List<? extends Class<? extends Coprocessor>> coprocessors = getCoprocessors();
+      if (coprocessors.isEmpty()) {
+        return CoprocessorJar.EMPTY;
+      }
+
+      Location jarDir = locationFactory.create(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
+                                                         QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
+      Location jarFile = HBaseTableUtil.createCoProcessorJar(type.name().toLowerCase(), jarDir, coprocessors);
+      return new CoprocessorJar(coprocessors, jarFile);
+    }
+
+    @Override
+    protected boolean upgradeTable(HTableDescriptor tableDescriptor) {
+      HColumnDescriptor columnDescriptor = tableDescriptor.getFamily(QueueEntryRow.COLUMN_FAMILY);
+      if (columnDescriptor.getMaxVersions() != 1) {
+        columnDescriptor.setMaxVersions(1);
+        return true;
+      }
+      return false;
+    }
+
+    @Override
+    public void create() throws IOException {
+      // Create the queue table
+      byte[] tableName = Bytes.toBytes(this.tableName);
+      HTableDescriptor htd = new HTableDescriptor(tableName);
+
+      HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
+      htd.addFamily(hcd);
+      hcd.setMaxVersions(1);
+
+      // Add coprocessors
+      CoprocessorJar coprocessorJar = createCoprocessorJar();
+      for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
+        addCoprocessor(htd, coprocessor, coprocessorJar.getJarLocation(), coprocessorJar.getPriority(coprocessor));
+      }
+
+      // Create queue table with splits.
+      int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
+                                QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
+      byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits);
+
+      tableUtil.createTableIfNotExists(getHBaseAdmin(), tableName, htd, splitKeys);
+    }
   }
 }

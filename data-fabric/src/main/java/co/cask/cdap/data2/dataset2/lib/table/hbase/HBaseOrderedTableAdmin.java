@@ -54,7 +54,7 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
                                 HBaseTableUtil tableUtil,
                                 CConfiguration conf,
                                 LocationFactory locationFactory) throws IOException {
-    super(spec.getName(), new HBaseAdmin(hConf), tableUtil);
+    super(spec.getName(), hConf, tableUtil);
     this.spec = spec;
     this.conf = conf;
     this.locationFactory = locationFactory;
