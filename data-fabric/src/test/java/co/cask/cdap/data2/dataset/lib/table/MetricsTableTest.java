@@ -57,42 +57,42 @@ public abstract class MetricsTableTest {
     // put two rows
     table.put(ImmutableMap.of(A, (Map<byte[], byte[]>) ImmutableMap.of(P, X, Q, Y),
                               B, ImmutableMap.of(P, X, R, Z)));
-    Assert.assertArrayEquals(X, table.get(A, P).getValue());
-    Assert.assertArrayEquals(Y, table.get(A, Q).getValue());
-    Assert.assertTrue(table.get(A, R).isEmpty());
-    Assert.assertArrayEquals(X, table.get(B, P).getValue());
-    Assert.assertArrayEquals(Z, table.get(B, R).getValue());
-    Assert.assertTrue(table.get(B, Q).isEmpty());
+    Assert.assertArrayEquals(X, table.get(A, P));
+    Assert.assertArrayEquals(Y, table.get(A, Q));
+    Assert.assertNull(table.get(A, R));
+    Assert.assertArrayEquals(X, table.get(B, P));
+    Assert.assertArrayEquals(Z, table.get(B, R));
+    Assert.assertNull(table.get(B, Q));
 
     // put one row again, with overlapping key set
     table.put(ImmutableMap.of(A, (Map<byte[], byte[]>) ImmutableMap.of(P, A, R, C)));
-    Assert.assertArrayEquals(A, table.get(A, P).getValue());
-    Assert.assertArrayEquals(Y, table.get(A, Q).getValue());
-    Assert.assertArrayEquals(C, table.get(A, R).getValue());
+    Assert.assertArrayEquals(A, table.get(A, P));
+    Assert.assertArrayEquals(Y, table.get(A, Q));
+    Assert.assertArrayEquals(C, table.get(A, R));
 
     // compare and swap an existing value, successfully
     Assert.assertTrue(table.swap(A, P, A, B));
-    Assert.assertArrayEquals(B, table.get(A, P).getValue());
+    Assert.assertArrayEquals(B, table.get(A, P));
     // compare and swap an existing value that does not match
     Assert.assertFalse(table.swap(A, P, A, B));
-    Assert.assertArrayEquals(B, table.get(A, P).getValue());
+    Assert.assertArrayEquals(B, table.get(A, P));
     // compare and swap an existing value that does not exist
     Assert.assertFalse(table.swap(B, Q, A, B));
-    Assert.assertTrue(table.get(B, Q).isEmpty());
+    Assert.assertNull(table.get(B, Q));
 
     // compare and delete an existing value, successfully
     Assert.assertTrue(table.swap(A, P, B, null));
-    Assert.assertTrue(table.get(A, P).isEmpty());
+    Assert.assertNull(table.get(A, P));
     // compare and delete an existing value that does not match
     Assert.assertFalse(table.swap(A, Q, A, null));
-    Assert.assertArrayEquals(Y, table.get(A, Q).getValue());
+    Assert.assertArrayEquals(Y, table.get(A, Q));
 
     // compare and swap a null value, successfully
     Assert.assertTrue(table.swap(A, P, null, Z));
-    Assert.assertArrayEquals(Z, table.get(A, P).getValue());
+    Assert.assertArrayEquals(Z, table.get(A, P));
     // compare and swap a null value, successfully
     Assert.assertFalse(table.swap(A, Q, null, Z));
-    Assert.assertArrayEquals(Y, table.get(A, Q).getValue());
+    Assert.assertArrayEquals(Y, table.get(A, Q));
   }
 
   class IncThread extends Thread {
@@ -206,7 +206,7 @@ public abstract class MetricsTableTest {
     t2.start();
     t1.join();
     t2.join();
-    Assert.assertArrayEquals(Bytes.toBytes(rounds), table.get(A, B).getValue());
+    Assert.assertArrayEquals(Bytes.toBytes(rounds), table.get(A, B));
     Assert.assertEquals(rounds, counts[0].get()); // number of successful swaps
     Assert.assertEquals(rounds, counts[1].get()); // number of failed swaps
   }
@@ -220,20 +220,20 @@ public abstract class MetricsTableTest {
     }
     table.put(writes);
     // verify the first and last are there (sanity test for correctness of test logic)
-    Assert.assertArrayEquals(X, table.get(Bytes.toBytes(0x00000000), A).getValue());
-    Assert.assertArrayEquals(X, table.get(Bytes.toBytes(0xffc00000), A).getValue());
+    Assert.assertArrayEquals(X, table.get(Bytes.toBytes(0x00000000), A));
+    Assert.assertArrayEquals(X, table.get(Bytes.toBytes(0xffc00000), A));
 
     List<byte[]> toDelete = ImmutableList.of(
       Bytes.toBytes(0xa1000000), Bytes.toBytes(0xb2000000), Bytes.toBytes(0xc3000000));
     // verify these three are there, we will soon delete them
     for (byte[] row : toDelete) {
-      Assert.assertArrayEquals(X, table.get(row, A).getValue());
+      Assert.assertArrayEquals(X, table.get(row, A));
     }
     // delete these three
     table.delete(toDelete);
     // verify these three are now gone.
     for (byte[] row : toDelete) {
-      Assert.assertTrue(table.get(row, A).isEmpty());
+      Assert.assertNull(table.get(row, A));
     }
     // verify nothing else is gone by counting all entries in a scan
     Assert.assertEquals(1021, countRange(table, null, null));

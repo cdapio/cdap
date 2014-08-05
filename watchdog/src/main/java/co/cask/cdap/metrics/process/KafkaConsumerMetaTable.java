@@ -16,9 +16,8 @@
 package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data.operation.StatusCode;
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.OperationResult;
+import co.cask.cdap.data2.StatusCode;
 import co.cask.cdap.data2.dataset.lib.table.MetricsTable;
 import com.google.common.collect.Maps;
 import org.apache.twill.kafka.client.TopicPartition;
@@ -60,11 +59,11 @@ public final class KafkaConsumerMetaTable {
    */
   public synchronized long get(TopicPartition topicPartition) throws OperationException {
     try {
-      OperationResult<byte[]> result = metaTable.get(getKey(topicPartition), OFFSET_COLUMN);
-      if (result == null || result.isEmpty()) {
+      byte[] result = metaTable.get(getKey(topicPartition), OFFSET_COLUMN);
+      if (result == null) {
         return -1;
       }
-      return Bytes.toLong(result.getValue());
+      return Bytes.toLong(result);
     } catch (Exception e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     }

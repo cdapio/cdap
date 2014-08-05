@@ -19,8 +19,6 @@ package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.data.operation.StatusCode;
-import co.cask.cdap.data2.OperationResult;
 import co.cask.cdap.data2.dataset.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.Update;
@@ -46,15 +44,15 @@ public class InMemoryMetricsTable implements MetricsTable {
   }
 
   @Override
-  public OperationResult<byte[]> get(byte[] row, byte[] column) throws Exception {
+  public byte[] get(byte[] row, byte[] column) throws Exception {
     NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = InMemoryOrderedTableService.get(tableName, row, null);
     if (rowMap != null) {
       NavigableMap<Long, byte[]> valueMap = rowMap.get(column);
       if (valueMap != null && !valueMap.isEmpty()) {
-        return new OperationResult<byte[]>(valueMap.firstEntry().getValue());
+        return valueMap.firstEntry().getValue();
       }
     }
-    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+    return null;
   }
 
   @Override

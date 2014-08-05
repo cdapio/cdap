@@ -18,7 +18,6 @@ package co.cask.cdap.data2.dataset.lib.table;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.data2.OperationResult;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 
 import java.util.Collection;
@@ -34,7 +33,8 @@ public interface MetricsTable extends Dataset {
   /**
    * Read single column of a row
    */
-  OperationResult<byte[]> get(byte[] row, byte[] column) throws Exception;
+  @Nullable
+  byte[] get(byte[] row, byte[] column) throws Exception;
 
   /**
    * Write multiple rows, each with multiple individual columns to write.

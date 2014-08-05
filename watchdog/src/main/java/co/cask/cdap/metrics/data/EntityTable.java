@@ -16,7 +16,6 @@
 package co.cask.cdap.metrics.data;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data2.OperationResult;
 import co.cask.cdap.data2.dataset.lib.table.MetricsTable;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -122,11 +121,11 @@ public final class EntityTable {
       public Long load(EntityName key) throws Exception {
         byte[] rowKey = Bytes.toBytes(key.getType() + '.' + key.getName());
 
-        OperationResult<byte[]> result = table.get(rowKey, ID);
+        byte[] result = table.get(rowKey, ID);
 
         // Found, return it
-        if (!result.isEmpty()) {
-          return Bytes.toLong(result.getValue());
+        if (result != null) {
+          return Bytes.toLong(result);
         }
 
         // Not found, generate a new ID
@@ -148,10 +147,10 @@ public final class EntityTable {
           byte[] oldName = null;
           while (!table.swap(rowKey, NAME, oldName, Bytes.toBytes(key.getName()))) {
             result = table.get(rowKey, NAME);
-            if (result.isEmpty()) {
+            if (result == null) {
               throw new IllegalStateException("Fail to set reverse mapping from id to name.");
             }
-            oldName = result.getValue();
+            oldName = result;
           }
 
           return newId;
@@ -160,10 +159,10 @@ public final class EntityTable {
         // Get the value if CAS failed.
         result = table.get(rowKey, ID);
 
-        if (result.isEmpty()) {
+        if (result == null) {
           throw new IllegalStateException("ID not found for " + key);
         }
-        return Bytes.toLong(result.getValue());
+        return Bytes.toLong(result);
       }
     };
   }
@@ -174,11 +173,11 @@ public final class EntityTable {
       public EntityName load(EntityId key) throws Exception {
         // Lookup the reverse mapping
         byte[] rowKey = Bytes.concat(Bytes.toBytes(key.getType()), DOT, Bytes.toBytes(key.getId()));
-        OperationResult<byte[]> result = table.get(rowKey, NAME);
-        if (result.isEmpty()) {
+        byte[] result = table.get(rowKey, NAME);
+        if (result == null) {
           throw new IllegalArgumentException("Entity name not found for type " + key.getType() + ", id " + key.getId());
         }
-        return new EntityName(key.getType(), Bytes.toString(result.getValue()));
+        return new EntityName(key.getType(), Bytes.toString(result));
       }
     };
   }

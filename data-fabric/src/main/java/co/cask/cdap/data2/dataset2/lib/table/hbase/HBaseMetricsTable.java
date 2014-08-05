@@ -19,9 +19,8 @@ package co.cask.cdap.data2.dataset2.lib.table.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data.operation.StatusCode;
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.OperationResult;
+import co.cask.cdap.data2.StatusCode;
 import co.cask.cdap.data2.dataset.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -62,18 +61,16 @@ public class HBaseMetricsTable implements MetricsTable {
   }
 
   @Override
-  public OperationResult<byte[]> get(byte[] row, byte[] column) throws Exception {
+  @Nullable
+  public byte[] get(byte[] row, byte[] column) throws Exception {
     Get get = new Get(row);
     get.addColumn(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY, column);
     get.setMaxVersions(1);
     Result getResult = hTable.get(get);
     if (!getResult.isEmpty()) {
-      byte[] value = getResult.getValue(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY, column);
-      if (value != null) {
-        return new OperationResult<byte[]>(value);
-      }
+      return getResult.getValue(HBaseOrderedTableAdmin.DATA_COLUMN_FAMILY, column);
     }
-    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+    return null;
   }
 
   @Override
