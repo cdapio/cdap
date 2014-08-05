@@ -18,6 +18,7 @@ package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.KerberosUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
@@ -174,9 +175,10 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         server.setConnectors(new Connector[]{connector});
       }
 
-      // initialize system properties for kerberos
-      File reactorKeytabFile = new File(configuration.get(Constants.Security.CFG_KRB_KEYTAB_PATH));
-      enableKerberos(reactorKeytabFile, configuration);
+      tmpDir = Files.createTempDir();
+      KerberosUtil.enable(
+        tmpDir, new File(configuration.get(Constants.Security.CFG_EXTERNAL_AUTH_SERVER_KEYTAB_PATH)),
+        configuration.get(Constants.Security.CFG_EXTERNAL_AUTH_SERVER_PRINCIPAL));
 
       server.setHandler(context);
     } catch (Exception e) {
@@ -221,48 +223,6 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   protected void shutDown() throws Exception {
     if (tmpDir != null && tmpDir.exists()) {
       FileUtils.deleteDirectory(tmpDir);
-    }
-  }
-
-  private void enableKerberos(File keyTabFile, CConfiguration conf) {
-    Preconditions.checkArgument(keyTabFile != null, "Kerberos keytab file is required");
-    Preconditions.checkArgument(keyTabFile.exists(),
-                                "Kerberos keytab file does not exist: " + keyTabFile.getAbsolutePath());
-    Preconditions.checkArgument(keyTabFile.isFile(),
-                                "Kerberos keytab file should be a file: " + keyTabFile.getAbsolutePath());
-    Preconditions.checkArgument(keyTabFile.canRead(),
-                                "Kerberos keytab file cannot be read: " + keyTabFile.getAbsolutePath());
-
-    System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
-    System.setProperty("zookeeper.allowSaslFailedClients", "true");
-    System.setProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "Client");
-
-    try {
-      tmpDir = Files.createTempDir();
-
-      // Generate the jaas.conf file which will be used by the Kerberos client library for authentication,
-      // due to setting the environment variable "java.security.auth.login.config"
-      File saslConfFile = new File(tmpDir, "jaas.conf");
-      PrintWriter writer = new PrintWriter(new FileWriter(saslConfFile));
-      try {
-        String krbPrincipal = conf.get(Constants.Security.CFG_KRB_SECURITY_PRINCIPAL);
-        writer.printf("Client {\n");
-        writer.printf("  com.sun.security.auth.module.Krb5LoginModule required\n");
-        writer.printf("  useKeyTab=true\n");
-        writer.printf("  keyTab=\"%s\"\n", keyTabFile.getAbsolutePath());
-        writer.printf("  useTicketCache=false\n");
-        writer.printf("  principal=\"%s\";\n", krbPrincipal);
-        writer.printf("};\n");
-      } finally {
-        writer.close();
-      }
-
-      System.setProperty("java.security.auth.login.config", saslConfFile.getAbsolutePath());
-      LOG.debug("Set java.security.auth.login.config to {}", saslConfFile.getAbsolutePath());
-      LOG.debug("Contents of java.security.auth.login.config file:\n{}", FileUtils.readFileToString(saslConfFile));
-    } catch (IOException e) {
-      // could not create tmp directory to hold JAAS conf file.
-      throw Throwables.propagate(e);
     }
   }
 }

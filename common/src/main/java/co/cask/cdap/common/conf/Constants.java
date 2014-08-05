@@ -16,13 +16,6 @@
 
 package co.cask.cdap.common.conf;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.data.ACL;
-import org.apache.zookeeper.data.Id;
-
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -443,10 +436,16 @@ public final class Constants {
     public static final String SSL_KEYSTORE_PASSWORD = "security.server.ssl.keystore.password";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
-    /** Path to the Kerberos keytab file by auth server and router */
-    public static final String CFG_KRB_KEYTAB_PATH = "security.kerberos.keytab.path";
+
+    /** Path to the Kerberos keytab file by auth server */
+    public static final String CFG_EXTERNAL_AUTH_SERVER_KEYTAB_PATH = "security.external.auth.server.keytab.path";
     /** Path to the Kerberos principal used by auth server and router */
-    public static final String CFG_KRB_SECURITY_PRINCIPAL = "security.kerberos.principal";
+    public static final String CFG_EXTERNAL_AUTH_SERVER_PRINCIPAL = "security.external.auth.server.principal";
+
+    /** Path to the Kerberos keytab file by router */
+    public static final String CFG_ROUTER_KEYTAB_PATH = "security.router.keytab.path";
+    /** Path to the Kerberos principal used by auth server and router */
+    public static final String CFG_ROUTER_PRINCIPAL = "security.router.principal";
   }
 
   /**
@@ -559,4 +558,24 @@ public final class Constants {
    * NOTE: value should be in sync with the one used by UI.
    */
   public static final String DEVELOPER_ACCOUNT_ID = "developer";
+
+  /**
+   * Constants related to external systems.
+   */
+  public static final class External {
+    /**
+     * Constants used by Java security.
+     */
+    public static final class JavaSecurity {
+      public static final String ENV_AUTH_LOGIN_CONFIG = "java.security.auth.login.config";
+    }
+
+    /**
+     * Constants used by Zookeeper.
+     */
+    public static final class Zookeeper {
+      public static final String ENV_AUTH_PROVIDER_1 = "zookeeper.authProvider.1";
+      public static final String ENV_ALLOW_SASL_FAILED_CLIENTS = "zookeeper.allowSaslFailedClients";
+    }
+  }
 }

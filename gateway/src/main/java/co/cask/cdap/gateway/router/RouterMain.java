@@ -23,18 +23,24 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.kerberos.KerberosUtil;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.security.guice.SecurityModules;
 import com.google.common.base.Throwables;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.commons.io.FileUtils;
 import org.apache.twill.common.Services;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Main class to run Router from command line.
@@ -45,6 +51,7 @@ public class RouterMain extends DaemonMain {
   private ZKClientService zkClientService;
   private NettyRouter router;
   private DiscoveryService discoveryService;
+  private File tmpDir;
 
   public static void main(String[] args) {
     try {
@@ -60,6 +67,10 @@ public class RouterMain extends DaemonMain {
     try {
       // Load configuration
       CConfiguration cConf = CConfiguration.create();
+
+      tmpDir = Files.createTempDir();
+      KerberosUtil.enable(tmpDir, new File(cConf.get(Constants.Security.CFG_ROUTER_KEYTAB_PATH)),
+                          cConf.get(Constants.Security.CFG_ROUTER_PRINCIPAL));
 
       // Initialize ZK client
       String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
@@ -95,6 +106,13 @@ public class RouterMain extends DaemonMain {
   public void stop() {
     LOG.info("Stopping Router...");
     Futures.getUnchecked(Services.chainStop(router, zkClientService));
+    if (tmpDir != null) {
+      try {
+        FileUtils.deleteDirectory(tmpDir);
+      } catch (IOException e) {
+        LOG.warn("Couldn't delete temporary directory '{}'", tmpDir.getAbsolutePath());
+      }
+    }
     LOG.info("Router stopped.");
   }
 

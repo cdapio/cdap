@@ -19,11 +19,13 @@ package co.cask.cdap.security.auth;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Codec;
+import co.cask.cdap.common.zookeeper.ZKACLs;
 import co.cask.cdap.common.zookeeper.ZKIds;
 import co.cask.cdap.security.zookeeper.ResourceListener;
 import co.cask.cdap.security.zookeeper.SharedResourceCache;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.zookeeper.ZKClient;
@@ -37,6 +39,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -75,9 +78,11 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
       conf.getLong(Constants.Security.EXTENDED_TOKEN_EXPIRATION),
       conf.getLong(Constants.Security.TOKEN_EXPIRATION));
     this.zookeeper = ZKClients.namespace(zookeeper, parentZNode);
-    String krbPrincipal = conf.get(Constants.Security.CFG_KRB_SECURITY_PRINCIPAL);
-    List<ACL> acls = ImmutableList.of(new ACL(ZooDefs.Perms.ALL, ZKIds.createSaslId(krbPrincipal)));
-    this.keyCache = new SharedResourceCache<KeyIdentifier>(zookeeper, codec, "/keys", acls);
+    this.keyCache = new SharedResourceCache<KeyIdentifier>(zookeeper, codec, "/keys",
+                                                           ZKACLs.fromSaslPrincipalsAllowAll(
+      conf.get(Constants.Security.CFG_ROUTER_PRINCIPAL),
+      conf.get(Constants.Security.CFG_EXTERNAL_AUTH_SERVER_PRINCIPAL)
+    ));
   }
 
   @Override
