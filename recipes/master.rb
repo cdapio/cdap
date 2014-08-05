@@ -44,6 +44,8 @@ if node['cdap'].key?('security') && node['cdap']['security'].key?('cdap_keytab')
     variables my_vars
   end # End /etc/default/cdap-master
 
+  include_recipe 'yum-epel' if node['platform_family'] == 'rhel'
+
   package 'kstart'
   group 'hadoop' do
     append true
