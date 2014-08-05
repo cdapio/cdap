@@ -28,7 +28,7 @@ import javax.ws.rs.Path;
 
 
 /**
- * Explore ping handler - reachable outside of Reactor.
+ * Explore ping handler - reachable outside of CDAP.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class ExplorePingHandler extends AbstractHttpHandler {
