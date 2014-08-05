@@ -22,9 +22,11 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.reactor.client.app.FakeApp;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
+import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +36,7 @@ import java.util.Map;
 /**
  * Test for {@link ApplicationClient}.
  */
+@Category(XSlowTests.class)
 public class ApplicationClientTest extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationClientTest.class);
@@ -42,8 +45,6 @@ public class ApplicationClientTest extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    super.setUp();
-
     appClient = new ApplicationClient(new ReactorClientConfig("localhost"));
   }
 

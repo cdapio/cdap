@@ -19,16 +19,19 @@ package co.cask.cdap.reactor.client;
 import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.config.ReactorClientConfig;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
+import co.cask.cdap.test.XSlowTests;
 import com.google.gson.JsonObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Test for {@link MetricsClient}.
  */
+@Category(XSlowTests.class)
 public class MetricsClientTest extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsClientTest.class);
@@ -37,8 +40,6 @@ public class MetricsClientTest extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    super.setUp();
-
     metricsClient = new MetricsClient(new ReactorClientConfig("localhost"));
   }
 

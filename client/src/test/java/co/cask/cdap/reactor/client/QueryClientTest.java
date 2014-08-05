@@ -25,8 +25,10 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.reactor.client.app.FakeApp;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
+import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +37,7 @@ import java.util.List;
 /**
  *
  */
+@Category(XSlowTests.class)
 public class QueryClientTest extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(QueryClientTest.class);
@@ -44,8 +47,6 @@ public class QueryClientTest extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    super.setUp();
-
     ReactorClientConfig config = new ReactorClientConfig("localhost");
     appClient = new ApplicationClient(config);
     queryClient = new QueryClient(config);

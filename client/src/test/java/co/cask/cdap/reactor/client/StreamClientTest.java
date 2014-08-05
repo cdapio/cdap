@@ -19,15 +19,18 @@ package co.cask.cdap.reactor.client;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ReactorClientConfig;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
+import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  *
  */
+@Category(XSlowTests.class)
 public class StreamClientTest extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamClientTest.class);
@@ -36,8 +39,6 @@ public class StreamClientTest extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    super.setUp();
-
     ReactorClientConfig config = new ReactorClientConfig("localhost");
     streamClient = new StreamClient(config);
   }
@@ -48,12 +49,12 @@ public class StreamClientTest extends ClientTestBase {
     String testStreamEvent = "blargh_data";
 
     LOG.info("Getting stream list");
-    Assert.assertEquals(0, streamClient.list().size());
+    int baseStreamCount = streamClient.list().size();
+    Assert.assertEquals(baseStreamCount, streamClient.list().size());
     LOG.info("Creating stream");
     streamClient.create(testStreamId);
     LOG.info("Checking stream list");
-    Assert.assertEquals(1, streamClient.list().size());
-    Assert.assertEquals(testStreamId, streamClient.list().get(0).getId());
+    Assert.assertEquals(baseStreamCount + 1, streamClient.list().size());
     // TODO: getting and setting config for stream is not supported with in-memory
 //    streamClient.setTTL(testStreamId, 123);
 //    streamClient.sendEvent(testStreamId, testStreamEvent);

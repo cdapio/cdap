@@ -22,7 +22,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
@@ -40,10 +42,10 @@ public class SingleNodeTestBase {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private SingleNodeMain singleNodeMain;
+  private static SingleNodeMain singleNodeMain;
 
-  @Before
-  public void setUp() throws Throwable {
+  @BeforeClass
+  public static void setUpClass() throws Throwable {
     try {
       CConfiguration cConf = CConfiguration.create();
       cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
@@ -60,15 +62,10 @@ public class SingleNodeTestBase {
     }
   }
 
-  @After
-  public void tearDown() {
+  @AfterClass
+  public static void tearDownClass() {
     if (singleNodeMain != null) {
       singleNodeMain.shutDown();
     }
   }
-
-  protected File createAppJarFile(Class<?> cls) {
-    return new File(AppFabricTestHelper.createAppJar(cls).toURI());
-  }
-
 }

@@ -21,9 +21,11 @@ import co.cask.cdap.client.exception.NotFoundException;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +33,7 @@ import java.util.Map;
 /**
  *
  */
-public abstract class ClientTestBase extends SingleNodeTestBase {
+public abstract class ClientTestBase {
 
   protected void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {
     Assert.assertEquals(expected.size(), actual.size());
@@ -101,4 +103,7 @@ public abstract class ClientTestBase extends SingleNodeTestBase {
     Assert.assertEquals(programStatus, status);
   }
 
+  protected File createAppJarFile(Class<?> cls) {
+    return new File(AppFabricTestHelper.createAppJar(cls).toURI());
+  }
 }

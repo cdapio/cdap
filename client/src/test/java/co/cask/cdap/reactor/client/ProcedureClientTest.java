@@ -24,11 +24,13 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.reactor.client.app.FakeApp;
 import co.cask.cdap.reactor.client.app.FakeProcedure;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
+import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +39,7 @@ import java.io.File;
 /**
  *
  */
+@Category(XSlowTests.class)
 public class ProcedureClientTest extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProcedureClientTest.class);
@@ -48,8 +51,6 @@ public class ProcedureClientTest extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    super.setUp();
-
     ReactorClientConfig config = new ReactorClientConfig("localhost");
     appClient = new ApplicationClient(config);
     procedureClient = new ProcedureClient(config);
@@ -75,5 +76,11 @@ public class ProcedureClientTest extends ClientTestBase {
     String result = procedureClient.call(FakeApp.NAME, FakeProcedure.NAME, FakeProcedure.METHOD_NAME,
                                          ImmutableMap.of("customer", "joe"));
     Assert.assertEquals(GSON.toJson(ImmutableMap.of("customer", "realjoe")), result);
+
+    // stop procedure
+    programClient.stop(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
+    assertProgramStopped(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
+
+    appClient.delete(FakeApp.NAME);
   }
 }
