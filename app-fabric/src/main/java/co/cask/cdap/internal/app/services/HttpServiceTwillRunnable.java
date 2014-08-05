@@ -73,23 +73,27 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void run() {
+    LOG.info("In run method in HTTP Service");
     Future<Service.State> completion = Services.getCompletionFuture(service);
     service.startAndWait();
     // announce the twill runnable
     int port = service.getBindAddress().getPort();
     Cancellable contextCancellable = getContext().announce(name, port);
+    LOG.info("Announced HTTP Service");
     try {
       completion.get();
+      // once the service has been stopped, don't announe it anymore.
       contextCancellable.cancel();
     } catch (InterruptedException e) {
-      LOG.error("Got Interrupted exception in Http Service run: {}", e);
+      LOG.error("Caught exception in HTTP Service run", e);
     } catch (ExecutionException e) {
-      LOG.error("Got Execution exception in Http Service run: {}", e);
+      LOG.error("Caught exception in HTTP Service run", e);
     }
   }
 
   @Override
   public TwillRunnableSpecification configure() {
+    LOG.info("In configure method in HTTP Service");
     Map<String, String> runnableArgs = new HashMap<String, String>();
     runnableArgs.put("service.runnable.name", name);
     List<String> handlerNames = new ArrayList<String>();
@@ -105,6 +109,9 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void initialize(TwillContext context) {
+    LOG.info("In initialize method in HTTP Service");
+    // initialize the base class so that we can use this context later
+    super.initialize(context);
     Map<String, String> runnableArgs = new HashMap<String, String>(context.getSpecification().getConfigs());
     name = runnableArgs.get("service.runnable.name");
     handlers = new ArrayList<HttpServiceHandler>();
@@ -114,7 +121,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
         HttpServiceHandler handler = (HttpServiceHandler) programClassLoader.loadClass(handlerName).newInstance();
         handlers.add(handler);
       } catch (Exception e) {
-        LOG.error("Could not initialize Http Service");
+        LOG.error("Could not initialize HTTP Service");
         Throwables.propagate(e);
       }
     }

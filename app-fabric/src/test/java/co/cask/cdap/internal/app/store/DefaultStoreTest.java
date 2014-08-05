@@ -52,7 +52,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
@@ -74,7 +74,7 @@ import java.util.Set;
  *
  */
 public class DefaultStoreTest {
-  private static InMemoryTransactionManager txManager;
+  private static TransactionManager txManager;
   private static DatasetService dsService;
 
   private static DefaultStore store;
@@ -83,7 +83,7 @@ public class DefaultStoreTest {
   public static void beforeClass() throws IOException {
     Injector injector = AppFabricTestHelper.getInjector();
 
-    txManager = injector.getInstance(InMemoryTransactionManager.class);
+    txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 
     dsService = injector.getInstance(DatasetService.class);

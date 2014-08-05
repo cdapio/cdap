@@ -25,8 +25,8 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.google.common.collect.ObjectArrays;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -62,7 +62,7 @@ public abstract class AppFabricTestBase {
   private static int port;
   private static Injector injector;
 
-  private static InMemoryTransactionManager txManager;
+  private static TransactionManager txManager;
   private static AppFabricServer appFabricServer;
   private static MetricsQueryService metricsService;
   private static DatasetService dsService;
@@ -81,7 +81,7 @@ public abstract class AppFabricTestBase {
     conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
 
     injector = Guice.createInjector(new AppFabricTestModule(conf));
-    txManager = injector.getInstance(InMemoryTransactionManager.class);
+    txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     dsService = injector.getInstance(DatasetService.class);
     dsService.startAndWait();

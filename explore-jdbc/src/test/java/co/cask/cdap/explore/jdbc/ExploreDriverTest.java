@@ -94,38 +94,46 @@ public class ExploreDriverTest {
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(ImmutableMultimap.of(), connectionParams.getExtraInfos());
 
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?reactor.auth.token=foo");
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?auth.token=foo");
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(
       ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo"),
       connectionParams.getExtraInfos());
 
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?reactor.auth.token=foo&foo2=bar2");
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?auth.token=foo&foo2=bar2");
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(
       ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo"),
       connectionParams.getExtraInfos());
 
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&reactor.auth.token=foo");
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&auth.token=foo");
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(
       ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo"),
       connectionParams.getExtraInfos());
 
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&reactor.auth.token");
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&auth.token");
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(ImmutableMultimap.of(), connectionParams.getExtraInfos());
 
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&reactor.auth.token=foo,bar");
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&auth.token=foo,bar");
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(
       ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo",
                            ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "bar"),
+      connectionParams.getExtraInfos());
+
+    // Test that we don't decode URL more than once
+    connectionParams = driver.parseConnectionUrl(baseUrl +
+                                                   "?reactor.auth.token=AgxqdWxpZW4AyIOOuPRRyJPy%2BPhR4o%2B35wlAA3");
+    Assert.assertEquals(
+      ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN,
+                           "AgxqdWxpZW4AyIOOuPRRyJPy+PhR4o+35wlAA3"),
       connectionParams.getExtraInfos());
  }
 
@@ -148,10 +156,10 @@ public class ExploreDriverTest {
     Assert.assertNotNull(driver.connect(exploreServiceUrl, null));
 
     // Correct host and extra parameter
-    Assert.assertNotNull(driver.connect(exploreServiceUrl + "?reactor.auth.token=bar", null));
+    Assert.assertNotNull(driver.connect(exploreServiceUrl + "?auth.token=bar", null));
 
     // Correct host and extra parameter
-    Assert.assertNotNull(driver.connect(exploreServiceUrl + "?reactor.auth.token", null));
+    Assert.assertNotNull(driver.connect(exploreServiceUrl + "?auth.token", null));
   }
 
   @Test

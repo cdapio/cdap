@@ -16,7 +16,7 @@
 package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
@@ -33,9 +33,9 @@ public class TransactionServiceGuiceTest {
     Injector injector = TransactionServiceTwillRunnable.createGuiceInjector(CConfiguration.create(),
                                                                             new Configuration());
     // get one tx manager
-    InMemoryTransactionManager txManager1 = injector.getInstance(InMemoryTransactionManager.class);
+    TransactionManager txManager1 = injector.getInstance(TransactionManager.class);
     // get a second tx manager
-    InMemoryTransactionManager txManager2 = injector.getInstance(InMemoryTransactionManager.class);
+    TransactionManager txManager2 = injector.getInstance(TransactionManager.class);
     // these should be two separate instances
     assertFalse(txManager1 == txManager2);
   }

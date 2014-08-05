@@ -19,10 +19,9 @@ package co.cask.cdap.data2.dataset2.lib.table.hbase;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
+import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.dataset.lib.table.ConflictDetection;
-import co.cask.cdap.data2.dataset.lib.table.hbase.HBaseOcTableClient;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -63,9 +62,8 @@ public class HBaseOrderedTableDefinition
                                  Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
-    // -1 means no purging, keep data "forever"
-    Integer ttl = Integer.valueOf(spec.getProperty("ttl", "-1"));
-    return new HBaseOcTableClient(spec.getName(), conflictDetection, ttl, hConf);
+    // NOTE: ttl property is applied on server-side in CPs
+    return new HBaseOrderedTable(spec.getName(), conflictDetection, hConf);
   }
 
   @Override

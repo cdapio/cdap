@@ -30,8 +30,8 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerTestBase;
 import co.cask.cdap.test.SlowTests;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.continuuity.tephra.persist.NoOpTransactionStateStorage;
 import com.continuuity.tephra.persist.TransactionStateStorage;
@@ -61,7 +61,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   private static StreamConsumerFactory consumerFactory;
   private static StreamAdmin streamAdmin;
   private static TransactionSystemClient txClient;
-  private static InMemoryTransactionManager txManager;
+  private static TransactionManager txManager;
   private static QueueClientFactory queueClientFactory;
   private static StreamFileWriterFactory fileWriterFactory;
 
@@ -93,7 +93,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     streamAdmin = injector.getInstance(StreamAdmin.class);
     consumerFactory = injector.getInstance(StreamConsumerFactory.class);
     txClient = injector.getInstance(TransactionSystemClient.class);
-    txManager = injector.getInstance(InMemoryTransactionManager.class);
+    txManager = injector.getInstance(TransactionManager.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
 

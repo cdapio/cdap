@@ -51,7 +51,7 @@ import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.dataset.DataSetInstantiationBase;
+import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data2.queue.ConsumerConfig;
@@ -211,9 +211,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                metricsCollectionService, serviceDiscovery);
 
       // hack for propagating metrics collector to datasets
-      if (dataSetContext instanceof DataSetInstantiationBase) {
-        ((DataSetInstantiationBase) dataSetContext).setMetricsCollector(metricsCollectionService,
-                                                                        flowletContext.getSystemMetrics());
+      if (dataSetContext instanceof DataSetInstantiator) {
+        ((DataSetInstantiator) dataSetContext).setMetricsCollector(metricsCollectionService,
+                                                                   flowletContext.getSystemMetrics());
       }
 
       // Creates QueueSpecification
