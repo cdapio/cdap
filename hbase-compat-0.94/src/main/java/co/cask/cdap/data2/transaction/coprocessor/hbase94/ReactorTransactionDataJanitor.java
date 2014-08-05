@@ -20,18 +20,18 @@ import co.cask.cdap.data2.increment.hbase94.IncrementFilter;
 import co.cask.cdap.data2.transaction.coprocessor.ReactorTransactionStateCacheSupplier;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.coprocessor.TransactionStateCache;
-import com.continuuity.tephra.coprocessor.hbase94.TransactionDataJanitor;
-import com.continuuity.tephra.coprocessor.hbase94.TransactionVisibilityFilter;
+import com.continuuity.tephra.hbase94.coprocessor.TransactionProcessor;
+import com.continuuity.tephra.hbase94.coprocessor.TransactionVisibilityFilter;
 import com.google.common.base.Supplier;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.filter.Filter;
 
 /**
- * Implementation of the {@link com.continuuity.tephra.coprocessor.hbase94.TransactionDataJanitor}
+ * Implementation of the {@link com.continuuity.tephra.hbase94.coprocessor.TransactionProcessor}
  * coprocessor that uses {@link co.cask.cdap.data2.transaction.coprocessor.ReactorTransactionStateCache}
  * to automatically refresh transaction state.
  */
-public class ReactorTransactionDataJanitor extends TransactionDataJanitor {
+public class ReactorTransactionDataJanitor extends TransactionProcessor {
 
   @Override
   protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(RegionCoprocessorEnvironment env) {

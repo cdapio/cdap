@@ -139,28 +139,23 @@ public class ExploreDriver implements Driver {
     int port = jdbcURI.getPort();
     ImmutableMultimap.Builder<ConnectionParams.Info, String>  builder = ImmutableMultimap.builder();
 
-    try {
-      // get the query params
-      String query = jdbcURI.getQuery();
-      if (query != null) {
-        String decoded  = URLDecoder.decode(query, "UTF-8");
-        Iterator<String> iterator = Splitter.on("&").split(decoded).iterator();
-        while (iterator.hasNext()) {
-          // Need to do it twice because of error in guava libs Issue: 1577
-          String [] splits = (iterator.next()).split("=");
-          // splits[0] is the key. Rest are values.
-          if (splits.length > 0) {
-            ConnectionParams.Info info = ConnectionParams.Info.fromStr(splits[0]);
-            if (info != null) {
-              for (int i = 1; i < splits.length; i++) {
-                builder.putAll(info, splits[i].split(","));
-              }
+    // get the query params - javadoc for getQuery says that it decodes the query URL with UTF-8 charset.
+    String query = jdbcURI.getQuery();
+    if (query != null) {
+      Iterator<String> iterator = Splitter.on("&").split(query).iterator();
+      while (iterator.hasNext()) {
+        // Need to do it twice because of error in guava libs Issue: 1577
+        String [] splits = (iterator.next()).split("=");
+        // splits[0] is the key. Rest are values.
+        if (splits.length > 0) {
+          ConnectionParams.Info info = ConnectionParams.Info.fromStr(splits[0]);
+          if (info != null) {
+            for (int i = 1; i < splits.length; i++) {
+              builder.putAll(info, splits[i].split(","));
             }
           }
         }
       }
-    } catch (UnsupportedEncodingException e) {
-      throw Throwables.propagate(e);
     }
     return new ConnectionParams(host, port, builder.build());
   }

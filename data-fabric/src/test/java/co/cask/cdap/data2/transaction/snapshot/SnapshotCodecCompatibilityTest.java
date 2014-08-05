@@ -17,9 +17,9 @@
 package co.cask.cdap.data2.transaction.snapshot;
 
 import co.cask.cdap.api.common.Bytes;
+import com.continuuity.tephra.ChangeId;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TxConstants;
-import com.continuuity.tephra.inmemory.ChangeId;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.tephra.persist.TransactionSnapshot;
 import com.continuuity.tephra.snapshot.SnapshotCodecProvider;
 import com.google.common.collect.ImmutableMap;
@@ -49,9 +49,9 @@ public class SnapshotCodecCompatibilityTest {
     long now = System.currentTimeMillis();
 
     // NOTE: set visibilityUpperBound to 0 as this is expected default for decoding older version that doesn't store it
-    TreeMap<Long, InMemoryTransactionManager.InProgressTx> inProgress =
-      Maps.newTreeMap(ImmutableSortedMap.of(16L, new InMemoryTransactionManager.InProgressTx(0L, now + 1000),
-                                            17L, new InMemoryTransactionManager.InProgressTx(0L, now + 1000)));
+    TreeMap<Long, TransactionManager.InProgressTx> inProgress =
+      Maps.newTreeMap(ImmutableSortedMap.of(16L, new TransactionManager.InProgressTx(0L, now + 1000),
+                                            17L, new TransactionManager.InProgressTx(0L, now + 1000)));
 
     TransactionSnapshot snapshot =
       new TransactionSnapshot(now,

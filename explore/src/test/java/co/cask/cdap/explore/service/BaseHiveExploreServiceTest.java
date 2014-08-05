@@ -41,7 +41,7 @@ import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -63,7 +63,7 @@ import java.util.concurrent.TimeUnit;
  * Base class for tests that need explore service to be running.
  */
 public class BaseHiveExploreServiceTest {
-  protected static InMemoryTransactionManager transactionManager;
+  protected static TransactionManager transactionManager;
   protected static DatasetFramework datasetFramework;
   protected static DatasetService datasetService;
   protected static ExploreExecutorService exploreExecutorService;
@@ -75,7 +75,7 @@ public class BaseHiveExploreServiceTest {
   protected static Injector injector;
   protected static void startServices(CConfiguration cConf) throws Exception {
     injector = Guice.createInjector(createInMemoryModules(cConf, new Configuration()));
-    transactionManager = injector.getInstance(InMemoryTransactionManager.class);
+    transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
 
     datasetService = injector.getInstance(DatasetService.class);

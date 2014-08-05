@@ -127,6 +127,14 @@ public class ExploreDriverTest {
       ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo",
                            ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "bar"),
       connectionParams.getExtraInfos());
+
+    // Test that we don't decode URL more than once
+    connectionParams = driver.parseConnectionUrl(baseUrl +
+                                                   "?reactor.auth.token=AgxqdWxpZW4AyIOOuPRRyJPy%2BPhR4o%2B35wlAA3");
+    Assert.assertEquals(
+      ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN,
+                           "AgxqdWxpZW4AyIOOuPRRyJPy+PhR4o+35wlAA3"),
+      connectionParams.getExtraInfos());
  }
 
   @Test
