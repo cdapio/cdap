@@ -25,8 +25,8 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -78,7 +78,7 @@ public class LogCleanupTest {
 
     Configuration conf = HBaseConfiguration.create();
     cConf.copyTxProperties(conf);
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf);
+    TransactionManager txManager = new TransactionManager(conf);
     txManager.startAndWait();
     TransactionSystemClient txClient = new InMemoryTxSystemClient(txManager);
     FileMetaDataManager fileMetaDataManager =

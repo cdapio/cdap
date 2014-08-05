@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data2.transaction.snapshot;
 
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.snapshot.BinaryDecoder;
 import com.continuuity.tephra.snapshot.BinaryEncoder;
 import com.google.common.collect.Maps;
@@ -50,12 +50,12 @@ public class SnapshotCodecV1 extends AbstractSnapshotCodec {
   }
 
   @Override
-  protected void encodeInProgress(BinaryEncoder encoder, Map<Long, InMemoryTransactionManager.InProgressTx> inProgress)
+  protected void encodeInProgress(BinaryEncoder encoder, Map<Long, TransactionManager.InProgressTx> inProgress)
     throws IOException {
 
     if (!inProgress.isEmpty()) {
       encoder.writeInt(inProgress.size());
-      for (Map.Entry<Long, InMemoryTransactionManager.InProgressTx> entry : inProgress.entrySet()) {
+      for (Map.Entry<Long, TransactionManager.InProgressTx> entry : inProgress.entrySet()) {
         encoder.writeLong(entry.getKey()); // tx id
         encoder.writeLong(entry.getValue().getExpiration());
       }
@@ -64,17 +64,17 @@ public class SnapshotCodecV1 extends AbstractSnapshotCodec {
   }
 
   @Override
-  protected NavigableMap<Long, InMemoryTransactionManager.InProgressTx> decodeInProgress(BinaryDecoder decoder)
+  protected NavigableMap<Long, TransactionManager.InProgressTx> decodeInProgress(BinaryDecoder decoder)
     throws IOException {
 
     int size = decoder.readInt();
-    NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress = Maps.newTreeMap();
+    NavigableMap<Long, TransactionManager.InProgressTx> inProgress = Maps.newTreeMap();
     while (size != 0) { // zero denotes end of list as per AVRO spec
       for (int remaining = size; remaining > 0; --remaining) {
         inProgress.put(decoder.readLong(),
                        // 1st version did not store visibilityUpperBound. It is safe to set firstInProgress to 0,
                        // it may decrease performance until this tx is finished, but correctness will be preserved.
-                       new InMemoryTransactionManager.InProgressTx(0L, decoder.readLong()));
+                       new TransactionManager.InProgressTx(0L, decoder.readLong()));
       }
       size = decoder.readInt();
     }
