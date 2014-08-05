@@ -17,9 +17,19 @@
 # limitations under the License.
 #
 
-# We need Hadoop installed
-%w(default hbase hive).each do |recipe|
+# We need Hadoop/HBase installed
+%w(default hbase).each do |recipe|
    include_recipe "hadoop::#{recipe}"
+end
+
+# Hive is optional
+if node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('explore.enabled') &&
+  node['cdap']['cdap_site']['explore.enabled'].to_s == 'true'
+
+  log 'hive-explore-enabled' do
+    message 'Explore module enabled, installing Hive libraries'
+  end
+  include_recipe 'hadoop::hive'
 end
 
 include_recipe 'cdap::repo'
