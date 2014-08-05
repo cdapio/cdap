@@ -20,7 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import com.google.inject.Inject;
@@ -43,14 +43,14 @@ public class LevelDBQueueAdmin implements QueueAdmin {
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBQueueAdmin.class);
 
   private final String tableNamePrefix;
-  private final LevelDBOcTableService service;
+  private final LevelDBOrderedTableService service;
 
   @Inject
-  public LevelDBQueueAdmin(CConfiguration conf, LevelDBOcTableService service) {
+  public LevelDBQueueAdmin(CConfiguration conf, LevelDBOrderedTableService service) {
     this(conf, service, QUEUE);
   }
 
-  protected LevelDBQueueAdmin(CConfiguration conf, LevelDBOcTableService service,
+  protected LevelDBQueueAdmin(CConfiguration conf, LevelDBOrderedTableService service,
                               QueueConstants.QueueType type) {
     this.service = service;
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)

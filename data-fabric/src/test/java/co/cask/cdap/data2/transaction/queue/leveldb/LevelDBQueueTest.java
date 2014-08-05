@@ -21,7 +21,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
@@ -60,6 +60,6 @@ public class LevelDBQueueTest extends QueueTest {
     queueAdmin = injector.getInstance(QueueAdmin.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    LevelDBOcTableService.getInstance().clearTables();
+    LevelDBOrderedTableService.getInstance().clearTables();
   }
 }

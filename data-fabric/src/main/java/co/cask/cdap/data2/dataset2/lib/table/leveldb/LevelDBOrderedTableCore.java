@@ -20,9 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.dataset.lib.table.FuzzyRowFilter;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.KeyValue;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
+import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.Result;
 import com.continuuity.tephra.Transaction;
 import com.google.common.base.Preconditions;
@@ -76,9 +74,9 @@ public class LevelDBOrderedTableCore {
     ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR).build();
 
   private final String tableName;
-  private final LevelDBOcTableService service;
+  private final LevelDBOrderedTableService service;
 
-  public LevelDBOrderedTableCore(String tableName, LevelDBOcTableService service) throws IOException {
+  public LevelDBOrderedTableCore(String tableName, LevelDBOrderedTableService service) throws IOException {
     this.tableName = tableName;
     this.service = service;
   }
@@ -135,11 +133,11 @@ public class LevelDBOrderedTableCore {
     return result;
   }
 
-  public void persist(Map<byte[], Map<byte[], byte[]>> changes, long version) throws IOException {
+  public void persist(Map<byte[], ? extends Map<byte[], byte[]>> changes, long version) throws IOException {
     DB db = getDB();
     // todo support writing null when no transaction
     WriteBatch batch = db.createWriteBatch();
-    for (Map.Entry<byte[], Map<byte[], byte[]>> row : changes.entrySet()) {
+    for (Map.Entry<byte[], ? extends Map<byte[], byte[]>> row : changes.entrySet()) {
       for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
         byte[] key = createPutKey(row.getKey(), column.getKey(), version);
         batch.put(key, column.getValue() == null ? DELETE_MARKER : column.getValue());
@@ -148,27 +146,18 @@ public class LevelDBOrderedTableCore {
     db.write(batch, service.getWriteOptions());
   }
 
-  public void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes, long version) throws IOException {
-    DB db = getDB();
-    // todo support writing null when no transaction
-    WriteBatch batch = db.createWriteBatch();
-    for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : changes.entrySet()) {
-      for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
-        byte[] key = createPutKey(row.getKey(), column.getKey(), version);
-        batch.put(key, column.getValue() == null ? DELETE_MARKER : column.getValue());
-      }
-    }
-    db.write(batch, service.getWriteOptions());
+  public void put(byte[] row, byte[] column, byte[] value, long version) throws IOException {
+    getDB().put(createPutKey(row, column, version), value);
   }
 
-  public void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted, long version) throws IOException {
+  public void undo(Map<byte[], ? extends Map<byte[], ?>> persisted, long version) throws IOException {
     if (persisted.isEmpty()) {
       return;
     }
     DB db = getDB();
     WriteBatch batch = db.createWriteBatch();
-    for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : persisted.entrySet()) {
-      for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
+    for (Map.Entry<byte[], ? extends Map<byte[], ?>> row : persisted.entrySet()) {
+      for (Map.Entry<byte[], ?> column : row.getValue().entrySet()) {
         byte[] key = createPutKey(row.getKey(), column.getKey(), version);
         batch.delete(key);
       }
@@ -493,7 +482,7 @@ public class LevelDBOrderedTableCore {
               }
             }
           }
-          return new Result(result.getFirst(), (Map<byte[], byte[]>) result.getSecond());
+          return new Result(result.getFirst(), result.getSecond());
         }
       } catch (Exception e) {
         throw Throwables.propagate(e);
