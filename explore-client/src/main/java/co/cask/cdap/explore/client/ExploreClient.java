@@ -136,7 +136,7 @@ public interface ExploreClient extends Closeable {
 
 
   /**
-   * Get information about Reactor as a database.
+   * Get information about CDAP as a database.
    *
    * @param infoType information type we are interested about.
    * @return a {@link ListenableFuture} object eventually containing the information requested.

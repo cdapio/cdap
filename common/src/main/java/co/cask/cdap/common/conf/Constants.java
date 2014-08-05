@@ -479,7 +479,7 @@ public final class Constants {
      * Explore JDBC constants.
      */
     public static final class Jdbc {
-      public static final String URL_PREFIX = "jdbc:reactor://";
+      public static final String URL_PREFIX = "jdbc:cdap://";
     }
   }
 

@@ -221,13 +221,13 @@ public class ExploreServiceUtils {
   public static HiveSupport checkHiveSupportWithSecurity(Configuration hConf, ClassLoader hiveClassLoader) {
     if (User.isHBaseSecurityEnabled(hConf)) {
       throw new RuntimeException("Explore is not supported on secure Hadoop clusters. Set the configuration " +
-                                   "reactor.explore.enabled to false to start up Reactor without Explore.");
+                                   "reactor.explore.enabled to false to start up CDAP without Explore.");
     }
     return checkHiveSupportWithoutSecurity(hiveClassLoader);
   }
 
   /**
-   * Return the list of absolute paths of the bootstrap classes.
+   * Return the list of absolute paths of thecdacd     bootstrap classes.
    */
   public static Set<String> getBoostrapClasses() {
     ImmutableSet.Builder<String> builder = ImmutableSet.builder();

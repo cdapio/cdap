@@ -41,8 +41,8 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 
 /**
- * Explore JDBC Driver. A proper URL is of the form: jdbc:reactor://<host>:<port>?<param1>=<value1>[&<param2>=<value2>],
- * Where host and port point to Reactor http interface where Explore is enabled, and the additional parameters are from
+ * Explore JDBC Driver. A proper URL is of the form: jdbc:cdap://<host>:<port>?<param1>=<value1>[&<param2>=<value2>],
+ * Where host and port point to CDAP http interface where Explore is enabled, and the additional parameters are from
  * the {@link co.cask.cdap.explore.jdbc.ExploreDriver.ConnectionParams.Info} enum.
  */
 public class ExploreDriver implements Driver {
@@ -51,7 +51,7 @@ public class ExploreDriver implements Driver {
     try {
       java.sql.DriverManager.registerDriver(new ExploreDriver());
     } catch (SQLException e) {
-      LOG.error("Caught exception when registering Reactor JDBC Driver", e);
+      LOG.error("Caught exception when registering CDAP JDBC Driver", e);
     }
   }
 
@@ -129,7 +129,7 @@ public class ExploreDriver implements Driver {
   }
 
   /**
-   * Parse Explore connection url string to retrieve the necessary parameters to connect to Reactor.
+   * Parse Explore connection url string to retrieve the necessary parameters to connect to CDAP.
    * Package visibility for testing.
    */
   ConnectionParams parseConnectionUrl(String url) {
@@ -174,7 +174,7 @@ public class ExploreDriver implements Driver {
      * Extra Explore connection parameter.
      */
     public enum Info {
-      EXPLORE_AUTH_TOKEN("reactor.auth.token");
+      EXPLORE_AUTH_TOKEN("cdap.auth.token");
 
       private String name;
 

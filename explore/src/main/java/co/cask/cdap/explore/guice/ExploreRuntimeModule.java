@@ -251,7 +251,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
     // Here we find the transitive dependencies and remove all paths that come from the boot class path -
     // those paths are not needed because the new JVM will have them in its boot class path.
     // It could even be wrong to keep them because in the target container, the boot class path may be different
-    // (for example, if Hadoop uses a different Java version than Reactor).
+    // (for example, if Hadoop uses a different Java version than CDAP).
 
     Set<String> bootstrapClassPaths = ExploreServiceUtils.getBoostrapClasses();
 
