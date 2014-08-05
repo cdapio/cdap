@@ -1351,7 +1351,7 @@ HTTP Responses
 
 List of Queries
 --------------
-Return list of queries 
+To return a list of queries, use::
 
    GET <base-url>/data/explore/queries?limit=<limit>&cursor=<cursor>&offset=<offset>
 
@@ -1377,9 +1377,9 @@ The results are returned as a JSON array, with each element containing informati
     ...
   ]
 
-Download query results
+Download Query Results
 ----------------------
-Download the results of a query.
+To download the results of a query, use::
   
    GET <base-url>/data/explore/queries/<query-handle>
 
