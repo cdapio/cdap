@@ -69,8 +69,6 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLoca
 
       for (Map.Entry<String, String> moduleEntry : specification.getDatasetModules().entrySet()) {
         // note: using app class loader to load module class
-        //JarClassLoader classLoader = new JarClassLoader(input.getArchive());
-
         @SuppressWarnings("unchecked")
         Class<?> clazz = classLoader.loadClass(moduleEntry.getValue());
         String moduleName = moduleEntry.getKey();
