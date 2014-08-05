@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>security</artifactId>
-  <name>Continuuity Security</name>
+  <name>Cask CDAP Security</name>
   <packaging>jar</packaging>
 
   <dependencies>

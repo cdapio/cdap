@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>data-fabric</artifactId>
-  <name>Continuuity Data-Fabric</name>
+  <name>Cask CDAP Data-Fabric</name>
   <packaging>jar</packaging>
 
   <dependencies>

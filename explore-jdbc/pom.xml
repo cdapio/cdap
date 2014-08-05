@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>explore-jdbc</artifactId>
-  <name>Continuuity Explore JDBC Driver</name>
+  <name>Cask CDAP Explore JDBC Driver</name>
   <packaging>jar</packaging>
 
   <dependencies>
