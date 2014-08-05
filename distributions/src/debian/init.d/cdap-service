@@ -38,10 +38,10 @@ fi
 
 SVC_COMMAND="/opt/cdap/@package.name@/bin/svc-@service.name@ $*"
 K5PID="/var/cdap/run/k5start.pid"
-KRB_COMMAND="k5start -b -L -K 10 -p $K5PID -f $REACTOR_KEYTAB -u $REACTOR_PRINCIPAL"
+KRB_COMMAND="k5start -b -L -K 10 -p $K5PID -f $CDAP_KEYTAB -u $CDAP_PRINCIPAL"
 
 # check for kerberos
-if [[ -n $REACTOR_KEYTAB ]] && [[ -n $REACTOR_PRINCIPAL ]]; then
+if [[ -n $CDAP_KEYTAB ]] && [[ -n $CDAP_PRINCIPAL ]]; then
   # Check for k5start and exit if it doesn't exist
   if [[ $(which k5start) ]]; then
     :
