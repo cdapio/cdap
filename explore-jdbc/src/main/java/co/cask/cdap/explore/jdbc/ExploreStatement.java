@@ -36,7 +36,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 /**
- * Reactor JDBC Statement. At most one {@link ExploreResultSet} object can be produced by instances
+ * CDAP JDBC Statement. At most one {@link ExploreResultSet} object can be produced by instances
  * of this class.
  */
 public class ExploreStatement implements Statement {
