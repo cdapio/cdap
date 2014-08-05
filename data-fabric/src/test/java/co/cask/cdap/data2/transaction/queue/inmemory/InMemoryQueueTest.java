@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.queue.inmemory;
 
+import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -27,10 +28,8 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.continuuity.tephra.TransactionExecutorFactory;
 import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
-import com.continuuity.tephra.runtime.ConfigModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.hadoop.conf.Configuration;
 import org.junit.BeforeClass;
 
 /**
@@ -44,7 +43,7 @@ public class InMemoryQueueTest extends QueueTest {
   public static void init() throws Exception {
 
     injector = Guice.createInjector(
-      new ConfigModule(new Configuration()),
+      new ConfigModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),

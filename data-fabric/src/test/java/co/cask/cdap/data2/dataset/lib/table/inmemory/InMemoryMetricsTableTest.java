@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset.lib.table.inmemory;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -30,12 +31,10 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
-import com.continuuity.tephra.runtime.ConfigModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import org.apache.hadoop.conf.Configuration;
 import org.junit.BeforeClass;
 
 /**
@@ -47,7 +46,7 @@ public class InMemoryMetricsTableTest extends MetricsTableTest {
   @BeforeClass
   public static void setup() throws Exception {
     Injector injector = Guice.createInjector(
-      new ConfigModule(new Configuration()),
+      new ConfigModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
