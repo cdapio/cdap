@@ -3668,7 +3668,7 @@ div.tooltip {
 	padding-right: 10px;
 }
 
-.downlad-query-results-btn {
+.download-query-results-btn {
 	width: 32px;
 	height: 32px;
 	background-image: url('/assets/img/v2/download_inactive.png');
@@ -3677,10 +3677,17 @@ div.tooltip {
 	margin: 0px auto;
 }
 
-.downlad-query-results-btn:hover {
+.download-query-results-btn:hover {
 	background-image: url('/assets/img/v2/download_active.png');
 }
-
+.download-query-results-inactive-btn {
+	width: 32px;
+	height: 32px;
+	background-image: url('/assets/img/v2/na.png');
+	background-repeat: no-repeat;
+	display: block;
+	margin: 0px auto;
+}
 
 /**
  *Login form

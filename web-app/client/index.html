@@ -342,36 +342,54 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="DataExploreResults">
+
+  <div>
+     <hr style="margin-top: 0px"/>
+
+    <table style="">
+      <thead>
+        <tr>
+          <td>
+            <button style="min-width:60px;" class="btn btn-blank btn-default" id="execute-explore-query" {{action 'nextPage' on="click"}}>></button>
+            <button style="min-width:60px;" class="btn btn-blank btn-default" id="execute-explore-query" {{action 'prevPage' on="click"}}><</button>
+          </td>
+        </tr>
+      </thead>
+    </table>
+
     <table class="table" id="query-list-table">
       <thead>
-        <th style="width: 25%">Query Handle</th>
+        <th style="width: 25%">Time Started</th>
         <th style="width: 45%">Query</th>
         <th style="width: 15%">Status</th>
         <th style="width: 15%" class="center-align">Result</th>
       </thead>
     </table>
     {{#each objArr}}
-    {{#unless deleted}}
-    <table {{bindAttr class=":table :cursor-pointer :query-table-entry this.isSelected:selected:notselected" }} {{ action showTable this }}>
+    <table {{bindAttr class=":table :cursor-pointer :query-table-entry this.isSelected:selected:notselected" }} {{ action toggleTable this }}>
       <tbody>
         <tr {{bindAttr data-target="query_handle_hashed"}}>
           <td style="width: 25%">
-            <span class="lighter-color">{{query_handle}}</span>
+            <span class="lighter-color">{{time_started}}</span>
           </td>
           <td style="width: 45%"><span class="bolder-font">{{statement}}</span></td>
           <td style="width: 15%"><span {{bindAttr class=":query-status status"}}>{{status}}</span></td>
           
           <td style="width: 15%" class="center-align">
           {{#if has_results}}
-            <a {{action download this bubbles=false}} class="downlad-query-results-btn"></a>
+            {{#if is_active}}
+              <a {{action download this bubbles=false}} class="download-query-results-btn"></a>
+            {{ else }}
+              <a class="download-query-results-inactive-btn"></a>
+            {{/if}}
           {{ else }}
-            No results
+            <a class="download-query-results-inactive-btn"></a>
           {{/if}}
           </td>
         </tr>
       </tbody>
     </table>
-      {{#if has_results}}
+      {{#if is_active}}
         <div {{bindAttr id="query_handle"}} style="display:none">
 
           <table class="table query-results-table-entry">
@@ -393,18 +411,12 @@
 
         </div>
       {{ else }}
-        <div {{bindAttr id="query_handle"}}>
+        <div {{bindAttr id="query_handle"}} style="display:none">
           <a>This query does not have results.</a>
         </div>
       {{/if}}
-    {{/unless}}
     {{/each}}
-    <div>
-      <div style="width:50%;">
-      <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'nextPage' on="click"}}>></button>
-      <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'prevPage' on="click"}}><</button>
-      </div>
-    </div>
+  </div>
   </script>
 
 
@@ -473,7 +485,7 @@
       <div class="panel">
          <ul class="nav nav-pills pull-right" id="explore-sub-menu">
            <li>{{#linkTo DataExplore.Query}}Query{{/linkTo }}</li>
-           <li>{{#linkTo DataExplore.Results}}Reults{{/linkTo}}</li>
+           <li>{{#linkTo DataExplore.Results}}Results{{/linkTo}}</li>
          </ul>
          <div style="clear:both"></div>
          <hr style="margin-top: 0px"/>

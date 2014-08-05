@@ -8,20 +8,23 @@ define([], function () {
 
 		load: function () {
 		  var self = this;
+		  C.hideAllTables = function(){
+		    self.hideAllTables();
+		  };
 
 		  self.limit = 4;
 		  self.offset = null;
 		  self.direction = null;
+      self.largestEver = null;
 
 		  this.set('objArr', []);
 		  this.fetchQueries();
 		  this.interval = setInterval(function () {
-//        self.fetchQueries();
+        self.fetchQueries();
 		  }, 1000);
 		  this.set('datasets', []);
 		  this.loadDiscoverableDatasets();
 		},
-
 
 		loadDiscoverableDatasets: function () {
 		  var self = this;
@@ -49,8 +52,17 @@ define([], function () {
 		  });
 		},
 
-		showTable: function (obj) {
+		toggleTable: function (obj, hideAllFirst, callback) {
       var self = this;
+      hideAllFirst = typeof hideAllFirst !== 'undefined' ? hideAllFirst : true;
+      console.log(hideAllFirst);
+      if(hideAllFirst){
+        self.hideAllTables(obj);
+      }
+      if(!obj.get('has_results') || !obj.get('is_active')) {
+        console.log('returning');
+        return;
+      }
       obj.set('isSelected', !obj.get('isSelected'));
       $("#" + obj.query_handle).slideToggle(200, function () {
         var objArr = self.get('objArr');
@@ -59,12 +71,38 @@ define([], function () {
             entry.set('isSelected', false);  
           }
         });
+        if (typeof callback === "function") {
+            callback();
+        }
       });
+    },
+
+    hideAllTables: function (dontHide) {
+      var objArr = this.get('objArr');
+      for (var i=0; i<objArr.length; i++){
+        var query = objArr[i];
+        if(query === dontHide){
+          continue;
+        }
+        if(query.get('isSelected')){
+          this.toggleTable(query, false);
+          query.set('isSelected', false);
+        }
+      }
+    },
+
+    hideTable: function (query, callback) {
+      if(query.get('isSelected')){
+        this.toggleTable(query, false, callback);
+      } else if (typeof callback === "function") {
+        callback();
+      }
     },
 
     selectDataset: function (dataset) {
       this.set('selectedDataset', dataset);
       $("#query-injector-input").attr('placeholder','SELECT * FROM ' + dataset.name + ' LIMIT 5');
+      this.set('placeholder', 'SELECT * FROM ' + dataset.name + ' LIMIT 5');
       var datasets = this.get('datasets');
       datasets.forEach(function (entry) {
         entry.set('isSelected', false);
@@ -74,41 +112,39 @@ define([], function () {
 
 		unload: function () {},
 
-    getLargestSmallest: function () {
-      var self = this;
-      var objArr = self.get('objArr');
-        if(objArr.length){
-          self.largest = objArr[0].timestamp;
-          self.smallest = objArr[0].timestamp;
-          objArr.forEach(function(query){
-            if(query.timestamp > self.largest){
-              self.largest = query.timestamp;
-            }
-            if(query.timestamp < self.smallest){
-              self.smallest = query.timestamp;
-            }
-          });
-        }
-    },
-
     nextPage: function () {
       var self = this;
-      self.getLargestSmallest();
       self.offset = self.smallest;
       self.cursor = "next";
-      self.fetchQueries();
+
+      self.fetchQueries(true);
     },
 
     prevPage: function () {
       var self = this;
-      self.getLargestSmallest();
       self.offset = self.largest;
       self.cursor = "prev";
-      self.fetchQueries();
+
+      self.fetchQueries(true);
     },
 
-		fetchQueries: function () {
+    padZero: function (num) {
+        return num < 10 ? "0" + num : num;
+    },
+
+    formattedDate: function (d) {
+        var day = d.getDate();
+        var month = d.getMonth() + 1; // Note the `+ 1` -- months start at zero.
+        var year = d.getFullYear();
+        var hour = d.getHours();
+        var min = d.getMinutes();
+        var sec = d.getSeconds();
+        return month+"/"+day+"/"+year+" "+hour+":"+this.padZero(min)+":"+this.padZero(sec);
+    },
+
+		fetchQueries: function (clearLocalFirst) {
 		  var self = this;
+
 		  var url = 'data/explore/queries';
 		  if(self.limit){
 		    url += '?limit=' + self.limit;
@@ -124,26 +160,46 @@ define([], function () {
         if(status != 200) { return console.log('error in fetchQueries in data-explore.js'); }
 
         if(queries.length == 0){
+          if(self.cursor == "prev"){
+            self.offset = null;
+            self.cursor = null;
+          }
           return;
         }
-        self.set('objArr', []);
+        //Clear the local memory of the queries if the list of queries in the response is different than the local version (and our local version isn't empty)
+        if(clearLocalFirst || (  self.get('objArr').length && (self.get('objArr')[0].get('query_handle') != queries[0].query_handle)  )){
+          console.log('reset');
+          self.set('objArr', []);
+        }
 		    var objArr = self.get('objArr');
 
-        objArr.forEach(function(query){
-          query.set('inList', false);
+        queries.sort(function(a, b){
+            if(a.timestamp < b.timestamp) return 1;
+            if(a.timestamp > b.timestamp) return -1;
+            return 0;
         });
         queries.forEach(function (query) {
           var existingObj = self.find(query.query_handle);
           if (!existingObj) {
             var newObj = Ember.Object.create(query);
             newObj.query_handle_hashed = "#" + newObj.query_handle;
-            existingObj = objArr.pushObject(newObj);
-          } else {
-            existingObj.set('status', query.status);
-            existingObj.set('has_results', query.has_results);
-            existingObj.set('is_active', query.is_active);
-          }
+            newObj.time_started = new Date(query.timestamp);
+            newObj.time_started = newObj.time_started.toString().replace(/\ GMT.*/,'');
+//            newObj.time_started = self.formattedDate(newObj.time_started);
 
+            existingObj = objArr.pushObject(newObj);
+          } else if (   existingObj.get('status')      !== query.status
+                     || existingObj.get('has_results') !== query.has_results
+                     || existingObj.get('is_active')   !== query.is_active) {
+              //Avoid updating the query object upon every response from the server.
+              //Instead, only update the query object when attributes actually change.
+              //Otherwise, emberjs will update the view (even when no attribute really changed) and the update can mess up any dynamic view (toggled tables).
+              self.hideTable(existingObj, function () {
+                existingObj.set('status', query.status);
+                existingObj.set('has_results', query.has_results);
+                existingObj.set('is_active', query.is_active);
+              });
+          }
           if (existingObj.get('status') === 'FINISHED' && existingObj.get('has_results') && existingObj.get('is_active')) {
             if (!existingObj.get('results')) {
               self.getPreview(existingObj);
@@ -152,6 +208,14 @@ define([], function () {
           }
         });
 
+
+        if(objArr.length){
+          self.largest = objArr[0].timestamp;
+          self.smallest = objArr[objArr.length - 1].timestamp;
+          if(self.largest > self.largestEver) {
+            self.largestEver = self.largest;
+          }
+        }
       });
 		},
 
@@ -188,6 +252,9 @@ define([], function () {
       self.HTTP.post(url, function (response) {
         self.downloadFile('results_' + handle + '.txt', response);
       });
+      this.hideTable(query, function () {
+        query.set('is_active', false);
+      });
     },
 
     deleteQuery: function (query) {
@@ -210,13 +277,14 @@ define([], function () {
       this.HTTP.post('rest/data/explore/queries', {data: { "query": sqlString }},
         function (response, status) {
           if(status != 200) {
-            C.Util.showWarning(response.error + ' : ' + response.message);
+            C.Util.showWarning(' ' + response.message);
             console.log('error in submitSQLQuery in data-explore.js');
             return;
           }
           self.fetchQueries();
         }
       );
+      self.hideAllTables();
     },
 
     find: function (query_handle) {
