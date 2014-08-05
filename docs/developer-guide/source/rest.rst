@@ -1219,6 +1219,11 @@ The status of a query is obtained using a HTTP GET request to the query's URL::
 
   GET <base-url>/data/explore/queries/<query-handle>/status
 
+   * - Parameter
+     - Description
+   * - ``<query-handle>``
+     - Handle obtained when the query was submitted
+
 HTTP Responses
 ..............
 .. list-table::
@@ -1251,6 +1256,11 @@ Obtaining the Result Schema
 If the query's status is ``FINISHED`` and it has results, you can obtain the schema of the results::
 
   GET <base-url>/data/explore/queries/<query-handle>/schema
+
+   * - Parameter
+     - Description
+   * - ``<query-handle>``
+     - Handle obtained when the query was submitted
 
 HTTP Responses
 ..............
@@ -1292,7 +1302,12 @@ The body of the request can contain a JSON string specifying the batch size::
     "size":<int>
   }
 
-If the batch size is not specified, it defaults to 20.
+If the batch size is not specified, the default is 20.
+
+   * - Parameter
+     - Description
+   * - ``<query-handle>``
+     - Handle obtained when the query was submitted
 
 HTTP Responses
 ..............
@@ -1334,6 +1349,15 @@ The query can be closed by issuing an HTTP DELETE against its URL::
 
 This frees all resources that are held by this query.
 
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<query-handle>``
+     - Handle obtained when the query was submitted
+
 HTTP Responses
 ..............
 .. list-table::
@@ -1349,16 +1373,53 @@ HTTP Responses
    * - ``404 Not Found``
      - The query handle does not match any current query
 
-Canceling a Query
------------------
-Execution of a query can be canceled before it is finished with an HTTP POST::
+List of Queries
+--------------
+To return a list of queries, use::
 
-  POST <base-url>/data/explore/queries/<query-handle>/cancel
+   GET <base-url>/data/explore/queries?limit=<limit>&cursor=<cursor>&offset=<offset>
 
-After this, the query can only be closed.
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
 
-**Note:** This operation is not supported with CDH 4.x distributions. It will return a
-``500 Internal Server Error`` status code.
+   * - Parameter
+     - Description
+   * - ``<limit>``
+     - Number of results to return in the response.; by default, 50 results will be returned
+   * - ``<cursor>``
+     - Specifies if the results returned should be in the forward or reverse direction by specifying ``next`` or ``prev``
+   * - ``<offset>``
+     - Offset for pagination, returns the results that are greater than offset if the cursor is ``next`` or 
+       results that are less than offset if cursor is ``prev``
+
+Comments
+........
+The results are returned as a JSON array, with each element containing information about the query::
+
+  [
+    {"timestamp":1407192465183,"statement":"SHOW TABLES","status":"FINISHED",
+     "query_handle":"319d9438-903f-49b8-9fff-ac71cf5d173d","has_results":true,"is_active":false},
+    ...
+  ]
+
+Download Query Results
+----------------------
+To download the results of a query, use::
+  
+  GET <base-url>/data/explore/queries/<query-handle>
+
+The results of the query are returned in CSV format.
+
+   * - Parameter
+     - Description
+   * - ``<query-handle>``
+     - Handle obtained when the query was submitted or via a list of queries
+
+Comments
+........
+The query results can be downloaded only once. The RESTful API will return a Status Code ``409 Conflict`` 
+if results for the ``query-handle`` are attempted to be downloaded again.
 
 HTTP Responses
 ..............
@@ -1369,11 +1430,45 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The query was canceled
-   * - ``400 Bad Request``
-     - The query was not in a state that can be canceled
+     - The HTTP call was successful.
    * - ``404 Not Found``
-     - The query handle does not match any current query
+     - The query handle does not match any current query.
+   * - ``409 Conflict``
+     - The query results was already downloaded.
+
+Hive Table Schema
+-----------------
+You can obtain the schema of the underlying Hive Table with::
+
+  GET <base-url>/data/explore/datasets/<dataset-name>/schema
+
+   * - Parameter
+     - Description
+   * - ``<dataset-name>``
+     - Name of the Dataset whose schema is to be retrieved
+
+Comments
+........
+The results are returned as a JSON Map, with ``key`` containing the column names of the underlying table and 
+``value`` containing the column types of the underlying table::
+
+  {
+    "key": "array<tinyint>",
+    "value": "array<tinyint>"
+  }
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The HTTP call was successful.
+   * - ``404 Not Found``
+     - The dataset was not found.
 
 
 Procedure HTTP API
