@@ -108,7 +108,7 @@ Services Integration with Guava Services
 -----------------------------------------
 To run `Guava Services <https://code.google.com/p/guava-libraries/wiki/ServiceExplained>`__ as ``TwillApplication``\s,
 add the service to the application using the ``addService(name, guavaService)`` method. The service can be managed,
-started, and stopped as other services.
+started, and stopped as other CDAP services.
 
 Services Integration with Metrics and Logging
 ---------------------------------------------
