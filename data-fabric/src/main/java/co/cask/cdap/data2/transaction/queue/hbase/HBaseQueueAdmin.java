@@ -345,7 +345,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
   }
 
   public void create(QueueName queueName) throws IOException {
-    // Queue Config need s to be on separate table, otherwise disabling the queue table would makes queue config
+    // Queue Config needs to be on separate table, otherwise disabling the queue table would makes queue config
     // not accessible by the queue region coprocessor for doing eviction.
 
     // Create the config table first so that in case the queue table coprocessor runs, it can access the config table.
