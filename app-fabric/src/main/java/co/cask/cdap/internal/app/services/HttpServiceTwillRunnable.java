@@ -85,9 +85,9 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
       // once the service has been stopped, don't announe it anymore.
       contextCancellable.cancel();
     } catch (InterruptedException e) {
-      LOG.error("Caught exception in HTTP Service run: {}", e);
+      LOG.error("Caught exception in HTTP Service run", e);
     } catch (ExecutionException e) {
-      LOG.error("Caught exception in HTTP Service run: {}", e);
+      LOG.error("Caught exception in HTTP Service run", e);
     }
   }
 
