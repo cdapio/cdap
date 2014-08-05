@@ -1,49 +1,49 @@
-.. :Author: Continuuity, Inc.
-   :Description: Introducing new developers to Continuuity Reactor
+.. :Author: Cask, Inc.
+   :Description: Introducing new developers to the Cask Data Application Platform
 
 ===============================
 Quick Start
 ===============================
 
-This Quick Start will guide you through installing Continuuity Reactor,
-running an example that counts HTTP status codes
+This Quick Start will guide you through installing the Cask Data Application Platform (CDAP),
+running an example that counts HTTP status codes,
 and then modifying the example's Java code to include counting client IP addresses.
 
 Checkout the Application
 ========================
-We've pre-deployed one of the example applications to the Continuuity Reactor.
-When you startup the Reactor, you'll be guided through viewing the application,
+We've pre-deployed one of the example applications to CDAP.
+When you startup CDAP Console, you'll be guided through viewing the application,
 injecting an Event into a Flow and querying a Procedure to obtain results.
 
 The example code for the *ResponseCodeAnalytics* that we'll be using is located in ``/examples/ResponseCodeAnalytics``.
 
 Step 1: Installation and Startup
 ================================
-Download and unpack the SDK from `Continuuity.com </download>`_.
+Download and unpack the SDK from `Cask.co </download>`_.
 
-Start the Reactor from a command line in the SDK directory::
+Start CDAP from a command line in the SDK directory::
 
-  $ bin/reactor.sh start
+  $ ./bin/cdap.sh start
 
 Or, on Windows::
 
-  > bin\reactor.bat start
+  > bin\cdap.bat start
 
-View the Reactor Dashboard in a browser window::
+View the CDAP Console in a browser window::
 
   http://localhost:9999
 
-Take the tour: you will be guided through the Dashboard, injecting HTTP log events and querying a Procedure to get a count of status codes.
+Take the tour: you will be guided through the Console, injecting HTTP log events and querying a Procedure to get a count of status codes.
 
-Step 2: The Dashboard
+Step 2: The Console
 =====================
-When you first open the Dashboard, you'll be greeted with:
+When you first open the Console, you'll be greeted with:
 
 .. image:: _images/quickstart/overview.png
    :width: 400px
 
 Click on the name of the Application (**ResponseCodeAnalytics**) to view the running Application. The Application has each
-of the Reactor's components:
+of CDAP's components:
 
 - Collect: a Stream *logEventStream*
 - Process: a Flow *LogAnalyticsFlow*
@@ -58,9 +58,11 @@ while the latter indicates that the code is implementing a class.
 Step 3: Inject Data
 ===================
 Click on the Flow name (**LogAnalyticsFlow**), and you will be guided through clicking on a Stream icon
-to add an Event to the Flow. We've pre-populated the injector with an Apache log line such as::
+to add an Event to the Flow. We've pre-populated the injector with an Apache log line such as
+(broken onto two lines)::
 
-  165.225.156.91 - - [09/Jan/2014:21:28:53 -0400] "GET /index.html HTTP/1.1" 200 225 "http://continuuity.com" "Mozilla/4.08 [en] (Win98; I ;Nav)"
+  165.225.156.91 - - [09/Jan/2014:21:28:53 -0400] "GET /index.html HTTP/1.1" 200 225 
+    "http://cask.co" "Mozilla/4.08 [en] (Win98; I ;Nav)"
 
 Once you inject the Event, if you leave the dialog box open, you can see it passing through the Flow on the real-time 
 graph of *Events Per Second*. (Depending on the load on your computer, it might take as long as a second for the 
@@ -97,9 +99,9 @@ code directory ``/examples/ResponseCodeAnalytics``) the command::
 to build the .JAR file for deploying the application.
 
 (On Windows, `these instructions <http://maven.apache.org/guides/getting-started/windows-prerequisites.html>`__
-may help with problems using maven.)
+may help with problems using *maven*.)
 
-Open the source file (*ResponseCodeAnalyticsApp.java*) in your preferred editor,
+Open the source file (``ResponseCodeAnalyticsApp.java``) in your preferred editor,
 and make the following changes.
 
 After the line ``private OutputEmitter<Integer> output;`` insert this code::
@@ -128,13 +130,13 @@ Add to the class ``LogCountFlowlet`` the following ``count`` method::
     statusCodes.increment(Bytes.toBytes("clientIPKey"), Bytes.toBytes(ip), 1L);
   }
 
-
 This new method that will count IP address occurrences.
 
 To the class ``StatusCodeProcedure``, add the following ``getClientIPCounts`` method::
 
   @Handle("getClientIPCounts")
-  public void getClientIPCounts(ProcedureRequest request, ProcedureResponder responder) throws IOException {
+  public void getClientIPCounts(ProcedureRequest request, ProcedureResponder responder) 
+      throws IOException {
     Map<String, Long> statusCountMap = new HashMap<String, Long>();
     Row row = statusCodes.get(Bytes.toBytes("clientIPKey"));
   
@@ -152,7 +154,7 @@ To the class ``StatusCodeProcedure``, add the following ``getClientIPCounts`` me
 
 The new ``getClientIPCounts`` method that will query the Dataset (storage) for the IP address occurrences.
 
-After you make your code changes to *ResponseCodeAnalyticsApp.java*, you can build the .JAR file by running::
+After you make your code changes to ``ResponseCodeAnalyticsApp.java``, you can build the .JAR file by running::
 
   mvn clean package
 
@@ -165,7 +167,7 @@ if you are in an Element detail). Click the **Stop** buttons on the right side o
 *Process* and *Query* sections. This will stop the Flow and Procedure. You can tell by the
 labels underneath the names of the Flow and Procedures.
 
-Now, redeploy the Application. Return to the Reactor Overview (via the *Overview* button) and click the
+Now, redeploy the Application. Return to the CDAP Console Overview (via the *Overview* button) and click the
 *Load An App* button. Browse for the .JAR file (located in 
 ``/examples/ResponseCodeAnalytics/target``, and select it. The Application will be deployed.
 
@@ -189,7 +191,7 @@ The total should match the number of injections you made after you restarted the
 
 Where to Go Next
 ================
-Now that you've had a look at Continuuity Reactor, take a look at:
+Now that you've had a look at CDAP, take a look at:
 
 - `Developer Examples <examples/index.html>`__,
   three different examples to run and experiment with.
