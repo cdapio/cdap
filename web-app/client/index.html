@@ -389,9 +389,7 @@
         </tr>
       </tbody>
     </table>
-      {{#if is_active}}
         <div {{bindAttr id="query_handle"}} style="display:none">
-
           <table class="table query-results-table-entry">
             <thead>
               {{#each schema}}
@@ -408,13 +406,7 @@
             {{/each}}
             </tbody>
           </table>
-
         </div>
-      {{ else }}
-        <div {{bindAttr id="query_handle"}} style="display:none">
-          <a>This query does not have results.</a>
-        </div>
-      {{/if}}
     {{/each}}
   </div>
   </script>

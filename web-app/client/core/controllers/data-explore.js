@@ -21,7 +21,7 @@ define([], function () {
 		  this.fetchQueries();
 		  this.interval = setInterval(function () {
         self.fetchQueries();
-		  }, 1000);
+		  }, 5000);
 		  this.set('datasets', []);
 		  this.loadDiscoverableDatasets();
 		},
@@ -55,12 +55,10 @@ define([], function () {
 		toggleTable: function (obj, hideAllFirst, callback) {
       var self = this;
       hideAllFirst = typeof hideAllFirst !== 'undefined' ? hideAllFirst : true;
-      console.log(hideAllFirst);
       if(hideAllFirst){
         self.hideAllTables(obj);
       }
       if(!obj.get('has_results') || !obj.get('is_active')) {
-        console.log('returning');
         return;
       }
       obj.set('isSelected', !obj.get('isSelected'));
@@ -128,36 +126,23 @@ define([], function () {
       self.fetchQueries(true);
     },
 
-    padZero: function (num) {
-        return num < 10 ? "0" + num : num;
-    },
-
-    formattedDate: function (d) {
-        var day = d.getDate();
-        var month = d.getMonth() + 1; // Note the `+ 1` -- months start at zero.
-        var year = d.getFullYear();
-        var hour = d.getHours();
-        var min = d.getMinutes();
-        var sec = d.getSeconds();
-        return month+"/"+day+"/"+year+" "+hour+":"+this.padZero(min)+":"+this.padZero(sec);
-    },
-
 		fetchQueries: function (clearLocalFirst) {
 		  var self = this;
 
+      if(self.largest == self.largestEver && self.cursor === "prev"){
+        self.offset = null;
+        self.cursor = null;
+      }
+
 		  var url = 'data/explore/queries';
-		  if(self.limit){
-		    url += '?limit=' + self.limit;
-		  }
+      url += '?limit=' + self.limit;
 		  if(self.offset){
 		    url += '&offset=' + self.offset;
 		  }
 		  if(self.cursor){
         url += '&cursor=' + self.cursor;
       }
-      console.log(url);
       this.HTTP.rest(url, function (queries, status) {
-        if(status != 200) { return console.log('error in fetchQueries in data-explore.js'); }
 
         if(queries.length == 0){
           if(self.cursor == "prev"){
@@ -166,9 +151,17 @@ define([], function () {
           }
           return;
         }
+        if (queries.length < self.limit) {
+          if(self.cursor == "prev"){
+            self.offset = null;
+            self.cursor = "next";
+            self.fetchQueries();
+            return;
+          }
+        }
+
         //Clear the local memory of the queries if the list of queries in the response is different than the local version (and our local version isn't empty)
         if(clearLocalFirst || (  self.get('objArr').length && (self.get('objArr')[0].get('query_handle') != queries[0].query_handle)  )){
-          console.log('reset');
           self.set('objArr', []);
         }
 		    var objArr = self.get('objArr');
@@ -184,8 +177,8 @@ define([], function () {
             var newObj = Ember.Object.create(query);
             newObj.query_handle_hashed = "#" + newObj.query_handle;
             newObj.time_started = new Date(query.timestamp);
-            newObj.time_started = newObj.time_started.toString().replace(/\ GMT.*/,'');
-//            newObj.time_started = self.formattedDate(newObj.time_started);
+            newObj.time_started = newObj.time_started.toLocaleString();
+//            newObj.time_started = newObj.time_started.toString().replace(/\ GMT.*/,'');
 
             existingObj = objArr.pushObject(newObj);
           } else if (   existingObj.get('status')      !== query.status
@@ -224,7 +217,6 @@ define([], function () {
       var handle = query.get('query_handle');
       this.HTTP.post('rest/data/explore/queries/' + handle + '/preview', function (response, status) {
         if (status != 200) {
-          console.log('Error in getPreview');
           query.set('results', []);
           return;
         }
@@ -278,10 +270,10 @@ define([], function () {
         function (response, status) {
           if(status != 200) {
             C.Util.showWarning(' ' + response.message);
-            console.log('error in submitSQLQuery in data-explore.js');
             return;
           }
           self.fetchQueries();
+          self.largestEver += 1;
         }
       );
       self.hideAllTables();
