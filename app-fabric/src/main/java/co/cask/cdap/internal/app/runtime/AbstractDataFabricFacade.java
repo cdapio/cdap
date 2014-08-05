@@ -20,8 +20,6 @@ import co.cask.cdap.api.data.DataSetContext;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.DataFabric;
-import co.cask.cdap.data.DataFabric2Impl;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.queue.ConsumerConfig;
@@ -129,8 +127,7 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
                                                    DatasetFramework datasetFramework,
                                                    CConfiguration configuration) {
     try {
-      DataFabric dataFabric = new DataFabric2Impl(locationFactory);
-      DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework, configuration,
+      DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(datasetFramework, configuration,
                                                                         program.getClassLoader());
       dataSetInstantiator.setDataSets(program.getSpecification().getDatasets().values());
       return dataSetInstantiator;
