@@ -1,14 +1,11 @@
-.. :Author: Continuuity, Inc.
-   :Description: Continuuity Reactor Intermediate Apache Log Event Logger
+.. :Author: Cask, Inc.
+   :Description: Cask Data Application Platform Intermediate Apache Log Event Logger
 
 ==========================
 TrafficAnalytics Example
 ==========================
 
-**A Continuuity Reactor Application Demonstrating MapReduce**
-
-.. reST Editor: .. section-numbering::
-.. reST Editor: .. contents::
+**A Cask Data Application Platform (CDAP) Example Demonstrating MapReduce**
 
 Overview
 ========
@@ -183,16 +180,16 @@ Deploying and Starting the Application
 Make sure an instance of the Continuuity Reactor is running and available. 
 From within the SDK root directory, this command will start Reactor in local mode::
 
-	$ bin/continuuity-reactor start
+	$ ./bin/cdap.sh start
 
 On Windows::
 
-	~SDK> bin\reactor.bat start
+	~SDK> bin\cdap.bat start
 
-From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
+From within the Continuuity Reactor Console (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
 #. Drag and drop the Application .JAR file (``target/TrafficAnalytics-<version>.jar``) onto your browser window.
-   Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
+   Alternatively, use the *Load App* button found on the *Overview* of the Reactor Console.
 #. Once loaded, select the ``TrafficAnalytics`` Application from the list.
    On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
 	
@@ -232,7 +229,7 @@ Running the MapReduce Job
 .........................
 Start the MapReduce job by:
 
-- In the Continuuity Reactor Dashboard:
+- In the Continuuity Reactor Console:
 
   #. Click the *Process* button.
   #. Click on the *RequestCountMapReduce* MapReduce.
@@ -244,7 +241,7 @@ Start the MapReduce job by:
 Querying the Results
 ....................
 If the Procedure has not already been started, you start it either through the 
-Continuuity Reactor Dashboard or via an HTTP request using the ``curl`` command::
+Continuuity Reactor Console or via an HTTP request using the ``curl`` command::
 
 	curl -v -X POST 'http://localhost:10000/v2/apps/TrafficAnalytics/procedures/LogCountProcedure/start'
 	
@@ -258,15 +255,15 @@ There are two ways to query the *countTable* Dataset:
 
 	libexec\curl...
 
-- Type a Procedure method name, in this case ``getCounts``, in the Query page of the Reactor Dashboard:
+- Type a Procedure method name, in this case ``getCounts``, in the Query page of the Reactor Console:
 
-  In the Continuuity Reactor Dashboard:
+  In the Continuuity Reactor Console:
 
   #. Click the *Query* button.
   #. Click on the *LogCountProcedure* Procedure.
   #. Type ``getCounts`` in the *Method* text box.
   #. Click the *Execute* button.
-  #. The results of the occurrences for each HTTP status code are displayed in the Dashboard
+  #. The results of the occurrences for each HTTP status code are displayed in the Console
      in JSON format. The returned results will be unsorted, with time stamps in milliseconds.
      For example::
 
@@ -278,7 +275,7 @@ Stopping the Application
 ------------------------
 Either:
 
-- On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
+- On the Application detail page of the Reactor Console, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ ./bin/app-manager.sh --action stop [--host <hostname>]``
 
   :Note:	[--host <hostname>] is not available for a *Local Reactor*.
@@ -288,4 +285,4 @@ Either:
 
 Downloading the Example
 =======================
-This example (and more!) is included with our `software development kit <http://continuuity.com/download>`__.
+This example (and more!) is included with our `software development kit <http://cask.co/download>`__.

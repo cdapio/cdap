@@ -14,7 +14,7 @@ Strategies in Testing Applications
 ----------------------------------
 
 The CDAP comes with a convenient way to unit test your Applications.
-The base for these tests is ``TestBase``, which is packaged
+The base for these tests is ``AppTestBase``, which is packaged
 separately from the API in its own artifact because it depends on the
 CDAP’s runtime classes. You can include it in your test dependencies
 in one of two ways:
@@ -25,15 +25,15 @@ in one of two ways:
   (see the ``pom.xml`` file of the *WordCount* example).
 
 Note that for building an application, you only need to include the
-Reactor API in your dependencies. For testing, however, you need the
-Reactor run-time. To build your test case, extend the
-``TestBase`` class.
+CDAP API in your dependencies. For testing, however, you need the
+CDAP run-time. To build your test case, extend the
+``AppTestBase`` class.
 
 Strategies in Testing Flows
 ---------------------------
 Let’s write a test case for the *WordCount* example::
 
-  public class WordCountTest extends TestBase {
+  public class WordCountTest extends AppTestBase {
     @Test
     public void testWordCount() throws Exception {
 
@@ -187,7 +187,7 @@ will not allow you to make any changes to datasets. But it is sufficient to perf
 or prepare statements and execute queries, then iterate over the results set and validate its correctness.
 
 
-Debugging Reactor Applications
+Debugging CDAP Applications
 ==============================
 
 Debugging an Application in Local DAP
@@ -430,16 +430,16 @@ system can become slow if such a situation occurs.
 
 Dumping the Transaction Manager
 ...............................
-Reactor comes bundled with a script that allows you to dump the state of the internal
-transaction manager into a local file to allow further investigation. If your Reactor
+CDAP comes bundled with a script that allows you to dump the state of the internal
+transaction manager into a local file to allow further investigation. If your DAP Instance
 tends to become slow, you can use this tool to detect the incriminating transactions.
 This script is called ``tx-debugger`` (on Windows, it is ``tx-debugger.bat``).
 
-To download a snapshot of the state of the TM of a Reactor, use the command::
+To download a snapshot of the state of the TM of the CDAP, use the command::
 
   $ tx-debugger view --host <name> [--save <filename>]
 
-where `name` is the host name of your Reactor instance, and the optional `filename`
+where `name` is the host name of your CDAP instance, and the optional `filename`
 specifies where the snapshot should be saved. This command will
 print statistics about all the structures that define the state of the TM.
 
@@ -462,7 +462,7 @@ Here are options that you can use with the ``tx-debugger view`` commands:
 
 While transactions don't inform you about the tasks that launched them—whether
 it was a Flowlet, a MapReduce job, etc.—you can match the time
-they were started with the activity of your Reactor to track potential
+they were started with the activity of your CDAP to track potential
 issues.
 
 If you really know what you are doing and you spot a transaction in the
@@ -479,5 +479,5 @@ Where to Go Next
 ================
 Now that you've fixed all your bugs with Cask Data Application Platform, take a look at:
 
-- `Reactor Security <security.html>`__,
+- `Cask Data Application Platform Security <security.html>`__,
   which covers enabling security in a production Cask Data Application Platform.

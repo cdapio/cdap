@@ -1,14 +1,11 @@
-.. :Author: Continuuity, Inc.
-   :Description: Continuuity Reactor Advanced Apache Log Event Logger
+.. :Author: Cask, Inc.
+   :Description: Cask Data Application Platform Advanced Apache Log Event Logger
 
 ============================
 PageViewAnalytics Example
 ============================
 
-**A Continuuity Reactor Application Demonstrating Custom Datasets and Metrics**
-
-.. reST Editor: .. section-numbering::
-.. reST Editor: .. contents::
+**A Cask Data Application Platform (CDAP) Example Demonstrating Custom Datasets and Metrics**
 
 Overview
 ========
@@ -23,7 +20,7 @@ By doing so, the Dataset does more than just store or convert data–it
 expresses methods that can perform valuable operations, such as counting and tabulating results
 based on the Dataset's knowledge of its underlying data.
 
-Data from a log will be sent to the Continuuity Reactor by an external script *inject-log*
+Data from a log will be sent to the Cask Data Application Platform by an external script *inject-log*
 to the *logEventStream*. Each entry of the log data—a page view—has two items of interest: 
 the referrer page URI (which is sometimes blank)
 and the requested page URI. Together these two tell us which pages are requesting a particular page.
@@ -34,7 +31,7 @@ aggregates the counts of the requested pages and then
 stores the results in the custom Dataset *pageViewCDS*, a instance of ``PageViewStore``.
 
 You can view the user-defined ("custom") metric by adding—in the 
-Continuuity Reactor Dashboard's Metrics Explorer—a metric
+Cask Data Application Platform Console's Metrics Explorer—a metric
 *logs.noreferrer* for the element Flow *PageViewFlow*.
 
 Finally, you can query the *pageViewCDS* for a specified URI by using the ``getDistribution`` 
@@ -101,13 +98,13 @@ The query (*getDistribution*) used to obtain results.
 
 Building and Running the Application and Example
 ================================================
-In this remainder of this document, we refer to the Continuuity Reactor runtime as "Reactor", and the
+In this remainder of this document, we refer to the Cask Data Application Platform runtime as "CDAP", and the
 example code that is running on it as an "Application".
 
 We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
 
 In this example, you can either build the app from source or deploy the already-compiled JAR file.
-In either case, you then start a Continuuity Reactor, deploy the app, and then run the example by
+In either case, you then start the CDAP, deploy the app, and then run the example by
 injecting Apache access log entries from an example file into the app. 
 
 As you do so, you can query the app to see the results
@@ -130,20 +127,20 @@ skip the tests by using the command::
 
 Deploying and Starting the Application
 --------------------------------------
-Make sure an instance of the Continuuity Reactor is running and available.
-From within the SDK root directory, this command will start Reactor in local mode::
+Make sure an instance of the DAP is running and available.
+From within the SDK root directory, this command will start CDAP in local mode::
 
-	$ ./bin/reactor.sh start
+	$ ./bin/cdap.sh start
 
 On Windows::
 
-	~SDK> bin\reactor.bat start
+	~SDK> bin\cdap.bat start
 
-From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
+From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
 #. Drag and drop the Application .JAR file (``target/PageViewAnalytics-<version>.jar``)
    onto your browser window.
-   Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
+   Alternatively, use the *Load App* button found on the *Overview* of the CDAP Console.
 #. Once loaded, select the ``PageViewAnalytics`` Application from the list.
    On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
 
@@ -166,7 +163,7 @@ to the Stream named *logEventStream* in the ``PageViewAnalyticsApp``::
 
 	$ ./bin/inject-data.sh [--host <hostname>]
 
-:Note:	[--host <hostname>] is not available for a *Local Reactor*.
+:Note:	[--host <hostname>] is not available for a *Local DAP*.
 
 On Windows::
 
@@ -175,7 +172,7 @@ On Windows::
 Querying the Results
 ....................
 If the Procedure has not already been started, you start it either through the 
-Continuuity Reactor Dashboard or via an HTTP request using the ``curl`` command::
+CDAP Console or via an HTTP request using the ``curl`` command::
 
 	curl -v -X POST 'http://localhost:10000/v2/apps/PageViewAnalytics/procedures/PageViewProcedure/start'
 	
@@ -189,46 +186,46 @@ There are two ways to query the *pageViewCDS* custom Dataset:
 
 	libexec\curl...
 
-- Type a Procedure method name, in this case ``getDistribution``, in the Query page of the Reactor Dashboard:
+- Type a Procedure method name, in this case ``getDistribution``, in the Query page of the CDAP Console:
 
-	In the Continuuity Reactor Dashboard:
+	In the CDAP Console:
 
 	#. Click the *Query* button.
 	#. Click on the *PageViewProcedure* Procedure.
 	#. Type ``getDistribution`` in the *Method* text box.
 	#. Type the parameters required for this method, a JSON string with the name *page* and
-	   value of a URI, ``"http://www.continuuity.com"``:
+	   value of a URI, ``"http://www.cask.co"``:
 
 	   ::
 
-		{ "page" : "http://www.continuuity.com" }
+		{ "page" : "http://www.cask.co" }
 
 	   ..
 
 	#. Click the *Execute* button.
-	#. The results of the occurrences for each HTTP status code are displayed in the Dashboard
+	#. The results of the occurrences for each HTTP status code are displayed in the Console
 	   in JSON format. The returned results will be unsorted, with time stamps in milliseconds.
 	   For example:
 
 	   ::
 
 		{"/careers":0.05,"/how-it-works":0.05,"/enterprise":0.05,"/developers":0.05,
-		"https://accounts.continuuity.com/signup":0.2,"/":0.15,"/contact-sales":0.1,
-		"https://accounts.continuuity.com/login":0.15,"/products":0.2}
+		"https://accounts.cask.co/signup":0.2,"/":0.15,"/contact-sales":0.1,
+		"https://accounts.cask.co/login":0.15,"/products":0.2}
 
 
 Stopping the Application
 ------------------------
 Either:
 
-- On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
+- On the Application detail page of the CDAP Console, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ ./bin/app-manager.sh --action stop [--host <hostname>]``
 
-  :Note:	[--host <hostname>] is not available for a *Local Reactor*.
+  :Note:	[--host <hostname>] is not available for a *Local DAP*.
 
   On Windows, run ``~SDK> bin\app-manager.bat stop``
 
 
 Downloading the Example
 =======================
-This example (and more!) is included with our `software development kit <http://continuuity.com/download>`__.
+This example (and more!) is included with our `software development kit <http://ccask.co/download>`__.
