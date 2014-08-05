@@ -18,8 +18,8 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -70,8 +70,7 @@ public class ConfigurationTable {
    * @throws IOException If an error occurs while writing the configuration
    */
   public void write(Type type, CConfiguration conf) throws IOException {
-    String tableName = getTableName(conf.get(ReactorDatasetNamespace.CFG_TABLE_PREFIX,
-                                             ReactorDatasetNamespace.DEFAULT_TABLE_PREFIX));
+    String tableName = getTableName(conf.get(Constants.Dataset.TABLE_PREFIX));
     byte[] tableBytes = Bytes.toBytes(tableName);
 
     // must create the table if it doesn't exist

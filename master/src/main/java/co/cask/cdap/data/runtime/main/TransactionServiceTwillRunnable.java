@@ -27,19 +27,17 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.twill.AbstractReactorTwillRunnable;
+import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.HDFSTransactionStateStorageProvider;
 import co.cask.cdap.data.runtime.TransactionManagerProvider;
-import co.cask.cdap.data2.transaction.metrics.ReactorTxMetricsCollector;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.distributed.TransactionService;
-import com.continuuity.tephra.metrics.TxMetricsCollector;
 import com.continuuity.tephra.persist.TransactionStateStorage;
 import com.continuuity.tephra.runtime.TransactionStateStorageProvider;
 import com.google.common.base.Throwables;
@@ -48,7 +46,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Scopes;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
@@ -63,7 +60,7 @@ import java.util.List;
 /**
  * TwillRunnable to run Transaction Service through twill.
  */
-public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnable {
+public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionServiceTwillRunnable.class);
 
   private ZKClientService zkClient;
@@ -128,12 +125,6 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(TxMetricsCollector.class).to(ReactorTxMetricsCollector.class).in(Scopes.SINGLETON);
-        }
-      },
       new LoggingModules().getDistributedModules()
     );
   }

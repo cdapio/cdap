@@ -28,12 +28,12 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ProcedureClient;
 import co.cask.cdap.test.ProcedureManager;
-import co.cask.cdap.test.ReactorTestBase;
 import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
@@ -68,7 +68,7 @@ import java.util.concurrent.TimeoutException;
  *
  */
 @Category(SlowTests.class)
-public class TestFrameworkTest extends ReactorTestBase {
+public class TestFrameworkTest extends TestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTest.class);
 
   @After

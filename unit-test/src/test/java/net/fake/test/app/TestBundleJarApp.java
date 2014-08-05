@@ -20,11 +20,11 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ProcedureClient;
 import co.cask.cdap.test.ProcedureManager;
-import co.cask.cdap.test.ReactorTestBase;
 import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.TestBase;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -41,7 +41,7 @@ import java.util.concurrent.TimeoutException;
  * its dependency jars inside the "/lib" folder within the application jar.
  */
 @Category(SlowTests.class)
-public class TestBundleJarApp extends ReactorTestBase {
+public class TestBundleJarApp extends TestBase {
 
   @Test
   public void testFlow() throws IOException, URISyntaxException, TimeoutException, InterruptedException {

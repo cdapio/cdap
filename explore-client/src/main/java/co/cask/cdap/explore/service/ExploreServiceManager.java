@@ -18,7 +18,7 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.AbstractDistributedReactorServiceManager;
+import co.cask.cdap.common.twill.AbstractDistributedMasterServiceManager;
 import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -26,7 +26,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 /**
  * Service manager for explore service in distributed mode.
  */
-public class ExploreServiceManager extends AbstractDistributedReactorServiceManager {
+public class ExploreServiceManager extends AbstractDistributedMasterServiceManager {
 
   @Inject
   public ExploreServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,

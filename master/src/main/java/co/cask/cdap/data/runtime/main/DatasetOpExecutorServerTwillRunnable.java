@@ -27,7 +27,7 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.twill.AbstractReactorTwillRunnable;
+import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -51,7 +51,7 @@ import java.util.List;
  * Executes user code on behalf of a particular user inside
  * a container running as that user. For security.
  */
-public class DatasetOpExecutorServerTwillRunnable extends AbstractReactorTwillRunnable {
+public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRunnable {
 
   // TODO: remove
   public static final String DEFAULT_USER = "bob";

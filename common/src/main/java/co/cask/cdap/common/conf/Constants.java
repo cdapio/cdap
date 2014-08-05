@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
  * Constants used by different systems are all defined here.
  */
 public final class Constants {
+
   /**
    * Global Service names.
    */
@@ -140,6 +141,9 @@ public final class Constants {
    * Datasets.
    */
   public static final class Dataset {
+
+    public static final String TABLE_PREFIX = "dataset.table.prefix";
+
     /**
      * DatasetManager service configuration.
      */

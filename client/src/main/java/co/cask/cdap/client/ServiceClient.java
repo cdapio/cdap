@@ -16,7 +16,7 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.client.config.ReactorClientConfig;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpResponse;
@@ -43,10 +43,10 @@ import javax.management.ServiceNotFoundException;
 public class ServiceClient {
 
   private final RESTClient restClient;
-  private final ReactorClientConfig config;
+  private final ClientConfig config;
 
   @Inject
-  public ServiceClient(ReactorClientConfig config) {
+  public ServiceClient(ClientConfig config) {
     this.config = config;
     this.restClient = RESTClient.create(config);
   }
