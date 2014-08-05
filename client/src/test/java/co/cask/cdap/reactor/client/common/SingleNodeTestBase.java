@@ -19,18 +19,13 @@ package co.cask.cdap.reactor.client.common;
 import co.cask.cdap.SingleNodeMain;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
 import org.apache.hadoop.conf.Configuration;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
 
 /**
  *
