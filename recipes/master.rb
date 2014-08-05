@@ -24,6 +24,27 @@ package 'cdap-master' do
   action :install
 end
 
+if node['cdap'].key?('security') && node['cdap']['security'].key?('cdap_keytab') &&
+  node['cdap']['security'].key?('cdap_principal')
+  my_vars = { :options => node['cdap']['security'] }
+
+  directory '/etc/default' do
+    owner 'root'
+    group 'root'
+    mode '0755'
+    action :create
+  end
+
+  template '/etc/default/cdap-master' do
+    source 'generic-env.sh.erb'
+    mode '0755'
+    owner 'root'
+    group 'root'
+    action :create
+    variables my_vars
+  end
+end # End /etc/default/cdap-master
+
 service 'cdap-master' do
   status_command 'service cdap-master status'
   action :nothing
