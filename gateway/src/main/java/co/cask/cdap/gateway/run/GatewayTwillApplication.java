@@ -49,7 +49,7 @@ public class GatewayTwillApplication implements TwillApplication {
     int memoryMb = cConf.getInt(Constants.Gateway.MEMORY_MB, Constants.Gateway.DEFAULT_MEMORY_MB);
     int instances = cConf.getInt(Constants.Gateway.NUM_INSTANCES, Constants.Gateway.DEFAULT_NUM_INSTANCES);
 
-    // It is always present in continuuity-default.xml
+    // It is always present in cdap-default.xml
     long noContainerTimeout = cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE);
 
     ResourceSpecification spec = ResourceSpecification.Builder

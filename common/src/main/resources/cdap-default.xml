@@ -18,15 +18,15 @@
 <configuration>
 
     <property>
-        <name>reactor.namespace</name>
-        <value>continuuity</value>
-        <description>Specifies the namespace for this instance of Reactor</description>
+        <name>root.namespace</name>
+        <value>cdap</value>
+        <description>Specifies the root namespace</description>
     </property>
 
     <property>
         <name>zookeeper.quorum</name>
-        <value>127.0.0.1:2181/${reactor.namespace}</value>
-        <description>Specifies the zookeeper host:port</description>
+        <value>127.0.0.1:2181/${root.namespace}</value>
+        <description>Specifies the zookeeper quorum string</description>
     </property>
 
     <property>
@@ -46,37 +46,37 @@
     </property>
 
     <property>
-        <name>weave.zookeeper.namespace</name>
-        <value>/weave</value>
-        <description>Namespace prefix for weave zookeeper</description>
+        <name>twill.zookeeper.namespace</name>
+        <value>/twill</value>
+        <description>Zookeeper namespace prefix for Apache Twill</description>
     </property>
 
     <property>
-        <name>weave.java.reserved.memory.mb</name>
+        <name>twill.java.reserved.memory.mb</name>
         <value>250</value>
         <description>
-            Reserved non-heap memory in MB for weave container.
+            Reserved non-heap memory in MB for Apache Twill container.
         </description>
     </property>
 
     <property>
-        <name>weave.no.container.timeout</name>
+        <name>twill.no.container.timeout</name>
         <value>120000</value>
         <description>
-            Amount of time in milliseconds to wait for at least one container for weave runnable
+            Amount of time in milliseconds to wait for at least one container for Apache Twill runnable
         </description>
     </property>
 
     <property>
-        <name>weave.jvm.gc.opts</name>
+        <name>twill.jvm.gc.opts</name>
         <value>-verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
-        <description>Java GC options for all weave containers</description>
+        <description>Java GC options for all Apache Twill containers</description>
     </property>
 
     <property>
         <name>hdfs.namespace</name>
-        <value>/${reactor.namespace}</value>
-        <description>Namespace for files written by Reactor</description>
+        <value>/${root.namespace}</value>
+        <description>Namespace for HDFS files</description>
     </property>
 
     <property>
@@ -181,49 +181,49 @@
       <description>Timeout in seconds for service discovery used in Monitor Handler Service Status check</description>
     </property>
 
-    <!-- Reactor YARN Services Parameters -->
+    <!-- YARN Services Parameters -->
 
     <property>
-        <name>reactor.service.num.cores</name>
+        <name>master.service.num.cores</name>
         <value>2</value>
-        <description>Number of cores for Reactor Service Twill Runnables</description>
+        <description>Number of cores for Master Service instance</description>
     </property>
 
     <property>
-        <name>reactor.service.memory.mb</name>
+        <name>master.service.memory.mb</name>
         <value>512</value>
-        <description>Size of Memory in MB for Reactor Service Twill Runnables</description>
+        <description>Size of Memory in MB for Master Service instance</description>
     </property>
 
     <property>
-        <name>reactor.service.max.instances</name>
+        <name>master.service.max.instances</name>
         <value>5</value>
-        <description>Maximum Number of Reactor Service Instances</description>
+        <description>Maximum Number of Master Service Instances</description>
     </property>
 
-    <!-- Reactor Services HTTP handles -->
+    <!-- Master Services HTTP handles -->
     <property>
         <name>http.service.connection.backlog</name>
         <value>20000</value>
-        <description>Max connection backlog of Reactor HTTP service</description>
+        <description>Max connection backlog of master HTTP service</description>
     </property>
 
     <property>
         <name>http.service.exec.threads</name>
         <value>20</value>
-        <description>Number of netty server executor threads for Reactor HTTP services</description>
+        <description>Number of netty server executor threads for master HTTP services</description>
     </property>
 
     <property>
         <name>http.service.boss.threads</name>
         <value>1</value>
-        <description>Number of netty server boss threads for Reactor HTTP services</description>
+        <description>Number of netty server boss threads for master HTTP services</description>
     </property>
 
     <property>
         <name>http.service.worker.threads</name>
         <value>10</value>
-        <description>Number of netty server worker threads for Reactor HTTP services</description>
+        <description>Number of netty server worker threads for master HTTP services</description>
     </property>
 
     <!-- Stream handles -->
@@ -452,17 +452,17 @@
 
     <property>
         <name>data.tx.max.instances</name>
-        <value>${reactor.service.max.instances}</value>
+        <value>${master.service.max.instances}</value>
     </property>
 
     <property>
         <name>data.tx.num.cores</name>
-        <value>${reactor.service.num.cores}</value>
+        <value>${master.service.num.cores}</value>
     </property>
 
     <property>
         <name>data.tx.memory.mb</name>
-        <value>${reactor.service.memory.mb}</value>
+        <value>${master.service.memory.mb}</value>
     </property>
 
     <!--
@@ -578,7 +578,7 @@
 
     <property>
         <name>dataset.executor.max.instances</name>
-        <value>${reactor.service.max.instances}</value>
+        <value>${master.service.max.instances}</value>
         <description>Maximum Number of DataSet Executor Instances</description>
     </property>
 
@@ -596,7 +596,7 @@
 
     <property>
         <name>app.program.jvm.opts</name>
-        <value>${weave.jvm.gc.opts}</value>
+        <value>${twill.jvm.gc.opts}</value>
         <description>Java options for all program containers</description>
     </property>
 
@@ -625,7 +625,6 @@
 
 
     <!-- Sets whether Devsuite is in Cloud or not -->
-    <!-- AppFabric will become Reactor later -->
     <property>
         <name>appfabric.environment</name>
         <value>devsuite</value>
@@ -660,25 +659,25 @@
     <property>
         <name>metrics.connection.backlog</name>
         <value>${http.service.connection.backlog}</value>
-        <description>Max connection backlog of Reactor HTTP service</description>
+        <description>Max connection backlog of metrics HTTP service</description>
     </property>
 
     <property>
         <name>metrics.exec.threads</name>
         <value>${http.service.exec.threads}</value>
-        <description>Number of netty server executor threads for Reactor HTTP services</description>
+        <description>Number of netty server executor threads for metrics HTTP services</description>
     </property>
 
     <property>
         <name>metrics.boss.threads</name>
         <value>${http.service.boss.threads}</value>
-        <description>Number of netty server boss threads for Reactor HTTP services</description>
+        <description>Number of netty server boss threads for metrics HTTP services</description>
     </property>
 
     <property>
         <name>metrics.worker.threads</name>
         <value>${http.service.worker.threads}</value>
-        <description>Number of netty server worker threads for Reactor HTTP services</description>
+        <description>Number of netty server worker threads for metrics HTTP services</description>
     </property>
 
     <property>
@@ -688,17 +687,17 @@
 
     <property>
         <name>metrics.max.instances</name>
-        <value>${reactor.service.max.instances}</value>
+        <value>${master.service.max.instances}</value>
     </property>
 
     <property>
         <name>metrics.num.cores</name>
-        <value>${reactor.service.num.cores}</value>
+        <value>${master.service.num.cores}</value>
     </property>
 
     <property>
         <name>metrics.memory.mb</name>
-        <value>${reactor.service.memory.mb}</value>
+        <value>${master.service.memory.mb}</value>
     </property>
 
     <!--
@@ -708,24 +707,24 @@
     <property>
         <name>metrics.processor.num.instances</name>
         <value>1</value>
-        <description>Number of instances for Metrics Processor Service Twill Runnable</description>
+        <description>Number of instances for Metrics Processor Service Apache Twill Runnable</description>
     </property>
 
     <property>
         <name>metrics.processor.max.instances</name>
-        <value>${reactor.service.max.instances}</value>
+        <value>${master.service.max.instances}</value>
     </property>
 
     <property>
         <name>metrics.processor.num.cores</name>
         <value>1</value>
-        <description>Number of cores for Metrics Processor Service Twill Runnable</description>
+        <description>Number of cores for Metrics Processor Service Apache Twill Runnable</description>
     </property>
 
     <property>
         <name>metrics.processor.memory.mb</name>
         <value>512</value>
-        <description>Size of Memory in MB for Metrics Processor Service Twill Runnable</description>
+        <description>Size of Memory in MB for Metrics Processor Service Apache Twill Runnable</description>
     </property>
 
     <property>
@@ -747,12 +746,6 @@
         <name>log.publish.num.partitions</name>
         <value>10</value>
         <description>Number of Kafka partitions to publish the logs to</description>
-    </property>
-
-    <property>
-        <name>log.run.account</name>
-        <value>continuuity</value>
-        <description>Account to run the logging service</description>
     </property>
 
     <property>
@@ -781,7 +774,7 @@
 
     <property>
         <name>log.saver.max.instances</name>
-        <value>${reactor.service.max.instances}</value>
+        <value>${master.service.max.instances}</value>
     </property>
 
     <property>
@@ -825,7 +818,7 @@
 
     <property>
         <name>kafka.zookeeper.namespace</name>
-        <value>continuuity_kafka</value>
+        <value>kafka</value>
         <description>ZK namespace for Kafka</description>
     </property>
 
@@ -874,7 +867,7 @@
          Explore Server Settings
      -->
     <property>
-        <name>reactor.explore.enabled</name>
+        <name>explore.enabled</name>
         <value>false</value>
     </property>
     <property>
@@ -981,7 +974,7 @@
 
     <property>
         <name>security.token.distributed.parent.znode</name>
-        <value>/${reactor.namespace}/security/auth</value>
+        <value>/${root.namespace}/security/auth</value>
         <description>Parent node in ZooKeeper used for secret key distribution in distributed mode</description>
     </property>
 
@@ -991,12 +984,12 @@
     <property>
         <name>security.enabled</name>
         <value>false</value>
-        <description>If this is set to true, security layer will be up and active in Reactor</description>
+        <description>If this is set to true, security layer will be up and active</description>
     </property>
 
     <property>
         <name>security.realm</name>
-        <value>continuuity</value>
+        <value>cdap</value>
         <description>Security realm used for authentication</description>
     </property>
 

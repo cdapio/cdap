@@ -72,7 +72,7 @@ final class ProgramDiscoveryServiceClient implements DiscoveryServiceClient {
                                 @Named("local.discovery.client") DiscoveryServiceClient delegate) {
     this.zkClient = zkClient;
     this.delegate = delegate;
-    this.twillNamespace = configuration.get(Constants.CFG_TWILL_ZK_NAMESPACE, "/weave");
+    this.twillNamespace = configuration.get(Constants.CFG_TWILL_ZK_NAMESPACE);
     this.clients = CacheBuilder.newBuilder().expireAfterAccess(CACHE_EXPIRES_MINUTES, TimeUnit.MINUTES)
                                             .build(createClientLoader());
   }
