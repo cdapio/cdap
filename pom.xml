@@ -1378,6 +1378,7 @@
                   <phase>prepare-package</phase>
                   <configuration>
                     <outputDirectory>${stage.lib.dir}</outputDirectory>
+                    <finalName>${project.groupId}.${project.build.finalName}</finalName>
                   </configuration>
                   <goals>
                     <goal>jar</goal>
@@ -1403,6 +1404,7 @@
                     <overWriteIfNewer>true</overWriteIfNewer>
                     <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,org.datanucleus,asm</excludeGroupIds>
                     <excludeArtifactIds>hive-exec</excludeArtifactIds>
+                    <prependGroupId>true</prependGroupId>
                     <silent>true</silent>
                     <includeScope>compile</includeScope>
                   </configuration>
