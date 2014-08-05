@@ -38,10 +38,16 @@ public class SingleNodeTestBase {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static SingleNodeMain singleNodeMain;
+  /**
+   * Index of the current test being run.
+   * TODO: Hack to handle when SingleNodeTestBase is used as a suite and part of a suite.
+   */
+  private static int testStackIndex = 0;
 
   @BeforeClass
   public static void setUpClass() throws Throwable {
-    if (singleNodeMain != null) {
+    testStackIndex++;
+    if (singleNodeMain == null) {
       try {
         CConfiguration cConf = CConfiguration.create();
         cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
@@ -61,7 +67,8 @@ public class SingleNodeTestBase {
 
   @AfterClass
   public static void tearDownClass() {
-    if (singleNodeMain != null) {
+    testStackIndex--;
+    if (singleNodeMain != null && testStackIndex == 0) {
       singleNodeMain.shutDown();
       singleNodeMain = null;
     }
