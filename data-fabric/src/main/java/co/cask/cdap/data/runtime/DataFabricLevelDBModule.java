@@ -18,7 +18,7 @@ package co.cask.cdap.data.runtime;
 import co.cask.cdap.data.stream.InMemoryStreamCoordinator;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBQueueAdmin;
@@ -40,7 +40,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
 
   @Override
   public void configure() {
-    bind(LevelDBOcTableService.class).toInstance(LevelDBOcTableService.getInstance());
+    bind(LevelDBOrderedTableService.class).toInstance(LevelDBOrderedTableService.getInstance());
 
     bind(QueueClientFactory.class).to(LevelDBQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(LevelDBQueueAdmin.class).in(Singleton.class);

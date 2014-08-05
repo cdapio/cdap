@@ -28,8 +28,8 @@ import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.dataset.lib.table.inmemory.InMemoryOcTableClient;
-import co.cask.cdap.data2.dataset.lib.table.inmemory.InMemoryOcTableService;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTable;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableService;
 import com.continuuity.tephra.DefaultTransactionExecutor;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
@@ -170,12 +170,12 @@ public class TransactionServiceTest {
   }
 
   private OrderedTable createTable(String tableName) throws Exception {
-    InMemoryOcTableService.create(tableName);
-    return new InMemoryOcTableClient(tableName);
+    InMemoryOrderedTableService.create(tableName);
+    return new InMemoryOrderedTable(tableName);
   }
 
   private void dropTable(String tableName, CConfiguration cConf) throws Exception {
-    InMemoryOcTableService.drop(tableName);
+    InMemoryOrderedTableService.drop(tableName);
   }
 
   static TransactionService createTxService(String zkConnectionString, int txServicePort,

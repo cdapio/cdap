@@ -120,7 +120,7 @@ public class ConfigurationTable {
    * Reads the given configuration type from the HBase table, looking for the HBase table name under the
    * given "namespace".
    * @param type Type of configuration to read in
-   * @param namespace Namespace to use in constructing the table name (should be the same as reactor.namespace)
+   * @param namespace Namespace to use in constructing the table name (should be the same as root.namespace)
    * @return The {@link CConfiguration} instance populated with the stored values, or {@code null} if no row
    *         was found for the given type.
    * @throws IOException If an error occurs while attempting to read the table or the table does not exist.

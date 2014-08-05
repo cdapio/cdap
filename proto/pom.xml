@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>proto</artifactId>
-  <name>Continuuity Protocol</name>
+  <name>Cask CDAP Protocol</name>
 
   <dependencies>
     <dependency>

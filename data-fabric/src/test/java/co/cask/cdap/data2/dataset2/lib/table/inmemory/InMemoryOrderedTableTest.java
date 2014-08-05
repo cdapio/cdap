@@ -18,17 +18,15 @@ package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
-import co.cask.cdap.data2.dataset.lib.table.inmemory.InMemoryOcTableClient;
-import co.cask.cdap.data2.dataset2.lib.table.BufferingOrederedTableTest;
+import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrederedTableTest;
 
 /**
  *
  */
-public class InMemoryOrderedTableTest extends BufferingOrederedTableTest<InMemoryOcTableClient> {
+public class InMemoryOrderedTableTest extends BufferingOrederedTableTest<InMemoryOrderedTable> {
   @Override
-  protected InMemoryOcTableClient getTable(String name, ConflictDetection conflictLevel) throws Exception {
-    return new InMemoryOcTableClient(name,
-                       co.cask.cdap.data2.dataset.lib.table.ConflictDetection.valueOf(conflictLevel.name()));
+  protected InMemoryOrderedTable getTable(String name, ConflictDetection conflictLevel) throws Exception {
+    return new InMemoryOrderedTable(name, ConflictDetection.valueOf(conflictLevel.name()));
   }
 
   @Override

@@ -118,7 +118,6 @@ public class TestKafkaLogging extends KafkaTestBase {
     CConfiguration conf = new CConfiguration();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-    conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "TFL_ACCT_1");
 
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     DistributedLogReader logReader =
@@ -133,7 +132,6 @@ public class TestKafkaLogging extends KafkaTestBase {
     CConfiguration conf = new CConfiguration();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-    conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "TFL_ACCT_1");
 
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     DistributedLogReader logReader =

@@ -19,8 +19,8 @@ package co.cask.cdap.data2.dataset2.module.lib.hbase;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.data2.dataset.lib.table.MetricsTable;
-import co.cask.cdap.data2.dataset.lib.table.hbase.HBaseMetricsTable;
-import co.cask.cdap.data2.dataset.lib.table.hbase.HBaseMetricsTableDefinition;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseMetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseMetricsTableDefinition;
 
 /**
  * Registers HBase-backed implementations of the metrics system datasets
