@@ -27,7 +27,7 @@
 
   <artifactId>examples</artifactId>
   <packaging>pom</packaging>
-  <name>Continuuity Examples</name>
+  <name>Cask CDAP Examples</name>
 
   <modules>
     <module>CountAndFilterWords</module>

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.data.DataSetSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -47,7 +46,6 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
-    jsonObj.add("datasets", serializeMap(src.getDataSets(), context, DataSetSpecification.class));
     jsonObj.add("datasetModules", serializeMap(src.getDatasetModules(), context, String.class));
     jsonObj.add("datasetInstances", serializeMap(src.getDatasets(), context, DatasetCreationSpec.class));
     jsonObj.add("flows", serializeMap(src.getFlows(), context, FlowSpecification.class));
@@ -69,8 +67,6 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
 
     Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"),
                                                               context, StreamSpecification.class);
-    Map<String, DataSetSpecification> datasets = deserializeMap(jsonObj.get("datasets"),
-                                                                context, DataSetSpecification.class);
     Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
     Map<String, DatasetCreationSpec> datasetInstances = deserializeMap(jsonObj.get("datasetInstances"),
                                                                                context,
@@ -87,7 +83,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     Map<String, ServiceSpecification> services = deserializeMap(jsonObj.get("services"),
                                                                 context, ServiceSpecification.class);
 
-    return new DefaultApplicationSpecification(name, description, streams, datasets,
+    return new DefaultApplicationSpecification(name, description, streams,
                                                datasetModules, datasetInstances,
                                                flows, procedures, mapReduces,
                                                workflows, services);

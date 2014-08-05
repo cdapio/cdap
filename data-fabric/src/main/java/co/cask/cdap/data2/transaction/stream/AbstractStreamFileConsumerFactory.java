@@ -15,8 +15,9 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.DataSetAccessor;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.file.filter.TTLReadFilter;
@@ -24,6 +25,7 @@ import co.cask.cdap.data.stream.MultiLiveStreamFileReader;
 import co.cask.cdap.data.stream.StreamEventOffset;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -61,12 +63,13 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   private final QueueClientFactory queueClientFactory;
   private final StreamAdmin oldStreamAdmin;
 
-  protected AbstractStreamFileConsumerFactory(DataSetAccessor dataSetAccessor, StreamAdmin streamAdmin,
+  protected AbstractStreamFileConsumerFactory(CConfiguration conf, StreamAdmin streamAdmin,
                                               StreamConsumerStateStoreFactory stateStoreFactory,
                                               QueueClientFactory queueClientFactory, StreamAdmin oldStreamAdmin) {
     this.streamAdmin = streamAdmin;
     this.stateStoreFactory = stateStoreFactory;
-    this.tablePrefix = dataSetAccessor.namespace(QueueConstants.STREAM_TABLE_PREFIX, DataSetAccessor.Namespace.SYSTEM);
+    this.tablePrefix =
+      new ReactorDatasetNamespace(conf, Namespace.SYSTEM).namespace(QueueConstants.STREAM_TABLE_PREFIX);
     this.queueClientFactory = queueClientFactory;
     this.oldStreamAdmin = oldStreamAdmin;
   }

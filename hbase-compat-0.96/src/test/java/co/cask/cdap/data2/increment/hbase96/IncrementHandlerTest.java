@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data2.increment.hbase96;
 
-import co.cask.cdap.data2.dataset.lib.table.hbase.HBaseOcTableClient;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTable;
 import co.cask.cdap.test.SlowTests;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
@@ -202,7 +202,7 @@ public class IncrementHandlerTest {
   public Put newIncrement(byte[] row, byte[] column, long timestamp, long value) {
     Put p = new Put(row);
     p.add(FAMILY, column, timestamp, Bytes.toBytes(value));
-    p.setAttribute(HBaseOcTableClient.DELTA_WRITE, EMPTY_BYTES);
+    p.setAttribute(HBaseOrderedTable.DELTA_WRITE, EMPTY_BYTES);
     return p;
   }
 }

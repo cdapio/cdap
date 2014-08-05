@@ -17,12 +17,9 @@
 package co.cask.cdap.api.flow.flowlet;
 
 import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.data.DataSet;
 
 /**
- * This interface represents the Flowlet context, which consists of things like
- * number of instances of this flowlet and methods to create and initialize a
- * {@link DataSet} by name.
+ * This interface represents the Flowlet context.
  */
 public interface FlowletContext extends RuntimeContext {
   /**

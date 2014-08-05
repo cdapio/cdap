@@ -16,8 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.data.batch.BatchReadable;
-import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -27,9 +25,6 @@ import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.data.DataFabric;
-import co.cask.cdap.data.DataFabric2Impl;
-import co.cask.cdap.data.DataSetAccessor;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.DataSets;
@@ -39,7 +34,6 @@ import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Sets;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.RunIds;
@@ -108,16 +102,12 @@ public abstract class AbstractMapReduceContextBuilder {
 
     // Initializing dataset context and hooking it up with mapreduce job transaction
 
-    DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     CConfiguration configuration = injector.getInstance(CConfiguration.class);
 
-    DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
-    DataSetInstantiator dataSetContext = new DataSetInstantiator(dataFabric, datasetFramework,
-                                                                 configuration, classLoader);
+    DataSetInstantiator dataSetContext = new DataSetInstantiator(datasetFramework, configuration, classLoader);
     ApplicationSpecification programSpec = program.getSpecification();
-    dataSetContext.setDataSets(programSpec.getDataSets().values(),
-                               programSpec.getDatasets().values());
+    dataSetContext.setDataSets(programSpec.getDatasets().values());
 
     // if this is not for a mapper or a reducer, we don't need the metrics collection service
     MetricsCollectionService metricsCollectionService =
@@ -128,7 +118,7 @@ public abstract class AbstractMapReduceContextBuilder {
     //       to define all datasets used in Mapper and Reducer classes on MapReduceJob
     //       class level
     Map<String, Closeable> dataSets = DataSets.createDataSets(
-      dataSetContext, Sets.union(programSpec.getDataSets().keySet(), programSpec.getDatasets().keySet()));
+      dataSetContext, programSpec.getDatasets().keySet());
 
     ProgramServiceDiscovery serviceDiscovery = injector.getInstance(ProgramServiceDiscovery.class);
 
@@ -154,10 +144,10 @@ public abstract class AbstractMapReduceContextBuilder {
 
     // Setting extra context's configuration: mapreduce input and output
     if (inputDataSetName != null && inputSplits != null) {
-      context.setInput((BatchReadable) context.getDataSet(inputDataSetName), inputSplits);
+      context.setInput(inputDataSetName, inputSplits);
     }
     if (outputDataSetName != null) {
-      context.setOutput((BatchWritable) context.getDataSet(outputDataSetName));
+      context.setOutput(outputDataSetName);
     }
 
     return context;

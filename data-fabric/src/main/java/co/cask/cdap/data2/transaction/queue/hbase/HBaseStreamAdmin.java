@@ -18,7 +18,6 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.DataSetAccessor;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -42,10 +41,9 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   @Inject
   public HBaseStreamAdmin(Configuration hConf,
                           CConfiguration cConf,
-                          DataSetAccessor dataSetAccessor,
                           LocationFactory locationFactory,
                           HBaseTableUtil tableUtil) throws IOException {
-    super(hConf, cConf, QueueConstants.QueueType.STREAM, dataSetAccessor, locationFactory, tableUtil);
+    super(hConf, cConf, QueueConstants.QueueType.STREAM, locationFactory, tableUtil);
   }
 
   @Override

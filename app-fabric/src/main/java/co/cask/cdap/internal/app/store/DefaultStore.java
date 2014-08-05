@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.data.DataSetSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -35,7 +34,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.DataSetAccessor;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -108,7 +107,7 @@ public class DefaultStore implements Store {
     this.locationFactory = locationFactory;
     this.configuration = conf;
     this.dsFramework =
-      new NamespacedDatasetFramework(framework, new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.SYSTEM));
+      new NamespacedDatasetFramework(framework, new ReactorDatasetNamespace(conf, Namespace.SYSTEM));
 
     txnl =
       Transactional.of(
@@ -211,9 +210,6 @@ public class DefaultStore implements Store {
       public Void apply(AppMds mds) throws Exception {
         mds.apps.writeApplication(id.getAccountId(), id.getId(), spec, appArchiveLocation.toURI().toString());
 
-        for (DataSetSpecification dsSpec : spec.getDataSets().values()) {
-          mds.apps.writeDataset(id.getAccountId(), dsSpec);
-        }
         for (StreamSpecification stream : spec.getStreams().values()) {
           mds.apps.writeStream(id.getAccountId(), stream);
         }
@@ -266,67 +262,11 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void addDataset(final Id.Account id, final DataSetSpecification dsSpec) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
-      @Override
-      public Void apply(AppMds mds) throws Exception {
-        mds.apps.writeDataset(id.getId(), dsSpec);
-        return null;
-      }
-    });
-
-  }
-
-  @Override
-  public void removeDataSet(final Id.Account id, final String name) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
-      @Override
-      public Void apply(AppMds mds) throws Exception {
-        mds.apps.deleteDataset(id.getId(), name);
-        return null;
-      }
-    });
-
-  }
-
-  @Override
-  public DataSetSpecification getDataSet(final Id.Account id, final String name) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, DataSetSpecification>() {
-      @Override
-      public DataSetSpecification apply(AppMds mds) throws Exception {
-        return mds.apps.getDataset(id.getId(), name);
-      }
-    });
-
-  }
-
-  @Override
-  public Collection<DataSetSpecification> getAllDataSets(final Id.Account id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<DataSetSpecification>>() {
-      @Override
-      public Collection<DataSetSpecification> apply(AppMds mds) throws Exception {
-        return mds.apps.getAllDatasets(id.getId());
-      }
-    });
-  }
-
-  @Override
   public void addStream(final Id.Account id, final StreamSpecification streamSpec) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.writeStream(id.getId(), streamSpec);
-        return null;
-      }
-    });
-  }
-
-  @Override
-  public void removeStream(final Id.Account id, final String name) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
-      @Override
-      public Void apply(AppMds mds) throws Exception {
-        mds.apps.deleteStream(id.getId(), name);
         return null;
       }
     });
@@ -519,7 +459,6 @@ public class DefaultStore implements Store {
       public Void apply(AppMds mds) throws Exception {
         mds.apps.deleteApplications(id.getId());
         mds.apps.deleteProgramArgs(id.getId());
-        mds.apps.deleteAllDatasets(id.getId());
         mds.apps.deleteAllStreams(id.getId());
         // todo: delete program history?
         return null;

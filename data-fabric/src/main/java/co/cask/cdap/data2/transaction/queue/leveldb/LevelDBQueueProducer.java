@@ -17,8 +17,8 @@ package co.cask.cdap.data2.transaction.queue.leveldb;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.KeyValue;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.KeyValue;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableCore;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueProducer;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
@@ -33,11 +33,11 @@ import java.util.NavigableMap;
  */
 public final class LevelDBQueueProducer extends AbstractQueueProducer {
 
-  private final LevelDBOcTableCore core;
+  private final LevelDBOrderedTableCore core;
   private final byte[] queueRowPrefix;
   private final NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes;
 
-  public LevelDBQueueProducer(LevelDBOcTableCore tableCore, QueueName queueName, QueueMetrics queueMetrics) {
+  public LevelDBQueueProducer(LevelDBOrderedTableCore tableCore, QueueName queueName, QueueMetrics queueMetrics) {
     super(queueMetrics, queueName);
     core = tableCore;
     changes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);

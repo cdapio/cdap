@@ -18,7 +18,6 @@ package co.cask.cdap.data2.transaction.stream.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.DataSetAccessor;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.stream.StreamEventOffset;
@@ -64,11 +63,11 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
   private HBaseAdmin admin;
 
   @Inject
-  HBaseStreamFileConsumerFactory(DataSetAccessor dataSetAccessor, StreamAdmin streamAdmin,
+  HBaseStreamFileConsumerFactory(StreamAdmin streamAdmin,
                                  StreamConsumerStateStoreFactory stateStoreFactory,
                                  CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil,
                                  QueueClientFactory queueClientFactory, HBaseStreamAdmin oldStreamAdmin) {
-    super(dataSetAccessor, streamAdmin, stateStoreFactory, queueClientFactory, oldStreamAdmin);
+    super(cConf, streamAdmin, stateStoreFactory, queueClientFactory, oldStreamAdmin);
     this.hConf = hConf;
     this.cConf = cConf;
     this.tableUtil = tableUtil;

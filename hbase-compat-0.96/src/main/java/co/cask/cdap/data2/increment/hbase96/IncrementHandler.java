@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data2.increment.hbase96;
 
-import co.cask.cdap.data2.dataset.lib.table.hbase.HBaseOcTableClient;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTable;
 import co.cask.cdap.data2.transaction.coprocessor.ReactorTransactionStateCacheSupplier;
 import com.continuuity.tephra.coprocessor.TransactionStateCache;
 import com.continuuity.tephra.hbase96.Filters;
@@ -54,8 +54,8 @@ import java.util.TreeMap;
  * HBase coprocessor that handles reading and writing read-less increment operations.
  *
  * <p>Writes of incremental values are performed as normal {@code Put}s, flagged with a special attribute
- * {@link HBaseOcTableClient#DELTA_WRITE}.  The coprocessor intercepts these writes and rewrites the cell value
- * to use a special marker prefix.</p>
+ * {@link co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTable#DELTA_WRITE}.  The coprocessor intercepts these
+ * writes and rewrites the cell value to use a special marker prefix.</p>
  *
  * <p>For read (for {@code Get} and {@code Scan}) operations, all of the delta values are summed up for a column,
  * up to and including the most recent "full" (non-delta) value.  The sum of these delta values, plus the full value
@@ -118,7 +118,7 @@ public class IncrementHandler extends BaseRegionObserver {
   @Override
   public void prePut(ObserverContext<RegionCoprocessorEnvironment> ctx, Put put, WALEdit edit, Durability durability)
     throws IOException {
-    if (put.getAttribute(HBaseOcTableClient.DELTA_WRITE) != null) {
+    if (put.getAttribute(HBaseOrderedTable.DELTA_WRITE) != null) {
       // incremental write
       NavigableMap<byte[], List<Cell>> newFamilyMap = new TreeMap<byte[], List<Cell>>(Bytes.BYTES_COMPARATOR);
       for (Map.Entry<byte[], List<Cell>> entry : put.getFamilyCellMap().entrySet()) {

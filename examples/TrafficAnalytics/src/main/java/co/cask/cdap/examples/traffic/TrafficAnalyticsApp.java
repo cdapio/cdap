@@ -170,7 +170,7 @@ public class TrafficAnalyticsApp extends AbstractApplication {
       long startTime = endTime - TIME_WINDOW;
       
       // A Mapper processes log data for the last 24 hours in logs table by 2 splits.
-      context.setInput(logs, logs.getInput(2, ROW_KEY, startTime, endTime));
+      context.setInput("logEventTable", logs.getInput(2, ROW_KEY, startTime, endTime));
       
       // Set the Mapper class.
       job.setMapperClass(LogMapper.class);

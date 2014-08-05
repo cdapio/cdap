@@ -16,9 +16,11 @@
 
 package co.cask.cdap.data2.transaction.queue.leveldb;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.DataSetAccessor;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
+import co.cask.cdap.data.Namespace;
+import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import com.google.inject.Inject;
@@ -41,20 +43,20 @@ public class LevelDBQueueAdmin implements QueueAdmin {
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBQueueAdmin.class);
 
   private final String tableNamePrefix;
-  private final LevelDBOcTableService service;
+  private final LevelDBOrderedTableService service;
 
   @Inject
-  public LevelDBQueueAdmin(DataSetAccessor dataSetAccessor, LevelDBOcTableService service) {
-    this(dataSetAccessor, service, QUEUE);
+  public LevelDBQueueAdmin(CConfiguration conf, LevelDBOrderedTableService service) {
+    this(conf, service, QUEUE);
   }
 
-  protected LevelDBQueueAdmin(DataSetAccessor dataSetAccessor, LevelDBOcTableService service,
+  protected LevelDBQueueAdmin(CConfiguration conf, LevelDBOrderedTableService service,
                               QueueConstants.QueueType type) {
     this.service = service;
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
     String unqualifiedTableNamePrefix =
       type == QUEUE ? QueueConstants.QUEUE_TABLE_PREFIX : QueueConstants.STREAM_TABLE_PREFIX;
-    this.tableNamePrefix = dataSetAccessor.namespace(unqualifiedTableNamePrefix, DataSetAccessor.Namespace.SYSTEM);
+    this.tableNamePrefix = new ReactorDatasetNamespace(conf, Namespace.SYSTEM).namespace(unqualifiedTableNamePrefix);
   }
 
   /**
