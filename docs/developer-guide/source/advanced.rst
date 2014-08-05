@@ -87,6 +87,28 @@ methods:
      }
   }
 
+For simple services consisting of only one ``TwillRunnable``, you may also add the runnable directly to the application
+as a service using the ``addService(name, runnable)`` method. For example, the above application may be simplified to::
+
+  public class AnalyticsApp extends AbstractApplication {
+    @Override
+    public void configure() {
+      setName("AnalyticsApp");
+      setDescription("Application for generating mobile analytics");
+      addStream(new Stream("event"));
+      addFlow(new EventProcessingFlow());
+      ....
+      addService(new IpGeoRunnable());
+      addService(new UserLookupServiceService());
+      ...
+    }
+  }
+
+Services Integration with Guava Services
+-----------------------------------------
+To run `Guava Services <https://code.google.com/p/guava-libraries/wiki/ServiceExplained>`__ as ``TwillApplications``,
+add the service to the application using the ``addService(name, guavaService)`` method. The service's lifecycle
+is managed and it can be started or stopped as usual.
 
 Services Integration with Metrics and Logging
 ---------------------------------------------

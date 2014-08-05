@@ -1710,7 +1710,7 @@ an HTTP GET method::
     * - ``<service-name>``
       - Name of the Custom Service
     * - ``<discoverable-id>``
-      - ID of service to be discovered
+      - ID of ``TwillRunnable`` to be discovered
 
 Example
 .......
