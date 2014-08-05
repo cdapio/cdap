@@ -25,9 +25,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableClient;
-import co.cask.cdap.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
-import co.cask.cdap.data2.dataset2.lib.table.BufferingOrederedTableTest;
+import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrederedTableTest;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -41,12 +39,12 @@ import java.io.IOException;
 /**
  * test for LevelDB tables.
  */
-public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBOcTableClient> {
+public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBOrderedTable> {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  static LevelDBOcTableService service;
+  static LevelDBOrderedTableService service;
   static Injector injector = null;
 
   @BeforeClass
@@ -58,14 +56,14 @@ public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBO
       new LocationRuntimeModule().getSingleNodeModules(),
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule());
-    service = injector.getInstance(LevelDBOcTableService.class);
+    service = injector.getInstance(LevelDBOrderedTableService.class);
   }
 
   @Override
-  protected LevelDBOcTableClient getTable(String name, ConflictDetection level) throws IOException {
-    return new LevelDBOcTableClient(name,
-                                    co.cask.cdap.data2.dataset.lib.table.ConflictDetection.valueOf(level.name()),
-                                    service);
+  protected LevelDBOrderedTable getTable(String name, ConflictDetection level) throws IOException {
+    return new LevelDBOrderedTable(name,
+                                   ConflictDetection.valueOf(level.name()),
+                                   service);
   }
 
   @Override

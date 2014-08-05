@@ -28,6 +28,7 @@
   </parent>
 
   <artifactId>distributions</artifactId>
+  <name>Cask CDAP Distributions</name>
   <packaging>jar</packaging>
 
   <profiles>
@@ -60,7 +61,7 @@
       <id>rpm</id>
       <build>
         <plugins>
-          <!-- Distribution builds top level continuuity package. It builds differently than others -->
+          <!-- Distribution builds top level package. It builds differently than others -->
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
@@ -76,19 +77,19 @@
                   <workingDirectory>${project.build.directory}</workingDirectory>
                   <executable>fpm</executable>
                   <commandlineArgs>
-                    --name "continuuity"
-                    --vendor "Continuuity Inc."
-                    --maintainer "support@continuuity.com"
-                    --license "Copyright 2014 Cask,Inc. All Rights Reserved."
-                    --description "Component of Continuuity Enterprise Reactor"
+                    --name "cdap"
+                    --vendor "Cask Inc."
+                    --maintainer "support@cask.com"
+                    --license "Copyright ${package.build.year} Cask,Inc. Licensed under the Apache License, Version 2.0."
+                    --description "Component of Cask CDAP"
                     --category misc
                     -s dir
                     -t rpm
                     -C "${stage.dir}"
                     --version "${package.version}"
                     --architecture all
-                    --url "http://www.continuuity.com/products"
-                    --template-value "project=continuuity"
+                    --url "http://www.cask.co"
+                    --template-value "project=cdap"
                     --after-install "${project.basedir}/src/rpm/scripts/common-postinst"
                     --before-install "${project.basedir}/src/rpm/scripts/common-preinst"
                     --before-remove "${project.basedir}/src/rpm/scripts/common-prerm"
@@ -116,10 +117,10 @@
                 <configuration>
                   <version>${project.version}</version>
                   <groupId>${dist.deploy.groupId}</groupId>
-                  <artifactId>continuuity</artifactId>
+                  <artifactId>cdap</artifactId>
                   <packaging>noarch.rpm</packaging>
                   <generatePom>false</generatePom>
-                  <file>${project.build.directory}/continuuity-${package.version}-1.noarch.rpm</file>
+                  <file>${project.build.directory}/cdap-${package.version}-1.noarch.rpm</file>
                   <classifier>1</classifier>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
@@ -136,7 +137,7 @@
       <id>deb</id>
       <build>
         <plugins>
-          <!-- Distribution builds top level continuuity package. It builds differently than others -->
+          <!-- Distribution builds top level package. It builds differently than others -->
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
@@ -152,19 +153,19 @@
                   <workingDirectory>${project.build.directory}</workingDirectory>
                   <executable>fpm</executable>
                   <commandlineArgs>
-                    --name "continuuity"
-                    --vendor "Continuuity Inc."
-                    --maintainer "support@continuuity.com"
+                    --name "cdap"
+                    --vendor "Cask Inc."
+                    --maintainer "support@cask.co"
                     --license "Copyright 2014 Cask,Inc. All Rights Reserved."
-                    --description "Component of Continuuity Enterprise Reactor"
+                    --description "Component of Cask CDAP"
                     --category misc
                     -s dir
                     -t deb
                     -C "${stage.dir}-deb"
                     --version "${package.version}"
                     --architecture all
-                    --url "http://www.continuuity.com/products"
-                    --template-value "project=continuuity"
+                    --url "http://www.cask.co"
+                    --template-value "project=cdap"
                     --after-install "${project.basedir}/src/debian/scripts/common-postinst"
                     --before-install "${project.basedir}/src/debian/scripts/common-preinst"
                     --before-remove "${project.basedir}/src/debian/scripts/common-prerm"
@@ -192,10 +193,10 @@
                 <configuration>
                   <version>${project.version}</version>
                   <groupId>${dist.deploy.groupId}</groupId>
-                  <artifactId>continuuity</artifactId>
+                  <artifactId>cdap</artifactId>
                   <packaging>deb</packaging>
                   <generatePom>false</generatePom>
-                  <file>${project.build.directory}/continuuity_${package.version}-1_all.deb</file>
+                  <file>${project.build.directory}/cdap_${package.version}-1_all.deb</file>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
                 </configuration>

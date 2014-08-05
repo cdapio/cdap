@@ -474,7 +474,7 @@ public final class Constants {
     public static final String CONTAINER_INSTANCES = "explore.executor.container.instances";
 
     public static final String LOCAL_DATA_DIR = "explore.local.data.dir";
-    public static final String EXPLORE_ENABLED = "reactor.explore.enabled";
+    public static final String EXPLORE_ENABLED = "explore.enabled";
 
     //max-instances of explore HTTP service
     public static final String MAX_INSTANCES = "explore.executor.max.instances";
@@ -489,7 +489,7 @@ public final class Constants {
      * Explore JDBC constants.
      */
     public static final class Jdbc {
-      public static final String URL_PREFIX = "jdbc:reactor://";
+      public static final String URL_PREFIX = "jdbc:cdap://";
     }
   }
 
@@ -499,9 +499,9 @@ public final class Constants {
   public static final String CFG_HDFS_NAMESPACE = "hdfs.namespace";
   public static final String CFG_HDFS_LIB_DIR = "hdfs.lib.dir";
 
-  public static final String CFG_TWILL_ZK_NAMESPACE = "weave.zookeeper.namespace";
-  public static final String CFG_TWILL_RESERVED_MEMORY_MB = "weave.java.reserved.memory.mb";
-  public static final String CFG_TWILL_NO_CONTAINER_TIMEOUT = "weave.no.container.timeout";
+  public static final String CFG_TWILL_ZK_NAMESPACE = "twill.zookeeper.namespace";
+  public static final String CFG_TWILL_RESERVED_MEMORY_MB = "twill.java.reserved.memory.mb";
+  public static final String CFG_TWILL_NO_CONTAINER_TIMEOUT = "twill.no.container.timeout";
 
   /**
    * Data Fabric.

@@ -19,5 +19,5 @@
 package_name="<%= project %>"
 version="<%= @version %>"
 
-update-alternatives --install /etc/continuuity/conf continuuity-conf /etc/continuuity/conf.dist 10
+update-alternatives --install /etc/cdap/conf cdap-conf /etc/cdap/conf.dist 10
 

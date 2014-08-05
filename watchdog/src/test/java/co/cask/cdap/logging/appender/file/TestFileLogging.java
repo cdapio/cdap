@@ -32,7 +32,7 @@ import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.SingleNodeLogReader;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -76,7 +76,7 @@ public class TestFileLogging {
 
     Configuration conf = HBaseConfiguration.create();
     cConf.copyTxProperties(conf);
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf);
+    TransactionManager txManager = new TransactionManager(conf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
 

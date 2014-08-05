@@ -16,7 +16,6 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.data.DataSet;
 import co.cask.cdap.api.data.DataSetContext;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.internal.lang.FieldVisitor;
@@ -37,7 +36,7 @@ public final class DataSetFieldSetter extends FieldVisitor {
 
   @Override
   public void visit(Object instance, TypeToken<?> inspectType, TypeToken<?> declareType, Field field) throws Exception {
-    if (DataSet.class.isAssignableFrom(field.getType()) || Dataset.class.isAssignableFrom(field.getType())) {
+    if (Dataset.class.isAssignableFrom(field.getType())) {
       UseDataSet useDataSet = field.getAnnotation(UseDataSet.class);
       if (useDataSet != null && !useDataSet.value().isEmpty()) {
         field.set(instance, dataSetContext.getDataSet(useDataSet.value()));

@@ -24,7 +24,7 @@
   <fileSets>
     <fileSet>
       <directory>${stage.opt.dir}</directory>
-      <outputDirectory>/continuuity-${project.artifactId}-${project.version}/</outputDirectory>
+      <outputDirectory>/cdap-${project.artifactId}-${project.version}/</outputDirectory>
     </fileSet>
   </fileSets>
 </assembly>

@@ -36,7 +36,7 @@ import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.tephra.Transaction;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -55,7 +55,7 @@ import java.util.List;
  * Test deployment behavior when explore module is disabled.
  */
 public class ExploreDisabledTest {
-  private static InMemoryTransactionManager transactionManager;
+  private static TransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
   private static DatasetService datasetService;
   private static ExploreClient exploreClient;
@@ -63,7 +63,7 @@ public class ExploreDisabledTest {
   @BeforeClass
   public static void start() throws Exception {
     Injector injector = Guice.createInjector(createInMemoryModules(CConfiguration.create(), new Configuration()));
-    transactionManager = injector.getInstance(InMemoryTransactionManager.class);
+    transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
 
     datasetService = injector.getInstance(DatasetService.class);

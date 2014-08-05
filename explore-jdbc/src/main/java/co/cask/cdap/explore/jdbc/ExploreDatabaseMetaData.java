@@ -48,7 +48,7 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
   private static final String CATALOG_SEPARATOR = ".";
   private static final char SEARCH_STRING_ESCAPE = '\\';
 
-  private static final String DRIVER_NAME = "Reactor JDBC";
+  private static final String DRIVER_NAME = "CDAP JDBC";
 
   private final ExploreConnection connection;
   private final ExploreClient exploreClient;

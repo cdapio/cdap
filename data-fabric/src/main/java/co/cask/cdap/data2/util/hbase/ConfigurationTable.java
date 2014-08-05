@@ -18,7 +18,8 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.DataSetAccessor;
+import co.cask.cdap.data.Namespace;
+import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -69,7 +70,8 @@ public class ConfigurationTable {
    * @throws IOException If an error occurs while writing the configuration
    */
   public void write(Type type, CConfiguration conf) throws IOException {
-    String tableName = getTableName(conf.get(DataSetAccessor.CFG_TABLE_PREFIX, DataSetAccessor.DEFAULT_TABLE_PREFIX));
+    String tableName = getTableName(conf.get(ReactorDatasetNamespace.CFG_TABLE_PREFIX,
+                                             ReactorDatasetNamespace.DEFAULT_TABLE_PREFIX));
     byte[] tableBytes = Bytes.toBytes(tableName);
 
     // must create the table if it doesn't exist
@@ -118,7 +120,7 @@ public class ConfigurationTable {
    * Reads the given configuration type from the HBase table, looking for the HBase table name under the
    * given "namespace".
    * @param type Type of configuration to read in
-   * @param namespace Namespace to use in constructing the table name (should be the same as reactor.namespace)
+   * @param namespace Namespace to use in constructing the table name (should be the same as root.namespace)
    * @return The {@link CConfiguration} instance populated with the stored values, or {@code null} if no row
    *         was found for the given type.
    * @throws IOException If an error occurs while attempting to read the table or the table does not exist.
@@ -160,6 +162,6 @@ public class ConfigurationTable {
   }
 
   private static String getTableName(String reactorNamespace) {
-    return reactorNamespace + "." + DataSetAccessor.Namespace.SYSTEM.namespace(TABLE_NAME);
+    return reactorNamespace + "." + Namespace.SYSTEM.namespace(TABLE_NAME);
   }
 }

@@ -33,14 +33,13 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.gateway.MockMetricsCollectionService;
 import co.cask.cdap.gateway.MockedPassportClient;
 import co.cask.cdap.gateway.auth.AuthModule;
-import co.cask.cdap.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.passport.http.client.PassportClient;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -217,7 +216,6 @@ public abstract class MetricsSuiteTestBase {
                // these bindings out as it overlaps with
                // AppFabricServiceModule
                bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-               bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
 
                MockMetricsCollectionService metricsCollectionService =
                  new MockMetricsCollectionService();
@@ -228,7 +226,7 @@ public abstract class MetricsSuiteTestBase {
     ));
 
     metrics = injector.getInstance(MetricsQueryService.class);
-    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
+    injector.getInstance(TransactionManager.class).startAndWait();
     metrics.startAndWait();
 
     // initialize the dataset instantiator

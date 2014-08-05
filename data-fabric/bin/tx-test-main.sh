@@ -40,7 +40,7 @@ SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.."
 APP_HOME="`pwd -P`"
 
-# Where log files are stored.  $CONTINUUITY_HOME/logs by default.
+# Where log files are stored.  $CDAP_HOME/logs by default.
 export LOG_DIR=/var/log
 
 # A string representing this instance of hbase. $USER by default.

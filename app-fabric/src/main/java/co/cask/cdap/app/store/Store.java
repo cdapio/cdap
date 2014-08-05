@@ -17,7 +17,6 @@
 package co.cask.cdap.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.data.DataSetSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
@@ -90,14 +89,6 @@ public interface Store {
   void addStream(Id.Account id, StreamSpecification stream) throws OperationException;
 
   /**
-   * Remove a stream from the metadata of an account.
-   * @param id the account id
-   * @param name the stream name
-   * @throws OperationException
-   */
-  void removeStream(Id.Account id, String name) throws OperationException;
-
-  /**
    * Get the spec of a named stream.
    * @param id the account id
    * @param name the name of the stream
@@ -113,38 +104,6 @@ public interface Store {
    */
 
   Collection<StreamSpecification> getAllStreams(Id.Account id) throws OperationException;
-
-  /**
-   * Creates a new dataset if it does not exist, otherwise updates existing dataset with new spec.
-   * @param id the account id
-   * @param dsSpec the specification of the dataset
-   * @throws OperationException
-   */
-  void addDataset(Id.Account id, DataSetSpecification dsSpec) throws OperationException;
-
-  /**
-   * Remove a dataset from the metadata of an account.
-   * @param id the account id
-   * @param name the dataset name
-   * @throws OperationException
-   */
-  void removeDataSet(Id.Account id, String name) throws OperationException;
-
-  /**
-   * Get the spec of a named dataset.
-   * @param id the account id
-   * @param name the name of the dataset
-   * @throws OperationException
-   */
-  DataSetSpecification getDataSet(Id.Account id, String name) throws OperationException;
-
-  /**
-   * Get the specs of all datasets for an account.
-   *
-   * @param id the account id
-   * @throws OperationException
-   */
-  Collection<DataSetSpecification> getAllDataSets(Id.Account id) throws OperationException;
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.

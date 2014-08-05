@@ -43,7 +43,7 @@ import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.watchdog.election.MultiLeaderElection;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -111,7 +111,6 @@ public class LogSaverTest extends KafkaTestBase {
     cConf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + getKafkaPort());
     cConf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
-    cConf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "developer");
     cConf.set(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS, "10");
     cConf.set(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, "10240");
     cConf.set(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, "5120");
@@ -121,7 +120,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     Configuration conf = HBaseConfiguration.create();
     cConf.copyTxProperties(conf);
-    InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf);
+    TransactionManager txManager = new TransactionManager(conf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
 
@@ -190,7 +189,6 @@ public class LogSaverTest extends KafkaTestBase {
     CConfiguration conf = new CConfiguration();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + getKafkaPort());
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-    conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "developer");
     DistributedLogReader distributedLogReader =
       new DistributedLogReader(dsFramework, txClient, conf, new LocalLocationFactory());
 

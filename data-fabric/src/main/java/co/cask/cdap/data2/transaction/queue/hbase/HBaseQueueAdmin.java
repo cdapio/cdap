@@ -19,7 +19,8 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.DataSetAccessor;
+import co.cask.cdap.data.Namespace;
+import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
 import co.cask.cdap.data2.dataset.lib.hbase.AbstractHBaseDataSetManager;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
@@ -93,16 +94,14 @@ public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements Queu
   @Inject
   public HBaseQueueAdmin(Configuration hConf,
                          CConfiguration cConf,
-                         DataSetAccessor dataSetAccessor,
                          LocationFactory locationFactory,
                          HBaseTableUtil tableUtil) throws IOException {
-    this(hConf, cConf, QUEUE, dataSetAccessor, locationFactory, tableUtil);
+    this(hConf, cConf, QUEUE, locationFactory, tableUtil);
   }
 
   protected HBaseQueueAdmin(Configuration hConf,
                             CConfiguration cConf,
                             QueueConstants.QueueType type,
-                            DataSetAccessor dataSetAccessor,
                             LocationFactory locationFactory,
                             HBaseTableUtil tableUtil) throws IOException {
     super(hConf, tableUtil);
@@ -111,10 +110,11 @@ public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements Queu
     String unqualifiedTableNamePrefix =
       type == QUEUE ? QueueConstants.QUEUE_TABLE_PREFIX : QueueConstants.STREAM_TABLE_PREFIX;
     this.type = type;
-    this.tableNamePrefix = HBaseTableUtil.getHBaseTableName(
-      dataSetAccessor.namespace(unqualifiedTableNamePrefix, DataSetAccessor.Namespace.SYSTEM));
-    this.configTableName = HBaseTableUtil.getHBaseTableName(
-      dataSetAccessor.namespace(QueueConstants.QUEUE_CONFIG_TABLE_NAME, DataSetAccessor.Namespace.SYSTEM));
+    ReactorDatasetNamespace namespace = new ReactorDatasetNamespace(cConf, Namespace.SYSTEM);
+    this.tableNamePrefix =
+      HBaseTableUtil.getHBaseTableName(namespace.namespace(unqualifiedTableNamePrefix));
+    this.configTableName =
+      HBaseTableUtil.getHBaseTableName(namespace.namespace(QueueConstants.QUEUE_CONFIG_TABLE_NAME));
     this.locationFactory = locationFactory;
   }
 

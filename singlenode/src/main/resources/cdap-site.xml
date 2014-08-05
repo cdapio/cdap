@@ -1,0 +1,92 @@
+<!--
+  Copyright 2014 Cask, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+  -->
+<configuration>
+    <!--
+       Metrics Configuration
+     -->
+    <property>
+        <name>metrics.data.table.retention.resolution.1.seconds</name>
+        <value>7200</value>
+        <description>Retention resolution 1 sec table (in seconds)</description>
+    </property>
+
+    <!--
+        Data Fabric configuration
+    -->
+    <property>
+        <name>data.local.storage.blocksize</name>
+        <value>1024</value>
+        <description>Specifies block size (in bytes)</description>
+    </property>
+
+    <property>
+        <name>data.local.storage.cachesize</name>
+        <value>104857600</value>
+        <description>Specifies cache size (in bytes)</description>
+    </property>
+
+    <!--
+        Router configuration
+    -->
+    <property>
+        <name>router.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>Specifies the address for router server to bind to</description>
+    </property>
+
+    <property>
+        <name>router.forward.rule</name>
+        <value>10000:gateway,20000:webapp/$HOST</value>
+        <description>Forward rules for router (port:service -> forward port to service)</description>
+    </property>
+
+    <!--
+        Logging Configuration
+    -->
+    <property>
+        <name>log.publish.num.partitions</name>
+        <value>1</value>
+        <description>Number of Kafka partitions to publish the logs to</description>
+    </property>
+
+    <property>
+        <name>log.base.dir</name>
+        <value>logs/avro</value>
+        <description>Base log directory</description>
+    </property>
+
+    <property>
+        <name>log.retention.duration.days</name>
+        <value>7</value>
+        <description>Log file retention duration (in days)</description>
+    </property>
+
+    <property>
+        <name>enable.unrecoverable.reset</name>
+        <value>true</value>
+        <description>
+            WARNING! - Enabling this option enables the deletion of all applications and data.
+            No recovery is possible!
+        </description>
+    </property>
+
+    <property>
+        <name>explore.enabled</name>
+        <value>true</value>
+        <description>Enable Explore functionality</description>
+    </property>
+
+</configuration>

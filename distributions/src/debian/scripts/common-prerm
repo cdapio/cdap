@@ -25,7 +25,7 @@ version="<%= @version %>"
 
 case "$1" in
     remove|upgrade|deconfigure)
-      update-alternatives --remove continuuity-conf /etc/continuuity/conf.dist || :
+      update-alternatives --remove cdap-conf /etc/cdap/conf.dist || :
     ;;
 
     failed-upgrade)

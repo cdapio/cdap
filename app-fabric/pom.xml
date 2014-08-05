@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>app-fabric</artifactId>
-  <name>Continuuity App-Fabric</name>
+  <name>Cask CDAP App-Fabric</name>
   <packaging>jar</packaging>
 
   <dependencies>

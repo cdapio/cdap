@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data2.increment.hbase94;
 
-import co.cask.cdap.data2.dataset.lib.table.hbase.HBaseOcTableClient;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTable;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -90,7 +90,7 @@ public class IncrementSummingScannerTest {
       // test handling of a single increment value alone
       Put p = new Put(Bytes.toBytes("r1"));
       p.add(familyBytes, columnBytes, Bytes.toBytes(3L));
-      p.setAttribute(HBaseOcTableClient.DELTA_WRITE, TRUE);
+      p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
       doPut(region, p);
 
       Scan scan = new Scan();
@@ -125,7 +125,7 @@ public class IncrementSummingScannerTest {
       for (int i = 0; i < 5; i++) {
         p.add(familyBytes, columnBytes, now - i, Bytes.toBytes((long) (i + 1)));
       }
-      p.setAttribute(HBaseOcTableClient.DELTA_WRITE, TRUE);
+      p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
       doPut(region, p);
 
       scan = new Scan(Bytes.toBytes("r3"));
@@ -145,7 +145,7 @@ public class IncrementSummingScannerTest {
       for (int i = 0; i < 3; i++) {
         p.add(familyBytes, columnBytes, now - i, Bytes.toBytes(1L));
       }
-      p.setAttribute(HBaseOcTableClient.DELTA_WRITE, TRUE);
+      p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
       doPut(region, p);
 
       // this put will appear as a "total" sum prior to all the delta puts

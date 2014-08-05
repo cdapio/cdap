@@ -36,7 +36,7 @@ import java.util.Set;
 public interface ProcedureSpecification extends ProgramSpecification, PropertyProvider {
 
   /**
-   * @return An immutable set of {@link co.cask.cdap.api.data.DataSet DataSets} that
+   * @return An immutable set of {@link co.cask.cdap.api.dataset.Dataset DataSets} that
    *         are used by the {@link Procedure}.
    */
   Set<String> getDataSets();
@@ -106,7 +106,7 @@ public interface ProcedureSpecification extends ProgramSpecification, PropertyPr
     public final class AfterDescription {
 
       /**
-       * Adds the names of {@link co.cask.cdap.api.data.DataSet DataSets} used by the procedure.
+       * Adds the names of {@link co.cask.cdap.api.dataset.Dataset DataSets} used by the procedure.
        *
        * @param dataSet DataSet name.
        * @param moreDataSets More DataSet names.

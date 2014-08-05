@@ -20,9 +20,6 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.jar.JarClassLoader;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.DataFabric;
-import co.cask.cdap.data.DataFabric2Impl;
-import co.cask.cdap.data.DataSetAccessor;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
@@ -77,7 +74,6 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Inject
   public DefaultApplicationManager(LocationFactory locationFactory,
-                                   DataSetAccessor dataSetAccessor,
                                    DatasetFramework datasetFramework,
                                    TransactionSystemClient txSystemClient,
                                    StreamWriterFactory streamWriterFactory,
@@ -97,17 +93,15 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.txSystemClient = txSystemClient;
     this.appFabricClient = new AppFabricClient(httpHandler, locationFactory);
 
-    DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
-
     try {
       // Since we expose the DataSet class, it has to be loaded using ClassLoader delegation.
       // The drawback is we'll not be able to instrument DataSet classes using ASM.
-      this.dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework, configuration,
+      this.dataSetInstantiator = new DataSetInstantiator(datasetFramework, configuration,
                                                          new DataSetClassLoader(new JarClassLoader(deployedJar)));
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
-    this.dataSetInstantiator.setDataSets(appSpec.getDataSets().values(), appSpec.getDatasets().values());
+    this.dataSetInstantiator.setDataSets(appSpec.getDatasets().values());
   }
 
   @Override

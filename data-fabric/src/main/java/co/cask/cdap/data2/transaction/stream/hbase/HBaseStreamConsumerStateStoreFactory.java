@@ -16,8 +16,10 @@
 package co.cask.cdap.data2.transaction.stream.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.DataSetAccessor;
+import co.cask.cdap.data.Namespace;
+import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -45,10 +47,11 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
   private boolean tableCreated;
 
   @Inject
-  HBaseStreamConsumerStateStoreFactory(Configuration hConf, DataSetAccessor dataSetAccessor, HBaseTableUtil tableUtil) {
+  HBaseStreamConsumerStateStoreFactory(Configuration hConf, CConfiguration conf, HBaseTableUtil tableUtil) {
     this.hConf = hConf;
-    this.storeTableName = HBaseTableUtil.getHBaseTableName(
-      dataSetAccessor.namespace(QueueConstants.STREAM_TABLE_PREFIX, DataSetAccessor.Namespace.SYSTEM) + ".state.store");
+    this.storeTableName =
+      HBaseTableUtil.getHBaseTableName(new ReactorDatasetNamespace(conf, Namespace.SYSTEM)
+                                         .namespace((QueueConstants.STREAM_TABLE_PREFIX) + ".state.store"));
     this.tableUtil = tableUtil;
   }
 

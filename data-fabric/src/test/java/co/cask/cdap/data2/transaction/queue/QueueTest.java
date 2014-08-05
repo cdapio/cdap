@@ -33,8 +33,8 @@ import com.continuuity.tephra.TransactionContext;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.TransactionExecutorFactory;
 import com.continuuity.tephra.TransactionFailureException;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
@@ -77,7 +77,7 @@ public abstract class QueueTest {
   protected static QueueClientFactory queueClientFactory;
   protected static QueueAdmin queueAdmin;
   protected static StreamAdmin streamAdmin;
-  protected static InMemoryTransactionManager transactionManager;
+  protected static TransactionManager transactionManager;
   protected static TransactionExecutorFactory executorFactory;
 
   @AfterClass

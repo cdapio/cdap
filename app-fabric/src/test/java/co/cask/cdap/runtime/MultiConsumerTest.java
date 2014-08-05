@@ -22,8 +22,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.DataFabric2Impl;
-import co.cask.cdap.data.DataSetAccessor;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.Specifications;
@@ -84,15 +82,13 @@ public class MultiConsumerTest {
     }
 
     LocationFactory locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
-    DataSetAccessor dataSetAccessor = AppFabricTestHelper.getInjector().getInstance(DataSetAccessor.class);
     DatasetFramework datasetFramework = AppFabricTestHelper.getInjector().getInstance(DatasetFramework.class);
 
     DataSetInstantiator dataSetInstantiator =
-      new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
-                              datasetFramework, CConfiguration.create(),
+      new DataSetInstantiator(datasetFramework, CConfiguration.create(),
                               getClass().getClassLoader());
     ApplicationSpecification spec = Specifications.from(new MultiApp());
-    dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
+    dataSetInstantiator.setDataSets(spec.getDatasets().values());
 
     final KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");
     TransactionExecutorFactory txExecutorFactory =
