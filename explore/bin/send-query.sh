@@ -37,9 +37,9 @@ function usage() {
   echo ""
   echo "  Options"
   echo "    --query     Specifies the query to be executed."
-  echo "    --host      Specifies the host that Reactor is running on. (Default: localhost)"
+  echo "    --host      Specifies the host that CDAP is running on. (Default: localhost)"
   echo "    --help      This help message"
-  echo "  If reactor requires an access token, it needs to be in $auth_file"
+  echo "  If CDAP requires an access token, it needs to be in $auth_file"
   echo ""
 }
 
