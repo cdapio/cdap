@@ -32,6 +32,7 @@ if node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('explore.ena
   include_recipe 'hadoop::hive'
 end
 
+include_recipe 'ntp'
 include_recipe 'cdap::repo'
 
 # add global CDAP_HOME environment variable
