@@ -14,11 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset.lib.table;
+package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 
 import java.util.Collection;
 import java.util.Map;

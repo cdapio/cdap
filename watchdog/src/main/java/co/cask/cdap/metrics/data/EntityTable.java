@@ -16,7 +16,7 @@
 package co.cask.cdap.metrics.data;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data2.dataset.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset.lib.table;
+package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;

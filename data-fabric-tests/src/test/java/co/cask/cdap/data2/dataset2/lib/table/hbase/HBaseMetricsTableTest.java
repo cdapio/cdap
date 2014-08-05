@@ -14,40 +14,58 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset.lib.table.inmemory;
+package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.data.runtime.DataFabricModules;
+import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.data.hbase.HBaseTestBase;
+import co.cask.cdap.data.hbase.HBaseTestFactory;
+import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset.lib.table.MetricsTable;
-import co.cask.cdap.data2.dataset.lib.table.MetricsTableTest;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
+import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
+import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
+import co.cask.cdap.test.SlowTests;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.experimental.categories.Category;
 
 /**
- * test in-memory metrics tables.
+ * metrics table test for levelDB.
  */
-public class InMemoryMetricsTableTest extends MetricsTableTest {
+@Category(SlowTests.class)
+public class HBaseMetricsTableTest extends MetricsTableTest {
+  private static HBaseTestBase testHBase;
+
   private static DatasetFramework dsFramework;
 
   @BeforeClass
   public static void setup() throws Exception {
-    Injector injector = Guice.createInjector(new LocationRuntimeModule().getInMemoryModules(),
-                                             new DiscoveryRuntimeModule().getInMemoryModules(),
-                                             new DataFabricModules().getInMemoryModules(),
+    testHBase = new HBaseTestFactory().get();
+    testHBase.startHBase();
+    CConfiguration conf = CConfiguration.create();
+    conf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
+    Injector injector = Guice.createInjector(new DataFabricDistributedModule(),
+                                             new ConfigModule(conf, testHBase.getConfiguration()),
+                                             new ZKClientModule(),
+                                             new DiscoveryRuntimeModule().getDistributedModules(),
                                              new TransactionMetricsModule(),
+                                             new LocationRuntimeModule().getDistributedModules(),
                                              new AbstractModule() {
                                                @Override
                                                protected void configure() {
@@ -59,7 +77,12 @@ public class InMemoryMetricsTableTest extends MetricsTableTest {
                                              });
 
     dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
-    dsFramework.addModule("metrics-inmemory", new InMemoryMetricsTableModule());
+    dsFramework.addModule("metrics-hbase", new HBaseMetricsTableModule());
+  }
+
+  @AfterClass
+  public static void tearDown() throws Exception {
+    testHBase.stopHBase();
   }
 
   @Override

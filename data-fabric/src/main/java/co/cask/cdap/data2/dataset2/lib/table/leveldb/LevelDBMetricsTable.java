@@ -17,8 +17,8 @@
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.data2.dataset.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
+import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
