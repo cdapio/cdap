@@ -41,7 +41,7 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.passport.http.client.PassportClient;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -91,7 +91,7 @@ public abstract class GatewayTestBase {
   private static EndpointStrategy endpointStrategy;
   private static MetricsQueryService metrics;
   private static StreamHttpService streamHttpService;
-  private static InMemoryTransactionManager txService;
+  private static TransactionManager txService;
   private static DatasetService dsService;
 
   @ClassRule
@@ -175,7 +175,7 @@ public abstract class GatewayTestBase {
     );
 
     gateway = injector.getInstance(Gateway.class);
-    txService = injector.getInstance(InMemoryTransactionManager.class);
+    txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     metrics = injector.getInstance(MetricsQueryService.class);

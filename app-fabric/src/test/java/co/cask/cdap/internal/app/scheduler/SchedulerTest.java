@@ -34,7 +34,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.internal.TempFolder;
 import com.continuuity.tephra.TransactionExecutorFactory;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
+import com.continuuity.tephra.TransactionManager;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.common.Services;
@@ -70,7 +70,7 @@ public class SchedulerTest {
   private static Scheduler scheduler;
   private static TransactionExecutorFactory factory;
   private static DatasetFramework dsFramework;
-  private static InMemoryTransactionManager txService;
+  private static TransactionManager txService;
   private static DatasetService dsService;
 
   @BeforeClass
@@ -85,7 +85,7 @@ public class SchedulerTest {
                                     new DataSetsModules().getInMemoryModule(),
                                     new DataSetServiceModules().getInMemoryModule(),
                                     new ExploreClientModule());
-    txService = injector.getInstance(InMemoryTransactionManager.class);
+    txService = injector.getInstance(TransactionManager.class);
     dsService = injector.getInstance(DatasetService.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
     factory = injector.getInstance(TransactionExecutorFactory.class);

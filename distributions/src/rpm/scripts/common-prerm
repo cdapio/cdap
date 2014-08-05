@@ -20,6 +20,6 @@ package_name="<%= project %>"
 version="<%= @version %>"
 
 if [ "$1" = 0 ]; then
-  alternatives --remove continuuity-conf /etc/continuuity/conf.dist || :
+  alternatives --remove cdap-conf /etc/cdap/conf.dist || :
 fi
 
