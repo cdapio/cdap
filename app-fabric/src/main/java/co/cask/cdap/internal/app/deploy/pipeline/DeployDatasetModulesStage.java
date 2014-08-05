@@ -96,7 +96,7 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLoca
         }
       }
     } catch (Exception e) {
-      LOG.info("Deploy datasets module failure");
+      LOG.info("Exception during Deploy DatasetModule {} ", e);
     } finally {
       try {
         DirUtils.deleteDirectoryContents(unpackedLocation);

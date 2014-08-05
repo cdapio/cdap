@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.jar.JarFinder;
+import co.cask.cdap.common.lang.jar.ProgramClassLoader;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -176,15 +177,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   private void addModule(String moduleName, Class<?> typeClass) throws DatasetManagementException {
-    Location tempJarPath;
-    //todo not sure if its safe to ignore the check. will need to test it.
-    //if (typeClass.getClassLoader() instanceof JarClassLoader) {
-      // for auto-registering module with application jar deploy
-      //tempJarPath = ((JarClassLoader) typeClass.getClassLoader()).getLocation();
-    //} else {
-      tempJarPath = new LocalLocationFactory().create(JarFinder.getJar(typeClass));
-    //}
-
+    Location tempJarPath = new LocalLocationFactory().create(JarFinder.getJar(typeClass));
     client.addModule(moduleName, typeClass.getName(), tempJarPath);
   }
 
