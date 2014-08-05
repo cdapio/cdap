@@ -3,7 +3,7 @@
    :description: HTTP Interface to the Continuuity Reactor
 
 =================================
-Continuuity Reactor HTTP REST API
+Cask Data Application Platform HTTP RESTful API
 =================================
 
 .. rst2pdf: .. contents::
@@ -1374,7 +1374,7 @@ HTTP Responses
      - The query handle does not match any current query
 
 List of Queries
---------------
+---------------
 To return a list of queries, use::
 
    GET <base-url>/data/explore/queries?limit=<limit>&cursor=<cursor>&offset=<offset>

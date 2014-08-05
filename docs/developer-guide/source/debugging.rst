@@ -477,7 +477,7 @@ from the concerned Tables.
 
 Where to Go Next
 ================
-Now that you've fixed all your bugs with Cask Data Application Platform, take a look at:
+Now that you've fixed all your bugs with CDAP, take a look at:
 
 - `Cask Data Application Platform Security <security.html>`__,
-  which covers enabling security in a production Cask Data Application Platform.
+  which covers enabling security in a production CDAP.

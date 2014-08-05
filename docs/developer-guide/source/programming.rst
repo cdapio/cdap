@@ -1,35 +1,35 @@
-.. :Author: Continuuity, Inc.
-   :Description: Introduction to Programming Applications for the Continuuity Reactor
+.. :Author: Cask, Inc.
+   :Description: Introduction to Programming Applications for the Cask Data Application Platform
 
-=================
-Programming Guide
-=================
+================================================
+Cask Data Application Platform Programming Guide
+================================================
 
-**Introduction to Programming Applications for the Continuuity Reactor**
+**Introduction to Programming Applications for the Cask Data Application Platform**
 
 Introduction
 ============
 
-This document covers in detail the Continuuity Reactor core
+This document covers in detail the Cask Data Application Platform (CDAP) core
 elements—Applications, Streams, Datasets, Flows, Procedures, MapReduce,
 and Workflows—and how you work with them in Java to build a Big Data
 application.
 
-For a high-level view of the concepts of the Continuuity Reactor Java
-APIs, please see the `Introduction to Continuuity Reactor <intro>`__.
+For a high-level view of the concepts of the Cask Data Application Platform,
+please see the `Introduction to the Cask Data Application Platform <intro>`__.
 
 For more information beyond this document, see the
 `Javadocs <javadocs/index>`_  and the code in the
 `examples <examples/index>`_ directory, both of which are on the
-Continuuity.com `Developers website <http://continuuity.com/developers>`_ as well as in your
-Reactor installation directory.
+`Cask.co <http://cask.co>`__ `Developers website <http://cask.co/developers>`_ as well as in your
+CDAP installation directory.
 
 
 Conventions
 -----------
 
 In this document, *Application* refers to a user Application that has
-been deployed into the Continuuity Reactor.
+been deployed into CDAP.
 
 Text that are variables that you are to replace is indicated by a series
 of angle brackets (``< >``). For example::
@@ -41,21 +41,21 @@ are to replace it with your value, perhaps in this case *mystream*::
 
   PUT /v2/streams/mystream
 
-Writing a Continuuity Reactor Application
+Writing a CDAP Application
 =========================================
 
-Note that the Continuuity Reactor API is written in a
+Note that the CDAP API is written in a
 `"fluent" interface style <http://en.wikipedia.org/wiki/Fluent_interface>`_,
-and relies heavily on ``Builder`` methods for creating many parts of the Application.
+and often relies on ``Builder`` methods for creating many parts of the Application.
 
-In writing a Continuuity Reactor, it's best to use an integrated
+In writing a CDAP Application, it's best to use an integrated
 development environment that understands the application interface to
 provide code-completion in writing interface methods.
 
-Using the Reactor Maven Archetype
+Using the CDAP Maven Archetype
 ---------------------------------
 
-To help you get started, Continuuity has created a Maven archetype to
+To help you get started, Cask has created a Maven archetype to
 generate a skeleton for your Java project.
 
 `Maven <http://maven.apache.org>`_ is the very popular Java build and
@@ -67,15 +67,15 @@ look at the `Maven guide to configuring a proxy <http://maven.apache.org/guides/
 for instructions on how to modify your ``settings.xml`` file (usually ``${user.home}/.m2/settings.xml``)
 so that dependencies can be downloaded and resolved correctly.
 
-This Maven archetype generates a Reactor application Java project with
+This Maven archetype generates a CDAP application Java project with
 the proper dependencies and sample code as a base to start writing your
 own Big Data application. To generate a new project, execute the
 following command::
 
   $ mvn archetype:generate \
-    -DarchetypeCatalog=https://repository.continuuity.com/content/groups/releases/archetype-catalog.xml \
-    -DarchetypeGroupId=com.continuuity \
-    -DarchetypeArtifactId=reactor-app-archetype \
+    -DarchetypeCatalog=https://repository.cask.com/content/groups/releases/archetype-catalog.xml \
+    -DarchetypeGroupId=co.cask \
+    -DarchetypeArtifactId=cdap-app-archetype \
     -DarchetypeVersion=2.4.0
 
 In the interactive shell that appears, specify basic properties for the
@@ -101,10 +101,10 @@ created under the current directory. To build the project::
   $ mvn clean package
 
 This creates ``MyFirstBigDataApp-1.0-SNAPSHOT.jar`` in the target
-directory. This JAR file is a skeleton Reactor application that is ready
+directory. This JAR file is a skeleton CDAP application that is ready
 to be edited with the contents of your Application. When finished and
-compiled, deploy it to the Continuuity Reactor by just dragging and
-dropping it anywhere on the Reactor Dashboard and it will be deployed.
+compiled, deploy it to the Cask DAP by just dragging and
+dropping it anywhere on the CDAP Console and it will be deployed.
 
 The remainder of this document covers what to put in that JAR file.
 
@@ -140,7 +140,7 @@ classes that implement correspondent interfaces and are referenced by passing
 an object, in addition to being assigned a unique name.
 
 Names used for *Streams* and *Datasets* need to be unique across the
-Reactor instance, while names used for *Flows*, *Flowlets* and
+DAP instance, while names used for *Flows*, *Flowlets* and
 *Procedures* need to be unique only to the application.
 
 .. _streams:
@@ -148,7 +148,7 @@ Reactor instance, while names used for *Flows*, *Flowlets* and
 Collecting Data: Streams
 ========================
 **Streams** are the primary means for bringing data
-from external systems into the Reactor in realtime.
+from external systems into the CDAP in realtime.
 You specify a Stream in your `Application`__ metadata::
 
   addStream(new Stream("myStream"));
@@ -156,10 +156,10 @@ You specify a Stream in your `Application`__ metadata::
 __ applications_
 
 specifies a new Stream named *myStream*. Names used for Streams need to
-be unique across the Reactor instance.
+be unique across the DAP instance.
 
 You can write to Streams either one operation at a time or in batches,
-using either the `Continuuity Reactor HTTP REST API <rest.html>`__
+using either the `Cask Data Application Platform HTTP RESTful API <rest.html>`__
 or command line tools.
 
 Each individual signal sent to a Stream is stored as an ``StreamEvent``,
@@ -168,8 +168,8 @@ body (a blob of arbitrary binary data).
 
 Streams are uniquely identified by an ID string (a "name") and are
 explicitly created before being used. They can be created
-programmatically within your application, through the Management
-Dashboard, or by or using a command line tool. Data written to a Stream
+programmatically within your application, through the CDAP Console, 
+or by or using a command line tool. Data written to a Stream
 can be consumed by Flows and processed in real-time. Streams are shared
 between applications, so they require a unique name.
 
@@ -195,7 +195,7 @@ assure a unique and core property of the Flow system: it guarantees
 atomic and "exactly-once" processing of each input object by each
 Flowlet in the DAG.
 
-Flows are deployed to the Reactor and hosted within containers. Each
+Flows are deployed to the DAP instance and hosted within containers. Each
 Flowlet instance runs in its own container. Each Flowlet in the DAG can
 have multiple concurrent instances, each consuming a partition of the
 Flowlet’s inputs.
@@ -481,7 +481,7 @@ If you have multiple Flowlets of the same class, you can give them explicit name
 Processing Data: MapReduce
 ==========================
 **MapReduce** is used to process data in batch. MapReduce jobs can be
-written as in a conventional Hadoop system. Additionally, Reactor
+written as in a conventional Hadoop system. Additionally, CDAP
 **Datasets** can be accessed from MapReduce jobs as both input and
 output.
 
@@ -543,7 +543,7 @@ implementation that does nothing::
     // do nothing
   }
 
-Continuuity Reactor ``Mapper`` and ``Reducer`` implement `the standard Hadoop APIs 
+CDAP ``Mapper`` and ``Reducer`` implement `the standard Hadoop APIs 
 <http://hadoop.apache.org/docs/r2.3.0/api/org/apache/hadoop/mapreduce/package-summary.html>`__::
 
   public static class TokenizerMapper
@@ -576,7 +576,7 @@ Continuuity Reactor ``Mapper`` and ``Reducer`` implement `the standard Hadoop AP
 
 MapReduce and Datasets
 ----------------------
-Both Continuuity Reactor ``Mapper`` and ``Reducer`` can directly read
+Both CDAP ``Mapper`` and ``Reducer`` can directly read
 from a Dataset or write to a Dataset similar to the way a Flowlet or
 Procedure can.
 
@@ -670,12 +670,12 @@ the Workflow::
 Store Data: Datasets
 ====================
 **Datasets** store and retrieve data. Datasets are your means of reading
-from and writing data to the Reactor’s storage capabilities. Instead of
+from and writing data to the CDAP’s storage capabilities. Instead of
 requiring you to manipulate data with low-level APIs, Datasets provide
 higher-level abstractions and generic, reusable Java implementations of
 common data patterns.
 
-The core Dataset of the Reactor is a Table. Unlike relational database
+The core Dataset of the CDAP is a Table. Unlike relational database
 systems, these tables are not organized into rows with a fixed schema.
 They are optimized for efficient storage of semi-structured data, data
 with unknown or variable schema, or sparse data.
@@ -689,11 +689,11 @@ index itself.
 
 You can implement your own data patterns as custom Datasets on top of
 Tables. A number of useful Datasets—we refer to them as system Datasets—are
-included with Reactor, including key/value tables, indexed tables and
+included with CDAP, including key/value tables, indexed tables and
 time series.
 
-You can create a Dataset in Continuuity Reactor using either
-`Continuuity Reactor HTTP REST API <rest.html>`__ or command line tools.
+You can create a Dataset in CDAP using either
+`Cask Data Application Platform HTTP RESTful API <rest.html>`__ or command line tools.
 
 You can also specify to create a Dataset by Application components if one doesn't
 exist. For that you must declare its details in the Application specification.
@@ -723,15 +723,15 @@ You can also implement custom Datasets by implementing the ``Dataset``
 interface or by extending existing Dataset types. See the 
 `PageViewAnalytics <examples/PageViewAnalytics/index.html>`__ 
 example for an implementation of a Custom Dataset. For more details, refer to
-`Advanced Continuuity Reactor Features <advanced.html>`__.
+`Advanced Cask Data Application Platform Features <advanced.html>`__.
 
 .. _Procedures:
 
 Query Data: Procedures
 ======================
-To query the Reactor and its Datasets and retrieve results, you use Procedures.
+To query CDAP and its Datasets and retrieve results, you use Procedures.
 
-Procedures allow you to make synchronous calls into the Reactor from an external system
+Procedures allow you to make synchronous calls into CDAP from an external system
 and perform server-side processing on-demand, similar to a stored procedure in a
 traditional database.
 
@@ -762,7 +762,7 @@ The most generic way to send a response is to obtain a
 ``Writer`` and stream out the response as bytes. Make sure to close the
 ``Writer`` when you are done::
 
-  import static com.continuuity.api.procedure.ProcedureResponse.Code.SUCCESS;
+  import static co.cask.cdap.api.procedure.ProcedureResponse.Code.SUCCESS;
   ...
   class HelloWorld extends AbstractProcedure {
 
@@ -778,7 +778,7 @@ The most generic way to send a response is to obtain a
 
 This uses the most generic way to create the response, which allows you
 to send arbitrary byte content as the response body. In many cases, you
-will actually respond with JSON. A Continuuity Reactor
+will actually respond with JSON. A CDAP
 ``ProcedureResponder`` has convenience methods for returning JSON maps::
 
   // Return a JSON map
@@ -803,7 +803,8 @@ There is also a convenience method to respond with an error message::
 Where to Go Next
 ================
 Now that you've had an introduction to programming applications
-for the Continuuity Reactor, take a look at:
+for CDAP, take a look at:
 
-- `Advanced Continuuity Reactor Features <advanced.html>`__,
-  with details of the Flow, Dataset and Transaction systems.
+- `Advanced Cask Data Application Platform Features <advanced.html>`__,
+  with details of the Custom Services, Flow, Dataset, and Transaction systems, and
+  best practices for developing applications.

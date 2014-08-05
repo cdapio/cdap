@@ -64,7 +64,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Cask Data Application Platform (CDAP)'
+project = u'Cask Data Application Platform'
 copyright = u'2014 Cask, Inc.'
 
 # The version info for the project you're documenting, acts as replacement for

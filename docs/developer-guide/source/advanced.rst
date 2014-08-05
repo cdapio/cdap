@@ -900,7 +900,7 @@ boxed types (e.g. ``Integer``), ``String`` and ``enum``.
 
 Where to Go Next
 ================
-Now that you've looked at the advanced features of Cask Data Application Platform, take a look at:
+Now that you've looked at the advanced features of CDAP, take a look at:
 
 - `Querying Datasets with SQL <query.html>`__,
-  which covers ad-hoc querying of Cask Data Application Platform Datasets using SQL.
+  which covers ad-hoc querying of CDAP Datasets using SQL.

@@ -1,9 +1,9 @@
 .. :Author: Cask, Inc.
    :Description: Introducing new developers to the Cask Data Application Platform
 
-===============================
-Quick Start
-===============================
+==========================================
+Cask Data Application Platform Quick Start
+==========================================
 
 This Quick Start will guide you through installing the Cask Data Application Platform (CDAP),
 running an example that counts HTTP status codes,
@@ -193,5 +193,5 @@ Where to Go Next
 ================
 Now that you've had a look at CDAP, take a look at:
 
-- `Developer Examples <examples/index.html>`__,
-  three different examples to run and experiment with.
+- `Cask Data Application Platform Examples <examples/index.html>`__,
+  an assortment of different examples to run and experiment with.

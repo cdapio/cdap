@@ -1,9 +1,9 @@
 .. :Author: Cask, Inc.
    :Description: Introduction to the Cask Data Application Platform
 
-===================================
-Introduction
-===================================
+==================================================
+Introduction to the Cask Data Application Platform
+==================================================
 
 The Challenge of Big Data Applications
 ======================================
@@ -276,9 +276,8 @@ Where to Go Next
 ================
 Now that you've had an introduction to CDAP, take a look at:
 
-- `CDAP Quick Start <quickstart.html>`_,
-  which guides you through installing CDAP and
-  running and modifying an example application.
+- `Cask Data Application Platform Quick Start <quickstart.html>`__,
+  which guides you through installing CDAP and running and modifying an example application.
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
    :trim:
