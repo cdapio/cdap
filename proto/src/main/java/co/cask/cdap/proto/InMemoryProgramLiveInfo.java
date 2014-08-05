@@ -22,14 +22,14 @@ import java.util.List;
  * A live info for in-memory runtime envirnment.
  */
 public class InMemoryProgramLiveInfo extends ProgramLiveInfo {
-  private final List<String> discoverables;
+  private final List<String> services;
 
   public InMemoryProgramLiveInfo(Id.Program programId, ProgramType type) {
     this(programId, type, null);
   }
 
-  public InMemoryProgramLiveInfo(Id.Program programId, ProgramType type, List<String> discoverables) {
+  public InMemoryProgramLiveInfo(Id.Program programId, ProgramType type, List<String> services) {
     super(programId, type, "in-memory");
-    this.discoverables = discoverables;
+    this.services = services;
   }
 }
