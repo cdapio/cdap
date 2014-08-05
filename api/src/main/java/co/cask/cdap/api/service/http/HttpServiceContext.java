@@ -19,11 +19,12 @@ package co.cask.cdap.api.service.http;
 import java.util.Map;
 
 /**
- * TODO: Extend runtime context later for transactions and dataset
+ * The Context for a {@link HttpServiceHandler}. Currently contains methods to get the
+ * {@link HttpServiceSpecification} and the runtime arguments passed by the user.
  */
 public interface HttpServiceContext {
   /**
-   * @return The HttpServiceSpecification for this HttpServiceContext
+   * @return The {@link HttpServiceSpecification} bound to this HttpServiceContext
    */
   HttpServiceSpecification getSpecification();
 

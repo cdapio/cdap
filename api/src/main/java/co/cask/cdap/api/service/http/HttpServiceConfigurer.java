@@ -19,26 +19,24 @@ package co.cask.cdap.api.service.http;
 import java.util.Map;
 
 /**
- *
+ * Interface which should be implemented to configure a {@link HttpServiceHandler}
  */
 public interface HttpServiceConfigurer {
   /**
    * Sets the Http Service's name.
-   *
-   * @param name The Http Service name
+   * @param name The HTTP Service name
    */
   void setName(String name);
 
   /**
    * Sets the Http Service's description.
-   *
-   * @param description The Http Service description
+   * @param description The HTTP Service description
    */
   void setDescription(String description);
 
   /**
-   * Set the runtime arguments
-   * @param arguments
+   * Sets the runtime arguments.
+   * @param arguments The HTTP Service runtime arguments.
    */
   void setArguments(Map<String, String> arguments);
 }

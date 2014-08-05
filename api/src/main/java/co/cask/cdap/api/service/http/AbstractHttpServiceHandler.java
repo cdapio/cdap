@@ -16,8 +16,6 @@
 
 package co.cask.cdap.api.service.http;
 
-import co.cask.cdap.api.app.ApplicationConfigurer;
-
 import java.util.Map;
 
 /**

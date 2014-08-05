@@ -24,10 +24,15 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 /**
- *
+ * Interface which contains methods for sending HTTP responses.
  */
 public interface HttpServiceResponder {
 
+  /**
+   * Send json response back to the client with some default status.
+   *
+   * @param object The object to send.
+   */
   void sendJson(Object object);
 
   /**
