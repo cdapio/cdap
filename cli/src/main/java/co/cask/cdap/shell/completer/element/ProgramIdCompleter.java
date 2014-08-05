@@ -14,41 +14,35 @@
  * the License.
  */
 
-package co.cask.cdap.shell.completer.reactor;
+package co.cask.cdap.shell.completer.element;
 
-import co.cask.cdap.client.DatasetModuleClient;
-import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.cdap.client.ApplicationClient;
+import co.cask.cdap.proto.ProgramRecord;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.shell.completer.StringsCompleter;
-import com.google.common.base.Function;
 import com.google.common.base.Supplier;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import javax.inject.Inject;
 
 /**
- * Completer for dataset module names.
+ * Completer for program IDs.
  */
-public class DatasetModuleNameCompleter extends StringsCompleter {
+public class ProgramIdCompleter extends StringsCompleter {
 
-  @Inject
-  public DatasetModuleNameCompleter(final DatasetModuleClient datasetModuleClient) {
+  public ProgramIdCompleter(final ApplicationClient appClient, final ProgramType programType) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
-          List<DatasetModuleMeta> list = datasetModuleClient.list();
-          return Lists.newArrayList(
-            Iterables.transform(list, new Function<DatasetModuleMeta, String>() {
-              @Override
-              public String apply(DatasetModuleMeta input) {
-                return input.getName();
-              }
-            })
-          );
+          List<ProgramRecord> programs = appClient.listAllPrograms(programType);
+          List<String> programIds = Lists.newArrayList();
+          for (ProgramRecord programRecord : programs) {
+            programIds.add(programRecord.getApp() + "." + programRecord.getId());
+          }
+          return programIds;
         } catch (IOException e) {
           return Lists.newArrayList();
         }

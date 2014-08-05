@@ -14,12 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.shell.completer.reactor;
+package co.cask.cdap.shell.completer.element;
 
-import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.proto.ApplicationRecord;
+import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.proto.StreamRecord;
 import co.cask.cdap.shell.completer.StringsCompleter;
+import com.google.common.base.Function;
 import com.google.common.base.Supplier;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
@@ -28,22 +30,25 @@ import java.util.List;
 import javax.inject.Inject;
 
 /**
- * Completer for application IDs.
+ * Completer for stream IDs.
  */
-public class AppIdCompleter extends StringsCompleter {
+public class StreamIdCompleter extends StringsCompleter {
 
   @Inject
-  public AppIdCompleter(final ApplicationClient applicationClient) {
+  public StreamIdCompleter(final StreamClient streamClient) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
-          List<ApplicationRecord> appsList = applicationClient.list();
-          List<String> appIds = Lists.newArrayList();
-          for (ApplicationRecord item : appsList) {
-            appIds.add(item.getId());
-          }
-          return appIds;
+          List<StreamRecord> list = streamClient.list();
+          return Lists.newArrayList(
+            Iterables.transform(list, new Function<StreamRecord, String>() {
+              @Override
+              public String apply(StreamRecord input) {
+                return input.getId();
+              }
+            })
+          );
         } catch (IOException e) {
           return Lists.newArrayList();
         }

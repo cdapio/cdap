@@ -24,7 +24,6 @@ import jline.console.completer.Completer;
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
-
 import javax.annotation.Nullable;
 
 import static jline.internal.Preconditions.checkNotNull;

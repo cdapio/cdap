@@ -17,6 +17,7 @@
 package co.cask.cdap.shell.command;
 
 import co.cask.cdap.shell.CLIConfig;
+import co.cask.cdap.shell.Constants;
 import com.google.common.base.Supplier;
 
 import java.io.PrintStream;
@@ -37,8 +38,8 @@ public class HelpCommand extends AbstractCommand {
 
   @Override
   public void process(String[] args, PrintStream output) throws Exception {
-    output.println("Reactor shell version " + config.getVersion());
-    output.println("REACTOR_HOST=" + config.getHost());
+    output.println("CLI version " + config.getVersion());
+    output.println(Constants.EV_HOSTNAME + "=" + config.getHost());
     output.println();
     output.println("Available commands: \n" + getCommands.get().getHelperText(""));
   }

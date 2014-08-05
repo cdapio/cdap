@@ -36,6 +36,7 @@ import co.cask.cdap.shell.command.start.StartProgramCommandSet;
 import co.cask.cdap.shell.command.stop.StopProgramCommandSet;
 import co.cask.cdap.shell.command.truncate.TruncateCommandSet;
 import co.cask.cdap.shell.exception.InvalidCommandException;
+import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
@@ -63,7 +64,7 @@ public class CLIMain {
   public CLIMain(final CLIConfig cliConfig) throws URISyntaxException, IOException {
     this.reader = new ConsoleReader();
     this.cliConfig = cliConfig;
-    this.cliConfig.addReactorHostChangeListener(new CLIConfig.HostnameChangeListener() {
+    this.cliConfig.addHostnameChangeListener(new CLIConfig.HostnameChangeListener() {
       @Override
       public void onHostnameChanged(String newHostname) {
         reader.setPrompt("cdap (" + cliConfig.getHost() + ":" + cliConfig.getClientConfig().getPort() + ")> ");
@@ -164,12 +165,9 @@ public class CLIMain {
   }
 
   public static void main(String[] args) throws Exception {
-    String reactorHost = System.getenv("CDAP_HOST");
-    if (reactorHost == null) {
-      reactorHost = "localhost";
-    }
+    String hostname = Objects.firstNonNull(System.getenv(Constants.EV_HOSTNAME), "localhost");
 
-    CLIConfig config = new CLIConfig(reactorHost);
+    CLIConfig config = new CLIConfig(hostname);
     CLIMain shell = new CLIMain(config);
 
     if (args.length == 0) {

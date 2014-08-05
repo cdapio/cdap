@@ -20,7 +20,7 @@ import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
 import co.cask.cdap.shell.completer.Completable;
-import co.cask.cdap.shell.completer.reactor.StreamIdCompleter;
+import co.cask.cdap.shell.completer.element.StreamIdCompleter;
 import com.google.common.collect.Lists;
 import jline.console.completer.Completer;
 

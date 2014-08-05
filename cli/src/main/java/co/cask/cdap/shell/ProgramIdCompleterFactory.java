@@ -17,7 +17,7 @@
 package co.cask.cdap.shell;
 
 import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.shell.completer.reactor.ProgramIdCompleter;
+import co.cask.cdap.shell.completer.element.ProgramIdCompleter;
 import com.google.common.collect.ImmutableMap;
 import jline.console.completer.Completer;
 

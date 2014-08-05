@@ -20,7 +20,7 @@ import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
 import co.cask.cdap.shell.completer.Completable;
-import co.cask.cdap.shell.completer.reactor.DatasetNameCompleter;
+import co.cask.cdap.shell.completer.element.DatasetNameCompleter;
 import com.google.common.collect.Lists;
 import jline.console.completer.Completer;
 

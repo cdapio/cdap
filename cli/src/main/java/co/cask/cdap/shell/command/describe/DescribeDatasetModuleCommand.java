@@ -21,7 +21,7 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
 import co.cask.cdap.shell.completer.Completable;
-import co.cask.cdap.shell.completer.reactor.DatasetModuleNameCompleter;
+import co.cask.cdap.shell.completer.element.DatasetModuleNameCompleter;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
 import com.google.common.base.Joiner;

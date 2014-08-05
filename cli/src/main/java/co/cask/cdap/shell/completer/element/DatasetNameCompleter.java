@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.shell.completer.reactor;
+package co.cask.cdap.shell.completer.element;
 
-import co.cask.cdap.client.DatasetTypeClient;
-import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.shell.completer.StringsCompleter;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -30,22 +30,24 @@ import java.util.List;
 import javax.inject.Inject;
 
 /**
- * Completer for dataset types.
+ * Completer for dataset names.
  */
-public class DatasetTypeNameCompleter extends StringsCompleter {
+public class DatasetNameCompleter extends StringsCompleter {
 
   @Inject
-  public DatasetTypeNameCompleter(final DatasetTypeClient datasetTypeClient) {
+  public DatasetNameCompleter(final DatasetClient datasetClient) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
-          List<DatasetTypeMeta> list = datasetTypeClient.list();
+          List<DatasetSpecification> list = datasetClient.list();
           return Lists.newArrayList(
-            Iterables.transform(list, new Function<DatasetTypeMeta, String>() {
+            Iterables.transform(list, new Function<DatasetSpecification, String>() {
               @Override
-              public String apply(DatasetTypeMeta input) {
-                return input.getName();
+              public String apply(DatasetSpecification input) {
+                // TODO: hack to handle namespaced dataset names -- assumes there are no periods in dataset names
+                String[] tokens = input.getName().split("\\.");
+                return tokens[tokens.length - 1];
               }
             })
           );

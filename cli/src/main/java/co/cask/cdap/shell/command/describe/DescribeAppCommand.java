@@ -22,7 +22,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
 import co.cask.cdap.shell.completer.Completable;
-import co.cask.cdap.shell.completer.reactor.AppIdCompleter;
+import co.cask.cdap.shell.completer.element.AppIdCompleter;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
 import com.google.common.collect.Lists;

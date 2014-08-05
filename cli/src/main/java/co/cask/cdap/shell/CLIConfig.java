@@ -37,19 +37,19 @@ public class CLIConfig {
 
   public static final int PORT = 10000;
 
-  private final ClientConfig reactorConfig;
+  private final ClientConfig clientConfig;
   private final String version;
 
   private String hostname;
   private List<HostnameChangeListener> hostnameChangeListeners;
 
   /**
-   * @param hostname Hostname of the Reactor instance to interact with (e.g. "example.com")
+   * @param hostname Hostname of the CDAP server to interact with (e.g. "example.com")
    * @throws java.net.URISyntaxException
    */
   public CLIConfig(String hostname) throws URISyntaxException {
     this.hostname = Objects.firstNonNull(hostname, "localhost");
-    this.reactorConfig = new ClientConfig(hostname, PORT);
+    this.clientConfig = new ClientConfig(hostname, PORT);
     this.version = tryGetVersion();
     this.hostnameChangeListeners = Lists.newArrayList();
   }
@@ -73,7 +73,7 @@ public class CLIConfig {
   }
 
   public ClientConfig getClientConfig() {
-    return reactorConfig;
+    return clientConfig;
   }
 
   public String getVersion() {
@@ -82,13 +82,13 @@ public class CLIConfig {
 
   public void setHostname(String hostname) throws URISyntaxException {
     this.hostname = hostname;
-    this.reactorConfig.setHostnameAndPort(hostname, PORT);
+    this.clientConfig.setHostnameAndPort(hostname, PORT);
     for (HostnameChangeListener listener : hostnameChangeListeners) {
       listener.onHostnameChanged(hostname);
     }
   }
 
-  public void addReactorHostChangeListener(HostnameChangeListener listener) {
+  public void addHostnameChangeListener(HostnameChangeListener listener) {
     this.hostnameChangeListeners.add(listener);
   }
 

@@ -14,35 +14,41 @@
  * the License.
  */
 
-package co.cask.cdap.shell.completer.reactor;
+package co.cask.cdap.shell.completer.element;
 
-import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.client.DatasetTypeClient;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.shell.completer.StringsCompleter;
+import com.google.common.base.Function;
 import com.google.common.base.Supplier;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import javax.inject.Inject;
 
 /**
- * Completer for program IDs.
+ * Completer for dataset types.
  */
-public class ProgramIdCompleter extends StringsCompleter {
+public class DatasetTypeNameCompleter extends StringsCompleter {
 
-  public ProgramIdCompleter(final ApplicationClient appClient, final ProgramType programType) {
+  @Inject
+  public DatasetTypeNameCompleter(final DatasetTypeClient datasetTypeClient) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
-          List<ProgramRecord> programs = appClient.listAllPrograms(programType);
-          List<String> programIds = Lists.newArrayList();
-          for (ProgramRecord programRecord : programs) {
-            programIds.add(programRecord.getApp() + "." + programRecord.getId());
-          }
-          return programIds;
+          List<DatasetTypeMeta> list = datasetTypeClient.list();
+          return Lists.newArrayList(
+            Iterables.transform(list, new Function<DatasetTypeMeta, String>() {
+              @Override
+              public String apply(DatasetTypeMeta input) {
+                return input.getName();
+              }
+            })
+          );
         } catch (IOException e) {
           return Lists.newArrayList();
         }

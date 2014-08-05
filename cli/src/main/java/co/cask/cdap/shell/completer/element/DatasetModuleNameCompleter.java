@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.shell.completer.reactor;
+package co.cask.cdap.shell.completer.element;
 
-import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.proto.StreamRecord;
+import co.cask.cdap.client.DatasetModuleClient;
+import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.shell.completer.StringsCompleter;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -30,22 +30,22 @@ import java.util.List;
 import javax.inject.Inject;
 
 /**
- * Completer for stream IDs.
+ * Completer for dataset module names.
  */
-public class StreamIdCompleter extends StringsCompleter {
+public class DatasetModuleNameCompleter extends StringsCompleter {
 
   @Inject
-  public StreamIdCompleter(final StreamClient streamClient) {
+  public DatasetModuleNameCompleter(final DatasetModuleClient datasetModuleClient) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
-          List<StreamRecord> list = streamClient.list();
+          List<DatasetModuleMeta> list = datasetModuleClient.list();
           return Lists.newArrayList(
-            Iterables.transform(list, new Function<StreamRecord, String>() {
+            Iterables.transform(list, new Function<DatasetModuleMeta, String>() {
               @Override
-              public String apply(StreamRecord input) {
-                return input.getId();
+              public String apply(DatasetModuleMeta input) {
+                return input.getName();
               }
             })
           );
