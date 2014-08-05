@@ -136,7 +136,8 @@ public class ConfigurationTable {
       Result result = table.get(get);
       int propertyCnt = 0;
       if (result != null && !result.isEmpty()) {
-        conf = new CConfiguration();
+        conf = CConfiguration.create();
+        conf.clear();
         Map<byte[], byte[]> kvs = result.getFamilyMap(FAMILY);
         for (Map.Entry<byte[], byte[]> e : kvs.entrySet()) {
           conf.set(Bytes.toString(e.getKey()), Bytes.toString(e.getValue()));
