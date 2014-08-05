@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import com.continuuity.tephra.TransactionSystemClient;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.DataSetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamSpecification;
@@ -81,7 +82,6 @@ import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
-import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -973,6 +973,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
+      if (e.getCause().getCause() instanceof IllegalArgumentException) {
+        LOG.error("Could not find app, flow or flowlet.");
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find app, flow or flowlet.");
+      }
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
@@ -1310,6 +1314,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
+      if (e.getCause().getCause() instanceof IllegalArgumentException) {
+        LOG.error("Could not find app, flow or flowlet.");
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find app, flow or flowlet.");
+      }
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
