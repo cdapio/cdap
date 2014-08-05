@@ -62,7 +62,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
   protected final Configuration hConf;
   protected final HBaseTableUtil tableUtil;
 
-  protected HBaseAdmin admin;
+  private HBaseAdmin admin;
 
   protected AbstractHBaseDataSetAdmin(String name, Configuration hConf, HBaseTableUtil tableUtil) {
     this.tableName = name;
@@ -243,7 +243,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     }
   }
 
-  private HBaseAdmin getAdmin() throws IOException {
+  protected HBaseAdmin getAdmin() throws IOException {
     if (admin == null) {
       admin = new HBaseAdmin(hConf);
     }
