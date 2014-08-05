@@ -76,10 +76,6 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     this.listeners = new ListenerManager();
   }
 
-  public SharedResourceCache(ZKClient zookeeper, Codec<T> codec, String parentZnode) {
-    this(zookeeper, codec, parentZnode, ZooDefs.Ids.OPEN_ACL_UNSAFE);
-  }
-
   public void init() throws InterruptedException {
     this.watcher = new ZKWatcher();
     try {
