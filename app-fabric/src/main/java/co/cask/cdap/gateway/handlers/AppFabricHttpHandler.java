@@ -16,7 +16,6 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import com.continuuity.tephra.TransactionSystemClient;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.DataSetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamSpecification;
@@ -82,6 +81,7 @@ import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
