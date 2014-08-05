@@ -17,6 +17,11 @@
 # limitations under the License.
 #
 
+# We need Hadoop installed
+%w(default hbase hive).each do |recipe|
+   include_recipe "hadoop::#{recipe}"
+end
+
 include_recipe 'cdap::repo'
 
 # add global CDAP_HOME environment variable
