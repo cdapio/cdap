@@ -31,14 +31,14 @@ import co.cask.cdap.common.twill.AbstractReactorTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.HDFSTransactionStateStorageProvider;
-import co.cask.cdap.data.runtime.InMemoryTransactionManagerProvider;
+import co.cask.cdap.data.runtime.TransactionManagerProvider;
 import co.cask.cdap.data2.transaction.metrics.ReactorTxMetricsCollector;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.distributed.TransactionService;
-import com.continuuity.tephra.inmemory.InMemoryTransactionManager;
 import com.continuuity.tephra.metrics.TxMetricsCollector;
 import com.continuuity.tephra.persist.TransactionStateStorage;
 import com.continuuity.tephra.runtime.TransactionStateStorageProvider;
@@ -146,7 +146,7 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
         bind(TransactionStateStorage.class).annotatedWith(Names.named("persist"))
           .toProvider(HDFSTransactionStateStorageProvider.class);
         bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class);
-        bind(InMemoryTransactionManager.class).toProvider(InMemoryTransactionManagerProvider.class);
+        bind(TransactionManager.class).toProvider(TransactionManagerProvider.class);
       }
     });
   }

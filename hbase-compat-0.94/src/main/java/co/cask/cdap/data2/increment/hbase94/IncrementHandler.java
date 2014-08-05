@@ -19,7 +19,7 @@ package co.cask.cdap.data2.increment.hbase94;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTable;
 import co.cask.cdap.data2.transaction.coprocessor.ReactorTransactionStateCacheSupplier;
 import com.continuuity.tephra.coprocessor.TransactionStateCache;
-import com.continuuity.tephra.hbase.Filters;
+import com.continuuity.tephra.hbase94.Filters;
 import com.continuuity.tephra.persist.TransactionSnapshot;
 import com.google.common.base.Supplier;
 import org.apache.commons.logging.Log;
