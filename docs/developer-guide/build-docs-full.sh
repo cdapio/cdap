@@ -85,7 +85,7 @@ function build_docs() {
 }
 
 function build_pdf_rest() {
-#   version # version is not needed because the renaming is done by the pom.xml file
+  # renaming is done by the pom.xml file
   rm -rf $SCRIPT_PATH/$BUILD_PDF
   mkdir $SCRIPT_PATH/$BUILD_PDF
   python $DOCS_PY -g pdf -o $REST_PDF $REST_SOURCE
