@@ -56,7 +56,7 @@ security.server.ssl.keystore.password        <password>
 
 Enabling Access Logging
 ========================
-To enable access logging, add the following to ``logback.xml`` (typically under ``/etc/continuuity/conf/``) ::
+To enable access logging, add the following to ``logback.xml`` (typically under ``/etc/cdap/conf/``) ::
 
     <appender name="AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
       <file>access.log</file>
@@ -75,8 +75,8 @@ To enable access logging, add the following to ``logback.xml`` (typically under 
 You may also configure the file being logged to by changing the path under ``<file>...</file>``.
 
 Enabling Authentication Logging
-========================
-To enable access logging, add the following to ``logback.xml`` (typically under ``/etc/continuuity/conf/``) ::
+================================
+To enable access logging, add the following to ``logback.xml`` (typically under ``/etc/cdap/conf/``) ::
 
     <appender name="AUTH" class="ch.qos.logback.core.rolling.RollingFileAppender">
       <file>auth.log</file>
