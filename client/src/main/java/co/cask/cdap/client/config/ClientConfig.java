@@ -24,12 +24,12 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 /**
- * Configuration for the Reactor Java client library
+ * Configuration for the Java client library
  */
-public class ReactorClientConfig {
+public class ClientConfig {
 
-  private String protocol = "http";
-  private String version = "v2";
+  private static final String PROTOCOL = "http";
+  private static final String VERSION = "v2";
 
   private final HttpRequestConfig defaultConfig;
   private final HttpRequestConfig uploadConfig;
@@ -44,12 +44,12 @@ public class ReactorClientConfig {
    * @param uploadConfig {@link HttpRequestConfig} to use when uploading a file
    * @throws URISyntaxException
    */
-  public ReactorClientConfig(String reactorHost, int port, HttpRequestConfig defaultConfig,
-                             HttpRequestConfig uploadConfig) throws URISyntaxException {
+  public ClientConfig(String reactorHost, int port, HttpRequestConfig defaultConfig,
+                      HttpRequestConfig uploadConfig) throws URISyntaxException {
     this.defaultConfig = defaultConfig;
     this.uploadConfig = uploadConfig;
     this.port = port;
-    this.baseURI = new URI(protocol + "://" + reactorHost + ":" + port);
+    this.baseURI = new URI(PROTOCOL + "://" + reactorHost + ":" + port);
   }
 
   /**
@@ -57,7 +57,7 @@ public class ReactorClientConfig {
    * @param port Port of Reactor (i.e. 10000)
    * @throws URISyntaxException
    */
-  public ReactorClientConfig(String reactorHost, int port) throws URISyntaxException {
+  public ClientConfig(String reactorHost, int port) throws URISyntaxException {
     this(reactorHost, port, new HttpRequestConfig(15000, 15000), new HttpRequestConfig(0, 0));
   }
 
@@ -65,7 +65,7 @@ public class ReactorClientConfig {
    * @param reactorHost Hostname of Reactor (i.e. example.com)
    * @throws URISyntaxException
    */
-  public ReactorClientConfig(String reactorHost) throws URISyntaxException {
+  public ClientConfig(String reactorHost) throws URISyntaxException {
     this(reactorHost, 10000, new HttpRequestConfig(15000, 15000), new HttpRequestConfig(0, 0));
   }
 
@@ -77,7 +77,7 @@ public class ReactorClientConfig {
    * @throws MalformedURLException
    */
   public URL resolveURL(String path) throws MalformedURLException {
-    return baseURI.resolve("/" + version + "/" + path).toURL();
+    return baseURI.resolve("/" + VERSION + "/" + path).toURL();
   }
 
   /**
@@ -108,6 +108,6 @@ public class ReactorClientConfig {
    */
   public void setReactorHost(String reactorHost, int port) throws URISyntaxException {
     this.port = port;
-    this.baseURI = new URI(protocol + "://" + reactorHost + ":" + port);
+    this.baseURI = new URI(PROTOCOL + "://" + reactorHost + ":" + port);
   }
 }

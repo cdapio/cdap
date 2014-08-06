@@ -42,10 +42,10 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
- * Abstract TwillRunnable class for Reactor YARN services.
+ * Abstract TwillRunnable class for Master system service.
  */
-public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractReactorTwillRunnable.class);
+public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractMasterTwillRunnable.class);
 
   protected String name;
   private String cConfName;
@@ -55,7 +55,7 @@ public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable
   private List<Service> services;
   private volatile Thread runThread;
 
-  public AbstractReactorTwillRunnable(String name, String cConfName, String hConfName) {
+  public AbstractMasterTwillRunnable(String name, String cConfName, String hConfName) {
     this.name = name;
     this.cConfName = cConfName;
     this.hConfName = hConfName;

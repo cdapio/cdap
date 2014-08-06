@@ -20,7 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
@@ -115,7 +115,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     String unqualifiedTableNamePrefix =
       type == QUEUE ? QueueConstants.QUEUE_TABLE_PREFIX : QueueConstants.STREAM_TABLE_PREFIX;
     this.type = type;
-    ReactorDatasetNamespace namespace = new ReactorDatasetNamespace(cConf, Namespace.SYSTEM);
+    DefaultDatasetNamespace namespace = new DefaultDatasetNamespace(cConf, Namespace.SYSTEM);
     this.tableNamePrefix =
       HBaseTableUtil.getHBaseTableName(namespace.namespace(unqualifiedTableNamePrefix));
     this.configTableName =

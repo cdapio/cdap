@@ -18,7 +18,7 @@ package co.cask.cdap.logging.run;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.AbstractDistributedReactorServiceManager;
+import co.cask.cdap.common.twill.AbstractDistributedMasterServiceManager;
 import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -26,7 +26,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 /**
  * Log Saver Reactor Service Management in Distributed Mode.
  */
-public class LogSaverStatusServiceManager extends AbstractDistributedReactorServiceManager {
+public class LogSaverStatusServiceManager extends AbstractDistributedMasterServiceManager {
 
   @Inject
   public LogSaverStatusServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,

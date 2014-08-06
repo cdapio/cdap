@@ -47,7 +47,7 @@ import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamServiceModule;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
@@ -118,7 +118,7 @@ import java.util.HashMap;
 /**
  * Base class to inherit from, provides testing functionality for {@link Application}.
  */
-public class ReactorTestBase {
+public class TestBase {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -254,6 +254,7 @@ public class ReactorTestBase {
           install(new FactoryModuleBuilder()
                     .implement(ProcedureClient.class, DefaultProcedureClient.class)
                     .build(ProcedureClientFactory.class));
+          bind(TemporaryFolder.class).toInstance(tmpFolder);
         }
       }
     );
@@ -271,7 +272,7 @@ public class ReactorTestBase {
     DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
     datasetFramework =
       new NamespacedDatasetFramework(dsFramework,
-                                     new ReactorDatasetNamespace(cConf,  Namespace.USER));
+                                     new DefaultDatasetNamespace(cConf,  Namespace.USER));
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
     discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -300,7 +301,7 @@ public class ReactorTestBase {
     InputStream in = null;
     FileOutputStream out = null;
     try {
-      in = ReactorTestBase.class.getClassLoader().getResourceAsStream(infileName);
+      in = TestBase.class.getClassLoader().getResourceAsStream(infileName);
       out = new FileOutputStream(new File(outDir, infileName)); // localized within container, so it get cleaned.
       ByteStreams.copy(in, out);
     } catch (IOException e) {

@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.data2.increment.hbase96.IncrementHandler;
-import co.cask.cdap.data2.transaction.coprocessor.hbase96.ReactorTransactionDataJanitor;
+import co.cask.cdap.data2.transaction.coprocessor.hbase96.DefaultTransactionProcessor;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase96.DequeueScanObserver;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase96.HBaseQueueRegionObserver;
 import org.apache.hadoop.hbase.Coprocessor;
@@ -99,7 +99,7 @@ public class HBase96TableUtil extends HBaseTableUtil {
 
   @Override
   public Class<? extends Coprocessor> getTransactionDataJanitorClassForVersion() {
-    return ReactorTransactionDataJanitor.class;
+    return DefaultTransactionProcessor.class;
   }
 
   @Override

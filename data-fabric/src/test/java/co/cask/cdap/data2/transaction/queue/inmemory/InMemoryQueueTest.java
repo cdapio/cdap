@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.queue.inmemory;
 
+import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -41,11 +42,13 @@ public class InMemoryQueueTest extends QueueTest {
   @BeforeClass
   public static void init() throws Exception {
 
-    injector = Guice.createInjector(new LocationRuntimeModule().getInMemoryModules(),
-                                    new DiscoveryRuntimeModule().getInMemoryModules(),
-                                    new DataFabricModules().getInMemoryModules(),
-                                    new DataSetsModules().getInMemoryModule(),
-                                    new TransactionMetricsModule());
+    injector = Guice.createInjector(
+      new ConfigModule(),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new DataFabricModules().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModule(),
+      new TransactionMetricsModule());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
