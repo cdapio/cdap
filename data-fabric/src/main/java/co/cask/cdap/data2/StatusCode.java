@@ -14,7 +14,16 @@
  * the License.
  */
 
+package co.cask.cdap.data2;
+
 /**
- * This package is a library of different dataset connectors/implementations for dataset system v2.
+ * Defines internal status codes for use in operation results or execptions.
  */
-package co.cask.cdap.data2.dataset.lib;
+public class StatusCode {
+
+  public static final int OK = 0;
+
+  public static final int ILLEGAL_INCREMENT = 2000;
+
+  public static final int INTERNAL_ERROR = 5000;
+}
