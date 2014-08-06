@@ -269,6 +269,15 @@
                       <directory>${project.parent.basedir}/api/target/apidocs</directory>
                       <targetPath>javadocs</targetPath>
                     </resource>
+                    <!-- Copy CLI scripts -->
+                    <resource>
+                      <directory>${project.parent.basedir}/cli/target</directory>
+                      <targetPath>bin</targetPath>
+                      <includes>
+                        <include>cdap-cli</include>
+                        <include>cli-${project.version}.jar</include>
+                      </includes>
+                    </resource>
                     <!-- Copy examples. The assume the example is already built -->
                     <resource>
                       <directory>${project.parent.basedir}/examples</directory>
@@ -321,6 +330,21 @@
             <artifactId>maven-antrun-plugin</artifactId>
             <version>1.7</version>
             <executions>
+              <execution>
+                <id>copy-cli-bash</id>
+                <phase>prepare-package</phase>
+                <configuration>
+                  <target>
+                    <copy file="${stage.opt.dir}/bin/cdap-cli" tofile="${stage.opt.dir}/bin/cdap-cli" />
+                    <chmod file="${stage.opt.dir}/bin/cdap-cli" perm="755"/>
+                    <copy file="${stage.opt.dir}/bin/cli-${project.version}.jar" tofile="${stage.opt.dir}/bin/cdap-cli.jar" />
+                    <chmod file="${stage.opt.dir}/bin/cdap-cli.jar" perm="755"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
               <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
               <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
               <execution>
