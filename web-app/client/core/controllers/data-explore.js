@@ -26,6 +26,13 @@ define([], function () {
 		  this.loadDiscoverableDatasets();
 		},
 
+//   Using this currently messes it up.
+//    clearAllTooltips: function () {
+//      console.log('cleared');
+//      $("[data-toggle='tooltip']").tooltip('hide');
+//      $("[data-toggle='tooltip']").tooltip();
+//    },
+
 		loadDiscoverableDatasets: function () {
 		  var self = this;
       var datasets = self.get('datasets');
@@ -122,7 +129,7 @@ define([], function () {
       var self = this;
       self.offset = self.smallest;
       self.cursor = "next";
-
+//      self.clearAllTooltips();
       self.fetchQueries(true);
     },
 
@@ -130,7 +137,7 @@ define([], function () {
       var self = this;
       self.offset = self.largest;
       self.cursor = "prev";
-
+//      self.clearAllTooltips()
       self.fetchQueries(true);
     },
 
@@ -138,6 +145,11 @@ define([], function () {
 		  var self = this;
 
       if(self.largest == self.largestEver && self.cursor === "prev"){
+        var className = self.cursor + "Btn";
+        $("." + className).tooltip('show');
+        setTimeout(function(){
+          $("." + className).tooltip('hide');
+        }, 5000);
         self.offset = null;
         self.cursor = null;
       }
@@ -151,8 +163,14 @@ define([], function () {
         url += '&cursor=' + self.cursor;
       }
       this.HTTP.rest(url, function (queries, status) {
-
         if(queries.length == 0){
+          var className = self.cursor + "Btn";
+          console.log(className);
+          $("." + className).tooltip('show');
+          setTimeout(function(){
+            $("." + className).tooltip('hide');
+          }, 5000);
+
           if(self.cursor == "prev"){
             self.offset = null;
             self.cursor = null;

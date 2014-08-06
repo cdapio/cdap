@@ -400,8 +400,8 @@
         </div>
     {{/each}}
     <div style="max-width:97%">
-            <button style="min-width:40px;" class="btn btn-blank btn-default" id="execute-explore-query" {{action 'nextPage' on="click"}}>></button>
-            <button style="min-width:40px;" class="btn btn-blank btn-default" id="execute-explore-query" {{action 'prevPage' on="click"}}><</button>
+            <button data-toggle="tooltip" title="No more results." data-trigger="manual" style="min-width:40px;" class="btn btn-blank btn-default nextBtn" id="execute-explore-query" {{action 'nextPage' on="click"}}>></button>
+            <button data-toggle="tooltip" title="No more results." data-trigger="manual" style="min-width:40px;" class="btn btn-blank btn-default prevBtn" id="execute-explore-query" {{action 'prevPage' on="click"}}><</button>
     </div>
   </div>
   </script>
