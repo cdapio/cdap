@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset.lib.table.leveldb;
+package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
@@ -25,12 +25,12 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset.lib.table.MetricsTable;
-import co.cask.cdap.data2.dataset.lib.table.MetricsTableTest;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
