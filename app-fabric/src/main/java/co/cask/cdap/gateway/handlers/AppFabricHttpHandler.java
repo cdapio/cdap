@@ -1357,7 +1357,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
       if (e.getCause() != null && e.getCause().getCause() instanceof NoSuchElementException) {
-        LOG.error("Could not find app, flow, flowlet or stream: ", e.getCause().getMessage());
+        LOG.error("Could not find app, flow, flowlet or stream.");
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find app, flow, flowlet or stream.");
       }
       LOG.error("Got exception:", e);
