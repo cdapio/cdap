@@ -22,7 +22,7 @@ default['cdap']['conf_dir'] = 'conf.chef'
 # cdap-site.xml
 default['cdap']['cdap_site']['root.namespace'] = 'cdap'
 # ideally we could put the macro '/${cdap.namespace}' here but this attribute is used elsewhere in the cookbook
-default['cdap']['cdap_site']['hdfs.namespace'] = "/#{node['cdap']['cdap_site']['cdap.namespace']}"
+default['cdap']['cdap_site']['hdfs.namespace'] = "/#{node['cdap']['cdap_site']['root.namespace']}"
 default['cdap']['cdap_site']['hdfs.user'] = 'yarn'
 default['cdap']['cdap_site']['kafka.log.dir'] = '/data/cdap/kafka-logs'
 default['cdap']['cdap_site']['kafka.broker.quorum'] = "#{node['fqdn']}:9092"
