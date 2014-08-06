@@ -575,14 +575,13 @@ Updating an Existing Dataset
 
 You can update an existing Dataset's table and properties by issuing an HTTP PUT request to the URL::
 
-	PUT <base-url>/data/datasets/<dataset-name>
+	PUT <base-url>/data/datasets/<dataset-name>/properties
 
 with JSON-formatted name of the dataset type and properties in the body::
 
   {
      "typeName":"<type-name>",
-     "properties":{<properties>},
-     "update":"true"
+     "properties":{<properties>}
   }
 
 :Note: The Dataset must exist, and the instance and type passed must match with the existing Dataset.
@@ -622,9 +621,13 @@ Example
    :stub-columns: 1
 
    * - HTTP Request
-     - ``PUT <base-url>/data/datasets/mydataset``
+     - ``PUT <base-url>/data/datasets/mydataset/properties``
    * - Body
+<<<<<<< HEAD
      - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"ttl":"7200000"},"update":"true"}``
+=======
+     - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"7200000"}}``
+>>>>>>> develop
    * - Description
      - For the "mydataset" of type "Table", updates the Dataset and its time-to-live property to 2 hours
 
