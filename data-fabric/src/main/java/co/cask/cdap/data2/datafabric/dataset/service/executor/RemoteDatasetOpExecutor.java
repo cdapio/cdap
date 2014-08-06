@@ -34,6 +34,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
@@ -60,7 +61,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
       public EndpointStrategy get() {
         return new TimeLimitEndpointStrategy(
           new RandomEndpointStrategy(
-            discoveryClient.discover(Constants.Service.DATASET_EXECUTOR)), 10L, TimeUnit.SECONDS);
+            discoveryClient.discover(Constants.Service.DATASET_EXECUTOR)), 2L, TimeUnit.SECONDS);
       }
     });
   }
@@ -120,7 +121,11 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
   }
 
   private URL resolve(String path) throws MalformedURLException {
-    InetSocketAddress addr = this.endpointStrategySupplier.get().pick().getSocketAddress();
+    Discoverable endpoint = endpointStrategySupplier.get().pick();
+    if (endpoint == null) {
+      throw new IllegalStateException("No endpoint for " + Constants.Service.DATASET_EXECUTOR);
+    }
+    InetSocketAddress addr = endpoint.getSocketAddress();
     return new URL(String.format("http://%s:%s%s/data/%s",
                          addr.getHostName(), addr.getPort(),
                          Constants.Gateway.GATEWAY_VERSION,
