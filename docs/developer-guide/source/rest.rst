@@ -1,9 +1,9 @@
 .. :author: Cask, Inc.
    :description: HTTP RESTful Interface to the Cask DAP
 
-===============================================
-Cask Data Application Platform HTTP RESTful API
-===============================================
+=====================
+CDAP HTTP RESTful API
+=====================
 
 .. rst2pdf: .. contents::
 .. rst2pdf: config _templates/pdf-config

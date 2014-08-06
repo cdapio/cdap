@@ -1,9 +1,9 @@
-.. :Author: Cask, Inc.
-   :Description: Introduction to Programming Applications for the Cask Data Application Platform
+.. :author: Cask, Inc.
+   :description: Introduction to Programming Applications for the Cask Data Application Platform
 
-================================================
-Cask Data Application Platform Programming Guide
-================================================
+======================
+CDAP Programming Guide
+======================
 
 **Introduction to Programming Applications for the Cask Data Application Platform**
 

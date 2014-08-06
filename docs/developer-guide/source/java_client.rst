@@ -1,8 +1,8 @@
 .. mirror of client/README.rst
 
-=================
-Java Client API
-=================
+====================
+CDAP Java Client API
+====================
 
 Introduction
 ============

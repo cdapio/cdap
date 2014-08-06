@@ -1,9 +1,9 @@
-.. :Author: Cask, Inc.
-   :Description: Advanced Cask Data Application Platform Features
+.. :author: Cask, Inc.
+   :description: Advanced Cask Data Application Platform Features
 
-================================================
-Advanced Cask Data Application Platform Features
-================================================
+======================
+Advanced CDAP Features
+======================
 
 **Custom Services, Flow, Dataset, and Transaction Systems, 
 with Best Practices for the Cask Data Application Platform**

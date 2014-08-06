@@ -16,11 +16,25 @@
 
 /* Javadoc style sheet */
 
+/* 
 @font-face {
-  font-family: 'Maven Pro';
+  font-family: 'Source Sans Pro';
   font-style: normal;
   font-weight: 400;
-  src: local('Maven Pro Regular'), local('MavenProRegular'), url(http://themes.googleusercontent.com/static/fonts/mavenpro/v4/MG9KbUZFchDs94Tbv9U-pbO3LdcAZYWl9Si6vvxL-qU.woff) format('woff');
+  src: local('Source Sans Pro'), local('SourceSansPro'), url(http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,400italic);
+}
+
+@font-face {
+  font-family: 'Source Sans Pro';
+  font-style: bold;
+  font-weight: 600;
+  src: local('Source Sans Pro'), local('SourceSansPro'), url(http://fonts.googleapis.com/css?family=Source+Sans+Pro:600,600italic);
+}
+ */
+
+@font-face {
+  font-family: 'Source Sans Pro';
+  src: local('Source Sans Pro'), local('SourceSansPro'), url(http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600);
 }
 
 /* Define colors, fonts and other style attributes here to override the defaults */
@@ -28,7 +42,7 @@
 /* Page background color */
 body { background-color: #FFFFFF; color:#111; font-size: 100%; }
 
-body { font-size: 1em; line-height: 1.286em; font-family: "Maven Pro", "Helvetica", "Arial", sans-serif; }
+body { font-size: 1em; line-height: 1.286em; font-family: "Source Sans Pro", "Helvetica", "Arial", sans-serif; }
 
 code { line-height: 1.286em; font-family: "Consolas", "Lucida Console", "Droid Sans Mono", "Andale Mono", "Monaco", "Lucida Sans Typewriter"; }
 
@@ -76,6 +90,7 @@ h2 b {
 .FrameHeadingFont { font-size:  90%; }
 .FrameItemFont { font-size:  0.9em; line-height: 1.3em;
 }
+
 /* Java Interfaces */
 .FrameItemFont a i {
     color: #2f4e7c;
@@ -85,10 +100,17 @@ h2 b {
 }
 
 /* Navigation bar fonts and colors */
-.NavBarCell1    { padding: 4px 8px; background-color:#162d50; color: #FFFFFF; } /* Light mauve */
-.NavBarCell1Rev { padding: 4px 8px; background-color:#49b1d2; color:#FFFFFF} /* Dark Blue */
-.NavBarFont1    { color: #FFFFFF;}
-.NavBarFont1Rev { color:#FFFFFF; }
+.NavBarCell1    { padding: 4px 8px; background-color:#162d50; color:#FFFFFF;} /* Light mauve */
+.NavBarCell1Rev { padding: 4px 8px; background-color:#49b1d2; color:#FFFFFF;} /* Dark Blue */
+
+.NavBarCell1    { padding: 4px 8px; background-color:#4B5258; color:#FFFFFF;} /* Dark background */
+.NavBarCell1Rev { padding: 4px 8px; background-color:#F1EFEE; color:#FFFFFF;} /* Light background*/
+
+.NavBarFont1    { color:#FFFFFF;}
+.NavBarFont1Rev { color:#FFFFFF;}
+
+.NavBarFont1    { color:#FFFFFF;}
+.NavBarFont1Rev { color:#000000;}
 
 .NavBarCell2    { background-color:#FFFFFF; color:#000000}
 .NavBarCell3    { background-color:#FFFFFF; color:#000000}

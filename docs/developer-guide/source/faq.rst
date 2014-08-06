@@ -1,12 +1,6 @@
-.. .. _faq_toplevel:
-
-.. toctree::
-   :hidden:
-   :maxdepth: 0
-   
-==========================
-FAQ
-==========================
+========
+CDAP FAQ
+========
 
 .. contents::
    :local:

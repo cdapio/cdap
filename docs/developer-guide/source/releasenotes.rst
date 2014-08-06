@@ -1,14 +1,14 @@
-.. :Author: Cask, Inc 
-   :Description: Release notes for the Cask Data Application Platform
+.. :author: Cask, Inc 
+   :description: Release notes for the Cask Data Application Platform
 
 .. _overview_release-notes:
 
 .. index::
    single: Release Notes
 
-===================================================
-Cask Data Application Platform (CDAP) Release Notes
-===================================================
+==================
+CDAP Release Notes
+==================
 .. _release-notes:
 
 New Features

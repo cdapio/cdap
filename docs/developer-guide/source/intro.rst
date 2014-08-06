@@ -1,5 +1,5 @@
-.. :Author: Cask, Inc.
-   :Description: Introduction to the Cask Data Application Platform
+.. :author: Cask, Inc.
+   :description: Introduction to the Cask Data Application Platform
 
 ==================================================
 Introduction to the Cask Data Application Platform

@@ -1,9 +1,9 @@
-.. :Author: Cask, Inc.
-   :Description: Operating Cask Data Application Platform and its Console
+.. :author: Cask, Inc.
+   :description: Operating Cask Data Application Platform and its Console
 
-===============================================
-Cask Data Application Platform Operations Guide
-===============================================
+=====================
+CDAP Operations Guide
+=====================
 
 **Introduction to Running Applications and Operating the Cask Data Application Platform (CDAP)**
 
