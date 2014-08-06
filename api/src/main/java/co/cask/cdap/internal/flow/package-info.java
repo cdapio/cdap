@@ -15,7 +15,7 @@
  */
 
 /**
- * This package contains internal classes for supporting Continuuity api. Not supposed to be used by user
- * of Continuuity api.
+ * This package contains internal classes for supporting CDAP API. Not supposed to be used by user
+ * of CDAP API.
  */
 package co.cask.cdap.internal.flow;

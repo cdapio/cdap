@@ -70,7 +70,7 @@ import java.lang.annotation.Target;
  * </p>
  * 
  * <p>
- * See the <i><a href="http://continuuity.com/docs/reactor/current/en/">Continuuity Reactor Developer Guides</a></i>
+ * See the <i><a href="http://cask.co/docs/cdap/current/en/">Cask CDAP Developer Guides</a></i>
  * for more information.
  * </p>
  *

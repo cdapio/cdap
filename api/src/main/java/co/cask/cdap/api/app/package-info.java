@@ -31,7 +31,7 @@
  * </p>
  *
  * <p>
- * To create a Reactor Application, first begin by extending the
+ * To create a CDAP Application, first begin by extending the
  * {@link co.cask.cdap.api.app.AbstractApplication} class, then implement its 
  * {@link co.cask.cdap.api.app.Application#configure(ApplicationConfigurer configurer, ApplicationContext context)
  * configure()} method. In the configure method, specify the Application's metadata
@@ -65,7 +65,7 @@
  *
  * <p>
  * {@link co.cask.cdap.api.data.stream.Stream}s are the primary means for
- * pushing data into the Reactor.
+ * pushing data into the CDAP server.
  * </p>
  *
  * <p>
@@ -76,7 +76,7 @@
  *
  * <p>
  * A {@link co.cask.cdap.api.data.DataSet Dataset} defines the storage and
- * retrieval of data. In addition to the several Dataset implementations the Reactor
+ * retrieval of data. In addition to the several Dataset implementations the CDAP server
  * provides, you can also implement your own Custom Datasets.
  * </p>
  *
@@ -122,7 +122,7 @@
  *
  * <p>
  * A {@link co.cask.cdap.api.procedure.Procedure} handles queries from external
- * systems to the Reactor and performs arbitrary server-side processing on demand.
+ * systems to the CDAP server and performs arbitrary server-side processing on demand.
  * </p>
  *
  * <p>

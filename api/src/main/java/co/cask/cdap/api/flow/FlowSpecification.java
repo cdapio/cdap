@@ -56,7 +56,7 @@ import java.util.Map;
  *    </code> 
  *  </pre>
  *
- * See the <i>Continuuity Reactor Developer Guide</i> and the Reactor example applications.
+ * See the <i>Cask CDAP Developer Guide</i> and the CDAP server example applications.
  *
  * @see co.cask.cdap.api.flow.flowlet.Flowlet Flowlet
  *
