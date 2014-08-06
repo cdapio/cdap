@@ -50,21 +50,13 @@
     <dependency>
       <groupId>jline</groupId>
       <artifactId>jline</artifactId>
-      <version>2.12</version>
     </dependency>
     <dependency>
-      <groupId>org.ardverk</groupId>
-      <artifactId>patricia-trie</artifactId>
-      <version>0.6</version>
+      <groupId>com.googlecode.concurrent-trees</groupId>
+      <artifactId>concurrent-trees</artifactId>
+      <version>2.4.0</version>
     </dependency>
   </dependencies>
-
-  <repositories>
-    <repository>
-      <id>ardverk-release</id>
-      <url>http://mvn.ardverk.org/repository/release</url>
-    </repository>
-  </repositories>
 
   <build>
     <resources>

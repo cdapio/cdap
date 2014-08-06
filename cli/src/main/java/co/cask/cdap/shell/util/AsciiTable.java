@@ -17,10 +17,10 @@
 package co.cask.cdap.shell.util;
 
 import com.google.common.base.Joiner;
-import com.sun.istack.internal.Nullable;
 
 import java.io.PrintStream;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Utility class to print an ASCII table. e.g.

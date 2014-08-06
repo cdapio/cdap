@@ -21,24 +21,24 @@ import co.cask.cdap.shell.completer.PrefixCompleter;
 import co.cask.cdap.shell.completer.StringsCompleter;
 import co.cask.cdap.shell.exception.InvalidCommandException;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.googlecode.concurrenttrees.radix.ConcurrentRadixTree;
+import com.googlecode.concurrenttrees.radix.RadixTree;
+import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharArrayNodeFactory;
 import jline.console.completer.AggregateCompleter;
 import jline.console.completer.Completer;
-import org.ardverk.collection.PatriciaTrie;
-import org.ardverk.collection.StringKeyAnalyzer;
-import org.ardverk.collection.Trie;
 
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Command representing a set of commands.
  */
 public class CommandSet implements Command, Completable {
 
-  private final Trie<String, Command> commandsMap;
+  private final RadixTree<Command> commandsMap;
   private final List<Command> commands;
   private final String name;
 
@@ -54,8 +54,8 @@ public class CommandSet implements Command, Completable {
     this.commandsMap = map(this.commands);
   }
 
-  private Trie<String, Command> map(List<Command> commands) {
-    Trie<String, Command> result = new PatriciaTrie<String, Command>(StringKeyAnalyzer.CHAR);
+  private RadixTree<Command> map(List<Command> commands) {
+    RadixTree<Command> result = new ConcurrentRadixTree<Command>(new DefaultCharArrayNodeFactory());
     for (Command command : commands) {
       result.put(command.getName(), command);
     }
@@ -70,20 +70,12 @@ public class CommandSet implements Command, Completable {
     }
 
     String commandName = args[0];
-
-    Command command = commandsMap.get(commandName);
-    if (command == null) {
-      // lookup in trie as backup
-      Map.Entry<String, Command> entry = commandsMap.select(commandName);
-      if (entry.getValue().getName().startsWith(commandName)) {
-        command = entry.getValue();
-      }
-    }
-
-    if (command == null) {
+    Iterable<Command> matches = commandsMap.getValuesForKeysStartingWith(commandName);
+    if (Iterables.isEmpty(matches)) {
       throw new InvalidCommandException();
     }
 
+    Command command = matches.iterator().next();
     command.process(Arrays.copyOfRange(args, 1, args.length), output);
   }
 
