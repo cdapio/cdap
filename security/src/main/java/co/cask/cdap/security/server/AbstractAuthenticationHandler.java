@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import javax.security.auth.login.Configuration;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -47,8 +46,7 @@ import javax.ws.rs.Path;
  */
 @Path("/*")
 public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHandler {
-  private static final Logger AUTHENTICATION_AUDIT_LOG = LoggerFactory.getLogger("auth");
-  private final DateFormat dateFormat = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z");
+  private static final Logger AUDIT_LOG = LoggerFactory.getLogger("http-access");
 
   protected final CConfiguration configuration;
 
@@ -90,9 +88,12 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
       AuditLogEntry logEntry = new AuditLogEntry();
       logEntry.setUserName(request.getRemoteUser());
       logEntry.setClientIP(InetAddress.getByName(request.getRemoteAddr()));
+      logEntry.setRequestLine(request.getMethod(), request.getRequestURI(), request.getProtocol());
       logEntry.setResponseCode(response.getStatus());
-      logEntry.setResponseContentLength((long) response.getBufferSize());
-      AUTHENTICATION_AUDIT_LOG.trace(logEntry.toString());
+      if (response.getHeader("Content-Length") != null) {
+        logEntry.setResponseContentLength(Long.parseLong(response.getHeader("Content-Length")));
+      }
+      AUDIT_LOG.trace(logEntry.toString());
     }
   }
 

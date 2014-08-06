@@ -74,26 +74,6 @@ To enable access logging, add the following to ``logback.xml`` (typically under 
 
 You may also configure the file being logged to by changing the path under ``<file>...</file>``.
 
-Enabling Authentication Logging
-================================
-To enable access logging, add the following to ``logback.xml`` (typically under ``/etc/cdap/conf/``) ::
-
-    <appender name="AUTH" class="ch.qos.logback.core.rolling.RollingFileAppender">
-      <file>auth.log</file>
-      <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-        <fileNamePattern>auth.log.%d{yyyy-MM-dd}</fileNamePattern>
-        <maxHistory>30</maxHistory>
-      </rollingPolicy>
-      <encoder>
-        <pattern>%msg%n</pattern>
-      </encoder>
-    </appender>
-    <logger name="auth" level="TRACE" additivity="false">
-      <appender-ref ref="AUTH" />
-    </logger>
-
-You may also configure the file being logged to by changing the path under ``<file>...</file>``.
-
 Configuring Authentication Mechanisms
 ======================================
 Reactor provides several ways to authenticate a user's identity.

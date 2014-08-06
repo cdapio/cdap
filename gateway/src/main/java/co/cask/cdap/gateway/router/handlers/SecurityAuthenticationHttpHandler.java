@@ -109,7 +109,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     }
 
     logEntry.setClientIP(((InetSocketAddress) ctx.getChannel().getRemoteAddress()).getAddress());
-    logEntry.setRequestLine(msg.getMethod() + " " + msg.getUri() + " " + msg.getProtocolVersion());
+    logEntry.setRequestLine(msg.getMethod(), msg.getUri(), msg.getProtocolVersion());
 
     TokenState tokenState = tokenValidator.validate(accessToken);
     if (!tokenState.isValid()) {

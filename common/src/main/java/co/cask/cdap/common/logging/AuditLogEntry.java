@@ -16,6 +16,9 @@
 
 package co.cask.cdap.common.logging;
 
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpVersion;
+
 import java.net.InetAddress;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -90,8 +93,12 @@ public final class AuditLogEntry {
     return requestLine;
   }
 
-  public void setRequestLine(String requestLine) {
-    this.requestLine = requestLine;
+  public void setRequestLine(HttpMethod method, String uri, HttpVersion protocolVersion) {
+    this.requestLine = method + " " + uri + " " + protocolVersion;
+  }
+
+  public void setRequestLine(String method, String uri, String protocolVersion) {
+    this.requestLine = method + " " + uri + " " + protocolVersion;
   }
 
   public Integer getResponseCode() {
