@@ -973,7 +973,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
-      if (e.getCause().getCause() instanceof IllegalArgumentException) {
+      if (e.getCause() != null && e.getCause().getCause() instanceof IllegalArgumentException) {
         LOG.error("Could not find app, flow or flowlet.");
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find app, flow or flowlet.");
       }
@@ -1314,7 +1314,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
-      if (e.getCause().getCause() instanceof IllegalArgumentException) {
+      if (e.getCause() != null && e.getCause().getCause() instanceof IllegalArgumentException) {
         LOG.error("Could not find app, flow or flowlet.");
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find app, flow or flowlet.");
       }
