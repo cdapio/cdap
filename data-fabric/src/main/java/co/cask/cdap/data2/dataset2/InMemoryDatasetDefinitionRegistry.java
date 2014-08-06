@@ -28,7 +28,7 @@ import java.util.Map;
  * Simple implementation of {@link DatasetDefinitionRegistry} that keeps state in memory.
  */
 public class InMemoryDatasetDefinitionRegistry implements DatasetDefinitionRegistry {
-  private final Logger LOG = LoggerFactory.getLogger(InMemoryDatasetDefinitionRegistry.class);
+  private static final Logger LOG = LoggerFactory.getLogger(InMemoryDatasetDefinitionRegistry.class);
 
   private Map<String, DatasetDefinition> datasetTypes = Maps.newHashMap();
 
