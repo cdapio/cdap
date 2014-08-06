@@ -82,5 +82,6 @@ public class ProcedureClientTestRun extends ClientTestBase {
     assertProgramStopped(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
 
     appClient.delete(FakeApp.NAME);
+    Assert.assertEquals(0, appClient.list().size());
   }
 }

@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -95,10 +96,15 @@ public abstract class ClientTestBase extends SingleNodeTestBase {
 
     String status;
     int numTries = 0;
-    int maxTries = 5;
+    int maxTries = 10;
     do {
       status = programClient.getStatus(appId, programType, programId);
       numTries++;
+      try {
+        TimeUnit.SECONDS.sleep(1);
+      } catch (InterruptedException e) {
+        // NO-OP
+      }
     } while (!status.equals(programStatus) && numTries <= maxTries);
     Assert.assertEquals(programStatus, status);
   }

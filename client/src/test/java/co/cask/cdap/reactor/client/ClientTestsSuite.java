@@ -30,6 +30,6 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({ ApplicationClientTestRun.class, DatasetClientTestRun.class, MetricsClientTestRun.class,
                       MonitorClientTestRun.class, ProcedureClientTestRun.class, ProgramClientTestRun.class,
                       /*QueryClientTestRun.class, */StreamClientTestRun.class })
-public class ClientTestSuite extends SingleNodeTestBase {
+public class ClientTestsSuite extends SingleNodeTestBase {
 
 }
