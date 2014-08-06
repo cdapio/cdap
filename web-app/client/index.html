@@ -472,15 +472,15 @@
       <div class="panel">
          <ul class="nav nav-pills pull-right" id="explore-sub-menu">
            <li>{{#linkTo DataExplore.Query}}Query{{/linkTo }}</li>
-           <li id="ResultsLink" data-toggle="tooltip" title="Queries can be viewed here" data-trigger="manual">{{#linkTo DataExplore.Results}}Results{{/linkTo}}</li>
+           <li id="ResultsLink" data-toggle="tooltip" title="View Query Here" data-trigger="manual">{{#linkTo DataExplore.Results}}Results{{/linkTo}}</li>
          </ul>
          <div style="clear:both"></div>
          <hr style="margin-top: 0px"/>
         <td>
-          <div class="text-area-container">
+          <div data-toggle="popover"  title="Error" data-trigger="manual" data-placement="top" data-content="yes" class="text-area-container">
           {{view C.Embed.Injector elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
           </div>
-          <button data-toggle="tooltip" data-placement="left" title="TODO:replacethis" data-trigger="manual" class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
+          <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
         </td>
 
         {{outlet}}

@@ -3386,6 +3386,16 @@ div.tooltip-inner {
     background-color: #0000000;
     font-size: 14px;
 }
+.popover {
+
+}
+.popover-title {
+    font-size: 15p;
+}
+.popover-content {
+    color: black;
+    font-size: 10p;
+}
 
 .flow-run-date {
 	font-size: 12px;

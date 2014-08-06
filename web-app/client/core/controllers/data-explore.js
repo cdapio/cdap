@@ -27,11 +27,11 @@ define([], function () {
 		},
 
 //   Using this currently messes it up.
-//    clearAllTooltips: function () {
-//      console.log('cleared');
-//      $("[data-toggle='tooltip']").tooltip('hide');
+    clearAllTooltips: function () {
+      console.log('cleared');
+      $("[data-toggle='tooltip']").tooltip('hide');
 //      $("[data-toggle='tooltip']").tooltip();
-//    },
+    },
 
 		loadDiscoverableDatasets: function () {
 		  var self = this;
@@ -112,10 +112,7 @@ define([], function () {
 
     selectDataset: function (dataset) {
       this.set('selectedDataset', dataset);
-      setTimeout(function(){
-        console.log('set');
-        $("#query-injector-input").attr('placeholder','SELECT * FROM ' + dataset.name + ' LIMIT 5');
-      }, 2000);
+      this.injectorTextArea.set('placeholder', 'SELECT * FROM ' + dataset.name + ' LIMIT 5');
       var datasets = this.get('datasets');
       datasets.forEach(function (entry) {
         entry.set('isSelected', false);
@@ -129,15 +126,17 @@ define([], function () {
       var self = this;
       self.offset = self.smallest;
       self.cursor = "next";
-//      self.clearAllTooltips();
+      self.clearAllTooltips();
+      setTimeout(function(){
       self.fetchQueries(true);
+      }, 0)
     },
 
     prevPage: function () {
       var self = this;
       self.offset = self.largest;
       self.cursor = "prev";
-//      self.clearAllTooltips()
+      self.clearAllTooltips()
       self.fetchQueries(true);
     },
 
@@ -146,7 +145,7 @@ define([], function () {
 
       if(self.largest == self.largestEver && self.cursor === "prev"){
         var className = self.cursor + "Btn";
-        $("." + className).tooltip('show');
+        $("." + className).tooltip('show'); console.log('shown');
         setTimeout(function(){
           $("." + className).tooltip('hide');
         }, 5000);
@@ -237,6 +236,7 @@ define([], function () {
         }
         setTimeout(function () {
           $("[data-toggle='tooltip']").tooltip();
+          $("[data-toggle='popover']").popover();
         }, 500)
       });
 		},
@@ -294,11 +294,12 @@ define([], function () {
     submitSQLQuery: function () {
       var self = this;
       var controller = this.get('controllers');
-      var sqlString = controller.get("SQLQueryString") || $("#query-injector-input").attr('placeholder');
+      var sqlString = controller.get("SQLQueryString") || this.injectorTextArea.get('placeholder');
       this.HTTP.post('rest/data/explore/queries', {data: { "query": sqlString }},
         function (response, status) {
           if(status != 200) {
-            C.Util.showWarning(' ' + response.message);
+            $(".text-area-container").attr('data-content', response.message).popover('show')
+            .click(function(){},function(){$(".text-area-container").popover('hide')});
             return;
           }
           self.fetchQueries();
