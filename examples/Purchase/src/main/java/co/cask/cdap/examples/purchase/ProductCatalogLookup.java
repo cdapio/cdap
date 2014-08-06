@@ -16,8 +16,12 @@
 
 package co.cask.cdap.examples.purchase;
 
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Charsets;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
@@ -29,12 +33,17 @@ import javax.ws.rs.PathParam;
  * Lookup Handler to handle users interest HTTP call.
  */
 @Path("/v1")
-public final class ProductCatalogLookup extends AbstractHttpHandler {
+public final class ProductCatalogLookup extends AbstractHttpServiceHandler {
 
   @Path("product/{id}/catalog")
   @GET
-  public void handler(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
-    responder.sendString(HttpResponseStatus.OK, "Cat-" + id);
+  public void handler(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("id") String id) {
+    // send string Cat-<id> with 200 OK response.
+    responder.sendString(200, "Cat-" + id, Charsets.UTF_8);
   }
 
+  @Override
+  public void configure() {
+    // no-op
+  }
 }
