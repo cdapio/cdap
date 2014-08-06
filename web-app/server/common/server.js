@@ -28,11 +28,11 @@ var Env = require('./env');
  * @param {string} logLevel log level {TRACE|INFO|ERROR}
  * @param {boolean} https whether to use https for requests.
  */
-var WebAppServer = function(dirPath, logLevel, https) {
+var WebAppServer = function(dirPath, logLevel, httpsEnabled) {
   this.dirPath = dirPath;
   this.LOG_LEVEL = logLevel;
   this.lib = http;
-  if (https) {
+  if (httpsEnabled) {
     this.lib = https;
   }
 };
@@ -210,6 +210,22 @@ WebAppServer.prototype.setCookieSession = function(cookieName, secret) {
  */
 WebAppServer.prototype.getServerInstance = function(app) {
   return this.lib.createServer(app);
+};
+
+/**
+ * Creates https server based on app framework.
+ * Currently works only with express.
+ * @param {Object} app framework.
+ * @param {string} key path to SSL key
+ * @param {string} cert path to SSL cert
+ * @return {Object} instance of the http server.
+ */
+WebAppServer.prototype.getHttpsServerInstance = function(app, key, cert) {
+  var options = {
+    key: fs.readFileSync(key),
+    cert: fs.readFileSync(cert)
+  };
+  return this.lib.createServer(options, app);
 };
 
 WebAppServer.prototype.checkAuth = function(req, res, next) {

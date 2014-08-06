@@ -28,14 +28,20 @@ process.env.NODE_ENV = 'production';
 var logLevel = 'INFO';
 
 var EntServer = function() {
-  EntServer.super_.call(this, __dirname, logLevel);
+  var self = this;
+  this.getConfig(function(version) {
+    if (self.config['dashboard.https.enabled'] === "true") {
+      EntServer.super_.call(self, __dirname, logLevel, true);
+    } else {
+      EntServer.super_.call(self, __dirname, logLevel, false);
+    }
 
-  this.cookieName = 'continuuity-enterprise-edition';
-  this.secret = 'enterprise-edition-secret';
-  this.logger = this.getLogger('console', 'Enterprise UI');
-  this.setCookieSession(this.cookieName, this.secret);
-  this.configureExpress();
-
+    self.cookieName = 'continuuity-enterprise-edition';
+    self.secret = 'enterprise-edition-secret';
+    self.logger = self.getLogger('console', 'Enterprise UI');
+    self.setCookieSession(self.cookieName, self.secret);
+    self.configureExpress();
+  }
 };
 util.inherits(EntServer, WebAppServer);
 
@@ -81,8 +87,12 @@ EntServer.prototype.start = function() {
   var self = this;
 
   self.getConfig(function(version) {
-
-    self.server = self.getServerInstance(self.app);
+    if (this.config['dashboard.https.enabled'] === "true") {
+      self.server = self.getHttpsServerInstance(self.app, self.config['dashboard.ssl.key'],
+                                                self.config['dashboard.ssl.cert']);
+    } else {
+      self.server = self.getServerInstance(self.app);
+    }
 
     if (!('dashboard.bind.port' in self.config)) {
       self.config['dashboard.bind.port'] = DEFAULT_BIND_PORT;
