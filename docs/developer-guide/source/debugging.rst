@@ -109,16 +109,16 @@ application that uses MapReduce. Complete source code and test can be
 found under `TrafficAnalytics </examples/TrafficAnalytics/index.html>`__.
 
 The ``TrafficAnalyticsTest`` class should extend from
-``ReactorTestBase`` similar to `Strategies in Testing Flows`.
+``AppTestBase`` similar to `Strategies in Testing Flows`.
 
 ::
 
-  public class TrafficAnalyticsTest extends ReactorTestBase {
+  public class TrafficAnalyticsTest extends AppTestBase {
     @Test
     public void test() throws Exception {
 
 The ``TrafficAnalytics`` application can be deployed using the ``deployApplication`` 
-method from the ``ReactorTestBase`` class::
+method from the ``AppTestBase`` class::
 
   // Deploy an Application
   ApplicationManager appManager = deployApplication(TrafficAnalyticsApp.class);

@@ -281,7 +281,7 @@ Comments
   first obtain a consumer (group) id, which is then passed to subsequent read requests.
 - The ``Consumer-ID`` is returned in a response header and—for convenience—also in the body of the response::
 
-    X-Continuuity-ConsumerId: <consumer-id>
+    X-CDAP-ConsumerId: <consumer-id>
 
   Once you have the ``Consumer-ID``, single events can be read from the Stream.
 
@@ -304,7 +304,7 @@ A read is performed as an HTTP POST method to the URL::
 
 The request must pass the ``Consumer-ID`` in a header of the form::
 
-  X-Continuuity-ConsumerId: <consumer-id>
+  X-CDAP-ConsumerId: <consumer-id>
 
 HTTP Responses
 ..............

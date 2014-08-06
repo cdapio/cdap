@@ -86,9 +86,9 @@ To do all of this, you'll need to build an entire platform that provides an infr
 
 Cask Data Application Platform Overview
 =======================================
-Under the covers, Cask Data Application Platform™ (CDAP) is a Java-based middleware solution that 
+Under the covers, **Cask Data Application Platform (CDAP)** is a Java-based middleware solution that 
 abstracts the complexities and integrates the components of the Hadoop ecosystem (YARN, MapReduce, 
-HBase, Zookeeper, etc.). Simply stated, Reactor behaves like a modern-day application 
+HBase, Zookeeper, etc.). Simply stated, CDAP behaves like a modern-day application 
 server, distributed and scalable, sitting on top of a Hadoop distribution (such as CDH, 
 HDP, or Apache). It provides a programming framework and scalable runtime environment 
 that allows any Java developer to build Big Data applications without having to 
@@ -128,8 +128,8 @@ increase capacity with a click of a button without taking your application offli
 the CDAP Console or RESTful APIs to monitor and manage the lifecycle and scale of your 
 application.
 
-Reactor Components
-==================
+CDAP Components
+===============
 Now, let’s talk about the components within CDAP. Cask DAP provides four 
 basic abstractions:
 
@@ -251,7 +251,7 @@ CDAP Log Analysis Framework
 Designing Big Data applications using the **Cask Data Application Platform** provides a clear
 separation between infrastructure components and application code.
 
-Reactor functions as a middle-tier application platform, exposing simple, high-level 
+CDAP functions as a middle-tier application platform, exposing simple, high-level 
 abstractions to perform data collection, processing, storage and query. Logs are collected
 by `Streams <programming.html#streams>`__, while `Flows <programming.html#flows>`__
 do basic aggregation and realtime analysis. Advanced, off-line

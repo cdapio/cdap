@@ -32,7 +32,7 @@ These examples (and more!) are included with our
 ======================================================================
 This is a simple application for real-time streaming log analysis—computing 
 the number of occurrences of each HTTP status code by processing Apache access log data. 
-The example introduces the basic constructs of the Continuuity Reactor programming paradigm:
+The example introduces the basic constructs of the Cask Data Application Platform programming paradigm:
 **Applications**, **Streams**, **Flows**, **Flowlets**, **Procedures** and **Datasets**.
 
 `PageViewAnalytics <pageViewAnalytics.html>`_

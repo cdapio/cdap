@@ -1,5 +1,5 @@
 # Translations template for Sphinx.
-# Copyright (C) 2013 ORGANIZATION
+# Copyright (C) 2014 Cask, Inc.
 # This file is distributed under the same license as the Sphinx project.
 # 
 # Translators:
@@ -7,16 +7,16 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Sphinx\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"Report-Msgid-Bugs-To: support@cask.co\n"
 "POT-Creation-Date: 2013-04-02 10:33+0200\n"
 "PO-Revision-Date: 2013-06-18 08:03+0000\n"
 "Last-Translator: JJ\n"
-"Language-Team: Continuuity\n"
+"Language-Team: Cask\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
-"Language: en_CO\n"
+"Language: en_CDAP\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: sphinx/config.py:81

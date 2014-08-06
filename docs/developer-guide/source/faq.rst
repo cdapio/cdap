@@ -86,7 +86,7 @@ Hadoop
 
 I have a Hadoop cluster in my datacenter, can I run CDAP that uses my Hadoop cluster?
 ---------------------------------------------------------------------------------------- 
-Yes. You can install CDAP on your Hadoop cluster. Contact `Continuuity support`__ on how this can be done.
+Yes. You can install CDAP on your Hadoop cluster. Contact `Cask support`__ on how this can be done.
 
 __ support_
 
@@ -100,13 +100,13 @@ Feedback and Support
 
 How can I Provide Feedback?
 ---------------------------
-Feel free to provide feedback by contacting `Continuuity support`__.
+Feel free to provide feedback by contacting `Cask support`__.
 
 __ support_
 
 Any Unanswered Questions?
 -------------------------
-Please contact `Continuuity support`__ if you have any unanswered questions.
+Please contact `Cask support`__ if you have any unanswered questions.
 
 __ support_
 

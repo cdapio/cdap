@@ -12,7 +12,7 @@ Custom Services
 ===============
 In addition to Flows, MapReduce jobs, and Procedures, additional Services can be run in a 
 Cask Data Application Platform (CDAP) Application. Developers can implement Custom Services that run in program containers,
-to interface with a legacy system and perform additional processing beyond the Continuuity processing
+to interface with a legacy system and perform additional processing beyond the CDAP processing
 paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
 
 Services are implemented as `Twill applications <http://twill.incubator.apache.org>`__ and are run in
@@ -350,7 +350,7 @@ one holding the data and one holding the index.
 We distinguish three categories of Datasets: *core*, *system*, and *custom* Datasets:
 
 - The **core** Dataset of the CDAP is a Table. Its implementation may use internal
-  Continuuity classes hidden from developers.
+  CDAP classes hidden from developers.
 
 - A **system** Dataset is bundled with the CDAP and is built around
   one or more underlying core or system Datasets to implement a specific data pattern.
