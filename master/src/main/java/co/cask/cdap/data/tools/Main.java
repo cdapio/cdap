@@ -47,9 +47,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 
 /**
- * Reactor command line tool.
+ * Command line tool.
  */
-public class ReactorTool {
+public class Main {
 
   /**
    * Set of Action available in this tool.
@@ -195,6 +195,6 @@ public class ReactorTool {
   }
 
   public static void main(String[] args) throws Exception {
-    new ReactorTool().doMain(args);
+    new Main().doMain(args);
   }
 }

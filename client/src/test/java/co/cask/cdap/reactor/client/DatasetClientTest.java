@@ -19,7 +19,7 @@ package co.cask.cdap.reactor.client;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.client.DatasetTypeClient;
-import co.cask.cdap.client.config.ReactorClientConfig;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.reactor.client.app.FakeDataset;
@@ -48,7 +48,7 @@ public class DatasetClientTest extends ClientTestBase {
   public void setUp() throws Throwable {
     super.setUp();
 
-    ReactorClientConfig config = new ReactorClientConfig("localhost");
+    ClientConfig config = new ClientConfig("localhost");
     datasetClient = new DatasetClient(config);
     moduleClient = new DatasetModuleClient(config);
     typeClient = new DatasetTypeClient(config);

@@ -19,7 +19,7 @@ package co.cask.cdap.common.twill;
 /**
  * InMemory Reactor Service Management class.
  */
-public abstract class AbstractInMemoryReactorServiceManager implements ReactorServiceManager {
+public abstract class AbstractInMemoryMasterServiceManager implements MasterServiceManager {
 
   @Override
   public int getInstances() {
