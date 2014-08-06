@@ -16,7 +16,7 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.client.config.ReactorClientConfig;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.AlreadyExistsException;
 import co.cask.cdap.client.exception.BadRequestException;
 import co.cask.cdap.client.exception.DatasetModuleAlreadyExistsException;
@@ -45,10 +45,10 @@ import javax.inject.Inject;
 public class DatasetModuleClient {
 
   private final RESTClient restClient;
-  private final ReactorClientConfig config;
+  private final ClientConfig config;
 
   @Inject
-  public DatasetModuleClient(ReactorClientConfig config) {
+  public DatasetModuleClient(ClientConfig config) {
     this.config = config;
     this.restClient = RESTClient.create(config);
   }

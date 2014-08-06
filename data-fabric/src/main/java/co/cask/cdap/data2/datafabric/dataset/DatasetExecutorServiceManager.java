@@ -18,7 +18,7 @@ package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.AbstractDistributedReactorServiceManager;
+import co.cask.cdap.common.twill.AbstractDistributedMasterServiceManager;
 import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -26,7 +26,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 /**
  * Dataset Reactor Service management in distributed mode.
  */
-public class DatasetExecutorServiceManager extends AbstractDistributedReactorServiceManager {
+public class DatasetExecutorServiceManager extends AbstractDistributedMasterServiceManager {
 
   @Inject
   public DatasetExecutorServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,

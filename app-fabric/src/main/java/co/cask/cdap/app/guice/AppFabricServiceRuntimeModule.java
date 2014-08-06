@@ -22,7 +22,7 @@ import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.common.twill.ReactorServiceManager;
+import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.stream.StreamServiceManager;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
@@ -99,8 +99,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
 
-                               MapBinder<String, ReactorServiceManager> mapBinder = MapBinder.newMapBinder(
-                                 binder(), String.class, ReactorServiceManager.class);
+                               MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
+                                 binder(), String.class, MasterServiceManager.class);
                                mapBinder.addBinding(Constants.Service.LOGSAVER)
                                         .to(InMemoryLogSaverServiceManager.class);
                                mapBinder.addBinding(Constants.Service.TRANSACTION)
@@ -131,8 +131,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
 
-                               MapBinder<String, ReactorServiceManager> mapBinder = MapBinder.newMapBinder(
-                                 binder(), String.class, ReactorServiceManager.class);
+                               MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
+                                 binder(), String.class, MasterServiceManager.class);
                                mapBinder.addBinding(Constants.Service.LOGSAVER)
                                         .to(InMemoryLogSaverServiceManager.class);
                                mapBinder.addBinding(Constants.Service.TRANSACTION)
@@ -164,8 +164,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(SchedulerService.class).to(DistributedSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
 
-                               MapBinder<String, ReactorServiceManager> mapBinder = MapBinder.newMapBinder(
-                                 binder(), String.class, ReactorServiceManager.class);
+                               MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
+                                 binder(), String.class, MasterServiceManager.class);
                                mapBinder.addBinding(Constants.Service.LOGSAVER)
                                         .to(LogSaverStatusServiceManager.class);
                                mapBinder.addBinding(Constants.Service.TRANSACTION)

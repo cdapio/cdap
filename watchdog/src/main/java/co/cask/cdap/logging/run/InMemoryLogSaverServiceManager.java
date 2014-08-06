@@ -17,12 +17,12 @@
 package co.cask.cdap.logging.run;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.AbstractInMemoryReactorServiceManager;
+import co.cask.cdap.common.twill.AbstractInMemoryMasterServiceManager;
 
 /**
  * InMemory LogSaver Service Management class.
  */
-public class InMemoryLogSaverServiceManager extends AbstractInMemoryReactorServiceManager {
+public class InMemoryLogSaverServiceManager extends AbstractInMemoryMasterServiceManager {
 
   @Override
   public boolean isLogAvailable() {

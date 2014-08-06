@@ -17,7 +17,7 @@
 package co.cask.cdap.reactor.client;
 
 import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.client.config.ReactorClientConfig;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.reactor.client.app.FakeApp;
@@ -45,7 +45,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    appClient = new ApplicationClient(new ReactorClientConfig("localhost"));
+    appClient = new ApplicationClient(new ClientConfig("localhost"));
   }
 
   @Test

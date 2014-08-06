@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.dataset.api.DataSetManager;
+import co.cask.cdap.data2.transaction.EntityAdmin;
 
 import java.io.IOException;
 import java.util.Map;
@@ -25,7 +25,7 @@ import java.util.Map;
 /**
  *
  */
-public interface StreamAdmin extends DataSetManager {
+public interface StreamAdmin extends EntityAdmin {
 
   /**
    * Deletes all entries for all queues.

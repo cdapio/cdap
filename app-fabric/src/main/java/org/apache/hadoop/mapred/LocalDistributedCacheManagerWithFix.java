@@ -244,10 +244,10 @@ class LocalDistributedCacheManagerWithFix {
    * Creates a class loader that includes the designated
    * files and archives.
    *
-   * Continnuuity fix : for each localClasspaths, if it is JAR file, uses the JarClassLoader instead
+   * Continnuuity fix : for each localClasspaths, if it is JAR file, uses the ProgramClassLoader instead
    * so that it won't keep the file stream opened, but rather having all classes bytes loaded in memmory.
    * If the class path is a directory, it will use URLClassLoader. The final ClassLoader is a CombineClassLoader
-   * that load classes from all the JarClassLoader and the URLClassLoader as described above.
+   * that load classes from all the ProgramClassLoader and the URLClassLoader as described above.
    */
   public ClassLoader makeClassLoader(final ClassLoader parent)
     throws MalformedURLException {

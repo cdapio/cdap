@@ -18,7 +18,7 @@ package co.cask.cdap.reactor.client;
 
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.QueryClient;
-import co.cask.cdap.client.config.ReactorClientConfig;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
@@ -47,7 +47,7 @@ public class QueryClientTestRun extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    ReactorClientConfig config = new ReactorClientConfig("localhost");
+    ClientConfig config = new ClientConfig("localhost");
     appClient = new ApplicationClient(config);
     queryClient = new QueryClient(config);
   }

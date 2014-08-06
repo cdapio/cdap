@@ -17,7 +17,7 @@
 package co.cask.cdap.reactor.client;
 
 import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.client.config.ReactorClientConfig;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
@@ -39,7 +39,7 @@ public class StreamClientTestRun extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    ReactorClientConfig config = new ReactorClientConfig("localhost");
+    ClientConfig config = new ClientConfig("localhost");
     streamClient = new StreamClient(config);
   }
 
