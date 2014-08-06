@@ -1,4 +1,5 @@
-# This is an example config file. Modify and place in ~/.rst2pdf/config
+# This is the rst2pdf config file. Modify and place in /_templates/ 
+# and pass to rst2pdf by including it in the .rst file as a comment
 
 [general]
 # author="Cask, Inc."
