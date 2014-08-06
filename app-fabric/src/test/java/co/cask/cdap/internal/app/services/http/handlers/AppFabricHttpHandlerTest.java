@@ -305,6 +305,10 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
     waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
 
+    // Get instances for a non-existent flowlet
+    HttpResponse response = doGet("/v2/apps/WordCountApp/flows/WordCountFlow/flowlets/XXXX/instances");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
     //Get Flowlet Instances
     Assert.assertEquals(1, getFlowletInstances("WordCountApp", "WordCountFlow", "StreamSource"));
 
