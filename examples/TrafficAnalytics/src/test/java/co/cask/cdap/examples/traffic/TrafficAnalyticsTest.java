@@ -20,10 +20,10 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ProcedureClient;
 import co.cask.cdap.test.ProcedureManager;
-import co.cask.cdap.test.ReactorTestBase;
 import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.TestBase;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *  Test TrafficAnalyticsApp
  */
-public class TrafficAnalyticsTest extends ReactorTestBase {
+public class TrafficAnalyticsTest extends TestBase {
   private static final Gson GSON = new Gson();
   private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss");
   private static final long NOW = System.currentTimeMillis();

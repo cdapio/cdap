@@ -20,7 +20,7 @@ package co.cask.cdap.common.twill;
  * Interface that defines a set of methods that will be used for management of Reactor Services.
  * Each individual service must provide an implementation.
  */
-public interface ReactorServiceManager {
+public interface MasterServiceManager {
 
   /**
    * @return true if the configured to be available, false otherwise.

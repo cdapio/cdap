@@ -27,7 +27,7 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.twill.AbstractReactorTwillRunnable;
+import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.gateway.auth.AuthModule;
@@ -52,7 +52,7 @@ import java.util.List;
 /**
  * TwillRunnable to run Metrics Service through twill.
  */
-public class MetricsTwillRunnable extends AbstractReactorTwillRunnable {
+public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsTwillRunnable.class);
 
   private MetricsQueryService metricsQueryService;

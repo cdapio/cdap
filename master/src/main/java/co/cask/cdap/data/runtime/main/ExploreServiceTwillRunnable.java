@@ -26,7 +26,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.common.twill.AbstractReactorTwillRunnable;
+import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
@@ -51,7 +51,7 @@ import java.util.List;
  * Service for the Explore module that runs user queries in a Twill runnable.
  * It launches a discoverable HTTP servers, that execute SQL statements.
  */
-public class ExploreServiceTwillRunnable extends AbstractReactorTwillRunnable {
+public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreServiceTwillRunnable.class);
 
   private Injector injector;

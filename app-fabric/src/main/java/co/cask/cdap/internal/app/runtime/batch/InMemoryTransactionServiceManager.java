@@ -17,14 +17,14 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.AbstractInMemoryReactorServiceManager;
+import co.cask.cdap.common.twill.AbstractInMemoryMasterServiceManager;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.google.inject.Inject;
 
 /**
  *
  */
-public class InMemoryTransactionServiceManager extends AbstractInMemoryReactorServiceManager {
+public class InMemoryTransactionServiceManager extends AbstractInMemoryMasterServiceManager {
   private TransactionSystemClient txClient;
 
   @Override

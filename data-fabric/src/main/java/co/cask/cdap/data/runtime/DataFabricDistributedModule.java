@@ -21,6 +21,7 @@ import co.cask.cdap.data.stream.DistributedStreamCoordinator;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data2.queue.QueueClientFactory;
+import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueClientFactory;
@@ -36,10 +37,12 @@ import com.continuuity.tephra.TxConstants;
 import com.continuuity.tephra.distributed.PooledClientProvider;
 import com.continuuity.tephra.distributed.ThreadLocalClientProvider;
 import com.continuuity.tephra.distributed.ThriftClientProvider;
+import com.continuuity.tephra.metrics.TxMetricsCollector;
 import com.continuuity.tephra.runtime.TransactionModules;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -73,6 +76,7 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
 
     // bind transactions
+    bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
     install(new TransactionModules().getDistributedModules());
 
   }

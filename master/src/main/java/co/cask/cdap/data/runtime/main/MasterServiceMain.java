@@ -89,17 +89,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Driver class for starting all reactor master services.
+ * Driver class for starting all master services.
  * AppFabricHttpService
  * TwillRunnables: MetricsProcessor, MetricsHttp, LogSaver, TransactionService, StreamHandler.
  */
-public class ReactorServiceMain extends DaemonMain {
-  private static final Logger LOG = LoggerFactory.getLogger(ReactorServiceMain.class);
+public class MasterServiceMain extends DaemonMain {
+  private static final Logger LOG = LoggerFactory.getLogger(MasterServiceMain.class);
 
   private static final long MAX_BACKOFF_TIME_MS = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
   private static final long SUCCESSFUL_RUN_DURATON_MS = TimeUnit.MILLISECONDS.convert(20, TimeUnit.MINUTES);
 
-  public ReactorServiceMain(CConfiguration cConf, Configuration hConf) {
+  public MasterServiceMain(CConfiguration cConf, Configuration hConf) {
     this.cConf = cConf;
     this.hConf = hConf;
   }
@@ -130,8 +130,8 @@ public class ReactorServiceMain extends DaemonMain {
   private boolean isExploreEnabled;
 
   public static void main(final String[] args) throws Exception {
-    LOG.info("Starting {}", ReactorServiceMain.class.getSimpleName());
-    new ReactorServiceMain(CConfiguration.create(), HBaseConfiguration.create()).doMain(args);
+    LOG.info("Starting {}", MasterServiceMain.class.getSimpleName());
+    new MasterServiceMain(CConfiguration.create(), HBaseConfiguration.create()).doMain(args);
   }
 
   @Override
@@ -342,7 +342,7 @@ public class ReactorServiceMain extends DaemonMain {
 
   private TwillApplication createTwillApplication(final Map<String, Integer> instanceCountMap) {
     try {
-      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf(), isExploreEnabled, instanceCountMap);
+      return new MasterTwillApplication(cConf, getSavedCConf(), getSavedHConf(), isExploreEnabled, instanceCountMap);
     } catch (Exception e) {
       throw  Throwables.propagate(e);
     }

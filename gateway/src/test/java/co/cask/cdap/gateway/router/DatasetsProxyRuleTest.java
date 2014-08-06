@@ -34,11 +34,11 @@ public class DatasetsProxyRuleTest {
 
   @Test
   public void testApplyingProxyRules() {
-    assertChange("/v2/data/explore/datasets/continuuity.user.myTable/schema",
+    assertChange("/v2/data/explore/datasets/cdap.user.myTable/schema",
                  "/v2/data/explore/datasets/myTable/schema");
-    assertChange("/v2/data/datasets/continuuity.user.myTable", "/v2/data/datasets/myTable");
-    assertChange("/v2/data/datasets/continuuity.user.myTable/admin", "/v2/data/datasets/myTable/admin");
-    assertChange("/v2/data/datasets/continuuity.user.myTable/admin/truncate",
+    assertChange("/v2/data/datasets/cdap.user.myTable", "/v2/data/datasets/myTable");
+    assertChange("/v2/data/datasets/cdap.user.myTable/admin", "/v2/data/datasets/myTable/admin");
+    assertChange("/v2/data/datasets/cdap.user.myTable/admin/truncate",
                  "/v2/data/datasets/myTable/admin/truncate");
     assertSame("/v2/data/types/myType");
     assertSame("/v2/metrics");
