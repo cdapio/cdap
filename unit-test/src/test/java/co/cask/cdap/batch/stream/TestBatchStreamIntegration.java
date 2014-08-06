@@ -18,8 +18,8 @@ package co.cask.cdap.batch.stream;
 
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.ReactorTestBase;
 import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 @Category(XSlowTests.class)
-public class TestBatchStreamIntegration extends ReactorTestBase {
+public class TestBatchStreamIntegration extends TestBase {
   @Test
   public void testStreamBatch() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestBatchStreamIntegrationApp.class);

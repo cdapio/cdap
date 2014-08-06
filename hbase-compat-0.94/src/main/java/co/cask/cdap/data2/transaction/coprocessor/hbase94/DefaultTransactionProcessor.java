@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.transaction.coprocessor.hbase94;
 
 import co.cask.cdap.data2.increment.hbase94.IncrementFilter;
-import co.cask.cdap.data2.transaction.coprocessor.ReactorTransactionStateCacheSupplier;
+import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.coprocessor.TransactionStateCache;
 import com.continuuity.tephra.hbase94.coprocessor.TransactionProcessor;
@@ -28,10 +28,10 @@ import org.apache.hadoop.hbase.filter.Filter;
 
 /**
  * Implementation of the {@link com.continuuity.tephra.hbase94.coprocessor.TransactionProcessor}
- * coprocessor that uses {@link co.cask.cdap.data2.transaction.coprocessor.ReactorTransactionStateCache}
+ * coprocessor that uses {@link co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCache}
  * to automatically refresh transaction state.
  */
-public class ReactorTransactionDataJanitor extends TransactionProcessor {
+public class DefaultTransactionProcessor extends TransactionProcessor {
 
   @Override
   protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(RegionCoprocessorEnvironment env) {
@@ -41,7 +41,7 @@ public class ReactorTransactionDataJanitor extends TransactionProcessor {
     if (parts.length > 0) {
       tableNamespace = parts[0];
     }
-    return new ReactorTransactionStateCacheSupplier(tableNamespace, env.getConfiguration());
+    return new DefaultTransactionStateCacheSupplier(tableNamespace, env.getConfiguration());
   }
 
   @Override

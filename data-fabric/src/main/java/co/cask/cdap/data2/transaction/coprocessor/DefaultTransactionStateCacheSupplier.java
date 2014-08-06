@@ -22,13 +22,13 @@ import org.apache.hadoop.conf.Configuration;
 
 /**
  * Provides a single shared instance of
- * {@link co.cask.cdap.data2.transaction.coprocessor.ReactorTransactionStateCache} for use by transaction
+ * {@link DefaultTransactionStateCache} for use by transaction
  * coprocessors.
  */
-public class ReactorTransactionStateCacheSupplier extends TransactionStateCacheSupplier {
+public class DefaultTransactionStateCacheSupplier extends TransactionStateCacheSupplier {
   private final String namespace;
 
-  public ReactorTransactionStateCacheSupplier(String namespace, Configuration conf) {
+  public DefaultTransactionStateCacheSupplier(String namespace, Configuration conf) {
     super(conf);
     this.namespace = namespace;
   }
@@ -42,7 +42,7 @@ public class ReactorTransactionStateCacheSupplier extends TransactionStateCacheS
     if (instance == null) {
       synchronized (lock) {
         if (instance == null) {
-          instance = new ReactorTransactionStateCache(namespace);
+          instance = new DefaultTransactionStateCache(namespace);
           instance.setConf(conf);
           instance.startAndWait();
         }

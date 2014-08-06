@@ -17,11 +17,11 @@
 package co.cask.cdap.flow.stream;
 
 import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.ReactorTestBase;
 import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.TestBase;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 @Category(SlowTests.class)
-public class TestFlowStreamIntegration extends ReactorTestBase {
+public class TestFlowStreamIntegration extends TestBase {
   @Test
   public void testStreamBatch() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestFlowStreamIntegrationApp.class);

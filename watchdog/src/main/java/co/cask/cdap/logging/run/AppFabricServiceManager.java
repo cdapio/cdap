@@ -17,12 +17,12 @@
 package co.cask.cdap.logging.run;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.AbstractInMemoryReactorServiceManager;
+import co.cask.cdap.common.twill.AbstractInMemoryMasterServiceManager;
 
 /**
  * Service for managing app fabric service.
  */
-public class AppFabricServiceManager extends AbstractInMemoryReactorServiceManager {
+public class AppFabricServiceManager extends AbstractInMemoryMasterServiceManager {
 
   @Override
   public String getDescription() {

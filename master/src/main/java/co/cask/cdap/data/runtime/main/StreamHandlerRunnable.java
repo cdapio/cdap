@@ -26,7 +26,7 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.twill.AbstractReactorTwillRunnable;
+import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.service.StreamHttpService;
@@ -49,7 +49,7 @@ import java.util.List;
 /**
  * Twill runnable for running stream http service.
  */
-public class StreamHandlerRunnable extends AbstractReactorTwillRunnable {
+public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
 
   private Injector injector;
 
