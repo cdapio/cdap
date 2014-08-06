@@ -73,7 +73,7 @@ own Big Data application. To generate a new project, execute the
 following command::
 
   $ mvn archetype:generate \
-    -DarchetypeCatalog=https://repository.cask.com/content/groups/releases/archetype-catalog.xml \
+    -DarchetypeCatalog=https://repository.cask.co/content/groups/releases/archetype-catalog.xml \
     -DarchetypeGroupId=co.cask.cdap \
     -DarchetypeArtifactId=cdap-app-archetype \
     -DarchetypeVersion=2.4.0

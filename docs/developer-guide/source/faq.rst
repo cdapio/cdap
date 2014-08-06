@@ -7,7 +7,7 @@ CDAP FAQ
    :class: faq
    :backlinks: none
 
-.. _support: https://cask.uservoice.com/clients/widgets/classic_widget?mode=support&link_color=162e52&primary_color=42afcf&embed_type=lightbox&trigger_method=custom_trigger&contact_enabled=true&feedback_enabled=false&smartvote=true&referrer=http%3A%2F%2Fwww.cask.com%2Fdevelopers#faq
+.. _support: https://cask.uservoice.com/clients/widgets/classic_widget?mode=support&link_color=162e52&primary_color=42afcf&embed_type=lightbox&trigger_method=custom_trigger&contact_enabled=true&feedback_enabled=false&smartvote=true&referrer=http%3A%2F%2Fwww.cask.co%2Fdevelopers#faq
 
 
 Cask Data Application Platform

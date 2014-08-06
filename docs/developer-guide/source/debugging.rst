@@ -304,7 +304,7 @@ Debugging with IntelliJ
 
    .. image:: _images/IntelliJ_3.png
 
-#. Start the Flow in the Dashboard.
+#. Start the Flow in the Console.
 #. Send an event to the Stream. The control will stop at the breakpoint
    and you can proceed with debugging.
 
@@ -326,7 +326,7 @@ Debugging with Eclipse
 
    .. image:: _images/Eclipse_2.png
 
-#. Start the Flow in the Dashboard.
+#. Start the Flow in the Console.
 #. Send an event to the Stream.
 #. The control stops at the breakpoint and you can proceed with debugging.
 

@@ -180,7 +180,7 @@ These services and features include:
 - **Metrics, Logging and Monitoring:** system and user-defined metrics, along with standard
   SLF4J logs, a testing framework and the ability to attach a remote debugger;
 
-- **Management Dashboard:** available for deploying, querying and managing the Server;
+- **Management Console:** available for deploying, querying and managing the Server;
 
 - **Different Runtimes:** single-node (useful for learning, prototyping and testing),
   hosted in the Cloud, and Distributed versions;
