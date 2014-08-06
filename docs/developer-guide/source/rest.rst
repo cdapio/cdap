@@ -623,11 +623,7 @@ Example
    * - HTTP Request
      - ``PUT <base-url>/data/datasets/mydataset/properties``
    * - Body
-<<<<<<< HEAD
-     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"ttl":"7200000"},"update":"true"}``
-=======
-     - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"7200000"}}``
->>>>>>> develop
+     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"ttl":"7200000"}}``
    * - Description
      - For the "mydataset" of type "Table", updates the Dataset and its time-to-live property to 2 hours
 
