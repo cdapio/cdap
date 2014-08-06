@@ -19,10 +19,10 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ProcedureClient;
 import co.cask.cdap.test.ProcedureManager;
-import co.cask.cdap.test.ReactorTestBase;
 import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.TestBase;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *  Test PageViewAnalyticsApp
  */
-public class PageViewAnalyticsTest extends ReactorTestBase {
+public class PageViewAnalyticsTest extends TestBase {
   private static final Gson GSON = new Gson();
   private static final double OFF = 0.000001;
 

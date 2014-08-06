@@ -28,12 +28,12 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ProcedureClient;
 import co.cask.cdap.test.ProcedureManager;
-import co.cask.cdap.test.ReactorTestBase;
 import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
@@ -68,7 +68,7 @@ import java.util.concurrent.TimeoutException;
  *
  */
 @Category(SlowTests.class)
-public class TestFrameworkTest extends ReactorTestBase {
+public class TestFrameworkTest extends TestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTest.class);
 
   @After
@@ -511,10 +511,10 @@ public class TestFrameworkTest extends ReactorTestBase {
       // list the tables and make sure the table is there
       ResultSet results = connection.prepareStatement("show tables").executeQuery();
       Assert.assertTrue(results.next());
-      Assert.assertTrue("continuuity_user_mytable".equalsIgnoreCase(results.getString(1)));
+      Assert.assertTrue("cdap_user_mytable".equalsIgnoreCase(results.getString(1)));
 
       // run a query over the dataset
-      results = connection.prepareStatement("select first from continuuity_user_mytable where second = '1'")
+      results = connection.prepareStatement("select first from cdap_user_mytable where second = '1'")
           .executeQuery();
       Assert.assertTrue(results.next());
       Assert.assertEquals("a", results.getString(1));

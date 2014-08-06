@@ -129,11 +129,12 @@ public class ExploreDriverTest {
       connectionParams.getExtraInfos());
 
     // Test that we don't decode URL more than once
-    connectionParams = driver.parseConnectionUrl(baseUrl +
-                                                   "?reactor.auth.token=AgxqdWxpZW4AyIOOuPRRyJPy%2BPhR4o%2B35wlAA3");
+    connectionParams = driver.parseConnectionUrl(baseUrl + "?" +
+                                                 ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN.getName() +
+                                                 "=AgxqdWxpZW4AyIOOuPRRyJPy%2BPhR4o%2B35wl%3DAA3");
     Assert.assertEquals(
       ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN,
-                           "AgxqdWxpZW4AyIOOuPRRyJPy+PhR4o+35wlAA3"),
+                           "AgxqdWxpZW4AyIOOuPRRyJPy+PhR4o+35wl=AA3"),
       connectionParams.getExtraInfos());
  }
 

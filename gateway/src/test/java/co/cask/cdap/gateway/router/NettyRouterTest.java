@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.utils.Networks;
@@ -423,7 +424,8 @@ public class NettyRouterTest {
     @Override
     protected void before() throws Throwable {
       CConfiguration cConf = CConfiguration.create();
-      Injector injector = Guice.createInjector(new IOModule(), new SecurityModules().getInMemoryModules(),
+      Injector injector = Guice.createInjector(new ConfigModule(), new IOModule(),
+                                               new SecurityModules().getInMemoryModules(),
                                                new DiscoveryRuntimeModule().getInMemoryModules());
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);

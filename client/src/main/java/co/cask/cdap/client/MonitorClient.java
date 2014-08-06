@@ -29,7 +29,6 @@ import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.SystemServiceMeta;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;

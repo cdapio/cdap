@@ -29,7 +29,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -54,7 +53,7 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
                                 HBaseTableUtil tableUtil,
                                 CConfiguration conf,
                                 LocationFactory locationFactory) throws IOException {
-    super(spec.getName(), new HBaseAdmin(hConf), tableUtil);
+    super(spec.getName(), hConf, tableUtil);
     this.spec = spec;
     this.conf = conf;
     this.locationFactory = locationFactory;
@@ -93,7 +92,7 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
       splits = GSON.fromJson(splitsProperty, byte[][].class);
     }
 
-    tableUtil.createTableIfNotExists(admin, name, tableDescriptor, splits);
+    tableUtil.createTableIfNotExists(getAdmin(), name, tableDescriptor, splits);
   }
 
   @Override

@@ -28,12 +28,13 @@ import java.net.URL;
  */
 public class ClientConfig {
 
-  private String protocol = "http";
-  private String version = "v2";
+  private static final String DEFAULT_PROTOCOL = "http";
+  private static final String VERSION = "v2";
 
   private final HttpRequestConfig defaultConfig;
   private final HttpRequestConfig uploadConfig;
 
+  private String protocol;
   private URI baseURI;
   private int port;
 
@@ -49,6 +50,7 @@ public class ClientConfig {
     this.defaultConfig = defaultConfig;
     this.uploadConfig = uploadConfig;
     this.port = port;
+    this.protocol = DEFAULT_PROTOCOL;
     this.baseURI = new URI(protocol + "://" + hostname + ":" + port);
   }
 
@@ -77,7 +79,7 @@ public class ClientConfig {
    * @throws MalformedURLException
    */
   public URL resolveURL(String path) throws MalformedURLException {
-    return baseURI.resolve("/" + version + "/" + path).toURL();
+    return baseURI.resolve("/" + VERSION + "/" + path).toURL();
   }
 
   /**

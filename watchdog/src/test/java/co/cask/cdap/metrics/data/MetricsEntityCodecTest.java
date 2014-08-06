@@ -17,7 +17,7 @@
 package co.cask.cdap.metrics.data;
 
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.dataset.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableService;
 import org.junit.Assert;

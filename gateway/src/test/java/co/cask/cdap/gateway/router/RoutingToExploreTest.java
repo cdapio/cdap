@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.utils.Networks;
@@ -59,8 +60,9 @@ public class RoutingToExploreTest {
 
   @BeforeClass
   public static void before() throws Exception {
-    Injector injector = Guice.createInjector(new IOModule(), new SecurityModules().getInMemoryModules(),
-        new DiscoveryRuntimeModule().getInMemoryModules());
+    Injector injector = Guice.createInjector(new ConfigModule(), new IOModule(),
+                                             new SecurityModules().getInMemoryModules(),
+                                             new DiscoveryRuntimeModule().getInMemoryModules());
 
     // Starting router
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -105,7 +107,7 @@ public class RoutingToExploreTest {
 
   @Test
   public void testExploreExecutorHandlerRequests() throws Exception {
-    Assert.assertEquals("schema:continuuity.user.foobar", doRequest("/data/explore/datasets/foobar/schema", "GET"));
+    Assert.assertEquals("schema:cdap.user.foobar", doRequest("/data/explore/datasets/foobar/schema", "GET"));
   }
 
   @Test

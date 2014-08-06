@@ -22,13 +22,11 @@ import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.data2.OperationResult;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
@@ -1364,20 +1362,6 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
 
     // drop table
     admin.drop();
-  }
-
-  // todo: verify changing different cols of one row causes conflict
-  // todo: check race: table committed, but txClient doesn't know yet (visibility, conflict detection)
-  // todo: test overwrite + delete, that delete doesn't cause getting from persisted again
-
-  void verify(byte[][] expected, OperationResult<Map<byte[], byte[]>> actual) {
-    Preconditions.checkArgument(expected.length % 2 == 0, "expected [key,val] pairs in first param");
-    if (expected.length == 0) {
-      Assert.assertTrue(actual.isEmpty());
-      return;
-    }
-    Assert.assertFalse("result is empty, but expected " + expected.length / 2 + " columns", actual.isEmpty());
-    verify(expected, actual.getValue());
   }
 
   void verify(byte[][] expected, Map<byte[], byte[]> rowMap) {

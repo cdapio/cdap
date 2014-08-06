@@ -259,7 +259,8 @@ public abstract class HBaseTableUtil {
         public boolean accept(String className, final URL classUrl, URL classPathUrl) {
           // Assuming the endpoint and protocol class doesn't have dependencies
           // other than those comes with HBase and Java.
-          if (className.startsWith("co.cask.cdap")) {
+          // TODO: Move Tephra to Cask (ENG-4164)
+          if (className.startsWith("co.cask.cdap") || className.startsWith("com.continuuity")) {
             if (!dependentClasses.containsKey(className)) {
               dependentClasses.put(className, classUrl);
             }
