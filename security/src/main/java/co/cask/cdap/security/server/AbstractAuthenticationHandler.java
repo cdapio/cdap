@@ -18,6 +18,7 @@ package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.logging.AuditLogEntry;
 import com.google.inject.Inject;
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.ConstraintMapping;
@@ -30,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -80,13 +82,16 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
   }
 
   @Override
-  public void handle(String pathInContext, Request baseRequest, HttpServletRequest request,
+  public final void handle(String pathInContext, Request baseRequest, HttpServletRequest request,
                      HttpServletResponse response) throws IOException, ServletException {
     try {
       super.handle(pathInContext, baseRequest, request, response);
     } finally {
-      AuthenticationLogEntry logEntry = new AuthenticationLogEntry(
-        request.getAuthType(), request.getRemoteUser(), request.getRemoteAddr(), response);
+      AuditLogEntry logEntry = new AuditLogEntry();
+      logEntry.setUserName(request.getRemoteUser());
+      logEntry.setClientIP(InetAddress.getByName(request.getRemoteAddr()));
+      logEntry.setResponseCode(response.getStatus());
+      logEntry.setResponseContentLength((long) response.getBufferSize());
       AUTHENTICATION_AUDIT_LOG.trace(logEntry.toString());
     }
   }
@@ -114,38 +119,4 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
    * @return
    */
   protected abstract Configuration getLoginModuleConfiguration();
-
-  private final class AuthenticationLogEntry {
-
-    /** Each audit log field will default to "-" if the field is missing or not supported. */
-    private static final String DEFAULT_VALUE = "-";
-
-    private final String authType;
-    private final String userName;
-    private final boolean success;
-    private final Date date;
-    private final String remoteAddr;
-
-    public AuthenticationLogEntry(String authType, String userName, String remoteAddr, HttpServletResponse response) {
-      this.authType = authType;
-      this.userName = userName;
-      this.remoteAddr = remoteAddr;
-      this.success = response.getStatus() == HttpServletResponse.SC_OK;
-      this.date = new Date();
-    }
-
-    @Override
-    public String toString() {
-      return String.format("%s %s [%s] %s %b",
-                           fieldOrDefault(remoteAddr),
-                           fieldOrDefault(userName),
-                           dateFormat.format(date),
-                           fieldOrDefault(authType),
-                           success);
-    }
-
-    private String fieldOrDefault(Object field) {
-      return field == null ? DEFAULT_VALUE : field.toString();
-    }
-  }
 }

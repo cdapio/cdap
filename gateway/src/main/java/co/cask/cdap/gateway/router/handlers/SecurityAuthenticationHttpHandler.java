@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.router.handlers;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.logging.AuditLogEntry;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.auth.TokenState;
 import co.cask.cdap.security.auth.TokenValidator;
@@ -50,11 +51,7 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -71,7 +68,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
   private final Iterable<Discoverable> discoverables;
   private final CConfiguration configuration;
   private final String realm;
-  private final DateFormat dateFormat = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z");
 
 
   public SecurityAuthenticationHttpHandler(String realm, TokenValidator tokenValidator,
@@ -112,13 +108,13 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       }
     }
 
-    logEntry.clientIP = ((InetSocketAddress) ctx.getChannel().getRemoteAddress()).getAddress();
-    logEntry.requestLine = msg.getMethod() + " " + msg.getUri() + " " + msg.getProtocolVersion();
+    logEntry.setClientIP(((InetSocketAddress) ctx.getChannel().getRemoteAddress()).getAddress());
+    logEntry.setRequestLine(msg.getMethod() + " " + msg.getUri() + " " + msg.getProtocolVersion());
 
     TokenState tokenState = tokenValidator.validate(accessToken);
     if (!tokenState.isValid()) {
       HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
-      logEntry.responseCode = HttpResponseStatus.UNAUTHORIZED.getCode();
+      logEntry.setResponseCode(HttpResponseStatus.UNAUTHORIZED.getCode());
 
       JsonObject jsonObject = new JsonObject();
       if (tokenState == TokenState.MISSING) {
@@ -146,7 +142,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       int contentLength = content.readableBytes();
       httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, contentLength);
       httpResponse.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/json;charset=UTF-8");
-      logEntry.responseContentLength = new Long(contentLength);
+      logEntry.setResponseContentLength(new Long(contentLength));
       ChannelFuture writeFuture = Channels.future(inboundChannel);
       Channels.write(ctx, writeFuture, httpResponse);
       writeFuture.addListener(ChannelFutureListener.CLOSE);
@@ -154,7 +150,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     } else {
       AccessTokenTransformer.AccessTokenIdentifierPair accessTokenIdentifierPair =
         accessTokenTransformer.transform(accessToken);
-      logEntry.userName = accessTokenIdentifierPair.getAccessTokenIdentifierObj().getUsername();
+      logEntry.setUserName(accessTokenIdentifierPair.getAccessTokenIdentifierObj().getUsername());
       msg.setHeader(HttpHeaders.Names.AUTHORIZATION,
                     "Reactor-verified " + accessTokenIdentifierPair.getAccessTokenIdentifierStr());
       return true;
@@ -218,11 +214,11 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     Object message = e.getMessage();
     if (message instanceof HttpResponse) {
       HttpResponse response = (HttpResponse) message;
-      logEntry.responseCode = response.getStatus().getCode();
+      logEntry.setResponseCode(response.getStatus().getCode());
       if (response.containsHeader(HttpHeaders.Names.CONTENT_LENGTH)) {
         String lengthString = response.getHeader(HttpHeaders.Names.CONTENT_LENGTH);
         try {
-          logEntry.responseContentLength = Long.valueOf(lengthString);
+          logEntry.setResponseContentLength(Long.valueOf(lengthString));
         } catch (NumberFormatException nfe) {
           LOG.warn("Invalid value for content length in HTTP response message: {}", lengthString, nfe);
         }
@@ -230,13 +226,13 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     } else if (message instanceof ChannelBuffer) {
       // for chunked responses the response code will only be present on the first chunk
       // so we only look for it the first time around
-      if (logEntry.responseCode == null) {
+      if (logEntry.getResponseCode() == null) {
         ChannelBuffer channelBuffer = (ChannelBuffer) message;
-        logEntry.responseCode = findResponseCode(channelBuffer);
-        if (logEntry.responseCode != null) {
+        logEntry.setResponseCode(findResponseCode(channelBuffer));
+        if (logEntry.getResponseCode() != null) {
           // we currently only look for a Content-Length header in the first buffer on an HTTP response
           // this is a limitation of the implementation that simplifies header parsing
-          logEntry.responseContentLength = findContentLength(channelBuffer);
+          logEntry.setResponseContentLength(findContentLength(channelBuffer));
         }
       }
     } else {
@@ -248,9 +244,9 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
   @Override
   public void writeComplete(ChannelHandlerContext ctx, WriteCompletionEvent e) throws Exception {
     AuditLogEntry logEntry = getLogEntry(ctx);
-    if (!logEntry.logged) {
+    if (!logEntry.isLogged()) {
       AUDIT_LOG.trace(logEntry.toString());
-      logEntry.logged = true;
+      logEntry.setLogged(true);
     }
   }
 
@@ -302,39 +298,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       ctx.setAttachment(logEntry);
     }
     return logEntry;
-  }
-
-  private final class AuditLogEntry {
-    /** Each audit log field will default to "-" if the field is missing or not supported. */
-    private static final String DEFAULT_VALUE = "-";
-
-    /** Indicates whether this entry has already been logged. */
-    private boolean logged;
-
-    private InetAddress clientIP;
-    private String userName;
-    private Date date;
-    private String requestLine;
-    private Integer responseCode;
-    private Long responseContentLength;
-
-    public AuditLogEntry() {
-      this.date = new Date();
-    }
-
-    public String toString() {
-      return String.format("%s %s [%s] \"%s\" %s %s",
-                           clientIP != null ? clientIP.getHostAddress() : DEFAULT_VALUE,
-                           fieldOrDefault(userName),
-                           dateFormat.format(date),
-                           fieldOrDefault(requestLine),
-                           fieldOrDefault(responseCode),
-                           fieldOrDefault(responseContentLength));
-    }
-
-    private String fieldOrDefault(Object field) {
-      return field == null ? DEFAULT_VALUE : field.toString();
-    }
   }
 
   private static final ChannelBufferIndexFinder CONTENT_LENGTH_FINDER = new ChannelBufferIndexFinder() {
