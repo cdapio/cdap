@@ -272,7 +272,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       StreamConfig config = streamAdmin.getConfig(stream);
       try {
         config = getConfigUpdate(request, config);
-        if(config.getTTL() < 0) {
+        if (config.getTTL() < 0) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, "TTL value should be positive");
           return;
         }
