@@ -1,7 +1,7 @@
 From 01913729221a0f2b00ba855fc8b9ecac83d23250 Mon Sep 17 00:00:00 2001
 From: Julien Guery <julien@continuuity.com>
 Date: Thu, 5 Jun 2014 18:34:06 -0700
-Subject: [PATCH 1/3] Fix some operations in local mode
+Subject: [PATCH 1/5] Fix some operations in local mode
 
 ---
  ql/pom.xml                                         | 40 +++++++++++++++-------
@@ -181,7 +181,7 @@ index 55ce0fc..3e2d77f 100644
 From 849af86be72c31e1ef79bd6eff71e69ecf8842ea Mon Sep 17 00:00:00 2001
 From: Julien Guery <julien@continuuity.com>
 Date: Fri, 6 Jun 2014 15:29:32 -0700
-Subject: [PATCH 2/3] Modify version number
+Subject: [PATCH 2/5] Modify version number
 
 ---
  ql/pom.xml | 7 ++++++-
@@ -196,7 +196,7 @@ index c86377f..a55de0b 100644
    <groupId>com.continuuity</groupId>
    <artifactId>hive-exec</artifactId>
 -  <version>0.13.0-SNAPSHOT</version>
-+  <version>0.13.0-continuuity-2.3.0</version>
++  <version>0.13.0-continuuity-2.3.0-SNAPSHOT</version>
    <packaging>jar</packaging>
    <name>Hive Query Language</name>
  
@@ -219,7 +219,7 @@ index c86377f..a55de0b 100644
 From bdd525d90f917554d4ecae641490f4452aa63bae Mon Sep 17 00:00:00 2001
 From: Julien Guery <julien@continuuity.com>
 Date: Wed, 16 Jul 2014 13:50:24 -0700
-Subject: [PATCH 3/3] Reactor 2.4.0 snapshot version
+Subject: [PATCH 3/5] Reactor 2.4.0 snapshot version
 
 ---
  ql/pom.xml | 8 ++++----
@@ -251,6 +251,66 @@ index a55de0b..271a84e 100644
      </repository>
      <snapshotRepository>
        <id>snapshots</id>
+-- 
+1.8.5.2 (Apple Git-48)
+
+
+From fdd05d62c76762cc8d63e67506010091f9fee713 Mon Sep 17 00:00:00 2001
+From: Julien Guery <julien@continuuity.com>
+Date: Tue, 5 Aug 2014 02:33:32 -0700
+Subject: [PATCH 4/5] cdap group id
+
+---
+ ql/pom.xml | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/ql/pom.xml b/ql/pom.xml
+index 271a84e..b9039e3 100644
+--- a/ql/pom.xml
++++ b/ql/pom.xml
+@@ -23,9 +23,9 @@
+     <relativePath>../pom.xml</relativePath>
+   </parent>
+ 
+-  <groupId>com.continuuity</groupId>
++  <groupId>co.cask.cdap</groupId>
+   <artifactId>hive-exec</artifactId>
+-  <version>0.13.0-continuuity-2.4.0-SNAPSHOT</version>
++  <version>0.13.0</version>
+   <packaging>jar</packaging>
+   <name>Hive Query Language</name>
+ 
+-- 
+1.8.5.2 (Apple Git-48)
+
+
+From af0702147a6c3da015503baca772bb97cb09d81f Mon Sep 17 00:00:00 2001
+From: Julien Guery <julien@continuuity.com>
+Date: Tue, 5 Aug 2014 17:38:08 -0700
+Subject: [PATCH 5/5] Deploy hive-exec to public repo
+
+---
+ ql/pom.xml | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/ql/pom.xml b/ql/pom.xml
+index b9039e3..8bde744 100644
+--- a/ql/pom.xml
++++ b/ql/pom.xml
+@@ -576,12 +576,10 @@
+   <distributionManagement>
+     <repository>
+       <id>nexus</id>
+-      <name>continuuity-internal</name>
+-      <url>https://repository.continuuity.com/service/local/staging/deploy/maven2</url>
++      <url>https://repository.continuuity.com/content/repositories/releases-public</url>
+     </repository>
+     <snapshotRepository>
+       <id>snapshots</id>
+-      <name>Internal Releases</name>
+       <url>https://repository.continuuity.com/content/repositories/snapshots/</url>
+     </snapshotRepository>
+   </distributionManagement>
 -- 
 1.8.5.2 (Apple Git-48)
 
