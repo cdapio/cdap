@@ -18,26 +18,15 @@ package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.AuditLogEntry;
 import com.google.inject.Inject;
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
-import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.util.security.Constraint;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import javax.security.auth.login.Configuration;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Path;
 
 /**
@@ -46,7 +35,6 @@ import javax.ws.rs.Path;
  */
 @Path("/*")
 public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHandler {
-  private static final Logger AUDIT_LOG = LoggerFactory.getLogger("http-access");
 
   protected final CConfiguration configuration;
 
@@ -77,24 +65,6 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     this.setAuthenticator(getHandlerAuthenticator());
     this.setLoginService(getHandlerLoginService());
     this.doStart();
-  }
-
-  @Override
-  public final void handle(String pathInContext, Request baseRequest, HttpServletRequest request,
-                     HttpServletResponse response) throws IOException, ServletException {
-    try {
-      super.handle(pathInContext, baseRequest, request, response);
-    } finally {
-      AuditLogEntry logEntry = new AuditLogEntry();
-      logEntry.setUserName(request.getRemoteUser());
-      logEntry.setClientIP(InetAddress.getByName(request.getRemoteAddr()));
-      logEntry.setRequestLine(request.getMethod(), request.getRequestURI(), request.getProtocol());
-      logEntry.setResponseCode(response.getStatus());
-      if (response.getHeader("Content-Length") != null) {
-        logEntry.setResponseContentLength(Long.parseLong(response.getHeader("Content-Length")));
-      }
-      AUDIT_LOG.trace(logEntry.toString());
-    }
   }
 
   /**
