@@ -21,4 +21,3 @@ to what version of CDAP you are modifying.
 hive-exec.
 7. Don't forget to create a new patch file and to put it here:
   ``git format-patch release-0.13.0-rc2 --stdout > explore/hive-exec-0.13.0.patch``
-
