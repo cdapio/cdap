@@ -1732,6 +1732,8 @@ Example
           }
          ]
 
+Note that accessing Services directly via their host and port is not advisable as it bypasses, and invalidates, all
+CDAP security.
 .. rst2pdf: PageBreak
 
 Scale
