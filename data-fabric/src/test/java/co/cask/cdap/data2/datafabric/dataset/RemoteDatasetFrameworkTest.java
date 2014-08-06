@@ -23,6 +23,8 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
@@ -33,11 +35,15 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
+import co.cask.cdap.gateway.auth.NoAuthenticator;
+import co.cask.http.HttpHandler;
 import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.twill.common.Services;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
@@ -52,6 +58,8 @@ import java.util.Collections;
  *
  */
 public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
+  private TransactionManager txManager;
+  private DatasetOpExecutorService opExecutorService;
   private DatasetService service;
   private RemoteDatasetFramework framework;
 
@@ -74,13 +82,19 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     // Tx Manager to support working with datasets
     Configuration txConf = HBaseConfiguration.create();
     cConf.copyTxProperties(txConf);
-    TransactionManager txManager = new TransactionManager(txConf);
+    txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
     LocalLocationFactory locationFactory = new LocalLocationFactory();
     framework = new RemoteDatasetFramework(discoveryService, locationFactory, new InMemoryDefinitionRegistryFactory(),
                                              new LocalDatasetTypeClassLoaderFactory());
+
+    ImmutableSet<HttpHandler> handlers =
+      ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(new NoAuthenticator(), framework));
+    opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
+
+    opExecutorService.startAndWait();
 
     MDSDatasetsRegistry mdsDatasetsRegistry =
       new MDSDatasetsRegistry(txSystemClient,
@@ -104,7 +118,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
   @After
   public void after() {
-    service.stopAndWait();
+    Services.chainStop(service, opExecutorService, txManager);
   }
 
   @Override
