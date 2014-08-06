@@ -40,7 +40,7 @@ import java.lang.annotation.Target;
  * </pre>
  *
  * <p>
- * See the <i><a href="http://cask.co/docs/cdap/current/en/">Cask CDAP Developer Guides</a></i>
+ * See the <i><a href="http://cask.co/docs/cdap/current/en/">Cask DAP Developer Guides</a></i>
  * and the CDAP example applications for more information.
  * </p>
  *

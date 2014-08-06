@@ -15,7 +15,7 @@
  */
 
 /**
- * This package contains internal classes for supporting the Cask CDAP API. 
- * This is not supposed to be used by users of the Cask CDAP API.
+ * This package contains internal classes for supporting the Cask DAP API. 
+ * This is not supposed to be used by users of the Cask DAP API.
  */
 package co.cask.cdap.internal.batch;
