@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -234,6 +235,10 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable throwable) {
+      if (throwable.getCause() != null && throwable.getCause().getCause() instanceof NoSuchElementException) {
+        LOG.error("Could not find app, service or runnable.", throwable.getCause().getMessage());
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find app, service or runnable.");
+      }
       LOG.error("Got exception : ", throwable);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
