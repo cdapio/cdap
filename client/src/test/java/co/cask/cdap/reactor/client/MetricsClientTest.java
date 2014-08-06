@@ -17,7 +17,7 @@
 package co.cask.cdap.reactor.client;
 
 import co.cask.cdap.client.MetricsClient;
-import co.cask.cdap.client.config.ReactorClientConfig;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
 import com.google.gson.JsonObject;
 import org.junit.Assert;
@@ -39,7 +39,7 @@ public class MetricsClientTest extends ClientTestBase {
   public void setUp() throws Throwable {
     super.setUp();
 
-    metricsClient = new MetricsClient(new ReactorClientConfig("localhost"));
+    metricsClient = new MetricsClient(new ClientConfig("localhost"));
   }
 
   @Test

@@ -17,22 +17,21 @@
 package co.cask.cdap.data2.datafabric;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
 
 import javax.annotation.Nullable;
 
 /**
- * Reactor's dataset namespace.
+ * Default dataset namespace, which namespace by configuration setting {@link Constants.Dataset#TABLE_PREFIX}.
  */
-public class ReactorDatasetNamespace implements DatasetNamespace {
-  public static final String DEFAULT_TABLE_PREFIX = "continuuity";
-  public static final String CFG_TABLE_PREFIX = "data.table.prefix";
+public class DefaultDatasetNamespace implements DatasetNamespace {
   private final String namespacePrefix;
   private final Namespace namespace;
 
-  public ReactorDatasetNamespace(CConfiguration conf, Namespace namespace) {
-    String reactorNameSpace = conf.get(CFG_TABLE_PREFIX, DEFAULT_TABLE_PREFIX);
+  public DefaultDatasetNamespace(CConfiguration conf, Namespace namespace) {
+    String reactorNameSpace = conf.get(Constants.Dataset.TABLE_PREFIX);
     this.namespacePrefix = reactorNameSpace + ".";
     this.namespace = namespace;
   }

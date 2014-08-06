@@ -21,19 +21,16 @@ import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import com.continuuity.tephra.metrics.TxMetricsCollector;
 import com.google.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Reactor implementation for TxMetricsCollector
+ * Implementation for TxMetricsCollector that delegate the the underlying {@link MetricsCollector}.
  */
-public class ReactorTxMetricsCollector extends TxMetricsCollector {
-  MetricsCollector metricsCollector;
-  private static final Logger LOG = LoggerFactory.getLogger(ReactorTxMetricsCollector.class);
+public class TransactionManagerMetricsCollector extends TxMetricsCollector {
+  private final MetricsCollector metricsCollector;
 
   @Inject
-  public ReactorTxMetricsCollector(MetricsCollectionService metricsCollectionService) {
-    metricsCollector = metricsCollectionService.getCollector(MetricsScope.REACTOR, "transactions", "0");
+  public TransactionManagerMetricsCollector(MetricsCollectionService metricsCollectionService) {
+    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.REACTOR, "transactions", "0");
   }
 
   @Override

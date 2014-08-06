@@ -36,10 +36,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * TwillApplication wrapper for Reactor YARN Services.
+ * TwillApplication wrapper for Master Services running in YARN.
  */
-public class ReactorTwillApplication implements TwillApplication {
-  private static final Logger LOG = LoggerFactory.getLogger(ReactorServiceMain.class);
+public class MasterTwillApplication implements TwillApplication {
+  private static final Logger LOG = LoggerFactory.getLogger(MasterServiceMain.class);
   private static final String NAME = Constants.Service.REACTOR_SERVICES;
 
   private final CConfiguration cConf;
@@ -49,8 +49,8 @@ public class ReactorTwillApplication implements TwillApplication {
   private final boolean runHiveService;
   private final Map<String, Integer> instanceCountMap;
 
-  public ReactorTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile, boolean runHiveService,
-                                 Map<String, Integer> instanceCountMap) {
+  public MasterTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile, boolean runHiveService,
+                                Map<String, Integer> instanceCountMap) {
     this.cConf = cConf;
     this.cConfFile = cConfFile;
     this.hConfFile = hConfFile;

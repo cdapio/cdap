@@ -32,7 +32,7 @@ import java.io.IOException;
  * {@link ConfigurationTable}.  This allows the coprocessors to pick up configuration changes without requiring
  * a restart.
  */
-public class ReactorTransactionStateCache extends TransactionStateCache {
+public class DefaultTransactionStateCache extends TransactionStateCache {
   // Reactor versions of coprocessors must reference snapshot classes so they get included in generated jar file
   // DO NOT REMOVE
   private static final SnapshotCodecV1 codecV1 = null;
@@ -41,7 +41,7 @@ public class ReactorTransactionStateCache extends TransactionStateCache {
   private String tableNamespace;
   private ConfigurationTable configTable;
 
-  public ReactorTransactionStateCache(String tableNamespace) {
+  public DefaultTransactionStateCache(String tableNamespace) {
     this.tableNamespace = tableNamespace;
   }
 
