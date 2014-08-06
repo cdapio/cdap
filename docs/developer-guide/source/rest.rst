@@ -1,10 +1,9 @@
-.. :author: Continuuity, Inc.
-   :version: 2.4.0
-   :description: HTTP Interface to the Continuuity Reactor
+.. :author: Cask, Inc.
+   :description: HTTP RESTful Interface to the Cask DAP
 
-=================================
+===============================================
 Cask Data Application Platform HTTP RESTful API
-=================================
+===============================================
 
 .. rst2pdf: .. contents::
 .. rst2pdf: config _templates/pdf-config
@@ -14,33 +13,33 @@ Cask Data Application Platform HTTP RESTful API
 Introduction
 ============
 
-The Continuuity Reactor has an HTTP interface for a multitude of purposes:
+The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude of purposes:
 
 - **Stream:** sending data events to a Stream, or to inspect the contents of a Stream
 - **Dataset:** interacting with Datasets, Dataset Modules, and Dataset Types
 - **Data:** interacting with Datasets (deprecated)
-- **Query:** sending ad-hoc queries to Reactor Datasets
+- **Query:** sending ad-hoc queries to CDAP Datasets
 - **Procedure:** sending calls to a stored Procedure
-- **Reactor Client:** deploying and managing Applications, and managing the life cycle of Flows,
-  Procedures, MapReduce jobs, Workflows, and Custom Services
+- **Client:** deploying and managing Applications, and managing the life cycle of Flows,
+  Procedures, MapReduce Jobs, Workflows, and Custom Services
 - **Logging:** retrieving Application logs
 - **Metrics:** retrieving metrics for system and user Applications (user-defined metrics)
-- **Monitor:** checking the status of various Reactor services, both System and Custom
+- **Monitor:** checking the status of various CDAP services, both System and Custom
 
 **Note:** The HTTP interface binds to port ``10000``. This port cannot be changed.
 
 Conventions
 -----------
 
-In this API, *client* refers to an external application that is calling the Continuuity Reactor using the HTTP interface.
+In this API, *client* refers to an external application that is calling the Cask DAP using the HTTP interface.
 
-In this API, *Application* refers to a user Application that has been deployed into the Continuuity Reactor.
+In this API, *Application* refers to a user Application that has been deployed into the Cask DAP.
 
 All URLs referenced in this API have this base URL::
 
   http://<host>:10000/v2
 
-where ``<host>`` is the URL of the Continuuity Reactor. The base URL is represented as::
+where ``<host>`` is the URL of the Cask DAP Instance. The base URL is represented as::
 
   <base-url>
 
@@ -110,36 +109,18 @@ Status Codes
 but a request may return any of these.
 
 
-SSL Required for Sandboxed Continuuity Reactor
-----------------------------------------------
-When you interact with a Sandboxed Continuuity Reactor,
-the Continuuity HTTP APIs require that you use SSL for the connection
-and that you authenticate your request by sending your API key in an HTTP header::
-
-  X-Continuuity-ApiKey: <api-key>
-
-.. list-table::
-   :widths: 15 85
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<api-key>``
-     - Continuuity Reactor API key, obtained from an account at
-       `Continuuity Accounts <http://accounts.continuuity.com>`__
-
-
-Working with Reactor Security
+Working with CDAP Security
 -----------------------------
-When working with a Reactor cluster with security enabled (``security.enabled=true`` in
-``continuuity-site.xml``), all calls to the HTTP APIs must be authenticated.  Clients must first
-obtain an access token from the authentication server (see the "Security" section of the
-guide). In order to authenticate, all client requests must supply this access token in the
+When working with a Cask DAP cluster with security enabled (``security.enabled=true`` in
+``cdap-site.xml``), all calls to the HTTP RESTful APIs must be authenticated. Clients must first
+obtain an access token from the authentication server (see the *Client Authentication* section of the
+Developer Guide `CDAP Security <security.html#client-authentication>`__).
+In order to authenticate, all client requests must supply this access token in the
 ``Authorization`` header of the request::
 
    Authorization: Bearer wohng8Xae7thahfohshahphaeNeeM5ie
 
-For Reactor-issued access tokens, the authentication scheme must always be ``Bearer``.
+For CDAP-issued access tokens, the authentication scheme must always be ``Bearer``.
 
 
 Stream HTTP API
@@ -480,7 +461,7 @@ Reading multiple events is not supported directly by the Stream HTTP API,
 but the command-line tool ``stream-client`` demonstrates how to view *all*, the *first N*, or the *last N* events in the Stream.
 
 For more information, see the Stream Command Line Client ``stream-client`` in the ``/bin`` directory of the
-Continuuity Reactor SDK distribution.
+CDAP SDK distribution.
 
 For usage and documentation of options, run at the command line::
 
@@ -497,19 +478,19 @@ The Dataset API allows you to interact with Datasets through HTTP. You can list,
 
 .. only:: html
 
-  `Continuuity Reactor Advanced Features, Datasets section <advanced.html#datasets-system>`__
+  `CDAP Advanced Features, Datasets section <advanced.html#datasets-system>`__
 
 .. only:: pdf
 
 .. rst2pdf: CutStop
 
-  `Continuuity Reactor Advanced Features, Datasets section <http://continuuity.com/docs/reactor/current/en/advanced.html#datasets-system>`__
+  `CDAP Advanced Features, Datasets section <http://continuuity.com/docs/CDAP/current/en/advanced.html#datasets-system>`__
 
 
 Listing all Datasets
 --------------------
 
-You can list all Datasets in the Continuuity Reactor by issuing an HTTP GET request to the URL::
+You can list all Datasets in the Cask DAP by issuing an HTTP GET request to the URL::
 
   GET <base-url>/data/datasets
 
@@ -727,7 +708,7 @@ HTTP Responses
 Data HTTP API (Deprecated)
 ==========================
 
-The Data API allows you to interact with Continuuity Reactor Tables (the core Datasets) through HTTP.
+The Data API allows you to interact with CDAP Tables (the core Datasets) through HTTP.
 You can create Tables, truncate Tables, and read, write, modify, or delete data.
 
 For Datasets other than Tables, you can truncate the Dataset using this API.
@@ -1475,7 +1456,7 @@ Procedure HTTP API
 ==================
 
 This interface supports sending calls to the methods of an Application’s Procedures.
-See the `Reactor Client HTTP API <#reactor-client-http-api>`__ for how to control the life cycle of
+See the `CDAP Client HTTP API <#cdap-client-http-api>`__ for how to control the life cycle of
 Procedures. 
 
 Executing Procedures
@@ -1634,8 +1615,8 @@ with the arguments as a JSON string in the body::
 
   {"foo":"bar","this":"that"}
 
-The Continuuity Reactor will use these these runtime arguments only for this single invocation of the
-element. To save the runtime arguments so that the Reactor will use them every time you start the element,
+The Cask DAP will use these these runtime arguments only for this single invocation of the
+element. To save the runtime arguments so that the Cask DAP will use them every time you start the element,
 issue an HTTP PUT with the parameter ``runtimeargs``::
 
   PUT <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
@@ -1657,7 +1638,7 @@ Container Information
 ---------------------
 
 To find out the address of an element's container host and the container’s debug port, you can query
-the Reactor for a Procedure, Flow or Service’s live info via an HTTP GET method::
+the Cask DAP for a Procedure, Flow or Service’s live info via an HTTP GET method::
 
   GET <base-url>/apps/<app-id>/<element-type>/<element-id>/live-info
 
@@ -1684,13 +1665,13 @@ The response is formatted in JSON; an example of this is shown in:
 
 .. only:: html
 
-  `Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`__
+  `CDAP Testing and Debugging Guide <debugging.html#debugging-cdap-applications>`__
 
 .. only:: pdf
 
 .. rst2pdf: CutStop
 
-  `Continuuity Reactor Testing and Debugging Guide <http://continuuity.com/docs/reactor/current/en/debugging.html#debugging-reactor-applications>`__
+  `CDAP Testing and Debugging Guide <http://continuuity.com/docs/reactor/current/en/debugging.html#debugging-reactor-applications>`__
 
 .. rst2pdf: PageBreak
 
@@ -1872,7 +1853,7 @@ Example
      - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
        ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
 
-The *runid* field is a UUID that uniquely identifies a run within the Continuuity Reactor,
+The *runid* field is a UUID that uniquely identifies a run within the Cask DAP,
 with the start and end times in seconds since the start of the Epoch (midnight 1/1/1970).
 
 For Services, you can retrieve the history of a Twill Service using::
@@ -1903,36 +1884,6 @@ For Workflows, you can also retrieve:
 
     GET <base-url>/apps/<app-id>/workflows/<workflow-id>/nextruntime
 
-.. rst2pdf: PageBreak
-
-Promote
--------
-To promote an Application from your local Continuuity Reactor to your Sandbox Continuuity Reactor,
-send a POST request with the host name of your Sandbox in the request body.
-You must include the API key for the Sandbox in the request header.
-
-Example
-.......
-Promote the Application *HelloWorld* from your Local Reactor to your Sandbox::
-
-  POST <base-url>/apps/HelloWorld/promote
-
-with the API Key in the header::
-
-  X-Continuuity-ApiKey: <api-key> {"hostname":"<sandbox>.continuuity.net"}
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<api-key>``
-     - Continuuity Reactor API key, obtained from an account at
-       `Continuuity Accounts <http://accounts.continuuity.com>`_
-   * - ``<sandbox>``
-     - Sandbox located on ``continuuity.net``
-
 
 Logging HTTP API
 =================
@@ -1940,7 +1891,7 @@ Logging HTTP API
 Downloading Logs
 ----------------
 You can download the logs that are emitted by any of the *Flows*, *Procedures*, *MapReduce* jobs,
-or *Services* running in the Continuuity Reactor. To do that, send an HTTP GET request::
+or *Services* running in the Cask DAP. To do that, send an HTTP GET request::
 
   GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
 
@@ -1986,7 +1937,7 @@ Note how the context of the log line shows the name of the Flowlet (*source*), i
 
 Metrics HTTP API
 ================
-As Applications process data, the Continuuity Reactor collects metrics about the Application’s behavior and performance. Some of these metrics are the same for every Application—how many events are processed, how many data operations are performed, etc.—and are thus called system or Reactor metrics.
+As Applications process data, the Cask DAP collects metrics about the Application’s behavior and performance. Some of these metrics are the same for every Application—how many events are processed, how many data operations are performed, etc.—and are thus called system or CDAP metrics.
 
 Other metrics are user-defined and differ from Application to Application. 
 For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
@@ -1996,13 +1947,13 @@ the Developer Guide:
 
 .. only:: html
 
-  `Continuuity Reactor Operations Guide <operations.html>`__
+  `CDAP Operations Guide <operations.html>`__
 
 .. only:: pdf
 
 .. rst2pdf: CutStop
 
-  `Continuuity Reactor Operations Guide <http://continuuity.com/docs/reactor/current/en/operations.html>`__
+  `CDAP Operations Guide <http://continuuity.com/docs/reactor/current/en/operations.html>`__
 
 
 Metrics Requests
@@ -2083,7 +2034,7 @@ If you want the number of input objects processed across all Flowlets of a Flow,
   GET <base-url>/metrics/reactor/apps/CountRandom/flows/
     CountRandomFlow/process.events?start=now-5s&count=5
 
-Similarly, you can address the context of all flows of an Application, an entire Application, or the entire Reactor::
+Similarly, you can address the context of all flows of an Application, an entire Application, or the entire Cask DAP::
 
   GET <base-url>/metrics/reactor/apps/CountRandom/
     flows/process.events?start=now-5s&count=5
@@ -2135,15 +2086,15 @@ The time range of a metric query can be specified in various ways:
      - The same as before, but with the count given as a number of seconds
 
 Instead of getting the values for each second of a time range, you can also retrieve the
-aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that the Reactor has not been stopped or restarted (you cannot specify a time range for aggregates)::
+aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that the Cask DAP has not been stopped or restarted (you cannot specify a time range for aggregates)::
 
-  GET <base-url>/metrics/reactor/apps/CountRandom/process.events?aggregate=true
+  GET <base-url>/metrics/cdap/apps/CountRandom/process.events?aggregate=true
 
 .. rst2pdf: PageBreak
 
 Available Contexts
 ------------------
-The context of a metric is typically enclosed into a hierarchy of contexts. For example, the Flowlet context is enclosed in the Flow context, which in turn is enclosed in the Application context. A metric can always be queried (and aggregated) relative to any enclosing context. These are the available Application contexts of the Continuuity Reactor:
+The context of a metric is typically enclosed into a hierarchy of contexts. For example, the Flowlet context is enclosed in the Flow context, which in turn is enclosed in the Application context. A metric can always be queried (and aggregated) relative to any enclosing context. These are the available Application contexts of the Cask DAP:
 
 .. list-table::
    :header-rows: 1
@@ -2218,7 +2169,7 @@ Flowlet, Procedure, Mapper, or Reducer level:
 
 Available Metrics
 -----------------
-For Continuuity Reactor metrics, the available metrics depend on the context.
+For Cask DAP metrics, the available metrics depend on the context.
 User-defined metrics will be available at whatever context that they are emitted from.
 
 These metrics are available in the Flowlet context:
@@ -2309,7 +2260,7 @@ These metrics are available in the Datasets context:
 
 Monitor HTTP API
 ================
-Reactor internally uses a variety of System Services that are critical to its functionality. This section describes the REST APIs that can be used to see into System Services.
+CDAP internally uses a variety of System Services that are critical to its functionality. This section describes the RESTful APIs that can be used to see into System Services.
 
 Details of All Available System Services
 ----------------------------------------
@@ -2329,7 +2280,7 @@ HTTP Responses
    * - ``200 OK``
      - The event successfully called the method, and the body contains the results
 
-Checking Status of All Reactor System Services
+Checking Status of All CDAP System Services
 ----------------------------------------------
 To check the status of all the System Services, use::
 
@@ -2348,13 +2299,13 @@ HTTP Responses
 
 .. rst2pdf: PageBreak
 
-Checking Status of a Specific Reactor System Service
+Checking Status of a Specific CDAP System Service
 ----------------------------------------------------
 To check the status of a specific System Service, use::
 
   GET <base-url>/system/services/<service-name>/status
 
-The status of these Reactor System Servcies can be checked:
+The status of these CDAP System Servcies can be checked:
 
 .. list-table::
    :header-rows: 1
@@ -2388,7 +2339,7 @@ The status of these Reactor System Servcies can be checked:
      - ``explore.service``
      - Service that handles all HTTP requests for ad-hoc data exploration
 
-Note that the Service status checks are more useful when the Reactor is running in a distributed cluster mode.
+Note that the Service status checks are more useful when the Cask DAP is running in a distributed cluster mode.
 
 Example
 .......
@@ -2418,7 +2369,7 @@ HTTP Responses
 
 Scaling System Services
 -----------------------
-In distributed Continuuity Reactor installations, the number of instances for system services 
+In distributed Cask DAP installations, the number of instances for system services 
 can be queried and changed by using these commands::
 
   GET <base-url>/system/services/<service-name>/instances
@@ -2439,7 +2390,7 @@ with the arguments as a JSON string in the body::
    * - ``<quantity>``
      - Number of instances to be used
      
-:Note: In single-node Reactor, these commands will return a Status Code ``400 Bad Request``.
+:Note: In single-node Cask DAP, these commands will return a Status Code ``400 Bad Request``.
 
 Examples
 ........
@@ -2501,11 +2452,11 @@ HTTP Responses
 
 Where to Go Next
 ================
-Now that you've seen Continuuity Reactor's HTTP REST API, 
+Now that you've seen CDAP's HTTP RESTful API, 
 the last of our documentation is:
 
-- `Continuuity Reactor Javadocs <javadocs/index.html>`__,
-  a complete Javadoc of the Continuuity Reactor Java APIs.
+- `Cask Data Application Platform Javadocs <javadocs/index.html>`__,
+  a complete Javadoc of the CDAP Java APIs.
 
 .. rst2pdf: CutStop
 

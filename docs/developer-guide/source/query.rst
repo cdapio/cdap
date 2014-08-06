@@ -1,11 +1,11 @@
-.. :Author: Continuuity, Inc.
-   :Description: Ad-hoc Querying of Continuuity Reactor Datasets using SQL 
+.. :Author: Cask, Inc.
+   :Description: Ad-hoc Querying of Cask Data Application Platform Datasets using SQL 
 
 ==========================
 Querying Datasets with SQL
 ==========================
 
-**Ad-hoc Querying of Continuuity Reactor Datasets using SQL**
+**Ad-hoc Querying of Cask Data Application Platform (CDAP) Datasets using SQL**
 
 Introduction
 ============
@@ -16,14 +16,14 @@ two requirements:
 * it defines the schema for each record; and
 * it has a method to scan its data record by record.
 
-For Reactor Datasets, this is done by implementing the ``RecordScannable`` interface. 
-The Reactor built-in Dataset ``KeyValueTable`` already implements this and can be used for ad-hoc queries. 
+For CDAP Datasets, this is done by implementing the ``RecordScannable`` interface. 
+The CDAP built-in Dataset ``KeyValueTable`` already implements this and can be used for ad-hoc queries. 
 
 Let's take a closer look at the ``RecordScannable`` interface.
 
 Defining the Record Schema
 ==========================
-The record schema is given by returning the Java type of each record, and the Reactor will derive the record schema from
+The record schema is given by returning the Java type of each record, and CDAP will derive the record schema from
 that type::
 
   Type getRecordType();
@@ -45,7 +45,7 @@ You can implement a record-scannable Dataset that uses ``Entry`` as the record t
     } 
       
 Note that Java's ``Class`` implements ``Type`` and you can simply return ``Entry.class`` as the record type.
-The Reactor will use reflection to infer a SQL-style schema from the record type.
+CDAP will use reflection to infer a SQL-style schema from the record type.
 
 In the case of the above class ``Entry``, the schema will be::
 
@@ -98,7 +98,7 @@ and value::
 
 We should easily be able to implement ``RecordScannable<GenericEntry<String, Integer>>`` by defining ``getRecordType()``.
 However, due to Java's runtime type erasure, returning ``GenericEntry.class`` does not convey complete information
-about the record type. With reflection, the Reactor can only determine the names of the two fields, but not their types.
+about the record type. With reflection, CDAP can only determine the names of the two fields, but not their types.
 
 To convey information about the type parameters, we must instead return a ``ParameterizedType``, which Java's
 ``Class`` does not implement. An easy way is to use Guava's ``TypeToken``::
@@ -200,7 +200,7 @@ implementation of the underlying Tables and Datasets. For example, if your Datas
 While this is straightforward, it is even easier if your Dataset already implements ``BatchReadable``.
 In that case, you can reuse its implementation of ``getSplits()`` and implement the split record scanner
 with a helper method
-(``Scannables.splitRecordScanner``) already defined by Reactor. It takes a split reader and a ``RecordMaker``
+(``Scannables.splitRecordScanner``) already defined by CDAP. It takes a split reader and a ``RecordMaker``
 that transforms a key and value, as produced by the ``BatchReadable``'s split reader,
 into a record::
 
@@ -227,24 +227,24 @@ defining::
     return Scannables.valueRecordScanner(table.createSplitReader(split));
   }
 
-An example demonstrating an implementation of ``RecordScannable`` is included in the Continuuity Reactor SDK in the
+An example demonstrating an implementation of ``RecordScannable`` is included in the Cask Data Application Platform SDK in the
 directory ``examples/Purchase``, namely the ``PurchaseHistoryStore``.
 
 Formulating Queries
 ===================
 When creating your queries, keep these limitations in mind:
 
-- The query syntax of the Reactor is a subset of the variant of SQL that was first defined by Apache Hive.
-- In contrast to HiveQL, Reactor queries only allow reading from data sets, not writing
-- These SQL commands are not allowed on Reactor Datasets: ``INSERT``, ``UPDATE``, ``DELETE``.
-- When addressing your datasets in queries, you need to prefix the data set name with the Reactor
-  namespace. For example, if your Dataset is named ``ProductCatalog``, then the corresponding table
-  name is ``continuuity_user_ProductCatalog``.
+- The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.
+- In contrast to HiveQL, CDAP queries only allow reading from data sets, not writing
+- These SQL commands are not allowed on CDAP Datasets: ``INSERT``, ``UPDATE``, ``DELETE``.
+- When addressing your datasets in queries, you need to prefix the data set name with the CDAP
+  namespace ``cdap_user``. For example, if your Dataset is named ``ProductCatalog``, then the corresponding table
+  name is ``cdap_user_ProductCatalog``.
 
 Where to Go Next
 ================
 Now that you've seen ad-hoc querying, take a look at:
 
-- `Continuuity Reactor Testing and Debugging Guide <debugging.html>`__,
-  which covers both testing and debugging of Continuuity Reactor applications.
+- `Cask Data Application Platform Testing and Debugging Guide <debugging.html>`__,
+  which covers both testing and debugging of CDAP applications.
 

@@ -1,9 +1,9 @@
 .. :Author: Cask, Inc.
    :Description: Introduction to Testing, Debugging, and Troubleshooting the Cask Data Application Platform
 
-===============================================
-Testing and Debugging Guide
-===============================================
+==========================================================
+Cask Data Application Platform Testing and Debugging Guide
+==========================================================
 
 **Introduction to Testing, Debugging, and Troubleshooting Cask Data Application Platform (CDAP) Applications**
 
