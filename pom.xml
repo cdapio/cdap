@@ -24,7 +24,7 @@
   <artifactId>cdap</artifactId>
   <version>2.4.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Cask CDAP Reactor</name>
+  <name>Cask CDAP</name>
 
   <organization>
     <name>Cask</name>
