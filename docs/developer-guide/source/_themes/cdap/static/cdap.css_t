@@ -19,7 +19,6 @@
 body {
     font-family: 'Source Sans Pro', "Helvetica", "Arial", sans-serif; font-weight: 400;
     font-size: 100%;
-#     background-color: #5E76A6;
     background-color: #4B5258;
     color: #555;
     margin: 0;
@@ -49,7 +48,7 @@ div.body {
     color: #3E4349;
     padding: 0 30px 30px 30px;
     font-size: 0.9em;
-    min-height: 1100px;
+    min-height: 1200px;
 }
 
 div.footer {
@@ -66,7 +65,6 @@ div.footer a {
 }
 
 div.related {
-# 	background-color: #5E76A6;
 	background-color: #303840;
 	line-height: 32px;
 	color: #fff;
