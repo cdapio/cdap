@@ -25,18 +25,21 @@ import co.cask.cdap.reactor.client.app.FakeApp;
 import co.cask.cdap.reactor.client.app.FakeFlow;
 import co.cask.cdap.reactor.client.app.FakeProcedure;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
+import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  *
  */
-public class ProgramClientTest extends ClientTestBase {
+@Category(XSlowTests.class)
+public class ProgramClientTestRun extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ProgramClientTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramClientTestRun.class);
 
   private ApplicationClient appClient;
   private ProcedureClient procedureClient;
@@ -44,8 +47,6 @@ public class ProgramClientTest extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    super.setUp();
-
     ClientConfig config = new ClientConfig("localhost");
     appClient = new ApplicationClient(config);
     procedureClient = new ProcedureClient(config);
