@@ -143,6 +143,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -973,7 +974,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
-      if (e.getCause() != null && e.getCause().getCause() instanceof IllegalArgumentException) {
+      if (e.getCause() != null && e.getCause().getCause() instanceof NoSuchElementException) {
         LOG.error("Could not find app, flow or flowlet.");
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find app, flow or flowlet.");
       }
@@ -1314,7 +1315,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
-      if (e.getCause() != null && e.getCause().getCause() instanceof IllegalArgumentException) {
+      if (e.getCause() != null && e.getCause().getCause() instanceof NoSuchElementException) {
         LOG.error("Could not find app, flow or flowlet.");
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find app, flow or flowlet.");
       }
