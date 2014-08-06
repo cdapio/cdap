@@ -26,7 +26,7 @@ elements of CDAP:
 - MapReduce
 
 These examples (and more!) are included with our
-`software development kit <http://continuuity.com/download>`__.
+`software development kit <http://cask.co/download>`__.
 
 `ResponseCodeAnalytics <responseCodeAnalytics.html>`_
 ======================================================================

@@ -180,7 +180,7 @@ There are two ways to query the *pageViewCDS* custom Dataset:
 
 - Send a query via an HTTP request using the ``curl`` command. For example::
 
-	curl -v -d '{"page": "http://www.continuuity.com"}' -X POST 'http://localhost:10000/v2/apps/PageViewAnalytics/procedures/PageViewProcedure/methods/getDistribution'
+	curl -v -d '{"page": "http://www.cask.co"}' -X POST 'http://localhost:10000/v2/apps/PageViewAnalytics/procedures/PageViewProcedure/methods/getDistribution'
 
   On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the example::
 

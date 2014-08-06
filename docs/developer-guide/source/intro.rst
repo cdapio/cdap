@@ -159,7 +159,7 @@ along with services and features that run inside YARN containers in Hadoop.
 These services and features include:
 
 - **Dataset Abstractions:** with globally consistent transactions provided by using 
-  `Cask Tephra <https://github.com/continuuity/tephra/blob/develop/README.rst>`__, these 
+  `Cask Tephra <http://github.com/continuuity/tephra/>`__, these 
   abstractions provide generic, reusable Java implementations of common data patterns;
 
 - **Streams:** the means for ingesting data from external systems in real time;

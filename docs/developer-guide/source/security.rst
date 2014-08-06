@@ -176,7 +176,7 @@ To provide a custom authentication mechanism you may create your own ``Authentic
 
 To make your custom handler class available to the authentication service, copy your packaged jar file (and any
 additional dependency jars) to the ``security/lib/`` directory within your Cask DAP installation
-(typically under ``/opt/continuuity``).
+(typically under ``/opt/cdap``).
 
 Example Configuration
 =======================

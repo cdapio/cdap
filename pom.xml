@@ -1324,7 +1324,7 @@
                   <link>http://download.oracle.com/javase/6/docs/api/</link>
                 </links>
                 <bottom>
-                  <![CDATA[Copyright &#169; $\{package.build.year} <a href="http://cask.co">Cask, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.]]>
+                  <![CDATA[Copyright &#169; 2014 <a href="http://cask.co">Cask, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.]]>
                 </bottom>
               </configuration>
               <executions>
@@ -1928,7 +1928,7 @@
             <link>http://download.oracle.com/javase/6/docs/api/</link>
           </links>
           <bottom>
-            <![CDATA[Copyright &#169; $\{package.build.year} <a href="http://cask.co">Cask, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.]]>
+            <![CDATA[Copyright &#169; 2014 <a href="http://cask.co">Cask, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.]]>
           </bottom>
         </configuration>
         <reportSets>
