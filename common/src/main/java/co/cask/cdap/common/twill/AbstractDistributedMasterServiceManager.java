@@ -35,8 +35,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Abstract class that can be extended by individual Reactor Services to implement their management methods.
  */
-public abstract class AbstractDistributedReactorServiceManager implements ReactorServiceManager {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractDistributedReactorServiceManager.class);
+public abstract class AbstractDistributedMasterServiceManager implements MasterServiceManager {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractDistributedMasterServiceManager.class);
   private static final long SERVICE_PING_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(1, TimeUnit.SECONDS);
   protected final long discoveryTimeout;
 
@@ -45,9 +45,9 @@ public abstract class AbstractDistributedReactorServiceManager implements Reacto
   protected String serviceName;
   protected DiscoveryServiceClient discoveryServiceClient;
 
-  public AbstractDistributedReactorServiceManager(CConfiguration cConf, String serviceName,
-                                                  TwillRunnerService twillRunnerService,
-                                                  DiscoveryServiceClient discoveryServiceClient) {
+  public AbstractDistributedMasterServiceManager(CConfiguration cConf, String serviceName,
+                                                 TwillRunnerService twillRunnerService,
+                                                 DiscoveryServiceClient discoveryServiceClient) {
     this.cConf = cConf;
     this.serviceName = serviceName;
     this.twillRunnerService = twillRunnerService;

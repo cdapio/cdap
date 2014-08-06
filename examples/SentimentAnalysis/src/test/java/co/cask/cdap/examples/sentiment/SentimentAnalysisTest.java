@@ -18,10 +18,10 @@ package co.cask.cdap.examples.sentiment;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ProcedureManager;
-import co.cask.cdap.test.ReactorTestBase;
 import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.TestBase;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class SentimentAnalysisTest extends ReactorTestBase {
+public class SentimentAnalysisTest extends TestBase {
 
   @Test
   public void test() throws Exception {

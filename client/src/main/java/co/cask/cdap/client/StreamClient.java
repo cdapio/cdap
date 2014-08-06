@@ -16,7 +16,7 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.client.config.ReactorClientConfig;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.BadRequestException;
 import co.cask.cdap.client.exception.StreamNotFoundException;
 import co.cask.cdap.client.util.RESTClient;
@@ -44,10 +44,10 @@ public class StreamClient {
   private static final Gson GSON = new Gson();
 
   private final RESTClient restClient;
-  private final ReactorClientConfig config;
+  private final ClientConfig config;
 
   @Inject
-  public StreamClient(ReactorClientConfig config) {
+  public StreamClient(ClientConfig config) {
     this.config = config;
     this.restClient = RESTClient.create(config);
   }

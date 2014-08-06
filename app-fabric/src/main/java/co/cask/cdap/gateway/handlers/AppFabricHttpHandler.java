@@ -46,7 +46,7 @@ import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -333,7 +333,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.txClient = txClient;
     this.dsFramework =
       new NamespacedDatasetFramework(dsFramework,
-                                     new ReactorDatasetNamespace(configuration, Namespace.USER));
+                                     new DefaultDatasetNamespace(configuration, Namespace.USER));
   }
 
   /**

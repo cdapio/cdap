@@ -18,8 +18,6 @@ package co.cask.cdap.internal.app;
 
 import org.apache.twill.api.ResourceSpecification;
 
-import java.util.List;
-
 /**
  * Forwarding ResourceSpecification implementation.
  */

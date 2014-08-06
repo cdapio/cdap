@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.SlowTests;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.AfterClass;
@@ -51,8 +51,7 @@ public class ConfigurationTableTest {
   @Test
   public void testConfigurationSerialization() throws Exception {
     CConfiguration cconf = CConfiguration.create();
-    String expectedNamespace = cconf.get(ReactorDatasetNamespace.CFG_TABLE_PREFIX,
-                                         ReactorDatasetNamespace.DEFAULT_TABLE_PREFIX);
+    String expectedNamespace = cconf.get(Constants.Dataset.TABLE_PREFIX);
 
     ConfigurationTable configTable = new ConfigurationTable(hbaseUtil.getConfiguration());
     configTable.write(ConfigurationTable.Type.DEFAULT, cconf);

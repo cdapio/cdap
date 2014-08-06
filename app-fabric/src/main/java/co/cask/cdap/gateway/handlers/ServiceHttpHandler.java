@@ -216,13 +216,13 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       int oldInstances = store.getServiceRunnableInstances(programId, runnableName);
-      store.setServiceRunnableInstances(programId, runnableName, instances);
 
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getAccountId(),
                                                                       programId.getApplicationId(),
                                                                       programId.getId(),
                                                                       ProgramType.SERVICE);
       if (runtimeInfo != null) {
+        store.setServiceRunnableInstances(programId, runnableName, instances);
         runtimeInfo.getController().command(ProgramOptionConstants.RUNNABLE_INSTANCES,
                                             ImmutableMap.of("runnable", runnableName,
                                                             "newInstances", String.valueOf(instances),

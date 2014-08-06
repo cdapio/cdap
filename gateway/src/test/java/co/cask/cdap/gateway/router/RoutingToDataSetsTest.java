@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.utils.Networks;
@@ -60,7 +61,8 @@ public class RoutingToDataSetsTest {
 
   @BeforeClass
   public static void before() throws Exception {
-    Injector injector = Guice.createInjector(new IOModule(), new SecurityModules().getInMemoryModules(),
+    Injector injector = Guice.createInjector(new ConfigModule(), new IOModule(),
+                                             new SecurityModules().getInMemoryModules(),
                                              new DiscoveryRuntimeModule().getInMemoryModules());
 
     // Starting router
@@ -105,9 +107,9 @@ public class RoutingToDataSetsTest {
   @Test
   public void testInstanceHandlerRequests() throws Exception {
     Assert.assertEquals("list", doRequest("/data/datasets", "GET"));
-    Assert.assertEquals("post:continuuity.user.myInstance", doRequest("/data/datasets/myInstance", "POST"));
-    Assert.assertEquals("delete:continuuity.user.myInstance", doRequest("/data/datasets/myInstance", "DELETE"));
-    Assert.assertEquals("get:continuuity.user.myInstance", doRequest("/data/datasets/myInstance", "GET"));
+    Assert.assertEquals("post:cdap.user.myInstance", doRequest("/data/datasets/myInstance", "POST"));
+    Assert.assertEquals("delete:cdap.user.myInstance", doRequest("/data/datasets/myInstance", "DELETE"));
+    Assert.assertEquals("get:cdap.user.myInstance", doRequest("/data/datasets/myInstance", "GET"));
   }
 
   @Path(Constants.Gateway.GATEWAY_VERSION)

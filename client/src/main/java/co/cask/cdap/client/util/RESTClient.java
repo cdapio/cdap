@@ -16,7 +16,7 @@
 
 package co.cask.cdap.client.util;
 
-import co.cask.cdap.client.config.ReactorClientConfig;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpRequestConfig;
@@ -44,10 +44,10 @@ public class RESTClient {
   /**
    * Creates a default {@link RESTClient}.
    *
-   * @param config {@link ReactorClientConfig} that provides information about the Reactor host and timeouts
+   * @param config {@link ClientConfig} that provides information about the Reactor host and timeouts
    * @return {@link RESTClient} instance
    */
-  public static RESTClient create(ReactorClientConfig config) {
+  public static RESTClient create(ClientConfig config) {
     return new RESTClient(config.getDefaultConfig(), config.getUploadConfig());
   }
 

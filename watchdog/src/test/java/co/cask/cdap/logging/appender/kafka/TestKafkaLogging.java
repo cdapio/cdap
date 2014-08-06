@@ -54,6 +54,7 @@ import java.io.PrintStream;
 public class TestKafkaLogging extends KafkaTestBase {
   private static InMemoryTxSystemClient txClient = null;
   private static DatasetFramework dsFramework;
+  private static CConfiguration cConf;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -65,11 +66,11 @@ public class TestKafkaLogging extends KafkaTestBase {
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
 
-    CConfiguration conf = CConfiguration.create();
-    conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
-    conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-    conf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync");
-    LogAppender appender = new LogAppenderInitializer(new KafkaLogAppender(conf)).initialize("TestKafkaLogging");
+    cConf = CConfiguration.create();
+    cConf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
+    cConf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
+    cConf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync");
+    LogAppender appender = new LogAppenderInitializer(new KafkaLogAppender(cConf)).initialize("TestKafkaLogging");
 
     Logger logger = LoggerFactory.getLogger("TestKafkaLogging");
     Exception e1 = new Exception("Test Exception1");
@@ -115,13 +116,9 @@ public class TestKafkaLogging extends KafkaTestBase {
 
   @Test
   public void testGetNext() throws Exception {
-    CConfiguration conf = new CConfiguration();
-    conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
-    conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     DistributedLogReader logReader =
-      new DistributedLogReader(dsFramework, txClient, conf, new LocalLocationFactory());
+      new DistributedLogReader(dsFramework, txClient, cConf, new LocalLocationFactory());
     LoggingTester tester = new LoggingTester();
     tester.testGetNext(logReader, loggingContext);
     logReader.close();
@@ -129,13 +126,9 @@ public class TestKafkaLogging extends KafkaTestBase {
 
   @Test
   public void testGetPrev() throws Exception {
-    CConfiguration conf = new CConfiguration();
-    conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
-    conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     DistributedLogReader logReader =
-      new DistributedLogReader(dsFramework, txClient, conf, new LocalLocationFactory());
+      new DistributedLogReader(dsFramework, txClient, cConf, new LocalLocationFactory());
     LoggingTester tester = new LoggingTester();
     tester.testGetPrev(logReader, loggingContext);
     logReader.close();

@@ -18,7 +18,7 @@ package co.cask.cdap.metrics.runtime;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.AbstractDistributedReactorServiceManager;
+import co.cask.cdap.common.twill.AbstractDistributedMasterServiceManager;
 import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -26,7 +26,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 /**
  * Metrics Processor Reactor Service Management in Distributed Mode.
  */
-public class MetricsProcessorStatusServiceManager extends AbstractDistributedReactorServiceManager {
+public class MetricsProcessorStatusServiceManager extends AbstractDistributedMasterServiceManager {
 
   @Inject
   public MetricsProcessorStatusServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
