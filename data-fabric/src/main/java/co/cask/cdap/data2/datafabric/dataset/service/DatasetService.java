@@ -28,38 +28,49 @@ import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * DatasetService implemented using the common http netty framework.
  */
-public class DatasetService extends AbstractIdleService {
+public class DatasetService extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetService.class);
 
   private final NettyHttpService httpService;
   private final DiscoveryService discoveryService;
+  private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetOpExecutor opExecutorClient;
   private Cancellable cancelDiscovery;
 
   private final DatasetTypeManager typeManager;
-
-
   private final MDSDatasetsRegistry mdsDatasets;
+
+  private Cancellable opExecutorServiceWatch;
+  private SettableFuture<ServiceDiscovered> opExecutorDiscovered;
+  private volatile boolean stopping = false;
 
   @Inject
   public DatasetService(CConfiguration cConf,
                         LocationFactory locationFactory,
                         DiscoveryService discoveryService,
+                        DiscoveryServiceClient discoveryServiceClient,
                         DatasetTypeManager typeManager,
                         DatasetInstanceManager instanceManager,
                         MetricsCollectionService metricsCollectionService,
@@ -91,6 +102,7 @@ public class DatasetService extends AbstractIdleService {
 
     this.httpService = builder.build();
     this.discoveryService = discoveryService;
+    this.discoveryServiceClient = discoveryServiceClient;
     this.opExecutorClient = opExecutorClient;
     this.mdsDatasets = mdsDatasets;
   }
@@ -99,12 +111,36 @@ public class DatasetService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.info("Starting DatasetService...");
 
-    mdsDatasets.startUp();
+    mdsDatasets.startAndWait();
     typeManager.startAndWait();
     opExecutorClient.startAndWait();
-
     httpService.startAndWait();
 
+    // setting watch for ops executor service that we need to be running to operate correctly
+    ServiceDiscovered discover = discoveryServiceClient.discover(Constants.Service.DATASET_EXECUTOR);
+    opExecutorDiscovered = SettableFuture.create();
+    opExecutorServiceWatch = discover.watchChanges(
+      new ServiceDiscovered.ChangeListener() {
+        @Override
+        public void onChange(ServiceDiscovered serviceDiscovered) {
+          if (!Iterables.isEmpty(serviceDiscovered)) {
+            LOG.info("Discovered {} service", Constants.Service.DATASET_EXECUTOR);
+            opExecutorDiscovered.set(serviceDiscovered);
+          }
+        }
+      }, MoreExecutors.sameThreadExecutor());
+  }
+
+  @Override
+  protected String getServiceName() {
+    return "DatasetService";
+  }
+
+  @Override
+  protected void run() throws Exception {
+    waitForOpExecutorToStart();
+
+    LOG.info("Announcing DatasetService for discovery...");
     // Register the service
     cancelDiscovery = discoveryService.register(new Discoverable() {
       @Override
@@ -119,12 +155,49 @@ public class DatasetService extends AbstractIdleService {
     });
 
     LOG.info("DatasetService started successfully on {}", httpService.getBindAddress());
+    while (isRunning()) {
+      try {
+        TimeUnit.SECONDS.sleep(1);
+      } catch (InterruptedException e) {
+        // It's triggered by stop
+        Thread.currentThread().interrupt();
+        continue;
+      }
+    }
+  }
+
+  private void waitForOpExecutorToStart() throws Exception {
+    LOG.info("Waiting for {} service to be discoverable", Constants.Service.DATASET_EXECUTOR);
+    while (!stopping) {
+      try {
+        opExecutorDiscovered.get(1, TimeUnit.SECONDS);
+        break;
+      } catch (TimeoutException e) {
+        // re-try
+      } catch (InterruptedException e) {
+        LOG.warn("Got interrupted while waiting for service {}", Constants.Service.DATASET_EXECUTOR);
+        Thread.currentThread().interrupt();
+        break;
+      } catch (ExecutionException e) {
+        LOG.error("Error during discovering service {}, DatasetService start failed",
+                  Constants.Service.DATASET_EXECUTOR);
+        throw e;
+      }
+    }
+  }
+
+  @Override
+  protected void triggerShutdown() {
+    stopping = true;
+    super.triggerShutdown();
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping DatasetService...");
-
+    
+    opExecutorServiceWatch.cancel();
+    
     mdsDatasets.shutDown();
 
     typeManager.stopAndWait();

@@ -90,6 +90,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     service = new DatasetService(cConf,
                                  locationFactory,
                                  discoveryService,
+                                 discoveryService,
                                  new DatasetTypeManager(mdsDatasetsRegistry, locationFactory,
                                                         // note: in this test we start with empty modules
                                                         Collections.<String, DatasetModule>emptyMap()),

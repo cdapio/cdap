@@ -111,6 +111,7 @@ public abstract class DatasetServiceTestBase {
     service = new DatasetService(cConf,
                                  locationFactory,
                                  discoveryService,
+                                 discoveryService,
                                  new DatasetTypeManager(mdsDatasetsRegistry, locationFactory,
                                                         // we don't need any default modules in this test
                                                         Collections.<String, DatasetModule>emptyMap()),
