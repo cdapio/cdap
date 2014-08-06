@@ -254,6 +254,7 @@ public class TestBase {
           install(new FactoryModuleBuilder()
                     .implement(ProcedureClient.class, DefaultProcedureClient.class)
                     .build(ProcedureClientFactory.class));
+          bind(TemporaryFolder.class).toInstance(tmpFolder);
         }
       }
     );
