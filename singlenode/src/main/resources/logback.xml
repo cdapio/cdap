@@ -88,6 +88,35 @@
         </layout>
     </appender>
 
+
+  <appender name="AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs/access.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>logs/access.log.%d{yyyy-MM-dd}</fileNamePattern>
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%msg%n</pattern>
+    </encoder>
+  </appender>
+  <logger name="http-access" level="TRACE" additivity="false">
+    <appender-ref ref="AUDIT" />
+  </logger>
+
+  <appender name="AUTH" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs/auth.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>logs/auth.log.%d{yyyy-MM-dd}</fileNamePattern>
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%msg%n</pattern>
+    </encoder>
+  </appender>
+  <logger name="auth" level="TRACE" additivity="false">
+    <appender-ref ref="AUTH" />
+  </logger>
+
     <root level="DEBUG">
         <appender-ref ref="Rolling"/>
         <appender-ref ref="Debug"/>

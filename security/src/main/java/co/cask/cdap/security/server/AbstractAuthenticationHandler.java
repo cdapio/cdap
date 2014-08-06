@@ -24,9 +24,19 @@ import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
+import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.util.security.Constraint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import javax.security.auth.login.Configuration;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Path;
 
 /**
@@ -35,6 +45,9 @@ import javax.ws.rs.Path;
  */
 @Path("/*")
 public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHandler {
+  private static final Logger AUTHENTICATION_AUDIT_LOG = LoggerFactory.getLogger("auth");
+  private final DateFormat dateFormat = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z");
+
   protected final CConfiguration configuration;
 
   @Inject
@@ -66,6 +79,18 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     this.doStart();
   }
 
+  @Override
+  public void handle(String pathInContext, Request baseRequest, HttpServletRequest request,
+                     HttpServletResponse response) throws IOException, ServletException {
+    try {
+      super.handle(pathInContext, baseRequest, request, response);
+    } finally {
+      AuthenticationLogEntry logEntry = new AuthenticationLogEntry(
+        request.getAuthType(), request.getRemoteUser(), request.getRemoteAddr(), response);
+      AUTHENTICATION_AUDIT_LOG.trace(logEntry.toString());
+    }
+  }
+
   /**
    * Get a {@link org.eclipse.jetty.security.LoginService} for the handler.
    * @return
@@ -89,4 +114,38 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
    * @return
    */
   protected abstract Configuration getLoginModuleConfiguration();
+
+  private final class AuthenticationLogEntry {
+
+    /** Each audit log field will default to "-" if the field is missing or not supported. */
+    private static final String DEFAULT_VALUE = "-";
+
+    private final String authType;
+    private final String userName;
+    private final boolean success;
+    private final Date date;
+    private final String remoteAddr;
+
+    public AuthenticationLogEntry(String authType, String userName, String remoteAddr, HttpServletResponse response) {
+      this.authType = authType;
+      this.userName = userName;
+      this.remoteAddr = remoteAddr;
+      this.success = response.getStatus() == HttpServletResponse.SC_OK;
+      this.date = new Date();
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s %s [%s] %s %b",
+                           fieldOrDefault(remoteAddr),
+                           fieldOrDefault(userName),
+                           dateFormat.format(date),
+                           fieldOrDefault(authType),
+                           success);
+    }
+
+    private String fieldOrDefault(Object field) {
+      return field == null ? DEFAULT_VALUE : field.toString();
+    }
+  }
 }
