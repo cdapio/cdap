@@ -24,53 +24,55 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 /**
- * Configuration for the Java client library
+ * Configuration for the Java client API
  */
 public class ClientConfig {
 
-  private static final String PROTOCOL = "http";
+  private static final String DEFAULT_PROTOCOL = "http";
   private static final String VERSION = "v2";
 
   private final HttpRequestConfig defaultConfig;
   private final HttpRequestConfig uploadConfig;
 
+  private String protocol;
   private URI baseURI;
   private int port;
 
   /**
-   * @param reactorHost Hostname of Reactor (i.e. example.com)
-   * @param port Port of Reactor (i.e. 10000)
+   * @param hostname Hostname of the CDAP server (i.e. example.com)
+   * @param port Port of the CDAP server (i.e. 10000)
    * @param defaultConfig {@link HttpRequestConfig} to use by default
    * @param uploadConfig {@link HttpRequestConfig} to use when uploading a file
    * @throws URISyntaxException
    */
-  public ClientConfig(String reactorHost, int port, HttpRequestConfig defaultConfig,
+  public ClientConfig(String hostname, int port, HttpRequestConfig defaultConfig,
                       HttpRequestConfig uploadConfig) throws URISyntaxException {
     this.defaultConfig = defaultConfig;
     this.uploadConfig = uploadConfig;
     this.port = port;
-    this.baseURI = new URI(PROTOCOL + "://" + reactorHost + ":" + port);
+    this.protocol = DEFAULT_PROTOCOL;
+    this.baseURI = new URI(protocol + "://" + hostname + ":" + port);
   }
 
   /**
-   * @param reactorHost Hostname of Reactor (i.e. example.com)
-   * @param port Port of Reactor (i.e. 10000)
+   * @param hostname Hostname of the CDAP server (i.e. example.com)
+   * @param port Port of the CDAP server (i.e. 10000)
    * @throws URISyntaxException
    */
-  public ClientConfig(String reactorHost, int port) throws URISyntaxException {
-    this(reactorHost, port, new HttpRequestConfig(15000, 15000), new HttpRequestConfig(0, 0));
+  public ClientConfig(String hostname, int port) throws URISyntaxException {
+    this(hostname, port, new HttpRequestConfig(15000, 15000), new HttpRequestConfig(0, 0));
   }
 
   /**
-   * @param reactorHost Hostname of Reactor (i.e. example.com)
+   * @param hostname Hostname of the CDAP server (i.e. example.com)
    * @throws URISyntaxException
    */
-  public ClientConfig(String reactorHost) throws URISyntaxException {
-    this(reactorHost, 10000, new HttpRequestConfig(15000, 15000), new HttpRequestConfig(0, 0));
+  public ClientConfig(String hostname) throws URISyntaxException {
+    this(hostname, 10000, new HttpRequestConfig(15000, 15000), new HttpRequestConfig(0, 0));
   }
 
   /**
-   * Resolves a path against the target Reactor
+   * Resolves a path against the target CDAP server
    * @param path Path to the HTTP endpoint. For example, "apps" would result
    *             in a URL like "http://example.com:10000/v2/apps".
    * @return URL of the resolved path
@@ -102,12 +104,12 @@ public class ClientConfig {
   }
 
   /**
-   * @param reactorHost Hostname of Reactor (i.e. example.com)
-   * @param port Port of Reactor (i.e. 10000)
+   * @param hostname Hostname of the CDAP server (i.e. example.com)
+   * @param port Port of the CDAP server (i.e. 10000)
    * @throws URISyntaxException
    */
-  public void setReactorHost(String reactorHost, int port) throws URISyntaxException {
+  public void setHostnameAndPort(String hostname, int port) throws URISyntaxException {
     this.port = port;
-    this.baseURI = new URI(PROTOCOL + "://" + reactorHost + ":" + port);
+    this.baseURI = new URI(protocol + "://" + hostname + ":" + port);
   }
 }
