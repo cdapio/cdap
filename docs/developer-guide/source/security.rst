@@ -54,6 +54,20 @@ security.server.ssl.keystore.path            <path>
 security.server.ssl.keystore.password        <password>
 ==========================================  ===========
 
+Configuring Kerberos (required)
+================================
+To configure which Kerberos keytabs and principals are to be used for various CDAP services, add these properties to
+``cdap-site.xml``:
+
+==========================================  =======================
+   Property                                   Value
+==========================================  =======================
+security.external.auth.server.keytab.path    <path-to-keytab-file>
+security.external.auth.server.principal      <principal>
+security.router.keytab.path                  <path-to-keytab-file>
+security.router.principal                    <principal>
+==========================================  =======================
+
 Enabling Access Logging
 ========================
 To enable access logging, add the following to ``logback.xml`` (typically under ``/etc/continuuity/conf/``) ::
