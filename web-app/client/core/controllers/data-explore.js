@@ -12,7 +12,7 @@ define([], function () {
 		    self.hideAllTables();
 		  };
 
-		  self.limit = 4;
+		  self.limit = 8;
 		  self.offset = null;
 		  self.direction = null;
       self.largestEver = null;
@@ -59,6 +59,12 @@ define([], function () {
         self.hideAllTables(obj);
       }
       if(!obj.get('has_results') || !obj.get('is_active')) {
+        setTimeout(function(){
+        $("[id='#" + obj.get('query_handle') + "']").tooltip('show');
+        setTimeout(function(){
+          $("[id='#" + obj.get('query_handle') + "']").tooltip('hide');
+        }, 1000);
+        }, 200)
         return;
       }
       obj.set('isSelected', !obj.get('isSelected'));
@@ -99,8 +105,10 @@ define([], function () {
 
     selectDataset: function (dataset) {
       this.set('selectedDataset', dataset);
-      $("#query-injector-input").attr('placeholder','SELECT * FROM ' + dataset.name + ' LIMIT 5');
-      this.set('placeholder', 'SELECT * FROM ' + dataset.name + ' LIMIT 5');
+      setTimeout(function(){
+        console.log('set');
+        $("#query-injector-input").attr('placeholder','SELECT * FROM ' + dataset.name + ' LIMIT 5');
+      }, 2000);
       var datasets = this.get('datasets');
       datasets.forEach(function (entry) {
         entry.set('isSelected', false);
@@ -209,6 +217,9 @@ define([], function () {
             self.largestEver = self.largest;
           }
         }
+        setTimeout(function () {
+          $("[data-toggle='tooltip']").tooltip();
+        }, 500)
       });
 		},
 
@@ -274,6 +285,13 @@ define([], function () {
           }
           self.fetchQueries();
           self.largestEver += 1;
+
+          if(self.page == "query"){
+            $("[id='ResultsLink']").tooltip('show');
+            setTimeout(function(){
+              $("[id='ResultsLink']").tooltip('hide');
+            }, 5000);
+          }
         }
       );
       self.hideAllTables();

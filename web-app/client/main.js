@@ -475,6 +475,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		DataExploreQueryRoute: Ember.Route.extend({
 		  controllerName: 'DataExplore',
       renderTemplate: function () {
+        var controller = this.controllerFor('DataExplore');
+        controller.set('page', 'query');
         this.render('DataExploreQuery');
       }
     }),
@@ -482,6 +484,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		DataExploreResultsRoute: Ember.Route.extend({
 		  controllerName: 'DataExplore',
       renderTemplate: function () {
+        var controller = this.controllerFor('DataExplore');
+        controller.set('page', 'results');
         this.render('DataExploreResults');
       }
     }),

@@ -3377,6 +3377,16 @@ div.tooltip {
 	pointer-events: none;
 }
 
+div.tooltip-inner {
+    text-align: center;
+    -webkit-border-radius: 0px;
+    -moz-border-radius: 0px;
+    border-radius: 1000px;
+    margin-bottom: 6px;
+    background-color: #0000000;
+    font-size: 14px;
+}
+
 .flow-run-date {
 	font-size: 12px;
 	color: #77878B;
@@ -3684,6 +3694,14 @@ div.tooltip {
 	width: 32px;
 	height: 32px;
 	background-image: url('/assets/img/v2/na.png');
+	background-repeat: no-repeat;
+	display: block;
+	margin: 0px auto;
+}
+.download-query-results-disabled-btn {
+	width: 32px;
+	height: 32px;
+	background-image: url('/assets/img/v2/download_disabled.png');
 	background-repeat: no-repeat;
 	display: block;
 	margin: 0px auto;

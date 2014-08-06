@@ -346,16 +346,7 @@
   <div>
      <hr style="margin-top: 0px"/>
 
-    <table style="">
-      <thead>
-        <tr>
-          <td>
-            <button style="min-width:60px;" class="btn btn-blank btn-default" id="execute-explore-query" {{action 'nextPage' on="click"}}>></button>
-            <button style="min-width:60px;" class="btn btn-blank btn-default" id="execute-explore-query" {{action 'prevPage' on="click"}}><</button>
-          </td>
-        </tr>
-      </thead>
-    </table>
+
 
     <table class="table" id="query-list-table">
       <thead>
@@ -366,9 +357,9 @@
       </thead>
     </table>
     {{#each objArr}}
-    <table {{bindAttr class=":table :cursor-pointer :query-table-entry this.isSelected:selected:notselected" }} {{ action toggleTable this }}>
+    <table {{bindAttr id="query_handle_hashed"}} data-toggle="tooltip" data-placement="top" title="No results" data-trigger="manual" {{bindAttr class=":table :cursor-pointer :query-table-entry this.isSelected:selected:notselected" }} {{ action toggleTable this }}>
       <tbody>
-        <tr {{bindAttr data-target="query_handle_hashed"}}>
+        <tr>
           <td style="width: 25%">
             <span class="lighter-color">{{time_started}}</span>
           </td>
@@ -378,12 +369,12 @@
           <td style="width: 15%" class="center-align">
           {{#if has_results}}
             {{#if is_active}}
-              <a {{action download this bubbles=false}} class="download-query-results-btn"></a>
+                <a data-toggle="tooltip" data-placement="right" title="Download" {{action download this bubbles=false}} class="download-query-results-btn"></a>
             {{ else }}
-              <a class="download-query-results-inactive-btn"></a>
+              <a data-toggle="tooltip" data-placement="right" title="Already downloaded" class="download-query-results-disabled-btn"></a>
             {{/if}}
           {{ else }}
-            <a class="download-query-results-inactive-btn"></a>
+            <a data-toggle="tooltip" data-placement="right" title="No results" class="download-query-results-inactive-btn"></a>
           {{/if}}
           </td>
         </tr>
@@ -408,6 +399,10 @@
           </table>
         </div>
     {{/each}}
+    <div style="max-width:97%">
+            <button style="min-width:40px;" class="btn btn-blank btn-default" id="execute-explore-query" {{action 'nextPage' on="click"}}>></button>
+            <button style="min-width:40px;" class="btn btn-blank btn-default" id="execute-explore-query" {{action 'prevPage' on="click"}}><</button>
+    </div>
   </div>
   </script>
 
@@ -477,7 +472,7 @@
       <div class="panel">
          <ul class="nav nav-pills pull-right" id="explore-sub-menu">
            <li>{{#linkTo DataExplore.Query}}Query{{/linkTo }}</li>
-           <li>{{#linkTo DataExplore.Results}}Results{{/linkTo}}</li>
+           <li id="ResultsLink" data-toggle="tooltip" title="Queries can be viewed here" data-trigger="manual">{{#linkTo DataExplore.Results}}Results{{/linkTo}}</li>
          </ul>
          <div style="clear:both"></div>
          <hr style="margin-top: 0px"/>
@@ -485,7 +480,7 @@
           <div class="text-area-container">
           {{view C.Embed.Injector elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
           </div>
-          <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
+          <button data-toggle="tooltip" data-placement="left" title="TODO:replacethis" data-trigger="manual" class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
         </td>
 
         {{outlet}}
