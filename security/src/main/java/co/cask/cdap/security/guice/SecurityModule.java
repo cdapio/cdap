@@ -71,9 +71,11 @@ public abstract class SecurityModule extends PrivateModule {
                  .toProvider(AuthenticationHandlerProvider.class);
     handlerBinder.addBinding(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER)
                  .to(GrantAccessToken.class);
-    bind(HashMap.class).annotatedWith(Names.named("security.handlers"))
-                       .toProvider(AuthenticationHandlerMapProvider.class)
-                       .in(Scopes.SINGLETON);
+
+    bind(new TypeLiteral<Map<String, Object>>() { })
+      .annotatedWith(Names.named("security.handlers"))
+      .toProvider(AuthenticationHandlerMapProvider.class)
+      .in(Scopes.SINGLETON);
 
     bind(TokenValidator.class).to(AccessTokenValidator.class);
     bind(AccessTokenTransformer.class).in(Scopes.SINGLETON);
@@ -85,17 +87,17 @@ public abstract class SecurityModule extends PrivateModule {
   }
 
   @Provides
-  private Class<Handler> provideHandlerClass(CConfiguration configuration) throws ClassNotFoundException {
-    return (Class<Handler>) configuration.getClass(Constants.Security.AUTH_HANDLER_CLASS, null, Handler.class);
+  private Class<? extends Handler> provideHandlerClass(CConfiguration configuration) throws ClassNotFoundException {
+    return configuration.getClass(Constants.Security.AUTH_HANDLER_CLASS, null, Handler.class);
   }
 
-  private static final class AuthenticationHandlerProvider implements  Provider<Handler> {
+  private static final class AuthenticationHandlerProvider implements Provider<Handler> {
 
     private final Injector injector;
-    private final Class<Handler> handlerClass;
+    private final Class<? extends Handler> handlerClass;
 
     @Inject
-    private AuthenticationHandlerProvider(Injector injector, Class<Handler> handlerClass) {
+    private AuthenticationHandlerProvider(Injector injector, Class<? extends Handler> handlerClass) {
       this.injector = injector;
       this.handlerClass = handlerClass;
     }
@@ -106,7 +108,7 @@ public abstract class SecurityModule extends PrivateModule {
     }
   }
 
-  private static final class AuthenticationHandlerMapProvider implements Provider<HashMap> {
+  private static final class AuthenticationHandlerMapProvider implements Provider<Map<String, Object>> {
     private final HashMap<String, Object> handlerMap;
 
     @Inject
@@ -115,7 +117,7 @@ public abstract class SecurityModule extends PrivateModule {
     }
 
     @Override
-    public HashMap get() {
+    public Map<String, Object> get() {
       return handlerMap;
     }
   }
