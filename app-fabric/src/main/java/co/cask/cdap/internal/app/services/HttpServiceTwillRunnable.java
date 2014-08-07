@@ -63,8 +63,9 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   /**
    * Instantiates this class with a name which will be used when this service is announced
    * and a list of {@link HttpServiceHandler} which will be used to to handle the HTTP requests.
-   * @param name The name which will be used to announce the service.
-   * @param handlers The handlers which will be used to handle the HttpRequests.
+   *
+   * @param name the name which will be used to announce the service
+   * @param handlers the handlers which will be used to handle the HttpRequests
    */
   public HttpServiceTwillRunnable(String name, Iterable<? extends HttpServiceHandler> handlers) {
     this.name = name;
@@ -73,7 +74,8 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   /**
    * Utility constructor used to instantiate the service from the program classloader.
-   * @param programClassLoader classloader to instantiate the service with.
+   *
+   * @param programClassLoader classloader to instantiate the service with
    */
   public HttpServiceTwillRunnable(ClassLoader programClassLoader) {
     this.programClassLoader = programClassLoader;
@@ -101,7 +103,8 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   /**
    * Configures this runnable with the name and handler names as configs.
-   * @return The specification for this runnable.
+   *
+   * @return the specification for this runnable
    */
   @Override
   public TwillRunnableSpecification configure() {
@@ -120,6 +123,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   /**
    * Initializes this runnable from the given context.
+   *
    * @param context
    */
   @Override
@@ -158,8 +162,9 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   /**
    * Creates a {@link NettyHttpService} from the given host.
-   * @param host The host which the service will run on.
-   * @return A HTTP Service which uses the {@link HttpServiceHandler}s to handle the HTTP requests.
+   *
+   * @param host the host which the service will run on
+   * @return a NettyHttpService which delegates to the {@link HttpServiceHandler}s to handle the HTTP requests
    */
   private NettyHttpService createNettyHttpService(String host) {
     // Create HttpHandlers which delegate to the HttpServiceHandlers

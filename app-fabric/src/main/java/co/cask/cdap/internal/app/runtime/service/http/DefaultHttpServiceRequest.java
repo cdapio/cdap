@@ -38,7 +38,8 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
   private final Multimap<String, String> headers;
 
   /**
-   * Instantiates this class from a {@link HttpRequest}
+   * Instantiates the class from a {@link HttpRequest}
+   *
    * @param request
    */
   DefaultHttpServiceRequest(HttpRequest request) {
@@ -53,7 +54,7 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
   }
 
   /**
-   * @return The method of the request.
+   * @return the method of the request
    */
   @Override
   public String getMethod() {
@@ -61,7 +62,7 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
   }
 
   /**
-   * @return The URI of the request.
+   * @return the URI of the request
    */
   @Override
   public String getRequestURI() {
@@ -69,7 +70,7 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
   }
 
   /**
-   * @return the data content of the request as a ByteBuffer.
+   * @return the data content of the request as a ByteBuffer
    */
   @Override
   public ByteBuffer getContent() {
@@ -77,7 +78,7 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
   }
 
   /**
-   * @return The headers of this request. Where each header name can map to multiple values
+   * @return the headers of this request; each header name can map to multiple values
    */
   @Override
   public Multimap<String, String> getHeaders() {
@@ -86,8 +87,9 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
 
   /**
    * Returns all of the values for a specified header.
-   * @param key The header to find
-   * @return List of all of the values for that header.
+   *
+   * @param key the header to find
+   * @return all of the values for the header with the specified key
    */
   @Override
   public List<String> getHeaders(String key) {
@@ -95,9 +97,11 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
   }
 
   /**
-   * @param key The header to find
-   * @return The value of the specified header. If the header maps to multiple values,
-   * then the first value should be returned.
+   * Returns the first value for the specified header.
+   *
+   * @param key the header to find
+   * @return the value of the specified header; if the header maps to multiple values,
+   * then the first value is returned
    */
   @Override
   public String getHeader(String key) {

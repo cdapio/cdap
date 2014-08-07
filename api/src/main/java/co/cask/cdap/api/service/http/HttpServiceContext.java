@@ -19,17 +19,17 @@ package co.cask.cdap.api.service.http;
 import java.util.Map;
 
 /**
- * The Context for a {@link HttpServiceHandler}. Currently contains methods to get the
+ * The context for a {@link HttpServiceHandler}. Currently contains methods to receive the
  * {@link HttpServiceSpecification} and the runtime arguments passed by the user.
  */
 public interface HttpServiceContext {
   /**
-   * @return The {@link HttpServiceSpecification} bound to this HttpServiceContext
+   * @return the HttpServiceSpecification bound to this HttpServiceContext
    */
   HttpServiceSpecification getSpecification();
 
   /**
-   * @return A map of argument key and value.
+   * @return a map of argument key and value
    */
   Map<String, String> getRuntimeArguments();
 

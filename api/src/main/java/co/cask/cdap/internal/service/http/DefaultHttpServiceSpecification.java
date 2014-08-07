@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
- * This class is a simple implementation of {@link HttpServiceSpecification}.
+ * A simple implementation of {@link HttpServiceSpecification}.
  */
 public class DefaultHttpServiceSpecification implements HttpServiceSpecification {
   private final String className;
@@ -32,6 +32,7 @@ public class DefaultHttpServiceSpecification implements HttpServiceSpecification
 
   /**
    * Instantiate this class with the following parameters.
+   *
    * @param className
    * @param name
    * @param description
@@ -47,6 +48,7 @@ public class DefaultHttpServiceSpecification implements HttpServiceSpecification
 
   /**
    * Instantiate this class with the following parammeters.
+   *
    * @param name
    * @param description
    * @param properties
@@ -56,7 +58,7 @@ public class DefaultHttpServiceSpecification implements HttpServiceSpecification
   }
 
   /**
-   * @return The class name
+   * @return the class name
    */
   @Override
   public String getClassName() {
@@ -64,7 +66,7 @@ public class DefaultHttpServiceSpecification implements HttpServiceSpecification
   }
 
   /**
-   * @return The name
+   * @return the name
    */
   @Override
   public String getName() {
@@ -72,7 +74,7 @@ public class DefaultHttpServiceSpecification implements HttpServiceSpecification
   }
 
   /**
-   * @return The description
+   * @return the description
    */
   @Override
   public String getDescription() {
@@ -80,7 +82,7 @@ public class DefaultHttpServiceSpecification implements HttpServiceSpecification
   }
 
   /**
-   * @return The properties
+   * @return the properties
    */
   @Override
   public Map<String, String> getProperties() {
@@ -88,8 +90,8 @@ public class DefaultHttpServiceSpecification implements HttpServiceSpecification
   }
 
   /**
-   * @param key for getting specific property value.
-   * @return The property value.
+   * @param key for getting specific property value
+   * @return the property value
    */
   @Override
   public String getProperty(String key) {

@@ -20,7 +20,7 @@ import java.util.Map;
 
 /**
  * An abstract implementation of {@link HttpServiceHandler}. Classes that extend this class only
- * have to implement a configure method which can be used to add optional optional arguments.
+ * have to implement a configure method which can be used to add optional arguments.
  */
 public abstract class AbstractHttpServiceHandler implements HttpServiceHandler {
   private HttpServiceConfigurer configurer;
@@ -33,10 +33,10 @@ public abstract class AbstractHttpServiceHandler implements HttpServiceHandler {
   public abstract void configure();
 
   /**
-   * Implementation of {@link HttpServiceHandler#configure(HttpServiceConfigurer)}. Stores the configurer
+   * An implementation of {@link HttpServiceHandler#configure(HttpServiceConfigurer)}. Stores the configurer
    * so that it can be used later and then runs the configure method which is overwritten by children classes.
    *
-   * @param configurer The {@link HttpServiceConfigurer} which is used to configure this Handler.
+   * @param configurer the {@link HttpServiceConfigurer} which is used to configure this Handler
    */
   @Override
   public final void configure(HttpServiceConfigurer configurer) {
@@ -45,10 +45,10 @@ public abstract class AbstractHttpServiceHandler implements HttpServiceHandler {
   }
 
   /**
-   * Implementation of {@link HttpServiceHandler#initialize(HttpServiceContext)}. Stores the context
+   * An implementation of {@link HttpServiceHandler#initialize(HttpServiceContext)}. Stores the context
    * so that it can be used later.
    *
-   * @param context http service runtime context
+   * @param context the HTTP service runtime context
    * @throws Exception
    */
   @Override
@@ -57,7 +57,7 @@ public abstract class AbstractHttpServiceHandler implements HttpServiceHandler {
   }
 
   /**
-   * Implementation of {@link HttpServiceHandler#destroy()} which does nothing
+   * An implementation of {@link HttpServiceHandler#destroy()} which does nothing
    */
   @Override
   public void destroy() {
@@ -65,38 +65,41 @@ public abstract class AbstractHttpServiceHandler implements HttpServiceHandler {
   }
 
   /**
-   * @return The {@link HttpServiceContext} which was used when this class was initialized.
+   * @return the {@link HttpServiceContext} which was used when this class was initialized
    */
   protected final HttpServiceContext getContext() {
     return context;
   }
 
   /**
-   * @return The {@link HttpServiceConfigurer} used to configure this class.
+   * @return the {@link HttpServiceConfigurer} used to configure this class
    */
   protected final HttpServiceConfigurer getConfigurer() {
     return configurer;
   }
 
   /**
-   * @see HttpServiceConfigurer#setName(String).
-   * @param name The name to set.
+   * @see HttpServiceConfigurer#setName(String)
+   *
+   * @param name the name to set
    */
   protected final void setName(String name) {
     configurer.setName(name);
   }
 
   /**
-   * @see HttpServiceConfigurer#setDescription(String).
-   * @param description The description to set.
+   * @see HttpServiceConfigurer#setDescription(String)
+   *
+   * @param description the description to set
    */
   protected final void setDescription(String description) {
     configurer.setDescription(description);
   }
 
   /**
-   * @see HttpServiceConfigurer#setArguments(java.util.Map).
-   * @param arguments The runtime arguments to store.
+   * @see HttpServiceConfigurer#setArguments(java.util.Map)
+   *
+   * @param arguments the runtime arguments to store
    */
   protected final void setArguments(Map<String, String> arguments) {
     configurer.setArguments(arguments);

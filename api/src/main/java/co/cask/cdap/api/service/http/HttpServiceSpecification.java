@@ -20,8 +20,8 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
 
 /**
- * The specification for {@link HttpServiceHandler}. The runtime arguments for {@link HttpServiceHandler}
- * should be defined using this class.
+ * The specification for {@link HttpServiceHandler}. The runtime arguments for the
+ * HttpServiceHandler should be defined using this class.
  */
 public interface HttpServiceSpecification extends PropertyProvider, ProgramSpecification {
 }

@@ -23,20 +23,23 @@ import java.util.Map;
  */
 public interface HttpServiceConfigurer {
   /**
-   * Sets the Http Service's name.
-   * @param name The HTTP Service name
+   * Sets the HTTP Service's name.
+   *
+   * @param name the HTTP Service name
    */
   void setName(String name);
 
   /**
-   * Sets the Http Service's description.
-   * @param description The HTTP Service description
+   * Sets the HTTP Service's description.
+   *
+   * @param description the HTTP Service description
    */
   void setDescription(String description);
 
   /**
    * Sets the runtime arguments.
-   * @param arguments The HTTP Service runtime arguments.
+   *
+   * @param arguments the HTTP Service runtime arguments
    */
   void setArguments(Map<String, String> arguments);
 }

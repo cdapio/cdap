@@ -37,7 +37,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   private final HttpResponder responder;
 
   /**
-   * Instantiates this class from a {@link HttpResponder}
+   * Instantiates the class from a {@link HttpResponder}
    *
    * @param responder
    */
@@ -46,9 +46,9 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   }
 
   /**
-   * Send json response back to the client with status code 200 OK.
+   * Sends JSON response back to the client with status code 200 OK.
    *
-   * @param object Object that will be serialized into Json and sent back as content.
+   * @param object Object that will be serialized into JSON and sent back as content
    */
   @Override
   public void sendJson(Object object) {
@@ -56,10 +56,10 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   }
 
   /**
-   * Sends json response back to the client.
+   * Sends JSON response back to the client.
    *
-   * @param status Status of the response.
-   * @param object Object that will be serialized into Json and sent back as content.
+   * @param status status of the HTTP response
+   * @param object object that will be serialized into JSON and sent back as content
    */
   @Override
   public void sendJson(int status, Object object) {
@@ -67,12 +67,12 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   }
 
    /**
-    * Sends json response back to the client using the given {@link Gson} object.
+    * Sends JSON response back to the client using the given {@link Gson} object.
     *
-    * @param status Status of the response.
-    * @param object Object that will be serialized into Json and sent back as content.
-    * @param type Type of object.
-    * @param gson Gson object for serialization.
+    * @param status status of the HTTP response
+    * @param object object that will be serialized into JSON and sent back as content
+    * @param type type of object
+    * @param gson Gson object for serialization
    */
   @Override
   public void sendJson(int status, Object object, Type type, Gson gson) {
@@ -80,9 +80,9 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   }
 
   /**
-   * Send a UTF-8 encoded string response back to the http client with a default response status.
+   * Sends a UTF-8 encoded string response back to the http client with a default response status.
    *
-   * @param data string data to be sent back.
+   * @param data string data to be sent back
    */
   @Override
   public void sendString(String data) {
@@ -90,11 +90,11 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   }
 
   /**
-   * Send a string response back to the http client.
+   * Sends a string response back to the http client.
    *
-   * @param status status of the Http response.
-   * @param data string data to be sent back.
-   * @param charset The Charset used to encode the string.
+   * @param status status of the HTTP response
+   * @param data string data to be sent back
+   * @param charset the Charset used to encode the string
    */
   @Override
   public void sendString(int status, String data, Charset charset) {
@@ -103,9 +103,9 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   }
 
   /**
-   * Send only a status code back to client without any content.
+   * Sends only a status code back to client without any content.
    *
-   * @param status status of the Http response.
+   * @param status status of the HTTP response
    */
   @Override
   public void sendStatus(int status) {
@@ -113,10 +113,10 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   }
 
   /**
-   * Send a status code and headers back to client without any content.
+   * Sends a status code and headers back to client without any content.
    *
-   * @param status status of the Http response.
-   * @param headers Headers to send.
+   * @param status status of the HTTP response
+   * @param headers headers to send
    */
   @Override
   public void sendStatus(int status, Multimap<String, String> headers) {
@@ -124,10 +124,10 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   }
 
   /**
-   * Send error message back to the client with the specified status code.
+   * Sends error message back to the client with the specified status code.
    *
-   * @param status Status of the response.
-   * @param errorMessage Error message sent back to the client.
+   * @param status status of the response
+   * @param errorMessage error message sent back to the client
    */
   @Override
   public void sendError(int status, String errorMessage) {
@@ -135,12 +135,12 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   }
 
   /**
-   * Send response back to client.
+   * Sends response back to client.
    *
-   * @param status Status of the response.
-   * @param content Content to be sent back.
-   * @param contentType Type of content.
-   * @param headers Headers to be sent back.
+   * @param status status of the response
+   * @param content content to be sent back
+   * @param contentType type of content
+   * @param headers headers to be sent back
    */
   @Override
   public void send(int status, ByteBuffer content, String contentType, Multimap<String, String> headers) {

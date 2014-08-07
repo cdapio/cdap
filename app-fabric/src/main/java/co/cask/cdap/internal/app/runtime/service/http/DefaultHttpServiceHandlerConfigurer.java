@@ -33,8 +33,9 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
   private Map<String, String> arguments;
 
   /**
-   * Instantiate this class with the given {@link HttpServiceHandler}.
-   * The arguments and description are empty and the name is the handler class name.
+   * Instantiates the class with the given {@link HttpServiceHandler}.
+   * The arguments and description are set to empty values and the name is the handler class name.
+   *
    * @param handler
    */
   public DefaultHttpServiceHandlerConfigurer(HttpServiceHandler handler) {
@@ -45,7 +46,8 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
 
   /**
    * Sets the name.
-   * @param name The HTTP Service name
+   *
+   * @param name the HTTP Service name
    */
   @Override
   public void setName(String name) {
@@ -54,7 +56,8 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
 
   /**
    * Sets the descriptions.
-   * @param description The HTTP Service description
+   *
+   * @param description the HTTP Service description
    */
   @Override
   public void setDescription(String description) {
@@ -63,7 +66,8 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
 
   /**
    * Sets the runtime arguments.
-   * @param arguments The HTTP Service runtime arguments.
+   *
+   * @param arguments the HTTP Service runtime arguments
    */
   @Override
   public void setArguments(Map<String, String> arguments) {
@@ -71,10 +75,9 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
   }
 
   /**
-   * Creates a {@link HttpServiceSpecification} from the parameters
-   * stored in this class.
+   * Creates a {@link HttpServiceSpecification} from the parameters stored in this class.
    *
-   * @return The specification from the parameters stored in this class.
+   * @return a new specification from the parameters stored in this instance
    */
   public HttpServiceSpecification createHttpServiceSpec() {
     return new DefaultHttpServiceSpecification(name, description, arguments);

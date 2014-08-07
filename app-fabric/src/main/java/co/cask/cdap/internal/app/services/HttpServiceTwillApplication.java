@@ -21,7 +21,7 @@ import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
 
 /**
- * Twill Application which contains one runnable which runs a {@link co.cask.http.NettyHttpService}
+ * Twill Application which contains one runnable that runs an HTTP Service
  * with the handlers passed into the constructor.
  */
 public class HttpServiceTwillApplication implements TwillApplication {
@@ -29,10 +29,11 @@ public class HttpServiceTwillApplication implements TwillApplication {
   private final Iterable<HttpServiceHandler> handlers;
 
   /**
-   * Instantiates this class with the given name and {@link HttpServiceHandler}s. The name is the
+   * Instantiates the class with the given name and {@link HttpServiceHandler}s. The name is the
    * name used when announcing this service. The handlers will handle the HTTP requests.
-   * @param name The name of the service which will also be used when announcing this service is announced.
-   * @param handlers The handlers which will handle the HTTP requests.
+   *
+   * @param name the name of the service which will also be used when announcing this service is announced
+   * @param handlers the handlers which will handle the HTTP requests
    */
   public HttpServiceTwillApplication(String name, Iterable<HttpServiceHandler> handlers) {
     this.name = name;
@@ -40,8 +41,9 @@ public class HttpServiceTwillApplication implements TwillApplication {
   }
 
   /**
-   * Configures this Twill application with one runnable, the {@link HttpServiceTwillRunnable}
-   * @return The specification which describes this application.
+   * Configures this Twill application with one runnable, a {@link HttpServiceTwillRunnable}
+   *
+   * @return the specification which describes this application
    */
   @Override
   public TwillSpecification configure() {

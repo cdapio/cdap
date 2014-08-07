@@ -53,22 +53,22 @@ public interface HttpServiceHandler {
    * Configures this HttpServiceHandler with the given {@link HttpServiceConfigurer}.
    * This method is invoked at deployment time.
    *
-   * @param configurer The {@link HttpServiceConfigurer} which is used to configure this Handler
+   * @param configurer the HttpServiceConfigurer which is used to configure this Handler
    */
   void configure(HttpServiceConfigurer configurer);
 
   /**
-   * Invoked when the custom user service that is using this HttpServiceHandler is initialized at runtime.
-   * This method can be used to initialize any user related resources.
+   * Invoked when the Custom User Service using this HttpServiceHandler is initialized.
+   * This method can be used to initialize any user related resources at runtime.
    *
-   * @param context http service runtime context
+   * @param context the HTTP service runtime context
    * @throws Exception
    */
   void initialize(HttpServiceContext context) throws Exception;
 
   /**
-   * Invoked after the custom user service that is using this HttpServiceHandler is destroyed. Use this
-   * method to perform any necessary cleanup.
+   * Invoked after the Custom User Service using this HttpServiceHandler is destroyed.
+   * Use this method to perform any necessary cleanup.
    */
   void destroy();
 }
