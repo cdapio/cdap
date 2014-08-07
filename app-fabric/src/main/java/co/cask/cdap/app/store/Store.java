@@ -269,5 +269,5 @@ public interface Store {
    * @param type type of program.
    * @return true if the program exists, false otherwise.
    */
-  boolean programExists(Id.Program id, ProgramType type);
+  boolean programExists(Id.Program id, ProgramType type) throws OperationException;
 }
