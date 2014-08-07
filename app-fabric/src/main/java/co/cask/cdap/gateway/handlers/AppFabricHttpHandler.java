@@ -681,12 +681,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     Id.Program id = Id.Program.from(accountId, appId, runnableId);
 
-    if (!store.programExists(id, type)) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
-      return;
-    }
 
     try {
+      if (!store.programExists(id, type)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
       Map<String, String> runtimeArgs = store.getRunArguments(id);
       responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
     } catch (Throwable e) {
@@ -713,12 +713,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     Id.Program id = Id.Program.from(accountId, appId, runnableId);
 
-    if (!store.programExists(id, type)) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
-      return;
-    }
 
     try {
+      if (!store.programExists(id, type)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
       Map<String, String> args = decodeArguments(request);
       store.storeRunArguments(id, args);
       responder.sendStatus(HttpResponseStatus.OK);
