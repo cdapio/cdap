@@ -69,8 +69,8 @@ public class RouterMain extends DaemonMain {
       CConfiguration cConf = CConfiguration.create();
 
       tmpDir = Files.createTempDir();
-      KerberosUtil.enable(tmpDir, new File(cConf.get(Constants.Security.CFG_CDAP_KRB_KEYTAB_PATH)),
-                          cConf.get(Constants.Security.CFG_CDAP_KRB_PRINCIPAL));
+      KerberosUtil.enable(tmpDir, new File(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH)),
+                          cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL));
 
       // Initialize ZK client
       String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);

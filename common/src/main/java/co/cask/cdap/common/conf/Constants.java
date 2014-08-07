@@ -442,9 +442,9 @@ public final class Constants {
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
 
     /** Path to the Kerberos keytab file used by CDAP */
-    public static final String CFG_CDAP_KRB_KEYTAB_PATH = "cdap.kerberos.keytab.path";
+    public static final String CFG_CDAP_MASTER_KRB_KEYTAB_PATH = "cdap.master.kerberos.keytab";
     /** Kerberos principal used by CDAP */
-    public static final String CFG_CDAP_KRB_PRINCIPAL = "cdap.kerberos.principal";
+    public static final String CFG_CDAP_MASTER_KRB_PRINCIPAL = "cdap.master.kerberos.principal";
   }
 
   /**

@@ -71,7 +71,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
     this.zookeeper = ZKClients.namespace(zookeeper, parentZNode);
     this.keyCache = new SharedResourceCache<KeyIdentifier>(
       zookeeper, codec, "/keys", ZKACLs.fromSaslPrincipalsAllowAll(
-      conf.get(Constants.Security.CFG_CDAP_KRB_PRINCIPAL)));
+      conf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL)));
   }
 
   @Override

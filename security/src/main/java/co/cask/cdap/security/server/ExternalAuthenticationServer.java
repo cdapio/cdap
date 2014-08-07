@@ -175,8 +175,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       tmpDir = Files.createTempDir();
       KerberosUtil.enable(
-        tmpDir, new File(configuration.get(Constants.Security.CFG_CDAP_KRB_KEYTAB_PATH)),
-        configuration.get(Constants.Security.CFG_CDAP_KRB_PRINCIPAL));
+        tmpDir, new File(configuration.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH)),
+        configuration.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL));
 
       server.setHandler(context);
     } catch (Exception e) {
