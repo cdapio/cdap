@@ -3,19 +3,29 @@
  */
 
 define([], function () {
-  var url = "data/explore/queries";
+  var url = 'data/explore/queries';
 	var Controller = Em.Controller.extend({
+
+    contentDidChange: function() {
+      this.clearAllTooltips();
+
+      setTimeout(function () {
+        $("[data-toggle='tooltip']").tooltip();
+        $("[data-toggle='popover']").popover();
+      }, 500)
+    }.observes('page'),
 
 		load: function () {
 		  var self = this;
-		  C.hideAllTables = function(){
-		    self.hideAllTables();
+		  C.fetchQueries = function(a,b,c){
+		    self.fetchQueries(a,b,c);
 		  };
 
-		  self.limit = 8;
+		  self.limit = 3;
 		  self.offset = null;
 		  self.direction = null;
-      self.largestEver = null;
+      self.largestEver = 0;
+      self.smallestEver = Infinity;
 
 		  this.set('objArr', []);
 		  this.fetchQueries();
@@ -26,11 +36,9 @@ define([], function () {
 		  this.loadDiscoverableDatasets();
 		},
 
-//   Using this currently messes it up.
     clearAllTooltips: function () {
-      console.log('cleared');
       $("[data-toggle='tooltip']").tooltip('hide');
-//      $("[data-toggle='tooltip']").tooltip();
+      $("[data-toggle='popover']").popover('hide');
     },
 
 		loadDiscoverableDatasets: function () {
@@ -41,15 +49,13 @@ define([], function () {
 		      var name = dataset.hive_table;
           var shortName = dataset.spec.name.replace(/.*\./,'');
           self.HTTP.rest('data/explore/datasets/' + shortName + '/schema', function (response, status) {
-            var schemaString = '[{"name":"col_name"},{"name":"data_type"}]'
-            schema = jQuery.parseJSON(schemaString);
             var results = [];
             for(var key in response) {
               if(response.hasOwnProperty(key)){
                 results.push({columns:[key, response[key]]});
               }
             }
-            datasets.pushObject(Ember.Object.create({name:name, shortName:shortName, schema:schema, results:results}));
+            datasets.pushObject(Ember.Object.create({name:name, shortName:shortName, results:results}));
 
             if(datasets.length == 1){
               self.selectDataset(datasets[0]);
@@ -59,7 +65,7 @@ define([], function () {
 		  });
 		},
 
-		toggleTable: function (obj, hideAllFirst, callback) {
+		toggleTable: function (obj, hideAllFirst /* = true */, callback) {
       var self = this;
       hideAllFirst = typeof hideAllFirst !== 'undefined' ? hideAllFirst : true;
       if(hideAllFirst){
@@ -67,10 +73,10 @@ define([], function () {
       }
       if(!obj.get('has_results') || !obj.get('is_active')) {
         setTimeout(function(){
-        $("[id='#" + obj.get('query_handle') + "']").tooltip('show');
-        setTimeout(function(){
-          $("[id='#" + obj.get('query_handle') + "']").tooltip('hide');
-        }, 1000);
+          $("[id='#" + obj.get('query_handle') + "']").tooltip('show');
+          setTimeout(function(){
+            $("[id='#" + obj.get('query_handle') + "']").tooltip('hide');
+          }, 1000);
         }, 200)
         return;
       }
@@ -123,32 +129,26 @@ define([], function () {
 		unload: function () {},
 
     nextPage: function () {
-      var self = this;
-      self.offset = self.smallest;
-      self.cursor = "next";
-      self.clearAllTooltips();
-      setTimeout(function(){
-      self.fetchQueries(true);
-      }, 0)
+      this.offset = this.smallest;
+      this.cursor = "next";
+      this.fetchQueries(true, true);
     },
 
     prevPage: function () {
-      var self = this;
-      self.offset = self.largest;
-      self.cursor = "prev";
-      self.clearAllTooltips()
-      self.fetchQueries(true);
+      this.offset = this.largest;
+      this.cursor = "prev";
+      this.fetchQueries(true, true);
     },
 
-		fetchQueries: function (clearLocalFirst) {
+		fetchQueries: function (clearLocalFirst, userAction) {
 		  var self = this;
 
-      if(self.largest == self.largestEver && self.cursor === "prev"){
+      if(self.largest == self.largestEver && self.cursor === "prev" && userAction){
         var className = self.cursor + "Btn";
-        $("." + className).tooltip('show'); console.log('shown');
+        $("." + className).tooltip('show');
         setTimeout(function(){
           $("." + className).tooltip('hide');
-        }, 5000);
+        }, 2000);
         self.offset = null;
         self.cursor = null;
       }
@@ -163,26 +163,24 @@ define([], function () {
       }
       this.HTTP.rest(url, function (queries, status) {
         if(queries.length == 0){
-          var className = self.cursor + "Btn";
-          console.log(className);
-          $("." + className).tooltip('show');
-          setTimeout(function(){
-            $("." + className).tooltip('hide');
-          }, 5000);
-
+          if(userAction){
+            var className = self.cursor + "Btn";
+            $("." + className).tooltip('show');
+            setTimeout(function(){
+              $("." + className).tooltip('hide');
+            }, 2000);
+          }
           if(self.cursor == "prev"){
             self.offset = null;
             self.cursor = null;
           }
           return;
         }
-        if (queries.length < self.limit) {
-          if(self.cursor == "prev"){
-            self.offset = null;
-            self.cursor = "next";
-            self.fetchQueries();
-            return;
-          }
+        if (queries.length < self.limit && self.cursor == "prev") {
+          self.offset = null;
+          self.cursor = "next";
+          self.fetchQueries();
+          return;
         }
 
         //Clear the local memory of the queries if the list of queries in the response is different than the local version (and our local version isn't empty)
@@ -191,11 +189,6 @@ define([], function () {
         }
 		    var objArr = self.get('objArr');
 
-        queries.sort(function(a, b){
-            if(a.timestamp < b.timestamp) return 1;
-            if(a.timestamp > b.timestamp) return -1;
-            return 0;
-        });
         queries.forEach(function (query) {
           var existingObj = self.find(query.query_handle);
           if (!existingObj) {
@@ -203,13 +196,13 @@ define([], function () {
             newObj.query_handle_hashed = "#" + newObj.query_handle;
             newObj.time_started = new Date(query.timestamp);
             newObj.time_started = newObj.time_started.toLocaleString();
-//            newObj.time_started = newObj.time_started.toString().replace(/\ GMT.*/,'');
+//            newObj.time_started = new Date(query.timestamp);.toString().replace(/\ GMT.*/,'');
 
             existingObj = objArr.pushObject(newObj);
           } else if (   existingObj.get('status')      !== query.status
                      || existingObj.get('has_results') !== query.has_results
                      || existingObj.get('is_active')   !== query.is_active) {
-              //Avoid updating the query object upon every response from the server.
+              //Avoid updating the local query object upon every response from the server.
               //Instead, only update the query object when attributes actually change.
               //Otherwise, emberjs will update the view (even when no attribute really changed) and the update can mess up any dynamic view (toggled tables).
               self.hideTable(existingObj, function () {
@@ -218,26 +211,27 @@ define([], function () {
                 existingObj.set('is_active', query.is_active);
               });
           }
-          if (existingObj.get('status') === 'FINISHED' && existingObj.get('has_results') && existingObj.get('is_active')) {
-            if (!existingObj.get('results')) {
-              self.getPreview(existingObj);
-              self.getSchema(existingObj);
-            }
+          if ( existingObj.get('status') === 'FINISHED'
+               && existingObj.get('has_results')
+               && existingObj.get('is_active')
+               && !existingObj.get('preview_cached') ) {
+            self.getPreview(existingObj);
+            self.getSchema(existingObj);
           }
         });
 
 
         if(objArr.length){
+          //keep track of largest and smallest timestamps for the purposes of page navigation.
           self.largest = objArr[0].timestamp;
           self.smallest = objArr[objArr.length - 1].timestamp;
           if(self.largest > self.largestEver) {
             self.largestEver = self.largest;
           }
+          if(self.smallest < self.smallestEver) {
+            self.smallestEver = self.smallest;
+          }
         }
-        setTimeout(function () {
-          $("[data-toggle='tooltip']").tooltip();
-          $("[data-toggle='popover']").popover();
-        }, 500)
       });
 		},
 
@@ -246,11 +240,15 @@ define([], function () {
       var handle = query.get('query_handle');
       this.HTTP.post('rest/data/explore/queries/' + handle + '/preview', function (response, status) {
         if (status != 200) {
-          query.set('results', []);
+          query.set('preview_cached', []);
           return;
         }
+
         response = jQuery.parseJSON( response );
-        query.set('results', response);
+        if(response.length == 0){
+          query.set('is_active', false);
+        }
+        query.set('preview_cached', response);
       });
     },
 

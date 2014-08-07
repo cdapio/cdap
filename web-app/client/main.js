@@ -476,8 +476,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		  controllerName: 'DataExplore',
       renderTemplate: function () {
         var controller = this.controllerFor('DataExplore');
-        controller.set('page', 'query');
         this.render('DataExploreQuery');
+        controller.set('page', 'query');
       }
     }),
 
@@ -485,8 +485,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		  controllerName: 'DataExplore',
       renderTemplate: function () {
         var controller = this.controllerFor('DataExplore');
-        controller.set('page', 'results');
         this.render('DataExploreResults');
+        controller.set('page', 'results');
       }
     }),
 

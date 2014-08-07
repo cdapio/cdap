@@ -347,7 +347,7 @@
      <hr style="margin-top: 0px"/>
 
 
-
+{{#if objArr}}
     <table class="table" id="query-list-table">
       <thead>
         <th style="width: 25%">Time Started</th>
@@ -371,10 +371,10 @@
             {{#if is_active}}
                 <a data-toggle="tooltip" data-placement="right" title="Download" {{action download this bubbles=false}} class="download-query-results-btn"></a>
             {{ else }}
-              <a data-toggle="tooltip" data-placement="right" title="Already downloaded" class="download-query-results-disabled-btn"></a>
+              <a data-toggle="tooltip" data-placement="right" title="No results" class="download-query-results-disabled-btn"></a>
             {{/if}}
           {{ else }}
-            <a data-toggle="tooltip" data-placement="right" title="No results" class="download-query-results-inactive-btn"></a>
+            <a data-toggle="tooltip" data-placement="right" title="No results" class="download-query-results-disabled-btn"></a>
           {{/if}}
           </td>
         </tr>
@@ -388,10 +388,10 @@
               {{/each}}
             </thead>
             <tbody>
-            {{#each results}}
+            {{#each preview_cached}}
               <tr>
-              {{#each columns}}
-                <td>{{this}}</td>
+              {{#each col in columns}}
+                <td>{{col}}</td>
               {{/each}}
               </tr>
             {{/each}}
@@ -400,10 +400,18 @@
         </div>
     {{/each}}
     <div style="max-width:97%">
-            <button data-toggle="tooltip" title="No more results." data-trigger="manual" style="min-width:40px;" class="btn btn-blank btn-default nextBtn" id="execute-explore-query" {{action 'nextPage' on="click"}}>></button>
-            <button data-toggle="tooltip" title="No more results." data-trigger="manual" style="min-width:40px;" class="btn btn-blank btn-default prevBtn" id="execute-explore-query" {{action 'prevPage' on="click"}}><</button>
+            <button data-toggle="tooltip" title="No more results." data-trigger="manual" data-placement="bottom" style="min-width:40px;" class="btn btn-blank btn-default nextBtn" id="execute-explore-query" {{action 'nextPage' on="click"}}>></button>
+            <button data-toggle="tooltip" title="No more results." data-trigger="manual" data-placement="left" style="min-width:40px;" class="btn btn-blank btn-default prevBtn" id="execute-explore-query" {{action 'prevPage' on="click"}}><</button>
     </div>
   </div>
+    {{ else }}
+    <div class="object-list-empty" style="height:500px;padding-top:20px;">
+        <div class="object-list-empty-content">
+          <div>No Queries.</div>
+          <span>Please submit a query before using this feature.</span>
+        </div>
+      </div>
+  {{/if}}
   </script>
 
 
@@ -436,9 +444,8 @@
         <div id="query-schema">
           <table class="table" id="schema-table">
               <thead>
-                {{#each selectedDataset.schema}}
-                  <th>{{name}}</th>
-                {{/each}}
+                  <th>col_name</th>
+                  <th>data_type</th>
               </thead>
               <tbody>
               {{#each selectedDataset.results}}
@@ -472,12 +479,12 @@
       <div class="panel">
          <ul class="nav nav-pills pull-right" id="explore-sub-menu">
            <li>{{#linkTo DataExplore.Query}}Query{{/linkTo }}</li>
-           <li id="ResultsLink" data-toggle="tooltip" title="View Query Here" data-trigger="manual">{{#linkTo DataExplore.Results}}Results{{/linkTo}}</li>
+           <li id="ResultsLink" data-toggle="tooltip" title="View Results Here" data-trigger="manual">{{#linkTo DataExplore.Results}}Results{{/linkTo}}</li>
          </ul>
          <div style="clear:both"></div>
          <hr style="margin-top: 0px"/>
         <td>
-          <div data-toggle="popover"  title="Error" data-trigger="manual" data-placement="top" data-content="yes" class="text-area-container">
+          <div data-toggle="popover"  title="Error" data-trigger="manual" data-placement="top" class="text-area-container">
           {{view C.Embed.Injector elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
           </div>
           <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
