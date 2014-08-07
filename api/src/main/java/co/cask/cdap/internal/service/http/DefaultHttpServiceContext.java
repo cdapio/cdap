@@ -16,22 +16,50 @@
 
 package co.cask.cdap.internal.service.http;
 
+import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
 
+import java.util.Map;
+
 /**
- *
+ * Default implementation of HttpServiceContext which simply stores and retrieves the
+ * spec provided when this class is instantiated
  */
 public class DefaultHttpServiceContext implements HttpServiceContext {
 
-  HttpServiceSpecification spec;
+  private final HttpServiceSpecification spec;
+  private final Map<String, String> runtimeArgs;
 
-  public DefaultHttpServiceContext(HttpServiceSpecification spec) {
+  /**
+   * Instantiates the context with a spec and a map for the runtime arguments
+   *
+   * @param spec the {@link HttpServiceSpecification} for this context
+   * @param runtimeArgs the runtime arguments as a map of string to string
+   */
+  public DefaultHttpServiceContext(HttpServiceSpecification spec, Map<String, String> runtimeArgs) {
     this.spec = spec;
+    this.runtimeArgs = runtimeArgs;
   }
 
+  /**
+   * @param spec the {@link HttpServiceSpecification} for this context
+   */
+  public DefaultHttpServiceContext(HttpServiceSpecification spec, String[] runtimeArgs) {
+    this.spec = spec;
+    this.runtimeArgs = RuntimeArguments.fromPosixArray(runtimeArgs);
+  }
+
+  /**
+   * @return the {@link HttpServiceSpecification} for this context
+   */
   @Override
   public HttpServiceSpecification getSpecification() {
     return spec;
+  }
+
+  @Override
+  public Map<String, String> getRuntimeArguments() {
+    return runtimeArgs;
   }
 }
