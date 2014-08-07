@@ -40,7 +40,7 @@ import java.util.Set;
  */
 public class MasterTwillApplication implements TwillApplication {
   private static final Logger LOG = LoggerFactory.getLogger(MasterServiceMain.class);
-  private static final String NAME = Constants.Service.REACTOR_SERVICES;
+  private static final String NAME = Constants.Service.MASTER_SERVICES;
 
   private final CConfiguration cConf;
   private final File cConfFile;
