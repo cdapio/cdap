@@ -1731,7 +1731,9 @@ Example
           }
          ]
 
-Note that accessing Services directly via their host and port is not advisable as it bypasses all CDAP security.
+Accessing Services directly via their host and port is not advisable as it bypasses all CDAP security.
+
+Note that this feature is experimental and may be deprecated or removed in future releases.
 
 .. rst2pdf: PageBreak
 
