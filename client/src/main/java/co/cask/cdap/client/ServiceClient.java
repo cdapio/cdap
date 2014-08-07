@@ -68,8 +68,9 @@ public class ServiceClient {
 
   public List<Discoverable> discover(String appId, String serviceId, final String discoverableId) throws Exception {
     URL url = config.resolveURL(String.format("apps/%s/services/%s/discover/%s", appId, serviceId, discoverableId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url);
-
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND,
+                                                                    HttpURLConnection.HTTP_INTERNAL_ERROR,
+                                                                    HttpURLConnection.HTTP_UNAUTHORIZED);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ServiceNotFoundException("Could not discover " + discoverableId);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
