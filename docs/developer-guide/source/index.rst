@@ -14,7 +14,7 @@ Cask Data Application Platform Documentation
    Testing and Debugging </debugging>
    Security </security>
    Operations Guide </operations>
-   HTTP REST API </rest>
+   HTTP RESTful API </rest>
    Java Client API </java_client>
    /javadocs/index
    Licenses and Dependencies </licenses/index>
