@@ -21,12 +21,15 @@ import co.cask.cdap.client.exception.NotFoundException;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -93,12 +96,20 @@ public abstract class ClientTestBase extends SingleNodeTestBase {
 
     String status;
     int numTries = 0;
-    int maxTries = 5;
+    int maxTries = 10;
     do {
       status = programClient.getStatus(appId, programType, programId);
       numTries++;
+      try {
+        TimeUnit.SECONDS.sleep(1);
+      } catch (InterruptedException e) {
+        // NO-OP
+      }
     } while (!status.equals(programStatus) && numTries <= maxTries);
     Assert.assertEquals(programStatus, status);
   }
 
+  protected File createAppJarFile(Class<?> cls) {
+    return new File(AppFabricTestHelper.createAppJar(cls).toURI());
+  }
 }
