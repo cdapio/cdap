@@ -2297,8 +2297,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       try {
         Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
         location.delete();
-      } catch (FileNotFoundException e){
-        LOG.warn("Program jar for program {} not found", programId.toString());
+      } catch (FileNotFoundException e) {
+        LOG.warn("Program jar for program {} not found.", programId.toString(), e);
       }
     }
 
