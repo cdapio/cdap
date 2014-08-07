@@ -681,6 +681,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     Id.Program id = Id.Program.from(accountId, appId, runnableId);
 
+    if (!store.programExists(id, type)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+      return;
+    }
+
     try {
       Map<String, String> runtimeArgs = store.getRunArguments(id);
       responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
@@ -707,6 +712,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
     String accountId = getAuthenticatedAccountId(request);
     Id.Program id = Id.Program.from(accountId, appId, runnableId);
+
+    if (!store.programExists(id, type)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+      return;
+    }
 
     try {
       Map<String, String> args = decodeArguments(request);

@@ -27,6 +27,7 @@ import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
@@ -69,6 +70,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillSpecification;
@@ -589,6 +591,38 @@ public class DefaultStore implements Store {
               flow.getAccountId(), flow.getApplicationId(), flow.getId(), flowletId, oldValue, newValue);
 
     // todo: change stream "used by" flow mapping in metadata?
+  }
+
+  @Override
+  public boolean programExists(final Id.Program id, final ProgramType type) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Boolean>() {
+      @Override
+      public Boolean apply(AppMds mds) throws Exception {
+        ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
+        if (appSpec == null) {
+          return false;
+        }
+        ProgramSpecification programSpecification = null;
+        try {
+          if (type == ProgramType.FLOW) {
+            programSpecification = getFlowSpecOrFail(id, appSpec);
+          } else if (type == ProgramType.PROCEDURE) {
+            programSpecification = getProcedureSpecOrFail(id, appSpec);
+          } else if (type == ProgramType.SERVICE) {
+            programSpecification = getServiceSpecOrFail(id, appSpec);
+          } else if (type == ProgramType.WORKFLOW) {
+            programSpecification = appSpec.getWorkflows().get(id.getId());
+          } else if (type == ProgramType.MAPREDUCE) {
+            programSpecification = appSpec.getMapReduce().get(id.getId());
+          } else if (type == ProgramType.WEBAPP) {
+            // no-op
+          }
+        } catch (Exception e) {
+          programSpecification = null;
+        }
+        return (programSpecification != null);
+      }
+    });
   }
 
   @VisibleForTesting

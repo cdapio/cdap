@@ -262,4 +262,12 @@ public interface Store {
    */
   void changeFlowletSteamConnection(Id.Program flow, String flowletId, String oldValue, String newValue)
     throws OperationException;
+
+  /**
+   * Check if a program exists.
+   * @param id id of program.
+   * @param type type of program.
+   * @return true if the program exists, false otherwise.
+   */
+  boolean programExists(Id.Program id, ProgramType type);
 }
