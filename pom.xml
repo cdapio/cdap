@@ -1174,6 +1174,8 @@
                   <exclude>LICENSE*.txt</exclude>
                   <exclude>*.rst</exclude>
                   <exclude>*.md</exclude>
+                  <exclude>*.sh</exclude>
+                  <exclude>*.bat</exclude>
                   <exclude>logs/**</exclude>
                   <exclude>docs/**</exclude>
                   <exclude>conf/**</exclude>
