@@ -416,10 +416,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       QueryStatus status = fetchStatus(getOperationHandle(handle));
       LOG.trace("Status of handle {} is {}", handle, status);
 
-      if ((status.getStatus() == QueryStatus.OpStatus.FINISHED && !status.hasResults()) ||
-        status.getStatus() == QueryStatus.OpStatus.ERROR) {
-        // No results or error, so can be timed out aggressively
+      // No results or error, so can be timed out aggressively
+      if (status.getStatus() == QueryStatus.OpStatus.FINISHED && !status.hasResults()) {
         timeoutAggresively(handle, getResultSchema(handle), status);
+      } else if (status.getStatus() == QueryStatus.OpStatus.ERROR) {
+        // getResultSchema will fail if the query is in error
+        timeoutAggresively(handle, ImmutableList.<ColumnDesc>of(), status);
       }
       return status;
     } catch (HiveSQLException e) {
