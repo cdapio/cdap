@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -48,11 +48,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ExternalAuthenticationServer extends AbstractExecutionThreadService {
 
-  public static final String HANDLERS = "security.authentication.external.handlers";
-
   private final int port;
   private final int maxThreads;
-  private final HashMap<String, Object> handlers;
+  private final Map<String, Object> handlers;
   private final DiscoveryService discoveryService;
   private final CConfiguration configuration;
   private Cancellable serviceCancellable;
@@ -82,7 +80,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
   @Inject
   public ExternalAuthenticationServer(CConfiguration configuration, DiscoveryService discoveryService,
-                                      @Named("security.handlers") HashMap handlers) {
+                                      @Named("security.handlers") Map<String, Object> handlers) {
     this.port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
     this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;
@@ -137,7 +135,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       ServletContextHandler context = new ServletContextHandler();
       context.setServer(server);
       context.addServlet(HttpServletDispatcher.class, "/");
-      context.addEventListener(new AuthenticationGuiceServletContextListener(handlers, configuration));
+      context.addEventListener(new AuthenticationGuiceServletContextListener(handlers));
       context.setSecurityHandler(authenticationHandler);
 
       SelectChannelConnector connector = new SelectChannelConnector();
@@ -176,7 +174,6 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
   /**
    * Initializes the handlers.
-   * @return
    */
   protected void initHandlers() throws Exception {
     authenticationHandler.init();
@@ -186,6 +183,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   @Override
   protected Executor executor() {
     final AtomicInteger id = new AtomicInteger();
+    //noinspection NullableProblems
     return new Executor() {
       @Override
       public void execute(Runnable runnable) {
