@@ -67,6 +67,9 @@ while names used for *Flows*, *Flowlets* and *Procedures* need to be unique only
 
 Streams for Data Collection
 -------------------------------
+
+.. highlight:: console
+
 Streams are the primary means for bringing data from external systems into CDAP in real-time.
 
 Data can be written to streams using the RESTful API. In this example, a Stream named *logEventStream* is used to 
@@ -233,6 +236,7 @@ Either:
 
   On Windows, run ``~SDK> bin\app-manager.bat stop``
 
+.. highlight:: java
 
 Downloading the Example
 =======================

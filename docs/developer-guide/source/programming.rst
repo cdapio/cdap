@@ -24,6 +24,7 @@ For more information beyond this document, see the
 `Cask.co <http://cask.co>`__ `Developers website <http://cask.co/developers>`_ as well as in your
 CDAP installation directory.
 
+.. highlight:: console
 
 Conventions
 -----------
@@ -107,6 +108,8 @@ compiled, deploy it to the Cask DAP by just dragging and
 dropping it anywhere on the CDAP Console and it will be deployed.
 
 The remainder of this document covers what to put in that JAR file.
+
+.. highlight:: java
 
 .. _applications:
 

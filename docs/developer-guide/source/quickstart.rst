@@ -1,6 +1,8 @@
 .. :author: Cask, Inc.
    :description: Introducing new developers to the Cask Data Application Platform
 
+.. highlight:: console
+
 ================
 CDAP Quick Start
 ================
@@ -104,6 +106,8 @@ may help with problems using *maven*.)
 Open the source file (``ResponseCodeAnalyticsApp.java``) in your preferred editor,
 and make the following changes.
 
+.. highlight:: java
+
 After the line ``private OutputEmitter<Integer> output;`` insert this code::
 
   // Emitter for emitting client IP address to the next Flowlet
@@ -154,6 +158,8 @@ To the class ``StatusCodeProcedure``, add the following ``getClientIPCounts`` me
 
 The new ``getClientIPCounts`` method that will query the Dataset (storage) for the IP address occurrences.
 
+.. highlight:: console
+
 After you make your code changes to ``ResponseCodeAnalyticsApp.java``, you can build the .JAR file by running::
 
   mvn clean package
@@ -188,6 +194,7 @@ and their counts::
 Of course, if you have performed additional injections, your results will be different.
 The total should match the number of injections you made after you restarted the application.
 
+.. highlight:: java
 
 Where to Go Next
 ================

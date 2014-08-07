@@ -148,6 +148,9 @@ and in an actual application that would be common.
 
 Building and Running the Application and Example
 ================================================
+
+.. highlight:: console
+
 In this remainder of this document, we refer to the Cask Data Application Platform runtime as "CDAP", and the
 example code that is running on it as an "Application".
 
@@ -282,6 +285,7 @@ Either:
 
   On Windows, run ``~SDK> bin\app-manager.bat stop``
 
+.. highlight:: java
 
 Downloading the Example
 =======================

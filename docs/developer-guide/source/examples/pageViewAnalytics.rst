@@ -68,6 +68,9 @@ of the Application are tied together by the class ``PageViewAnalyticsApp``::
 
 ``PageViewStore``: Custom Data Storage
 --------------------------------------
+
+.. highlight:: console
+
 The processed data is stored in a custom Dataset, ``PageViewStore``, with these
 methods defined:
 
@@ -225,6 +228,7 @@ Either:
 
   On Windows, run ``~SDK> bin\app-manager.bat stop``
 
+.. highlight:: java
 
 Downloading the Example
 =======================

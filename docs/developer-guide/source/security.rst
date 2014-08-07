@@ -56,6 +56,9 @@ security.server.ssl.keystore.password        <password>
 
 Enabling Access Logging
 ========================
+
+.. highlight:: console
+
 To enable access logging, add the following to ``logback.xml`` (typically under ``/etc/cdap/conf/``) ::
 
     <appender name="AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -146,6 +149,8 @@ such as ``security.authentication.handler.hostname``, will also be used by the h
 These properties, without the prefix, will be used to instantiate the ``javax.security.auth.login.Configuration`` used
 by the ``LoginModule``.
 
+.. highlight:: java
+
 Custom Authentication
 ----------------------
 To provide a custom authentication mechanism you may create your own ``AuthenticationHandler`` by overriding
@@ -180,6 +185,9 @@ additional dependency jars) to the ``security/lib/`` directory within your Cask 
 
 Example Configuration
 =======================
+
+.. highlight:: xml
+
 This is what your ``cdap-site.xml`` could include when configured to enable security, SSL, and
 authentication using LDAP::
 
@@ -255,6 +263,9 @@ authentication using LDAP::
 
 Testing Security
 =================
+
+.. highlight:: console
+
 To ensure that you've configured security correctly, run these simple tests to verify that the
 security components are working as expected:
 
@@ -492,6 +503,7 @@ Comments
 - The ``auth_uri`` value in the error responses indicates where the authentication server(s) are
   running, allowing clients to discover instances from which they can obtain access tokens.
 
+.. highlight:: java
 
 Where to Go Next
 ================

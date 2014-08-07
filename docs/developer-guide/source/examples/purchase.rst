@@ -107,6 +107,9 @@ This procedure has a ``history`` method to obtain the purchase history of a give
 
 Building and Running the Application and Example
 ================================================
+
+.. highlight:: console
+
 In this remainder of this document, we refer to the CDAP runtime as "CDAP", and the
 example code that is running on it as an "Application".
 
@@ -289,6 +292,7 @@ or:
 
   On Windows, run ``~SDK> bin\app-manager.bat stop``
 
+.. highlight:: java
 
 Downloading the Example
 =======================

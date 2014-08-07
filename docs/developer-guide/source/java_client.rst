@@ -2,6 +2,8 @@
  Java Client API
 =================
 
+.. highlight:: console
+
 Introduction
 ============
 
@@ -81,3 +83,5 @@ DatasetClient
 
   // Delete a Dataset
   datasetClient.delete("someDataset");
+  
+  .. highlight:: java

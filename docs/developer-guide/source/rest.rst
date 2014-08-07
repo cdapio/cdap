@@ -1,6 +1,8 @@
 .. :author: Cask, Inc.
    :description: HTTP RESTful Interface to the Cask DAP
 
+.. highlight:: console
+
 =====================
 CDAP HTTP RESTful API
 =====================
@@ -9,6 +11,8 @@ CDAP HTTP RESTful API
 .. rst2pdf: config _templates/pdf-config
 .. rst2pdf: stylesheets _templates/pdf-stylesheet
 .. rst2pdf: build ../build-pdf/
+
+.. highlight:: console
 
 Introduction
 ============
@@ -2467,6 +2471,7 @@ HTTP Responses
    * - ``200 OK``
      - The event successfully called the method, and the body contains the results
 
+.. highlight:: java
 
 .. rst2pdf: CutStart
 

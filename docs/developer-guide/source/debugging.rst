@@ -213,6 +213,8 @@ For more information, see `Attaching a Debugger`_.
 Debugging an Application in Distributed DAP
 -----------------------------------------------
 
+.. highlight:: console
+
 In distributed mode, an application does not run in a single JVM. Instead, its programs
 are dispersed over multiple—if not many—containers in the Hadoop cluster. There is no 
 single place to debug the entire application. 
@@ -280,6 +282,8 @@ The corresponding HTTP requests for the ``RetrieveCounts`` Procedure of this app
   GET <base-url>/apps/WordCount/procedures/RetrieveCounts/live-info
 
 Analysis of the response would give you the host names and debugging ports for all instances of the Procedure.
+
+.. highlight:: java
 
 Attaching a Debugger
 --------------------
@@ -430,6 +434,9 @@ system can become slow if such a situation occurs.
 
 Dumping the Transaction Manager
 ...............................
+
+.. highlight:: console
+
 CDAP comes bundled with a script that allows you to dump the state of the internal
 transaction manager into a local file to allow further investigation. If your DAP Instance
 tends to become slow, you can use this tool to detect the incriminating transactions.
@@ -474,6 +481,8 @@ use this command to invalidate it::
 Invalidating a transaction when we know for sure that its writes should
 be invalidated is useful, because those writes will then be removed
 from the concerned Tables.
+
+.. highlight:: java
 
 Where to Go Next
 ================

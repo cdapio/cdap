@@ -450,8 +450,8 @@ Introduction
 ------------
 
 The Command-Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
-similar to HBase shell or ``bash``. It is located within the SDK, at ``bin/cdap-cli`` as a bash script. It is also
-packaged in the SDK as a JAR file, at ``bin/cdap-cli.jar``.
+similar to HBase shell or ``bash``. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
+script or a Windows ``.bat`` file. It is also packaged in the SDK as a JAR file, at ``bin/cdap-cli.jar``.
 
 Usage
 -----
@@ -461,7 +461,16 @@ The CLI may be used in two ways: interactive mode and non-interactive mode.
 Interactive Mode
 ----------------
 
-To run the CLI in interactive mode, run the ``cdap-cli`` executable with no arguments from the terminal.
+.. highlight:: console
+
+To run the CLI in interactive mode, run the ``cdap-cli`` executable with no arguments from the terminal::
+
+  $ /bin/cdap-cli
+
+or, on Windows::
+
+  ~SDK> bin\cdap-cli.bat
+
 The executable should bring you into a shell, with this prompt::
 
   cdap (localhost:10000)>
@@ -556,6 +565,8 @@ Here are all of the available commands:
 - ``stop mapreduce <program-id>``: Stops a MapReduce job
 - ``truncate dataset instance``: Truncates a Dataset
 - ``truncate stream``: Truncates a Stream
+
+.. highlight:: java
 
 Logging
 =======
@@ -678,6 +689,8 @@ the default “Hello” to a customized “Good Morning” by passing a runtime 
 Scaling Instances
 =================
 
+.. highlight:: console
+
 Scaling Flowlets
 ----------------
 You can query and set the number of instances executing a given Flowlet
@@ -741,6 +754,8 @@ in the Flow *WhoFlow* of the application *HelloWorld*::
 with the arguments as a JSON string in the body::
 
   { "instances" : 2 }
+
+.. highlight:: java
 
 Where to Go Next
 ================
