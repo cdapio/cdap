@@ -192,7 +192,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
    */
   @PUT
   @Path("/data/datasets/{name}")
-  public void createOrUpdate(HttpRequest request, final HttpResponder responder,
+  public void create(HttpRequest request, final HttpResponder responder,
                   @PathParam("name") String name) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
 
@@ -210,7 +210,9 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
 
-    createDatasetInstance(creationProperties, name, responder, "create");
+    if (!createDatasetInstance(creationProperties, name, responder, "create")) {
+      return;
+    }
 
     // Enable ad-hoc exploration of dataset
     // Note: today explore enable is not transactional with dataset create - REACTOR-314
@@ -257,7 +259,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       responder.sendError(HttpResponseStatus.CONFLICT, message);
       return;
     }
-    createDatasetInstance(creationProperties, name, responder, "update");
+
+    if (!createDatasetInstance(creationProperties, name, responder, "update")) {
+      return;
+    }
     // Enable ad-hoc exploration of dataset
     // Note: today explore enable is not transactional with dataset create - REACTOR-314
 
@@ -276,7 +281,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     executeAdmin(request, responder, name, "upgrade");
   }
 
-  private void createDatasetInstance(DatasetInstanceConfiguration creationProperties,
+  private boolean createDatasetInstance(DatasetInstanceConfiguration creationProperties,
                                      String name, HttpResponder responder, String operation) {
     DatasetTypeMeta typeMeta = implManager.getTypeInfo(creationProperties.getTypeName());
     if (typeMeta == null) {
@@ -284,9 +289,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                                      operation, name, creationProperties.getTypeName());
       LOG.warn(message);
       responder.sendError(HttpResponseStatus.NOT_FOUND, message);
-      return;
+      return false;
     }
-
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     DatasetSpecification spec;
     try {
@@ -299,6 +303,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       throw new RuntimeException(msg, e);
     }
     instanceManager.add(spec);
+    return true;
   }
 
   @DELETE
