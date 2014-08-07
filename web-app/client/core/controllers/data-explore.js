@@ -6,13 +6,16 @@ define([], function () {
   var url = 'data/explore/queries';
 	var Controller = Em.Controller.extend({
 
-    contentDidChange: function() {
-      this.clearAllTooltips();
-
+    bindTooltips: function() {
       setTimeout(function () {
         $("[data-toggle='tooltip']").tooltip();
         $("[data-toggle='popover']").popover();
       }, 500)
+    },
+
+    contentDidChange: function() {
+      this.clearAllTooltips();
+      this.bindTooltips();
     }.observes('page'),
 
 		load: function () {
@@ -20,7 +23,6 @@ define([], function () {
 		  C.fetchQueries = function(a,b,c){
 		    self.fetchQueries(a,b,c);
 		  };
-
 		  self.limit = 3;
 		  self.offset = null;
 		  self.direction = null;
@@ -71,7 +73,7 @@ define([], function () {
       if(hideAllFirst){
         self.hideAllTables(obj);
       }
-      if(!obj.get('has_results') || !obj.get('is_active')) {
+      if(!obj.get('preview_cached') || !obj.get('has_results') || !obj.get('is_active')) {
         setTimeout(function(){
           $("[id='#" + obj.get('query_handle') + "']").tooltip('show');
           setTimeout(function(){
@@ -140,17 +142,26 @@ define([], function () {
       this.fetchQueries(true, true);
     },
 
+    pageNavTooltip: function () {
+      var className = this.cursor + "Btn";
+      $("." + className).tooltip('show');
+      setTimeout(function(){
+        $("." + className).tooltip('hide');
+      }, 2000);
+    },
+
 		fetchQueries: function (clearLocalFirst, userAction) {
 		  var self = this;
 
-      if(self.largest == self.largestEver && self.cursor === "prev" && userAction){
-        var className = self.cursor + "Btn";
-        $("." + className).tooltip('show');
-        setTimeout(function(){
-          $("." + className).tooltip('hide');
-        }, 2000);
-        self.offset = null;
-        self.cursor = null;
+      if(self.largest == self.largestEver){
+        //If the user is trying to go to a previous page when already viewing the most recent query:
+        if(self.cursor === "prev" && userAction){
+          self.pageNavTooltip();
+        }
+        if(!userAction){
+          self.offset = null;
+          self.cursor = null;
+        }
       }
 
 		  var url = 'data/explore/queries';
@@ -164,21 +175,16 @@ define([], function () {
       this.HTTP.rest(url, function (queries, status) {
         if(queries.length == 0){
           if(userAction){
-            var className = self.cursor + "Btn";
-            $("." + className).tooltip('show');
-            setTimeout(function(){
-              $("." + className).tooltip('hide');
-            }, 2000);
-          }
-          if(self.cursor == "prev"){
-            self.offset = null;
-            self.cursor = null;
+            //When trying to go to next page, and there are no results there:
+            self.pageNavTooltip();
           }
           return;
         }
+
+        //If the user is going to a previous page, and < limit number of queries are being returned (because new queries were created)
         if (queries.length < self.limit && self.cursor == "prev") {
           self.offset = null;
-          self.cursor = "next";
+          self.cursor = 'next';
           self.fetchQueries();
           return;
         }
@@ -232,19 +238,15 @@ define([], function () {
             self.smallestEver = self.smallest;
           }
         }
+        self.bindTooltips();
       });
 		},
 
     getPreview: function (query) {
       var self = this;
       var handle = query.get('query_handle');
-      this.HTTP.post('rest/data/explore/queries/' + handle + '/preview', function (response, status) {
-        if (status != 200) {
-          query.set('preview_cached', []);
-          return;
-        }
-
-        response = jQuery.parseJSON( response );
+      this.HTTP.post('rest/data/explore/queries/' + handle + '/preview', function (response) {
+        response = jQuery.parseJSON(response);
         if(response.length == 0){
           query.set('is_active', false);
         }

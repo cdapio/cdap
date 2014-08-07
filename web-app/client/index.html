@@ -369,12 +369,12 @@
           <td style="width: 15%" class="center-align">
           {{#if has_results}}
             {{#if is_active}}
-                <a data-toggle="tooltip" data-placement="right" title="Download" {{action download this bubbles=false}} class="download-query-results-btn"></a>
+                <a data-toggle="tooltip" data-placement="right" title="Download" trigger="hover" {{action download this bubbles=false}} class="download-query-results-btn"></a>
             {{ else }}
-              <a data-toggle="tooltip" data-placement="right" title="No results" class="download-query-results-disabled-btn"></a>
+              <a data-toggle="tooltip" data-placement="right" title="No results" trigger="hover" class="download-query-results-disabled-btn"></a>
             {{/if}}
           {{ else }}
-            <a data-toggle="tooltip" data-placement="right" title="No results" class="download-query-results-disabled-btn"></a>
+            <a data-toggle="tooltip" data-placement="right" title="No results" trigger="hover" class="download-query-results-disabled-btn"></a>
           {{/if}}
           </td>
         </tr>
@@ -399,7 +399,7 @@
           </table>
         </div>
     {{/each}}
-    <div style="max-width:97%">
+    <div style="max-width:100%">
             <button data-toggle="tooltip" title="No more results." data-trigger="manual" data-placement="bottom" style="min-width:40px;" class="btn btn-blank btn-default nextBtn" id="execute-explore-query" {{action 'nextPage' on="click"}}>></button>
             <button data-toggle="tooltip" title="No more results." data-trigger="manual" data-placement="left" style="min-width:40px;" class="btn btn-blank btn-default prevBtn" id="execute-explore-query" {{action 'prevPage' on="click"}}><</button>
     </div>
