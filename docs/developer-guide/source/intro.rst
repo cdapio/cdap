@@ -258,10 +258,10 @@ do basic aggregation and realtime analysis. Advanced, off-line
 aggregation is performed by `MapReduce <programming.html#mapreduce>`__ and 
 `Workflow <programming.html#workflows>`__ components. 
 `Procedures <programming.html#procedures>`__ provide
-stored queries. The application can now be scaled independent of the underlying
-infrastructure.
+stored queries, with `Ad-hoc Queries <query.html>`__ accessing the data using SQL. 
+The application can now be scaled independent of the underlying infrastructure.
 
-.. image:: _images/ArchitectureDiagram_3.png
+.. image:: _images/ArchitectureDiagram_4.png
    :width: 6in
    :align: center
 
