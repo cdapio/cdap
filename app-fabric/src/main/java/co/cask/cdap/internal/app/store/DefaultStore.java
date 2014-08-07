@@ -85,6 +85,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 
 /**
@@ -616,9 +617,13 @@ public class DefaultStore implements Store {
             programSpecification = appSpec.getMapReduce().get(id.getId());
           } else if (type == ProgramType.WEBAPP) {
             // no-op
+          } else {
+            throw new IllegalArgumentException("Invalid ProgramType");
           }
-        } catch (Exception e) {
+        } catch (NoSuchElementException e) {
           programSpecification = null;
+        } catch (Exception e) {
+          Throwables.propagate(e);
         }
         return (programSpecification != null);
       }
