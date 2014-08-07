@@ -1,5 +1,3 @@
-.. mirror of client/README.rst
-
 =================
  Java Client API
 =================
@@ -15,9 +13,9 @@ Maven Dependency
 To use the Java Client API in your project, add this Maven dependency::
 
   <dependency>
-    <groupId>com.continuuity</groupId>
+    <groupId>co.cask.cdap</groupId>
     <artifactId>client</artifactId>
-    <version>${reactor.version}</version>
+    <version>${cdap.version}</version>
   </dependency>
 
 Components
@@ -45,10 +43,10 @@ ApplicationClient
 
 ::
 
-  // Interact with the Reactor instance located at example.com, port 10000
-  ReactorClientConfig clientConfig = new ReactorClientConfig("example.com", 10000);
+  // Interact with the CDAP server located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
 
-  // Construct the client used to interact with Reactor
+  // Construct the client used to interact with the CDAP server
   ApplicationClient appClient = new ApplicationClient(clientConfig);
 
   // Fetch the list of applications
@@ -69,13 +67,13 @@ DatasetClient
 
 ::
 
-  // Interact with the Reactor instance located at example.com, port 10000
-  ReactorClientConfig clientConfig = new ReactorClientConfig("example.com", 10000);
+  // Interact with the CDAP server located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
 
-  // Construct the client used to interact with Reactor
+  // Construct the client used to interact with the CDAP server
   DatasetClient datasetClient = new DatasetClient(clientConfig);
 
-  // Fetch list of Datasets [common]
+  // Fetch list of Datasets
   List<DatasetSpecification> datasets = datasetClient.list();
 
   // Create a Dataset

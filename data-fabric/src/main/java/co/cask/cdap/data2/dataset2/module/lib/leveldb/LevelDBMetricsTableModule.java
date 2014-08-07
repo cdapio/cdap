@@ -18,7 +18,7 @@ package co.cask.cdap.data2.dataset2.module.lib.leveldb;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.data2.dataset.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBMetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBMetricsTableDefinition;
 

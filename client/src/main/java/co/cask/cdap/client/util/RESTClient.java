@@ -44,7 +44,7 @@ public class RESTClient {
   /**
    * Creates a default {@link RESTClient}.
    *
-   * @param config {@link ClientConfig} that provides information about the Reactor host and timeouts
+   * @param config {@link ClientConfig} that configures hostname and timeouts
    * @return {@link RESTClient} instance
    */
   public static RESTClient create(ClientConfig config) {
