@@ -25,11 +25,8 @@ import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
+import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.Workflow;
-import com.google.common.util.concurrent.Service;
-import org.apache.twill.api.ResourceSpecification;
-import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillRunnable;
 
 /**
  * Configures a Reactor Application.
@@ -57,7 +54,7 @@ public interface ApplicationConfigurer {
   void addStream(Stream stream);
 
   /**
-   * Adds a {@link DatasetModule} to be deployed automatically (if absent in the Reactor) during application 
+   * Adds a {@link DatasetModule} to be deployed automatically (if absent in the Reactor) during application
    * deployment.
    *
    * @param moduleName Name of the module to deploy
@@ -128,6 +125,13 @@ public interface ApplicationConfigurer {
    * @param mapReduce The {@link MapReduce MapReduce job} to include in the Application
    */
   void addMapReduce(MapReduce mapReduce);
+
+  /**
+   * Adds a {@link Spark} job to the Application.
+   *
+   * @param spark The {@link Spark} job to include in the Application
+   */
+  void addSpark(Spark spark);
 
   /**
    * Adds a {@link Workflow} to the Application.

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.api;
 
-import co.cask.cdap.api.data.DataSetContext;
 import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.util.Map;
@@ -24,7 +23,7 @@ import java.util.Map;
 /**
  * This interface represents a context for a processor or elements of a processor.
  */
-public interface RuntimeContext extends DataSetContext {
+public interface RuntimeContext {
   /**
    * @return A map of argument key and value.
    */
