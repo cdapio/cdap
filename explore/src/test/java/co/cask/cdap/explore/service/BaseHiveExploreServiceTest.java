@@ -70,6 +70,7 @@ public class BaseHiveExploreServiceTest {
   protected static ExploreClient exploreClient;
 
   protected static Injector injector;
+
   protected static void startServices(CConfiguration cConf) throws Exception {
     injector = Guice.createInjector(createInMemoryModules(cConf, new Configuration()));
     transactionManager = injector.getInstance(TransactionManager.class);
