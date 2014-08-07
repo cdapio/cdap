@@ -19,7 +19,6 @@ package co.cask.cdap.security.server;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.KerberosUtil;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -29,7 +28,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
@@ -42,9 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -177,8 +172,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       tmpDir = Files.createTempDir();
       KerberosUtil.enable(
-        tmpDir, new File(configuration.get(Constants.Security.CFG_EXTERNAL_AUTH_SERVER_KEYTAB_PATH)),
-        configuration.get(Constants.Security.CFG_EXTERNAL_AUTH_SERVER_PRINCIPAL));
+        tmpDir, new File(configuration.get(Constants.Security.CFG_CDAP_KRB_KEYTAB_PATH)),
+        configuration.get(Constants.Security.CFG_CDAP_KRB_PRINCIPAL));
 
       server.setHandler(context);
     } catch (Exception e) {

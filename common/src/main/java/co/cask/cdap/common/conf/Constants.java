@@ -437,15 +437,10 @@ public final class Constants {
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
 
-    /** Path to the Kerberos keytab file by auth server */
-    public static final String CFG_EXTERNAL_AUTH_SERVER_KEYTAB_PATH = "security.external.auth.server.keytab.path";
-    /** Path to the Kerberos principal used by auth server and router */
-    public static final String CFG_EXTERNAL_AUTH_SERVER_PRINCIPAL = "security.external.auth.server.principal";
-
-    /** Path to the Kerberos keytab file by router */
-    public static final String CFG_ROUTER_KEYTAB_PATH = "security.router.keytab.path";
-    /** Path to the Kerberos principal used by auth server and router */
-    public static final String CFG_ROUTER_PRINCIPAL = "security.router.principal";
+    /** Path to the Kerberos keytab file used by CDAP */
+    public static final String CFG_CDAP_KRB_KEYTAB_PATH = "cdap.kerberos.keytab.path";
+    /** Kerberos principal used by CDAP */
+    public static final String CFG_CDAP_KRB_PRINCIPAL = "cdap.kerberos.principal";
   }
 
   /**
