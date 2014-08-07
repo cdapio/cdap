@@ -196,73 +196,61 @@ define([], function () {
 
 		},
 
-		addOneInstance: function () {
-			this.confirm('Add 1 instance to ', +1);
-		},
+    changeInstances: function () {
+      var inputStr = this.get('instancesInput');
+      var input = parseInt(inputStr);
 
-		removeOneInstance: function () {
+      if(!inputStr || inputStr.length === 0){
+        C.Modal.show('Change Instances','Use the submit button to change the number of instances requested.');
+        return;
+      }
 
-			if (this.get('model').get('instances') > 1) {
-				this.confirm('Remove 1 instance from ', -1);
-			} else {
+      if(isNaN(input) || isNaN(inputStr)){
+        C.Modal.show('Incorrect Input', 'Instance count can only be set to numbers (between 1 and 100).');
+        return;
+      }
 
-				C.Modal.show(
-					"Instances Error",
-					'Sorry, this Flowlet is only running one instance and cannot be reduced.'
-				);
+      if(input < 1 || input > 100) {
+        C.Modal.show('Instances Requested out of bounds', 'Please select an instance count (between 1 and 100)');
+        return;
+      }
 
-			}
-
-		},
-
-		confirm: function (message, value) {
-
-			var model = this.get('model');
-			var name = model.name;
 			var self = this;
-
 			C.Modal.show(
 				"Flowlet Instances",
-				message + '"' + name + '" flowlet?',
+				'Change instances to ' + input + ' for ' + '"' + this.get('model').name + '" flowlet?',
 				function () {
-					self.addInstances(value, function () {
-
+					self.addInstances(input, function () {
+					  self.set('instancesInput', '');
 					});
 				});
+    },
 
-		},
-
-		addInstances: function (value, done) {
+		addInstances: function (instancesRequested, done) {
 
 			var flow = this.get('controllers').get('FlowStatus').get('model');
 			var model = this.get('model');
 
-			var instances = model.get('instances') + value;
+      var app = flow.get('app');
+      var flow = flow.get('name');
+      var flowlet = model.name;
 
-			if (instances < 1 || instances > 64) {
-				done('Cannot set instances. Please select an instance count > 1 and <= 64');
-			} else {
+      this.HTTP.put('rest', 'apps', app, 'flows', flow, 'flowlets', flowlet, 'instances', {
+        data: '{"instances":' + instancesRequested + '}'
+      }, function (response) {
 
-				var app = flow.get('app');
-				var flow = flow.get('name');
-				var version = flow.version || -1;
-				var flowlet = model.name;
+        if (response.error) {
+          C.Modal.show('Container Error', response.error);
+        } else {
+          model.set('instances', instancesRequested);
+        }
 
-				this.HTTP.put('rest', 'apps', app, 'flows', flow, 'flowlets', flowlet, 'instances', {
-					data: '{"instances":' + instances + '}'
-				}, function (response) {
+        if(typeof done === 'function'){
+          done();
+        }
 
-					if (response.error) {
-						C.Modal.show('Container Error', response.error);
-					} else {
-						model.set('instances', instances);
-					}
-
-				});
-
-			}
-		}
-
+      });
+		},
 	});
 
 	Controller.reopenClass({

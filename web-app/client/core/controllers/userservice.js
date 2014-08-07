@@ -19,6 +19,7 @@ define(['core/controllers/services'], function (servicesController) {
       var parent = this.get('needs')[0];
       var model = this.get('controllers').get(parent).get('model');
 
+
       this.interval = setInterval(function () {
         if (model) {
           model.update(self.HTTP);

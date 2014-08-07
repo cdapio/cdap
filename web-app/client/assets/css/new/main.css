@@ -1634,7 +1634,10 @@ span.log-icon.complete {
   background-image: url('/assets/img/plus.png');
 }
 
-
+#instancesInput {
+   text-align:left;
+   height: 29px;
+}
 /*
  * Bootstrap Overrides
  */

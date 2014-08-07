@@ -38,6 +38,15 @@ define(['core/models/program'], function (Program) {
 
 		},
 
+    instancesString: function () {
+      if (C.get('isLocal')) {
+        return this.instances + ' instance' + this.get('pluralInstances');
+      } else {
+        return this.containersLabel + ' instance' + this.get('pluralInstances') + ' (' + this.instances  + ' Requested)';
+      }
+    }.property('instances'),
+
+
 		doubleCount: function () {
 			return 'Add ' + this.instances;
 		}.property().cacheable(false),

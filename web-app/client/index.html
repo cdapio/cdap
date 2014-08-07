@@ -1188,13 +1188,8 @@
           <div class="popup-close" {{action close on="click"}}>×</div>
 
             <div class="btn-group pull-right" style="margin-top: 4px;">
-              <button class="btn btn-blank" {{action "addOneInstance" on="click"}}>+</button>
-              <button class="btn btn-blank" {{action "removeOneInstance" on="click"}}>-</button>
-              {{#if C.isLocal}}
-                <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
-              {{else}}
-                <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{model.containersLabel}} instance{{model.pluralInstances}} ({{model.instances}} Requested)</button>
-              {{/if}}
+              <button class="btn btn-blank" {{action "changeInstances" on="click"}}>Submit</button>
+              {{input id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instancesString value=instancesInput}}
             </div>
 
           <div class="popup-icon"></div>
