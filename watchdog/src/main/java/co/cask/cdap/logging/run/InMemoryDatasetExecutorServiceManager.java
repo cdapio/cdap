@@ -17,12 +17,12 @@
 package co.cask.cdap.logging.run;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.AbstractInMemoryReactorServiceManager;
+import co.cask.cdap.common.twill.AbstractInMemoryMasterServiceManager;
 
 /**
  *  In memory dataset executor service manager.
  */
-public class InMemoryDatasetExecutorServiceManager extends AbstractInMemoryReactorServiceManager {
+public class InMemoryDatasetExecutorServiceManager extends AbstractInMemoryMasterServiceManager {
 
   @Override
   public String getDescription() {

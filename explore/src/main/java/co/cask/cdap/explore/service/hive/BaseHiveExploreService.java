@@ -155,8 +155,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     LOG.info("Starting {}...", Hive13ExploreService.class.getSimpleName());
     cliService.init(getHiveConf());
     cliService.start();
-    // TODO: Figure out a way to determine when cliService has started successfully - REACTOR-254
-    TimeUnit.SECONDS.sleep(5);
 
     // Schedule the cache cleanup
     scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {

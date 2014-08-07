@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.increment.hbase96;
 
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTable;
-import co.cask.cdap.data2.transaction.coprocessor.ReactorTransactionStateCacheSupplier;
+import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import com.continuuity.tephra.coprocessor.TransactionStateCache;
 import com.continuuity.tephra.hbase96.Filters;
 import com.continuuity.tephra.persist.TransactionSnapshot;
@@ -94,7 +94,7 @@ public class IncrementHandler extends BaseRegionObserver {
     if (parts.length > 0) {
       tableNamespace = parts[0];
     }
-    return new ReactorTransactionStateCacheSupplier(tableNamespace, env.getConfiguration());
+    return new DefaultTransactionStateCacheSupplier(tableNamespace, env.getConfiguration());
   }
 
   @Override

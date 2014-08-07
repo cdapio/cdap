@@ -18,7 +18,7 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
@@ -28,10 +28,10 @@ import java.net.URI;
  * We hide internal namespacing of datasets from user, so we want to namespace it here.
  */
 public class DatasetsProxyRule implements ProxyRule {
-  private final ReactorDatasetNamespace namespace;
+  private final DefaultDatasetNamespace namespace;
 
   public DatasetsProxyRule(CConfiguration conf) {
-    this.namespace = new ReactorDatasetNamespace(conf, Namespace.USER);
+    this.namespace = new DefaultDatasetNamespace(conf, Namespace.USER);
   }
 
   @Override

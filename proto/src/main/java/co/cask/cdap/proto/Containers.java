@@ -65,6 +65,21 @@ public interface Containers {
       this.debugPort = debugPort;
     }
 
+    @Override
+    public String toString() {
+      final StringBuilder sb = new StringBuilder("ContainerInfo{");
+      sb.append("type='").append(type).append('\'');
+      sb.append(", name='").append(name).append('\'');
+      sb.append(", instance=").append(instance);
+      sb.append(", container='").append(container).append('\'');
+      sb.append(", host='").append(host).append('\'');
+      sb.append(", memory=").append(memory);
+      sb.append(", virtualCores=").append(virtualCores);
+      sb.append(", debugPort=").append(debugPort);
+      sb.append('}');
+      return sb.toString();
+    }
+
     public ContainerType getType() {
       return ContainerType.valueOf(type.toUpperCase());
     }
