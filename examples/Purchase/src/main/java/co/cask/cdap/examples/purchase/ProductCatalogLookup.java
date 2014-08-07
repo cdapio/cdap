@@ -37,9 +37,4 @@ public final class ProductCatalogLookup extends AbstractHttpServiceHandler {
     // send string Cat-<id> with 200 OK response.
     responder.sendString(200, "Cat-" + id, Charsets.UTF_8);
   }
-
-  @Override
-  public void configure() {
-    // no-op
-  }
 }
