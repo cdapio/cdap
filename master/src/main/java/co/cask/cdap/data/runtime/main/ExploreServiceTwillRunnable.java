@@ -66,7 +66,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
     Configuration hConf = getConfiguration();
 
     // NOTE: twill client will try to load all the classes present here - including hive classes but it
-    // will fail since Hive classes are not in Reactor Master classpath, and ignore those classes silently
+    // will fail since Hive classes are not in master classpath, and ignore those classes silently
     injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(), new ZKClientModule(),

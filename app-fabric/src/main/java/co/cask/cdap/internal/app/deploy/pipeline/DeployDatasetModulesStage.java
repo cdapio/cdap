@@ -92,7 +92,6 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLoca
           LOG.info("Not deploying module " + moduleName + " as it already exists");
         }
       }
-    } catch (Exception e) {
     } finally {
       try {
         DirUtils.deleteDirectoryContents(unpackedLocation);

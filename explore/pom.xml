@@ -72,7 +72,7 @@
       <artifactId>hive-metastore</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>hive-exec</artifactId>
     </dependency>
     <dependency>
