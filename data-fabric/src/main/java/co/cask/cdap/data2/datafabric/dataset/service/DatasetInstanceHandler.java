@@ -32,7 +32,9 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.continuuity.tephra.TxConstants;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
@@ -47,6 +49,7 @@ import java.io.Reader;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -97,7 +100,21 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       && (queryParams.get("explorable").contains("true") || queryParams.get("explorable").contains("false"));
     boolean getExplorableDatasets = explorableDatasetsOption && queryParams.get("explorable").contains("true");
 
-    Collection<DatasetSpecification> datasetSpecifications = instanceManager.getAll();
+    Collection<DatasetSpecification> tempdatasetSpecifications = instanceManager.getAll();
+    Collection<DatasetSpecification> datasetSpecifications = Lists.newArrayList();
+
+    for (DatasetSpecification spec : tempdatasetSpecifications) {
+      if (spec.getProperties().containsKey(TxConstants.PROPERTY_TTL)) {
+        datasetSpecifications.add(DatasetSpecification.builder(spec.getName(), spec.getType())
+                                    .properties(spec.getProperties())
+                                    .property(TxConstants.PROPERTY_TTL, String.valueOf
+                                      (TimeUnit.MILLISECONDS.toSeconds
+                                        (Long.parseLong(spec.getProperty(TxConstants.PROPERTY_TTL)))))
+                                    .build());
+      } else {
+        datasetSpecifications.add(spec);
+      }
+    }
 
     if (explorableDatasetsOption) {
       try {
@@ -180,6 +197,14 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
+      //Change TTL to seconds
+      if (spec.getProperties().containsKey(TxConstants.PROPERTY_TTL)) {
+        spec = DatasetSpecification.builder(spec.getName(), spec.getType())
+          .properties(spec.getProperties())
+          .property(TxConstants.PROPERTY_TTL, String.valueOf
+            (TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(spec.getProperty(TxConstants.PROPERTY_TTL)))))
+          .build();
+      }
       DatasetMeta info = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null);
       responder.sendJson(HttpResponseStatus.OK, info);
     }
@@ -197,6 +222,12 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
 
     DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
+
+    if (creationProperties.getProperties().containsKey(TxConstants.PROPERTY_TTL)) {
+      long ttl = TimeUnit.SECONDS.toMillis(Long.parseLong
+        (creationProperties.getProperties().get(TxConstants.PROPERTY_TTL)));
+      creationProperties.getProperties().put(TxConstants.PROPERTY_TTL, String.valueOf(ttl));
+    }
 
     LOG.info("Creating dataset {}, type name: {}, typeAndProps: {}",
              name, creationProperties.getTypeName(), creationProperties.getProperties());
@@ -238,6 +269,12 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
 
     DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
+
+    if (creationProperties.getProperties().containsKey(TxConstants.PROPERTY_TTL)) {
+      long ttl = TimeUnit.SECONDS.toMillis(Long.parseLong
+        (creationProperties.getProperties().get(TxConstants.PROPERTY_TTL)));
+      creationProperties.getProperties().put(TxConstants.PROPERTY_TTL, String.valueOf(ttl));
+    }
 
     LOG.info("Update dataset {}, type name: {}, typeAndProps: {}",
              name, creationProperties.getTypeName(), creationProperties.getProperties());
