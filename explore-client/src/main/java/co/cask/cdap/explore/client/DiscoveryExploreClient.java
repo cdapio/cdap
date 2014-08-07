@@ -58,7 +58,7 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
     EndpointStrategy endpointStrategy = this.endpointStrategySupplier.get();
     if (endpointStrategy == null || endpointStrategy.pick() == null) {
       String message = String.format("Cannot discover service %s", Service.EXPLORE_HTTP_USER_SERVICE);
-      LOG.error(message);
+      LOG.debug(message);
       throw new RuntimeException(message);
     }
 
