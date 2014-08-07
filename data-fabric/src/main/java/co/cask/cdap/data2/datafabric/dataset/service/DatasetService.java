@@ -195,15 +195,19 @@ public class DatasetService extends AbstractExecutionThreadService {
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping DatasetService...");
-    
-    opExecutorServiceWatch.cancel();
+
+    if (opExecutorServiceWatch != null) {
+      opExecutorServiceWatch.cancel();
+    }
     
     mdsDatasets.shutDown();
 
     typeManager.stopAndWait();
 
     // Unregister the service
-    cancelDiscovery.cancel();
+    if (cancelDiscovery != null) {
+      cancelDiscovery.cancel();
+    }
     // Wait for a few seconds for requests to stop
     try {
       TimeUnit.SECONDS.sleep(3);

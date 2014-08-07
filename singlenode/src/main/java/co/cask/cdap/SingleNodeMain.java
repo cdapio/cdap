@@ -358,7 +358,6 @@ public class SingleNodeMain {
       new GatewayModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getInMemoryModule(),
-      new DataSetServiceModules().getInMemoryModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),

@@ -46,6 +46,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -305,6 +306,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     connection.close();
   }
 
+  @Ignore
   @Test
   public void getDatasetsTest() throws Exception {
 

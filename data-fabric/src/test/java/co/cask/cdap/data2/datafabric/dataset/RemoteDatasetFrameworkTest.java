@@ -88,7 +88,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     LocalLocationFactory locationFactory = new LocalLocationFactory();
     framework = new RemoteDatasetFramework(discoveryService, new InMemoryDefinitionRegistryFactory(),
-                                             new LocalDatasetTypeClassLoaderFactory());
+                                           new LocalDatasetTypeClassLoaderFactory());
 
     ImmutableSet<HttpHandler> handlers =
       ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(new NoAuthenticator(), framework));
@@ -96,10 +96,10 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     opExecutorService.startAndWait();
 
-    MDSDatasetsRegistry mdsDatasetsRegistry =
-      new MDSDatasetsRegistry(txSystemClient,
-                              ImmutableMap.of("memoryTable", new InMemoryOrderedTableModule()),
-                              new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory()), cConf);
+    InMemoryDatasetFramework mdsFramework =
+      new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(),
+                                   ImmutableMap.of("memoryTable", new InMemoryOrderedTableModule()));
+    MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework, cConf);
 
     service = new DatasetService(cConf,
                                  locationFactory,

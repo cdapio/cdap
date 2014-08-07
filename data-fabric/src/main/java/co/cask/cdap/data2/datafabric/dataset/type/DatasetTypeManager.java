@@ -127,7 +127,7 @@ public class DatasetTypeManager extends AbstractIdleService {
             @SuppressWarnings("unchecked")
             Class clazz = ClassLoaders.loadClass(className, cl, this);
             module = DatasetModules.getDatasetModule(clazz);
-            reg = new DependencyTrackingRegistry(datasets, cl);
+            reg = new DependencyTrackingRegistry(datasets);
             module.register(reg);
           } catch (Exception e) {
             LOG.error("Could not instantiate instance of dataset module class {} for module {} using jarLocation {}",
@@ -350,17 +350,16 @@ public class DatasetTypeManager extends AbstractIdleService {
       }
     }
   }
+
   private class DependencyTrackingRegistry implements DatasetDefinitionRegistry {
     private final MDSDatasets datasets;
     private final DatasetDefinitionRegistry registry;
-    private final ClassLoader classLoader;
 
     private final List<String> types = Lists.newArrayList();
     private final List<String> usedTypes = Lists.newArrayList();
 
-    public DependencyTrackingRegistry(MDSDatasets datasets, ClassLoader classLoader) {
+    public DependencyTrackingRegistry(MDSDatasets datasets) {
       this.datasets = datasets;
-      this.classLoader = classLoader;
       this.registry = new InMemoryDatasetDefinitionRegistry();
     }
 
@@ -400,10 +399,6 @@ public class DatasetTypeManager extends AbstractIdleService {
       }
       usedTypes.add(datasetTypeName);
       return def;
-    }
-
-    public ClassLoader getClassLoader() {
-      return classLoader;
     }
   }
 }

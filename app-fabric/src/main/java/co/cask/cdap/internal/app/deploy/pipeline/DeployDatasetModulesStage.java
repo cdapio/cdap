@@ -24,7 +24,6 @@ import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.lang.jar.ProgramClassLoader;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.ModuleConflictException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;

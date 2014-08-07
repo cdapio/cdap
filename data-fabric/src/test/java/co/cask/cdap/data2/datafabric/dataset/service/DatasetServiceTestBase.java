@@ -117,11 +117,8 @@ public abstract class DatasetServiceTestBase {
 
     opExecutorService.startAndWait();
 
-    ImmutableMap<String, ? extends DatasetModule> defaultModules =
-      ImmutableMap.of("memoryTable", new InMemoryOrderedTableModule());
-
     MDSDatasetsRegistry mdsDatasetsRegistry =
-      new MDSDatasetsRegistry(txSystemClient, defaultModules,
+      new MDSDatasetsRegistry(txSystemClient,
                               new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory()), cConf);
 
     service = new DatasetService(cConf,
