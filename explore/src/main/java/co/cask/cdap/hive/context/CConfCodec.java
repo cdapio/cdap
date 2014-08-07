@@ -48,7 +48,8 @@ public class CConfCodec implements Codec<CConfiguration> {
     }
 
     ByteArrayInputStream bin = new ByteArrayInputStream(data);
-    CConfiguration cConfiguration = new CConfiguration();
+    CConfiguration cConfiguration = CConfiguration.create();
+    cConfiguration.clear();
     cConfiguration.addResource(bin);
     return cConfiguration;
   }

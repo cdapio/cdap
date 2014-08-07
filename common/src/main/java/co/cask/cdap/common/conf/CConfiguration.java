@@ -36,6 +36,10 @@ public class CConfiguration extends Configuration {
   private static final Logger LOG =
     LoggerFactory.getLogger(CConfiguration.class);
 
+  private CConfiguration() {
+    // Shouldn't be used other than in this class.
+  }
+
   /**
    * Creates an instance of configuration.
    *

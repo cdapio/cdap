@@ -29,7 +29,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.internal.app.Specifications;
@@ -106,7 +106,7 @@ public class MapReduceProgramRunnerTest {
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = new NamespacedDatasetFramework(injector.getInstance(DatasetFramework.class),
-                                                 new ReactorDatasetNamespace(conf, Namespace.USER));
+                                                 new DefaultDatasetNamespace(conf, Namespace.USER));
 
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);

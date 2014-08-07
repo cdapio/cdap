@@ -17,14 +17,14 @@
 package co.cask.cdap.data2.transaction.queue;
 
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.dataset.api.DataSetManager;
+import co.cask.cdap.data2.transaction.EntityAdmin;
 
 import java.util.Map;
 
 /**
  *
  */
-public interface QueueAdmin extends DataSetManager {
+public interface QueueAdmin extends EntityAdmin {
 
   /**
    * Deletes all entries for all queues.

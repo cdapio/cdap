@@ -20,29 +20,25 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
 import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLDecoder;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
 /**
- * Explore JDBC Driver. A proper URL is of the form: jdbc:reactor://<host>:<port>?<param1>=<value1>[&<param2>=<value2>],
- * Where host and port point to Reactor http interface where Explore is enabled, and the additional parameters are from
+ * Explore JDBC Driver. A proper URL is of the form: jdbc:cdap://<host>:<port>?<param1>=<value1>[&<param2>=<value2>],
+ * Where host and port point to CDAP http interface where Explore is enabled, and the additional parameters are from
  * the {@link co.cask.cdap.explore.jdbc.ExploreDriver.ConnectionParams.Info} enum.
  */
 public class ExploreDriver implements Driver {
@@ -51,7 +47,7 @@ public class ExploreDriver implements Driver {
     try {
       java.sql.DriverManager.registerDriver(new ExploreDriver());
     } catch (SQLException e) {
-      LOG.error("Caught exception when registering Reactor JDBC Driver", e);
+      LOG.error("Caught exception when registering CDAP JDBC Driver", e);
     }
   }
 
@@ -129,7 +125,7 @@ public class ExploreDriver implements Driver {
   }
 
   /**
-   * Parse Explore connection url string to retrieve the necessary parameters to connect to Reactor.
+   * Parse Explore connection url string to retrieve the necessary parameters to connect to CDAP.
    * Package visibility for testing.
    */
   ConnectionParams parseConnectionUrl(String url) {
@@ -142,18 +138,16 @@ public class ExploreDriver implements Driver {
     // get the query params - javadoc for getQuery says that it decodes the query URL with UTF-8 charset.
     String query = jdbcURI.getQuery();
     if (query != null) {
-      Iterator<String> iterator = Splitter.on("&").split(query).iterator();
-      while (iterator.hasNext()) {
+      for (String entry : Splitter.on("&").split(query)) {
         // Need to do it twice because of error in guava libs Issue: 1577
-        String [] splits = (iterator.next()).split("=");
-        // splits[0] is the key. Rest are values.
-        if (splits.length > 0) {
-          ConnectionParams.Info info = ConnectionParams.Info.fromStr(splits[0]);
-          if (info != null) {
-            for (int i = 1; i < splits.length; i++) {
-              builder.putAll(info, splits[i].split(","));
-            }
-          }
+        int idx = entry.indexOf('=');
+        if (idx <= 0) {
+          continue;
+        }
+
+        ConnectionParams.Info info = ConnectionParams.Info.fromStr(entry.substring(0, idx));
+        if (info != null) {
+          builder.putAll(info, Splitter.on(',').omitEmptyStrings().split(entry.substring(idx + 1)));
         }
       }
     }
@@ -169,7 +163,7 @@ public class ExploreDriver implements Driver {
      * Extra Explore connection parameter.
      */
     public enum Info {
-      EXPLORE_AUTH_TOKEN("reactor.auth.token");
+      EXPLORE_AUTH_TOKEN("auth.token");
 
       private String name;
 

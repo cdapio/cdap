@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
-import co.cask.cdap.common.twill.AbstractDistributedReactorServiceManager;
+import co.cask.cdap.common.twill.AbstractDistributedMasterServiceManager;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Transaction Reactor Service Management in Distributed Mode.
  */
-public class TransactionServiceManager extends AbstractDistributedReactorServiceManager {
+public class TransactionServiceManager extends AbstractDistributedMasterServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionServiceManager.class);
   private TransactionSystemClient txClient;
   private DiscoveryServiceClient discoveryServiceClient;

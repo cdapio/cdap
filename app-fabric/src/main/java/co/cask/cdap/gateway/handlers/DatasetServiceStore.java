@@ -23,7 +23,7 @@ import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -45,7 +45,7 @@ public final class DatasetServiceStore implements ServiceStore {
                              @Named("serviceModule") DatasetModule datasetModule) throws Exception {
     DatasetFramework dsFramework =
       new NamespacedDatasetFramework(new InMemoryDatasetFramework(dsRegistryFactory),
-                                     new ReactorDatasetNamespace(cConf, Namespace.SYSTEM));
+                                     new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
     dsFramework.addModule("basicKVTable", datasetModule);
     table = DatasetsUtil.getOrCreateDataset(dsFramework, Constants.Service.SERVICE_INSTANCE_TABLE_NAME,
                                             NoTxKeyValueTable.class.getName(),

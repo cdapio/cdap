@@ -21,7 +21,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -82,7 +82,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
     this.programTerminator = programTerminator;
     this.datasetFramework =
       new NamespacedDatasetFramework(datasetFramework,
-                                     new ReactorDatasetNamespace(configuration, Namespace.USER));
+                                     new DefaultDatasetNamespace(configuration, Namespace.USER));
   }
 
   @Override

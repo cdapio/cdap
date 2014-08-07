@@ -19,6 +19,7 @@ import co.cask.cdap.data.stream.InMemoryStreamCoordinator;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data2.queue.QueueClientFactory;
+import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueClientFactory;
@@ -26,8 +27,10 @@ import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.inmemory.InMemoryStreamConsumerFactory;
+import com.continuuity.tephra.metrics.TxMetricsCollector;
 import com.continuuity.tephra.runtime.TransactionModules;
 import com.google.inject.AbstractModule;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 
 /**
@@ -48,6 +51,7 @@ public class DataFabricInMemoryModule extends AbstractModule {
     bind(StreamFileWriterFactory.class).to(InMemoryStreamFileWriterFactory.class).in(Singleton.class);
 
     // bind transactions
+    bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
     install(new TransactionModules().getInMemoryModules());
   }
 }

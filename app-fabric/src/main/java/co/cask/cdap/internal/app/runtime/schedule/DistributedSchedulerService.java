@@ -61,8 +61,12 @@ public final class DistributedSchedulerService extends AbstractSchedulerService 
           if (!Iterables.isEmpty(serviceDiscovered) && !schedulerStarted.get()) {
             LOG.info("Starting scheduler, Discovered {} transaction service(s)",
                      Iterables.size(serviceDiscovered));
-            startScheduler();
-            schedulerStarted.set(true);
+            try {
+              startScheduler();
+              schedulerStarted.set(true);
+            } catch (Throwable t) {
+              LOG.error("Exception when starting scheduler.", t);
+            }
           }
         }
       }, MoreExecutors.sameThreadExecutor());

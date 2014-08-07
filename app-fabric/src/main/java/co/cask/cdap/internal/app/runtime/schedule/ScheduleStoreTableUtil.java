@@ -17,8 +17,8 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.dataset.lib.table.MetaTableUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.table.MetaTableUtil;
 import com.google.inject.Inject;
 
 /**
