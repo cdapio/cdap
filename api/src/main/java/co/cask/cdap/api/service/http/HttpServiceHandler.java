@@ -16,7 +16,6 @@
 
 package co.cask.cdap.api.service.http;
 
-
 /**
  * Interface to be implemented to handle HTTP requests. This interface can be implemented and passed along to
  * custom user services. Classes that implement this interface can add methods with the @Path annotation
@@ -30,8 +29,8 @@ package co.cask.cdap.api.service.http;
  *
  *        @GET
  *        @Path("/ping")
- *        public void process(HttpRequest request, HttpResponder responder) {
- *          responder.sendString(HttpResponseStatus.OK, "Hello World");
+ *        public void process(HttpServiceRequest request, HttpServiceResponder responder) {
+ *          responder.sendString("Hello World");
  *        }
  *
  *        @Override
