@@ -25,6 +25,7 @@ import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -35,7 +36,6 @@ import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
@@ -43,7 +43,6 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.http.HttpHandler;
 import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.google.gson.reflect.TypeToken;
@@ -119,7 +118,8 @@ public abstract class DatasetServiceTestBase {
 
     MDSDatasetsRegistry mdsDatasetsRegistry =
       new MDSDatasetsRegistry(txSystemClient,
-                              new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory()), cConf);
+                              new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(),
+                                                           DataSetServiceModules.INMEMORY_DATASET_MODULES), cConf);
 
     service = new DatasetService(cConf,
                                  locationFactory,
