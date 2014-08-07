@@ -18,6 +18,11 @@ define([], function () {
       this.bindTooltips();
     }.observes('page'),
 
+    renderExecuteBtn: function() {
+      return true;
+      return this.get('page') == 'query';
+    }.property('page'),
+
 		load: function () {
 		  var self = this;
 		  C.fetchQueries = function(a,b,c){
@@ -66,6 +71,11 @@ define([], function () {
 		    });
 		  });
 		},
+
+    tableClicked: function (obj) {
+      this.injectorTextArea.set('value', obj.statement);
+      this.toggleTable(obj);
+    },
 
 		toggleTable: function (obj, hideAllFirst /* = true */, callback) {
       var self = this;
@@ -120,7 +130,7 @@ define([], function () {
 
     selectDataset: function (dataset) {
       this.set('selectedDataset', dataset);
-      this.injectorTextArea.set('placeholder', 'SELECT * FROM ' + dataset.name + ' LIMIT 5');
+      this.injectorTextArea.set('value', 'SELECT * FROM ' + dataset.name + ' LIMIT 5');
       var datasets = this.get('datasets');
       datasets.forEach(function (entry) {
         entry.set('isSelected', false);
@@ -294,7 +304,7 @@ define([], function () {
     submitSQLQuery: function () {
       var self = this;
       var controller = this.get('controllers');
-      var sqlString = controller.get("SQLQueryString") || this.injectorTextArea.get('placeholder');
+      var sqlString = controller.get("SQLQueryString") || this.injectorTextArea.get('value');
       this.HTTP.post('rest/data/explore/queries', {data: { "query": sqlString }},
         function (response, status) {
           if(status != 200) {
@@ -302,15 +312,11 @@ define([], function () {
             .click(function(){},function(){$(".text-area-container").popover('hide')});
             return;
           }
+          self.transitionToRoute('DataExplore.Results');
+          self.offset = null;
+          self.cursor = null;
           self.fetchQueries();
           self.largestEver += 1;
-
-          if(self.page == "query"){
-            $("[id='ResultsLink']").tooltip('show');
-            setTimeout(function(){
-              $("[id='ResultsLink']").tooltip('hide');
-            }, 5000);
-          }
         }
       );
       self.hideAllTables();

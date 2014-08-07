@@ -3693,7 +3693,7 @@ div.tooltip-inner {
 	height: 32px;
 	background-image: url('/assets/img/v2/download_inactive.png');
 	background-repeat: no-repeat;
-	display: block;
+	display: inline-block;
 	margin: 0px auto;
 }
 
@@ -3705,15 +3705,15 @@ div.tooltip-inner {
 	height: 32px;
 	background-image: url('/assets/img/v2/na.png');
 	background-repeat: no-repeat;
-	display: block;
-	margin: 0px auto;
+	display: inline-block;
+  margin: 0px auto;
 }
 .download-query-results-disabled-btn {
 	width: 32px;
 	height: 32px;
 	background-image: url('/assets/img/v2/download_disabled.png');
 	background-repeat: no-repeat;
-	display: block;
+	display: inline-block;
 	margin: 0px auto;
 }
 

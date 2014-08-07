@@ -350,32 +350,40 @@
 {{#if objArr}}
     <table class="table" id="query-list-table">
       <thead>
-        <th style="width: 25%">Time Started</th>
-        <th style="width: 45%">Query</th>
-        <th style="width: 15%">Status</th>
-        <th style="width: 15%" class="center-align">Result</th>
+        <th style="width: 12%">Time Started</th>
+        <th style="width: 8%">Status</th>
+        <th style="width: 10%" class="center">Results</th>
+        <th style="width: 35%">Query</th>
+        <th style="width: 43%">Panel Here?</th>
       </thead>
     </table>
     {{#each objArr}}
-    <table {{bindAttr id="query_handle_hashed"}} data-toggle="tooltip" data-placement="top" title="No results" data-trigger="manual" {{bindAttr class=":table :cursor-pointer :query-table-entry this.isSelected:selected:notselected" }} {{ action toggleTable this }}>
+    <table {{bindAttr id="query_handle_hashed"}} data-toggle="tooltip" data-placement="top" title="No results" data-trigger="manual" {{bindAttr class=":table :cursor-pointer :query-table-entry this.isSelected:selected:notselected" }} {{ action tableClicked this }}>
       <tbody>
         <tr>
-          <td style="width: 25%">
+          <td style="width: 12%">
             <span class="lighter-color">{{time_started}}</span>
           </td>
-          <td style="width: 45%"><span class="bolder-font">{{statement}}</span></td>
-          <td style="width: 15%"><span {{bindAttr class=":query-status status"}}>{{status}}</span></td>
-          
-          <td style="width: 15%" class="center-align">
-          {{#if has_results}}
-            {{#if is_active}}
-                <a data-toggle="tooltip" data-placement="right" title="Download" trigger="hover" {{action download this bubbles=false}} class="download-query-results-btn"></a>
-            {{ else }}
-              <a data-toggle="tooltip" data-placement="right" title="No results" trigger="hover" class="download-query-results-disabled-btn"></a>
-            {{/if}}
-          {{ else }}
-            <a data-toggle="tooltip" data-placement="right" title="No results" trigger="hover" class="download-query-results-disabled-btn"></a>
-          {{/if}}
+          <td style="width: 10%">
+            <span {{bindAttr class=":query-status status"}}>
+              {{status}}
+            </span>
+          </td>
+          <td style="width: 8%">
+              {{#if has_results}}
+                {{#if is_active}}
+                  <a data-toggle="tooltip" data-placement="right" title="Download" trigger="hover" {{action download this bubbles=false}} class="download-query-results-btn"></a>
+                {{ else }}
+                  <a data-toggle="tooltip" data-placement="right" title="Results Not Available" trigger="hover" class="download-query-results-disabled-btn"></a>
+                {{/if}}
+              {{ else }}
+                <a data-toggle="tooltip" data-placement="right" title="No results" trigger="hover" class="download-query-results-disabled-btn"></a>
+              {{/if}}
+          </td>
+          <td style="width: 35%"><span class="bolder-font">{{statement}}</span></td>
+
+          <td style="width: 43%" class="center-align">
+
           </td>
         </tr>
       </tbody>
@@ -477,9 +485,9 @@
     </div>
     <div id="panels">
       <div class="panel">
-         <ul class="nav nav-pills pull-right" id="explore-sub-menu">
+         <ul class="nav nav-pills pull-left" id="explore-sub-menu">
            <li>{{#linkTo DataExplore.Query}}Query{{/linkTo }}</li>
-           <li id="ResultsLink" data-toggle="tooltip" title="View Results Here" data-trigger="manual">{{#linkTo DataExplore.Results}}Results{{/linkTo}}</li>
+           <li>{{#linkTo DataExplore.Results}}Results{{/linkTo}}</li>
          </ul>
          <div style="clear:both"></div>
          <hr style="margin-top: 0px"/>
@@ -487,7 +495,9 @@
           <div data-toggle="popover"  title="Error" data-trigger="manual" data-placement="top" class="text-area-container">
           {{view C.Embed.Injector elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
           </div>
-          <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
+          {{#if renderExecuteBtn}}
+            <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
+          {{/if}}
         </td>
 
         {{outlet}}
