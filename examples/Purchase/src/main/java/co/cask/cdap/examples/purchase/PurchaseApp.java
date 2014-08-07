@@ -28,6 +28,8 @@ import co.cask.cdap.internal.io.UnsupportedTypeException;
  */
 public class PurchaseApp extends AbstractApplication {
 
+  public static final String SERVICE_NAME = "CatalogLookup";
+
   @Override
   public void configure() {
     setName("PurchaseHistory");
@@ -37,7 +39,7 @@ public class PurchaseApp extends AbstractApplication {
     addFlow(new PurchaseFlow());
     addProcedure(new PurchaseProcedure());
     addWorkflow(new PurchaseHistoryWorkflow());
-    addService(new CatalogLookupService());
+    addService(SERVICE_NAME, new ProductCatalogLookup());
 
     try {
       createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());

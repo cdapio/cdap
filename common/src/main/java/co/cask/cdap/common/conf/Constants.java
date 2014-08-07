@@ -33,7 +33,7 @@ public final class Constants {
     public static final String LOGSAVER = "log.saver";
     public static final String GATEWAY = "gateway";
     public static final String STREAMS = "streams";
-    public static final String REACTOR_SERVICES = "reactor.services";
+    public static final String MASTER_SERVICES = "master.services";
     public static final String METRICS_PROCESSOR = "metrics.processor";
     public static final String DATASET_MANAGER = "dataset.service";
     public static final String DATASET_EXECUTOR = "dataset.executor";

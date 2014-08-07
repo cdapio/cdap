@@ -27,7 +27,12 @@ public abstract class AbstractHttpServiceHandler implements HttpServiceHandler {
   private HttpServiceConfigurer configurer;
   private HttpServiceContext context;
 
-  public abstract void configure();
+  /**
+   * This can be overridden in child classes to add custom user properties during configure time.
+   */
+  protected void configure() {
+    // no-op
+  }
 
   @Override
   public final void configure(HttpServiceConfigurer configurer) {
