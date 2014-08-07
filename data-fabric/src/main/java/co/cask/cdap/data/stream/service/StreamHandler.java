@@ -54,6 +54,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -82,7 +83,11 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION + "/streams")
 public final class StreamHandler extends AuthenticatedHttpHandler {
 
-  private static final Gson GSON = new Gson();
+  //private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(StreamConfig.class, new StreamConfigAdapter())
+    .create();
+
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
@@ -119,15 +124,12 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/{stream}/info")
   public void getInfo(HttpRequest request, HttpResponder responder,
-                   @PathParam("stream") String stream) throws Exception {
+                      @PathParam("stream") String stream) throws Exception {
     String accountID = getAuthenticatedAccountId(request);
 
     if (streamMetaStore.streamExists(accountID, stream)) {
       StreamConfig config = streamAdmin.getConfig(stream);
-      responder.sendJson(HttpResponseStatus.OK,
-                         new StreamConfig(config.getName(), config.getPartitionDuration(), config.getIndexInterval(),
-                         TimeUnit.MILLISECONDS.toSeconds(config.getTTL()), config.getLocation())
-      );
+      responder.sendString(HttpResponseStatus.OK, GSON.toJson(config));
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }

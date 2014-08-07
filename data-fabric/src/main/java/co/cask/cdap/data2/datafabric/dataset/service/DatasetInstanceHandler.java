@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.HandlerException;
+import co.cask.cdap.data2.datafabric.dataset.DatsetSpecificationAdapter;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -34,8 +35,8 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.continuuity.tephra.TxConstants;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -64,7 +65,9 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class DatasetInstanceHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceHandler.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(DatasetSpecification.class, new DatsetSpecificationAdapter())
+    .create();
 
   private final DatasetTypeManager implManager;
   private final DatasetInstanceManager instanceManager;
@@ -100,21 +103,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       && (queryParams.get("explorable").contains("true") || queryParams.get("explorable").contains("false"));
     boolean getExplorableDatasets = explorableDatasetsOption && queryParams.get("explorable").contains("true");
 
-    Collection<DatasetSpecification> tempdatasetSpecifications = instanceManager.getAll();
-    Collection<DatasetSpecification> datasetSpecifications = Lists.newArrayList();
-
-    for (DatasetSpecification spec : tempdatasetSpecifications) {
-      if (spec.getProperties().containsKey(TxConstants.PROPERTY_TTL)) {
-        datasetSpecifications.add(DatasetSpecification.builder(spec.getName(), spec.getType())
-                                    .properties(spec.getProperties())
-                                    .property(TxConstants.PROPERTY_TTL, String.valueOf
-                                      (TimeUnit.MILLISECONDS.toSeconds
-                                        (Long.parseLong(spec.getProperty(TxConstants.PROPERTY_TTL)))))
-                                    .build());
-      } else {
-        datasetSpecifications.add(spec);
-      }
-    }
+    Collection<DatasetSpecification> datasetSpecifications = instanceManager.getAll();
 
     if (explorableDatasetsOption) {
       try {
@@ -143,7 +132,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
             }
           }
         }
-        responder.sendJson(HttpResponseStatus.OK, joinBuilder.build());
+        responder.sendString(HttpResponseStatus.OK, GSON.toJson(joinBuilder.build()));
         return;
       } catch (Throwable t) {
         LOG.error("Caught exception while listing explorable datasets", t);
@@ -156,9 +145,9 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       for (DatasetSpecification spec : datasetSpecifications) {
         builder.add(new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null));
       }
-      responder.sendJson(HttpResponseStatus.OK, builder.build());
+      responder.sendString(HttpResponseStatus.OK, GSON.toJson(builder.build()));
     } else {
-      responder.sendJson(HttpResponseStatus.OK, datasetSpecifications);
+      responder.sendString(HttpResponseStatus.OK, GSON.toJson(datasetSpecifications));
     }
   }
 
@@ -197,16 +186,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      //Change TTL to seconds
-      if (spec.getProperties().containsKey(TxConstants.PROPERTY_TTL)) {
-        spec = DatasetSpecification.builder(spec.getName(), spec.getType())
-          .properties(spec.getProperties())
-          .property(TxConstants.PROPERTY_TTL, String.valueOf
-            (TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(spec.getProperty(TxConstants.PROPERTY_TTL)))))
-          .build();
-      }
       DatasetMeta info = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null);
-      responder.sendJson(HttpResponseStatus.OK, info);
+      responder.sendString(HttpResponseStatus.OK, GSON.toJson(info));
     }
   }
 
