@@ -14,14 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.api.service.http;
+package co.cask.cdap.internal.service.http;
+
+import co.cask.cdap.api.service.http.HttpServiceContext;
+import co.cask.cdap.api.service.http.HttpServiceSpecification;
 
 /**
- * TODO: Extend runtime context later for transactions and dataset
+ *
  */
-public interface HttpServiceContext {
-  /**
-   * @return The HttpServiceSpecification for this HttpServiceContext
-   */
-  HttpServiceSpecification getSpecification();
+public class DefaultHttpServiceContext implements HttpServiceContext {
+
+  HttpServiceSpecification spec;
+
+  public DefaultHttpServiceContext(HttpServiceSpecification spec) {
+    this.spec = spec;
+  }
+
+  @Override
+  public HttpServiceSpecification getSpecification() {
+    return spec;
+  }
 }

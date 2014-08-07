@@ -32,7 +32,6 @@ import org.junit.Test;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -73,15 +72,9 @@ public class HttpHandlerGeneratorTest {
     HttpHandlerFactory factory = new HttpHandlerFactory();
     HttpHandler httpHandler = factory.createHttpHandler(new MyHttpHandler(), new HttpServiceContext() {
       @Override
-      public Map<String, String> getRuntimeArguments() {
-        return null;
-      }
-
-      @Override
       public HttpServiceSpecification getSpecification() {
         return null;
       }
-
     });
 
     NettyHttpService service = NettyHttpService.builder().addHttpHandlers(ImmutableList.of(httpHandler)).build();

@@ -19,7 +19,10 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.internal.app.runtime.service.http.DefaultHttpServiceHandlerConfigurer;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
+import co.cask.cdap.internal.service.http.DefaultHttpServiceContext;
+import co.cask.cdap.internal.service.http.DefaultHttpServiceSpecification;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Throwables;
@@ -51,9 +54,13 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   private static final Gson GSON = new Gson();
   private static final Type HANDLER_NAMES_TYPE = new TypeToken<List<String>>() { }.getType();
+  private static final Type HANDLER_SPEC_TYPE = new TypeToken<List<DefaultHttpServiceSpecification>>() { }.getType();
   private static final Logger LOG = LoggerFactory.getLogger(HttpServiceTwillRunnable.class);
-  private ClassLoader programClassLoader;
+  private static final String CONF_RUNNABLE = "service.runnable.name";
+  private static final String CONF_HANDLER = "service.runnable.handlers";
+  private static final String CONF_SPEC = "service.runnable.handler.spec";
 
+  private ClassLoader programClassLoader;
   private String name;
   private List<HttpServiceHandler> handlers;
   private NettyHttpService service;
@@ -95,12 +102,18 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   public TwillRunnableSpecification configure() {
     LOG.info("In configure method in HTTP Service");
     Map<String, String> runnableArgs = new HashMap<String, String>();
-    runnableArgs.put("service.runnable.name", name);
+    runnableArgs.put(CONF_RUNNABLE, name);
     List<String> handlerNames = new ArrayList<String>();
+    List<HttpServiceSpecification> specs = new ArrayList<HttpServiceSpecification>();
     for (HttpServiceHandler handler : handlers) {
       handlerNames.add(handler.getClass().getName());
+      // call the configure method of the HTTP Handler
+      DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(handler);
+      handler.configure(configurer);
+      specs.add(configurer.createHttpServiceSpec());
     }
-    runnableArgs.put("service.runnable.handlers", GSON.toJson(handlerNames));
+    runnableArgs.put(CONF_HANDLER, GSON.toJson(handlerNames));
+    runnableArgs.put(CONF_SPEC, GSON.toJson(specs));
     return TwillRunnableSpecification.Builder.with()
       .setName(name)
       .withConfigs(ImmutableMap.copyOf(runnableArgs))
@@ -113,23 +126,35 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     // initialize the base class so that we can use this context later
     super.initialize(context);
     Map<String, String> runnableArgs = new HashMap<String, String>(context.getSpecification().getConfigs());
-    name = runnableArgs.get("service.runnable.name");
+    name = runnableArgs.get(CONF_RUNNABLE);
     handlers = new ArrayList<HttpServiceHandler>();
-    List<String> handlerNames = GSON.fromJson(runnableArgs.get("service.runnable.handlers"), HANDLER_NAMES_TYPE);
-    for (String handlerName : handlerNames) {
+    List<String> handlerNames = GSON.fromJson(runnableArgs.get(CONF_HANDLER), HANDLER_NAMES_TYPE);
+    List<HttpServiceSpecification> specs = GSON.fromJson(runnableArgs.get(CONF_SPEC), HANDLER_SPEC_TYPE);
+    // we will need the context based on the spec when we create NettyHttpService
+    Map<HttpServiceHandler, HttpServiceContext> handlerSpecMap =
+      new HashMap<HttpServiceHandler, HttpServiceContext>();
+    for (int i = 0; i < handlerNames.size(); ++i) {
       try {
-        HttpServiceHandler handler = (HttpServiceHandler) programClassLoader.loadClass(handlerName).newInstance();
+        HttpServiceHandler handler =
+          (HttpServiceHandler) programClassLoader.loadClass(handlerNames.get(i)).newInstance();
+        DefaultHttpServiceContext httpServiceContext = new DefaultHttpServiceContext(specs.get(i));
+        // call handler initialize method with the spec from configure time
+        handler.initialize(httpServiceContext);
+        handlerSpecMap.put(handler, httpServiceContext);
         handlers.add(handler);
       } catch (Exception e) {
         LOG.error("Could not initialize HTTP Service");
         Throwables.propagate(e);
       }
     }
-    service = createNettyHttpService(context.getHost().getCanonicalHostName());
+    service = createNettyHttpService(context.getHost().getCanonicalHostName(), handlerSpecMap);
   }
 
   @Override
   public void destroy() {
+    for (HttpServiceHandler handler : handlers) {
+      handler.destroy();
+    }
   }
 
   @Override
@@ -137,23 +162,13 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     service.stop();
   }
 
-  private NettyHttpService createNettyHttpService(String host) {
+  private static NettyHttpService createNettyHttpService(String host,
+                                                         Map<HttpServiceHandler, HttpServiceContext> specMap) {
     // Create HttpHandlers which delegate to the HttpServiceHandlers
     HttpHandlerFactory factory = new HttpHandlerFactory();
     List<HttpHandler> nettyHttpHandlers = new ArrayList<HttpHandler>();
-    for (HttpServiceHandler handler : handlers) {
-      // TODO: Implement correct runtime args and spec
-      nettyHttpHandlers.add(factory.createHttpHandler(handler, new HttpServiceContext() {
-        @Override
-        public Map<String, String> getRuntimeArguments() {
-          return null;
-        }
-
-        @Override
-        public HttpServiceSpecification getSpecification() {
-          return null;
-        }
-      }));
+    for (Map.Entry<HttpServiceHandler, HttpServiceContext> entry : specMap.entrySet()) {
+      nettyHttpHandlers.add(factory.createHttpHandler(entry.getKey(), entry.getValue()));
     }
 
     return NettyHttpService.builder().setHost(host)
