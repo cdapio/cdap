@@ -49,7 +49,7 @@ public class FakeApp extends AbstractApplication {
   public void configure() {
     setName(NAME);
     addStream(new Stream(STREAM_NAME));
-    addDatasetModule("fakeDSModule", FakeDatasetModule.class);
+    addDatasetModule(FakeDatasetModule.NAME, FakeDatasetModule.class);
     createDataset(DS_NAME, FakeDataset.class.getName());
     addProcedure(new FakeProcedure());
     addFlow(new FakeFlow());

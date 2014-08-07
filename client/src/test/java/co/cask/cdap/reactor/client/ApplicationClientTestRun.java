@@ -17,10 +17,14 @@
 package co.cask.cdap.reactor.client;
 
 import co.cask.cdap.client.ApplicationClient;
+import co.cask.cdap.client.DatasetClient;
+import co.cask.cdap.client.DatasetModuleClient;
+import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.reactor.client.app.FakeApp;
+import co.cask.cdap.reactor.client.app.FakeDatasetModule;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
@@ -42,10 +46,15 @@ public class ApplicationClientTestRun extends ClientTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationClientTestRun.class);
 
   private ApplicationClient appClient;
+  private DatasetClient datasetClient;
+  private DatasetModuleClient datasetModuleClient;
 
   @Before
   public void setUp() throws Throwable {
-    appClient = new ApplicationClient(new ClientConfig("localhost"));
+    ClientConfig clientConfig = new ClientConfig("localhost");
+    appClient = new ApplicationClient(clientConfig);
+    datasetClient = new DatasetClient(clientConfig);
+    datasetModuleClient = new DatasetModuleClient(clientConfig);
   }
 
   @Test
@@ -87,5 +96,10 @@ public class ApplicationClientTestRun extends ClientTestBase {
     LOG.info("Deleting app");
     appClient.delete(FakeApp.NAME);
     Assert.assertEquals(0, appClient.list().size());
+
+    // Delete FakeApp's dataset and module so that DatasetClientTestRun works when running both inside a test suite
+    // This is due to DatasetClientTestRun assuming that it is using a blank CDAP instance
+    datasetClient.delete(FakeApp.DS_NAME);
+    datasetModuleClient.delete(FakeDatasetModule.NAME);
   }
 }
