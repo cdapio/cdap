@@ -19,6 +19,7 @@ package co.cask.cdap.logging.save;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.AccountLoggingContext;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.ComponentLoggingContext;
@@ -98,6 +99,7 @@ public class LogSaverTest extends KafkaTestBase {
   private static InMemoryTxSystemClient txClient = null;
   private static DatasetFramework dsFramework;
   private static LogSaverTableUtil tableUtil;
+  private static CConfiguration cConf;
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
@@ -107,9 +109,12 @@ public class LogSaverTest extends KafkaTestBase {
     String logBaseDir = temporaryFolder.newFolder().getAbsolutePath();
     LOG.info("Log base dir {}", logBaseDir);
 
-    CConfiguration cConf = CConfiguration.create();
+    cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, temporaryFolder.newFolder().getAbsolutePath());
     cConf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + getKafkaPort());
     cConf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
+    cConf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync");
+    cConf.set(LoggingConfiguration.KAFKA_PROCUDER_BUFFER_MS, "100");
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
     cConf.set(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS, "10");
     cConf.set(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, "10240");
@@ -186,11 +191,8 @@ public class LogSaverTest extends KafkaTestBase {
 
   private void testLogRead(LoggingContext loggingContext) throws Exception {
     LOG.info("Verifying logging context {}", loggingContext.getLogPathFragment());
-    CConfiguration conf = new CConfiguration();
-    conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + getKafkaPort());
-    conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
     DistributedLogReader distributedLogReader =
-      new DistributedLogReader(dsFramework, txClient, conf, new LocalLocationFactory());
+      new DistributedLogReader(dsFramework, txClient, cConf, new LocalLocationFactory());
 
     LogCallback logCallback1 = new LogCallback();
     distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback1);
@@ -303,12 +305,7 @@ public class LogSaverTest extends KafkaTestBase {
   }
 
   private static void publishLogs() throws Exception {
-    CConfiguration conf = CConfiguration.create();
-    conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + getKafkaPort());
-    conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-    conf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync");
-    conf.set(LoggingConfiguration.KAFKA_PROCUDER_BUFFER_MS, "100");
-    KafkaLogAppender appender = new KafkaLogAppender(conf);
+    KafkaLogAppender appender = new KafkaLogAppender(cConf);
     new LogAppenderInitializer(appender).initialize("LogSaverTest");
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();

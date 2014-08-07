@@ -17,8 +17,6 @@
 package co.cask.cdap.api.mapreduce;
 
 import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.data.batch.BatchReadable;
-import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.Split;
 
 import java.util.List;

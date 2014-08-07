@@ -22,7 +22,7 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.ReactorTestBase;
+import co.cask.cdap.test.TestBase;
 import com.google.common.collect.Maps;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -38,7 +38,7 @@ import static org.junit.Assert.fail;
 /**
  *
  */
-public class MultiIndexedTableTest extends ReactorTestBase {
+public class MultiIndexedTableTest extends TestBase {
   private static final Logger LOG = LoggerFactory.getLogger(MultiIndexedTableTest.class);
 
   private static final byte[] TIMESTAMP_COL = Bytes.toBytes("ts");

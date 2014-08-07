@@ -16,7 +16,7 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.client.config.ReactorClientConfig;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.NotFoundException;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.client.util.RESTClient;
@@ -48,10 +48,10 @@ public class ProgramClient {
   private static final Gson GSON = new Gson();
 
   private final RESTClient restClient;
-  private final ReactorClientConfig config;
+  private final ClientConfig config;
 
   @Inject
-  public ProgramClient(ReactorClientConfig config) {
+  public ProgramClient(ClientConfig config) {
     this.config = config;
     this.restClient = RESTClient.create(config);
   }
@@ -130,7 +130,7 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the program with the specified name could not be found
    */
-  public ProgramLiveInfo getLiveInfo(String appId, ProgramType programType, String programName)
+  public DistributedProgramLiveInfo getLiveInfo(String appId, ProgramType programType, String programName)
     throws IOException, ProgramNotFoundException {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/live-info",

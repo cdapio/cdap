@@ -24,7 +24,7 @@
   <artifactId>cdap</artifactId>
   <version>2.4.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Cask CDAP Reactor</name>
+  <name>Cask CDAP</name>
 
   <organization>
     <name>Cask</name>
@@ -78,7 +78,8 @@
     <async.http.version>1.7.18</async.http.version>
     <avro.version>1.6.2</avro.version>
     <commons.codec.version>1.6</commons.codec.version>
-    <continuuity.hive.version>0.13.0-continuuity-2.4.0-SNAPSHOT</continuuity.hive.version>
+    <concurrent.trees.version>2.4.0</concurrent.trees.version>
+    <cdap.hive.version>0.13.0</cdap.hive.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
     <geronimo.version>2.0.0</geronimo.version>
@@ -93,6 +94,7 @@
     <http.component.version>4.2.5</http.component.version>
     <jetty.version>6.1.22</jetty.version>
     <jetty8.version>8.1.15.v20140411</jetty8.version>
+    <jline.version>2.12</jline.version>
     <junit.version>4.11</junit.version>
     <kafka.version>0.8.0</kafka.version>
     <leveldb.version>0.6</leveldb.version>
@@ -136,6 +138,7 @@
     <module>web-app</module>
     <module>proto</module>
     <module>client</module>
+    <module>cli</module>
     <module>singlenode</module>
     <module>distributions</module>
   </modules>
@@ -240,6 +243,16 @@
         <groupId>org.jboss.resteasy</groupId>
         <artifactId>resteasy-guice</artifactId>
         <version>${resteasy.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jline</groupId>
+        <artifactId>jline</artifactId>
+        <version>${jline.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.googlecode.concurrent-trees</groupId>
+        <artifactId>concurrent-trees</artifactId>
+        <version>${concurrent.trees.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
@@ -968,9 +981,9 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>com.continuuity</groupId>
+        <groupId>co.cask.cdap</groupId>
         <artifactId>hive-exec</artifactId>
-        <version>${continuuity.hive.version}</version>
+        <version>${cdap.hive.version}</version>
         <exclusions>
           <exclusion>
             <groupId>com.google.guava</groupId>
@@ -995,7 +1008,6 @@
         <artifactId>javax.servlet-api</artifactId>
         <version>${servlet.api.version}</version>
       </dependency>
-
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
@@ -1324,7 +1336,7 @@
                   <link>http://download.oracle.com/javase/6/docs/api/</link>
                 </links>
                 <bottom>
-                  <![CDATA[Copyright &#169; ${package.build.year} <a href="http://www.cask.co">Cask Inc.</a>. <a href="http://www.apache.org/licenses/LICENSE-2.0">Licensed under the Apache License, Version 2.0</a>.]]>
+                  <![CDATA[Copyright &#169; {currentYear} <a href="http://www.cask.co">Cask Inc.</a>. <a href="http://www.apache.org/licenses/LICENSE-2.0">Licensed under the Apache License, Version 2.0</a>.]]>
                 </bottom>
               </configuration>
               <executions>
@@ -1928,7 +1940,7 @@
             <link>http://download.oracle.com/javase/6/docs/api/</link>
           </links>
           <bottom>
-            <![CDATA[Copyright &#169; ${package.build.year} <a href="http://www.cask.co">Cask Inc.</a>. <a href="http://www.apache.org/licenses/LICENSE-2.0">Licensed under the Apache License, Version 2.0</a>.]]>
+            <![CDATA[Copyright &#169; {currentYear} <a href="http://www.cask.co">Cask Inc.</a>. <a href="http://www.apache.org/licenses/LICENSE-2.0">Licensed under the Apache License, Version 2.0</a>.]]>
           </bottom>
         </configuration>
         <reportSets>
