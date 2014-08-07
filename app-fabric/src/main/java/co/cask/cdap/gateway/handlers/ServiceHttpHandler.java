@@ -40,6 +40,7 @@ import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.ServiceMeta;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -235,9 +236,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable throwable) {
-      if (throwable.getCause() != null && throwable.getCause().getCause() instanceof NoSuchElementException) {
-        LOG.error("Could not find app, service or runnable.", throwable.getCause().getMessage());
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find app, service or runnable.");
+      if (respondIfElementNotFound(throwable, responder)) {
+        return;
       }
       LOG.error("Got exception : ", throwable);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
