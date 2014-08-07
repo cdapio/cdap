@@ -1200,6 +1200,10 @@ The status of a query is obtained using a HTTP GET request to the query's URL::
 
   GET <base-url>/data/explore/queries/<query-handle>/status
 
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
    * - Parameter
      - Description
    * - ``<query-handle>``
@@ -1237,6 +1241,10 @@ Obtaining the Result Schema
 If the query's status is ``FINISHED`` and it has results, you can obtain the schema of the results::
 
   GET <base-url>/data/explore/queries/<query-handle>/schema
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
 
    * - Parameter
      - Description
@@ -1284,6 +1292,10 @@ The body of the request can contain a JSON string specifying the batch size::
   }
 
 If the batch size is not specified, the default is 20.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
 
    * - Parameter
      - Description
@@ -1392,6 +1404,10 @@ To download the results of a query, use::
 
 The results of the query are returned in CSV format.
 
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
    * - Parameter
      - Description
    * - ``<query-handle>``
@@ -1422,6 +1438,10 @@ Hive Table Schema
 You can obtain the schema of the underlying Hive Table with::
 
   GET <base-url>/data/explore/datasets/<dataset-name>/schema
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
 
    * - Parameter
      - Description
@@ -1939,21 +1959,21 @@ Metrics HTTP API
 ================
 As Applications process data, the Cask DAP collects metrics about the Application’s behavior and performance. Some of these metrics are the same for every Application—how many events are processed, how many data operations are performed, etc.—and are thus called system or CDAP metrics.
 
-Other metrics are user-defined and differ from Application to Application. 
-For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-the Developer Guide,
-
 .. rst2pdf: CutStart
 
 .. only:: html
 
-  `CDAP Operations Guide <operations.html>`__.
+   Other metrics are user-defined and differ from Application to Application. 
+   For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
+   the Developer Guide, `CDAP Operations Guide <operations.html>`__.
 
 .. only:: pdf
 
 .. rst2pdf: CutStop
 
-  `CDAP Operations Guide <http://cask.co/docs/cdap/current/en/operations.html>`__.
+   Other metrics are user-defined and differ from Application to Application. 
+   For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
+   the Developer Guide, `CDAP Operations Guide <http://cask.co/docs/cdap/current/en/operations.html>`__.
 
 
 Metrics Requests

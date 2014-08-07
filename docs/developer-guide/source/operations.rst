@@ -48,7 +48,7 @@ Overview
 --------
 
 The **CDAP Console** is available for deploying, querying and managing the Cask Data Application Platform in all modes of CDAP except an 
-`In-memory DAP <#in-memory-dap>`__.
+`In-memory DAP <#in-memory-data-application-platform>`__.
 
 .. image:: _images/console/console_01_overview.png
    :width: 600px

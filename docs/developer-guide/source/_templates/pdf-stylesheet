@@ -1,7 +1,7 @@
 # Cask Stylesheet for PDF Generation
 
 # List the fonts you would like to embed in the PDF here
-embeddedFonts: [["SourceSansPro-Regular.ttf","SourceSansPro-Bold.ttf","SourceSansPro-It.ttf","SourceSansPro-BoldIt.ttf"]]
+embeddedFonts: [["SourceSansPro-Regular.ttf","SourceSansPro-Bold.ttf","SourceSansPro-Italic.ttf","SourceSansPro-BoldItalic.ttf"]]
 
 # font weights: regular, strong emphasis, emphasis, unknown?
 # this does not match the order documented, but seems to be what works...
@@ -46,8 +46,7 @@ pageTemplates:
             [0cm, 0cm, 100%, 100%]
         showHeader : false
         showFooter : true
-        alignment: TA_CENTER
-        defaultFooter : "###Title### • © 2014 Cask, Inc. • Page ###Page###"
+        defaultFooter : ".. class:: right\n###Title### • © 2014 Cask, Inc. • Page ###Page###"
         
     twoColumn:
         frames: []
@@ -75,12 +74,12 @@ pageTemplates:
 fontsAlias:
     stdFont: SourceSansPro-Regular
     stdBold: SourceSansPro-Bold
-    stdItalic: SourceSansPro-It
-    stdBoldItalic: SourceSansPro-BoldIt
+    stdItalic: SourceSansPro-Italic
+    stdBoldItalic: SourceSansPro-BoldItalic
     stdSans: SourceSansPro-Regular
     stdSansBold: SourceSansPro-Bold
-    stdSansItalic: SourceSansPro-It
-    stdSansBoldItalic: SourceSansPro-BoldIt
+    stdSansItalic: SourceSansPro-Italic
+    stdSansBoldItalic: SourceSansPro-BoldItalic
     stdMono: Courier
     stdMonoItalic: Courier-Oblique
     stdMonoBold: Courier-Bold
@@ -208,7 +207,7 @@ styles:
 
     footer:
       parent: normal
-      alignment: TA_CENTER
+      alignment: TA_RIGHT
 
     header:
       parent: normal
