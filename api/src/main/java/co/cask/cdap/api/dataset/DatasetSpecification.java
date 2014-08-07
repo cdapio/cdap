@@ -155,7 +155,7 @@ public final class DatasetSpecification {
     return datasetSpecs.get(dsName);
   }
 
-  public Map<String, DatasetSpecification> getSpecifications() {
+  public SortedMap<String, DatasetSpecification> getSpecifications() {
     return  datasetSpecs;
   }
 

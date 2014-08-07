@@ -57,6 +57,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -66,6 +68,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -129,7 +132,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     if (streamMetaStore.streamExists(accountID, stream)) {
       StreamConfig config = streamAdmin.getConfig(stream);
-      responder.sendString(HttpResponseStatus.OK, GSON.toJson(config));
+      responder.sendJson(HttpResponseStatus.OK, config, StreamConfig.class, GSON);
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
@@ -501,6 +504,20 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       } finally {
         cancellable.cancel();
       }
+    }
+  }
+
+  /**
+   *  Adapter class for {@link co.cask.cdap.data2.transaction.stream.StreamConfig}
+   */
+  private static final class StreamConfigAdapter implements JsonSerializer<StreamConfig> {
+    @Override
+    public JsonElement serialize(StreamConfig src, Type typeOfSrc, JsonSerializationContext context) {
+      JsonObject json = new JsonObject();
+      json.addProperty("partitionDuration", src.getPartitionDuration());
+      json.addProperty("indexInterval", src.getIndexInterval());
+      json.addProperty("ttl", TimeUnit.MILLISECONDS.toSeconds(src.getTTL()));
+      return json;
     }
   }
 }
