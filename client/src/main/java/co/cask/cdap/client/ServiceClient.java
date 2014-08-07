@@ -26,6 +26,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.apache.hadoop.security.authorize.AuthorizationException;
 import org.apache.twill.discovery.Discoverable;
 
 import java.io.IOException;
@@ -68,10 +69,15 @@ public class ServiceClient {
   public List<Discoverable> discover(String appId, String serviceId, final String discoverableId) throws Exception {
     URL url = config.resolveURL(String.format("apps/%s/services/%s/discover/%s", appId, serviceId, discoverableId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url);
-    
-    if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
-      throw new ServiceNotFoundException(discoverableId);
+
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ServiceNotFoundException("Could not discover " + discoverableId);
+    } else if (response.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+      throw new AuthorizationException("Invalid or missing authorization");
+    } else if (response.getResponseCode() == HttpURLConnection.HTTP_INTERNAL_ERROR) {
+      throw new InternalError("Error attempting to discover " + discoverableId);
     }
+
     List<Discoverable> discoverables = new ArrayList<Discoverable>();
     JsonParser parser = new JsonParser();
     JsonArray array = (JsonArray) parser.parse(response.getResponseBodyAsString());
