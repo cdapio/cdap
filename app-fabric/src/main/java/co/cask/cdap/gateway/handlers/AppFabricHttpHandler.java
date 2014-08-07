@@ -2304,8 +2304,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     for (ProgramSpecification spec : programSpecs) {
       ProgramType type = ProgramTypes.fromSpecification(spec);
       Id.Program programId = Id.Program.from(appId, spec.getName());
-      Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
-      location.delete();
+      try {
+        Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
+        location.delete();
+      } catch (FileNotFoundException e) {
+        LOG.warn("Program jar for program {} not found.", programId.toString(), e);
+      }
     }
 
     // Delete webapp
