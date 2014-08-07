@@ -186,9 +186,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Creates a new Dataset or updates existing Dataset specification's
-   * properties if an optional update parameter in the body is set to true, {@link DatasetInstanceConfiguration}
-   * is constructed based on request and appropriate action is performed
+   * Creates a new Dataset instance.
    */
   @PUT
   @Path("/data/datasets/{name}")
