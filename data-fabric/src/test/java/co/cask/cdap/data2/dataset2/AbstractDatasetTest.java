@@ -71,7 +71,9 @@ public class AbstractDatasetTest {
     framework.deleteInstance(instanceName);
   }
 
-  protected static <T extends Dataset> T getInstance(String datasetName) throws DatasetManagementException, IOException {
+  protected static <T extends Dataset> T getInstance(String datasetName)
+    throws DatasetManagementException, IOException {
+    
     return getInstance(datasetName, null);
   }
 
