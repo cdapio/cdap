@@ -108,7 +108,7 @@ public abstract class DatasetServiceTestBase {
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
     LocalLocationFactory locationFactory = new LocalLocationFactory();
-    dsFramework = new RemoteDatasetFramework(discoveryService, locationFactory, new InMemoryDefinitionRegistryFactory(),
+    dsFramework = new RemoteDatasetFramework(discoveryService, new InMemoryDefinitionRegistryFactory(),
                                              new LocalDatasetTypeClassLoaderFactory());
 
     ImmutableSet<HttpHandler> handlers =

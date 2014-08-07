@@ -87,7 +87,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
     LocalLocationFactory locationFactory = new LocalLocationFactory();
-    framework = new RemoteDatasetFramework(discoveryService, locationFactory, new InMemoryDefinitionRegistryFactory(),
+    framework = new RemoteDatasetFramework(discoveryService, new InMemoryDefinitionRegistryFactory(),
                                              new LocalDatasetTypeClassLoaderFactory());
 
     ImmutableSet<HttpHandler> handlers =

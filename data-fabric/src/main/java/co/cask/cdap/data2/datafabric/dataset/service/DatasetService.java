@@ -161,7 +161,7 @@ public class DatasetService extends AbstractExecutionThreadService {
       } catch (InterruptedException e) {
         // It's triggered by stop
         Thread.currentThread().interrupt();
-        continue;
+        break;
       }
     }
   }
