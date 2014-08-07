@@ -49,6 +49,9 @@ import javax.servlet.DispatcherType;
  * Jetty service for External Authentication.
  */
 public class ExternalAuthenticationServer extends AbstractExecutionThreadService {
+
+  public static final String HANDLERS = "security.authentication.external.handlers";
+
   private final int port;
   private final int maxThreads;
   private final HashMap<String, Object> handlers;
