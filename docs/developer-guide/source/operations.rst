@@ -451,6 +451,119 @@ In a fashion similar to the `Flow Log Explorer`_, you can examine the logs assoc
 .. image:: _images/dashboard/dashboard_17_procedure_ranker.png
    :width: 600px
 
+Command-Line Interface
+======================
+
+Introduction
+------------
+
+The Command-Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
+similar to HBase shell or ``bash``. It is located within the SDK, at ``bin/cdap-cli`` as a bash script. It is also
+packaged in the SDK as a JAR file, at ``bin/cdap-cli.jar``.
+
+Usage
+-----
+
+The CLI may be used in two ways: interactive mode and non-interactive mode.
+
+Interactive Mode
+----------------
+
+To run the CLI in interactive mode, run the ``cdap-cli`` executable with no arguments from the terminal.
+The executable should bring you into a shell, with this prompt::
+
+  cdap (localhost:10000)>
+
+This indicates that the CLI is currently set to interact with the CDAP server at ``localhost``.
+There are two ways to interact with a different CDAP server:
+
+- To interact with a different CDAP server by default, set the environment variable ``CDAP_HOST`` to a hostname.
+- To change the current CDAP server, run the command ``connect example.com``.
+
+For example, with ``CDAP_HOST`` set to ``example.com``, the Shell Client would be interacting with
+a Reactor instance at ``example.com``, port ``10000``::
+
+  cdap (example.com:10000)>
+
+To list all of the available commands, enter ``help``::
+
+  cdap (localhost:10000)> help
+
+Non-Interactive Mode
+--------------------
+
+To run the CLI in non-interactive mode, run the ``cdap-cli`` executable, passing the command you want executed
+as the argument. For example, to list all applications currently deployed to Reactor, execute this::
+
+  cdap list apps
+
+Available Commands
+------------------
+
+Here are all of the available commands:
+
+- ``help``: Prints this helper text
+- ``version``: Prints the version
+- ``exit``: Exits the shell
+- ``call procedure <app-id>.<procedure-id> <method-id> <parameters-map>``: Calls a Procedure,
+  passing in the parameters as a JSON String map
+- ``create stream <new-stream-id>``: Creates a Stream
+- ``create dataset instance <type-name> <new-dataset-name>``: Creates a Dataset
+- ``delete app <app-id>``: Deletes an application
+- ``delete dataset instance <dataset-name>``: Deletes a Dataset
+- ``delete dataset module <module-name>``: Deletes a Dataset module
+- ``deploy app <app-jar-file>``: Deploys an application
+- ``deploy dataset module <module-jar-file> <module-name> <module-jar-classname>``: Deploys a Dataset module
+- ``describe app <app-id>``: Shows detailed information about an application
+- ``describe dataset module <module-name>``: Shows information about a Dataset module
+- ``describe dataset type <type-name>``: Shows information about a Dataset type
+- ``execute <query>``: Executes a Dataset query
+- ``get history flow <app-id>.<program-id>``: Gets the run history of a Flow
+- ``get history workflow <app-id>.<program-id>``: Gets the run history of a Workflow
+- ``get history procedure <app-id>.<program-id>``: Gets the run history of a Procedure
+- ``get history runnable <app-id>.<program-id>``: Gets the run history of a Runnable
+- ``get history mapreduce <app-id>.<program-id>``: Gets the run history of a MapReduce job
+- ``get instances flowlet <app-id>.<program-id>``: Gets the instances of a Flowlet
+- ``get instances procedure <app-id>.<program-id>``: Gets the instances of a Procedure
+- ``get instances runnable <app-id>.<program-id>``: Gets the instances of a Runnable
+- ``get live flow <app-id>.<program-id>``: Gets the live info of a Flow
+- ``get live procedure <app-id>.<program-id>``: Gets the live info of a Procedure
+- ``get logs flow <app-id>.<program-id> [<start-time> <end-time>]``: Gets the logs of a Flow
+- ``get logs procedure <app-id>.<program-id> [<start-time> <end-time>]``: Gets the logs of a Procedure
+- ``get logs runnable <app-id>.<program-id> [<start-time> <end-time>]``: Gets the logs of a Runnable
+- ``get logs mapreduce <app-id>.<program-id> [<start-time> <end-time>]``: Gets the logs of a MapReduce job
+- ``get status flow <app-id>.<program-id>``: Gets the status of a Flow
+- ``get status workflow <app-id>.<program-id>``: Gets the status of a Workflow
+- ``get status procedure <app-id>.<program-id>``: Gets the status of a Procedure
+- ``get status service <app-id>.<program-id>``: Gets the status of a Service
+- ``get status mapreduce <app-id>.<program-id>``: Gets the status of a MapReduce job
+- ``list apps``: Lists all applications
+- ``list programs``: Lists all programs
+- ``list flows``: Lists Flows
+- ``list mapreduce``: Lists MapReduce jobs
+- ``list procedures``: Lists Procedures
+- ``list workflows``: Lists Workflows
+- ``list dataset instances``: Lists all Datasets
+- ``list dataset modules``: Lists Dataset modules
+- ``list dataset types``: Lists Dataset types
+- ``list streams``: Lists Streams
+- ``send stream <stream-id> <stream-event>``: Sends an event to a Stream
+- ``set instances flowlet <program-id> <num-instances>``: Sets the instances of a Flowlet
+- ``set instances procedure <program-id> <num-instances>``: Sets the instances of a Procedure
+- ``set instances runnable <program-id> <num-instances>``: Sets the instances of a Runnable
+- ``set stream ttl <stream-id> <ttl-in-seconds>``: Sets the Time-to-Live (TTL) of a Stream
+- ``start flow <program-id>``: Starts a Flow
+- ``start workflow <program-id>``: Starts a Workflow
+- ``start procedure <program-id>``: Starts a Procedure
+- ``start service <program-id>``: Starts a Service
+- ``start mapreduce <program-id>``: Starts a MapReduce job
+- ``stop flow <program-id>``: Stops a Flow
+- ``stop workflow <program-id>``: Stops a Workflow
+- ``stop procedure <program-id>``: Stops a Procedure
+- ``stop service <program-id>``: Stops a Service
+- ``stop mapreduce <program-id>``: Stops a MapReduce job
+- ``truncate dataset instance``: Truncates a Dataset
+- ``truncate stream``: Truncates a Stream
 
 Logging
 =======
