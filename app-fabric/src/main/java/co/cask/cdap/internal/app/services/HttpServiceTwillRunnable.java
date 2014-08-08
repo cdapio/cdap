@@ -61,7 +61,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
   /**
    * Instantiates this class with a name which will be used when this service is announced
-   * and a list of {@link HttpServiceHandler} which will be used to to handle the HTTP requests.
+   * and a list of {@link HttpServiceHandler}s used to to handle the HTTP requests.
    *
    * @param name the name which will be used to announce the service
    * @param handlers the handlers of the HTTP requests
