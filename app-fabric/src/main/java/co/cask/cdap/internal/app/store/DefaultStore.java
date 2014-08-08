@@ -83,6 +83,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 
 /**
@@ -736,7 +737,7 @@ public class DefaultStore implements Store {
                                                               String flowletId, Id.Program id) {
     FlowletDefinition flowletDef = flowSpec.getFlowlets().get(flowletId);
     if (flowletDef == null) {
-      throw new IllegalArgumentException("no such flowlet @ account id: " + id.getAccountId() +
+      throw new NoSuchElementException("no such flowlet @ account id: " + id.getAccountId() +
                                            ", app id: " + id.getApplication() +
                                            ", flow id: " + id.getId() +
                                            ", flowlet id: " + id.getId());
@@ -747,7 +748,7 @@ public class DefaultStore implements Store {
   private static FlowSpecification getFlowSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
     FlowSpecification flowSpec = appSpec.getFlows().get(id.getId());
     if (flowSpec == null) {
-      throw new IllegalArgumentException("no such flow @ account id: " + id.getAccountId() +
+      throw new NoSuchElementException("no such flow @ account id: " + id.getAccountId() +
                                            ", app id: " + id.getApplication() +
                                            ", flow id: " + id.getId());
     }
@@ -757,7 +758,7 @@ public class DefaultStore implements Store {
   private static ServiceSpecification getServiceSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
     ServiceSpecification spec = appSpec.getServices().get(id.getId());
     if (spec == null) {
-      throw new IllegalArgumentException("no such service @ account id: " + id.getAccountId() +
+      throw new NoSuchElementException("no such service @ account id: " + id.getAccountId() +
                                            ", app id: " + id.getApplication() +
                                            ", service id: " + id.getId());
     }
@@ -767,7 +768,7 @@ public class DefaultStore implements Store {
   private static ProcedureSpecification getProcedureSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
     ProcedureSpecification procedureSpecification = appSpec.getProcedures().get(id.getId());
     if (procedureSpecification == null) {
-      throw new IllegalArgumentException("no such procedure @ account id: " + id.getAccountId() +
+      throw new NoSuchElementException("no such procedure @ account id: " + id.getAccountId() +
                                            ", app id: " + id.getApplication() +
                                            ", procedure id: " + id.getId());
     }
@@ -787,7 +788,7 @@ public class DefaultStore implements Store {
   private ApplicationSpecification getAppSpecOrFail(AppMds mds, Id.Program id) {
     ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
     if (appSpec == null) {
-      throw new IllegalArgumentException("no such application @ account id: " + id.getAccountId() +
+      throw new NoSuchElementException("no such application @ account id: " + id.getAccountId() +
                                            ", app id: " + id.getApplication().getId());
     }
     return appSpec;
