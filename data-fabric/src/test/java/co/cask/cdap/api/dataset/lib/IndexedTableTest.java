@@ -26,9 +26,9 @@ import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import co.cask.cdap.data2.dataset2.TableTest;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.tephra.TransactionExecutor;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -36,7 +36,7 @@ import org.junit.Test;
  */
 public class IndexedTableTest extends AbstractDatasetTest {
 
-  private IndexedTable table;
+  private static IndexedTable table;
 
   static byte[] idxCol = { 'i', 'd', 'x' };
   static byte[] valCol = { 'v', 'a', 'l' };
@@ -57,22 +57,17 @@ public class IndexedTableTest extends AbstractDatasetTest {
   static String idxColString = Bytes.toString(idxCol);
   static byte[][] colIdxVal = { idxCol, valCol };
 
-  @Before
-  public void setUp() throws Exception {
-    super.setUp();
-
-    addModule("core", new CoreDatasetsModule());
+  @BeforeClass
+  public static void beforeClass() throws Exception {
     createInstance("indexedTable", "tab", DatasetProperties.builder()
       .add("columnToIndex", idxColString)
       .build());
     table = getInstance("tab");
   }
 
-  @After
-  public void tearDown() throws Exception {
+  @AfterClass
+  public static void afterClass() throws Exception {
     deleteInstance("tab");
-    deleteModule("core");
-    super.tearDown();
   }
 
   @Test

@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * Loads {@link DatasetDefinition} using its metadata info
  */
-public class DatasetDefinitionLoader {
+class DatasetDefinitionLoader {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetDefinitionLoader.class);
 
   private final LocationFactory locationFactory;

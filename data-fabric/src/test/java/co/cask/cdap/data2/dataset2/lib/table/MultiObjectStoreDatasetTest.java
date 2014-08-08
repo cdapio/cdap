@@ -33,8 +33,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -51,18 +53,6 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
 
   private static final byte[] a = { 'a' };
   private static final byte[] DEFAULT_OBJECT_STORE_COLUMN = { 'c' };
-
-  @Before
-  public void setUp() throws Exception {
-    super.setUp();
-    addModule("core", new CoreDatasetsModule());
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    super.tearDown();
-    deleteModule("core");
-  }
 
   @Test
   public void testStringStore() throws Exception {

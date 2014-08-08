@@ -40,6 +40,7 @@ import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.ServiceMeta;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -56,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -234,6 +236,9 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable throwable) {
+      if (respondIfElementNotFound(throwable, responder)) {
+        return;
+      }
       LOG.error("Got exception : ", throwable);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }

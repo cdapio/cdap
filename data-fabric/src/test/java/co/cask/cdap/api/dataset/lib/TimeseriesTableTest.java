@@ -19,11 +19,11 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
-import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.TransactionFailureException;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -33,14 +33,17 @@ import java.util.List;
  * Time series table tests.
  */
 public class TimeseriesTableTest extends AbstractDatasetTest {
-  private TimeseriesTable table;
+  private static TimeseriesTable table;
 
-  @Before
-  public void setUp() throws Exception {
-    super.setUp();
-    addModule("core", new CoreDatasetsModule());
+  @BeforeClass
+  public static void beforeClass() throws Exception {
     createInstance("timeseriesTable", "metricsTable", DatasetProperties.EMPTY);
     table = getInstance("metricsTable");
+  }
+
+  @AfterClass
+  public static void afterClass() throws Exception {
+    deleteInstance("metricsTable");
   }
 
   @Test
