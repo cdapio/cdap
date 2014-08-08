@@ -56,6 +56,7 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -448,7 +449,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       jsonObject.addProperty("type", src.getType());
       jsonObject.add("properties", context.serialize(Maps.transformEntries(src.getProperties(),
                                                      TRANSFORM_DATASET_PROPERTIES), TRANSFORM_DATASET_PROPERTIES_TYPE));
-      Type specsType = new TypeToken<Map<String, DatasetSpecification>>() { }.getType();
+      Type specsType = new TypeToken<SortedMap<String, DatasetSpecification>>() { }.getType();
       jsonObject.add("datasetSpecs", context.serialize(src.getSpecifications(), specsType));
       return jsonObject;
     }
