@@ -138,7 +138,7 @@ public class DataSetInstantiator implements DataSetContext {
       }
 
     } catch (Exception e) {
-      throw new DataSetInstantiationException("Failed to access dataset: " + datasetName);
+      throw new DataSetInstantiationException("Failed to access dataset: " + datasetName, e);
     }
 
     if (dataset instanceof TransactionAware) {

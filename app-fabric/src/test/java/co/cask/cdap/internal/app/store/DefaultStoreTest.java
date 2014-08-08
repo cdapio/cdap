@@ -45,27 +45,23 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
-import com.continuuity.tephra.TransactionManager;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.inject.Injector;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.filesystem.LocalLocationFactory;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -74,31 +70,12 @@ import java.util.Set;
  *
  */
 public class DefaultStoreTest {
-  private static TransactionManager txManager;
-  private static DatasetService dsService;
-
   private static DefaultStore store;
 
   @BeforeClass
-  public static void beforeClass() throws IOException {
+  public static void beforeClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
-
-    txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
-
-    dsService = injector.getInstance(DatasetService.class);
-    dsService.startAndWait();
-
     store = injector.getInstance(DefaultStore.class);
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    try {
-      dsService.stopAndWait();
-    } finally {
-      txManager.stopAndWait();
-    }
   }
 
   @Before

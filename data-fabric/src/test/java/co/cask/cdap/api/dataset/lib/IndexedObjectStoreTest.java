@@ -19,12 +19,9 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
-import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.tephra.TransactionExecutor;
 import com.google.common.collect.ImmutableList;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -34,19 +31,6 @@ import java.util.List;
  * Test for {@link co.cask.cdap.api.dataset.lib.IndexedObjectStore}.
  */
 public class IndexedObjectStoreTest extends AbstractDatasetTest {
-
-  @Before
-  public void setUp() throws Exception {
-    super.setUp();
-    addModule("core", new CoreDatasetsModule());
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    deleteModule("core");
-    super.tearDown();
-  }
-
   @Test
   public void testLookupByIndex() throws Exception {
     createIndexedObjectStoreInstance("index", Feed.class);

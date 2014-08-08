@@ -27,8 +27,8 @@ import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.inmemory.MinimalTxSystemClient;
 import com.google.common.base.Preconditions;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 import java.io.IOException;
 import java.util.Map;
@@ -38,49 +38,51 @@ import java.util.Map;
  */
 public class AbstractDatasetTest {
 
-  private DatasetFramework framework;
+  private static DatasetFramework framework;
 
-  @Before
-  public void setUp() throws Exception {
+  @BeforeClass
+  public static void init() throws Exception {
     framework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
     framework.addModule("inMemory", new InMemoryOrderedTableModule());
     framework.addModule("core", new CoreDatasetsModule());
   }
 
-  @After
-  public void tearDown() throws Exception {
+  @AfterClass
+  public static void destroy() throws Exception {
     framework.deleteModule("core");
     framework.deleteModule("inMemory");
   }
 
-  protected void addModule(String name, DatasetModule module) throws DatasetManagementException {
+  protected static void addModule(String name, DatasetModule module) throws DatasetManagementException {
     framework.addModule(name, module);
   }
 
-  protected void deleteModule(String name) throws DatasetManagementException {
+  protected static void deleteModule(String name) throws DatasetManagementException {
     framework.deleteModule(name);
   }
 
-  protected void createInstance(String type, String instanceName, DatasetProperties properties)
+  protected static void createInstance(String type, String instanceName, DatasetProperties properties)
     throws IOException, DatasetManagementException {
 
     framework.addInstance(type, instanceName, properties);
   }
 
-  protected void deleteInstance(String instanceName) throws IOException, DatasetManagementException {
+  protected static void deleteInstance(String instanceName) throws IOException, DatasetManagementException {
     framework.deleteInstance(instanceName);
   }
 
-  protected <T extends Dataset> T getInstance(String datasetName) throws DatasetManagementException, IOException {
+  protected static <T extends Dataset> T getInstance(String datasetName)
+    throws DatasetManagementException, IOException {
+
     return getInstance(datasetName, null);
   }
 
-  protected <T extends Dataset> T getInstance(String datasetName, Map<String, String> arguments)
+  protected static <T extends Dataset> T getInstance(String datasetName, Map<String, String> arguments)
     throws DatasetManagementException, IOException {
     return framework.getDataset(datasetName, arguments, null);
   }
 
-  protected TransactionExecutor newTransactionExecutor(TransactionAware...tables) {
+  protected static TransactionExecutor newTransactionExecutor(TransactionAware...tables) {
     Preconditions.checkArgument(tables != null);
     return new DefaultTransactionExecutor(new MinimalTxSystemClient(), tables);
   }

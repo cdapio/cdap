@@ -35,9 +35,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -55,18 +55,14 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
 
   private static final byte[] a = { 'a' };
 
-  @Before
-  public void setUp() throws Exception {
-    super.setUp();
-    addModule("core", new CoreDatasetsModule());
+  @BeforeClass
+  public static void beforeClass() throws Exception {
     addModule("integerStore", new IntegerStoreModule());
   }
 
-  @After
-  public void tearDown() throws Exception {
+  @AfterClass
+  public static void afterClass() throws Exception {
     deleteModule("integerStore");
-    deleteModule("core");
-    super.tearDown();
   }
 
   private void addIntegerStoreInstance(String instanceName) throws Exception {

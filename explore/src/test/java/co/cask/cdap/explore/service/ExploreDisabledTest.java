@@ -25,9 +25,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
-import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreClient;
@@ -57,7 +55,6 @@ import java.util.List;
 public class ExploreDisabledTest {
   private static TransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
-  private static DatasetService datasetService;
   private static ExploreClient exploreClient;
 
   @BeforeClass
@@ -65,9 +62,6 @@ public class ExploreDisabledTest {
     Injector injector = Guice.createInjector(createInMemoryModules(CConfiguration.create(), new Configuration()));
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
-
-    datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
 
     exploreClient = injector.getInstance(DiscoveryExploreClient.class);
     Assert.assertFalse(exploreClient.isServiceAvailable());
@@ -78,7 +72,6 @@ public class ExploreDisabledTest {
   @AfterClass
   public static void stop() throws Exception {
     exploreClient.close();
-    datasetService.stopAndWait();
     transactionManager.stopAndWait();
   }
 
@@ -171,7 +164,6 @@ public class ExploreDisabledTest {
         new IOModule(),
         new DiscoveryRuntimeModule().getInMemoryModules(),
         new LocationRuntimeModule().getInMemoryModules(),
-        new DataSetServiceModules().getInMemoryModule(),
         new DataFabricModules().getInMemoryModules(),
         new DataSetsModules().getInMemoryModule(),
         new MetricsClientRuntimeModule().getInMemoryModules(),

@@ -23,14 +23,25 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
+import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -39,44 +50,61 @@ import javax.annotation.Nullable;
  * A simple implementation of {@link co.cask.cdap.data2.dataset2.DatasetFramework} that keeps its state in
  * memory
  */
+@Singleton
 public class InMemoryDatasetFramework implements DatasetFramework {
-  private final Set<String> modules = Sets.newHashSet();
-  private final DatasetDefinitionRegistryFactory registryFactory;
+  private static final Logger LOG = LoggerFactory.getLogger(InMemoryDatasetFramework.class);
+
+  private DatasetDefinitionRegistryFactory registryFactory;
+  private Map<String, ? extends DatasetModule> defaultModules;
+
+  private final Map<String, String> moduleClasses = Maps.newLinkedHashMap();
+  private final Set<String> defaultTypes = Sets.newHashSet();
   private final Map<String, DatasetSpecification> instances = Maps.newHashMap();
 
+  // NOTE: used only for "internal" operations, that doesn't return to client object of custom type
+  // NOTE: for getting dataset/admin objects we construct fresh new one using all modules (no dependency management in
+  //       this in-mem implementation for now) and passed client (program) classloader
   private DatasetDefinitionRegistry registry;
 
-  @Inject
   public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory) {
+    this(registryFactory, new HashMap<String, DatasetModule>());
+  }
+
+  @Inject
+  public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
+                                  @Named("defaultDatasetModules") Map<String, ? extends DatasetModule> defaultModules) {
     this.registryFactory = registryFactory;
-    this.registry = registryFactory.create();
+    this.defaultModules = defaultModules;
+    resetRegistry();
   }
 
   @Override
   public synchronized void addModule(String moduleName, DatasetModule module)
     throws ModuleConflictException {
 
-    if (modules.contains(moduleName)) {
+    if (moduleClasses.containsKey(moduleName)) {
       throw new ModuleConflictException("Cannot add module " + moduleName + ": it already exists.");
     }
-    module.register(registry);
+    add(moduleName, module, false);
   }
 
   @Override
-  public void deleteModule(String moduleName) throws ModuleConflictException {
-    modules.remove(moduleName);
-    // todo: remove from registry & check for conflicts. It is fine for now, as we don't use delete with in-mem version
+  public synchronized void deleteModule(String moduleName) throws ModuleConflictException {
+    // todo: check if existnig datasets or modules use this module
+    moduleClasses.remove(moduleName);
+    // this will cleanup types
+    registry = createRegistry(registry.getClass().getClassLoader());
   }
 
   @Override
-  public void deleteAllModules() throws DatasetManagementException {
-    if (!instances.isEmpty()) {
-      // todo: quick check - not enough though
-      throw new ModuleConflictException("Cannot delete all modules, some datasets use them");
+  public synchronized void deleteAllModules() throws DatasetManagementException {
+    // check if there are any datasets that use non-default types that we want to remove
+    for (DatasetSpecification spec : instances.values()) {
+      if (!defaultTypes.contains(spec.getType())) {
+        throw new ModuleConflictException("Cannot delete all modules, some datasets use them");
+      }
     }
-    modules.clear();
-    registry = registryFactory.create();
-    // todo: remove from registry & check for conflicts. It is fine for now, as we don't use delete with in-mem version
+    resetRegistry();
   }
 
   @Override
@@ -92,6 +120,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     instances.put(datasetInstanceName, spec);
     def.getAdmin(spec, null).create();
     instances.put(datasetInstanceName, spec);
+    LOG.info("Created dataset {} of type {}", datasetInstanceName, datasetType);
   }
 
   @Override
@@ -110,60 +139,158 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public Collection<DatasetSpecification> getInstances() {
+  public synchronized Collection<DatasetSpecification> getInstances() {
     return Collections.unmodifiableCollection(instances.values());
   }
 
   @Nullable
   @Override
-  public DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException {
+  public synchronized DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException {
     return instances.get(name);
   }
 
   @Override
-  public boolean hasInstance(String instanceName) throws DatasetManagementException {
+  public synchronized boolean hasInstance(String instanceName) throws DatasetManagementException {
     return instances.containsKey(instanceName);
   }
 
   @Override
-  public boolean hasType(String typeName) throws DatasetManagementException {
+  public synchronized boolean hasType(String typeName) throws DatasetManagementException {
     return registry.get(typeName) != null;
   }
 
   @Override
-  public void deleteInstance(String datasetInstanceName) throws InstanceConflictException, IOException {
+  public synchronized void deleteInstance(String datasetInstanceName) throws InstanceConflictException, IOException {
     DatasetSpecification spec = instances.remove(datasetInstanceName);
     DatasetDefinition def = registry.get(spec.getType());
-    def.getAdmin(spec, null).create();
+    def.getAdmin(spec, null).drop();
   }
 
   @Override
-  public void deleteAllInstances() throws DatasetManagementException, IOException {
+  public synchronized void deleteAllInstances() throws DatasetManagementException, IOException {
+    for (DatasetSpecification spec : instances.values()) {
+      DatasetDefinition def = registry.get(spec.getType());
+      def.getAdmin(spec, null).drop();
+    }
     instances.clear();
   }
 
   @Override
-  public synchronized <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, ClassLoader classLoader)
+  public synchronized <T extends DatasetAdmin> T getAdmin(String datasetInstanceName,
+                                                          @Nullable ClassLoader classLoader)
     throws IOException {
 
     DatasetSpecification spec = instances.get(datasetInstanceName);
     if (spec == null) {
       return null;
     }
-    DatasetDefinition impl = registry.get(spec.getType());
+    DatasetDefinition impl = createRegistry(classLoader).get(spec.getType());
     return (T) impl.getAdmin(spec, classLoader);
   }
 
   @Override
   public synchronized <T extends Dataset> T getDataset(String datasetInstanceName,
-                                                       Map<String, String> arguments, ClassLoader classLoader)
+                                                       Map<String, String> arguments,
+                                                       @Nullable ClassLoader classLoader)
     throws IOException {
 
     DatasetSpecification spec = instances.get(datasetInstanceName);
     if (spec == null) {
       return null;
     }
-    DatasetDefinition def = registry.get(spec.getType());
+    DatasetDefinition def = createRegistry(classLoader).get(spec.getType());
     return (T) (def.getDataset(spec, arguments, classLoader));
+  }
+
+  private DatasetDefinitionRegistry createRegistry(@Nullable ClassLoader classLoader) {
+    DatasetDefinitionRegistry registry = registryFactory.create();
+    for (String moduleClassName : moduleClasses.values()) {
+      // todo: this module loading and registering code somewhat duplicated in RemoteDatasetFramework
+      Class<?> moduleClass;
+
+      // try program class loader then reactor class loader
+      try {
+        moduleClass = ClassLoaders.loadClass(moduleClassName, classLoader, this);
+      } catch (ClassNotFoundException e) {
+        try {
+          moduleClass = ClassLoaders.loadClass(moduleClassName, null, this);
+        } catch (ClassNotFoundException e2) {
+          LOG.error("Was not able to load dataset module class {}", moduleClassName, e);
+          throw Throwables.propagate(e);
+        }
+      }
+
+      try {
+        DatasetModule module = DatasetModules.getDatasetModule(moduleClass);
+        module.register(registry);
+      } catch (Exception e) {
+        LOG.error("Was not able to load dataset module class {}", moduleClassName, e);
+        throw Throwables.propagate(e);
+      }
+    }
+
+    return registry;
+  }
+
+  private void add(String moduleName, DatasetModule module, boolean defaultModule) {
+    DependencyTrackingRegistry trackingRegistry = new DependencyTrackingRegistry(registry);
+    module.register(trackingRegistry);
+    if (defaultModule) {
+      defaultTypes.addAll(trackingRegistry.getTypes());
+    }
+    moduleClasses.put(moduleName, DatasetModules.getDatasetModuleClass(module).getName());
+  }
+
+  private void resetRegistry() {
+    LOG.info("RESET " + this.toString());
+
+    moduleClasses.clear();
+    defaultTypes.clear();
+    registry = registryFactory.create();
+    for (Map.Entry<String, ? extends DatasetModule> entry : defaultModules.entrySet()) {
+      LOG.info("Adding Default module: " + entry.getKey() + " " + this.toString());
+      add(entry.getKey(), entry.getValue(), true);
+    }
+  }
+
+  private class DependencyTrackingRegistry implements DatasetDefinitionRegistry {
+    private final DatasetDefinitionRegistry delegate;
+
+    private final List<String> types = Lists.newArrayList();
+    private final List<String> usedTypes = Lists.newArrayList();
+
+    public DependencyTrackingRegistry(DatasetDefinitionRegistry delegate) {
+      this.delegate = delegate;
+    }
+
+    public List<String> getTypes() {
+      return types;
+    }
+
+    public List<String> getUsedTypes() {
+      return usedTypes;
+    }
+
+    @Override
+    public void add(DatasetDefinition def) {
+      String typeName = def.getName();
+      if (delegate.get(typeName) != null) {
+        throw new RuntimeException(
+          new DatasetModuleConflictException("Cannot add dataset type: it already exists: " + typeName));
+      }
+      types.add(typeName);
+      delegate.add(def);
+    }
+
+    @Override
+    public <T extends DatasetDefinition> T get(String datasetTypeName) {
+      T def = delegate.get(datasetTypeName);
+      if (def == null) {
+        throw new RuntimeException(
+          new IllegalArgumentException("Requested dataset type is not available: " + datasetTypeName));
+      }
+      usedTypes.add(datasetTypeName);
+      return def;
+    }
   }
 }

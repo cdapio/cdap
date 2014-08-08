@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.datafabric.dataset.service.mds;
 
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -38,29 +37,21 @@ import java.util.Map;
  * Allows transactional operations with datasets metadata.
  */
 public class MDSDatasetsRegistry extends TransactionalDatasetRegistry<MDSDatasets> {
-  private final Map<String, ? extends DatasetModule> defaultModules;
   private final DatasetFramework dsFramework;
 
   private DatasetMetaTableUtil util;
 
   @Inject
   public MDSDatasetsRegistry(TransactionSystemClient txClient,
-                             @Named("defaultDatasetModules")
-                             Map<String, ? extends DatasetModule> defaultModules,
                              @Named("datasetMDS") DatasetFramework framework,
                              CConfiguration conf) {
     super(txClient);
-    this.defaultModules = defaultModules;
     this.dsFramework =
       new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf, Namespace.SYSTEM));
   }
 
   @Override
   public void startUp() throws Exception {
-    for (Map.Entry<String, ? extends DatasetModule> moduleEntry : defaultModules.entrySet()) {
-      dsFramework.addModule(moduleEntry.getKey(), moduleEntry.getValue());
-    }
-
     this.util = new DatasetMetaTableUtil(dsFramework);
     this.util.init();
   }
