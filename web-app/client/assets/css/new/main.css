@@ -1641,25 +1641,8 @@ span.log-icon.complete {
 
 .system-services-instances-input{
   max-width: 50px ! important;
-  color: white ! important;
   font-weight: bold ! important;
   text-align: center ! important;
-  background-color : inherit ! important;
-}
-.system-services-instances-input::-webkit-input-placeholder {
-    color: white ! important;
-}
-.system-services-instances-input::-moz-placeholder {
-    /* FF 4-18 */
-    color: white ! important;
-}
-.system-services-instances-input::-moz-placeholder {
-    /* FF 19+ */
-    color: white ! important;
-}
-.system-services-instances-input::-ms-input-placeholder {
-    /* IE 10+ */
-    color: white ! important;
 }
 /*
  * Bootstrap Overrides
