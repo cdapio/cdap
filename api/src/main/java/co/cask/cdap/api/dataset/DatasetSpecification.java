@@ -155,6 +155,10 @@ public final class DatasetSpecification {
     return datasetSpecs.get(dsName);
   }
 
+  /**
+   * Get the map of embedded dataset name to {@link co.cask.cdap.api.dataset.DatasetSpecification}
+   * @return the map of dataset name to {@link co.cask.cdap.api.dataset.DatasetSpecification}
+   */
   public SortedMap<String, DatasetSpecification> getSpecifications() {
     return datasetSpecs;
   }

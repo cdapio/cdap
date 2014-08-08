@@ -86,7 +86,6 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION + "/streams")
 public final class StreamHandler extends AuthenticatedHttpHandler {
 
-  //private static final Gson GSON = new Gson();
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StreamConfig.class, new StreamConfigAdapter())
     .create();

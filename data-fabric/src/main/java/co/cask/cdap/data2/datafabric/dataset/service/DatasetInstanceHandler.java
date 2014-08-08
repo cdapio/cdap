@@ -197,7 +197,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
       DatasetMeta info = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null);
-      responder.sendString(HttpResponseStatus.OK, GSON.toJson(info));
+      responder.sendJson(HttpResponseStatus.OK, info, DatasetMeta.class, GSON);
     }
   }
 
@@ -290,9 +290,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
   private DatasetInstanceConfiguration getInstanceConfiguration(HttpRequest request) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
-
     DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
-
     if (creationProperties.getProperties().containsKey(TxConstants.PROPERTY_TTL)) {
       long ttl = TimeUnit.SECONDS.toMillis(Long.parseLong
         (creationProperties.getProperties().get(TxConstants.PROPERTY_TTL)));
