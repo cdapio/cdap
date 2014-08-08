@@ -581,7 +581,7 @@ Example
    * - HTTP Request
      - ``PUT <base-url>/data/datasets/mydataset``
    * - Body
-     - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"3600000"}}``
+     - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"3600"}}``
    * - Description
      - Creates a Dataset named "mydataset" of the type "table" and time-to-live property set to 1 hour
 
@@ -593,14 +593,13 @@ Updating an Existing Dataset
 
 You can update an existing Dataset's table and properties by issuing an HTTP PUT request to the URL::
 
-	PUT <base-url>/data/datasets/<dataset-name>
+	PUT <base-url>/data/datasets/<dataset-name>/properties
 
 with JSON-formatted name of the dataset type and properties in the body::
 
   {
      "typeName":"<type-name>",
-     "properties":{<properties>},
-     "update":"true"
+     "properties":{<properties>}
   }
 
 :Note: The Dataset must exist, and the instance and type passed must match with the existing Dataset.
@@ -640,9 +639,9 @@ Example
    :stub-columns: 1
 
    * - HTTP Request
-     - ``PUT <base-url>/data/datasets/mydataset``
+     - ``PUT <base-url>/data/datasets/mydataset/properties``
    * - Body
-     - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"7200000"},"update":"true"}``
+     - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"7200"}}``
    * - Description
      - For the "mydataset" of type "Table", updates the Dataset and its time-to-live property to 2 hours
 
@@ -1374,7 +1373,7 @@ HTTP Responses
      - The query handle does not match any current query
 
 List of Queries
----------------
+----------------
 To return a list of queries, use::
 
    GET <base-url>/data/explore/queries?limit=<limit>&cursor=<cursor>&offset=<offset>
@@ -1747,6 +1746,50 @@ The response is formatted in JSON; an example of this is shown in:
 .. rst2pdf: CutStop
 
   `Continuuity Reactor Testing and Debugging Guide <http://continuuity.com/docs/reactor/current/en/debugging.html#debugging-reactor-applications>`__
+
+Service Discovery
+------------------
+To find a list of the host and ports of an announced discoverable, you can query the Service's ``discover`` method via
+an HTTP GET method::
+
+  GET <base-url>/apps/<app-id>/services/<service-name>/discover/<discoverable-id>
+
+.. list-table::
+    :widths: 20 80
+    :header-rows: 1
+
+    * - Parameter
+      - Description
+    * - ``<app-id>``
+      - Name of the Application being called
+    * - ``<service-name>``
+      - Name of the Custom Service
+    * - ``<discoverable-id>``
+      - ID of ``TwillRunnable`` to be discovered
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/apps/PurchaseHistory/services/CatalogLookupService/discover/LookupByProductId``
+   * - Description
+     - Find the host and port of ``LookupByProductId`` service announced from ``CatalogLookupService``.
+   * - Result
+     - ::
+
+         [
+          {
+            "host": "node-1003.my.cluster.net",
+            "port": 40324
+          }
+         ]
+
+Accessing Services directly via their host and port is not advisable as it bypasses all CDAP security.
+
+Note that this feature is experimental and may be deprecated or removed in future releases.
 
 .. rst2pdf: PageBreak
 
