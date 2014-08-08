@@ -21,6 +21,9 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.http.HttpRequest;
+import co.cask.cdap.common.http.HttpRequests;
+import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -41,6 +44,8 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -53,7 +58,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 import java.net.Socket;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Collections;
@@ -217,7 +224,7 @@ public class TestFrameworkTest extends TestBase {
 
     // Look for service endpoint
     final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices", AppWithServices.SERVICE_NAME,
-                                                                        AppWithServices.SERVICE_NAME);
+                                                                         AppWithServices.SERVICE_NAME);
     final BlockingQueue<Discoverable> discoverables = new LinkedBlockingQueue<Discoverable>();
     serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
       @Override
@@ -230,6 +237,13 @@ public class TestFrameworkTest extends TestBase {
     Discoverable discoverable = discoverables.poll(5, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
     Assert.assertTrue(discoverables.isEmpty());
+
+
+    URL url = new URL(String.format("http://%s:%d/ping2", discoverable.getSocketAddress().getHostName(),
+                                          discoverable.getSocketAddress().getPort()));
+    HttpRequest request = HttpRequest.get(url).build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(response.getResponseCode(), 200);
 
     // Connect and close. This should stop the leader instance.
     Socket socket = new Socket(discoverable.getSocketAddress().getAddress(), discoverable.getSocketAddress().getPort());

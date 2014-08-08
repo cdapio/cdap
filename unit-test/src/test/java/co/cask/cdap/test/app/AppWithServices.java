@@ -24,6 +24,9 @@ import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
+import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.ElectionHandler;
@@ -36,6 +39,9 @@ import org.apache.twill.common.Cancellable;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * AppWithServices with a DummyService for unit testing.
@@ -61,7 +67,13 @@ public class AppWithServices extends AbstractApplication {
 
   }
 
-  public static class ServerService extends AbstractHttpServiceHandler {
-    // no-op service
+  @Path("/")
+  public class ServerService extends AbstractHttpServiceHandler {
+
+    @Path("/ping2")
+    @GET
+    public void handler(HttpServiceRequest request, HttpServiceResponder responder) {
+      responder.sendStatus(200);
+    }
   }
 }
