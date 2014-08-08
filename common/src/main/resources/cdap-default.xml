@@ -565,6 +565,12 @@
     </property>
 
     <property>
+        <name>dataset.table.prefix</name>
+        <value>${root.namespace}</value>
+        <description>Prefix for dataset table name</description>
+    </property>
+
+    <property>
         <name>dataset.service.output.dir</name>
         <value>/datasets</value>
         <description>Directory where all dataset modules archives are stored</description>

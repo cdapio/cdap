@@ -19,10 +19,10 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ProcedureClient;
 import co.cask.cdap.test.ProcedureManager;
-import co.cask.cdap.test.ReactorTestBase;
 import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.TestBase;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -39,7 +39,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Word Count main test.
  */
-public class WordCountTest extends ReactorTestBase {
+public class WordCountTest extends TestBase {
 
   static Type stringMapType = new TypeToken<Map<String, String>>() {
   }.getType();
@@ -87,5 +87,9 @@ public class WordCountTest extends ReactorTestBase {
     Map<String, Double> assocs = (Map<String, Double>) omap.get("assocs");
     Assert.assertEquals(2.0, (double) assocs.get("hello"), 0.000001);
     Assert.assertTrue(assocs.containsKey("hello"));
+
+    appManager.stopAll();
+    TimeUnit.SECONDS.sleep(1);
+    clear();
   }
 }

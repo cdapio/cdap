@@ -46,7 +46,7 @@ import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -333,7 +333,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.txClient = txClient;
     this.dsFramework =
       new NamespacedDatasetFramework(dsFramework,
-                                     new ReactorDatasetNamespace(configuration, Namespace.USER));
+                                     new DefaultDatasetNamespace(configuration, Namespace.USER));
   }
 
   /**
@@ -681,7 +681,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     Id.Program id = Id.Program.from(accountId, appId, runnableId);
 
+
     try {
+      if (!store.programExists(id, type)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
       Map<String, String> runtimeArgs = store.getRunArguments(id);
       responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
     } catch (Throwable e) {
@@ -708,7 +713,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     Id.Program id = Id.Program.from(accountId, appId, runnableId);
 
+
     try {
+      if (!store.programExists(id, type)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
       Map<String, String> args = decodeArguments(request);
       store.storeRunArguments(id, args);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -973,6 +983,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
+      if (respondIfElementNotFound(e, responder)) {
+        return;
+      }
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
@@ -1310,6 +1323,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
+      if (respondIfElementNotFound(e, responder)) {
+        return;
+      }
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
@@ -1347,6 +1363,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
+      if (respondIfElementNotFound(e, responder)) {
+        return;
+      }
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
@@ -2294,8 +2313,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     for (ProgramSpecification spec : programSpecs) {
       ProgramType type = ProgramTypes.fromSpecification(spec);
       Id.Program programId = Id.Program.from(appId, spec.getName());
-      Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
-      location.delete();
+      try {
+        Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
+        location.delete();
+      } catch (FileNotFoundException e) {
+        LOG.warn("Program jar for program {} not found.", programId.toString(), e);
+      }
     }
 
     // Delete webapp

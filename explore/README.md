@@ -2,8 +2,8 @@ about hive-exec patch file
 --------------------------
 
 This patch file contains all the changes that had to be made to hive branch `release-0.13.0-rc2`
-to make it work with reactor 2.3.0 in singlenode and in unit-tests.
-A hive-exec-0.13.0-continuuity-2.3.0.jar is already uploaded to Nexus and is used by Reactor in
+to make it work with CDAP 2.3.0 in singlenode and in unit-tests.
+A hive-exec-0.13.0.jar is already uploaded to Nexus and is used by Reactor in
 singlenode and for unit tests.
 
 To modify the hive-exec jar again, follow these steps:
@@ -14,11 +14,10 @@ To modify the hive-exec jar again, follow these steps:
   ``git apply --stat explore/hive-exec-0.13.0-continuuity-xxx.patch``
 3. Make your changes in the ``ql`` module (it will be packaged as hive-exec.jar)
 4. You can modify ``pom.xml`` in module ``ql`` to change the version number of the generated jar, according
-to what version of Reactor you are modifying.
+to what version of CDAP you are modifying.
 5. Deploy your jar to Nexus using this command in the ``ql`` directory:
   ``mvn clean deploy -DskipTests -P hadoop-2 -P sources``
-6. Change your dependencies in Reactor to point to the same version number you specified in step 4. for
+6. Change your dependencies in CDAP to point to the same version number you specified in step 4. for
 hive-exec.
 7. Don't forget to create a new patch file and to put it here:
-  ``git format-patch release-0.13.0-rc2 --stdout > explore/hive-exec-0.13.0-continuuity-xxx.patch``
-
+  ``git format-patch release-0.13.0-rc2 --stdout > explore/hive-exec-0.13.0.patch``

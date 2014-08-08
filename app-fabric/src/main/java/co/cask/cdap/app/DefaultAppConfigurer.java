@@ -165,8 +165,13 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     mapReduces.putAll(spec.getMapReduce());
   }
 
-  @Override
-  public void addService(TwillApplication application) {
+
+  /**
+   * Adds a Custom Service {@link TwillApplication} to the Application.
+   *
+   * @param application Custom Service {@link TwillApplication} to include in the Application
+   */
+  private void addService(TwillApplication application) {
     Preconditions.checkNotNull(application, "Service cannot be null.");
 
     DefaultServiceSpecification spec = new DefaultServiceSpecification(application.getClass().getName(),
@@ -174,13 +179,23 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     services.put(spec.getName(), spec);
   }
 
-  @Override
-  public void addService(TwillRunnable runnable, ResourceSpecification specification) {
+  /**
+   * Adds {@link TwillRunnable} TwillRunnable as a Custom Service {@link TwillApplication} to the Application.
+   * @param runnable TwillRunnable to run as service
+   * @param specification ResourceSpecification for Twill container.
+   */
+  private void addService(TwillRunnable runnable, ResourceSpecification specification) {
     addService(new SingleRunnableApplication(runnable, specification));
   }
 
-  @Override
-  public void addService(String name, Service service, ResourceSpecification specification) {
+  /**
+   * Adds {@link com.google.common.util.concurrent.Service} as a Custom Service {@link TwillApplication}
+   * to the Application.
+   * @param name Name of runnable.
+   * @param service Guava service to be added.
+   * @param specification ResourceSpecification for Twill container.
+   */
+  private void addService(String name, Service service, ResourceSpecification specification) {
     addService(new GuavaServiceTwillRunnable(name, service), specification);
   }
 

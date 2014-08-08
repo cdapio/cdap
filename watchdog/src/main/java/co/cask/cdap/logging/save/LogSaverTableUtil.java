@@ -17,8 +17,8 @@
 package co.cask.cdap.logging.save;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.dataset.lib.table.MetaTableUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.table.MetaTableUtil;
 import co.cask.cdap.logging.LoggingConfiguration;
 import com.google.inject.Inject;
 

@@ -25,7 +25,7 @@ import co.cask.cdap.data.stream.MultiLiveStreamFileReader;
 import co.cask.cdap.data.stream.StreamEventOffset;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -69,7 +69,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     this.streamAdmin = streamAdmin;
     this.stateStoreFactory = stateStoreFactory;
     this.tablePrefix =
-      new ReactorDatasetNamespace(conf, Namespace.SYSTEM).namespace(QueueConstants.STREAM_TABLE_PREFIX);
+      new DefaultDatasetNamespace(conf, Namespace.SYSTEM).namespace(QueueConstants.STREAM_TABLE_PREFIX);
     this.queueClientFactory = queueClientFactory;
     this.oldStreamAdmin = oldStreamAdmin;
   }

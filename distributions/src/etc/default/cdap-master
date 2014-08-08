@@ -14,7 +14,7 @@
 # the License.
 #
 
-# Uncomment the following and set them to the correct values for running Reactor on a Kerberos-enabled Hadoop cluster
+# Uncomment the following and set them to the correct values for running on a Kerberos-enabled Hadoop cluster
 #
 #CDAP_KEYTAB="/etc/security/keytabs/yarn.keytab"
 #CDAP_PRINCIPAL="yarn@EXAMPLE.REALM.COM"

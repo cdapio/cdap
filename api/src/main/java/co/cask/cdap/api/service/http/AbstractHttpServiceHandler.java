@@ -27,10 +27,11 @@ public abstract class AbstractHttpServiceHandler implements HttpServiceHandler {
   private HttpServiceContext context;
 
   /**
-   * To be implemented by a subclass. This method can be used to set the name, description, and add
-   * runtime arguments.
+   * This can be overridden in child classes to add custom user properties during configure time.
    */
-  public abstract void configure();
+  protected void configure() {
+    // no-op
+  }
 
   /**
    * An implementation of {@link HttpServiceHandler#configure(HttpServiceConfigurer)}. Stores the configurer

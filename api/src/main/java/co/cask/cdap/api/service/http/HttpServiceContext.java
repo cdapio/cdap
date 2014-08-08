@@ -29,8 +29,7 @@ public interface HttpServiceContext {
   HttpServiceSpecification getSpecification();
 
   /**
-   * @return a map of argument key and value
+   * @return the user runtime arguments for the {@link HttpServiceHandler}s
    */
   Map<String, String> getRuntimeArguments();
-
 }

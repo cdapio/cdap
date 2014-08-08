@@ -37,7 +37,10 @@ public final class TestMetricsCollectionService extends AggregatedMetricsCollect
       MetricsRecord metricsRecord = metrics.next();
       String context = metricsRecord.getContext();
       // Remove the last part, which is the runID
-      context = context.substring(0, context.lastIndexOf('.'));
+      int idx = context.lastIndexOf('.');
+      if (idx >= 0) {
+        context = context.substring(0, idx);
+      }
       RuntimeStats.count(String.format("%s.%s", context, metricsRecord.getName()), metricsRecord.getValue());
     }
   }

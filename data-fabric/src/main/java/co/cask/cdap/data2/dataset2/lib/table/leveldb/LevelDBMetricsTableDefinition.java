@@ -20,14 +20,14 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.data2.dataset.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.Map;
 
 /**
- * LevelDB backed implementation for {@link co.cask.cdap.data2.dataset.lib.table.MetricsTable}
+ * LevelDB backed implementation for {@link co.cask.cdap.data2.dataset2.lib.table.MetricsTable}
  */
 public class LevelDBMetricsTableDefinition
   extends AbstractDatasetDefinition<MetricsTable, DatasetAdmin> {

@@ -17,12 +17,12 @@
 package co.cask.cdap.logging.run;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.AbstractInMemoryReactorServiceManager;
+import co.cask.cdap.common.twill.AbstractInMemoryMasterServiceManager;
 
 /**
  * InMemory MetricsProcessor Service Management class.
  */
-public class InMemoryMetricsProcessorServiceManager extends AbstractInMemoryReactorServiceManager {
+public class InMemoryMetricsProcessorServiceManager extends AbstractInMemoryMasterServiceManager {
 
   @Override
   public String getDescription() {

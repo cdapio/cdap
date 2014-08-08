@@ -23,8 +23,6 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.jar.JarClassLoader;
-import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -36,18 +34,24 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
 import javax.annotation.Nullable;
 
 /**
@@ -58,17 +62,14 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   private final DatasetServiceClient client;
   private final DatasetDefinitionRegistryFactory registryFactory;
-  private final LocationFactory locationFactory;
   private final DatasetTypeClassLoaderFactory typeLoader;
 
   @Inject
   public RemoteDatasetFramework(DiscoveryServiceClient discoveryClient,
-                                LocationFactory locationFactory,
                                 DatasetDefinitionRegistryFactory registryFactory,
                                 DatasetTypeClassLoaderFactory typeLoader) {
 
     this.client = new DatasetServiceClient(discoveryClient);
-    this.locationFactory = locationFactory;
     this.registryFactory = registryFactory;
     this.typeLoader = typeLoader;
   }
@@ -178,14 +179,74 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   private void addModule(String moduleName, Class<?> typeClass) throws DatasetManagementException {
     Location tempJarPath;
-    if (typeClass.getClassLoader() instanceof JarClassLoader) {
-      // for auto-registering module with application jar deploy
-      tempJarPath = ((JarClassLoader) typeClass.getClassLoader()).getLocation();
-    } else {
-      tempJarPath = new LocalLocationFactory().create(JarFinder.getJar(typeClass));
+    try {
+      tempJarPath = createDeploymentJar(typeClass);
+      try {
+        client.addModule(moduleName, typeClass.getName(), tempJarPath);
+      } finally {
+        tempJarPath.delete();
+      }
+    } catch (IOException e) {
+      String msg = String.format("Could not create jar for deploying dataset module %s with main class %s",
+                                 moduleName, typeClass.getName());
+      LOG.error(msg, e);
+      throw new DatasetManagementException(msg, e);
+    }
+  }
+
+  private static Location createDeploymentJar(Class<?> clz) throws IOException {
+    File tempFile = File.createTempFile(clz.getName(), ".jar");
+    Location tempJarLocation = new LocalLocationFactory().create(tempFile.getPath());
+
+    ClassLoader remembered = Thread.currentThread().getContextClassLoader();
+    Thread.currentThread().setContextClassLoader(clz.getClassLoader());
+    try {
+      ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
+                                                                           "org.apache.hadoop",
+                                                                           "org.apache.hbase",
+                                                                           "org.apache.hive"));
+      bundler.createBundle(tempJarLocation, clz);
+    } finally {
+      Thread.currentThread().setContextClassLoader(remembered);
     }
 
-    client.addModule(moduleName, typeClass.getName(), tempJarPath);
+    // Create the program jar for deployment. It removes the "classes/" prefix as that's the convention taken
+    // by the ApplicationBundler inside Twill.
+    File outFile = File.createTempFile(clz.getName(), ".jar");
+    Location outJarLocation = new LocalLocationFactory().create(outFile.getPath());
+
+    JarOutputStream jarOutput = new JarOutputStream(outJarLocation.getOutputStream());
+    try {
+      JarInputStream jarInput = new JarInputStream(tempJarLocation.getInputStream());
+      try {
+        JarEntry jarEntry = jarInput.getNextJarEntry();
+        while (jarEntry != null) {
+          boolean isDir = jarEntry.isDirectory();
+          String entryName = jarEntry.getName();
+          if (!entryName.equals("classes/")) {
+            if (entryName.startsWith("classes/")) {
+              jarEntry = new JarEntry(entryName.substring("classes/".length()));
+            } else {
+              jarEntry = new JarEntry(entryName);
+            }
+            jarOutput.putNextEntry(jarEntry);
+
+            if (!isDir) {
+              ByteStreams.copy(jarInput, jarOutput);
+            }
+          }
+
+          jarEntry = jarInput.getNextJarEntry();
+        }
+      } finally {
+        jarInput.close();
+      }
+
+    } finally {
+      jarOutput.close();
+    }
+
+    return outJarLocation;
   }
 
   // can be used directly if DatasetTypeMeta is known, like in create dataset by dataset ops executor service

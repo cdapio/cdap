@@ -25,7 +25,7 @@ public class AlreadyExistsException extends Exception {
   private final String elementId;
 
   public AlreadyExistsException(String elementType, String elementId) {
-    super(String.format("Element '%s' of type '%s' already exists", elementId, elementType));
+    super(String.format("%s '%s' already exists", elementType, elementId));
     this.elementType = elementType;
     this.elementId = elementId;
   }

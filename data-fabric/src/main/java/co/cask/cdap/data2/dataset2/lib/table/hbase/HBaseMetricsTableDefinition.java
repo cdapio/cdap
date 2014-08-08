@@ -21,7 +21,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.dataset.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;

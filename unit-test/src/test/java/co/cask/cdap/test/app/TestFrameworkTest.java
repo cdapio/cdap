@@ -21,6 +21,9 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.http.HttpRequest;
+import co.cask.cdap.common.http.HttpRequests;
+import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -28,12 +31,12 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ProcedureClient;
 import co.cask.cdap.test.ProcedureManager;
-import co.cask.cdap.test.ReactorTestBase;
 import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
@@ -41,6 +44,8 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -53,7 +58,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 import java.net.Socket;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Collections;
@@ -68,7 +75,7 @@ import java.util.concurrent.TimeoutException;
  *
  */
 @Category(SlowTests.class)
-public class TestFrameworkTest extends ReactorTestBase {
+public class TestFrameworkTest extends TestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTest.class);
 
   @After
@@ -210,13 +217,14 @@ public class TestFrameworkTest extends ReactorTestBase {
   public void testAppwithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
-    ServiceManager serviceManager = applicationManager.startService("ServerService");
+    ServiceManager serviceManager = applicationManager.startService(AppWithServices.SERVICE_NAME);
     serviceStatusCheck(serviceManager, true);
 
     LOG.info("Service Started");
 
     // Look for service endpoint
-    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices", "ServerService", "server");
+    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices", AppWithServices.SERVICE_NAME,
+                                                                         AppWithServices.SERVICE_NAME);
     final BlockingQueue<Discoverable> discoverables = new LinkedBlockingQueue<Discoverable>();
     serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
       @Override
@@ -230,16 +238,16 @@ public class TestFrameworkTest extends ReactorTestBase {
     Assert.assertNotNull(discoverable);
     Assert.assertTrue(discoverables.isEmpty());
 
+
+    URL url = new URL(String.format("http://%s:%d/ping2", discoverable.getSocketAddress().getHostName(),
+                                                          discoverable.getSocketAddress().getPort()));
+    HttpRequest request = HttpRequest.get(url).build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(response.getResponseCode(), 200);
+
     // Connect and close. This should stop the leader instance.
     Socket socket = new Socket(discoverable.getSocketAddress().getAddress(), discoverable.getSocketAddress().getPort());
     socket.close();
-
-    // The leader is stopped. The follower becomes the new leader and a new endpoint should get announced
-    Discoverable discoverable2 = discoverables.poll(5, TimeUnit.SECONDS);
-    Assert.assertNotNull(discoverable2);
-    Assert.assertTrue(discoverables.isEmpty());
-
-    Assert.assertNotEquals(discoverable.getSocketAddress(), discoverable2.getSocketAddress());
 
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
@@ -247,20 +255,6 @@ public class TestFrameworkTest extends ReactorTestBase {
     // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the REACTOR scope test in
     // TestMetricsCollectionService
 
-  }
-
-  @Category(SlowTests.class)
-  @Test
-  public void testAppwithOnlyService() throws Exception {
-    //App with only service in it.
-    ApplicationManager applicationManager = deployApplication(AppWithOnlyService.class);
-    LOG.info("Deployed.");
-    ServiceManager serviceManager = applicationManager.startService("NoOpService");
-    serviceStatusCheck(serviceManager, true);
-    LOG.info("Service Started");
-    serviceManager.stop();
-    serviceStatusCheck(serviceManager, false);
-    LOG.info("Service Stopped");
   }
 
   private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
@@ -511,10 +505,10 @@ public class TestFrameworkTest extends ReactorTestBase {
       // list the tables and make sure the table is there
       ResultSet results = connection.prepareStatement("show tables").executeQuery();
       Assert.assertTrue(results.next());
-      Assert.assertTrue("continuuity_user_mytable".equalsIgnoreCase(results.getString(1)));
+      Assert.assertTrue("cdap_user_mytable".equalsIgnoreCase(results.getString(1)));
 
       // run a query over the dataset
-      results = connection.prepareStatement("select first from continuuity_user_mytable where second = '1'")
+      results = connection.prepareStatement("select first from cdap_user_mytable where second = '1'")
           .executeQuery();
       Assert.assertTrue(results.next());
       Assert.assertEquals("a", results.getString(1));

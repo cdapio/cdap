@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
  * Constants used by different systems are all defined here.
  */
 public final class Constants {
+
   /**
    * Global Service names.
    */
@@ -32,7 +33,7 @@ public final class Constants {
     public static final String LOGSAVER = "log.saver";
     public static final String GATEWAY = "gateway";
     public static final String STREAMS = "streams";
-    public static final String REACTOR_SERVICES = "reactor.services";
+    public static final String MASTER_SERVICES = "master.services";
     public static final String METRICS_PROCESSOR = "metrics.processor";
     public static final String DATASET_MANAGER = "dataset.service";
     public static final String DATASET_EXECUTOR = "dataset.executor";
@@ -140,6 +141,9 @@ public final class Constants {
    * Datasets.
    */
   public static final class Dataset {
+
+    public static final String TABLE_PREFIX = "dataset.table.prefix";
+
     /**
      * DatasetManager service configuration.
      */
@@ -479,7 +483,7 @@ public final class Constants {
      * Explore JDBC constants.
      */
     public static final class Jdbc {
-      public static final String URL_PREFIX = "jdbc:reactor://";
+      public static final String URL_PREFIX = "jdbc:cdap://";
     }
   }
 

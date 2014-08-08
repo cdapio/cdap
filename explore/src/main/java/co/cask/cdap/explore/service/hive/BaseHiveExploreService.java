@@ -155,8 +155,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     LOG.info("Starting {}...", Hive13ExploreService.class.getSimpleName());
     cliService.init(getHiveConf());
     cliService.start();
-    // TODO: Figure out a way to determine when cliService has started successfully - REACTOR-254
-    TimeUnit.SECONDS.sleep(5);
 
     // Schedule the cache cleanup
     scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
@@ -418,10 +416,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       QueryStatus status = fetchStatus(getOperationHandle(handle));
       LOG.trace("Status of handle {} is {}", handle, status);
 
-      if ((status.getStatus() == QueryStatus.OpStatus.FINISHED && !status.hasResults()) ||
-        status.getStatus() == QueryStatus.OpStatus.ERROR) {
-        // No results or error, so can be timed out aggressively
+      // No results or error, so can be timed out aggressively
+      if (status.getStatus() == QueryStatus.OpStatus.FINISHED && !status.hasResults()) {
         timeoutAggresively(handle, getResultSchema(handle), status);
+      } else if (status.getStatus() == QueryStatus.OpStatus.ERROR) {
+        // getResultSchema will fail if the query is in error
+        timeoutAggresively(handle, ImmutableList.<ColumnDesc>of(), status);
       }
       return status;
     } catch (HiveSQLException e) {
@@ -587,6 +587,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   @Override
   public void close(QueryHandle handle) throws ExploreException, HandleNotFoundException {
+    inactiveHandleCache.invalidate(handle);
     activeHandleCache.invalidate(handle);
   }
 
@@ -650,7 +651,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   /**
    * Starts a long running transaction, and also sets up session configuration.
-   * @return configuration for a hive session that contains a transaction, and serialized reactor configuration and
+   * @return configuration for a hive session that contains a transaction, and serialized CDAP configuration and
    * HBase configuration. This will be used by the map-reduce tasks started by Hive.
    * @throws IOException
    */

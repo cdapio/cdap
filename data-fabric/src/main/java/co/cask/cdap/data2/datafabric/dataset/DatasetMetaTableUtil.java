@@ -19,7 +19,7 @@ package co.cask.cdap.data2.datafabric.dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -74,7 +74,7 @@ public class DatasetMetaTableUtil {
     throws DatasetManagementException, IOException {
     DatasetFramework mdsDatasetFramework =
       new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory),
-                                     new ReactorDatasetNamespace(cConf, Namespace.SYSTEM));
+                                     new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
     mdsDatasetFramework.addModule("orderedTable", new HBaseOrderedTableModule());
     addTypes(mdsDatasetFramework);
     mdsDatasetFramework.addInstance(DatasetTypeMDS.class.getName(),
