@@ -16,12 +16,11 @@
 
 package co.cask.cdap.api.service.http;
 
-import co.cask.cdap.api.app.ApplicationConfigurer;
-
 import java.util.Map;
 
 /**
- *
+ * An abstract implementation of {@link HttpServiceHandler}. Classes that extend this class only
+ * have to implement a configure method which can be used to add optional arguments.
  */
 public abstract class AbstractHttpServiceHandler implements HttpServiceHandler {
   private HttpServiceConfigurer configurer;
@@ -34,54 +33,74 @@ public abstract class AbstractHttpServiceHandler implements HttpServiceHandler {
     // no-op
   }
 
+  /**
+   * An implementation of {@link HttpServiceHandler#configure(HttpServiceConfigurer)}. Stores the configurer
+   * so that it can be used later and then runs the configure method which is overwritten by children classes.
+   *
+   * @param configurer the {@link HttpServiceConfigurer} which is used to configure this Handler
+   */
   @Override
   public final void configure(HttpServiceConfigurer configurer) {
     this.configurer = configurer;
-
     configure();
   }
 
+  /**
+   * An implementation of {@link HttpServiceHandler#initialize(HttpServiceContext)}. Stores the context
+   * so that it can be used later.
+   *
+   * @param context the HTTP service runtime context
+   * @throws Exception
+   */
   @Override
   public void initialize(HttpServiceContext context) throws Exception {
     this.context = context;
   }
 
+  /**
+   * An implementation of {@link HttpServiceHandler#destroy()} which does nothing
+   */
   @Override
   public void destroy() {
-    // nothing to do
+    // no-op
   }
 
   /**
-   * @return
+   * @return the {@link HttpServiceContext} which was used when this class was initialized
    */
   protected final HttpServiceContext getContext() {
     return context;
   }
 
   /**
-   * @return The {@link ApplicationConfigurer} used to configure the {@link co.cask.cdap.api.app.Application}
+   * @return the {@link HttpServiceConfigurer} used to configure this class
    */
   protected final HttpServiceConfigurer getConfigurer() {
     return configurer;
   }
 
   /**
-   * @see ApplicationConfigurer#setName(String)
+   * @see HttpServiceConfigurer#setName(String)
+   *
+   * @param name the name to set
    */
   protected final void setName(String name) {
     configurer.setName(name);
   }
 
   /**
-   * @see ApplicationConfigurer#setDescription(String)
+   * @see HttpServiceConfigurer#setDescription(String)
+   *
+   * @param description the description to set
    */
   protected final void setDescription(String description) {
     configurer.setDescription(description);
   }
 
   /**
+   * @see HttpServiceConfigurer#setArguments(java.util.Map)
    *
-   * @param arguments
+   * @param arguments the runtime arguments to store
    */
   protected final void setArguments(Map<String, String> arguments) {
     configurer.setArguments(arguments);

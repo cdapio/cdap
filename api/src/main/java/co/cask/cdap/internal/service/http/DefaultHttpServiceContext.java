@@ -58,6 +58,9 @@ public class DefaultHttpServiceContext implements HttpServiceContext {
     return spec;
   }
 
+  /**
+   * @return the runtime arguments for the {@link HttpServiceContext}
+   */
   @Override
   public Map<String, String> getRuntimeArguments() {
     return runtimeArgs;
