@@ -16,29 +16,58 @@
 
 package co.cask.cdap.api.service.http;
 
-
 /**
- * Interface for user to handle HTTP requests.
+ * Interface to be implemented to handle HTTP requests. This interface can be implemented and passed along to
+ * custom user services. Classes that implement this interface can add methods with the @Path annotation
+ * to specify the endpoint which that method handles. It can also use the @GET, @POST, @PUT, @DELETE annotations
+ * to specify the type of HTTP requests that it handles.
+ *
+ * Example:
+ * <p>
+ *   <pre><code>
+ *      public class MyHttpHanlder implements HttpServiceHandler {
+ *
+ *        @GET
+ *        @Path("/ping")
+ *        public void process(HttpServiceRequest request, HttpServiceResponder responder) {
+ *          responder.sendString("Hello World");
+ *        }
+ *
+ *        @Override
+ *        public void configure(HttpServiceConfigurer configurer) { }
+ *
+ *        @Override
+ *        public void initialize(HttpServiceContext context) throws Exception { }
+ *
+ *        @Override
+ *        public void destroy() { }
+ *      }
+ *   </code></pre>
+ * </p>
+ *
  */
 public interface HttpServiceHandler {
 
   /**
    * Configures this HttpServiceHandler with the given {@link HttpServiceConfigurer}.
-   * This method is invoked at deployment time
-   * @param configurer The {@link HttpServiceConfigurer} which is used to configure this Handler
+   * This method is invoked at deployment time.
+   *
+   * @param configurer the HttpServiceConfigurer which is used to configure this Handler
    */
   void configure(HttpServiceConfigurer configurer);
 
   /**
-   * Initializes this HttpServiceHandler at runtime. This method is invoked only once during the startup of
-   * the HttpServiceHandler.This method can be used to initialize any user related resources.
-   * @param context http service runtime context
+   * Invoked when the Custom User Service using this HttpServiceHandler is initialized.
+   * This method can be used to initialize any user related resources at runtime.
+   *
+   * @param context the HTTP service runtime context
    * @throws Exception
    */
   void initialize(HttpServiceContext context) throws Exception;
 
   /**
-   * 
+   * Invoked after the Custom User Service using this HttpServiceHandler is destroyed.
+   * Use this method to perform any necessary cleanup.
    */
   void destroy();
 }

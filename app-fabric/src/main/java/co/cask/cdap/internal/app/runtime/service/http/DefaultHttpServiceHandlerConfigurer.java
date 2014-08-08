@@ -25,34 +25,60 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- *
+ * Default implementation of {@link HttpServiceConfigurer}
  */
 public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigurer {
   private String name;
   private String description;
   private Map<String, String> arguments;
 
+  /**
+   * Instantiates the class with the given {@link HttpServiceHandler}.
+   * The arguments and description are set to empty values and the name is the handler class name.
+   *
+   * @param handler the handler for the service
+   */
   public DefaultHttpServiceHandlerConfigurer(HttpServiceHandler handler) {
     this.name = handler.getClass().getSimpleName();
     this.description = "";
     this.arguments = Collections.emptyMap();
   }
 
+  /**
+   * Sets the name.
+   *
+   * @param name the HTTP Service name
+   */
   @Override
   public void setName(String name) {
     this.name = name;
   }
 
+  /**
+   * Sets the descriptions.
+   *
+   * @param description the HTTP Service description
+   */
   @Override
   public void setDescription(String description) {
     this.description = description;
   }
 
+  /**
+   * Sets the runtime arguments.
+   *
+   * @param arguments the HTTP Service runtime arguments
+   */
   @Override
   public void setArguments(Map<String, String> arguments) {
     this.arguments = arguments;
   }
 
+  /**
+   * Creates a {@link HttpServiceSpecification} from the parameters stored in this class.
+   *
+   * @return a new specification from the parameters stored in this instance
+   */
   public HttpServiceSpecification createHttpServiceSpec() {
     return new DefaultHttpServiceSpecification(name, description, arguments);
   }

@@ -267,7 +267,8 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     boolean responseStarted = false;
     try {
       QueryHandle handle = QueryHandle.fromId(id);
-      if (handle.equals(QueryHandle.NO_OP)) {
+      if (handle.equals(QueryHandle.NO_OP) ||
+          !exploreService.getStatus(handle).getStatus().equals(QueryStatus.OpStatus.FINISHED)) {
         responder.sendStatus(HttpResponseStatus.CONFLICT);
         return;
       }
@@ -389,7 +390,8 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       } else {
         sb.append(',');
       }
-      sb.append(o.toString());
+      // Using GSON toJson will serialize objects - in particular, strings will be quoted
+      sb.append(GSON.toJson(o));
     }
     return sb.toString();
   }
