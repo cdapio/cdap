@@ -124,6 +124,12 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
 
   @Override
   protected CoprocessorJar createCoprocessorJar() throws IOException {
+    return createCoprocessorJarInternal(conf, locationFactory, tableUtil);
+  }
+
+  public static CoprocessorJar createCoprocessorJarInternal(CConfiguration conf,
+                                                             LocationFactory locationFactory,
+                                                             HBaseTableUtil tableUtil) throws IOException {
     if (!conf.getBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE,
                          TxConstants.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
       return CoprocessorJar.EMPTY;
@@ -133,8 +139,7 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
     Location jarDir = locationFactory.create(conf.get(Constants.CFG_HDFS_LIB_DIR));
     Class<? extends Coprocessor> dataJanitorClass = tableUtil.getTransactionDataJanitorClassForVersion();
     Class<? extends Coprocessor> incrementClass = tableUtil.getIncrementHandlerClassForVersion();
-    ImmutableList<Class<? extends Coprocessor>> coprocessors =
-      ImmutableList.<Class<? extends Coprocessor>>of(dataJanitorClass, incrementClass);
+    ImmutableList<Class<? extends Coprocessor>> coprocessors = ImmutableList.of(dataJanitorClass, incrementClass);
     Location jarFile = HBaseTableUtil.createCoProcessorJar("table", jarDir, coprocessors);
     CoprocessorJar cpJar = new CoprocessorJar(coprocessors, jarFile);
     // TODO: this is hacky, the priority should come from the CP implementation

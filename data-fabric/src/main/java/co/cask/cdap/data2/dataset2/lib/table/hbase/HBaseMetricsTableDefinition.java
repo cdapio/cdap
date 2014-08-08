@@ -25,6 +25,8 @@ import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
@@ -61,7 +63,24 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
   }
 
   @Override
-  public HBaseOrderedTableAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    return new HBaseOrderedTableAdmin(spec, hConf, hBaseTableUtil, conf, locationFactory);
+  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    return new HTableDatasetAdmin(getHTableDescriptor(spec), hConf, hBaseTableUtil);
+  }
+
+  private HTableDescriptor getHTableDescriptor(DatasetSpecification spec) {
+    final String tableName = HBaseTableUtil.getHBaseTableName(spec.getName());
+
+    final HColumnDescriptor columnDescriptor = new HColumnDescriptor(HBaseMetricsTable.DATA_COLUMN_FAMILY);
+    hBaseTableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
+    columnDescriptor.setMaxVersions(1);
+
+    int ttl = spec.getIntProperty("ttl", -1);
+    if (ttl > 0) {
+      columnDescriptor.setTimeToLive(ttl);
+    }
+
+    final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
+    tableDescriptor.addFamily(columnDescriptor);
+    return tableDescriptor;
   }
 }
