@@ -291,7 +291,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     executeAdmin(request, responder, name, "upgrade");
   }
 
-
   private DatasetInstanceConfiguration getInstanceConfiguration(HttpRequest request) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
     DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
