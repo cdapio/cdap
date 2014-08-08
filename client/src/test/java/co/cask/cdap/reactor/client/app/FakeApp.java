@@ -54,6 +54,6 @@ public class FakeApp extends AbstractApplication {
     createDataset(DS_NAME, FakeDataset.class.getName());
     addProcedure(new FakeProcedure());
     addFlow(new FakeFlow());
-    getConfigurer().addService("fakeRunnable", new FakeService());
+    addService(FakeService.NAME, new FakeService());
   }
 }

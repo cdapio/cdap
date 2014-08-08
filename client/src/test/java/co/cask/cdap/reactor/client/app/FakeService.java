@@ -25,5 +25,5 @@ import org.apache.twill.api.TwillRunnableSpecification;
  * Fake no-op Service.
  */
 public final class FakeService extends AbstractHttpServiceHandler {
-  public static final String NAME = "fakeRunnable";
+  public static final String NAME = "fakeService";
 }

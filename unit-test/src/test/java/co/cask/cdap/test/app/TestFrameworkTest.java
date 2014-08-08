@@ -210,14 +210,14 @@ public class TestFrameworkTest extends TestBase {
   public void testAppwithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
-    ServiceManager serviceManager = applicationManager.startService("ServerService");
+    ServiceManager serviceManager = applicationManager.startService(AppWithServices.SERVICE_NAME);
     serviceStatusCheck(serviceManager, true);
 
     LOG.info("Service Started");
 
     // Look for service endpoint
-    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices", "ServerService",
-                                                                        "ServerService");
+    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices", AppWithServices.SERVICE_NAME,
+                                                                        AppWithServices.SERVICE_NAME);
     final BlockingQueue<Discoverable> discoverables = new LinkedBlockingQueue<Discoverable>();
     serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
       @Override

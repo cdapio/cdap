@@ -56,7 +56,6 @@ public abstract class AbstractHttpServiceHandler implements HttpServiceHandler {
    */
   protected final HttpServiceContext getContext() {
     return context;
-
   }
 
   /**

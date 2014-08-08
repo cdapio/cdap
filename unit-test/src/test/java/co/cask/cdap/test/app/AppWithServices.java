@@ -41,13 +41,14 @@ import java.net.Socket;
  * AppWithServices with a DummyService for unit testing.
  */
 public class AppWithServices extends AbstractApplication {
+  public static final String SERVICE_NAME = "ServerService";
 
     @Override
     public void configure() {
       setName("AppWithServices");
       addStream(new Stream("text"));
       addProcedure(new NoOpProcedure());
-      addService("ServerService", new ServerService());
+      addService(SERVICE_NAME, new ServerService());
    }
 
 
