@@ -216,7 +216,8 @@ public class TestFrameworkTest extends TestBase {
     LOG.info("Service Started");
 
     // Look for service endpoint
-    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices", "ServerService", "server");
+    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices", "ServerService",
+                                                                        "ServerService");
     final BlockingQueue<Discoverable> discoverables = new LinkedBlockingQueue<Discoverable>();
     serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
       @Override
@@ -233,13 +234,6 @@ public class TestFrameworkTest extends TestBase {
     // Connect and close. This should stop the leader instance.
     Socket socket = new Socket(discoverable.getSocketAddress().getAddress(), discoverable.getSocketAddress().getPort());
     socket.close();
-
-    // The leader is stopped. The follower becomes the new leader and a new endpoint should get announced
-    Discoverable discoverable2 = discoverables.poll(5, TimeUnit.SECONDS);
-    Assert.assertNotNull(discoverable2);
-    Assert.assertTrue(discoverables.isEmpty());
-
-    Assert.assertNotEquals(discoverable.getSocketAddress(), discoverable2.getSocketAddress());
 
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
