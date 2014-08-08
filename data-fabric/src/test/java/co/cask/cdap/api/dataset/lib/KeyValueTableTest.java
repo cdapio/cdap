@@ -25,9 +25,9 @@ import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.TransactionFailureException;
 import com.google.common.collect.Sets;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
@@ -46,20 +46,17 @@ public class KeyValueTableTest extends AbstractDatasetTest {
   static final byte[] VAL2 = Bytes.toBytes("VAL2");
   static final byte[] VAL3 = Bytes.toBytes("VAL3");
 
-  private KeyValueTable kvTable;
+  private static KeyValueTable kvTable;
 
-  @Before
-  public void setUp() throws Exception {
-    super.setUp();
-    addModule("core", new CoreDatasetsModule());
+  @BeforeClass
+  public static void beforeClass() throws Exception {
     createInstance("keyValueTable", "test", DatasetProperties.EMPTY);
     kvTable = getInstance("test");
   }
 
-  @After
-  public void tearDown() throws Exception {
-    deleteModule("core");
-    super.tearDown();
+  @AfterClass
+  public static void afterClass() throws Exception {
+    deleteInstance("test");
   }
 
   @Test

@@ -25,26 +25,32 @@ import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
+import co.cask.cdap.gateway.auth.NoAuthenticator;
 import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.http.HttpHandler;
 import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.twill.common.Services;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
 import org.junit.Before;
@@ -66,10 +72,13 @@ import java.util.jar.JarOutputStream;
  * Base class for unit-tests that require running of {@link DatasetService}
  */
 public abstract class DatasetServiceTestBase {
-  private int port;
+  private InMemoryDiscoveryService discoveryService;
+  private DatasetOpExecutorService opExecutorService;
   private DatasetService service;
   protected TransactionManager txManager;
   protected RemoteDatasetFramework dsFramework;
+
+  private int port = -1;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -87,7 +96,7 @@ public abstract class DatasetServiceTestBase {
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 
     // Starting DatasetService service
-    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    discoveryService = new InMemoryDiscoveryService();
     MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
 
     // Tx Manager to support working with datasets
@@ -98,18 +107,23 @@ public abstract class DatasetServiceTestBase {
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
     LocalLocationFactory locationFactory = new LocalLocationFactory();
-    dsFramework = new RemoteDatasetFramework(discoveryService, locationFactory, new InMemoryDefinitionRegistryFactory(),
+    dsFramework = new RemoteDatasetFramework(discoveryService, new InMemoryDefinitionRegistryFactory(),
                                              new LocalDatasetTypeClassLoaderFactory());
 
-    ImmutableMap<String, ? extends DatasetModule> defaultModules =
-      ImmutableMap.of("memoryTable", new InMemoryOrderedTableModule());
+    ImmutableSet<HttpHandler> handlers =
+      ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(new NoAuthenticator(), dsFramework));
+    opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
+
+    opExecutorService.startAndWait();
 
     MDSDatasetsRegistry mdsDatasetsRegistry =
-      new MDSDatasetsRegistry(txSystemClient, defaultModules,
-                              new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory()), cConf);
+      new MDSDatasetsRegistry(txSystemClient,
+                              new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(),
+                                                           DataSetServiceModules.INMEMORY_DATASET_MODULES), cConf);
 
     service = new DatasetService(cConf,
                                  locationFactory,
+                                 discoveryService,
                                  discoveryService,
                                  new DatasetTypeManager(mdsDatasetsRegistry, locationFactory,
                                                         // we don't need any default modules in this test
@@ -120,20 +134,29 @@ public abstract class DatasetServiceTestBase {
                                  mdsDatasetsRegistry,
                                  new DatasetExploreFacade(new DiscoveryExploreClient(discoveryService), cConf));
     service.startAndWait();
-    port = discoveryService.discover(Constants.Service.DATASET_MANAGER).iterator().next().getSocketAddress().getPort();
   }
 
   @After
   public void after() {
-    try {
-      service.stopAndWait();
-    } finally {
-      txManager.stopAndWait();
+    Services.chainStop(service, opExecutorService, txManager);
+  }
+
+  private synchronized int getPort() {
+    int attempts = 0;
+    while (port < 0 && attempts < 5) {
+      ServiceDiscovered discovered = discoveryService.discover(Constants.Service.DATASET_MANAGER);
+      if (!discovered.iterator().hasNext()) {
+        continue;
+      }
+      port = discovered.iterator().next().getSocketAddress().getPort();
+      attempts++;
     }
+
+    return port;
   }
 
   protected URL getUrl(String resource) throws MalformedURLException {
-    return new URL("http://" + "localhost" + ":" + port + Constants.Gateway.GATEWAY_VERSION + resource);
+    return new URL("http://" + "localhost" + ":" + getPort() + Constants.Gateway.GATEWAY_VERSION + resource);
   }
 
   protected int deployModule(String moduleName, Class moduleClass) throws Exception {
