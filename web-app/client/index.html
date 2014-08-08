@@ -222,12 +222,9 @@
                     </form>
                     </div>
                     <div>
-                      <a class="cursor-pointer" {{action decreaseInstance service service.requested }}>
-                        <span class="minus-icon"></span>
-                      </a>
-                      <a class="cursor-pointer" {{action increaseInstance service service.requested }}>
-                        <span class="plus-icon"></span>
-                      </a>
+                      <button class="btn btn-blank" {{action changeInstances service on="click"}}>
+                        <li class="glyphicon glyphicon-arrow-right"></li>
+                      </button>
                     </div>
                   </div>
                 </td>
@@ -1192,8 +1189,14 @@
           <div class="popup-close" {{action close on="click"}}>×</div>
 
             <div class="btn-group pull-right" style="margin-top: 4px;">
+              <div>
+              <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
+              {{input id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
               <button class="btn btn-blank" {{action "changeInstances" on="click"}}>Submit</button>
-              {{input id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instancesString value=instancesInput}}
+              </div>
+              <div>
+                <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Provisioned: {{model.instances}}</button>
+              </div>
             </div>
 
           <div class="popup-icon"></div>

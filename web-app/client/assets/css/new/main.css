@@ -1637,9 +1637,11 @@ span.log-icon.complete {
 #instancesInput {
    text-align:left;
    height: 29px;
+   width: 25px;
 }
 
 .system-services-instances-input{
+  height: 29px ! important;
   max-width: 50px ! important;
   font-weight: bold ! important;
   text-align: center ! important;
