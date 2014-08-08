@@ -1608,12 +1608,12 @@ jobs, Workflows, and Custom Services, and query for their status using HTTP POST
    * - ``<operation>``
      - One of ``start`` or ``stop``
 
-You can also retrieve the status of multiple elements from different applications and different element
-types using an HTTP POST method::
+You can retrieve the status of multiple elements from different applications and element types
+using an HTTP POST method::
 
   POST <base-url>/status
 
-with a JSON array in the request body consisting of multiple JSON objects with the following parameters:
+with a JSON array in the request body consisting of multiple JSON objects with these parameters:
 
 .. list-table::
    :widths: 20 80
@@ -1624,12 +1624,12 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"appId"``
      - Name of the Application being called
    * - ``"programType"``
-     - One of ``Flow``, ``Procedure``, ``Mapreduce``, ``Workflow`` or ``Service``
+     - One of ``flow``, ``procedure``, ``mapreduce``, ``workflow`` or ``service``
    * - ``"programId"``
      - Name of the element (*Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*)
        being called
 
-and the response will be the same JSON array with some additional parameters for each of the underlying JSON objects:
+The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
 
 .. list-table::
    :widths: 20 80
@@ -1638,14 +1638,14 @@ and the response will be the same JSON array with some additional parameters for
    * - Parameter
      - Description
    * - ``"status"``
-     - This will map to an individual JSON object's queried element's status if the query is valid and the element is found.
+     - Maps to the status of an individual JSON object's queried element if the query is valid and the element was found.
    * - ``"statusCode"``
-     - The status code for retrieving the status of an individual JSON object
+     - The status code from retrieving the status of an individual JSON object.
    * - ``"error"``
-     - An error describing why the status was not retrieved (for example: the specified element was not found,
+     - If an error, a description of why the status was not retrieved (the specified element was not found,
        the requested JSON object was missing a parameter, etc.)
 
-Note that if the ``"status"`` field exists then the ``"error"`` field will not and vice versa.
+Note that the ``status`` and ``error`` fields are mutually exclusive.
 
 Examples
 ........
@@ -1691,17 +1691,17 @@ request to the element's URL using the same parameter ``runtimeargs``::
 
 This will return the saved runtime arguments in JSON format.
 
-To get the status of multiple programs in multiple applications::
+To retrieve the status of multiple programs in different applications, use the HTTP POST command::
 
   POST <base-url>/status
 
-with the arguments as a JSON string in the body::
+with the arguments for the different applications and programs as a JSON string map in the body, such as::
 
   [{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1"},
    {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2"},
    {"appId":"MyApp3","programType":"Service","programId":"MySvc1}]
 
-This could return the following response given that there is no procedure named MyProc2 in the application MyApp1::
+If there was no procedure named ``MyProc2`` in the application ``MyApp1``, a possible response could be::
 
   [{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1","status":"RUNNING","statusCode":200},
    {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2","statusCode":404,"error":"Program: MyProc2 not found"},
@@ -1796,12 +1796,12 @@ Note that this feature is experimental and may be deprecated or removed in futur
 Scale
 -----
 
-You can retrieve the number of instances executing different elements from
-various applications and different element types using an HTTP POST method::
+You can retrieve the instance count executing different elements from various applications and
+different element types using an HTTP POST method::
 
   POST <base-url>/instances
 
-with a JSON array in the request body consisting of multiple JSON objects with the following parameters:
+with a JSON array in the request body consisting of multiple JSON objects with these parameters:
 
 .. list-table::
    :widths: 20 80
@@ -1812,14 +1812,14 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"appId"``
      - Name of the Application being called
    * - ``"programType"``
-     - One of ``Flow``, ``Procedure``, or ``Service``
+     - One of ``flow``, ``procedure``, or ``service``
    * - ``"programId"``
      - Name of the element (*Flow*, *Procedure*, or *Custom Service*) being called
    * - ``"runnableId"``
-     - Name of the *Flowlet/Runnable* if querying a *Flow/Custom Service*. This parameter
-       does not apply to *Procedures* because the programId is the same as the runnableId for a *Procedure*
+     - Name of the *Flowlet/Runnable* if querying a *Flow* or *Service*. This parameter
+       does not apply to *Procedures* because the ``programId`` is the same as the ``runnableId`` for a *Procedure*
 
-and the response will be the same JSON array with some additional parameters for each of the underlying JSON objects:
+The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
 
 .. list-table::
    :widths: 20 80
@@ -1828,21 +1828,21 @@ and the response will be the same JSON array with some additional parameters for
    * - Parameter
      - Description
    * - ``"requested"``
-     - This will map to the number of instances the user requested for the program defined by an individual JSON object's parameters.
+     - Maps to the number of instances the user requested for the program defined by the individual JSON object's parameters
    * - ``"provisioned"``
-     - This will map to the number of instances that are actually running for the program defined by an individual JSON object's parameters.
+     - Maps to the number of instances that are actually running for the program defined by the individual JSON object's parameters.
    * - ``"statusCode"``
-     - The status code for retrieving the instances of an individual JSON object
+     - The status code from retrieving the instance count of an individual JSON object.
    * - ``"error"``
-     - An error describing why the instances was not retrieved (for example: the specified element was not found,
+     - If an error, a description of why the status was not retrieved (the specified element was not found,
        the requested JSON object was missing a parameter, etc.)
 
-Note that if the ``"requested"`` and  ``"provisioned"`` fields exist then the ``"error"`` field will not and vice versa.
+Note that the ``requested`` and ``provisioned`` fields are mutually exclusive of the ``error`` field.
 
 Example
 .......
 
-To get the instances of multiple program runnables in multiple applications::
+To retrieve the instance count of multiple program runnables in multiple applications, use the HTTP POST command::
 
   POST <base-url>/instances
 
@@ -1852,11 +1852,14 @@ with the arguments as a JSON string in the body::
    {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2"},
    {"appId":"MyApp3","programType":"Service","programId":"MySvc1,"runnableId":"MyRunnable1"}]
 
-This could return the following response given that there is no procedure named MyProc2 in the application MyApp1::
+If there was no procedure named ``MyProc2`` in the application ``MyApp1``, a possible response could be::
 
-  [{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1","runnableId":"MyFlowlet5","provisioned":2,"requested":2,"statusCode":200},
-   {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2","provisioned":0,"requested":1,"statusCode":200},
-   {"appId":"MyApp3","programType":"Service","programId":"MySvc1,"runnableId":"MyRunnable1","statusCode":404,"error":"Runnable: MyRunnable1 not found"}]
+  [ {"appId":"MyApp1","programType":"Flow","programId":"MyFlow1",
+      "runnableId":"MyFlowlet5","provisioned":2,"requested":2,"statusCode":200},
+    {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2",
+      "provisioned":0,"requested":1,"statusCode":200},
+    {"appId":"MyApp3","programType":"Service","programId":"MySvc1,
+      "runnableId":"MyRunnable1","statusCode":404,"error":"Runnable: MyRunnable1 not found"} ]
 
 
 Scaling Flowlets
