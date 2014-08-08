@@ -56,10 +56,11 @@ import com.google.inject.name.Named;
 import com.google.inject.util.Modules;
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
-import org.junit.ClassRule;
-import org.junit.rules.ExternalResource;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -91,34 +92,39 @@ public abstract class GatewayTestBase {
   private static MetricsQueryService metrics;
   private static StreamHttpService streamHttpService;
   private static TransactionManager txService;
+  private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  @ClassRule
-  public static ExternalResource resources = new ExternalResource() {
+  // Controls for test suite for whether to run BeforeClass/AfterClass
+  public static boolean runBefore = true;
+  public static boolean runAfter = true;
 
-    private TemporaryFolder tmpFolder = new TemporaryFolder();
-
-    @Override
-    protected void before() throws Throwable {
-      tmpFolder.create();
-      conf = CConfiguration.create();
-      Set<String> forwards = ImmutableSet.of("0:" + Constants.Service.GATEWAY, "0:" + WEBAPPSERVICE);
-      conf.setInt(Constants.Gateway.PORT, 0);
-      conf.set(Constants.Gateway.ADDRESS, hostname);
-      conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-      conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
-      conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
-      conf.set(Constants.Router.ADDRESS, hostname);
-      conf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
-      conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
-      injector = startGateway(conf);
+  @BeforeClass
+  public static void beforeClass() throws IOException {
+    if (!runBefore) {
+      return;
     }
+    tmpFolder.create();
+    conf = CConfiguration.create();
+    Set<String> forwards = ImmutableSet.of("0:" + Constants.Service.GATEWAY, "0:" + WEBAPPSERVICE);
+    conf.setInt(Constants.Gateway.PORT, 0);
+    conf.set(Constants.Gateway.ADDRESS, hostname);
+    conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+    conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
+    conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
+    conf.set(Constants.Router.ADDRESS, hostname);
+    conf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
+    conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    injector = startGateway(conf);
+  }
 
-    @Override
-    protected void after() {
-      stopGateway(conf);
-      tmpFolder.delete();
+  @AfterClass
+  public static void afterClass() {
+    if (!runAfter) {
+      return;
     }
-  };
+    stopGateway(conf);
+    tmpFolder.delete();
+  }
 
   public static Injector startGateway(final CConfiguration conf) {
     final Map<String, List<String>> keysAndClusters = ImmutableMap.of(API_KEY, Collections.singletonList(CLUSTER));

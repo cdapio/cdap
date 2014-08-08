@@ -171,19 +171,19 @@ public class DatasetService extends AbstractExecutionThreadService {
     while (!stopping) {
       try {
         opExecutorDiscovered.get(1, TimeUnit.SECONDS);
-        cancelDiscovery.cancel();
+        opExecutorServiceWatch.cancel();
         break;
       } catch (TimeoutException e) {
         // re-try
       } catch (InterruptedException e) {
         LOG.warn("Got interrupted while waiting for service {}", Constants.Service.DATASET_EXECUTOR);
         Thread.currentThread().interrupt();
-        cancelDiscovery.cancel();
+        opExecutorServiceWatch.cancel();
         break;
       } catch (ExecutionException e) {
         LOG.error("Error during discovering service {}, DatasetService start failed",
                   Constants.Service.DATASET_EXECUTOR);
-        cancelDiscovery.cancel();
+        opExecutorServiceWatch.cancel();
         throw e;
       }
     }
@@ -206,6 +206,10 @@ public class DatasetService extends AbstractExecutionThreadService {
     mdsDatasets.shutDown();
 
     typeManager.stopAndWait();
+
+    if (cancelDiscovery != null) {
+      cancelDiscovery.cancel();
+    }
 
     // Wait for a few seconds for requests to stop
     try {

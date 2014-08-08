@@ -28,8 +28,7 @@ public interface HttpServiceContext {
   HttpServiceSpecification getSpecification();
 
   /**
-   * @return A map of argument key and value.
+   * @return the user runtime arguments for the Twill Application that implements the HTTP Service
    */
   Map<String, String> getRuntimeArguments();
-
 }
