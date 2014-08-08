@@ -245,6 +245,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
     mapredConf.set("mapreduce.reduce.java.opts", "-Xmx" + reducerMemory + "m");
     jobConf = Job.getInstance(mapredConf);
 
+    // Prefer our job jar in the classpath
+    // Set both old and new keys
+    jobConf.getConfiguration().setBoolean("mapreduce.user.classpath.first", true);
+    jobConf.getConfiguration().setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
+
     if (UserGroupInformation.isSecurityEnabled()) {
       Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
       LOG.info("Running in secure mode; adding all user credentials: {}", credentials.getAllTokens());

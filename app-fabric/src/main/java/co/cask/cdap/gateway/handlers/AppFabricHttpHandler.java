@@ -681,7 +681,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     Id.Program id = Id.Program.from(accountId, appId, runnableId);
 
+
     try {
+      if (!store.programExists(id, type)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
       Map<String, String> runtimeArgs = store.getRunArguments(id);
       responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
     } catch (Throwable e) {
@@ -708,7 +713,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     Id.Program id = Id.Program.from(accountId, appId, runnableId);
 
+
     try {
+      if (!store.programExists(id, type)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
       Map<String, String> args = decodeArguments(request);
       store.storeRunArguments(id, args);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -973,6 +983,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
+      if (respondIfElementNotFound(e, responder)) {
+        return;
+      }
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
@@ -1310,6 +1323,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
+      if (respondIfElementNotFound(e, responder)) {
+        return;
+      }
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
@@ -1347,6 +1363,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
+      if (respondIfElementNotFound(e, responder)) {
+        return;
+      }
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }

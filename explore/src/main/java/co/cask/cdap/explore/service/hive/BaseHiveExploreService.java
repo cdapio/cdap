@@ -587,6 +587,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   @Override
   public void close(QueryHandle handle) throws ExploreException, HandleNotFoundException {
+    inactiveHandleCache.invalidate(handle);
     activeHandleCache.invalidate(handle);
   }
 

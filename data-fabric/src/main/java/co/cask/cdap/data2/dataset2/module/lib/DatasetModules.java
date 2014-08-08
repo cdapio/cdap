@@ -50,4 +50,15 @@ public final class DatasetModules {
     return module;
   }
 
+  /**
+   * Gets class of the dataset module to be used in {@link #getDatasetModule(Class)};
+   */
+  public static Class getDatasetModuleClass(DatasetModule module) {
+
+    if (module instanceof SingleTypeModule) {
+      return ((SingleTypeModule) module).getDataSetClass();
+    } else {
+      return module.getClass();
+    }
+  }
 }
