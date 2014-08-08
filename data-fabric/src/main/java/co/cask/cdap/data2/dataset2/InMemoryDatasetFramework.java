@@ -163,11 +163,15 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   public synchronized void deleteInstance(String datasetInstanceName) throws InstanceConflictException, IOException {
     DatasetSpecification spec = instances.remove(datasetInstanceName);
     DatasetDefinition def = registry.get(spec.getType());
-    def.getAdmin(spec, null).create();
+    def.getAdmin(spec, null).drop();
   }
 
   @Override
   public synchronized void deleteAllInstances() throws DatasetManagementException, IOException {
+    for (DatasetSpecification spec : instances.values()) {
+      DatasetDefinition def = registry.get(spec.getType());
+      def.getAdmin(spec, null).drop();
+    }
     instances.clear();
   }
 
