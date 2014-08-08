@@ -209,8 +209,7 @@ public class Main {
     // We assume that all tables in USER namespace belong to OrderedTable type datasets. So we loop thru them
     // and upgrading with the help of HBaseOrderedTableAdmin
     final CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    DefaultDatasetNamespace namespace = new DefaultDatasetNamespace(cConf,
-                                                                    Namespace.USER);
+    DefaultDatasetNamespace namespace = new DefaultDatasetNamespace(cConf, Namespace.USER);
 
     Configuration hConf = injector.getInstance(Configuration.class);
     HBaseAdmin hAdmin = new HBaseAdmin(hConf);
