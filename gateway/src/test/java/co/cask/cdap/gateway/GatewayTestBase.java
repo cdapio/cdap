@@ -89,11 +89,9 @@ public abstract class GatewayTestBase {
   private static Injector injector;
   private static AppFabricServer appFabricServer;
   private static NettyRouter router;
-  private static EndpointStrategy endpointStrategy;
   private static MetricsQueryService metrics;
   private static StreamHttpService streamHttpService;
   private static TransactionManager txService;
-  private static DatasetService dsService;
   private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   // Controls for test suite for whether to run BeforeClass/AfterClass
@@ -190,8 +188,6 @@ public abstract class GatewayTestBase {
     metrics.startAndWait();
     streamHttpService.startAndWait();
     gateway.startAndWait();
-    dsService = injector.getInstance(DatasetService.class);
-    dsService.startAndWait();
 
     // Restart handlers to check if they are resilient across restarts.
     gateway.stopAndWait();
@@ -214,7 +210,6 @@ public abstract class GatewayTestBase {
     metrics.stopAndWait();
     streamHttpService.stopAndWait();
     router.stopAndWait();
-    dsService.stopAndWait();
     txService.stopAndWait();
     conf.clear();
   }
