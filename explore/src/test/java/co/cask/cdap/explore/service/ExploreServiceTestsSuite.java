@@ -35,6 +35,7 @@ import java.util.Set;
   ExploreExtensiveSchemaTableTest.class,
   ExploreMetadataTest.class,
   HiveExploreServiceTest.class,
+  HiveExploreServiceStopTest.class
 })
 public class ExploreServiceTestsSuite {
 
@@ -47,35 +48,8 @@ public class ExploreServiceTestsSuite {
 
   @AfterClass
   public static void finish() throws Exception {
-    testServiceStop();
     BaseHiveExploreServiceTest.runAfter = true;
     BaseHiveExploreServiceTest.stopServices();
-  }
-
-  /**
-   * Tests whether txns get closed on stopping explore service.
-   */
-  private static void testServiceStop() throws Exception {
-    ExploreService exploreService = BaseHiveExploreServiceTest.getExploreService();
-    Set<Long> beforeTxns = BaseHiveExploreServiceTest.getTransactionManager()
-      .getCurrentState().getInProgress().keySet();
-
-    exploreService.execute("show tables");
-
-    Set<Long> queryTxns = Sets.difference(BaseHiveExploreServiceTest.getTransactionManager().getCurrentState()
-                                            .getInProgress().keySet(), beforeTxns);
-    Assert.assertFalse(queryTxns.isEmpty());
-
-    // Stop explore service
-    exploreService.stopAndWait();
-
-    // Make sure that the transaction got closed
-    Assert.assertEquals(ImmutableSet.<Long>of(),
-                        Sets.intersection(
-                          queryTxns,
-                          BaseHiveExploreServiceTest.getTransactionManager().getCurrentState()
-                            .getInProgress().keySet()).immutableCopy()
-    );
   }
 }
 

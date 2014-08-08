@@ -16,7 +16,6 @@
 
 package co.cask.cdap.explore.service;
 
-import com.continuuity.tephra.Transaction;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -25,6 +24,7 @@ import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.test.XSlowTests;
+import com.continuuity.tephra.Transaction;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
