@@ -115,8 +115,6 @@ public class DatasetTypeManager extends AbstractIdleService {
           File unpackedLocation = Files.createTempDir();
           DependencyTrackingRegistry reg;
           try {
-            // NOTE: we assume all classes needed to load dataset module class are available in the jar or otherwise
-            //       are system classes
             // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
             if (jarLocation != null) {
               BundleJarUtil.unpackProgramJar(jarLocation, unpackedLocation);
