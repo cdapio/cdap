@@ -671,7 +671,7 @@ There are two ways to interact with a different CDAP server:
 - To change the current CDAP server, run the command ``connect example.com``.
 
 For example, with ``CDAP_HOST`` set to ``example.com``, the Shell Client would be interacting with
-a Reactor instance at ``example.com``, port ``10000``::
+a Cask DAP instance at ``example.com``, port ``10000``::
 
   cdap (example.com:10000)>
 
@@ -683,7 +683,7 @@ Non-Interactive Mode
 --------------------
 
 To run the CLI in non-interactive mode, run the ``cdap-cli`` executable, passing the command you want executed
-as the argument. For example, to list all applications currently deployed to Reactor, execute::
+as the argument. For example, to list all applications currently deployed to the Cask DAP, execute::
 
   cdap list apps
 
