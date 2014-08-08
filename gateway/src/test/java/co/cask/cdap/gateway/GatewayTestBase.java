@@ -26,6 +26,7 @@ import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.StreamHttpService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
@@ -92,6 +93,8 @@ public abstract class GatewayTestBase {
   private static MetricsQueryService metrics;
   private static StreamHttpService streamHttpService;
   private static TransactionManager txService;
+  private static DatasetOpExecutor dsOpService;
+  private static DatasetService datasetService;
   private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   // Controls for test suite for whether to run BeforeClass/AfterClass
@@ -181,6 +184,10 @@ public abstract class GatewayTestBase {
     gateway = injector.getInstance(Gateway.class);
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
+    dsOpService = injector.getInstance(DatasetOpExecutor.class);
+    dsOpService.startAndWait();
+    datasetService = injector.getInstance(DatasetService.class);
+    datasetService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     metrics = injector.getInstance(MetricsQueryService.class);
     streamHttpService = injector.getInstance(StreamHttpService.class);
@@ -210,6 +217,8 @@ public abstract class GatewayTestBase {
     metrics.stopAndWait();
     streamHttpService.stopAndWait();
     router.stopAndWait();
+    datasetService.stopAndWait();
+    dsOpService.stopAndWait();
     txService.stopAndWait();
     conf.clear();
   }
