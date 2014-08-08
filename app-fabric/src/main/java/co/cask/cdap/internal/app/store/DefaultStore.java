@@ -136,7 +136,7 @@ public class DefaultStore implements Store {
 
   /**
    * Adds datasets and types to the given {@link DatasetFramework} used by app mds.
-   * @param datasetFramework framework to add types and datasets to
+   * @param framework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
     framework.addInstance("table", APP_META_TABLE, DatasetProperties.EMPTY);
