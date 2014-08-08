@@ -188,14 +188,14 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @see ApplicationConfigurer#addService(TwillApplication)
+   * @see ApplicationConfigurer#addService(String, Iterable<HttpServiceHandler>);
    */
   protected void addService(String name, Iterable<HttpServiceHandler> handlers) {
     configurer.addService(name, handlers);
   }
 
   /**
-   * @see ApplicationConfigurer#addService(TwillApplication)
+   * @see ApplicationConfigurer#addService(String, HttpServiceHandler)
    */
   protected void addService(String name, HttpServiceHandler handler) {
     configurer.addService(name, handler);

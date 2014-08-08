@@ -11,14 +11,12 @@ with Best Practices for the Continuuity Reactor**
 Custom Services
 ===============
 In addition to Flows, MapReduce jobs, and Procedures, additional Services can be run in a 
-Reactor Application. Developers can implement Custom Services that run in program containers,
+Reactor Application. Developers can implement Custom Services that provide endpoints and run in program containers,
 to interface with a legacy system and perform additional processing beyond the Continuuity processing
 paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
 
-Services are implemented as `Twill applications <http://twill.incubator.apache.org>`__ and are run in
-YARN. A service's lifecycle can be controlled by using REST endpoints. 
-
-You can add services to your application by calling the ``addService`` method in the 
+Services are implemented by extending ``AbstractHttpServiceHandler`` and are run in
+YARN. You can add services to your application by calling the ``addService`` method in the
 Application's ``configure`` method::
 
   public class AnalyticsApp extends AbstractApplication {
@@ -29,129 +27,31 @@ Application's ``configure`` method::
       addStream(new Stream("event"));
       addFlow(new EventProcessingFlow());
       ....
-      addService(new IpGeoLookupService());
-      addService(new UserLookupServiceService());
+      addService("IpLookupService", new IpGeoLookupService());
+      addService("UserLookupService", new UserLookupService());
       ...
     }
   }
 
-
-A Custom Service is implemented as a Twill application, with one or more runnables. See the 
-`Apache Twill guide <http://twill.incubator.apache.org>`__ for additional information.
-
 ::
 
-  public class IpGeoLookupService implements TwillApplication {
-    @Override
-    public TwillSpecification configure() {
-      return TwillSpecification.Builder.with()
-        .setName("IpGeoApplication")
-        .withRunnable()
-        .add(new IpGeoRunnable())
-        .noLocalFiles()
-        .anyOrder()
-        .build();
+  public class IpGeoLookupService implements AbstractHttpServiceHandler {
+
+    @Path("lookup/{ip}")
+    @GET
+    public void lookup(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("ip") String ip) {
+      // ...
+      responder.sendString(200, location, Charsets.UTF_8);
     }
   }
-
-The service logic is implemented by extending the ``AbstractTwillRunnable`` and implementing these
-methods:
-
-- ``intialize()``
-- ``run()``
-- ``stop()``
-- ``destroy()``
-
-::
-
-  public final class IpGeoRunnable extends AbstractTwillRunnable {
-  
-     @Override
-     public void initialize(TwillContext context) {
-       // Service initialization
-     }
-  
-     @Override
-     public void run() {
-       // Start the custom service
-     }
-  
-     @Override
-     public void stop() {
-       // Called to stop the running the service
-     }
-  
-     @Override
-     public void destroy() {
-       // Called before shutting down the service
-     }
-  }
-
-For simple services consisting of only one ``TwillRunnable``, you can add the runnable directly to the application
-as a service using the ``addService(name, runnable)`` method. The above example can be simplified to::
-
-  public class AnalyticsApp extends AbstractApplication {
-    @Override
-    public void configure() {
-      setName("AnalyticsApp");
-      setDescription("Application for generating mobile analytics");
-      addStream(new Stream("event"));
-      addFlow(new EventProcessingFlow());
-      ....
-      addService(new IpGeoRunnable());
-      addService(new UserLookupServiceService());
-      ...
-    }
-  }
-
-Services Integration with Guava Services
------------------------------------------
-To run `Guava Services <https://code.google.com/p/guava-libraries/wiki/ServiceExplained>`__ as ``TwillApplication``\s,
-add the service to the application using the ``addService(name, guavaService)`` method. The service can be managed,
-started, and stopped as other CDAP services.
-
-Services Integration with Metrics and Logging
----------------------------------------------
-Services are integrated with the Reactor Metrics and Logging framework. Programs 
-implementing Custom Services can declare Metrics and Logger (SLF4J) member variables and 
-the appropriate implementation will be injected by the run-time.
-
-::
-
-  public class IpGeoRunnable extends AbstractTwillRunnable {
-    private Metrics metrics;
-    private static final Logger LOG = LoggerFactory.getLogger(IpGeoRunnable.class);
-  
-    @Override
-    public void run() {
-      LOG.info("Running ip geo lookup service");
-             metrics.count("ipgeo.instance", 1);
-    }
-  }
-
-The metrics and logs that are emitted by the service are aggregated and accessed similar 
-to other program types. See the sections in the 
-`Continuuity Reactor Operations Guide <operations.html>`__ on accessing 
-`logs <operations.html#logging>`__ and `metrics <operations.html#metrics>`__. 
-
 
 Service Discovery
 -----------------
 Services announce the host and port they are running on so that they can be discovered by—and provide
 access to—other programs: Flows, Procedures, MapReduce jobs, and other Custom Services.
 
-To announce a Service, call the ``announce`` method from ``TwillContext`` during the 
-initialize method. The announce method takes a name—which the Service can register 
-under—and the port which the Service is running on. The application name, service ID, and 
+Service are announced using the name passed in the ``configure`` method. The application name, service ID, and
 hostname required for registering the Service are automatically obtained.
-
-::
-
-  @Override
-  public void initialize (TwillContext context) {
-    context.announce("GeoLookup", 7000);
-  }
-
 
 The service can then be discovered in Flows, Procedures, MapReduce jobs, and other Services using
 appropriate program contexts.
@@ -165,7 +65,7 @@ For example, in Flows::
   
     @Override
     public void intialize(FlowletContext context) {
-      serviceDiscovered = context.discover("MyApp", "IpGeoLookupService", "GeoLookup"); 
+      serviceDiscovered = context.discover("AnalyticsApp", "IpGeoLookupService", "IpLookupService");
     }
   
     @ProcessInput
@@ -189,7 +89,7 @@ In MapReduce Mapper/Reducer jobs::
     
     @Override
     public void initialize(MapReduceContext mapReduceContext) throws Exception {
-      serviceDiscovered = mapReduceContext.discover("MyApp", "IpGeoLookupService", "GeoLookup");
+      serviceDiscovered = mapReduceContext.discover("AnalyticsApp", "IpGeoLookupService", "IpLookupService");
     }
     
     @Override
@@ -205,10 +105,9 @@ In MapReduce Mapper/Reducer jobs::
 
 Using Services
 -----------------
-Custom Services are not displayed in the Continuuity Reactor Dashboard. To control their
-lifecycle, use the `Reactor Client API <rest.html#reactor-client-http-api>`__ as described
-in the `Continuuity Reactor HTTP REST API <rest.html#reactor-client-http-api>`__.
-
+Custom Services lifecycle can be controlled via the UI or by using the
+`Reactor Client API <rest.html#reactor-client-http-api>`__ as described in the
+`Continuuity Reactor HTTP REST API <rest.html#reactor-client-http-api>`__.
 
 Flow System
 ===========
