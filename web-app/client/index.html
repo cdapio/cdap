@@ -223,7 +223,7 @@
                     </div>
                     <div>
                       <button class="btn btn-blank" {{action changeInstances service on="click"}}>
-                        <li class="glyphicon glyphicon-arrow-right"></li>
+                        <i class="icon-arrow-right"></i>
                       </button>
                     </div>
                   </div>
@@ -299,18 +299,18 @@
               </td>
               <td style="max-width: 200px;" class="instance-col">
                 <div class="instance-wrapper">
-                  <div class="instance-num left-float"><span>{{runnable.requested}}</span></div>
-                  {{#if model.isRunning}}
                   <div>
-                    <a class="cursor-pointer" {{action runnableDecreaseInstance model runnable.id runnable.requested }}>
-                      <span class="minus-icon"></span>
-                    </a>
-                    <a class="cursor-pointer" {{action runnableIncreaseInstance model runnable.id runnable.requested }}>
-                      <span class="plus-icon"></span>
-                    </a>
+                    <form {{action "runnableChangeInstances" model runnable on="submit"}}>
+                      {{input placeholder=runnable.requested maxlength="3" value=runnable.instancesInput class="system-services-instances-input" }}
+                    </form>
                   </div>
-                  {{/if}}
+                  <div>
+                    <button class="btn btn-blank" {{action runnableChangeInstances model runnable on="click"}}>
+                      <i class="icon-arrow-right"></i>
+                    </button>
+                  </div>
                 </div>
+              </td>
               <td class="instance-provisioned service-col">
                   <div class="instance-num auto-margin"><span>{{runnable.provisioned}}</span></div>
               </td>
@@ -1198,7 +1198,9 @@
             <div style="display: inline-block; width: 50%">
               <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
               {{input action="changeInstances" id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
-              <button class="btn btn-blank" {{action "changeInstances" on="click"}}>Submit</button>
+              <button class="btn btn-blank" {{action "changeInstances" on="click"}}>
+              <i class="icon-arrow-right"></i>
+              </button>
             </div>
           </div>
           <br />

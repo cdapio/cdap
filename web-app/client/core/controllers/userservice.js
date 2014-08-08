@@ -33,6 +33,32 @@ define(['core/controllers/services'], function (servicesController) {
 
     },
 
+
+    runnableChangeInstances: function (service, runnable) {
+      var inputStr = runnable.get('instancesInput');
+      var input = parseInt(inputStr);
+
+      runnable.set('instancesInput', '');
+
+      if(!inputStr || inputStr.length === 0){
+        C.Modal.show('Change Instances','Use the submit button to change the number of instances requested.');
+        return;
+      }
+
+      if(isNaN(input) || isNaN(inputStr)){
+        C.Modal.show('Incorrect Input', 'Instance count can only be set to numbers (between 1 and 100).');
+        return;
+      }
+
+      if(service.status !== "RUNNING"){
+        //This is because the server would return a 404, if modifying instances while service is off.
+        C.Modal.show('Service Stopped', "You can not change the component's instances while its service is stopped.")
+        return;
+      }
+
+      this.runnableVerifyInstanceBounds(service, runnable.id, input, "Request " + input);
+    },
+
     runnableIncreaseInstance: function (service, runnableID, instanceCount) {
       this.runnableVerifyInstanceBounds(service, runnableID, ++instanceCount, "Increase");
     },
