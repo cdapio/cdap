@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Scheduler service to run in distributed reactor. Waits for transaction service to be available.
+ * Scheduler service to run in distributed reactor. Waits for dataset service to be available.
  */
 public final class DistributedSchedulerService extends AbstractSchedulerService {
 
@@ -59,7 +59,7 @@ public final class DistributedSchedulerService extends AbstractSchedulerService 
         @Override
         public void onChange(ServiceDiscovered serviceDiscovered) {
           if (!Iterables.isEmpty(serviceDiscovered) && !schedulerStarted.get()) {
-            LOG.info("Starting scheduler, Discovered {} transaction service(s)",
+            LOG.info("Starting scheduler, Discovered {} dataset service(s)",
                      Iterables.size(serviceDiscovered));
             try {
               startScheduler();

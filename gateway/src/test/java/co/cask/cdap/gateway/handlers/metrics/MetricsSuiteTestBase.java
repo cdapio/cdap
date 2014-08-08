@@ -29,7 +29,6 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.gateway.MockMetricsCollectionService;
 import co.cask.cdap.gateway.MockedPassportClient;
 import co.cask.cdap.gateway.auth.AuthModule;
@@ -89,7 +88,6 @@ public abstract class MetricsSuiteTestBase {
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
 
   private static MetricsQueryService metrics;
-  private static DatasetService dsService;
   private static final String hostname = "127.0.0.1";
   private static int port;
 
@@ -121,9 +119,6 @@ public abstract class MetricsSuiteTestBase {
     conf.set(Constants.Metrics.CLUSTER_NAME, CLUSTER);
 
     injector = startMetricsService(conf);
-
-    dsService = injector.getInstance(DatasetService.class);
-    dsService.startAndWait();
 
     StoreFactory storeFactory = injector.getInstance(StoreFactory.class);
     store = storeFactory.create();
@@ -174,7 +169,6 @@ public abstract class MetricsSuiteTestBase {
   }
 
   public static void stop() throws OperationException {
-    dsService.startAndWait();
     collectionService.stopAndWait();
 
     Deque<File> files = Lists.newLinkedList();

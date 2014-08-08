@@ -26,9 +26,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
-import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
@@ -69,7 +67,6 @@ public class BaseHiveExploreServiceTest {
 
   protected static TransactionManager transactionManager;
   protected static DatasetFramework datasetFramework;
-  protected static DatasetService datasetService;
   protected static ExploreExecutorService exploreExecutorService;
   protected static EndpointStrategy datasetManagerEndpointStrategy;
   protected static ExploreService exploreService;
@@ -86,9 +83,6 @@ public class BaseHiveExploreServiceTest {
     injector = Guice.createInjector(createInMemoryModules(cConf, new Configuration()));
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
-
-    datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
 
     exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     exploreExecutorService.startAndWait();
@@ -112,7 +106,6 @@ public class BaseHiveExploreServiceTest {
 
     exploreClient.close();
     exploreExecutorService.stopAndWait();
-    datasetService.stopAndWait();
     transactionManager.stopAndWait();
   }
 
@@ -200,7 +193,6 @@ public class BaseHiveExploreServiceTest {
       new IOModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
-      new DataSetServiceModules().getInMemoryModule(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getInMemoryModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
