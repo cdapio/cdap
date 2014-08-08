@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static co.cask.cdap.explore.service.KeyStructValueTableDefinition.KeyValue;
 
@@ -196,15 +197,67 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                  new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
                )
     );
+  }
 
-    List<QueryInfo> result = exploreService.getQueries();
+  @Test
+  public void queriesListTest() throws Exception {
+    ListenableFuture<ExploreExecutionResult> future;
+    ExploreExecutionResult results;
+    List<QueryInfo> queries;
+
+    future = exploreClient.submit("show tables");
+    future.get();
+
+    future = exploreClient.submit("select * from my_table");
+    results = future.get();
+
+    queries = exploreService.getQueries();
+    Assert.assertEquals(2, queries.size());
+    Assert.assertEquals("select * from my_table", queries.get(0).getStatement());
+    Assert.assertEquals("FINISHED", queries.get(0).getStatus().toString());
+    Assert.assertTrue(queries.get(0).isHasResults());
+    Assert.assertTrue(queries.get(0).isActive());
+    Assert.assertEquals("show tables", queries.get(1).getStatement());
+    Assert.assertEquals("FINISHED", queries.get(1).getStatus().toString());
+    Assert.assertTrue(queries.get(1).isHasResults());
+    Assert.assertTrue(queries.get(1).isActive());
+
+    // Make the last query inactive
+    while (results.hasNext()) {
+      results.next();
+    }
+    queries = exploreService.getQueries();
+    Assert.assertEquals(2, queries.size());
+    Assert.assertEquals("select * from my_table", queries.get(0).getStatement());
+    Assert.assertEquals("FINISHED", queries.get(0).getStatus().toString());
+    Assert.assertTrue(queries.get(0).isHasResults());
+    Assert.assertFalse(queries.get(0).isActive());
+    Assert.assertEquals("show tables", queries.get(1).getStatement());
+    Assert.assertEquals("FINISHED", queries.get(1).getStatus().toString());
+    Assert.assertTrue(queries.get(1).isHasResults());
+    Assert.assertTrue(queries.get(1).isActive());
+
+    // Close last query
+    results.close();
+    queries = exploreService.getQueries();
+    Assert.assertEquals(1, queries.size());
+    Assert.assertEquals("show tables", queries.get(0).getStatement());
+
+    // Make sure queries are reverse ordered by timestamp
+    exploreClient.submit("show tables").get();
+    exploreClient.submit("show tables").get();
+    exploreClient.submit("show tables").get();
+    exploreClient.submit("show tables").get();
+
+    queries = exploreService.getQueries();
     List<Long> timestamps = Lists.newArrayList();
-    Assert.assertTrue(result.size() > 0);
-    for (QueryInfo queryInfo : result) {
+    Assert.assertEquals(5, queries.size());
+    for (QueryInfo queryInfo : queries) {
       Assert.assertNotNull(queryInfo.getStatement());
       Assert.assertNotNull(queryInfo.getQueryHandle());
-      Assert.assertFalse(queryInfo.isActive());
+      Assert.assertTrue(queryInfo.isActive());
       Assert.assertEquals("FINISHED", queryInfo.getStatus().toString());
+      Assert.assertEquals("show tables", queryInfo.getStatement());
       timestamps.add(queryInfo.getTimestamp());
     }
 
