@@ -289,8 +289,8 @@
           </thead>
           <tbody>
             {{!--  RUNNABLES ROWS --}}
-              {{#each runnable in model.runnablesList}}
-              <tr>
+            {{#each runnable in model.runnablesList}}
+            <tr>
               <td class="app-list-name service-col"><a class="none-text-decoration">
                 {{runnable.id}}
                 </a>
@@ -1199,7 +1199,7 @@
               <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
               {{input action="changeInstances" id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
               <button class="btn btn-blank" {{action "changeInstances" on="click"}}>
-              <i class="icon-arrow-right"></i>
+                <i class="icon-arrow-right"></i>
               </button>
             </div>
           </div>
@@ -1459,17 +1459,17 @@
       <div class="panel">
       <div class="panel-head">
 
-          <div class="btn-group pull-right">
-            <button class="btn btn-blank" {{action "addOneInstance" on="click"}}>+</button>
-            <button class="btn btn-blank" {{action "removeOneInstance" on="click"}}>-</button>
-
-            {{#if C.isLocal}}
-              <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
-            {{else}}
-              <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{actualInstances}} ({{model.instances}} Requested)</button>
-            {{/if}}
-
+          <div class="btn-group " style="margin-top: 4px; padding-bottom: 20px; width: 100%">
+            <div>
+              <button style="border:0;padding-right:120px;" disabled="disabled" class="btn btn-blank">Instances Provisioned: {{actualInstances}}</button>
+              <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
+              {{input action="changeInstances" id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
+              <button class="btn btn-blank" {{action "changeInstances" on="click"}}>
+                <i class="icon-arrow-right"></i>
+              </button>
+            </div>
           </div>
+          <br>
 
         <div class="panel-title">Make a Request</div></div>
 

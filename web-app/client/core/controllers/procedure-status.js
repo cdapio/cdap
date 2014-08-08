@@ -94,6 +94,29 @@ define([], function () {
 
 		},
 
+    changeInstances: function () {
+      var inputStr = this.get('instancesInput');
+      var input = parseInt(inputStr);
+      this.set('instancesInput', '');
+
+      if(!inputStr || inputStr.length === 0){
+        C.Modal.show('Change Instances','Use the submit button to change the number of instances requested.');
+        return;
+      }
+
+      if(isNaN(input) || isNaN(inputStr)){
+        C.Modal.show('Incorrect Input', 'Instance count can only be set to numbers (between 1 and 100).');
+        return;
+      }
+
+      if(input < 1 || input > 100) {
+        C.Modal.show('Instances Requested out of bounds', 'Please select an instance count (between 1 and 100)');
+        return;
+      }
+
+      this.setInstances(input, "Change Instances to " + input + " for ");
+    },
+
 		setInstances: function (instances, message) {
 
 			var self = this;
@@ -104,7 +127,7 @@ define([], function () {
 				"Procedure Instances",
 				message + ' "' + procedureName + '" procedure?',
 				function () {
-
+//
 					self.HTTP.put('rest', 'apps', appId, 'procedures', procedureName, 'instances', {
 						data: '{"instances": ' + instances + '}'
 					}, function (response) {
@@ -138,12 +161,14 @@ define([], function () {
 
 		},
 
-		actualInstances: function () {
-
-			var instances = Math.max(0, (+this.get('model.containersLabel') - 1));
-			return instances + ' instance' + (instances === 1 ? '' : 's');
-
-		}.property('model.containersLabel'),
+    actualInstances: function () {
+      if (C.get('isLocal')) {
+        return this.get('model.instances');
+      } else {
+        var instances = Math.max(0, (+this.get('model.containersLabel') - 1));
+        return instances + ' instance' + (instances === 1 ? '' : 's');
+      }
+    }.property('model.instances','model.containersLabel'),
 
 		config: function () {
 
