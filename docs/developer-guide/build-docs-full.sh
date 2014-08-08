@@ -55,10 +55,11 @@ function usage() {
   echo "    build        Clean build of javadocs, docs (HTML and PDF), copy javadocs and pdfs, zip results"
   echo "    stage        Stages docs and logins to server"
   echo "  or "
-  echo "    build-docs   Clean build of docs"
+  echo "    build_docs   Clean build of docs"
   echo "    javadocs     Clean build of javadocs"
-  echo "    pdf-rest     Clean build of REST PDF"
-  echo "    pdf-install  Clean build of Install Guide PDF"
+  echo "    pdf_licenses Clean build of Licence Dependency PDFs"
+  echo "    pdf_rest     Clean build of REST PDF"
+  echo "    pdf_install  Clean build of Install Guide PDF"
   echo "    login        Logs you into $STAGING_SERVER"
   echo "    zip          Zips docs into $ZIP"
   echo "  or"
@@ -101,7 +102,7 @@ function build_pdf_install() {
   python $DOCS_PY -g pdf -o $INSTALL_PDF $INSTALL_SOURCE
 }
 
-function build_license_pdfs() {
+function build_pdf_licenses() {
   rm -rf $SCRIPT_PATH/$LICENSES_PDF
   mkdir $SCRIPT_PATH/$LICENSES_PDF
   
@@ -210,8 +211,8 @@ fi
 
 case "$1" in
   build )              build; exit 1;;
-  build-javadocs )     build_javadocs; exit 1;;
-  build-docs )         build_docs; exit 1;;
+  build_javadocs )     build_javadocs; exit 1;;
+  build_docs )         build_docs; exit 1;;
   build_single_node )  build_single_node; exit 1;;
   build_license_pdfs ) build_license_pdfs; exit 1;;
   copy_javadocs )      copy_javadocs; exit 1;;
@@ -219,8 +220,9 @@ case "$1" in
   javadocs )           build_javadocs; exit 1;;
   depends )            build_dependencies; exit 1;;
   login )              login_staging_server; exit 1;;
-  pdf-install )        build_pdf_install; exit 1;;
-  pdf-rest )           build_pdf_rest; exit 1;;
+  pdf_install )        build_pdf_install; exit 1;;
+  pdf_licenses )       build_pdf_licenses; exit 1;;
+  pdf_rest )           build_pdf_rest; exit 1;;
   sdk )                build_sdk; exit 1;;
   stage )              stage_docs; exit 1;;
   version )            print_version; exit 1;;
