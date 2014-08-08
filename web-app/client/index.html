@@ -1188,20 +1188,22 @@
         <div class="popup-body">
           <div class="popup-close" {{action close on="click"}}>×</div>
 
-            <div class="btn-group pull-right" style="margin-top: 4px;">
-              <div>
-              <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
-              {{input id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
-              <button class="btn btn-blank" {{action "changeInstances" on="click"}}>Submit</button>
-              </div>
-              <div>
-                <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Provisioned: {{model.instances}}</button>
-              </div>
-            </div>
-
           <div class="popup-icon"></div>
 
           <h1 class="popup-title"> {{model.name}}</h1>
+          <div class="btn-group" style="margin-top: 4px; width: 100%">
+            <div style="display: inline-block; width: 50%">
+              <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Provisioned: {{model.instances}}</button>
+            </div>
+            <div style="display: inline-block; width: 50%">
+              <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
+              {{input id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
+              <button class="btn btn-blank" {{action "changeInstances" on="click"}}>Submit</button>
+            </div>
+          </div>
+          <br />
+          <br />
+
           <div id="flowlet-popup-tabs">
             <div id="flowlet-popup-inputs-tab" class="flowlet-popup-tab tab-selected"><a href="#" {{action select "inputs"}}>Inputs</a></div>
             <div id="flowlet-popup-processed-tab" class="flowlet-popup-tab"><a href="#" {{action select "processed"}}>Processed</a></div>
