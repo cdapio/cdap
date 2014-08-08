@@ -23,6 +23,10 @@ import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
+import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.ElectionHandler;
@@ -35,18 +39,22 @@ import org.apache.twill.common.Cancellable;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * AppWithServices with a DummyService for unit testing.
  */
 public class AppWithServices extends AbstractApplication {
+  public static final String SERVICE_NAME = "ServerService";
 
     @Override
     public void configure() {
       setName("AppWithServices");
       addStream(new Stream("text"));
       addProcedure(new NoOpProcedure());
-      addService(new TwillService());
+      addService(SERVICE_NAME, new ServerService());
    }
 
 
@@ -59,80 +67,13 @@ public class AppWithServices extends AbstractApplication {
 
   }
 
-  public static class TwillService implements TwillApplication {
-    @Override
-    public TwillSpecification configure() {
-      return TwillSpecification.Builder.with()
-        .setName("ServerService")
-        .withRunnable()
-        .add(new ServerService(),
-             ResourceSpecification.Builder.with()
-               .setVirtualCores(1)
-               .setMemory(512, ResourceSpecification.SizeUnit.MEGA)
-               .setInstances(2)
-               .build())
-        .noLocalFiles()
-        .anyOrder()
-        .build();
-    }
-  }
+  @Path("/")
+  public class ServerService extends AbstractHttpServiceHandler {
 
-  public static final class ServerService extends AbstractTwillRunnable {
-
-    private Cancellable discoveryCancel;
-    private ServerSocket serverSocket;
-
-    @Override
-    public void initialize(final TwillContext context) {
-      super.initialize(context);
-
-      try {
-        serverSocket = new ServerSocket(0);
-        context.electLeader("server", new ElectionHandler() {
-          @Override
-          public void leader() {
-            discoveryCancel = context.announce("server", serverSocket.getLocalPort());
-          }
-
-          @Override
-          public void follower() {
-            if (discoveryCancel != null) {
-              discoveryCancel.cancel();
-            }
-          }
-        });
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
-    }
-
-    @Override
-    public void run() {
-      try {
-        // Block for an incoming connection
-        Socket socket = serverSocket.accept();
-        socket.close();
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
-    }
-
-    @Override
-    public void stop() {
-      try {
-        serverSocket.close();
-      } catch (IOException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-
-    @Override
-    public void destroy() {
-      try {
-        serverSocket.close();
-      } catch (IOException e) {
-        throw Throwables.propagate(e);
-      }
+    @Path("/ping2")
+    @GET
+    public void handler(HttpServiceRequest request, HttpServiceResponder responder) {
+      responder.sendStatus(200);
     }
   }
 }

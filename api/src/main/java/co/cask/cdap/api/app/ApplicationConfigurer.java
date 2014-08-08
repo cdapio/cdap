@@ -137,29 +137,6 @@ public interface ApplicationConfigurer {
   void addWorkflow(Workflow workflow);
 
   /**
-   * Adds a Custom Service {@link TwillApplication} to the Application.
-   *
-   * @param application Custom Service {@link TwillApplication} to include in the Application
-   */
-  void addService(TwillApplication application);
-
-  /**
-   * Adds {@link TwillRunnable} TwillRunnable as a Custom Service {@link TwillApplication} to the Application.
-   * @param runnable TwillRunnable to run as service
-   * @param specification ResourceSpecification for Twill container.
-   */
-  void addService(TwillRunnable runnable, ResourceSpecification specification);
-
-  /**
-   * Adds {@link com.google.common.util.concurrent.Service} as a Custom Service {@link TwillApplication}
-   * to the Application.
-   * @param name Name of runnable.
-   * @param service Guava service to be added.
-   * @param specification ResourceSpecification for Twill container.
-   */
-  void addService(String name, Service service, ResourceSpecification specification);
-
-  /**
    * Adds a list of {@link HttpServiceHandler} as a Custom Service to the Application.
    * @param handlers
    */
