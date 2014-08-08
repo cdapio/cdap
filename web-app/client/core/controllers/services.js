@@ -59,6 +59,25 @@ define([], function () {
     },
 
 
+    changeInstances: function (service) {
+      var inputStr = service.get('instancesInput');
+      var input = parseInt(inputStr);
+
+      service.set('instancesInput', '');
+
+      if(!inputStr || inputStr.length === 0){
+        C.Modal.show('Change Instances','Use the submit button to change the number of instances requested.');
+        return;
+      }
+
+      if(isNaN(input) || isNaN(inputStr)){
+        C.Modal.show('Incorrect Input', 'Instance count can only be set to numbers (between 1 and 100).');
+        return;
+      }
+
+      this.verifyInstanceBounds(service, input, "Request " + input);
+    },
+
     increaseInstance: function (service, instanceCount) {
       this.verifyInstanceBounds(service, ++instanceCount, "Increase");
     },

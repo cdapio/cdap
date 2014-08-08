@@ -221,7 +221,7 @@ define([], function () {
 				'Change instances to ' + input + ' for ' + '"' + this.get('model').name + '" flowlet?',
 				function () {
 					self.addInstances(input, function () {
-					  self.set('instancesInput', '');
+					self.set('instancesInput', '');
 					});
 				});
     },

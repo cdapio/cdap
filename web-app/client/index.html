@@ -190,45 +190,49 @@
           <table class="table">
             <thead>
               <th style="padding-left: 14px; min-width: 350px" class="service-col">Name</th>
-              <th style="min-width: 100px;" class="status-col center-align">Status
-              </th>
+              <th style="min-width: 100px;" class="status-col center-align">Status</th>
               <th style="min-width: 100px;" class="logs-col center-align">Logs</th>
               <th style="min-width: 200px;" class="instance-col center-align">Instances Requested</th>
               <th style="min-width: 200px;" class="instance-col center-align">Provisioned</th>
             </thead>
             <tbody>
-            {{#each systemServices}}
+            {{#each service in systemServices}}
               <tr>
                 <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
-                  {{this.name}}
+                  {{service.name}}
                   </a>
                   <br />
-                  <span class="app-list-status">{{this.description}}</span>
+                  <span class="app-list-status">{{service.description}}</span>
                 </td>
                 <td style="max-width: 100px;" class="status-col center-align">
-                  <span {{ bindAttr class=":service-icon this.imgClass" }} ></span>
+                  <span {{ bindAttr class=":service-icon service.imgClass" }} ></span>
                 </td>
                 <td style="max-width: 100px;" class="status-col center-align">
-                  {{#if this.logsStatusOk}}
-                    {{#linkTo 'Service.Log' this}}<span {{ bindAttr class=":log-icon this.logClass" }} ></span>{{/linkTo}}
+                  {{#if service.logsStatusOk}}
+                    {{#linkTo 'Service.Log' service}}<span {{ bindAttr class=":log-icon service.logClass" }} ></span>{{/linkTo}}
                   {{ else }}
-                    <span data-toggle="tooltip" data-placement="right" title="Please contact your system admistrator for logs.">NA</span>
+                    <span data-toggle="tooltip" data-placement="right" title="Please contact your system administrator for logs.">NA</span>
                   {{/if}}
                 </td>
                 <td style="max-width: 200px;" class="instance-col">
                   <div class="instance-wrapper">
-                    <div class="instance-num"><span>{{this.requested}}</span></div>
+                    <div class="instance-num">
+                    <form {{action "changeInstances" service on="submit"}}>
+                      {{input placeholder=service.requested maxlength="3" value=service.instancesInput class="system-services-instances-input" }}
+                    </form>
+                    </div>
                     <div>
-                      <a class="cursor-pointer" {{action decreaseInstance this this.requested }}>
+                      <a class="cursor-pointer" {{action decreaseInstance service service.requested }}>
                         <span class="minus-icon"></span>
                       </a>
-                      <a class="cursor-pointer" {{action increaseInstance this this.requested }}>
+                      <a class="cursor-pointer" {{action increaseInstance service service.requested }}>
                         <span class="plus-icon"></span>
                       </a>
                     </div>
                   </div>
+                </td>
                 <td style="max-width: 350px;" class="instance-provisioned service-col">
-                    <div class="instance-num auto-margin"><span>{{this.provisioned}}</span></div>
+                    <div class="instance-num auto-margin"><span>{{service.provisioned}}</span></div>
                 </td>
               </tr>
             {{/each}}
