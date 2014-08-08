@@ -29,57 +29,119 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 /**
- *
+ * Implementation of {@link HttpServiceResponder} which delegates calls to
+ * the HttpServiceResponder's methods to the matching methods for a {@link HttpResponder}.
  */
 final class DefaultHttpServiceResponder implements HttpServiceResponder {
 
   private final HttpResponder responder;
 
+  /**
+   * Instantiates the class from a {@link HttpResponder}
+   *
+   * @param responder the responder which will be bound to
+   */
   DefaultHttpServiceResponder(HttpResponder responder) {
     this.responder = responder;
   }
 
+  /**
+   * Sends JSON response back to the client with status code 200 OK.
+   *
+   * @param object the object that will be serialized into JSON and sent back as content
+   */
   @Override
   public void sendJson(Object object) {
     responder.sendJson(HttpResponseStatus.OK, object);
   }
 
+  /**
+   * Sends JSON response back to the client.
+   *
+   * @param status the status of the HTTP response
+   * @param object the object that will be serialized into JSON and sent back as content
+   */
   @Override
   public void sendJson(int status, Object object) {
     responder.sendJson(HttpResponseStatus.valueOf(status), object);
   }
 
+   /**
+    * Sends JSON response back to the client using the given {@link Gson} object.
+    *
+    * @param status the status of the HTTP response
+    * @param object the object that will be serialized into JSON and sent back as content
+    * @param type the type of object
+    * @param gson the Gson object for serialization
+   */
   @Override
   public void sendJson(int status, Object object, Type type, Gson gson) {
     responder.sendJson(HttpResponseStatus.valueOf(status), object, type, gson);
   }
 
+  /**
+   * Sends a UTF-8 encoded string response back to the HTTP client with a default response status.
+   *
+   * @param data the data to be sent back
+   */
   @Override
   public void sendString(String data) {
     responder.sendString(HttpResponseStatus.OK, data);
   }
 
+  /**
+   * Sends a string response back to the HTTP client.
+   *
+   * @param status the status of the HTTP response
+   * @param data the data to be sent back
+   * @param charset the Charset used to encode the string
+   */
   @Override
   public void sendString(int status, String data, Charset charset) {
     responder.sendContent(HttpResponseStatus.valueOf(status), ChannelBuffers.wrappedBuffer(charset.encode(data)),
                           "text/plain; charset=" + charset.name(), ImmutableMultimap.<String, String>of());
   }
 
+  /**
+   * Sends only a status code back to the client without any content.
+   *
+   * @param status the status of the HTTP response
+   */
   @Override
   public void sendStatus(int status) {
     responder.sendStatus(HttpResponseStatus.valueOf(status));
   }
 
+  /**
+   * Sends a status code and headers back to client without any content.
+   *
+   * @param status the status of the HTTP response
+   * @param headers the headers to send
+   */
   @Override
   public void sendStatus(int status, Multimap<String, String> headers) {
     responder.sendStatus(HttpResponseStatus.valueOf(status), headers);
   }
 
+  /**
+   * Sends error message back to the client with the specified status code.
+   *
+   * @param status the status of the response
+   * @param errorMessage the error message sent back to the client
+   */
   @Override
   public void sendError(int status, String errorMessage) {
     responder.sendError(HttpResponseStatus.valueOf(status), errorMessage);
   }
 
+  /**
+   * Sends response back to client.
+   *
+   * @param status the status of the response
+   * @param content the content to be sent back
+   * @param contentType the type of content
+   * @param headers the headers to be sent back
+   */
   @Override
   public void send(int status, ByteBuffer content, String contentType, Multimap<String, String> headers) {
     responder.sendContent(HttpResponseStatus.valueOf(status),

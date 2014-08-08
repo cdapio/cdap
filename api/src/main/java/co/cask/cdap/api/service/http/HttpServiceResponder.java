@@ -24,74 +24,81 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 /**
- *
+ * Interface with methods for sending HTTP responses.
  */
 public interface HttpServiceResponder {
 
+  /**
+   * Sends JSON response back to the client with a default status.
+   *
+   * @param object object that will be serialized into JSON and sent back as content
+   */
   void sendJson(Object object);
 
   /**
-   * Sends json response back to the client.
+   * Sends JSON response back to the client.
    *
-   * @param status Status of the response.
-   * @param object Object that will be serialized into Json and sent back as content.
+   * @param status status of the HTTP response
+   * @param object object that will be serialized into JSON and sent back as content
    */
   void sendJson(int status, Object object);
 
   /**
-   * Sends json response back to the client using the given gson object.
+   * Sends JSON response back to the client using the given {@link Gson} object.
    *
-   * @param status Status of the response.
-   * @param object Object that will be serialized into Json and sent back as content.
-   * @param type Type of object.
-   * @param gson Gson object for serialization.
+   * @param status the status of the HTTP response
+   * @param object the object that will be serialized into JSON and sent back as content
+   * @param type the type of object
+   * @param gson the Gson object for serialization
    */
   void sendJson(int status, Object object, Type type, Gson gson);
 
   /**
-   * Send a UTF-8 encoded string response back to the http client with response status of 200 OK.
-   * @param data string data to be sent back.
+   * Sends a UTF-8 encoded string response back to the HTTP client with a default response status.
+   *
+   * @param data the string data to be sent back
    */
   void sendString(String data);
 
   /**
-   * Send a string response back to the http client.
+   * Sends a string response back to the HTTP client.
    *
-   * @param status status of the Http response.
-   * @param data string data to be sent back.
+   * @param status the status of the HTTP response
+   * @param data the data to be sent back
+   * @param charset the Charset used to encode the string
    */
   void sendString(int status, String data, Charset charset);
 
   /**
-   * Send only a status code back to client without any content.
+   * Sends only a status code back to client without any content.
    *
-   * @param status status of the Http response.
+   * @param status status of the HTTP response
    */
   void sendStatus(int status);
 
   /**
-   * Send only a status code back to client without any content.
+   * Sends a status code and headers back to client without any content.
    *
-   * @param status status of the Http response.
-   * @param headers Headers to send.
+   * @param status status of the HTTP response
+   * @param headers headers to send
    */
   void sendStatus(int status, Multimap<String, String> headers);
 
   /**
-   * Sends error message back to the client.
+   * Sends an error message back to the client with the specified status code.
    *
-   * @param status Status of the response.
-   * @param errorMessage Error message sent back to the client.
+   * @param status status of the HTTP response
+   * @param errorMessage error message sent back to the client
    */
   void sendError(int status, String errorMessage);
 
   /**
-   * Send response back to client.
+   * Sends response back to client.
    *
-   * @param status Status of the response.
-   * @param content Content to be sent back.
-   * @param contentType Type of content.
-   * @param headers Headers to be sent back.
+   * @param status status of the response
+   * @param content content to be sent back
+   * @param contentType type of content
+   * @param headers headers to be sent back
    */
   void send(int status, ByteBuffer content, String contentType, Multimap<String, String> headers);
 }
