@@ -22,9 +22,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
-import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.schedule.DataSetBasedScheduleStore;
@@ -37,7 +35,6 @@ import com.continuuity.tephra.TransactionExecutorFactory;
 import com.continuuity.tephra.TransactionManager;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.twill.common.Services;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -71,7 +68,6 @@ public class SchedulerTest {
   private static TransactionExecutorFactory factory;
   private static DatasetFramework dsFramework;
   private static TransactionManager txService;
-  private static DatasetService dsService;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -83,18 +79,16 @@ public class SchedulerTest {
                                     new MetricsClientRuntimeModule().getInMemoryModules(),
                                     new DataFabricModules().getInMemoryModules(),
                                     new DataSetsModules().getInMemoryModule(),
-                                    new DataSetServiceModules().getInMemoryModule(),
                                     new ExploreClientModule());
     txService = injector.getInstance(TransactionManager.class);
-    dsService = injector.getInstance(DatasetService.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
     factory = injector.getInstance(TransactionExecutorFactory.class);
-    Services.chainStart(txService, dsService);
+    txService.startAndWait();
   }
 
   @AfterClass
   public static void afterClass() {
-    Services.chainStop(dsService, txService);
+    txService.stop();
   }
 
   public static void schedulerSetup(boolean enablePersistence, String schedulerName)

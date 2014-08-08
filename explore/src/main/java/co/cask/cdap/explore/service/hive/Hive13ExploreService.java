@@ -52,6 +52,9 @@ public class Hive13ExploreService extends BaseHiveExploreService {
                               CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
                               @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir) {
     super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir);
+    // This config sets the time Hive CLI getOperationStatus method will wait for the status of
+    // a running query.
+    System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_LONG_POLLING_TIMEOUT.toString(), "50");
   }
 
   @Override

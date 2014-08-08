@@ -57,7 +57,7 @@ public abstract class AbstractDistributedMasterServiceManager implements MasterS
 
   @Override
   public int getInstances() {
-    Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.REACTOR_SERVICES);
+    Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.MASTER_SERVICES);
     int instances = 0;
     if (twillControllerList != null) {
       for (TwillController twillController : twillControllerList) {
@@ -78,7 +78,7 @@ public abstract class AbstractDistributedMasterServiceManager implements MasterS
   public boolean setInstances(int instanceCount) {
     Preconditions.checkArgument(instanceCount > 0);
     try {
-      Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.REACTOR_SERVICES);
+      Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.MASTER_SERVICES);
       if (twillControllerList != null) {
         for (TwillController twillController : twillControllerList) {
           twillController.changeInstances(serviceName, instanceCount).get();

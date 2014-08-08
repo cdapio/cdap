@@ -251,6 +251,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     } catch (HandleNotFoundException e) {
       if (e.isInactive()) {
         responder.sendString(HttpResponseStatus.CONFLICT, "Preview is unavailable for inactive queries.");
+        return;
       }
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
