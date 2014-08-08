@@ -74,7 +74,6 @@ public class LogAppenderInitializer implements Closeable {
     logAppender.start();
 
     rootLogger.addAppender(logAppender);
-//    return logAppender;
   }
 
   @Override
