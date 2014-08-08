@@ -32,8 +32,16 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.continuuity.tephra.TxConstants;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -44,9 +52,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -61,7 +72,9 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class DatasetInstanceHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceHandler.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(DatasetSpecification.class, new DatsetSpecificationAdapter())
+    .create();
 
   private final DatasetTypeManager implManager;
   private final DatasetInstanceManager instanceManager;
@@ -126,7 +139,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
             }
           }
         }
-        responder.sendJson(HttpResponseStatus.OK, joinBuilder.build());
+        responder.sendJson(HttpResponseStatus.OK, joinBuilder.build(),
+                           new TypeToken<List<?>>() { }.getType(), GSON);
         return;
       } catch (Throwable t) {
         LOG.error("Caught exception while listing explorable datasets", t);
@@ -139,9 +153,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       for (DatasetSpecification spec : datasetSpecifications) {
         builder.add(new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null));
       }
-      responder.sendJson(HttpResponseStatus.OK, builder.build());
+      responder.sendJson(HttpResponseStatus.OK, builder.build(),
+                         new TypeToken<List<DatasetMeta>>() { }.getType(), GSON);
     } else {
-      responder.sendJson(HttpResponseStatus.OK, datasetSpecifications);
+      responder.sendJson(HttpResponseStatus.OK, datasetSpecifications,
+                         new TypeToken<Collection<DatasetSpecification>>() { }.getType(), GSON);
     }
   }
 
@@ -181,7 +197,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
       DatasetMeta info = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null);
-      responder.sendJson(HttpResponseStatus.OK, info);
+      responder.sendJson(HttpResponseStatus.OK, info, DatasetMeta.class, GSON);
     }
   }
 
@@ -194,9 +210,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/datasets/{name}")
   public void createOrUpdate(HttpRequest request, final HttpResponder responder,
                   @PathParam("name") String name) {
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
-
-    DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
+    DatasetInstanceConfiguration creationProperties = getInstanceConfiguration(request);
 
     LOG.info("Creating dataset {}, type name: {}, typeAndProps: {}",
              name, creationProperties.getTypeName(), creationProperties.getProperties());
@@ -235,9 +249,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/datasets/{name}/properties")
   public void update(HttpRequest request, final HttpResponder responder,
                      @PathParam("name") String name) {
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
-
-    DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
+    DatasetInstanceConfiguration creationProperties = getInstanceConfiguration(request);
 
     LOG.info("Update dataset {}, type name: {}, typeAndProps: {}",
              name, creationProperties.getTypeName(), creationProperties.getProperties());
@@ -274,6 +286,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     }
     //caling admin upgrade, after updating specification
     executeAdmin(request, responder, name, "upgrade");
+  }
+
+  private DatasetInstanceConfiguration getInstanceConfiguration(HttpRequest request) {
+    Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
+    DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
+    if (creationProperties.getProperties().containsKey(TxConstants.PROPERTY_TTL)) {
+      long ttl = TimeUnit.SECONDS.toMillis(Long.parseLong
+        (creationProperties.getProperties().get(TxConstants.PROPERTY_TTL)));
+      creationProperties.getProperties().put(TxConstants.PROPERTY_TTL, String.valueOf(ttl));
+    }
+    return  creationProperties;
   }
 
   private void createDatasetInstance(DatasetInstanceConfiguration creationProperties,
@@ -398,4 +421,36 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
     return true;
   }
+
+  /**
+   * Adapter for {@link co.cask.cdap.api.dataset.DatasetSpecification}
+   */
+  private static final class DatsetSpecificationAdapter implements JsonSerializer<DatasetSpecification> {
+
+    private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+    private static final Maps.EntryTransformer<String, String, String> TRANSFORM_DATASET_PROPERTIES =
+      new Maps.EntryTransformer<String, String, String>() {
+        @Override
+        public String transformEntry(String key, String value) {
+          if (key.equals(TxConstants.PROPERTY_TTL)) {
+            return String.valueOf(TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(value)));
+          } else {
+            return value;
+          }
+        }
+      };
+
+    @Override
+    public JsonElement serialize(DatasetSpecification src, Type typeOfSrc, JsonSerializationContext context) {
+      JsonObject jsonObject = new JsonObject();
+      jsonObject.addProperty("name", src.getName());
+      jsonObject.addProperty("type", src.getType());
+      jsonObject.add("properties", context.serialize(Maps.transformEntries(src.getProperties(),
+                                                     TRANSFORM_DATASET_PROPERTIES), MAP_STRING_STRING_TYPE));
+      Type specsType = new TypeToken<SortedMap<String, DatasetSpecification>>() { }.getType();
+      jsonObject.add("datasetSpecs", context.serialize(src.getSpecifications(), specsType));
+      return jsonObject;
+    }
+  }
+
 }
