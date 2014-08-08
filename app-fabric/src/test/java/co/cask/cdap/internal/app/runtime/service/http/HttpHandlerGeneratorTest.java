@@ -73,15 +73,14 @@ public class HttpHandlerGeneratorTest {
     HttpHandlerFactory factory = new HttpHandlerFactory();
     HttpHandler httpHandler = factory.createHttpHandler(new MyHttpHandler(), new HttpServiceContext() {
       @Override
-      public Map<String, String> getRuntimeArguments() {
-        return null;
-      }
-
-      @Override
       public HttpServiceSpecification getSpecification() {
         return null;
       }
 
+      @Override
+      public Map<String, String> getRuntimeArguments() {
+        return null;
+      }
     });
 
     NettyHttpService service = NettyHttpService.builder().addHttpHandlers(ImmutableList.of(httpHandler)).build();

@@ -21,7 +21,7 @@ import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.metrics.MetricsConstants.ConfigKeys;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Process metrics by consuming metrics being published to kafka.
  */
-public final class KafkaMetricsProcessorService extends AbstractIdleService {
+public final class KafkaMetricsProcessorService extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsProcessorService.class);
 
@@ -68,15 +68,35 @@ public final class KafkaMetricsProcessorService extends AbstractIdleService {
   }
 
   @Override
-  protected void startUp() {
+  protected String getServiceName() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  protected void run() {
     LOG.info("Starting Metrics Processing for partitions {}.", partitions);
     subscribe();
-    LOG.info("Metrics Processing Service started for partition {}.", partitions);
+    LOG.info("Metrics Processing Service started for partitions {}.", partitions);
+
+    while (isRunning()) {
+      try {
+        TimeUnit.SECONDS.sleep(1);
+      } catch (InterruptedException e) {
+        // It's triggered by stop
+        Thread.currentThread().interrupt();
+        continue;
+      }
+    }
+  }
+
+  @Override
+  protected void triggerShutdown() {
+    stopping = true;
+    super.triggerShutdown();
   }
 
   @Override
   protected void shutDown() {
-    stopping = true;
     LOG.info("Stopping Metrics Processing Service.");
 
     // Cancel kafka subscriptions

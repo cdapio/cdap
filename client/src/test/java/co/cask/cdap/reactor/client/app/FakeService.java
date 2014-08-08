@@ -14,22 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.api.service.http;
+package co.cask.cdap.reactor.client.app;
 
-import java.util.Map;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import org.apache.twill.api.AbstractTwillRunnable;
+import org.apache.twill.api.TwillContext;
+import org.apache.twill.api.TwillRunnableSpecification;
 
 /**
- * The context for a {@link HttpServiceHandler}. Currently contains methods to receive the
- * {@link HttpServiceSpecification} and the runtime arguments passed by the user.
+ * Fake no-op Service.
  */
-public interface HttpServiceContext {
-  /**
-   * @return the specification bound to this HttpServiceContext
-   */
-  HttpServiceSpecification getSpecification();
-
-  /**
-   * @return the user runtime arguments for the {@link HttpServiceHandler}s
-   */
-  Map<String, String> getRuntimeArguments();
+public final class FakeService extends AbstractHttpServiceHandler {
+  public static final String NAME = "fakeService";
 }

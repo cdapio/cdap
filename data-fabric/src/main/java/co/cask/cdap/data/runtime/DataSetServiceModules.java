@@ -23,7 +23,6 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.LocalDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.YarnDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
@@ -57,34 +56,14 @@ import java.util.Map;
  * Bindings for DataSet Service.
  */
 public class DataSetServiceModules {
-  public Module getInMemoryModule() {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        // NOTE: order is important due to dependencies between modules
-        Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
-        defaultModules.put("orderedTable-memory", new InMemoryOrderedTableModule());
-        defaultModules.put("metricsTable-memory", new InMemoryMetricsTableModule());
-        defaultModules.put("core", new CoreDatasetsModule());
+  public static final Map<String, DatasetModule> INMEMORY_DATASET_MODULES;
 
-        bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
-          .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
-
-        install(new FactoryModuleBuilder()
-                  .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                  .build(DatasetDefinitionRegistryFactory.class));
-        // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
-        //       as long as the data is durably persisted
-        bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
-        bind(MDSDatasetsRegistry.class).in(Singleton.class);
-        bind(DatasetService.class);
-        expose(DatasetService.class);
-
-        bind(DatasetOpExecutor.class).to(InMemoryDatasetOpExecutor.class);
-        expose(DatasetOpExecutor.class);
-      }
-    };
-
+  static {
+    INMEMORY_DATASET_MODULES = Maps.newLinkedHashMap();
+    // NOTE: order is important due to dependencies between modules
+    INMEMORY_DATASET_MODULES.put("orderedTable-memory", new InMemoryOrderedTableModule());
+    INMEMORY_DATASET_MODULES.put("metricsTable-memory", new InMemoryMetricsTableModule());
+    INMEMORY_DATASET_MODULES.put("core", new CoreDatasetsModule());
   }
 
   public Module getLocalModule() {

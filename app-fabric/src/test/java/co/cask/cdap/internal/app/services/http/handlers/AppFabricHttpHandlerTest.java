@@ -305,6 +305,10 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
     waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
 
+    // Get instances for a non-existent flowlet
+    HttpResponse response = doGet("/v2/apps/WordCountApp/flows/WordCountFlow/flowlets/XXXX/instances");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
     //Get Flowlet Instances
     Assert.assertEquals(1, getFlowletInstances("WordCountApp", "WordCountFlow", "StreamSource"));
 
@@ -1352,7 +1356,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = doPost(url,
       "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow', 'runnableId': 'StreamSource'}," +
       "{'appId': 'WordCountApp', 'programType': 'Procedure', 'programId': 'WordFrequency'}," +
-      "{'appId': 'AppWithServices', 'programType':'Service', 'programId':'NoOpService', 'runnableId':'DummyService'}]");
+      "{'appId': 'AppWithServices', 'programType':'Service', 'programId':'NoOpService', 'runnableId':'NoOpService'}]");
     // test valid cases
     returnedBody = readResponse(response, typeToken);
     for (JsonObject obj : returnedBody) {
@@ -1370,7 +1374,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     doPost("/v2/apps/AppWithServices/services/NoOpService/start");
     response = doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow','programId':'WordCountFlow','runnableId':" +
       "'StreamSource'}, {'appId':'AppWithServices', 'programType':'Service','programId':'NoOpService', 'runnableId':" +
-      "'DummyService'}, {'appId': 'WordCountApp', 'programType': 'Procedure','programId': 'VoidMapReduceJob'}]");
+      "'NoOpService'}, {'appId': 'WordCountApp', 'programType': 'Procedure','programId': 'VoidMapReduceJob'}]");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     returnedBody = readResponse(response, typeToken);
     Assert.assertEquals(1, returnedBody.get(0).get("provisioned").getAsInt());

@@ -137,7 +137,7 @@ public class MasterServiceMain extends DaemonMain {
   @Override
   public void init(String[] args) {
     isExploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
-    serviceName = Constants.Service.REACTOR_SERVICES;
+    serviceName = Constants.Service.MASTER_SERVICES;
     cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
 
     baseInjector = Guice.createInjector(
@@ -175,7 +175,7 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   /**
-   * The transaction coprocessors (0.94 and 0.96 versions of {@code ReactorTransactionDataJanitor}) need access
+   * The transaction coprocessors (0.94 and 0.96 versions of {@code DefaultTransactionProcessor}) need access
    * to CConfiguration values in order to load transaction snapshots for data cleanup.
    */
   private void checkTransactionRequirements() {
@@ -187,7 +187,7 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   /**
-   * Check that if Explore is enabled, the correct jars are present on reactor-master node,
+   * Check that if Explore is enabled, the correct jars are present on master node,
    * and that the distribution of Hive is supported.
    */
   private void checkExploreRequirements() {
@@ -458,7 +458,7 @@ public class MasterServiceMain extends DaemonMain {
 
     try {
       // Put jars needed by Hive in the containers classpath. Those jars are localized in the Explore
-      // container by ReactorTwillApplication, so they are available for ExploreServiceTwillRunnable
+      // container by MasterTwillApplication, so they are available for ExploreServiceTwillRunnable
       Set<File> jars = ExploreServiceUtils.traceExploreDependencies();
       for (File jarFile : jars) {
         LOG.trace("Adding jar file to classpath: {}", jarFile.getName());

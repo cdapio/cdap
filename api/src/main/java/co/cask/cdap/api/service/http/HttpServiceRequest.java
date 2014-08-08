@@ -22,19 +22,41 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
- *
+ * Interface with methods for processing HTTP requests.
  */
 public interface HttpServiceRequest {
 
+  /**
+   * @return the method of this request
+   */
   String getMethod();
 
+  /**
+   * @return the URI of this request
+   */
   String getRequestURI();
 
+  /**
+   * @return the data content of this request
+   */
   ByteBuffer getContent();
 
+  /**
+   * @return the headers of this request; each header name can map to multiple values
+   */
   Multimap<String, String> getHeaders();
 
+  /**
+   * Returns all of the values for a specified header
+   *
+   * @param key the header to find
+   * @return all of the values for that header
+   */
   List<String> getHeaders(String key);
 
+  /**
+   * @param key the header to find
+   * @return the value of the specified header; if the header maps to multiple values, return the first value
+   */
   String getHeader(String key);
 }
