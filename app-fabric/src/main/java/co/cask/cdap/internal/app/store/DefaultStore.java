@@ -139,7 +139,7 @@ public class DefaultStore implements Store {
    * @param framework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
-    framework.addInstance("table", APP_META_TABLE, DatasetProperties.EMPTY);
+    framework.addInstance(Table.class.getName(), APP_META_TABLE, DatasetProperties.EMPTY);
   }
 
   @Nullable
