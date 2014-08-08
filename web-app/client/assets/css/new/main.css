@@ -1638,6 +1638,7 @@ span.log-icon.complete {
    text-align:left;
    height: 29px;
    width: 25px;
+   color: black;
 }
 
 .system-services-instances-input{
