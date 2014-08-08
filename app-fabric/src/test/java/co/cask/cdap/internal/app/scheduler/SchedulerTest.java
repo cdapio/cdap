@@ -28,6 +28,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.schedule.DataSetBasedScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
@@ -85,6 +86,7 @@ public class SchedulerTest {
                                     new DataFabricModules().getInMemoryModules(),
                                     new DataSetsModules().getLocalModule(),
                                     new DataSetServiceModules().getInMemoryModule(),
+                                    new AuthModule(),
                                     new ExploreClientModule());
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();

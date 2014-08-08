@@ -27,6 +27,7 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -80,7 +81,8 @@ public class InMemoryExploreServiceTest {
         new DataSetServiceModules().getInMemoryModule(),
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new AuthModule(),
-        new ExploreRuntimeModule().getInMemoryModules());
+        new ExploreRuntimeModule().getInMemoryModules(),
+        new ExploreClientModule());
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
 
