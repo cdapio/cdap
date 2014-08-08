@@ -9,3 +9,5 @@ version          '0.1.0'
 %w(apt hadoop java nodejs ntp yum yum-epel).each do |cb|
   depends cb
 end
+
+depends krb5_utils
