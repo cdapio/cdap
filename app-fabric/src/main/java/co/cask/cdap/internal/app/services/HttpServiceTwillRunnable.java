@@ -45,9 +45,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
- * A Twill Runnable which runs a {@link NettyHttpService} with a list of {@link HttpServiceHandler}
- * as the HTTP request handlers. This is the runnable which is run in the {@link HttpServiceTwillApplication}
- * as a custom user service.
+ * A Twill Runnable which runs a {@link NettyHttpService} with a list of {@link HttpServiceHandler}s.
+ * This is the runnable which is run in the {@link HttpServiceTwillApplication}.
  */
 public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
@@ -65,7 +64,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
    * and a list of {@link HttpServiceHandler} which will be used to to handle the HTTP requests.
    *
    * @param name the name which will be used to announce the service
-   * @param handlers the handlers which will be used to handle the HttpRequests
+   * @param handlers the handlers of the HTTP requests
    */
   public HttpServiceTwillRunnable(String name, Iterable<? extends HttpServiceHandler> handlers) {
     this.name = name;
@@ -75,7 +74,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   /**
    * Utility constructor used to instantiate the service from the program classloader.
    *
-   * @param programClassLoader classloader to instantiate the service with
+   * @param programClassLoader the classloader to instantiate the service with
    */
   public HttpServiceTwillRunnable(ClassLoader programClassLoader) {
     this.programClassLoader = programClassLoader;
@@ -124,7 +123,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   /**
    * Initializes this runnable from the given context.
    *
-   * @param context
+   * @param context the context for initialization
    */
   @Override
   public void initialize(TwillContext context) {

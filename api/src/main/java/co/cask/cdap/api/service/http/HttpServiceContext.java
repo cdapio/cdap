@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public interface HttpServiceContext {
   /**
-   * @return the HttpServiceSpecification bound to this HttpServiceContext
+   * @return the specification bound to this HttpServiceContext
    */
   HttpServiceSpecification getSpecification();
 

@@ -28,8 +28,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Implementation of {@link HttpServiceRequest} which binds the methods
- * to the appropriate methods for a {@link HttpRequest}.
+ * Implementation of {@link HttpServiceRequest} which delegates calls to
+ * the HttpServiceRequest's methods to the matching methods for a {@link HttpRequest}.
  */
 final class DefaultHttpServiceRequest implements HttpServiceRequest {
 
@@ -40,7 +40,7 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
   /**
    * Instantiates the class from a {@link HttpRequest}
    *
-   * @param request
+   * @param request the request which will be bound to.
    */
   DefaultHttpServiceRequest(HttpRequest request) {
     this.request = request;

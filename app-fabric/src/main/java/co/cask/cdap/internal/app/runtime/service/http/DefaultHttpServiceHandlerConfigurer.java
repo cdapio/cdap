@@ -36,7 +36,7 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
    * Instantiates the class with the given {@link HttpServiceHandler}.
    * The arguments and description are set to empty values and the name is the handler class name.
    *
-   * @param handler
+   * @param handler the handler for the service
    */
   public DefaultHttpServiceHandlerConfigurer(HttpServiceHandler handler) {
     this.name = handler.getClass().getSimpleName();

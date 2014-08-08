@@ -21,8 +21,8 @@ import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
 
 /**
- * Twill Application which contains one runnable that runs an HTTP Service
- * with the handlers passed into the constructor.
+ * A Twill Application containing a single runnable that runs an
+ * HTTP Service using handlers passed to the constructor.
  */
 public class HttpServiceTwillApplication implements TwillApplication {
   private final String name;
@@ -32,8 +32,8 @@ public class HttpServiceTwillApplication implements TwillApplication {
    * Instantiates the class with the given name and {@link HttpServiceHandler}s. The name is the
    * name used when announcing this service. The handlers will handle the HTTP requests.
    *
-   * @param name the name of the service which will also be used when announcing this service is announced
-   * @param handlers the handlers which will handle the HTTP requests
+   * @param name the name of the service used when announcing the service
+   * @param handlers the handlers of the HTTP request
    */
   public HttpServiceTwillApplication(String name, Iterable<HttpServiceHandler> handlers) {
     this.name = name;

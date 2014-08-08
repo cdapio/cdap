@@ -46,25 +46,25 @@ public interface HttpServiceResponder {
   /**
    * Sends JSON response back to the client using the given {@link Gson} object.
    *
-   * @param status status of the HTTP response
-   * @param object object that will be serialized into JSON and sent back as content
-   * @param type type of object
-   * @param gson Gson object for serialization
+   * @param status the status of the HTTP response
+   * @param object the object that will be serialized into JSON and sent back as content
+   * @param type the type of object
+   * @param gson the Gson object for serialization
    */
   void sendJson(int status, Object object, Type type, Gson gson);
 
   /**
    * Sends a UTF-8 encoded string response back to the HTTP client with a default response status.
    *
-   * @param data string data to be sent back
+   * @param data the string data to be sent back
    */
   void sendString(String data);
 
   /**
    * Sends a string response back to the HTTP client.
    *
-   * @param status status of the HTTP response
-   * @param data string data to be sent back
+   * @param status the status of the HTTP response
+   * @param data the data to be sent back
    * @param charset the Charset used to encode the string
    */
   void sendString(int status, String data, Charset charset);
