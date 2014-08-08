@@ -146,13 +146,14 @@ public class SingleNodeMain {
    * Start the service.
    */
   public void startUp() throws Exception {
-    // todo: REACTOR-682
-//    logAppenderInitializer.initialize();
-
     // Start all the services.
     txService.startAndWait();
     metricsCollectionService.startAndWait();
     datasetService.startAndWait();
+
+    // Log appender should be initialized only after datasetService is started,
+    // since log appender instantiates a dataset - REACTOR-682
+    logAppenderInitializer.initialize();
 
     Service.State state = appFabricServer.startAndWait();
     if (state != Service.State.RUNNING) {
@@ -212,8 +213,7 @@ public class SingleNodeMain {
       if (externalAuthenticationServer != null) {
         externalAuthenticationServer.stopAndWait();
       }
-      // todo: REACTOR-682
-//      logAppenderInitializer.close();
+      logAppenderInitializer.close();
 
     } catch (Throwable e) {
       LOG.error("Exception during shutdown", e);

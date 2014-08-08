@@ -129,6 +129,9 @@ public class FileLogAppender extends LogAppender {
   public void start() {
     super.start();
     try {
+      // Make sure the meta table is fetched before start is done to prevent deadlock in single node mode - REACTOR-682
+      tableUtil.getMetaTable();
+
       logSchema = new LogSchema().getAvroSchema();
       FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil,
                                                                         txClient,
