@@ -240,7 +240,7 @@ public class TestFrameworkTest extends TestBase {
 
 
     URL url = new URL(String.format("http://%s:%d/ping2", discoverable.getSocketAddress().getHostName(),
-                                          discoverable.getSocketAddress().getPort()));
+                                                          discoverable.getSocketAddress().getPort()));
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(response.getResponseCode(), 200);
