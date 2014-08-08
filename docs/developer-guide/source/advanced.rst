@@ -11,9 +11,9 @@ with Best Practices for the Continuuity Reactor**
 Custom Services
 ===============
 In addition to Flows, MapReduce jobs, and Procedures, additional Services can be run in a 
-Reactor Application. Developers can implement Custom Services that provide endpoints and run in program containers,
-to interface with a legacy system and perform additional processing beyond the Continuuity processing
-paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
+Reactor Application. Developers can implement Custom Services that run in program containers and provide endpoints,
+useful for interfacing with legacy systems and performing additional processing beyond the
+Continuuity processing paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
 
 Services are implemented by extending ``AbstractHttpServiceHandler`` and are run in
 YARN. You can add services to your application by calling the ``addService`` method in the
@@ -39,7 +39,8 @@ Application's ``configure`` method::
 
     @Path("lookup/{ip}")
     @GET
-    public void lookup(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("ip") String ip) {
+    public void lookup(HttpServiceRequest request, HttpServiceResponder responder,
+                                                      @PathParam("ip") String ip) {
       // ...
       responder.sendString(200, location, Charsets.UTF_8);
     }
@@ -50,8 +51,8 @@ Service Discovery
 Services announce the host and port they are running on so that they can be discovered by—and provide
 access to—other programs: Flows, Procedures, MapReduce jobs, and other Custom Services.
 
-Service are announced using the name passed in the ``configure`` method. The application name, service ID, and
-hostname required for registering the Service are automatically obtained.
+Service are announced using the name passed in the ``configure`` method. The ``application name``, ``serviceId``, and
+``hostname`` required for registering the Service are automatically obtained.
 
 The service can then be discovered in Flows, Procedures, MapReduce jobs, and other Services using
 appropriate program contexts.
@@ -105,7 +106,7 @@ In MapReduce Mapper/Reducer jobs::
 
 Using Services
 -----------------
-Custom Services lifecycle can be controlled via the UI or by using the
+Custom Services lifecycle can be controlled via the Continuuity Reactor Dashboard or by using the
 `Reactor Client API <rest.html#reactor-client-http-api>`__ as described in the
 `Continuuity Reactor HTTP REST API <rest.html#reactor-client-http-api>`__.
 
