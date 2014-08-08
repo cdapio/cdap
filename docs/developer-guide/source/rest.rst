@@ -581,7 +581,7 @@ Example
    * - HTTP Request
      - ``PUT <base-url>/data/datasets/mydataset``
    * - Body
-     - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"3600"}}``
+     - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"3600000"}}``
    * - Description
      - Creates a Dataset named "mydataset" of the type "table" and time-to-live property set to 1 hour
 
@@ -593,13 +593,14 @@ Updating an Existing Dataset
 
 You can update an existing Dataset's table and properties by issuing an HTTP PUT request to the URL::
 
-	PUT <base-url>/data/datasets/<dataset-name>/properties
+	PUT <base-url>/data/datasets/<dataset-name>
 
 with JSON-formatted name of the dataset type and properties in the body::
 
   {
      "typeName":"<type-name>",
-     "properties":{<properties>}
+     "properties":{<properties>},
+     "update":"true"
   }
 
 :Note: The Dataset must exist, and the instance and type passed must match with the existing Dataset.
@@ -639,9 +640,9 @@ Example
    :stub-columns: 1
 
    * - HTTP Request
-     - ``PUT <base-url>/data/datasets/mydataset/properties``
+     - ``PUT <base-url>/data/datasets/mydataset``
    * - Body
-     - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"7200"}}``
+     - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"7200000"},"update":"true"}``
    * - Description
      - For the "mydataset" of type "Table", updates the Dataset and its time-to-live property to 2 hours
 
@@ -1373,7 +1374,7 @@ HTTP Responses
      - The query handle does not match any current query
 
 List of Queries
-----------------
+---------------
 To return a list of queries, use::
 
    GET <base-url>/data/explore/queries?limit=<limit>&cursor=<cursor>&offset=<offset>
@@ -1608,6 +1609,45 @@ jobs, Workflows, and Custom Services, and query for their status using HTTP POST
    * - ``<operation>``
      - One of ``start`` or ``stop``
 
+You can also retrieve the status of multiple elements from different applications and different element
+types using an HTTP POST method::
+
+  POST <base-url>/status
+
+with a JSON array in the request body consisting of multiple JSON objects with the following parameters:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``"appId"``
+     - Name of the Application being called
+   * - ``"programType"``
+     - One of ``Flow``, ``Procedure``, ``Mapreduce``, ``Workflow`` or ``Service``
+   * - ``"programId"``
+     - Name of the element (*Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*)
+       being called
+
+and the response will be the same JSON array with some additional parameters for each of the underlying JSON objects:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``"status"``
+     - This will map to an individual JSON object's queried element's status if the query is valid and the element is found.
+   * - ``"statusCode"``
+     - The status code for retrieving the status of an individual JSON object
+   * - ``"error"``
+     - An error describing why the status was not retrieved (for example: the specified element was not found,
+       the requested JSON object was missing a parameter, etc.)
+
+Note that if the ``"status"`` field exists then the ``"error"`` field will not and vice versa.
+
 Examples
 ........
 
@@ -1652,6 +1692,23 @@ request to the element's URL using the same parameter ``runtimeargs``::
 
 This will return the saved runtime arguments in JSON format.
 
+To get the status of multiple programs in multiple applications::
+
+  POST <base-url>/status
+
+with the arguments as a JSON string in the body::
+
+  [{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1"},
+   {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2"},
+   {"appId":"MyApp3","programType":"Service","programId":"MySvc1}]
+
+This could return the following response given that there is no procedure named MyProc2 in the application MyApp1::
+
+  [{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1","status":"RUNNING","statusCode":200},
+   {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2","statusCode":404,"error":"Program: MyProc2 not found"},
+   {"appId":"MyApp3","programType":"Service","programId":"MySvc1,"status":"STOPPED","statusCode":200}]
+
+
 Container Information
 ---------------------
 
@@ -1691,54 +1748,73 @@ The response is formatted in JSON; an example of this is shown in:
 
   `Continuuity Reactor Testing and Debugging Guide <http://continuuity.com/docs/reactor/current/en/debugging.html#debugging-reactor-applications>`__
 
-Service Discovery
-------------------
-To find a list of the host and ports of an announced discoverable, you can query the Service's ``discover`` method via
-an HTTP GET method::
-
-  GET <base-url>/apps/<app-id>/services/<service-name>/discover/<discoverable-id>
-
-.. list-table::
-    :widths: 20 80
-    :header-rows: 1
-
-    * - Parameter
-      - Description
-    * - ``<app-id>``
-      - Name of the Application being called
-    * - ``<service-name>``
-      - Name of the Custom Service
-    * - ``<discoverable-id>``
-      - ID of ``TwillRunnable`` to be discovered
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/apps/PurchaseHistory/services/CatalogLookupService/discover/LookupByProductId``
-   * - Description
-     - Find the host and port of ``LookupByProductId`` service announced from ``CatalogLookupService``.
-   * - Result
-     - ::
-
-         [
-          {
-            "host": "node-1003.my.cluster.net",
-            "port": 40324
-          }
-         ]
-
-Accessing Services directly via their host and port is not advisable as it bypasses all CDAP security.
-
-Note that this feature is experimental and may be deprecated or removed in future releases.
-
 .. rst2pdf: PageBreak
 
 Scale
 -----
+
+You can retrieve the number of instances executing different elements from
+various applications and different element types using an HTTP POST method::
+
+  POST <base-url>/instances
+
+with a JSON array in the request body consisting of multiple JSON objects with the following parameters:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``"appId"``
+     - Name of the Application being called
+   * - ``"programType"``
+     - One of ``Flow``, ``Procedure``, or ``Service``
+   * - ``"programId"``
+     - Name of the element (*Flow*, *Procedure*, or *Custom Service*) being called
+   * - ``"runnableId"``
+     - Name of the *Flowlet/Runnable* if querying a *Flow/Custom Service*. This parameter
+       does not apply to *Procedures* because the programId is the same as the runnableId for a *Procedure*
+
+and the response will be the same JSON array with some additional parameters for each of the underlying JSON objects:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``"requested"``
+     - This will map to the number of instances the user requested for the program defined by an individual JSON object's parameters.
+   * - ``"provisioned"``
+     - This will map to the number of instances that are actually running for the program defined by an individual JSON object's parameters.
+   * - ``"statusCode"``
+     - The status code for retrieving the instances of an individual JSON object
+   * - ``"error"``
+     - An error describing why the instances was not retrieved (for example: the specified element was not found,
+       the requested JSON object was missing a parameter, etc.)
+
+Note that if the ``"requested"`` and  ``"provisioned"`` fields exist then the ``"error"`` field will not and vice versa.
+
+Example
+.......
+
+To get the instances of multiple program runnables in multiple applications::
+
+  POST <base-url>/instances
+
+with the arguments as a JSON string in the body::
+
+  [{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1","runnableId":"MyFlowlet5"},
+   {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2"},
+   {"appId":"MyApp3","programType":"Service","programId":"MySvc1,"runnableId":"MyRunnable1"}]
+
+This could return the following response given that there is no procedure named MyProc2 in the application MyApp1::
+
+  [{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1","runnableId":"MyFlowlet5","provisioned":2,"requested":2,"statusCode":200},
+   {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2","provisioned":0,"requested":1,"statusCode":200},
+   {"appId":"MyApp3","programType":"Service","programId":"MySvc1,"runnableId":"MyRunnable1","statusCode":404,"error":"Runnable: MyRunnable1 not found"}]
+
 
 Scaling Flowlets
 ................
