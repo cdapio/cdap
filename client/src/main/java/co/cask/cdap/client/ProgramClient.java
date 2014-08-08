@@ -130,7 +130,7 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the program with the specified name could not be found
    */
-  public ProgramLiveInfo getLiveInfo(String appId, ProgramType programType, String programName)
+  public DistributedProgramLiveInfo getLiveInfo(String appId, ProgramType programType, String programName)
     throws IOException, ProgramNotFoundException {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/live-info",
