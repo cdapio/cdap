@@ -1,21 +1,18 @@
-.. :Author: Continuuity, Inc.
-   :Description: Continuuity Reactor Apache Log Event Logger
+.. :Author: Cask, Inc.
+   :Description: Cask Data Application Platform Apache Log Event Logger
 
 =============================
 ResponseCodeAnalytics Example
 =============================
 
-**A Continuuity Reactor Application Demonstrating Streams, Flows, Datasets and Procedures**
-
-.. reST Editor: .. section-numbering::
-.. reST Editor: .. contents::
+**A Cask Data Application Platform (CDAP) Example Demonstrating Streams, Flows, Datasets and Procedures**
 
 Overview
 ========
 This example demonstrates a simple application for real-time streaming log analysis—computing 
 the number of occurrences of each HTTP status code by processing Apache access log data. 
 
-The example introduces the basic constructs of the Continuuity Reactor programming paradigm:
+The example introduces the basic constructs of the Cask Data Application Platform paradigm:
 Applications, Streams, Flows, Procedures and Datasets.
 
 In any real-time application, there are four distinct areas:
@@ -25,7 +22,8 @@ In any real-time application, there are four distinct areas:
 #. Data Storage: saving the computed analysis in an appropriate data structure
 #. Data Queries: serving the computed data to any down-stream application that wants to use the data
 
-The ``ResponseCodeAnalyticsApp`` Application demonstrates using the abstractions of the Continuuity Reactor to cover these four areas.
+The ``ResponseCodeAnalyticsApp`` Application demonstrates using the abstractions of the 
+Cask Data Application Platform to cover these four areas.
 
 Let's look at each one in turn.
 
@@ -33,7 +31,7 @@ The ResponseCodeAnalytics Application
 -------------------------------------
 All of the components (Streams, Flows, Datasets, and Procedures) of the Application are tied together 
 as a deployable entity by the class ``ResponseCodeAnalyticsApp``,
-an implementation of ``com.continuuity.api.app.AbstractApplication``.
+an implementation of ``co.cask.cdap.api.app.AbstractApplication``.
 
 ::
 
@@ -59,23 +57,27 @@ an implementation of ``com.continuuity.api.app.AbstractApplication``.
     // ...
 
 Notice that in coding the Application, *Streams* and *Datasets* are defined
-using Continuuity classes, and are referenced by names, 
+using CDAP classes, and are referenced by names, 
 while *Flows*, *Flowlets* and *Procedures* are defined using user-written classes
-that implement Continuuity classes and are referenced by passing an object, 
+that implement CDAP classes and are referenced by passing an object, 
 in addition to being assigned a unique name.
 
-Names used for *Streams* and *Datasets* need to be unique across the Reactor instance,
+Names used for *Streams* and *Datasets* need to be unique across the CDAP instance,
 while names used for *Flows*, *Flowlets* and *Procedures* need to be unique only to the Application.
 
 Streams for Data Collection
 -------------------------------
-Streams are the primary means for bringing data from external systems into the Continuuity Reactor in real-time.
 
-Data can be written to streams using REST. In this example, a Stream named *logEventStream* is used to ingest Apache access logs.
+.. highlight:: console
+
+Streams are the primary means for bringing data from external systems into CDAP in real-time.
+
+Data can be written to streams using the RESTful API. In this example, a Stream named *logEventStream* is used to 
+ingest Apache access logs.
 
 The Stream is configured to ingest data using the Apache Common Log Format. Here is a sample event from a log::
 
-	165.225.156.91 - - [09/Jan/2014:21:28:53 -0400] "GET /index.html HTTP/1.1" 200 225 "http://continuuity.com" "Mozilla/4.08 [en] (Win98; I ;Nav)"
+	165.225.156.91 - - [09/Jan/2014:21:28:53 -0400] "GET /index.html HTTP/1.1" 200 225 "http://cask.co" "Mozilla/4.08 [en] (Win98; I ;Nav)"
 
 If data is unavailable, a hyphen ("-") is used. Reading from left to right, this format contains:
 
@@ -121,13 +123,13 @@ The ``ResponseCodeAnalyticsApp`` has a Procedure to retrieve all status codes an
 
 Building and Running the Application and Example
 ================================================
-In this remainder of this document, we refer to the Continuuity Reactor runtime as "Reactor", and the
+In this remainder of this document, we refer to the Cask Data Application Platform runtime as "CDAP", and the
 example code that is running on it as an "Application".
 
 We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
 
 In this example, you can either build the Application from source or deploy the already-compiled JAR file.
-In either case, you then start a Continuuity Reactor, deploy the Application, and then run the example by
+In either case, you then start the CDAP, deploy the Application, and then run the example by
 injecting Apache access log entries from an example file into the Application. 
 
 As you do so, you can query the Application to see the results
@@ -143,20 +145,20 @@ From the project root, build ``ResponseCodeAnalyticsApp`` with the following `Ap
 
 Deploying and Starting the Application
 --------------------------------------
-Make sure an instance of the Continuuity Reactor is running and available. 
-From within the SDK root directory, this command will start Reactor in local mode::
+Make sure an instance of the CDAP is running and available. 
+From within the SDK root directory, this command will start CDAP in local mode::
 
-	$ bin/continuuity-reactor start
+	$ ./bin/cdap.sh start
 
 On Windows::
 
-	~SDK> bin\reactor.bat start
+	~SDK> bin\cdap.bat start
 
-From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`_ in local mode):
+From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`_ in local mode):
 
 #. Drag and drop the Application JAR file (``target/ResponseCodeAnalytics-...jar``)
    onto your browser window.
-   Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
+   Alternatively, use the *Load App* button found on the *Overview* of the CDAP Console.
 #. Once loaded, select ``ResponseCodeAnalytics`` Application from the list.
    On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
 	
@@ -165,7 +167,7 @@ Command line tools are also available to deploy and manage apps. From within the
 #. To deploy the Application JAR file, run ``$ bin/app-manager.sh --action deploy [--host <hostname>]``
 #. To start the Application, run ``$ bin/app-manager.sh --action start [--host <hostname>]``
 
-:Note:	[--host <hostname>] is not available for a *Local Reactor*.
+:Note:	[--host <hostname>] is not available for a *Local DAP*.
 
 On Windows:
 
@@ -186,7 +188,7 @@ to a Stream named *logEventStream* in the ``ResponseCodeAnalyticsApp``::
 
 	$ bin/inject-data.sh [--host <hostname>]
 
-:Note:	[--host <hostname>] is not available for a *Local Reactor*.
+:Note:	[--host <hostname>] is not available for a *Local DAP*.
 
 On Windows::
 
@@ -196,7 +198,7 @@ Query
 .....
 
 If the Procedure has not already been started, you start it either through the 
-Continuuity Reactor Dashboard or via an HTTP request using the ``curl`` command::
+CDAP Console or via an HTTP request using the ``curl`` command::
 
 	curl -v -X POST 'http://localhost:10000/v2/apps/ResponseCodeAnalytics/procedures/StatusCodeProcedure/start'
 
@@ -210,15 +212,15 @@ There are two ways to query the *statusCodeTable* DataSet:
 
 	libexec\curl...
 
-#. Type a Procedure method name, in this case ``getCounts``, in the *Query* page of the Reactor Dashboard:
+#. Type a Procedure method name, in this case ``getCounts``, in the *Query* page of the CDAP Console:
 
-   In the Continuuity Reactor Dashboard:
+   In the CDAP Console:
 
    #. Click the *Query* button.
    #. Click on the *StatusCodeProcedure* Procedure.
    #. Type ``getCounts`` in the *Method* text box.
    #. Click the *Execute* button.
-   #. The results of the occurrences for each HTTP status code are displayed in the Dashboard
+   #. The results of the occurrences for each HTTP status code are displayed in the Console
       in JSON format. For example::
 
 	{"200":21, "301":1,"404":19}
@@ -227,14 +229,15 @@ Stopping the Application
 ------------------------
 Either:
 
-- On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
+- On the Application detail page of the CDAP Console, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ bin/app-manager.sh --action stop [--host <hostname>]``
 
-  :Note:	[--host <hostname>] is not available for a *Local Reactor*.
+  :Note:	[--host <hostname>] is not available for a *Local DAP*.
 
   On Windows, run ``~SDK> bin\app-manager.bat stop``
 
+.. highlight:: java
 
 Downloading the Example
 =======================
-This example (and more!) is included with our `software development kit <http://continuuity.com/download>`__.
+This example (and more!) is included with our `software development kit <http://cask.co/download>`__.
