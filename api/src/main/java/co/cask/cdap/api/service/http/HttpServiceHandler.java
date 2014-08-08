@@ -20,7 +20,7 @@ package co.cask.cdap.api.service.http;
  * Interface to be implemented to handle HTTP requests. This interface can be implemented and passed along to
  * custom user services. Classes that implement this interface can add methods with the @Path annotation
  * to specify the endpoint which that method handles. It can also use the @GET, @POST, @PUT, @DELETE annotations
- * to specify the type of Http request that it handles.
+ * to specify the type of HTTP requests that it handles.
  *
  * Example:
  * <p>
