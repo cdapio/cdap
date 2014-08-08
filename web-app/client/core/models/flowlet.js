@@ -37,15 +37,13 @@ define(['core/models/program'], function (Program) {
 				.replace(/\{id\}/, this.get('id'));
 
 		},
-
-    instancesString: function () {
+    actualInstances: function () {
       if (C.get('isLocal')) {
-        return this.instances + ' instance' + this.get('pluralInstances');
+        return this.instances;
       } else {
-        return this.containersLabel + ' instance' + this.get('pluralInstances') + ' (' + this.instances  + ' Requested)';
+        return this.containersLabel;
       }
-    }.property('instances'),
-
+    }.property('instances','containersLabel'),
 
 		doubleCount: function () {
 			return 'Add ' + this.instances;

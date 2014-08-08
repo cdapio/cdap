@@ -1193,11 +1193,11 @@
           <h1 class="popup-title"> {{model.name}}</h1>
           <div class="btn-group" style="margin-top: 4px; width: 100%">
             <div style="display: inline-block; width: 50%">
-              <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Provisioned: {{model.instances}}</button>
+              <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Provisioned: {{model.actualInstances}}</button>
             </div>
             <div style="display: inline-block; width: 50%">
               <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
-              {{input id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
+              {{input action="changeInstances" id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
               <button class="btn btn-blank" {{action "changeInstances" on="click"}}>Submit</button>
             </div>
           </div>
