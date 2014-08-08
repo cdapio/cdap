@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service;
 
+import com.continuuity.tephra.Transaction;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -24,7 +25,6 @@ import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.test.XSlowTests;
-import com.continuuity.tephra.Transaction;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -51,6 +51,10 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
 
   @BeforeClass
   public static void start() throws Exception {
+    // Need to specify that when this test is run after ExploreServiceTestsSuite has run in the same JVM
+    BaseHiveExploreServiceTest.runBefore = true;
+    BaseHiveExploreServiceTest.runAfter = true;
+
     // Set smaller values for timeouts for testing
     CConfiguration cConfiguration = CConfiguration.create();
     cConfiguration.setLong(Constants.Explore.ACTIVE_OPERATION_TIMEOUT_SECS, ACTIVE_OPERATION_TIMEOUT_SECS);

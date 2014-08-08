@@ -63,6 +63,10 @@ import java.util.concurrent.TimeUnit;
  * Base class for tests that need explore service to be running.
  */
 public class BaseHiveExploreServiceTest {
+  // Controls for test suite for whether to run BeforeClass/AfterClass
+  public static boolean runBefore = true;
+  public static boolean runAfter = true;
+
   protected static TransactionManager transactionManager;
   protected static DatasetFramework datasetFramework;
   protected static DatasetService datasetService;
@@ -73,7 +77,12 @@ public class BaseHiveExploreServiceTest {
   protected static ExploreClient exploreClient;
 
   protected static Injector injector;
+
   protected static void startServices(CConfiguration cConf) throws Exception {
+    if (!runBefore) {
+      return;
+    }
+
     injector = Guice.createInjector(createInMemoryModules(cConf, new Configuration()));
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
@@ -97,13 +106,25 @@ public class BaseHiveExploreServiceTest {
 
   @AfterClass
   public static void stopServices() throws Exception {
+    if (!runAfter) {
+      return;
+    }
+
     exploreClient.close();
     exploreExecutorService.stopAndWait();
     datasetService.stopAndWait();
     transactionManager.stopAndWait();
   }
 
-  public static ExploreClient getExploreClient() {
+  protected static TransactionManager getTransactionManager() {
+    return transactionManager;
+  }
+
+  protected static ExploreService getExploreService() {
+    return exploreService;
+  }
+
+  protected static ExploreClient getExploreClient() {
     return exploreClient;
   }
 
