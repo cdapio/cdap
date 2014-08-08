@@ -7,16 +7,16 @@ Vagrant.configure("2") do |config|
   # please see the online documentation at vagrantup.com.
 
   # We *need* vagrant-omnibus for these box images
-  config.omnibus.chef_version = "11.4.0"
+  config.omnibus.chef_version = :latest
 
   config.vm.hostname = "cdap-berkshelf"
 
   # Every Vagrant virtual environment requires a box to build off of.
-  config.vm.box = "opscode-centos-6.4"
+  config.vm.box = "opscode-centos-6.5"
 
   # The url from where the 'config.vm.box' box will be fetched if it
   # doesn't already exist on the user's system.
-  config.vm.box_url = "https://opscode-vm-bento.s3.amazonaws.com/vagrant/opscode_centos-6.4_provisionerless.box"
+  config.vm.box_url = "https://opscode-vm-bento.s3.amazonaws.com/vagrant/opscode_centos-6.5_provisionerless.box"
 
   # Assign this VM to a host-only network IP, allowing you to access it
   # via the IP. Host-only networks can talk to the host machine as well as
