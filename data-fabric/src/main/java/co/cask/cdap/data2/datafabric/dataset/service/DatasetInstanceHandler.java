@@ -58,7 +58,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -141,7 +140,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
           }
         }
         responder.sendJson(HttpResponseStatus.OK, joinBuilder.build(),
-                           new TypeToken<ImmutableList<?>>() { }.getType(), GSON);
+                           new TypeToken<List<?>>() { }.getType(), GSON);
         return;
       } catch (Throwable t) {
         LOG.error("Caught exception while listing explorable datasets", t);
@@ -155,7 +154,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
         builder.add(new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null));
       }
       responder.sendJson(HttpResponseStatus.OK, builder.build(),
-                         new TypeToken<ImmutableList<DatasetMeta>>() { }.getType(), GSON);
+                         new TypeToken<List<DatasetMeta>>() { }.getType(), GSON);
     } else {
       responder.sendJson(HttpResponseStatus.OK, datasetSpecifications,
                          new TypeToken<Collection<DatasetSpecification>>() { }.getType(), GSON);
@@ -428,11 +427,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
    */
   private static final class DatsetSpecificationAdapter implements JsonSerializer<DatasetSpecification> {
 
-    private static final Type TRANSFORM_DATASET_PROPERTIES_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+    private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
     private static final Maps.EntryTransformer<String, String, String> TRANSFORM_DATASET_PROPERTIES =
       new Maps.EntryTransformer<String, String, String>() {
         @Override
-        public String transformEntry(@Nullable String key, @Nullable String value) {
+        public String transformEntry(String key, String value) {
           if (key.equals(TxConstants.PROPERTY_TTL)) {
             return String.valueOf(TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(value)));
           } else {
@@ -447,7 +446,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       jsonObject.addProperty("name", src.getName());
       jsonObject.addProperty("type", src.getType());
       jsonObject.add("properties", context.serialize(Maps.transformEntries(src.getProperties(),
-                                                     TRANSFORM_DATASET_PROPERTIES), TRANSFORM_DATASET_PROPERTIES_TYPE));
+                                                     TRANSFORM_DATASET_PROPERTIES), MAP_STRING_STRING_TYPE));
       Type specsType = new TypeToken<SortedMap<String, DatasetSpecification>>() { }.getType();
       jsonObject.add("datasetSpecs", context.serialize(src.getSpecifications(), specsType));
       return jsonObject;
