@@ -40,7 +40,7 @@ import java.lang.annotation.Target;
  *   </code>
  * </pre>
  * 
- * See the <i>Cask DAP Developer Guide</i> and the example code for the Purchase application.
+ * See the <i>Cask DAP Developer Guides</i> and the example code for the Purchase application.
  * <p>
  * See the <i><a href="http://cask.co/docs/cdap/current/en/">Cask DAP Developer Guides</a></i>
  * and the <a href="http://cask.co/docs/cdap/current/en/examples/purchase.html">example code for the

@@ -28,7 +28,7 @@ import co.cask.cdap.api.Processor;
  *   configure the flow.
  * </p>
  *
- * See the <i>Cask DAP Developer Guide</i> and the CDAP server example applications.
+ * See the <i>Cask DAP Developer Guide</i> and the CDAP instance example applications.
  * @see FlowSpecification
  * @see co.cask.cdap.api.flow.flowlet.Flowlet Flowlet
  */

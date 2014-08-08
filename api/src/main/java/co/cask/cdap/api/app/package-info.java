@@ -65,7 +65,7 @@
  *
  * <p>
  * {@link co.cask.cdap.api.data.stream.Stream}s are the primary means for
- * pushing data into the CDAP server.
+ * pushing data into CDAP.
  * </p>
  *
  * <p>
@@ -76,7 +76,7 @@
  *
  * <p>
  * A {@link co.cask.cdap.api.data.DataSet Dataset} defines the storage and
- * retrieval of data. In addition to the several Dataset implementations the CDAP server
+ * retrieval of data. In addition to the several Dataset implementations CDAP
  * provides, you can also implement your own Custom Datasets.
  * </p>
  *
@@ -122,7 +122,7 @@
  *
  * <p>
  * A {@link co.cask.cdap.api.procedure.Procedure} handles queries from external
- * systems to the CDAP server and performs arbitrary server-side processing on demand.
+ * systems to the CDAP instance and performs arbitrary server-side processing on demand.
  * </p>
  *
  * <p>

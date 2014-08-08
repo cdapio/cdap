@@ -56,7 +56,7 @@ import java.util.Map;
  *    </code> 
  *  </pre>
  *
- * See the <i>Cask DAP Developer Guide</i> and the CDAP server example applications.
+ * See the <i>Cask DAP Developer Guide</i> and the CDAP instance example applications.
  *
  * @see co.cask.cdap.api.flow.flowlet.Flowlet Flowlet
  *
