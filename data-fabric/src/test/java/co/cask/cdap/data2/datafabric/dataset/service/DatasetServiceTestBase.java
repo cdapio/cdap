@@ -44,12 +44,14 @@ import co.cask.http.HttpHandler;
 import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.common.Services;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -66,6 +68,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -135,7 +138,20 @@ public abstract class DatasetServiceTestBase {
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  mdsDatasetsRegistry,
                                  new DatasetExploreFacade(new DiscoveryExploreClient(discoveryService), cConf));
-    service.startAndWait();
+
+    // Start dataset service, wait for it to be discoverable
+    service.start();
+    final CountDownLatch startLatch = new CountDownLatch(1);
+    discoveryService.discover(Constants.Service.DATASET_MANAGER).watchChanges(new ServiceDiscovered.ChangeListener() {
+      @Override
+      public void onChange(ServiceDiscovered serviceDiscovered) {
+        if (!Iterables.isEmpty(serviceDiscovered)) {
+          startLatch.countDown();
+        }
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
+
+    startLatch.await(5, TimeUnit.SECONDS);
   }
 
   @After

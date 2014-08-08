@@ -41,10 +41,13 @@ import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.common.Services;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
 import org.junit.Before;
@@ -53,6 +56,8 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -113,7 +118,19 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  new InMemoryDatasetOpExecutor(framework),
                                  mdsDatasetsRegistry,
                                  new DatasetExploreFacade(new DiscoveryExploreClient(discoveryService), cConf));
-    service.startAndWait();
+    // Start dataset service, wait for it to be discoverable
+    service.start();
+    final CountDownLatch startLatch = new CountDownLatch(1);
+    discoveryService.discover(Constants.Service.DATASET_MANAGER).watchChanges(new ServiceDiscovered.ChangeListener() {
+      @Override
+      public void onChange(ServiceDiscovered serviceDiscovered) {
+        if (!Iterables.isEmpty(serviceDiscovered)) {
+          startLatch.countDown();
+        }
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
+
+    startLatch.await(5, TimeUnit.SECONDS);
   }
 
   @After
