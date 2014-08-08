@@ -73,7 +73,7 @@ import javax.ws.rs.PathParam;
 public class DatasetInstanceHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceHandler.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(DatasetSpecification.class, new DatsetSpecificationAdapter())
+    .registerTypeAdapter(DatasetSpecification.class, new DatasetSpecificationAdapter())
     .create();
 
   private final DatasetTypeManager implManager;
@@ -428,9 +428,9 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   /**
    * Adapter for {@link co.cask.cdap.api.dataset.DatasetSpecification}
    */
-  private static final class DatsetSpecificationAdapter implements JsonSerializer<DatasetSpecification> {
+  private static final class DatasetSpecificationAdapter implements JsonSerializer<DatasetSpecification> {
 
-    private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+    private static final Type MAP_STRING_STRING_TYPE = new TypeToken<SortedMap<String, String>>() { }.getType();
     private static final Maps.EntryTransformer<String, String, String> TRANSFORM_DATASET_PROPERTIES =
       new Maps.EntryTransformer<String, String, String>() {
         @Override
