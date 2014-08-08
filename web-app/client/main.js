@@ -61,24 +61,24 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 	C.Router.map(function() {
 
 		this.resource('Loading', { path: '/loading' } );
-		this.resource('ConnectionError', { path: '/connectionerror' } );
+    this.resource('ConnectionError', { path: '/connectionerror' } );
 
-		/**
-		 * Services routes.
-		 */
+    /**
+     * Services routes.
+     */
 		this.resource('Services', { path: '/services' });
 
-		this.resource('Service', { path: '/services/system/:service_id' }, function() {
-			this.route('Log', { path: '/log' });
-		});
+    this.resource('Service', { path: '/services/system/:service_id' }, function() {
+      this.route('Log', { path: '/log' });
+    });
 
-		this.resource('Userservice', { path: '/services/user/:userservice_id' }, function () {
-			this.resource('UserserviceStatus', { path: '/' } , function () {
-				this.route('Config', { path: '/config' } );
-			});
-			this.route('Log', { path: '/log' } );
-			this.route('History', { path: '/history' });
-		});
+    this.resource('Userservice', { path: '/services/user/:userservice_id' }, function () {
+      this.resource('UserserviceStatus', { path: '/' } , function () {
+        this.route('Config', { path: '/config' } );
+      });
+      this.route('Log', { path: '/log' } );
+      this.route('History', { path: '/history' });
+    });
 
 
 		this.resource('Login', { path: '/login' } );
@@ -112,8 +112,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 
 		this.resource('Datasets', { path: '/datasets' });
 		this.resource('DataExplore', { path: '/dataexplore' }, function () {
-			this.route('Query', { path: '/query'});
-			this.route('Results', { path: '/results'});
+      this.route('Query', { path: '/query'});
+      this.route('Results', { path: '/results'});
 		});
 		this.resource('Dataset', { path: '/datasets/:dataset_id' });
 
@@ -158,19 +158,19 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 	function modelFinder (params) {
 
 		for (var key in params) {
-			if (params.hasOwnProperty(key)) {
-				/*
-				 * Converts e.g. 'app_id' into 'App', 'flow_id' into 'Flow'
-				 */
-				var type = key.charAt(0).toUpperCase() + key.slice(1, key.length - 3);
-				/*
-				 * Finds type and injects HTTP
-				 */
-				if (type in C) {
-					return C[type].find(params[key],
-						this.controllerFor('Application').HTTP);
-				}
-			}
+      if (params.hasOwnProperty(key)) {
+        /*
+         * Converts e.g. 'app_id' into 'App', 'flow_id' into 'Flow'
+         */
+        var type = key.charAt(0).toUpperCase() + key.slice(1, key.length - 3);
+        /*
+         * Finds type and injects HTTP
+         */
+        if (type in C) {
+          return C[type].find(params[key],
+            this.controllerFor('Application').HTTP);
+        }
+      }
 		}
 	}
 
@@ -182,10 +182,10 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		 * Check auth on every route transition.
 		 */
 		activate: function() {
-			var routeHandler = this;
-			if (C.Env.security_enabled) {
-				C.setupAuth(routeHandler)
-			}
+		  var routeHandler = this;
+		  if (C.Env.security_enabled) {
+		    C.setupAuth(routeHandler)
+		  }
 		},
 
 		/*
@@ -207,9 +207,9 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		 * Override to unload the Controller once the Route has been deactivated.
 		 */
 		deactivate: function () {
-			if ('controller' in this) {
-				this.controller.unload();
-			}
+      if ('controller' in this) {
+        this.controller.unload();
+      }
 		},
 		/*
 		 * Override to load a model based on parameter name and inject HTTP resource.
@@ -218,59 +218,59 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 
 	});
 
-	/*
-	 * Pages for lists of Elements use the List controller.
-	 * @param {string} type ['App', 'Stream', 'Flow', ...]
-	 */
-	function getListHandler(types) {
-		return {
-			/**
-			 * Check auth on every route transition.
-			 */
-			activate: function() {
-				var routeHandler = this;
-				window.scrollTo(0, 0);
+  /*
+   * Pages for lists of Elements use the List controller.
+   * @param {string} type ['App', 'Stream', 'Flow', ...]
+   */
+  function getListHandler(types) {
+    return {
+      /**
+       * Check auth on every route transition.
+       */
+      activate: function() {
+        var routeHandler = this;
+        window.scrollTo(0, 0);
 
-				if (C.Env.security_enabled) {
-					C.setupAuth(routeHandler)
-				}
-			},
-			/*
-			 * Override to load the Controller once the Route has been activated.
-			 */
-			setupController: function () {
-				for (var i=0, len=types.length; i<len; i++) {
-					this.controllerFor('List').load(types[i]);
-				}
-			},
-			/*
-			 * Override the templates to be rendered and where.
-			 */
-			renderTemplate: function () {
-				/*
-				 * Render the List Page template (i.e. the header / time selector)
-				 */
-				this.render('list-page', {
-					controller: 'List'
-				});
-				/*
-				 * Render a list type partial into the List Page template
-				 */
-				for (var i=0, len=types.length; i<len; i++) {
-					this.render('_' + types[i].toLowerCase() + 's-list', {
-						controller: 'List',
-						into: 'list-page'
-					});
-				}
-			},
-			/*
-			 * Override to unload the Controller once the Route has been deactivated.
-			 */
-			deactivate: function () {
-				this.controllerFor('List').unload();
-			}
-		};
-	}
+        if (C.Env.security_enabled) {
+          C.setupAuth(routeHandler)
+        }
+      },
+      /*
+       * Override to load the Controller once the Route has been activated.
+       */
+      setupController: function  () {
+        for (var i=0, len=types.length; i<len; i++) {
+          this.controllerFor('List').load(types[i]);
+        }
+      },
+      /*
+       * Override the templates to be rendered and where.
+       */
+      renderTemplate: function () {
+        /*
+         * Render the List Page template (i.e. the header / time selector)
+         */
+        this.render('list-page', {
+          controller: 'List'
+        });
+        /*
+         * Render a list type partial into the List Page template
+         */
+        for (var i=0, len=types.length; i<len; i++) {
+          this.render('_' + types[i].toLowerCase() + 's-list', {
+            controller: 'List',
+            into: 'list-page'
+          });
+        }
+      },
+      /*
+       * Override to unload the Controller once the Route has been deactivated.
+       */
+      deactivate: function () {
+        this.controllerFor('List').unload();
+      }
+    };
+  }
 
 	/*
 	 * The following define the actual route handlers.
@@ -280,62 +280,62 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		ApplicationRoute: basicRouter.extend(),
 
 		IndexRoute: Ember.Route.extend({
-			model: modelFinder,
-			redirect: function() {
-				this.transitionTo('Overview');
-			}
-		}),
+      model: modelFinder,
+      redirect: function() {
+        this.transitionTo('Overview');
+      }
+    }),
 
-		ServicesRoute: basicRouter.extend({
-			model: modelFinder
-		}),
+    ServicesRoute: basicRouter.extend({
+      model: modelFinder
+    }),
 
-		ServiceRoute: Ember.Route.extend({
-			model: modelFinder
-		}),
+    ServiceRoute: Ember.Route.extend({
+      model: modelFinder
+    }),
 
-		ServiceLogRoute: basicRouter.extend({
-			model: function () {
-				return this.modelFor('Service');
-			},
-			renderTemplate: function () {
-				this.render('Runnable/Log');
-			}
-		}),
+    ServiceLogRoute: basicRouter.extend({
+      model: function () {
+        return this.modelFor('Service');
+      },
+      renderTemplate: function () {
+        this.render('Runnable/Log');
+      }
+    }),
 
-		UserserviceRoute: basicRouter.extend({
-			model: modelFinder
-		}),
+    UserserviceRoute: basicRouter.extend({
+      model: modelFinder
+    }),
 
-		UserserviceStatusRoute: basicRouter.extend({
-			model: function () {
-				return this.modelFor('Userservice');
-			},
-			setupController: function(controller, model) {
-				this.controllerFor('Userservice').setProperties({isNew:true,content:model});
-			},
-			renderTemplate: function () {
-				this.render({controller: 'Userservice'});
-			},
-			unload: function() {
+    UserserviceStatusRoute: basicRouter.extend({
+      model: function () {
+        return this.modelFor('Userservice');
+      },
+      setupController: function(controller, model) {
+        this.controllerFor('Userservice').setProperties({isNew:true,content:model});
+      },
+      renderTemplate: function () {
+        this.render({controller: 'Userservice'});
+      },
+      unload: function() {
 
-			}
-		}),
+      }
+    }),
 
-		UserserviceStatusConfigRoute: basicRouter.extend({
-			renderTemplate: function () {
-				this.render('Runnable/Config', {outlet: "config"});
-			}
-		}),
+    UserserviceStatusConfigRoute: basicRouter.extend({
+      renderTemplate: function () {
+        this.render('Runnable/Config', {outlet: "config"});
+      }
+    }),
 
-		UserserviceLogRoute: basicRouter.extend({
-			model: function () {
-				return this.modelFor('Userservice');
-			},
-			renderTemplate: function () {
-				this.render('Runnable/Log');
-			}
-		}),
+    UserserviceLogRoute: basicRouter.extend({
+      model: function () {
+        return this.modelFor('Userservice');
+      },
+      renderTemplate: function () {
+        this.render('Runnable/Log');
+      }
+    }),
 
 		UserserviceHistoryRoute: basicRouter.extend({
 			model: function () {
@@ -343,9 +343,9 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 			}
 		}),
 
-		LoginRoute: basicRouter.extend(),
+    LoginRoute: basicRouter.extend(),
 
-		AccessTokenRoute: basicRouter.extend(),
+    AccessTokenRoute: basicRouter.extend(),
 
 		OverviewRoute: basicRouter.extend(),
 
@@ -468,24 +468,24 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		DatasetRoute: basicRouter.extend(),
 
 		DataExploreRoute: basicRouter.extend({
-			renderTemplate: function () {
-				this.render('DataExplore');
-			}
+		  renderTemplate: function () {
+		    this.render('DataExplore');
+		  }
 		}),
 
 		DataExploreQueryRoute: Ember.Route.extend({
-			controllerName: 'DataExplore',
-			renderTemplate: function () {
-				this.render('DataExploreQuery');
-			}
-		}),
+		  controllerName: 'DataExplore',
+      renderTemplate: function () {
+        this.render('DataExploreQuery');
+      }
+    }),
 
 		DataExploreResultsRoute: Ember.Route.extend({
-			controllerName: 'DataExplore',
-			renderTemplate: function () {
-				this.render('DataExploreResults');
-			}
-		}),
+		  controllerName: 'DataExplore',
+      renderTemplate: function () {
+        this.render('DataExploreResults');
+      }
+    }),
 
 		/*
 		 * Ensures that the HTTP injection is handled properly (see basicRouter)
@@ -509,11 +509,11 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 			}
 		}),
 
-		ProcedureHistoryRoute: basicRouter.extend({
-			model: function() {
-				return this.modelFor('Procedure');
-			}
-		}),
+    ProcedureHistoryRoute: basicRouter.extend({
+      model: function() {
+        return this.modelFor('Procedure');
+      }
+    }),
 
 		/*
 		 * This will use the ProcedureStatusConfigController with the RunnableConfig template.
@@ -529,28 +529,28 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 
 		PageNotFoundRoute: Ember.Route.extend(),
 
-		LoadingRoute: basicRouter.extend(),
+    LoadingRoute: basicRouter.extend(),
 
-		ConnectionErrorRoute: basicRouter.extend()
+    ConnectionErrorRoute: basicRouter.extend()
 
 	});
 
-	var datasetListHandler = getListHandler(['Dataset']);
-	datasetListHandler.renderTemplate = function () {
-		/*
-		 * Render the List Page template (i.e. the header / time selector)
-		 */
-		this.render('datasets-list-page', {
-			controller: 'List'
-		});
-		/*
-		 * Render a list type partial into the List Page template
-		 */
-		this.render('_datasets-list', {
-			controller: 'List',
-			into: 'datasets-list-page'
-		});
-	};
+  var datasetListHandler = getListHandler(['Dataset']);
+  datasetListHandler.renderTemplate = function () {
+    /*
+     * Render the List Page template (i.e. the header / time selector)
+     */
+    this.render('datasets-list-page', {
+      controller: 'List'
+    });
+    /*
+     * Render a list type partial into the List Page template
+     */
+    this.render('_datasets-list', {
+      controller: 'List',
+      into: 'datasets-list-page'
+    });
+  };
 
 	$.extend(C, {
 
@@ -562,7 +562,7 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 
 		ProceduresRoute: Em.Route.extend(getListHandler(['Procedure'])),
 
-		DatasetsRoute: Em.Route.extend(datasetListHandler),
+    DatasetsRoute: Em.Route.extend(datasetListHandler),
 
 	});
 
@@ -574,24 +574,24 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
  * Helper to make equality work in Handlebars templates.
  */
 Handlebars.registerHelper('ifCond', function (v1, operator, v2, options) {
-	switch (operator) {
-		case '==':
-			return (this.get(v1) == v2) ? options.fn(this) : options.inverse(this);
-		case '===':
-			return (this.get(v1) === v2) ? options.fn(this) : options.inverse(this);
-		case '<':
-			return (this.get(v1) < v2) ? options.fn(this) : options.inverse(this);
-		case '<=':
-			return (this.get(v1) <= v2) ? options.fn(this) : options.inverse(this);
-		case '>':
-			return (this.get(v1) > v2) ? options.fn(this) : options.inverse(this);
-		case '>=':
-			return (this.get(v1) >= v2) ? options.fn(this) : options.inverse(this);
-		case '&&':
-			return (this.get(v1) && v2) ? options.fn(this) : options.inverse(this);
-		case '||':
-			return (this.get(v1) || v2) ? options.fn(this) : options.inverse(this);
-		default:
-			return options.inverse(this);
-	}
+  switch (operator) {
+    case '==':
+      return (this.get(v1) == v2) ? options.fn(this) : options.inverse(this);
+    case '===':
+      return (this.get(v1) === v2) ? options.fn(this) : options.inverse(this);
+    case '<':
+      return (this.get(v1) < v2) ? options.fn(this) : options.inverse(this);
+    case '<=':
+      return (this.get(v1) <= v2) ? options.fn(this) : options.inverse(this);
+    case '>':
+      return (this.get(v1) > v2) ? options.fn(this) : options.inverse(this);
+    case '>=':
+      return (this.get(v1) >= v2) ? options.fn(this) : options.inverse(this);
+    case '&&':
+      return (this.get(v1) && v2) ? options.fn(this) : options.inverse(this);
+    case '||':
+      return (this.get(v1) || v2) ? options.fn(this) : options.inverse(this);
+    default:
+      return options.inverse(this);
+  }
 });
