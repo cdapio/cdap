@@ -39,7 +39,7 @@ public class AppWithServices extends AbstractApplication {
     setName("AppWithServices");
     setDescription("Application with Services");
     addProcedure(new NoOpProcedure());
-    addService(new DummyTwillApplication());
+    getConfigurer().addService(new DummyTwillApplication());
   }
 
   public static final class DummyTwillApplication implements TwillApplication {

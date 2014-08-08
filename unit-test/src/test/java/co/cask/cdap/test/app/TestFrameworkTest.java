@@ -249,20 +249,6 @@ public class TestFrameworkTest extends TestBase {
 
   }
 
-  @Category(SlowTests.class)
-  @Test
-  public void testAppwithOnlyService() throws Exception {
-    //App with only service in it.
-    ApplicationManager applicationManager = deployApplication(AppWithOnlyService.class);
-    LOG.info("Deployed.");
-    ServiceManager serviceManager = applicationManager.startService("NoOpService");
-    serviceStatusCheck(serviceManager, true);
-    LOG.info("Service Started");
-    serviceManager.stop();
-    serviceStatusCheck(serviceManager, false);
-    LOG.info("Service Stopped");
-  }
-
   private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
     int trial = 0;
     while (trial++ < 5) {

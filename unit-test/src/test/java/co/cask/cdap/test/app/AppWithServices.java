@@ -46,7 +46,7 @@ public class AppWithServices extends AbstractApplication {
       setName("AppWithServices");
       addStream(new Stream("text"));
       addProcedure(new NoOpProcedure());
-      addService(new TwillService());
+      getConfigurer().addService(new TwillService());
    }
 
 

@@ -190,46 +190,6 @@ public abstract class AbstractApplication implements Application {
   /**
    * @see ApplicationConfigurer#addService(TwillApplication)
    */
-  protected void addService(TwillApplication application) {
-    configurer.addService(application);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addService(TwillRunnable, org.apache.twill.api.ResourceSpecification)
-   */
-  protected void addService(TwillRunnable runnable, ResourceSpecification specification) {
-    configurer.addService(runnable, specification);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addService(TwillRunnable, org.apache.twill.api.ResourceSpecification)
-   * ResourceSpecification is defaulted to ResourceSpecification.BASIC
-   */
-  protected void addService(TwillRunnable runnable) {
-    configurer.addService(runnable, ResourceSpecification.BASIC);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addService(String name, com.google.common.util.concurrent.Service,
-   *                                        org.apache.twill.api.ResourceSpecification)
-   */
-  protected void addService(String name, Service service, ResourceSpecification specification) {
-    configurer.addService(name, service, specification);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addService(String name, com.google.common.util.concurrent.Service,
-   *                                        org.apache.twill.api.ResourceSpecification)
-   * ResourceSpecification is defaulted to ResourceSpecification.BASIC
-   * Args is defaulted to an empty Map.
-   */
-  protected void addService(String name, Service service) {
-    addService(name, service, ResourceSpecification.BASIC);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addService(TwillApplication)
-   */
   protected void addService(String name, Iterable<HttpServiceHandler> handlers) {
     configurer.addService(name, handlers);
   }
