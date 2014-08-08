@@ -141,7 +141,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
           }
         }
         responder.sendJson(HttpResponseStatus.OK, joinBuilder.build(),
-                           ImmutableList.class, GSON);
+                           new TypeToken<ImmutableList<?>>() { }.getType(), GSON);
         return;
       } catch (Throwable t) {
         LOG.error("Caught exception while listing explorable datasets", t);
@@ -154,7 +154,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       for (DatasetSpecification spec : datasetSpecifications) {
         builder.add(new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null));
       }
-      responder.sendJson(HttpResponseStatus.OK, builder.build(), ImmutableList.class, GSON);
+      responder.sendJson(HttpResponseStatus.OK, builder.build(),
+                         new TypeToken<ImmutableList<DatasetMeta>>() { }.getType(), GSON);
     } else {
       responder.sendJson(HttpResponseStatus.OK, datasetSpecifications,
                          new TypeToken<Collection<DatasetSpecification>>() { }.getType(), GSON);
