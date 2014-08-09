@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.guice;
 
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.logging.appender.AsyncLogAppender;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.file.FileLogAppender;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
@@ -24,19 +25,27 @@ import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.logging.read.SingleNodeLogReader;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
 import com.google.inject.Module;
+import com.google.inject.Provider;
+import com.google.inject.Scopes;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 
 /**
  * Injectable modules for logging.
  */
 public class LoggingModules extends RuntimeModule {
+  private static final String SYNC_LOG_APPENDER_ANNOTATION = "sync.log.appender";
+
   @Override
   public Module getInMemoryModules() {
     return new AbstractModule() {
       @Override
       protected void configure() {
         bind(LogReader.class).to(SingleNodeLogReader.class);
-        bind(LogAppender.class).to(FileLogAppender.class);
+        bind(LogAppender.class).annotatedWith(Names.named(SYNC_LOG_APPENDER_ANNOTATION)).to(FileLogAppender.class);
+        bind(LogAppender.class).toProvider(AsyncLogAppenderProvider.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -47,7 +56,8 @@ public class LoggingModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(LogReader.class).to(SingleNodeLogReader.class);
-        bind(LogAppender.class).to(FileLogAppender.class);
+        bind(LogAppender.class).annotatedWith(Names.named(SYNC_LOG_APPENDER_ANNOTATION)).to(FileLogAppender.class);
+        bind(LogAppender.class).toProvider(AsyncLogAppenderProvider.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -61,5 +71,22 @@ public class LoggingModules extends RuntimeModule {
         bind(LogAppender.class).to(KafkaLogAppender.class);
       }
     };
+  }
+
+  /**
+   * Provider of async LogAppender.
+   */
+  public static class AsyncLogAppenderProvider implements Provider<LogAppender> {
+    private final LogAppender logAppender;
+
+    @Inject
+    public AsyncLogAppenderProvider(@Named(SYNC_LOG_APPENDER_ANNOTATION) LogAppender logAppender) {
+      this.logAppender = logAppender;
+    }
+
+    @Override
+    public LogAppender get() {
+      return new AsyncLogAppender(logAppender);
+    }
   }
 }

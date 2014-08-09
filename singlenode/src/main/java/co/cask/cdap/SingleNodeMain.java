@@ -156,8 +156,8 @@ public class SingleNodeMain {
     metricsCollectionService.startAndWait();
     datasetService.startAndWait();
 
-    // Log appender should be initialized only after datasetService is started,
-    // since log appender instantiates a dataset - REACTOR-682
+    // It is recommended to initialize log appender after datasetService is started,
+    // since log appender instantiates a dataset.
     logAppenderInitializer.initialize();
 
     Service.State state = appFabricServer.startAndWait();
