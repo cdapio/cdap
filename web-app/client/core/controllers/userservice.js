@@ -41,7 +41,7 @@ define(['core/controllers/services'], function (servicesController) {
       runnable.set('instancesInput', '');
 
       if(!inputStr || inputStr.length === 0){
-        C.Modal.show('Change Instances','Use the submit button to change the number of instances requested.');
+        C.Modal.show('Change Instances','Enter a valid number of instances.');
         return;
       }
 

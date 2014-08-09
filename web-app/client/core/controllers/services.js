@@ -116,7 +116,7 @@ define([], function () {
       service.set('instancesInput', '');
 
       if(!inputStr || inputStr.length === 0){
-        C.Modal.show('Change Instances','Use the submit button to change the number of instances requested.');
+        C.Modal.show('Change Instances','Enter a valid number of instances.');
         return;
       }
 
@@ -146,7 +146,7 @@ define([], function () {
         direction + " instances",
         direction + " instances for " + service.name + "?",
         function () {
-          var callback = function(){ self.resetServices() };
+          var callback = function(){ self.updateServices() };
           self.executeInstanceCall('rest/system/services/' + service.name + '/instances', numRequested, callback);
         }
       );
