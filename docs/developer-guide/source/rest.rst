@@ -1816,7 +1816,7 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"programId"``
      - Name of the element (*Flow*, *Procedure*, or *Custom Service*) being called
    * - ``"runnableId"``
-     - Name of the *Flowlet/Runnable* if querying a *Flow* or *Service*. This parameter
+     - Name of the *Flowlet* or *Runnable* if querying either a *Flow* or *Service*. This parameter
        does not apply to *Procedures* because the ``programId`` is the same as the ``runnableId`` for a *Procedure*
 
 The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
