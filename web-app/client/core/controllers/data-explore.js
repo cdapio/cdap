@@ -25,14 +25,21 @@ define([], function () {
 
 		load: function () {
 		  var self = this;
-		  C.fetchQueries = function(a,b,c){
-		    self.fetchQueries(a,b,c);
+
+      //largestEver is the largest timestamp of a query that the controller has seen.
+      //largest is the largest timestamp of a query on the current page.
+      //smallestEver is the smallest timestamp of a query that the controller has seen.
+      //smallest is the largest timestamp of a query on the current page.
+		  self.pageMgr = {
+        limit: 3,
+        largestEver: 0,
+        smallestEver: Infinity,
+        firstPage: function () {
+          this.offset = null;
+          this.cursor = null;
+        }
 		  };
-		  self.limit = 3;
-		  self.offset = null;
-		  self.direction = null;
-      self.largestEver = 0;
-      self.smallestEver = Infinity;
+      self.pageMgr.firstPage();
 
 		  this.set('objArr', []);
 		  this.fetchQueries();
@@ -141,46 +148,45 @@ define([], function () {
 		unload: function () {},
 
     nextPage: function () {
-      this.offset = this.smallest;
-      this.cursor = "next";
-      this.fetchQueries(true, true);
+      this.pageMgr.offset = this.smallest;
+      this.pageMgr.cursor = "next";
+      this.fetchQueries(true);
     },
 
     prevPage: function () {
-      this.offset = this.largest;
-      this.cursor = "prev";
-      this.fetchQueries(true, true);
+      this.pageMgr.offset = this.largest;
+      this.pageMgr.cursor = "prev";
+      this.fetchQueries(true);
     },
 
     pageNavTooltip: function () {
-      var className = this.cursor + "Btn";
+      var className = this.pageMgr.cursor + "Btn";
       $("." + className).tooltip('show');
       setTimeout(function(){
         $("." + className).tooltip('hide');
       }, 2000);
     },
 
-		fetchQueries: function (clearLocalFirst, userAction) {
+		fetchQueries: function (userAction) {
 		  var self = this;
 
-      if(self.largest == self.largestEver){
+      if(self.largest == self.pageMgr.largestEver){
         //If the user is trying to go to a previous page when already viewing the most recent query:
-        if(self.cursor === "prev" && userAction){
+        if(self.pageMgr.cursor === "prev" && userAction){
           self.pageNavTooltip();
         }
         if(!userAction){
-          self.offset = null;
-          self.cursor = null;
+          self.pageMgr.firstPage();
         }
       }
 
 		  var url = 'data/explore/queries';
-      url += '?limit=' + self.limit;
-		  if(self.offset){
-		    url += '&offset=' + self.offset;
+      url += '?limit=' + self.pageMgr.limit;
+		  if(self.pageMgr.offset){
+		    url += '&offset=' + self.pageMgr.offset;
 		  }
-		  if(self.cursor){
-        url += '&cursor=' + self.cursor;
+		  if(self.pageMgr.cursor){
+        url += '&cursor=' + self.pageMgr.cursor;
       }
       this.HTTP.rest(url, function (queries, status) {
         if(queries.length == 0){
@@ -191,16 +197,8 @@ define([], function () {
           return;
         }
 
-        //If the user is going to a previous page, and < limit number of queries are being returned (because new queries were created)
-        if (queries.length < self.limit && self.cursor == "prev") {
-          self.offset = null;
-          self.cursor = 'next';
-          self.fetchQueries();
-          return;
-        }
-
         //Clear the local memory of the queries if the list of queries in the response is different than the local version (and our local version isn't empty)
-        if(clearLocalFirst || (  self.get('objArr').length && (self.get('objArr')[0].get('query_handle') != queries[0].query_handle)  )){
+        if(userAction || (  self.get('objArr').length && (self.get('objArr')[0].get('query_handle') != queries[0].query_handle)  )){
           self.set('objArr', []);
         }
 		    var objArr = self.get('objArr');
@@ -212,7 +210,6 @@ define([], function () {
             newObj.query_handle_hashed = "#" + newObj.query_handle;
             newObj.time_started = new Date(query.timestamp);
             newObj.time_started = newObj.time_started.toLocaleString();
-//            newObj.time_started = new Date(query.timestamp);.toString().replace(/\ GMT.*/,'');
 
             existingObj = objArr.pushObject(newObj);
           } else if (   existingObj.get('status')      !== query.status
@@ -241,11 +238,11 @@ define([], function () {
           //keep track of largest and smallest timestamps for the purposes of page navigation.
           self.largest = objArr[0].timestamp;
           self.smallest = objArr[objArr.length - 1].timestamp;
-          if(self.largest > self.largestEver) {
-            self.largestEver = self.largest;
+          if(self.largest > self.pageMgr.largestEver) {
+            self.pageMgr.largestEver = self.largest;
           }
-          if(self.smallest < self.smallestEver) {
-            self.smallestEver = self.smallest;
+          if(self.smallest < self.pageMgr.smallestEver) {
+            self.pageMgr.smallestEver = self.smallest;
           }
         }
         self.bindTooltips();
@@ -313,10 +310,9 @@ define([], function () {
             return;
           }
           self.transitionToRoute('DataExplore.Results');
-          self.offset = null;
-          self.cursor = null;
+          self.pageMgr.firstPage();
           self.fetchQueries();
-          self.largestEver += 1;
+          self.pageMgr.largestEver += 1;
         }
       );
       self.hideAllTables();
