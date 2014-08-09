@@ -143,7 +143,7 @@ check_before_start() {
 
   # Checks if nodejs is available before it starts Cask Local DAP.
   command -v node >/dev/null 2>&1 || \
-    { echo >&2 "Cdap Reactor requires nodeJS but it's either not installed or not in path.  Aborting."; exit 1; }
+    { echo >&2 "Cask DAP requires nodeJS but it's either not installed or not in path.  Aborting."; exit 1; }
 
   if [ -f $pid ]; then
     if kill -0 `cat $pid` > /dev/null 2>&1; then
@@ -171,8 +171,8 @@ check_for_updates() {
      case $? in
        0);;
        1) echo ""
-          echo "UPDATE: There is a newer version of Cdap Developer Suite available."
-          echo "        Download it from your account: https://accounts.cdap.com."
+          echo "UPDATE: There is a newer version of CDAP Developer Suite available."
+          echo "        Download it from your account: https://accounts.cask.co."
           echo "";;
        2);;
      esac
@@ -267,7 +267,7 @@ start() {
     echo $! > $pid
 
     check_for_updates
-    echo -n "Starting Cdap Reactor ..."
+    echo -n "Starting Cask DAP ..."
 
     background_process=$!
     while kill -0 $background_process >/dev/null 2>/dev/null ; do
@@ -303,7 +303,7 @@ start() {
 }
 
 stop() {
-    echo -n "Stopping Cdap Reactor ..."
+    echo -n "Stopping Cask DAP ..."
     if [ -f $pid ]; then
       pidToKill=`cat $pid`
       # kill -0 == see if the PID exists
@@ -320,7 +320,7 @@ stop() {
       fi
       rm -f $pid
       echo ""
-      echo "Cdap Reactor stopped successfully"
+      echo "Cask DAP stopped successfully"
     fi
     echo
 }
