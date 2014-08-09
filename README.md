@@ -28,7 +28,7 @@ Developers can build and test their applications end-to-end in a full-stack, sin
 installation. CDAP can be run either standalone, deployed within the Enterprise or hosted in the Cloud.
 
 For more information, see our collection of 
-[Developer Guides and other documentation](http://cask.co/docs/reactor/current/en/index.html).
+[Developer Guides and other documentation](http://cask.co/docs/cdap/current/en/index.html).
 
 ## Is It Building?
 

@@ -25,7 +25,7 @@ epoch=`date +%s`
 app="PurchaseHistory"
 
 auth_token=
-auth_file="$HOME/.continuuity.accesstoken"
+auth_file="$HOME/.cdap.accesstoken"
 
 function get_auth_token() {
   if [ -f $auth_file ]; then
@@ -39,7 +39,7 @@ function usage() {
   echo ""
   echo "  Options"
   echo "    --action    Specifies the action to be taken on the application. Use 'run' to run the map/reduce."
-  echo "    --host      Specifies the host that Reactor is running on. (Default: localhost)"
+  echo "    --host      Specifies the host that CDAP is running on. (Default: localhost)"
   echo "    --help      This help message"
   echo ""
 }

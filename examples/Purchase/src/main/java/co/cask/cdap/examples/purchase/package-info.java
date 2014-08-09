@@ -26,7 +26,7 @@
  *     When scheduled by the PurchaseHistoryWorkflow, the PurchaseHistoryBuilder MapReduce job
  *     reads the purchases DataSet, creates a purchase history,
  *     and stores the purchase history in the history DataSet every morning at 4:00 A.M.
- *     Or you can manually (in the Process screen in the Reactor Dashboard) or programmatically execute 
+ *     Or you can manually (in the Process screen in the CDAP Console) or programmatically execute 
  *     the PurchaseHistoryBuilder MapReduce job to store customers' purchase history in the history DataSet.
  *   </li><li>
  *     Execute the PurchaseQuery procedure to query the history DataSet to discover the purchase history of each user.
