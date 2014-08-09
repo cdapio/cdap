@@ -51,8 +51,8 @@ Service Discovery
 Services announce the host and port they are running on so that they can be discovered by—and provide
 access to—other programs: Flows, Procedures, MapReduce jobs, and other Custom Services.
 
-Service are announced using the name passed in the ``configure`` method. The ``application name``, ``serviceId``, and
-``hostname`` required for registering the Service are automatically obtained.
+Service are announced using the name passed in the ``configure`` method. The *application name*, *service id*, and
+*hostname* required for registering the Service are automatically obtained.
 
 The service can then be discovered in Flows, Procedures, MapReduce jobs, and other Services using
 appropriate program contexts.
