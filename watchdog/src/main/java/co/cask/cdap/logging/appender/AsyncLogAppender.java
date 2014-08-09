@@ -23,6 +23,9 @@ import ch.qos.logback.core.filter.Filter;
 import ch.qos.logback.core.spi.FilterReply;
 import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusManager;
+import co.cask.cdap.logging.LoggingConfiguration;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import java.util.List;
 
@@ -33,7 +36,8 @@ public final class AsyncLogAppender extends LogAppender {
   private final AsyncAppender asyncAppender;
   private final LogAppender logAppender;
 
-  public AsyncLogAppender(LogAppender logAppender) {
+  @Inject
+  public AsyncLogAppender(@Named(LoggingConfiguration.SYNC_LOG_APPENDER_ANNOTATION) LogAppender logAppender) {
     this.logAppender = logAppender;
 
     this.asyncAppender = new AsyncAppender();

@@ -40,9 +40,9 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.LoggingConfiguration;
-import co.cask.cdap.logging.appender.file.FileLogAppender;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
+import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.SingleNodeLogReader;
 import com.continuuity.tephra.TransactionManager;
@@ -119,7 +119,8 @@ public class TestResilientLogging {
       }),
       new AuthModule(),
       new TransactionMetricsModule(),
-      new ExploreClientModule());
+      new ExploreClientModule(),
+      new LoggingModules().getInMemoryModules());
 
     TransactionManager txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
@@ -131,16 +132,15 @@ public class TestResilientLogging {
     TransactionSystemClient txSystemClient = injector.getInstance(TransactionSystemClient.class);
 
     // Start the logging before starting the service.
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
     String logBaseDir = "/tmp/log_files_" + new Random(System.currentTimeMillis()).nextLong();
 
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
-    LogAppender appender = new AsyncLogAppender(new FileLogAppender(cConf, dsFramework, txSystemClient,
-                                                                    new LocalLocationFactory()));
-    new LogAppenderInitializer(appender).initialize("TestFileLogging");
+    LogAppender appender = injector.getInstance(LogAppender.class);
+    new LogAppenderInitializer(appender).initialize("TestResilientLogging");
 
-    Logger logger = LoggerFactory.getLogger("TestFileLogging");
+    Logger logger = LoggerFactory.getLogger("TestResilientLogging");
     for (int i = 0; i < 5; ++i) {
       Exception e1 = new Exception("Test Exception1");
       Exception e2 = new Exception("Test Exception2", e1);
@@ -179,7 +179,7 @@ public class TestResilientLogging {
     appender.stop();
 
     // Verify - we should have at least 5 events.
-    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
+    LoggingContext loggingContext = new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "");
     SingleNodeLogReader logTail =
       new SingleNodeLogReader(cConf, dsFramework, txSystemClient, new LocalLocationFactory());
     LoggingTester.LogCallback logCallback1 = new LoggingTester.LogCallback();
