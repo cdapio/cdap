@@ -271,6 +271,7 @@ define([], function () {
       }).get(0).dispatchEvent(evt);
     },
 
+    //TODO: make this functionality compatible with more browsers.
     download: function (query) {
       var self = this;
       var handle = query.get('query_handle');
