@@ -354,7 +354,7 @@
         <th style="width: 8%">Status</th>
         <th style="width: 10%" class="center">Results</th>
         <th style="width: 35%">Query</th>
-        <th style="width: 43%">Panel Here?</th>
+        <th style="width: 43%">{{!-- Panel can potentially be here--}}</th>
       </thead>
     </table>
     {{#each objArr}}
@@ -380,10 +380,10 @@
                 <a data-toggle="tooltip" data-placement="right" title="No results" trigger="hover" class="download-query-results-disabled-btn"></a>
               {{/if}}
           </td>
-          <td style="width: 35%"><span class="bolder-font">{{statement}}</span></td>
-
+          <td style="min-width: 35%"><span class="bolder-font">{{statement}}</span></td>
+{{!-- panel can go here
           <td style="width: 43%" class="center-align">
-
+--}}
           </td>
         </tr>
       </tbody>
