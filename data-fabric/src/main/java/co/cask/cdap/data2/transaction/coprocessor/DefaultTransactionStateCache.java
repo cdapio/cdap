@@ -51,6 +51,7 @@ public class DefaultTransactionStateCache extends TransactionStateCache {
     this.configTable = new ConfigurationTable(conf);
   }
 
+  @Override
   protected Configuration getSnapshotConfiguration() throws IOException {
     CConfiguration cConf = configTable.read(ConfigurationTable.Type.DEFAULT, tableNamespace);
     Configuration txConf = HBaseConfiguration.create();
