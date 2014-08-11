@@ -17,58 +17,42 @@
 package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.logging.AuditLogEntry;
+import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Filter to write audit logs for the external authentication server.
+ * Handler for audit logging for the {@link ExternalAuthenticationServer}.
  */
-public class ExternalAuthenticationAuditLogFilter implements Filter {
+public class AuditLogHandler extends DefaultHandler {
 
-  private static final Logger EXTERNAL_AUTH_AUDIT_LOG = LoggerFactory.getLogger("external-auth-access");
+  private final Logger logger;
 
-  public static void logRequest(HttpServletRequest request, HttpServletResponse response) throws UnknownHostException {
+  public AuditLogHandler(Logger logger) {
+    this.logger = logger;
+  }
+
+  @Override
+  public void handle(String target, Request baseRequest, HttpServletRequest request,
+                     HttpServletResponse response) throws IOException, ServletException {
+    logRequest(request, response);
+  }
+
+  private void logRequest(HttpServletRequest request, HttpServletResponse response) throws UnknownHostException {
     AuditLogEntry logEntry = new AuditLogEntry();
     logEntry.setUserName(request.getRemoteUser());
     logEntry.setClientIP(InetAddress.getByName(request.getRemoteAddr()));
     logEntry.setRequestLine(request.getMethod(), request.getRequestURI(), request.getProtocol());
     logEntry.setResponseCode(response.getStatus());
     logEntry.setResponseContentLength(((Response) response).getContentCount());
-    EXTERNAL_AUTH_AUDIT_LOG.trace(logEntry.toString());
-  }
-
-  @Override
-  public void init(FilterConfig filterConfig) throws ServletException {
-
-  }
-
-  @Override
-  public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse,
-                       FilterChain filterChain) throws IOException, ServletException {
-    try {
-      filterChain.doFilter(servletRequest, servletResponse);
-    } finally {
-      HttpServletRequest request = (HttpServletRequest) servletRequest;
-      HttpServletResponse response = (HttpServletResponse) servletResponse;
-      logRequest(request, response);
-    }
-  }
-
-  @Override
-  public void destroy() {
-
+    logger.trace(logEntry.toString());
   }
 }
