@@ -16,11 +16,9 @@
 
 package co.cask.cdap.logging.appender.kafka;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.logging.appender.LogAppender;
+import co.cask.cdap.logging.appender.LogMessage;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -57,17 +55,12 @@ public final class KafkaLogAppender extends LogAppender {
   }
 
   @Override
-  protected void append(ILoggingEvent eventObject) {
-    LoggingContext loggingContext = LoggingContextAccessor.getLoggingContext();
-    if (loggingContext == null) {
-      return;
-    }
-
+  protected void append(LogMessage logMessage) {
     try {
-      byte [] bytes = loggingEventSerializer.toBytes(eventObject);
-      producer.publish(loggingContext.getLogPartition(), bytes);
+      byte [] bytes = loggingEventSerializer.toBytes(logMessage.getLoggingEvent(), logMessage.getLoggingContext());
+      producer.publish(logMessage.getLoggingContext().getLogPartition(), bytes);
     } catch (Throwable t) {
-      LOG.error("Got exception while serializing log event {}.", eventObject, t);
+      LOG.error("Got exception while serializing log event {}.", logMessage.getLoggingEvent(), t);
     }
   }
 

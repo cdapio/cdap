@@ -18,6 +18,7 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.HandlerException;
@@ -32,7 +33,6 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.continuuity.tephra.TxConstants;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -73,7 +73,7 @@ import javax.ws.rs.PathParam;
 public class DatasetInstanceHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceHandler.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(DatasetSpecification.class, new DatsetSpecificationAdapter())
+    .registerTypeAdapter(DatasetSpecification.class, new DatasetSpecificationAdapter())
     .create();
 
   private final DatasetTypeManager implManager;
@@ -291,13 +291,14 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     executeAdmin(request, responder, name, "upgrade");
   }
 
+  // todo: this doesn't belong here: instead change unit of ttl in props of spec to seconds, see REACTOR-769
   private DatasetInstanceConfiguration getInstanceConfiguration(HttpRequest request) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
     DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
-    if (creationProperties.getProperties().containsKey(TxConstants.PROPERTY_TTL)) {
+    if (creationProperties.getProperties().containsKey(OrderedTable.PROPERTY_TTL)) {
       long ttl = TimeUnit.SECONDS.toMillis(Long.parseLong
-        (creationProperties.getProperties().get(TxConstants.PROPERTY_TTL)));
-      creationProperties.getProperties().put(TxConstants.PROPERTY_TTL, String.valueOf(ttl));
+        (creationProperties.getProperties().get(OrderedTable.PROPERTY_TTL)));
+      creationProperties.getProperties().put(OrderedTable.PROPERTY_TTL, String.valueOf(ttl));
     }
     return  creationProperties;
   }
@@ -428,14 +429,15 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   /**
    * Adapter for {@link co.cask.cdap.api.dataset.DatasetSpecification}
    */
-  private static final class DatsetSpecificationAdapter implements JsonSerializer<DatasetSpecification> {
+  // todo: this doesn't belong here: instead change unit of ttl in props of spec to seconds, see REACTOR-769
+  private static final class DatasetSpecificationAdapter implements JsonSerializer<DatasetSpecification> {
 
-    private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+    private static final Type MAP_STRING_STRING_TYPE = new TypeToken<SortedMap<String, String>>() { }.getType();
     private static final Maps.EntryTransformer<String, String, String> TRANSFORM_DATASET_PROPERTIES =
       new Maps.EntryTransformer<String, String, String>() {
         @Override
         public String transformEntry(String key, String value) {
-          if (key.equals(TxConstants.PROPERTY_TTL)) {
+          if (key.equals(OrderedTable.PROPERTY_TTL)) {
             return String.valueOf(TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(value)));
           } else {
             return value;
