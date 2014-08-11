@@ -17,6 +17,7 @@
 package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.logging.AuditLogEntry;
+import org.eclipse.jetty.server.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Filter to write audit logs for the external authentication server.
  */
-public class ExternalAuthAuditLogFilter implements Filter {
+public class ExternalAuthenticationAuditLogFilter implements Filter {
 
   private static final Logger EXTERNAL_AUTH_AUDIT_LOG = LoggerFactory.getLogger("external-auth-access");
 
@@ -45,9 +46,7 @@ public class ExternalAuthAuditLogFilter implements Filter {
     logEntry.setClientIP(InetAddress.getByName(request.getRemoteAddr()));
     logEntry.setRequestLine(request.getMethod(), request.getRequestURI(), request.getProtocol());
     logEntry.setResponseCode(response.getStatus());
-    if (response.getHeader("Content-Length") != null) {
-      logEntry.setResponseContentLength(Long.parseLong(response.getHeader("Content-Length")));
-    }
+    logEntry.setResponseContentLength(((Response) response).getContentCount());
     EXTERNAL_AUTH_AUDIT_LOG.trace(logEntry.toString());
   }
 
@@ -59,9 +58,13 @@ public class ExternalAuthAuditLogFilter implements Filter {
   @Override
   public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse,
                        FilterChain filterChain) throws IOException, ServletException {
-    HttpServletRequest request = (HttpServletRequest) servletRequest;
-    HttpServletResponse response = (HttpServletResponse) servletResponse;
-    logRequest(request, response);
+    try {
+      filterChain.doFilter(servletRequest, servletResponse);
+    } finally {
+      HttpServletRequest request = (HttpServletRequest) servletRequest;
+      HttpServletResponse response = (HttpServletResponse) servletResponse;
+      logRequest(request, response);
+    }
   }
 
   @Override

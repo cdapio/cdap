@@ -148,11 +148,12 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         @Override
         public void handle(String target, Request baseRequest, HttpServletRequest request,
                            HttpServletResponse response) throws IOException {
-          ExternalAuthAuditLogFilter.logRequest(request, response);
+          ExternalAuthenticationAuditLogFilter.logRequest(request, response);
         }
       });
       // filter for logging successful requests from this server
-      context.addFilter(ExternalAuthAuditLogFilter.class, "/*", EnumSet.of(DispatcherType.INCLUDE, DispatcherType.REQUEST));
+      context.addFilter(ExternalAuthenticationAuditLogFilter.class, "/*",
+                        EnumSet.of(DispatcherType.INCLUDE, DispatcherType.REQUEST));
 
       SelectChannelConnector connector = new SelectChannelConnector();
       connector.setHost(address.getCanonicalHostName());
