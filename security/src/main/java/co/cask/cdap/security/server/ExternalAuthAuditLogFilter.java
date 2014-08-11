@@ -33,9 +33,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Filter to write audit logs.
+ * Filter to write audit logs for the external authentication server.
  */
-public class AuditLogFilter implements Filter {
+public class ExternalAuthAuditLogFilter implements Filter {
 
   private static final Logger EXTERNAL_AUTH_AUDIT_LOG = LoggerFactory.getLogger("external-auth-access");
 
