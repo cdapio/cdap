@@ -38,7 +38,8 @@ class IncrementSummingScanner implements RegionScanner {
   private static final Log LOG = LogFactory.getLog(IncrementSummingScanner.class);
 
   private final HRegion region;
-  private final RegionScanner baseScanner;
+  private final InternalScanner baseScanner;
+  private RegionScanner baseRegionScanner;
   private final int batchSize;
   // Highest timestamp, beyond which we cannot aggregate increments during flush and compaction.
   // Increments newer than this may still be visible to running transactions
@@ -51,7 +52,10 @@ class IncrementSummingScanner implements RegionScanner {
   IncrementSummingScanner(HRegion region, int batchSize, InternalScanner baseScanner, long compationUpperBound) {
     this.region = region;
     this.batchSize = batchSize;
-    this.baseScanner = (RegionScanner) baseScanner;
+    this.baseScanner = baseScanner;
+    if (baseScanner instanceof RegionScanner) {
+      this.baseRegionScanner = (RegionScanner) baseScanner;
+    }
     this.compactionUpperBound = compationUpperBound;
   }
 
@@ -62,22 +66,39 @@ class IncrementSummingScanner implements RegionScanner {
 
   @Override
   public boolean isFilterDone() throws IOException {
-    return baseScanner.isFilterDone();
+    if (baseRegionScanner != null) {
+      return baseRegionScanner.isFilterDone();
+    }
+    throw new IllegalStateException(
+      "RegionScanner.isFilterDone() called when the wrapped scanner is not a RegionScanner");
   }
 
   @Override
   public boolean reseek(byte[] bytes) throws IOException {
-    return baseScanner.reseek(bytes);
+    if (baseRegionScanner != null) {
+      return baseRegionScanner.reseek(bytes);
+    }
+    throw new IllegalStateException(
+      "RegionScanner.reseek() called when the wrapped scanner is not a RegionScanner");
   }
 
   @Override
   public long getMaxResultSize() {
-    return baseScanner.getMaxResultSize();
+    if (baseRegionScanner != null) {
+      return baseRegionScanner.getMaxResultSize();
+    }
+    throw new IllegalStateException(
+      "RegionScanner.isFilterDone() called when the wrapped scanner is not a RegionScanner");
   }
+
 
   @Override
   public long getMvccReadPoint() {
-    return baseScanner.getMvccReadPoint();
+    if (baseRegionScanner != null) {
+      return baseRegionScanner.getMvccReadPoint();
+    }
+    throw new IllegalStateException(
+      "RegionScanner.isFilterDone() called when the wrapped scanner is not a RegionScanner");
   }
 
   @Override
@@ -97,16 +118,7 @@ class IncrementSummingScanner implements RegionScanner {
 
   @Override
   public boolean next(List<Cell> cells, int limit) throws IOException {
-    boolean hasMore = false;
-    region.startRegionOperation();
-    try {
-      synchronized (baseScanner) {
-        hasMore = nextInternal(cells, limit);
-      }
-    } finally {
-      region.closeRegionOperation();
-    }
-    return hasMore;
+    return nextInternal(cells, limit);
   }
 
   private boolean nextInternal(List<Cell> cells, int limit) throws IOException {
@@ -116,7 +128,7 @@ class IncrementSummingScanner implements RegionScanner {
     int addedCnt = 0;
     do {
       List<Cell> tmpCells = new LinkedList<Cell>();
-      hasMore = baseScanner.nextRaw(tmpCells, limit);
+      hasMore = baseScanner.next(tmpCells, limit);
       // compact any delta writes
       if (!tmpCells.isEmpty()) {
         for (Cell cell : tmpCells) {

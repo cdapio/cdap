@@ -24,6 +24,7 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -62,10 +63,12 @@ public final class ClassLoaders {
 
   public static ProgramClassLoader newProgramClassLoader(File unpackedJarDir, Iterable<String> apiResourceList,
                                                          ClassLoader parentClassLoader) throws IOException {
-
+    // TODO: Unify the creation of FilterClassLoader REACTOR-760
     Predicate<String> predicate = Predicates.in(Sets.newHashSet(apiResourceList));
-    ClassLoader filterClassLoader = new FilterClassLoader(predicate, parentClassLoader);
-    return new ProgramClassLoader(unpackedJarDir, filterClassLoader);
+    ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                    ClassLoaders.class.getClassLoader());
+    return new ProgramClassLoader(unpackedJarDir, new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
+                                                                         ImmutableList.of(parentClassLoader)));
   }
 
   public static Iterable<String> getAPIResources(ClassLoader classLoader) throws IOException {

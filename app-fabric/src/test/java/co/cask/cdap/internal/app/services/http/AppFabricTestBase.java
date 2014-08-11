@@ -21,7 +21,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
@@ -65,7 +64,6 @@ public abstract class AppFabricTestBase {
   private static TransactionManager txManager;
   private static AppFabricServer appFabricServer;
   private static MetricsQueryService metricsService;
-  private static DatasetService dsService;
   private static TransactionSystemClient txClient;
 
   @BeforeClass
@@ -83,8 +81,6 @@ public abstract class AppFabricTestBase {
     injector = Guice.createInjector(new AppFabricTestModule(conf));
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-    dsService = injector.getInstance(DatasetService.class);
-    dsService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -102,7 +98,6 @@ public abstract class AppFabricTestBase {
   public static void afterClass() {
     appFabricServer.stopAndWait();
     metricsService.stopAndWait();
-    dsService.stopAndWait();
     txManager.stopAndWait();
   }
 

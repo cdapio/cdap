@@ -154,11 +154,16 @@ public final class AvroFileWriter implements Closeable, Flushable {
     try {
       avroFile.open();
     } catch (IOException e) {
-      avroFile.close();
+      closeAndDelete(avroFile);
       throw e;
     }
+    try {
+      fileMetaDataManager.writeMetaData(loggingContext, timestamp, location);
+    } catch (Throwable e) {
+      closeAndDelete(avroFile);
+      throw new IOException(e);
+    }
     fileMap.put(loggingContext.getLogPathFragment(), avroFile);
-    fileMetaDataManager.writeMetaData(loggingContext, timestamp, location);
     return avroFile;
   }
 
@@ -175,6 +180,17 @@ public final class AvroFileWriter implements Closeable, Flushable {
       return createAvroFile(loggingContext, timestamp);
     }
     return avroFile;
+  }
+
+  private void closeAndDelete(AvroFile avroFile) {
+    try {
+      avroFile.close();
+      if (avroFile.getLocation().exists()) {
+        avroFile.getLocation().delete();
+      }
+    } catch (IOException e) {
+      LOG.error("Error while closing and deleting file {}", avroFile.getLocation(), e);
+    }
   }
 
   /**

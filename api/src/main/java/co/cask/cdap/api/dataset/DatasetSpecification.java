@@ -156,6 +156,14 @@ public final class DatasetSpecification {
   }
 
   /**
+   * Get the map of embedded dataset name to {@link co.cask.cdap.api.dataset.DatasetSpecification}
+   * @return the map of dataset name to {@link co.cask.cdap.api.dataset.DatasetSpecification}
+   */
+  public SortedMap<String, DatasetSpecification> getSpecifications() {
+    return datasetSpecs;
+  }
+
+  /**
    * Equality.
    */
   public boolean equals(Object other) {

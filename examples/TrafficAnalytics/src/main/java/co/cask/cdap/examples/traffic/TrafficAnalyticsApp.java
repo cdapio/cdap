@@ -265,7 +265,7 @@ public class TrafficAnalyticsApp extends AbstractApplication {
 
     @Handle("getCounts")
     public void getAllCounts(ProcedureRequest request, ProcedureResponder responder)
-      throws IOException, InterruptedException{
+      throws IOException, InterruptedException {
         
       // Get the end time of the time range from the query parameters. By default, end time is now.
       String endTs = request.getArgument("endTs");

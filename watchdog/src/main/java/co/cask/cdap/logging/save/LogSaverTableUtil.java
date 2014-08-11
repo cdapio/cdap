@@ -16,11 +16,16 @@
 
 package co.cask.cdap.logging.save;
 
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.lib.table.MetaTableUtil;
 import co.cask.cdap.logging.LoggingConfiguration;
 import com.google.inject.Inject;
+
+import java.io.IOException;
 
 /**
  * Helper class for working with the dataset table used by {@link LogSaver}.
@@ -36,5 +41,13 @@ public class LogSaverTableUtil extends MetaTableUtil {
   @Override
   public String getMetaTableName() {
     return TABLE_NAME;
+  }
+
+  /**
+   * Adds datasets and types to the given {@link DatasetFramework} used by logging system mds.
+   * @param datasetFramework framework to add types and datasets to
+   */
+  public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
+    datasetFramework.addInstance(OrderedTable.class.getName(), TABLE_NAME, DatasetProperties.EMPTY);
   }
 }

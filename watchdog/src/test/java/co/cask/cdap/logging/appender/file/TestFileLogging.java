@@ -26,6 +26,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.cdap.logging.LoggingConfiguration;
+import co.cask.cdap.logging.appender.AsyncLogAppender;
+import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.LoggingTester;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
@@ -80,7 +82,8 @@ public class TestFileLogging {
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
 
-    FileLogAppender appender = new FileLogAppender(cConf, dsFramework, txClient, new LocalLocationFactory());
+    LogAppender appender = new AsyncLogAppender(new FileLogAppender(cConf, dsFramework, txClient,
+                                                                         new LocalLocationFactory()));
     new LogAppenderInitializer(appender).initialize("TestFileLogging");
 
     Logger logger = LoggerFactory.getLogger("TestFileLogging");
@@ -94,6 +97,8 @@ public class TestFileLogging {
     StatusPrinter.setPrintStream(new PrintStream(bos));
     StatusPrinter.print((LoggerContext) LoggerFactory.getILoggerFactory());
     System.out.println(bos.toString());
+
+    appender.stop();
   }
 
   @AfterClass
