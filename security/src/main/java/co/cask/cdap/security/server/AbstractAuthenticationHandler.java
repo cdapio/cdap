@@ -72,12 +72,6 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     this.doStart();
   }
 
-  @Override
-  public void handle(String pathInContext, Request baseRequest, HttpServletRequest request,
-                     HttpServletResponse response) throws IOException, ServletException {
-    super.handle(pathInContext, baseRequest, request, response);
-  }
-
   /**
    * Get a {@link org.eclipse.jetty.security.LoginService} for the handler.
    * @return
