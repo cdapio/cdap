@@ -10,4 +10,4 @@ version          '0.1.0'
   depends cb
 end
 
-depends krb5_utils
+depends 'krb5_utils'
