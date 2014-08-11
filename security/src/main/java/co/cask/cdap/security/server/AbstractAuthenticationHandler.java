@@ -24,9 +24,14 @@ import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
+import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.util.security.Constraint;
 
+import java.io.IOException;
 import javax.security.auth.login.Configuration;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Path;
 
 /**
@@ -65,6 +70,12 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     this.setAuthenticator(getHandlerAuthenticator());
     this.setLoginService(getHandlerLoginService());
     this.doStart();
+  }
+
+  @Override
+  public void handle(String pathInContext, Request baseRequest, HttpServletRequest request,
+                     HttpServletResponse response) throws IOException, ServletException {
+    super.handle(pathInContext, baseRequest, request, response);
   }
 
   /**

@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -38,6 +39,18 @@ public class AuditLogFilter implements Filter {
 
   private static final Logger AUDIT_LOG = LoggerFactory.getLogger("http-access");
 
+  public static void logRequest(HttpServletRequest request, HttpServletResponse response) throws UnknownHostException {
+    AuditLogEntry logEntry = new AuditLogEntry();
+    logEntry.setUserName(request.getRemoteUser());
+    logEntry.setClientIP(InetAddress.getByName(request.getRemoteAddr()));
+    logEntry.setRequestLine(request.getMethod(), request.getRequestURI(), request.getProtocol());
+    logEntry.setResponseCode(response.getStatus());
+    if (response.getHeader("Content-Length") != null) {
+      logEntry.setResponseContentLength(Long.parseLong(response.getHeader("Content-Length")));
+    }
+    AUDIT_LOG.trace(logEntry.toString());
+  }
+
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
 
@@ -48,16 +61,7 @@ public class AuditLogFilter implements Filter {
                        FilterChain filterChain) throws IOException, ServletException {
     HttpServletRequest request = (HttpServletRequest) servletRequest;
     HttpServletResponse response = (HttpServletResponse) servletResponse;
-
-    AuditLogEntry logEntry = new AuditLogEntry();
-    logEntry.setUserName(request.getRemoteUser());
-    logEntry.setClientIP(InetAddress.getByName(request.getRemoteAddr()));
-    logEntry.setRequestLine(request.getMethod(), request.getRequestURI(), request.getProtocol());
-    logEntry.setResponseCode(response.getStatus());
-    if (response.getHeader("Content-Length") != null) {
-      logEntry.setResponseContentLength(Long.parseLong(response.getHeader("Content-Length")));
-    }
-    AUDIT_LOG.trace(logEntry.toString());
+    logRequest(request, response);
   }
 
   @Override
