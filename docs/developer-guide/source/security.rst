@@ -72,6 +72,20 @@ To enable access logging, add the following to ``logback.xml`` (typically under 
       <appender-ref ref="AUDIT" />
     </logger>
 
+    <appender name="EXTERNAL_AUTH_AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+      <file>logs/external_auth_access.log</file>
+      <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <fileNamePattern>logs/external_auth_access.log.%d{yyyy-MM-dd}</fileNamePattern>
+        <maxHistory>30</maxHistory>
+      </rollingPolicy>
+      <encoder>
+        <pattern>%msg%n</pattern>
+      </encoder>
+    </appender>
+    <logger name="external-auth-access" level="TRACE" additivity="false">
+      <appender-ref ref="EXTERNAL_AUTH_AUDIT" />
+    </logger>
+
 You may also configure the file being logged to by changing the path under ``<file>...</file>``.
 
 Configuring Authentication Mechanisms
