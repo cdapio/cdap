@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class AuditLogFilter implements Filter {
 
-  private static final Logger AUDIT_LOG = LoggerFactory.getLogger("http-access");
+  private static final Logger EXTERNAL_AUTH_AUDIT_LOG = LoggerFactory.getLogger("external-auth-access");
 
   public static void logRequest(HttpServletRequest request, HttpServletResponse response) throws UnknownHostException {
     AuditLogEntry logEntry = new AuditLogEntry();
@@ -48,7 +48,7 @@ public class AuditLogFilter implements Filter {
     if (response.getHeader("Content-Length") != null) {
       logEntry.setResponseContentLength(Long.parseLong(response.getHeader("Content-Length")));
     }
-    AUDIT_LOG.trace(logEntry.toString());
+    EXTERNAL_AUTH_AUDIT_LOG.trace(logEntry.toString());
   }
 
   @Override
