@@ -57,6 +57,8 @@ if node['hadoop'].key?('core_site') && node['hadoop']['core_site'].key?('hadoop.
       action :modify
     end
     include_recipe 'krb5_utils'
+  else
+    Chef::Application.fatal!("You must specify node['cdap']['security']['cdap_keytab'] and node['cdap']['security']['cdap_principal'] on secure Hadoop!")
   end
 end
 
