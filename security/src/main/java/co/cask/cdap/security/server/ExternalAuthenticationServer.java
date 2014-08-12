@@ -170,6 +170,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       HandlerCollection handlers = new HandlerCollection();
       handlers.addHandler(context);
+      // AuditLogHandler must be last, since it needs the response that was sent to the client
       handlers.addHandler(new AuditLogHandler(EXTERNAL_AUTH_AUDIT_LOG));
 
       server.setHandler(handlers);

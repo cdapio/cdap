@@ -42,19 +42,29 @@ public final class AuditLogEntry {
   private String requestLine;
   private Integer responseCode;
   private Long responseContentLength;
+  private String userIdentity;
 
   public AuditLogEntry() {
     this.date = new Date();
   }
 
   public String toString() {
-    return String.format("%s %s [%s] \"%s\" %s %s",
+    return String.format("%s %s %s [%s] \"%s\" %s %s",
                          clientIP != null ? clientIP.getHostAddress() : DEFAULT_VALUE,
+                         fieldOrDefault(userIdentity),
                          fieldOrDefault(userName),
                          DEFAULT_DATE_FORMAT.format(date),
                          fieldOrDefault(requestLine),
                          fieldOrDefault(responseCode),
                          fieldOrDefault(responseContentLength));
+  }
+
+  public String getUserIdentity() {
+    return userIdentity;
+  }
+
+  public void setUserIdentity(String userIdentity) {
+    this.userIdentity = userIdentity;
   }
 
   public boolean isLogged() {
