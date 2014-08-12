@@ -21,7 +21,7 @@ import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.metrics.MetricsConstants.ConfigKeys;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Process metrics by consuming metrics being published to kafka.
  */
-public final class KafkaMetricsProcessorService extends AbstractIdleService {
+public final class KafkaMetricsProcessorService extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsProcessorService.class);
 
@@ -68,15 +68,36 @@ public final class KafkaMetricsProcessorService extends AbstractIdleService {
   }
 
   @Override
-  protected void startUp() {
+  protected String getServiceName() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  protected void run() {
     LOG.info("Starting Metrics Processing for partitions {}.", partitions);
     subscribe();
-    LOG.info("Metrics Processing Service started for partition {}.", partitions);
+    LOG.info("Metrics Processing Service started for partitions {}.", partitions);
+
+    while (isRunning()) {
+      try {
+        TimeUnit.SECONDS.sleep(1);
+      } catch (InterruptedException e) {
+        // It's triggered by stop
+        Thread.currentThread().interrupt();
+        continue;
+      }
+    }
+  }
+
+  @Override
+  protected void triggerShutdown() {
+    LOG.info("Shutdown is triggered.");
+    stopping = true;
+    super.triggerShutdown();
   }
 
   @Override
   protected void shutDown() {
-    stopping = true;
     LOG.info("Stopping Metrics Processing Service.");
 
     // Cancel kafka subscriptions
@@ -87,11 +108,15 @@ public final class KafkaMetricsProcessorService extends AbstractIdleService {
   }
 
   private KafkaConsumerMetaTable getMetaTable() {
-    while (!stopping && metaTable == null) {
+    while (metaTable == null) {
+      if (stopping) {
+        LOG.info("We are shutting down, giving up on acquiring KafkaConsumerMetaTable.");
+        break;
+      }
       try {
         metaTable = metricsTableFactory.createKafkaConsumerMeta("default");
       } catch (Exception e) {
-        LOG.warn("Cannot access kafka consumer metaTable, will retry in 1 sec");
+        LOG.warn("Cannot access kafka consumer metaTable, will retry in 1 sec.");
         try {
           TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException ie) {
@@ -129,7 +154,12 @@ public final class KafkaMetricsProcessorService extends AbstractIdleService {
   private long getOffset(String topic, int partition) {
     LOG.info("Retrieve offset for topic: {}, partition: {}", topic, partition);
     try {
-      long offset = getMetaTable().get(new TopicPartition(topic, partition));
+      KafkaConsumerMetaTable metaTable = getMetaTable();
+      if (metaTable == null) {
+        LOG.info("Could not get KafkaConsumerMetaTable, seems like we are being shut down");
+        return -1L;
+      }
+      long offset = metaTable.get(new TopicPartition(topic, partition));
       LOG.info("Offset for topic: {}, partition: {} is {}", topic, partition, offset);
       return offset;
     } catch (OperationException e) {

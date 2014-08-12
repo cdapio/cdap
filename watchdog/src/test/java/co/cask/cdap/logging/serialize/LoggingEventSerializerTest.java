@@ -55,7 +55,7 @@ public class LoggingEventSerializerTest {
 
     // Serialize
     LoggingEvent event = new LoggingEvent(iLoggingEvent);
-    byte [] serializedBytes = serializer.toBytes(event);
+    byte [] serializedBytes = serializer.toBytes(event, LoggingContextAccessor.getLoggingContext());
 
     // De-serialize
     ILoggingEvent actualEvent = serializer.fromBytes(ByteBuffer.wrap(serializedBytes));
@@ -104,7 +104,7 @@ public class LoggingEventSerializerTest {
 
     // Serialize
     LoggingEvent event = new LoggingEvent(iLoggingEvent);
-    byte [] serializedBytes = serializer.toBytes(event);
+    byte [] serializedBytes = serializer.toBytes(event, LoggingContextAccessor.getLoggingContext());
 
     // De-serialize
     ILoggingEvent actualEvent = serializer.fromBytes(ByteBuffer.wrap(serializedBytes));
@@ -130,7 +130,7 @@ public class LoggingEventSerializerTest {
 
     // Serialize
     LoggingEvent event = new LoggingEvent(iLoggingEvent);
-    byte [] serializedBytes = serializer.toBytes(event);
+    byte [] serializedBytes = serializer.toBytes(event, LoggingContextAccessor.getLoggingContext());
 
     // De-serialize
     ILoggingEvent actualEvent = serializer.fromBytes(ByteBuffer.wrap(serializedBytes));

@@ -22,7 +22,6 @@ import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import ch.qos.logback.classic.spi.ThrowableProxyVO;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;
@@ -172,7 +171,7 @@ public final class LoggingEvent implements ILoggingEvent {
     // Nothing to do!
   }
 
-  public static GenericRecord encode(Schema schema, ILoggingEvent event) {
+  public static GenericRecord encode(Schema schema, ILoggingEvent event, LoggingContext loggingContext) {
     event.prepareForDeferredProcessing();
 
     LoggingEvent loggingEvent = new LoggingEvent(event);
@@ -201,20 +200,19 @@ public final class LoggingEvent implements ILoggingEvent {
     }
     datum.put("hasCallerData", loggingEvent.hasCallerData);
     //datum.put("marker", marker);
-    datum.put("mdc", generateContextMdc(loggingEvent.getMDCPropertyMap()));
+    datum.put("mdc", generateContextMdc(loggingContext, loggingEvent.getMDCPropertyMap()));
     datum.put("timestamp", loggingEvent.timestamp);
     return datum;
   }
 
-  static Map<String, String> generateContextMdc(Map<String, String> mdc) {
-    LoggingContext loggingContext = LoggingContextAccessor.getLoggingContext();
+  static Map<String, String> generateContextMdc(LoggingContext loggingContext, Map<String, String> mdc) {
     if (loggingContext == null) {
       throw new IllegalStateException(String.format("Logging context not setup correctly for MDC %s", mdc));
     }
 
     Map<String, String> contextMdcMap = encodeMdcMap(mdc);
 
-    Map<String, SystemTag> systemTagMap = LoggingContextAccessor.getLoggingContext().getSystemTagsMap();
+    Map<String, SystemTag> systemTagMap = loggingContext.getSystemTagsMap();
     for (Map.Entry<String, SystemTag> entry : systemTagMap.entrySet()) {
       contextMdcMap.put(entry.getKey(), entry.getValue().getValue());
     }

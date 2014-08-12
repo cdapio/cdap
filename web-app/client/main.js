@@ -125,6 +125,7 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 				this.route('Config', { path: '/config' });
 			});
 
+			this.route('History', { path: '/history'});
 			this.route('Log', { path: '/log' });
 
 		});
@@ -475,14 +476,18 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		DataExploreQueryRoute: Ember.Route.extend({
 		  controllerName: 'DataExplore',
       renderTemplate: function () {
+        var controller = this.controllerFor('DataExplore');
         this.render('DataExploreQuery');
+        controller.set('page', 'query');
       }
     }),
 
 		DataExploreResultsRoute: Ember.Route.extend({
 		  controllerName: 'DataExplore',
       renderTemplate: function () {
+        var controller = this.controllerFor('DataExplore');
         this.render('DataExploreResults');
+        controller.set('page', 'results');
       }
     }),
 
@@ -507,6 +512,12 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 				this.render('Runnable/Log');
 			}
 		}),
+
+    ProcedureHistoryRoute: basicRouter.extend({
+      model: function() {
+        return this.modelFor('Procedure');
+      }
+    }),
 
 		/*
 		 * This will use the ProcedureStatusConfigController with the RunnableConfig template.
