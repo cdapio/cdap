@@ -17,8 +17,9 @@
 package co.cask.cdap.common.kerberos;
 
 import co.cask.cdap.common.conf.Constants;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import org.apache.commons.io.FileUtils;
+import com.google.common.io.Files;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,9 +32,11 @@ import java.io.PrintWriter;
 /**
  * Utility functions for Kerberos.
  */
-public class KerberosUtil {
+public final class KerberosUtil {
 
   private static final Logger LOG = LoggerFactory.getLogger(KerberosUtil.class);
+
+  private KerberosUtil() { }
 
   /**
    * Enables Kerberos authentication.
@@ -82,6 +85,6 @@ public class KerberosUtil {
     System.setProperty(Constants.External.JavaSecurity.ENV_AUTH_LOGIN_CONFIG, saslConfFile.getAbsolutePath());
     LOG.debug("Set {} to {}", Constants.External.JavaSecurity.ENV_AUTH_LOGIN_CONFIG, saslConfFile.getAbsolutePath());
     LOG.debug("Contents of {} file:\n{}", Constants.External.JavaSecurity.ENV_AUTH_LOGIN_CONFIG,
-              FileUtils.readFileToString(saslConfFile));
+              Files.toString(saslConfFile, Charsets.UTF_8));
   }
 }

@@ -18,7 +18,7 @@ package co.cask.cdap.common.zookeeper;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
-import net.iharder.base64.Base64;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.zookeeper.data.Id;
 
 import java.nio.charset.Charset;
@@ -28,31 +28,66 @@ import java.security.NoSuchAlgorithmException;
 /**
  * Utilities for creating Zookeeper Ids.
  */
-public class ZKIds {
+public final class ZKIds {
 
-  public static Id createSaslId(String principal) {
+  private ZKIds() { }
+
+  /**
+   * Creates a Zookeeper {@link Id} representing a SASL principal.
+   *
+   * @param principal the SASL principal
+   * @return the {@link Id} representing the principal
+   */
+  public static Id createSasl(String principal) {
     return new Id("sasl", principal);
   }
 
-  public static Id createDigestId(String username, String password, Charset encoding) {
+  /**
+   * Creates a Zookeeper {@link Id} representing a username and password identity.
+   *
+   * @param username username of the {@link Id}
+   * @param password password of the {@link Id}
+   * @param encoding encoding of the password
+   * @return the {@link Id} representing the user
+   */
+  public static Id createDigest(String username, String password, Charset encoding) {
     try {
       MessageDigest sha1MD = MessageDigest.getInstance("SHA-1");
-      String hashedPassword = Base64.encodeBytes(sha1MD.digest(password.getBytes(encoding)));
+      String hashedPassword = new String(Base64.encodeBase64(sha1MD.digest(password.getBytes(encoding))), encoding);
       return new Id("digest", username + ":" + hashedPassword);
     } catch (NoSuchAlgorithmException e) {
       throw Throwables.propagate(e);
     }
   }
 
-  public static Id createDigestId(String username, String password) {
-    return createDigestId(username, password, Charsets.UTF_8);
+  /**
+   * Creates a Zookeeper {@link Id} representing a username and password identity.
+   *
+   * @param username username of the {@link Id}
+   * @param password UTF-8 password of the {@link Id}
+   * @return the {@link Id} representing the username and password
+   */
+  public static Id createDigest(String username, String password) {
+    return createDigest(username, password, Charsets.UTF_8);
   }
 
-  public static Id createHostnameId(String hostname) {
+  /**
+   * Creates a Zookeeper {@link Id} representing a hostname.
+   *
+   * @param hostname hostname of the {@link Id}
+   * @return the {@link Id} representing the hostname
+   */
+  public static Id createHostname(String hostname) {
     return new Id("host", hostname);
   }
 
-  public static Id createIpId(String ip) {
+  /**
+   * Creates a Zookeeper {@link Id} representing an IP address.
+   *
+   * @param ip the IP address of the {@link Id}
+   * @return the {@link Id} representing the IP address
+   */
+  public static Id createIp(String ip) {
     return new Id("ip", ip);
   }
 }

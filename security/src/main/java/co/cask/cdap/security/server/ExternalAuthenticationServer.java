@@ -19,12 +19,12 @@ package co.cask.cdap.security.server;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.KerberosUtil;
+import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.commons.io.FileUtils;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -220,7 +220,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   @Override
   protected void shutDown() throws Exception {
     if (tmpDir != null && tmpDir.exists()) {
-      FileUtils.deleteDirectory(tmpDir);
+      DirUtils.deleteDirectoryContents(tmpDir);
     }
   }
 }

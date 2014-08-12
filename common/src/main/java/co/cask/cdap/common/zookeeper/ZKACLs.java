@@ -27,14 +27,22 @@ import java.util.Set;
 /**
  * Utilities for creating Zookeeper ACLs.
  */
-public class ZKACLs {
+public final class ZKACLs {
 
+  private ZKACLs() { }
+
+  /**
+   * Creates a list of {@link ACL}s from a list of SASL principals, with all permissions.
+   *
+   * @param principals list of SASL principals
+   * @return list of {@link ACL}s
+   */
   public static List<ACL> fromSaslPrincipalsAllowAll(String... principals) {
     Set<String> existingPrincipals = Sets.newHashSet();
     ImmutableList.Builder<ACL> result = ImmutableList.builder();
     for (String principal : principals) {
       if (principal != null && !existingPrincipals.contains(principal)) {
-        result.add(new ACL(ZooDefs.Perms.ALL, ZKIds.createSaslId(principal)));
+        result.add(new ACL(ZooDefs.Perms.ALL, ZKIds.createSasl(principal)));
         existingPrincipals.add(principal);
       }
     }

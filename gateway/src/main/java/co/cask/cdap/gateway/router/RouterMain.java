@@ -25,6 +25,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.kerberos.KerberosUtil;
 import co.cask.cdap.common.runtime.DaemonMain;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.security.guice.SecurityModules;
 import com.google.common.base.Throwables;
@@ -32,7 +33,6 @@ import com.google.common.io.Files;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.commons.io.FileUtils;
 import org.apache.twill.common.Services;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -108,7 +108,7 @@ public class RouterMain extends DaemonMain {
     Futures.getUnchecked(Services.chainStop(router, zkClientService));
     if (tmpDir != null) {
       try {
-        FileUtils.deleteDirectory(tmpDir);
+        DirUtils.deleteDirectoryContents(tmpDir);
       } catch (IOException e) {
         LOG.warn("Couldn't delete temporary directory '{}'", tmpDir.getAbsolutePath());
       }
