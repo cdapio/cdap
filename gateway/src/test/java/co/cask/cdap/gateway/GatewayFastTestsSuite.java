@@ -42,11 +42,14 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.internal.utils.Dependencies;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.jar.JarEntry;
@@ -211,4 +214,17 @@ public class GatewayFastTestsSuite {
     return execute(request);
   }
 
+  @BeforeClass
+  public static void beforeClass() throws IOException {
+    GatewayTestBase.beforeClass();
+    GatewayTestBase.runBefore = false;
+    GatewayTestBase.runAfter = false;
+
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    GatewayTestBase.runAfter = true;
+    GatewayTestBase.afterClass();
+  }
 }

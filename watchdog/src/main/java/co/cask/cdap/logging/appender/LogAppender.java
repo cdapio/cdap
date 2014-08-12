@@ -18,10 +18,29 @@ package co.cask.cdap.logging.appender;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
+import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.logging.LoggingContextAccessor;
 
 /**
  * Continuuity log appender interface.
  */
 public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
+  public final void append(ILoggingEvent eventObject) {
+    LoggingContext loggingContext;
+    // If the context is not setup, pickup the context from thread-local.
+    // If the context is already setup, use the context (in async mode).
+    if (eventObject instanceof LogMessage) {
+      loggingContext = ((LogMessage) eventObject).getLoggingContext();
+    } else {
+      loggingContext = LoggingContextAccessor.getLoggingContext();
+      if (loggingContext == null) {
+        return;
+      }
+    }
+
+    append(new LogMessage(eventObject, loggingContext));
+  }
+
+  protected abstract void append(LogMessage logMessage);
 
 }

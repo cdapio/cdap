@@ -74,7 +74,7 @@ define(['core/lib/date', 'core/models/program'],
       this.get(kind).set(C.Util.enc(path), Em.Object.create({
         path: path,
         value: label || [],
-        interpolate: 'linear'
+        interpolate: 'linear&maxInterpolateGap=3',
       }));
       return path;
 

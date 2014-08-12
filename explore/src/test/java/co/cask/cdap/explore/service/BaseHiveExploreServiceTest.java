@@ -26,9 +26,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
-import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
@@ -63,9 +61,12 @@ import java.util.concurrent.TimeUnit;
  * Base class for tests that need explore service to be running.
  */
 public class BaseHiveExploreServiceTest {
+  // Controls for test suite for whether to run BeforeClass/AfterClass
+  public static boolean runBefore = true;
+  public static boolean runAfter = true;
+
   protected static TransactionManager transactionManager;
   protected static DatasetFramework datasetFramework;
-  protected static DatasetService datasetService;
   protected static ExploreExecutorService exploreExecutorService;
   protected static EndpointStrategy datasetManagerEndpointStrategy;
   protected static ExploreService exploreService;
@@ -73,13 +74,15 @@ public class BaseHiveExploreServiceTest {
   protected static ExploreClient exploreClient;
 
   protected static Injector injector;
+
   protected static void startServices(CConfiguration cConf) throws Exception {
+    if (!runBefore) {
+      return;
+    }
+
     injector = Guice.createInjector(createInMemoryModules(cConf, new Configuration()));
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
-
-    datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
 
     exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     exploreExecutorService.startAndWait();
@@ -97,13 +100,24 @@ public class BaseHiveExploreServiceTest {
 
   @AfterClass
   public static void stopServices() throws Exception {
+    if (!runAfter) {
+      return;
+    }
+
     exploreClient.close();
     exploreExecutorService.stopAndWait();
-    datasetService.stopAndWait();
     transactionManager.stopAndWait();
   }
 
-  public static ExploreClient getExploreClient() {
+  protected static TransactionManager getTransactionManager() {
+    return transactionManager;
+  }
+
+  protected static ExploreService getExploreService() {
+    return exploreService;
+  }
+
+  protected static ExploreClient getExploreClient() {
     return exploreClient;
   }
 
@@ -179,7 +193,6 @@ public class BaseHiveExploreServiceTest {
       new IOModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
-      new DataSetServiceModules().getInMemoryModule(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getInMemoryModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
