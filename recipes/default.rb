@@ -19,7 +19,7 @@
 
 # We need Hadoop/HBase installed
 %w(default hbase).each do |recipe|
-   include_recipe "hadoop::#{recipe}"
+  include_recipe "hadoop::#{recipe}"
 end
 
 # Hive is optional
