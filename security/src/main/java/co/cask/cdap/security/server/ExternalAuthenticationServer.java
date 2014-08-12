@@ -49,13 +49,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ExternalAuthenticationServer extends AbstractExecutionThreadService {
 
-  private static final Logger EXTERNAL_AUTH_AUDIT_LOG = LoggerFactory.getLogger("external-auth-access");
+  public static final String NAMED_EXTERNAL_AUTH = "external.auth";
 
   private final int port;
   private final int maxThreads;
   private final Map<String, Object> handlers;
   private final DiscoveryService discoveryService;
   private final CConfiguration configuration;
+  private final AuditLogHandler auditLogHandler;
   private Cancellable serviceCancellable;
   private final GrantAccessToken grantAccessToken;
   private final AbstractAuthenticationHandler authenticationHandler;
@@ -83,7 +84,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
   @Inject
   public ExternalAuthenticationServer(CConfiguration configuration, DiscoveryService discoveryService,
-                                      @Named("security.handlers") Map<String, Object> handlers) {
+                                      @Named("security.handlers") Map<String, Object> handlers,
+                                      @Named(NAMED_EXTERNAL_AUTH) AuditLogHandler auditLogHandler) {
     this.port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
     this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;
@@ -91,6 +93,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
     this.configuration = configuration;
     this.grantAccessToken = (GrantAccessToken) handlers.get(HandlerType.GRANT_TOKEN_HANDLER);
     this.authenticationHandler = (AbstractAuthenticationHandler) handlers.get(HandlerType.AUTHENTICATION_HANDLER);
+    this.auditLogHandler = auditLogHandler;
   }
 
   /**
@@ -171,7 +174,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       HandlerCollection handlers = new HandlerCollection();
       handlers.addHandler(context);
       // AuditLogHandler must be last, since it needs the response that was sent to the client
-      handlers.addHandler(new AuditLogHandler(EXTERNAL_AUTH_AUDIT_LOG));
+      handlers.addHandler(auditLogHandler);
 
       server.setHandler(handlers);
     } catch (Exception e) {

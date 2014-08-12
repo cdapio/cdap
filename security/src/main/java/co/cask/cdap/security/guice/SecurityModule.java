@@ -29,6 +29,7 @@ import co.cask.cdap.security.auth.KeyIdentifier;
 import co.cask.cdap.security.auth.KeyIdentifierCodec;
 import co.cask.cdap.security.auth.TokenManager;
 import co.cask.cdap.security.auth.TokenValidator;
+import co.cask.cdap.security.server.AuditLogHandler;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.cdap.security.server.GrantAccessToken;
 import com.google.inject.Binder;
@@ -43,6 +44,8 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.eclipse.jetty.server.Handler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -52,6 +55,8 @@ import java.util.Map;
  * are exposed.
  */
 public abstract class SecurityModule extends PrivateModule {
+
+  private static final Logger EXTERNAL_AUTH_AUDIT_LOG = LoggerFactory.getLogger("external-auth-access");
 
   @Override
   protected final void configure() {
@@ -72,7 +77,12 @@ public abstract class SecurityModule extends PrivateModule {
     handlerBinder.addBinding(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER)
                  .to(GrantAccessToken.class);
 
-    bind(new TypeLiteral<Map<String, Object>>() { })
+    bind(AuditLogHandler.class)
+      .annotatedWith(Names.named(ExternalAuthenticationServer.NAMED_EXTERNAL_AUTH))
+      .toInstance(new AuditLogHandler(EXTERNAL_AUTH_AUDIT_LOG));
+
+    bind(new TypeLiteral<Map<String, Object>>() {
+    })
       .annotatedWith(Names.named("security.handlers"))
       .toProvider(AuthenticationHandlerMapProvider.class)
       .in(Scopes.SINGLETON);
