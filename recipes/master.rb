@@ -53,11 +53,29 @@ if node['hadoop'].key?('core_site') && node['hadoop']['core_site'].key?('hadoop.
     package 'kstart'
     group 'hadoop' do
       append true
-      members [ 'cdap' ]
+      members ['cdap']
       action :modify
     end
     include_recipe 'krb5_utils'
+    # We need to be hbase to run our shell
+    execute 'kinit-as-hbase-user' do
+      command "kinit -kt #{node['krb5_utils']['keytabs_dir']}/hbase.service.keytab hbase/#{node['fqdn']}@#{node['krb5']['krb5_conf']['realms']['default_realm'].upcase}"
+      user 'hbase'
+      only_if "test -e #{node['krb5_utils']['keytabs_dir']}/hbase.service.keytab"
+    end
+    # Template for HBase GRANT
+    template "#{Chef::Config[:file_cache_path]}/hbase-grant.hbase" do
+      source 'hbase-shell.erb'
+      owner 'hbase'
+      group 'hadoop'
+      action :create
+    end
+    execute 'hbase-grant' do
+      command "hbase shell #{Chef::Config[:file_cache_path]}/hbase-grant.hbase"
+      user 'hbase'
+    end
   else
+    # Hadoop is secure, but we're not configured for Kerberos
     Chef::Application.fatal!("You must specify node['cdap']['security']['cdap_keytab'] and node['cdap']['security']['cdap_principal'] on secure Hadoop!")
   end
 end
