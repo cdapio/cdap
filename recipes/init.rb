@@ -17,11 +17,7 @@
 # limitations under the License.
 #
 
-include_recipe 'java::default'
-
-# We need Hadoop and HBase clients installed
-include_recipe 'hadoop::default'
-include_recipe 'hadoop::hbase'
+include_recipe 'cdap::default'
 
 # We also need the configuration, so we can run HDFS commands
 execute 'initaction-create-hdfs-cdap-dir' do

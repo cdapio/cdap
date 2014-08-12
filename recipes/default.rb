@@ -17,6 +17,16 @@
 # limitations under the License.
 #
 
+# We require Java, so include it and add it to Hadoop env
+include_recipe 'java'
+log 'java-home' do
+  message "JAVA_HOME = #{node['java']['java_home']}"
+end
+ENV['JAVA_HOME'] = node['java']['java_home']
+%w(hadoop hbase hive).each do |envfile|
+  node.default[envfile]["#{envfile}_env"]['java_home'] = node['java']['java_home']
+end
+
 # We need Hadoop/HBase installed
 %w(default hbase).each do |recipe|
    include_recipe "hadoop::#{recipe}"

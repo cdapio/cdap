@@ -17,7 +17,6 @@
 # limitations under the License.
 #
 
-include_recipe 'java::default'
 include_recipe 'cdap::default'
 
 %w(gateway kafka master web_app).each do |recipe|

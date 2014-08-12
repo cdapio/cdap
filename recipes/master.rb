@@ -17,7 +17,6 @@
 # limitations under the License.
 #
 
-include_recipe 'java::default'
 include_recipe 'cdap::default'
 
 package 'cdap-master' do

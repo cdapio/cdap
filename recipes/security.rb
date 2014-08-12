@@ -18,7 +18,7 @@
 #
 
 include_recipe 'java::default'
-include_recipe 'cdap::default'
+include_recipe 'cdap::repo'
 
 package 'cdap-security' do
   action :install
