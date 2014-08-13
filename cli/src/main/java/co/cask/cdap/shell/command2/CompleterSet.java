@@ -14,13 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.shell;
+package co.cask.cdap.shell.command2;
+
+import com.google.common.collect.ImmutableMap;
+import jline.console.completer.Completer;
+
+import java.util.Map;
 
 /**
- * Constants for the CLI.
+ * Set of {@link Completer}s.
  */
-public class Constants {
+public class CompleterSet {
 
-  public static final String ENV_HOSTNAME = "CDAP_HOST";
+  private final Map<String, Completer> completers;
 
+  public CompleterSet(Map<String, Completer> completers) {
+    this.completers = ImmutableMap.copyOf(completers);
+  }
+
+  public Map<String, Completer> getCompleters() {
+    return completers;
+  }
+
+  public Completer getCompleter(String type) {
+    return completers.get(type);
+  }
 }
