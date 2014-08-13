@@ -27,8 +27,9 @@ import javax.ws.rs.PathParam;
 
 /**
  * Lookup Handler to handle users interest HTTP call.
- */
-@Path("/v1")
+*/
+@Path("/v2/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/methods/v1")
+//@Path("/v1/")
 public final class ProductCatalogLookup extends AbstractHttpServiceHandler {
 
   @Path("product/{id}/catalog")
