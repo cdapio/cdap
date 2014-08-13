@@ -370,6 +370,9 @@ public class ExploreServiceUtils {
 
     // Prefer our job jar in the classpath
     // Set both old and new keys
+    // Those settings will be in hive-site.xml in the classpath of the Explore Service. Therefore,
+    // all HiveConf objects created there will have those settings, and they will be passed to
+    // the map reduces jobs launched by Hive.
     conf.setBoolean("mapreduce.user.classpath.first", true);
     conf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
 
