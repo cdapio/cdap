@@ -17,14 +17,22 @@
 package co.cask.cdap.explore.service;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.Job;
+import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.FileOutputStream;
 
 /**
  *
  */
 public class ExploreServiceUtilsTest {
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   @Test
   public void testHiveVersion() throws Exception {
@@ -34,7 +42,30 @@ public class ExploreServiceUtilsTest {
 
   @Test
   public void hijackHiveConfFileTest() throws Exception {
-    ExploreServiceUtils.hijackHiveConfFile(new File("tmp"));
+    Configuration conf = new Configuration(false);
+    conf.set("foo", "bar");
+    Assert.assertEquals(1, conf.size());
+
+    File confFile = tmpFolder.newFile("hive-site.xml");
+    FileOutputStream fos = new FileOutputStream(confFile);
+    try {
+      conf.writeXml(fos);
+    } finally{
+      fos.close();
+    }
+
+    File newConfFile = ExploreServiceUtils.hijackHiveConfFile(confFile);
+
+    conf = new Configuration(false);
+    conf.addResource(newConfFile.toURI().toURL());
+    Assert.assertEquals(3, conf.size());
+    Assert.assertEquals("true", conf.get("mapreduce.user.classpath.first"));
+    Assert.assertEquals("true", conf.get(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST));
+    Assert.assertEquals("bar", conf.get("foo"));
+
+    // Ensure conf files that are not hive-site.xml are unchanged
+    confFile = tmpFolder.newFile("yarn-site.xml");
+    Assert.assertEquals(confFile, ExploreServiceUtils.hijackHiveConfFile(confFile));
   }
 
 }
