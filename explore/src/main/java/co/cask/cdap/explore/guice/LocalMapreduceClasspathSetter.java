@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -40,11 +41,13 @@ public class LocalMapreduceClasspathSetter {
 
   private final HiveConf hiveConf;
   private final String directory;
+  private final List<String> hiveAuxJars;
   private Set<String> hbaseProtocolJarPaths = new LinkedHashSet<String>();
 
-  public LocalMapreduceClasspathSetter(HiveConf hiveConf, String directory) {
+  public LocalMapreduceClasspathSetter(HiveConf hiveConf, String directory, List<String> hiveAuxJars) {
     this.hiveConf = hiveConf;
     this.directory = directory;
+    this.hiveAuxJars = hiveAuxJars;
   }
 
   public void accept(String jar) {
@@ -78,7 +81,9 @@ public class LocalMapreduceClasspathSetter {
     fileBuilder.append("\n");
     fileBuilder.append("function join { local IFS=\"$1\"; shift; echo \"$*\"; }\n");
     fileBuilder.append("if [ $# -ge 1 -a \"$1\" = \"jar\" ]; then\n");
-    fileBuilder.append("  HADOOP_CLASSPATH=$(join ").append(File.pathSeparatorChar).append(" ${HADOOP_CLASSPATH} ")
+    fileBuilder.append("  HADOOP_CLASSPATH=$(join ").append(File.pathSeparatorChar)
+      .append(" ${HADOOP_CLASSPATH} ")
+      .append(" ").append(Joiner.on(':').join(hiveAuxJars))
       .append(Joiner.on(' ').join(hbaseProtocolJarPaths)).append(')').append("\n");
     fileBuilder.append("  export HADOOP_CLASSPATH\n");
     fileBuilder.append("  echo \"Explore modified HADOOP_CLASSPATH = $HADOOP_CLASSPATH\" 1>&2\n");

@@ -52,7 +52,8 @@ public class LocalMapreduceClasspathSetterTest {
 
     HiveConf hiveConf = new HiveConf();
     LocalMapreduceClasspathSetter classpathSetter =
-      new LocalMapreduceClasspathSetter(hiveConf, TEMP_FOLDER.newFolder().getAbsolutePath());
+      new LocalMapreduceClasspathSetter(hiveConf, TEMP_FOLDER.newFolder().getAbsolutePath(),
+                                        ImmutableList.<String>of());
 
     for (String url : inputURLs) {
       classpathSetter.accept(url);
@@ -86,7 +87,8 @@ public class LocalMapreduceClasspathSetterTest {
 
     HiveConf hiveConf = new HiveConf();
     LocalMapreduceClasspathSetter classpathSetter =
-      new LocalMapreduceClasspathSetter(hiveConf, TEMP_FOLDER.newFolder().getAbsolutePath());
+      new LocalMapreduceClasspathSetter(hiveConf, TEMP_FOLDER.newFolder().getAbsolutePath(),
+                                        ImmutableList.<String>of());
 
     for (String url : inputURLs) {
       classpathSetter.accept(url);
@@ -116,7 +118,8 @@ public class LocalMapreduceClasspathSetterTest {
 
     HiveConf hiveConf = new HiveConf();
     LocalMapreduceClasspathSetter classpathSetter =
-      new LocalMapreduceClasspathSetter(hiveConf, TEMP_FOLDER.newFolder().getAbsolutePath());
+      new LocalMapreduceClasspathSetter(hiveConf, TEMP_FOLDER.newFolder().getAbsolutePath(),
+                                        ImmutableList.<String>of());
 
     for (String url : inputURLs) {
       classpathSetter.accept(url);

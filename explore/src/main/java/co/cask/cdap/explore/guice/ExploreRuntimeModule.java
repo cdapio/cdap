@@ -51,6 +51,7 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -228,6 +229,11 @@ public class ExploreRuntimeModule extends RuntimeModule {
         System.setProperty("hive.server2.enable.doAs", "false");
         System.setProperty("hive.server2.enable.impersonation", "false");
 
+        // Prefer our job jar in the classpath
+        // Set both old and new keys
+        System.setProperty("mapreduce.user.classpath.first", "true");
+        System.setProperty(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, "true");
+
         File previewDir = Files.createTempDir();
         LOG.info("Storing preview files in {}", previewDir.getAbsolutePath());
         bind(File.class).annotatedWith(Names.named(Constants.Explore.PREVIEWS_DIR_NAME)).toInstance(previewDir);
@@ -271,8 +277,10 @@ public class ExploreRuntimeModule extends RuntimeModule {
     // Note: the class path entries need to be prefixed with "file://" for the jars to work when
     // Hive starts local map-reduce job.
     ImmutableList.Builder<String> builder = ImmutableList.builder();
+    ImmutableList.Builder<String> builder2 = ImmutableList.builder();
     for (File dep : orderedDependencies) {
       builder.add("file://" + dep.getAbsolutePath());
+      builder2.add(dep.getAbsolutePath());
     }
     List<String> orderedDependenciesStr = builder.build();
 
@@ -282,7 +290,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
     // Setup HADOOP_CLASSPATH hack, more info on why this is needed - REACTOR-325
     LocalMapreduceClasspathSetter classpathSetter =
-      new LocalMapreduceClasspathSetter(new HiveConf(), System.getProperty("java.io.tmpdir"));
+      new LocalMapreduceClasspathSetter(new HiveConf(), System.getProperty("java.io.tmpdir"), builder2.build());
     for (File jar : hBaseTableDeps) {
       classpathSetter.accept(jar.getAbsolutePath());
     }
