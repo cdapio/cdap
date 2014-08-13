@@ -16,13 +16,11 @@
 
 package co.cask.cdap.logging.appender.file;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppender;
+import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.serialize.LoggingEvent;
@@ -150,17 +148,14 @@ public class FileLogAppender extends LogAppender {
   }
 
   @Override
-  protected void append(ILoggingEvent eventObject) {
-    LoggingContext loggingContext = LoggingContextAccessor.getLoggingContext();
-    if (loggingContext == null) {
-      return;
-    }
-
+  protected void append(LogMessage logMessage) {
     try {
-      GenericRecord datum = LoggingEvent.encode(logSchema, eventObject);
-      logFileWriter.append(ImmutableList.of(new LogWriteEvent(datum, eventObject, loggingContext)));
+      GenericRecord datum = LoggingEvent.encode(logSchema, logMessage.getLoggingEvent(),
+                                                logMessage.getLoggingContext());
+      logFileWriter.append(ImmutableList.of(new LogWriteEvent(datum, logMessage.getLoggingEvent(),
+                                                              logMessage.getLoggingContext())));
     } catch (Throwable t) {
-      LOG.error("Got exception while serializing log event {}.", eventObject, t);
+      LOG.error("Got exception while serializing log event {}.", logMessage.getLoggingEvent(), t);
     }
   }
 

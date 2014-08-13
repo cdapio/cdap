@@ -54,8 +54,11 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -65,6 +68,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -82,7 +86,10 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION + "/streams")
 public final class StreamHandler extends AuthenticatedHttpHandler {
 
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(StreamConfig.class, new StreamConfigAdapter())
+    .create();
+
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
@@ -119,11 +126,12 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/{stream}/info")
   public void getInfo(HttpRequest request, HttpResponder responder,
-                   @PathParam("stream") String stream) throws Exception {
+                      @PathParam("stream") String stream) throws Exception {
     String accountID = getAuthenticatedAccountId(request);
 
     if (streamMetaStore.streamExists(accountID, stream)) {
-      responder.sendJson(HttpResponseStatus.OK, streamAdmin.getConfig(stream));
+      StreamConfig config = streamAdmin.getConfig(stream);
+      responder.sendJson(HttpResponseStatus.OK, config, StreamConfig.class, GSON);
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
@@ -495,6 +503,20 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       } finally {
         cancellable.cancel();
       }
+    }
+  }
+
+  /**
+   *  Adapter class for {@link co.cask.cdap.data2.transaction.stream.StreamConfig}
+   */
+  private static final class StreamConfigAdapter implements JsonSerializer<StreamConfig> {
+    @Override
+    public JsonElement serialize(StreamConfig src, Type typeOfSrc, JsonSerializationContext context) {
+      JsonObject json = new JsonObject();
+      json.addProperty("partitionDuration", src.getPartitionDuration());
+      json.addProperty("indexInterval", src.getIndexInterval());
+      json.addProperty("ttl", TimeUnit.MILLISECONDS.toSeconds(src.getTTL()));
+      return json;
     }
   }
 }

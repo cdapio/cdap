@@ -12,6 +12,8 @@ define([], function () {
 			window.tabOverride.set(this.get('element'));
 
 			var controller = this.get('controller');
+			controller.injectorTextArea = this;
+
 			$(this.get('element')).keydown(function (e) {
 				if (e.keyCode === 13 && controller.get('injectOnEnter')) {
 					controller.inject();
