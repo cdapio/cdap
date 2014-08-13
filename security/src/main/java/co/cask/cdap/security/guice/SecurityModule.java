@@ -81,8 +81,7 @@ public abstract class SecurityModule extends PrivateModule {
       .annotatedWith(Names.named(ExternalAuthenticationServer.NAMED_EXTERNAL_AUTH))
       .toInstance(new AuditLogHandler(EXTERNAL_AUTH_AUDIT_LOG));
 
-    bind(new TypeLiteral<Map<String, Object>>() {
-    })
+    bind(new TypeLiteral<Map<String, Object>>() { })
       .annotatedWith(Names.named("security.handlers"))
       .toProvider(AuthenticationHandlerMapProvider.class)
       .in(Scopes.SINGLETON);
@@ -119,7 +118,7 @@ public abstract class SecurityModule extends PrivateModule {
   }
 
   private static final class AuthenticationHandlerMapProvider implements Provider<Map<String, Object>> {
-    private final HashMap<String, Object> handlerMap;
+    private final Map<String, Object> handlerMap;
 
     @Inject
     public AuthenticationHandlerMapProvider(@Named("security.handlers.map") Map<String, Object> handlers) {
