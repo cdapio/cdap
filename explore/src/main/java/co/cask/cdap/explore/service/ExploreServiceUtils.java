@@ -31,14 +31,19 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import com.google.common.io.Closeables;
+import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.VersionInfo;
 import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -53,6 +58,7 @@ import java.util.regex.Pattern;
  */
 public class ExploreServiceUtils {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreServiceUtils.class);
+
   /**
    * Hive support enum.
    */
@@ -85,6 +91,8 @@ public class ExploreServiceUtils {
   private static Set<File> exploreDependencies = null;
   // Caching explore class loader
   private static ClassLoader exploreClassLoader = null;
+
+  private static final Pattern HIVE_SITE_FILE_PATTERN = Pattern.compile("^.*/hive-site\\.xml$");
 
   /**
    * Get all the files contained in a class path.
@@ -343,4 +351,46 @@ public class ExploreServiceUtils {
     return jarFiles;
   }
 
+  /**
+   * Check that the file is a hive-site.xml file, and return a temp copy of it to which are added
+   * necessary options. If it is not a hive-site.xml file, return it as is.
+   */
+  public static File hijackHiveConfFile(File confFile) {
+    if (!HIVE_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
+      return confFile;
+    }
+
+    Configuration conf = new Configuration(false);
+    try {
+      conf.addResource(confFile.toURI().toURL());
+    } catch (MalformedURLException e) {
+      LOG.error("File {} is malformed.", confFile, e);
+      throw Throwables.propagate(e);
+    }
+
+    // Prefer our job jar in the classpath
+    // Set both old and new keys
+    conf.setBoolean("mapreduce.user.classpath.first", true);
+    conf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
+
+    File newHiveConfFile = new File(Files.createTempDir(), "hive-site.xml");
+    FileOutputStream fos;
+    try {
+      fos = new FileOutputStream(newHiveConfFile);
+    } catch (FileNotFoundException e) {
+      LOG.error("Problem creating temporary hive-site.xml conf file at {}", newHiveConfFile, e);
+      throw Throwables.propagate(e);
+    }
+
+    try {
+      conf.writeXml(fos);
+    } catch (IOException e) {
+      LOG.error("Could not write modified configuration to temporary hive-site.xml at {}", newHiveConfFile, e);
+      throw Throwables.propagate(e);
+    } finally {
+      Closeables.closeQuietly(fos);
+    }
+
+    return newHiveConfFile;
+  }
 }

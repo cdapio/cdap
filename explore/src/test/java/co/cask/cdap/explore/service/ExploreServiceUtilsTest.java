@@ -19,6 +19,8 @@ package co.cask.cdap.explore.service;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
 
+import java.io.File;
+
 /**
  *
  */
@@ -28,6 +30,11 @@ public class ExploreServiceUtilsTest {
   public void testHiveVersion() throws Exception {
     // This would throw an exception if it didn't pass
     ExploreServiceUtils.checkHiveSupportWithSecurity(new Configuration(), this.getClass().getClassLoader());
+  }
+
+  @Test
+  public void hijackHiveConfFileTest() throws Exception {
+    ExploreServiceUtils.hijackHiveConfFile(new File("tmp"));
   }
 
 }

@@ -50,10 +50,13 @@ public class LocalMapreduceClasspathSetterTest {
     inputURLs.add("/usr/lib/hbase/lib/hbase-thrift-0.96.1.2.0.11.0-1-hadoop2.jar");
     inputURLs.add("/usr/lib/hadoop/hadoop-common-2.2.0.2.0.11.0-1-tests.jar");
 
+    List<String> auxJarsURLs = Lists.newArrayList();
+    auxJarsURLs.add("/hadoop/hadoop/nm-local-dir/usercache/cdap/appcache/org.ow2.asm.asm-all-4.0.jar");
+    auxJarsURLs.add("/hadoop/hadoop/nm-local-dir/usercache/cdap/appcache/co.cask.cdap.common-2.4.0-SNAPSHOT.jar");
+
     HiveConf hiveConf = new HiveConf();
     LocalMapreduceClasspathSetter classpathSetter =
-      new LocalMapreduceClasspathSetter(hiveConf, TEMP_FOLDER.newFolder().getAbsolutePath(),
-                                        ImmutableList.<String>of());
+      new LocalMapreduceClasspathSetter(hiveConf, TEMP_FOLDER.newFolder().getAbsolutePath(), auxJarsURLs);
 
     for (String url : inputURLs) {
       classpathSetter.accept(url);
@@ -85,10 +88,13 @@ public class LocalMapreduceClasspathSetterTest {
     inputURLs.add("/usr/lib/hbase/lib/hbase-protocol-0.96.1.2.0.11.0-1-hadoop2.jar");
     inputURLs.add("/usr/lib/hadoop/hadoop-common-2.2.0.2.0.11.0-1-tests.jar");
 
+    List<String> auxJarsURLs = Lists.newArrayList();
+    auxJarsURLs.add("/hadoop/hadoop/nm-local-dir/usercache/cdap/appcache/org.ow2.asm.asm-all-4.0.jar");
+    auxJarsURLs.add("/hadoop/hadoop/nm-local-dir/usercache/cdap/appcache/co.cask.cdap.common-2.4.0-SNAPSHOT.jar");
+
     HiveConf hiveConf = new HiveConf();
     LocalMapreduceClasspathSetter classpathSetter =
-      new LocalMapreduceClasspathSetter(hiveConf, TEMP_FOLDER.newFolder().getAbsolutePath(),
-                                        ImmutableList.<String>of());
+      new LocalMapreduceClasspathSetter(hiveConf, TEMP_FOLDER.newFolder().getAbsolutePath(), auxJarsURLs);
 
     for (String url : inputURLs) {
       classpathSetter.accept(url);
@@ -142,11 +148,16 @@ public class LocalMapreduceClasspathSetterTest {
       "\n" +
       "function join { local IFS=\"$1\"; shift; echo \"$*\"; }\n" +
       "if [ $# -ge 1 -a \"$1\" = \"jar\" ]; then\n" +
-      "  HADOOP_CLASSPATH=$(join : ${HADOOP_CLASSPATH} " +
+      "  HADOOP_CLASSPATH=$(join : /hadoop/hadoop/nm-local-dir/usercache/cdap/appcache/org.ow2.asm.asm-all-4.0.jar " +
+      "/hadoop/hadoop/nm-local-dir/usercache/cdap/appcache/co.cask.cdap.common-2.4.0-SNAPSHOT.jar " +
+      "${HADOOP_CLASSPATH} " +
       "/usr/lib/hbase/lib/hbase-protocol-0.96.1.2.0.11.0-1-hadoop2.jar " +
       "/opt/cloudera/parcels/CDH-5.0.0-0.cdh5b2.p0.27/lib/hbase/hbase-protocol-0.95.0.jar " +
       "/home/cloudera/.m2/repository/org/apache/hbase/hbase-protocol/0.95.1-hadoop1/" +
       "hbase-protocol-0.95.1-hadoop1.jar)\n" +
+      "  # Put user jars first in Hadoop classpath so that the ASM jar needed by Twill has\n" +
+      "  # the right version, and not the one provided with the Hadoop libs.\n" +
+      "  export HADOOP_USER_CLASSPATH_FIRST=true\n" +
       "  export HADOOP_CLASSPATH\n" +
       "  echo \"Explore modified HADOOP_CLASSPATH = $HADOOP_CLASSPATH\" 1>&2\n" +
       "fi\n" +
@@ -161,8 +172,12 @@ public class LocalMapreduceClasspathSetterTest {
       "\n" +
       "function join { local IFS=\"$1\"; shift; echo \"$*\"; }\n" +
       "if [ $# -ge 1 -a \"$1\" = \"jar\" ]; then\n" +
-      "  HADOOP_CLASSPATH=$(join : ${HADOOP_CLASSPATH} /usr/lib/hbase/lib/" +
-      "hbase-protocol-0.96.1.2.0.11.0-1-hadoop2.jar)\n" +
+      "  HADOOP_CLASSPATH=$(join : /hadoop/hadoop/nm-local-dir/usercache/cdap/appcache/org.ow2.asm.asm-all-4.0.jar " +
+      "/hadoop/hadoop/nm-local-dir/usercache/cdap/appcache/co.cask.cdap.common-2.4.0-SNAPSHOT.jar " +
+      "${HADOOP_CLASSPATH} /usr/lib/hbase/lib/hbase-protocol-0.96.1.2.0.11.0-1-hadoop2.jar)\n" +
+      "  # Put user jars first in Hadoop classpath so that the ASM jar needed by Twill has\n" +
+      "  # the right version, and not the one provided with the Hadoop libs.\n" +
+      "  export HADOOP_USER_CLASSPATH_FIRST=true\n" +
       "  export HADOOP_CLASSPATH\n" +
       "  echo \"Explore modified HADOOP_CLASSPATH = $HADOOP_CLASSPATH\" 1>&2\n" +
       "fi\n" +

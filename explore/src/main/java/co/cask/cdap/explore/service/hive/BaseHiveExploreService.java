@@ -47,7 +47,6 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
 import org.apache.hive.service.cli.FetchOrientation;
@@ -144,10 +143,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   protected HiveConf getHiveConf() {
     // TODO figure out why this hive conf does not contain our env properties - REACTOR-270
     // return hiveConf;
-    HiveConf hiveConf = new HiveConf();
-    hiveConf.setBoolean("mapreduce.user.classpath.first", true);
-    hiveConf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
-    return hiveConf;
+    return new HiveConf();
   }
 
   protected CLIService getCliService() {
