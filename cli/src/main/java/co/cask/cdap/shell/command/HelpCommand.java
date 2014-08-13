@@ -39,7 +39,7 @@ public class HelpCommand extends AbstractCommand {
   @Override
   public void process(String[] args, PrintStream output) throws Exception {
     output.println("CLI version " + config.getVersion());
-    output.println(Constants.EV_HOSTNAME + "=" + config.getHost());
+    output.println(Constants.ENV_HOSTNAME + "=" + config.getHost());
     output.println();
     output.println("Available commands: \n" + getCommands.get().getHelperText(""));
   }

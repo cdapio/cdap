@@ -14,13 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.shell;
+package co.cask.cdap.shell.command2;
 
 /**
- * Constants for the CLI.
+ * Represents an input matching for a command and provided arguments.
  */
-public class Constants {
+public final class CommandMatch {
+  private final Command command;
+  private final Arguments arguments;
 
-  public static final String ENV_HOSTNAME = "CDAP_HOST";
+  public CommandMatch(Command command, Arguments arguments) {
+    this.command = command;
+    this.arguments = arguments;
+  }
 
+  public Command getCommand() {
+    return command;
+  }
+
+  public Arguments getArguments() {
+    return arguments;
+  }
 }

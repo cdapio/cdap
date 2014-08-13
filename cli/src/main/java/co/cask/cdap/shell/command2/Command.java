@@ -14,13 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.shell;
+package co.cask.cdap.shell.command2;
+
+import java.io.PrintStream;
 
 /**
- * Constants for the CLI.
+ *
  */
-public class Constants {
+public interface Command {
 
-  public static final String ENV_HOSTNAME = "CDAP_HOST";
+  public void execute(Arguments arguments, PrintStream output) throws Exception;
+  public String getPattern();
+  public String getDescription();
 
 }
