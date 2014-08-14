@@ -17,6 +17,7 @@
 /**
  * Defines APIs for defining Spark jobs in CDAP.
  * Also provides a custom JavaSparkContext (for Java Spark jobs) and SparkContext (for Scala Spark jobs) which supports
- * reading a {@link co.cask.cdap.api.dataset.Dataset} to RDD and writing a RDD to {@link co.cask.cdap.api.dataset.Dataset}
+ * reading a {@link co.cask.cdap.api.dataset.Dataset} to RDD and writing a RDD to
+ * {@link co.cask.cdap.api.dataset.Dataset}
  */
 package co.cask.cdap.api.spark;
