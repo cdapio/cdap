@@ -72,6 +72,8 @@ To configure Zookeeper to enable SASL authentication, add the following to your 
 
   authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider
   jaasLoginRenew=3600000
+  kerberos.removeHostFromPrincipal=true
+  kerberos.removeRealmFromPrincipal=true
 
 This will let Zookeeper use the ``SASLAuthenticationProvider`` as an auth provider, and the ``jaasLoginRenew`` line
 will cause the Zookeeper server to renew its Kerberos ticket once an hour.
