@@ -1634,7 +1634,19 @@ span.log-icon.complete {
   background-image: url('/assets/img/plus.png');
 }
 
+#instancesInput {
+   text-align:left;
+   height: 29px;
+   width: 25px;
+   color: black;
+}
 
+.services-instances-input{
+  height: 29px ! important;
+  max-width: 50px ! important;
+  font-weight: bold ! important;
+  text-align: center ! important;
+}
 /*
  * Bootstrap Overrides
  */
@@ -1815,6 +1827,10 @@ a strong {
 
 .btn-success, .btn-danger {
 	color: #fff;
+}
+
+.btn-transparent {
+  opacity: 0.2;
 }
 
 .btn:focus {
@@ -2168,7 +2184,7 @@ a strong {
 .popup-title {
 	line-height: 36px;
 	padding: 2px 0 16px 10px;
-	height: 50px;
+	height: 40px;
 }
 
 .popup-title span {
