@@ -33,6 +33,8 @@ import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.service.GuavaServiceTwillRunnable;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
+import co.cask.cdap.api.spark.Spark;
+import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -42,6 +44,7 @@ import co.cask.cdap.internal.batch.DefaultMapReduceSpecification;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
 import co.cask.cdap.internal.service.DefaultServiceSpecification;
+import co.cask.cdap.internal.spark.DefaultSparkSpecification;
 import co.cask.cdap.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -65,6 +68,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   private final Map<String, FlowSpecification> flows = Maps.newHashMap();
   private final Map<String, ProcedureSpecification> procedures = Maps.newHashMap();
   private final Map<String, MapReduceSpecification> mapReduces = Maps.newHashMap();
+  private final Map<String, SparkSpecification> sparks = Maps.newHashMap();
   private final Map<String, WorkflowSpecification> workflows = Maps.newHashMap();
   private final Map<String, ServiceSpecification> services = Maps.newHashMap();
   // passed app to be used to resolve default name and description
@@ -155,6 +159,13 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
+  public void addSpark(Spark spark) {
+    Preconditions.checkArgument(spark != null, "Spark cannot be null.");
+    DefaultSparkSpecification spec = new DefaultSparkSpecification(spark);
+    sparks.put(spec.getName(), spec);
+  }
+
+  @Override
   public void addWorkflow(Workflow workflow) {
     Preconditions.checkArgument(workflow != null, "Workflow cannot be null.");
     WorkflowSpecification spec = new DefaultWorkflowSpecification(workflow.getClass().getName(),
@@ -212,6 +223,6 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   public ApplicationSpecification createApplicationSpec() {
     return new DefaultApplicationSpecification(name, description, streams,
                                                dataSetModules, dataSetInstances,
-                                               flows, procedures, mapReduces, workflows, services);
+                                               flows, procedures, mapReduces, sparks, workflows, services);
   }
 }

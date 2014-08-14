@@ -214,7 +214,7 @@ public class MasterTwillApplication implements TwillApplication {
 
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
       .setVirtualCores(cConf.getInt(Constants.Explore.CONTAINER_VIRTUAL_CORES, 1))
-      .setMemory(cConf.getInt(Constants.Explore.CONTAINER_MEMORY_MB, 512), ResourceSpecification.SizeUnit.MEGA)
+      .setMemory(cConf.getInt(Constants.Explore.CONTAINER_MEMORY_MB, 1024), ResourceSpecification.SizeUnit.MEGA)
       .setInstances(instances)
       .build();
 

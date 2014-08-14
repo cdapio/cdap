@@ -25,6 +25,7 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -83,6 +84,12 @@ public interface ApplicationSpecification {
    *         for {@link MapReduce} jobs configured for the Application.
    */
   Map<String, MapReduceSpecification> getMapReduce();
+
+  /**
+   * @return An immutable {@link Map} from {@link co.cask.cdap.api.spark.Spark} name to
+   * {@link SparkSpecification} for {@link co.cask.cdap.api.spark.Spark} jobs configured for the Application.
+   */
+  Map<String, SparkSpecification> getSpark();
 
   /**
    * @return An immutable {@link Map} from {@link Workflow} name to {@link WorkflowSpecification}
