@@ -1,12 +1,12 @@
-.. :author: Continuuity, Inc.
+.. :author: Cask, Inc.
    :version: 2.4.0
 
 ============================================
-Continuuity Reactor 2.4.0
+Cask Data Application Platform 2.4.0
 ============================================
 
-Continuuity Reactor SingleNode Dependencies
---------------------------------------------
+Cask Data Application Platform Distributed Dependencies
+-------------------------------------------------------
 
 .. rst2pdf: PageBreak
 .. rst2pdf: .. contents::
@@ -15,9 +15,9 @@ Continuuity Reactor SingleNode Dependencies
 .. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
 .. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
 
-.. csv-table:: **Continuuity Reactor SingleNode Dependencies**
+.. csv-table:: **Cask Data Application Platform Distributed Dependencies**
    :header: "Package","Version","Classifier","License","License URL"
-   :widths: 20, 10, 10, 20, 30
+   :widths: 20, 10, 10, 20, 35
 
    "ST4-4.0.4.jar","4.0.4","\-","BSD License","http://antlr.org/license.html"
    "activation-1.1.jar","1.1","\-","Common Development And Distribution License (CCDL)","http://opensource.org/licenses/CDDL-1.0"
@@ -41,7 +41,9 @@ Continuuity Reactor SingleNode Dependencies
    "commons-collections-3.2.1.jar","3.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-compress-1.4.jar","1.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-configuration-1.6.jar","1.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "commons-daemon-1.0.13.jar","1.0.13","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-digester-1.8.jar","1.8","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "commons-el-1.0.jar","1.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-httpclient-3.1.jar","3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-io-2.1.jar","2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-lang-2.5.jar","2.5","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -49,9 +51,6 @@ Continuuity Reactor SingleNode Dependencies
    "commons-logging-1.1.1.jar","1.1.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-math3-3.1.1.jar","3.1.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-net-3.1.jar","3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "datanucleus-api-jdo-3.2.6.jar","3.2.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "datanucleus-core-3.2.10.jar","3.2.10","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "datanucleus-rdbms-3.2.9.jar","3.2.9","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "derby-10.10.1.1.jar","10.10.1.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "fastutil-6.5.6.jar","6.5.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "flume-ng-configuration-1.2.0.jar","1.2.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -66,26 +65,7 @@ Continuuity Reactor SingleNode Dependencies
    "guice-3.0.jar","3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "guice-assistedinject-3.0.jar","3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "guice-multibindings-3.0.jar","3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hadoop-annotations-2.3.0.jar","2.3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hadoop-auth-2.3.0.jar","2.3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hadoop-common-2.3.0.jar","2.3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hadoop-mapreduce-client-common-2.3.0.jar","2.3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hadoop-mapreduce-client-core-2.3.0.jar","2.3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hadoop-yarn-api-2.3.0.jar","2.3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hadoop-yarn-client-2.3.0.jar","2.3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hadoop-yarn-common-2.3.0.jar","2.3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hadoop-yarn-server-common-2.3.0.jar","2.3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "high-scale-lib-1.1.1.jar","1.1.1","\-","Public Domain",""
-   "hive-ant-0.13.0.jar","0.13.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hive-beeline-0.13.0.jar","0.13.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hive-common-0.13.0.jar","0.13.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hive-jdbc-0.13.0.jar","0.13.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hive-metastore-0.13.0.jar","0.13.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hive-serde-0.13.0.jar","0.13.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hive-service-0.13.0.jar","0.13.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hive-shims-0.13.0.jar","0.13.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hive-shims-common-0.13.0.jar","0.13.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "hive-shims-common-secure-0.13.0.jar","0.13.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "http-0.2.0.jar","0.2.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "httpclient-4.1.3.jar","4.1.3","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "httpcore-4.1.4.jar","4.1.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -94,6 +74,7 @@ Continuuity Reactor SingleNode Dependencies
    "jackson-mapper-asl-1.8.8.jar","1.8.8","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "jackson-xc-1.8.8.jar","1.8.8","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "jamon-runtime-2.3.1.jar","2.3.1","\-","Mozilla public license 1.1","http://www.mozilla.org/MPL/1.1/index.txt"
+   "jasper-runtime-5.5.23.jar","5.5.23","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "java-xmlbuilder-0.4.jar","0.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "javax.activation-1.1.0.v201105071233.jar","1.1.0","v201105071233","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "javax.inject-1.jar","1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -109,7 +90,10 @@ Continuuity Reactor SingleNode Dependencies
    "jcip-annotations-1.0.jar","1.0","\-","Creative Commons Attribution License","http://creativecommons.org/licenses/by/2.5"
    "jcl-over-slf4j-1.7.5.jar","1.7.5","\-","The MIT License","http://slf4j.org/license.html http://www.slf4j.org/faq.html#license"
    "jdo-api-3.0.1.jar","3.0.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "jersey-core-1.8.jar","1.8","\-","CCDL 1.1","https://glassfish.java.net/public/CDDL+GPL_1_1.html"
+   "jersey-server-1.8.jar","1.8","\-","CCDL 1.1","https://glassfish.java.net/public/CDDL+GPL_1_1.html"
    "jets3t-0.6.1.jar","0.6.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "jetty-6.1.26.jar","6.1.26","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "jetty-all-7.6.0.v20120127.jar","7.6.0","v20120127","Eclipse Public License Version 1.0 + AL, V2","http://www.eclipse.org/legal/epl-v10.html"
    "jetty-continuation-8.1.15.v20140411.jar","8.1.15","v20140411","Eclipse Public License Version 1.0 + AL, V2","http://www.eclipse.org/legal/epl-v10.html"
    "jetty-http-8.1.15.v20140411.jar","8.1.15","v20140411","Eclipse Public License Version 1.0 + AL, V2","http://www.eclipse.org/legal/epl-v10.html"
@@ -120,6 +104,7 @@ Continuuity Reactor SingleNode Dependencies
    "jetty-security-8.1.15.v20140411.jar","8.1.15","v20140411","Eclipse Public License Version 1.0 + AL, V2","http://www.eclipse.org/legal/epl-v10.html"
    "jetty-server-8.1.15.v20140411.jar","8.1.15","v20140411","Eclipse Public License Version 1.0 + AL, V2","http://www.eclipse.org/legal/epl-v10.html"
    "jetty-servlet-8.1.15.v20140411.jar","8.1.15","v20140411","Eclipse Public License Version 1.0 + AL, V2","http://www.eclipse.org/legal/epl-v10.html"
+   "jetty-util-6.1.26.jar","6.1.26","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "jetty-util-8.1.15.v20140411.jar","8.1.15","v20140411","Eclipse Public License Version 1.0 + AL, V2","http://www.eclipse.org/legal/epl-v10.html"
    "jetty-webapp-8.1.15.v20140411.jar","8.1.15","v20140411","Eclipse Public License Version 1.0 + AL, V2","http://www.eclipse.org/legal/epl-v10.html"
    "jetty-xml-8.1.15.v20140411.jar","8.1.15","v20140411","Eclipse Public License Version 1.0 + AL, V2","http://www.eclipse.org/legal/epl-v10.html"
@@ -128,9 +113,11 @@ Continuuity Reactor SingleNode Dependencies
    "jopt-simple-3.2.jar","3.2","\-","The MIT License","http://www.opensource.org/licenses/mit-license.php"
    "jpam-1.1.jar","1.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "jsch-0.1.42.jar","0.1.42","\-","BSD style","http://www.jcraft.com/jsch/LICENSE.txt"
+   "jsp-api-2.1.jar","2.1","\-","CCDL 1.0","https://glassfish.java.net/public/CDDLv1.0.html"
    "jsr250-api-1.0.jar","1.0","\-","CCDL 1.0","https://glassfish.java.net/public/CDDLv1.0.html"
    "jsr305-2.0.1.jar","2.0.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "jta-1.1.jar","1.1","\-","CCDL 1.0","http://opensource.org/licenses/cddl1.php"
+   "kafka_2.10-0.8.0.jar","0.8.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "leveldb-0.6.jar","0.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "leveldb-api-0.6.jar","0.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "libfb303-0.9.0.jar","0.9.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -144,17 +131,20 @@ Continuuity Reactor SingleNode Dependencies
    "netty-3.6.6.Final.jar","3.6.6","Final","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "oro-2.0.8.jar","2.0.8","\-","Apache License, Version 1.1","http://www.apache.org/licenses/LICENSE-1.1"
    "paranamer-2.3.jar","2.3","\-","Public Domain (but BSD because of ASM)",""
-   "protobuf-java-2.5.0.jar","2.5.0","\-","BSD 2","http://opensource.org/licenses/bsd-license.php"
    "quartz-2.2.0.jar","2.2.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "quartz-jobs-2.2.0.jar","2.2.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "resteasy-guice-3.0.8.Final.jar","3.0.8","Final","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "resteasy-jaxrs-3.0.8.Final.jar","3.0.8","Final","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "resteasy-servlet-initializer-3.0.8.Final.jar","3.0.8","Final","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "scala-compiler-2.10.1.jar","2.10.1","\-","BSD like","http://www.scala-lang.org/license.html"
+   "scala-library-2.8.0.jar","2.8.0","\-","BSD like","http://www.scala-lang.org/license.html"
+   "scala-reflect-2.10.1.jar","2.10.1","\-","BSD like","http://www.scala-lang.org/license.html"
    "servlet-api-2.5.jar","2.5","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "slf4j-api-1.7.5.jar","1.7.5","\-","MIT license","http://www.slf4j.org/license.html"
    "snappy-0.2.jar","0.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "snappy-java-1.0.4.1.jar","1.0.4.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "stax-api-1.0.1.jar","1.0.1","\-","GPL and CCDL","http://www.gnu.org/licenses/gpl.txt"
+   "stax-api-1.0-2.jar","1.0","2","GPL and CCDL","http://www.gnu.org/licenses/gpl.txt"
    "stringtemplate-3.2.1.jar","3.2.1","\-","BSD License","http://antlr.org/license.html<"
    "twill-api-0.3.0-incubating-SNAPSHOT.jar","0.3.0","incubating-SNAPSHOT","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "twill-common-0.3.0-incubating-SNAPSHOT.jar","0.3.0","incubating-SNAPSHOT","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -167,3 +157,5 @@ Continuuity Reactor SingleNode Dependencies
    "xbean-reflect-3.6.jar","3.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "xmlenc-0.52.jar","0.52","\-","BSD 2","http://opensource.org/licenses/bsd-license.php"
    "xz-1.0.jar","1.0","\-","Public Domain",""
+   "zkclient-0.2.jar","0.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "zookeeper-3.4.5.jar","3.4.5","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"

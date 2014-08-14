@@ -28,7 +28,7 @@ script=`basename $0`
 #tickerSummary, {"ticker":"AAPL", "start":start, "end":end}
 
 auth_token=
-auth_file="$HOME/.continuuity.accesstoken"
+auth_file="$HOME/.cdap.accesstoken"
 
 function get_auth_token() {
   if [ -f $auth_file ]; then
@@ -45,7 +45,7 @@ function usage() {
   echo "    --start     Specifies start timestamp"
   echo "    --end       Specifies end timestamp"
   echo "    --symbol    Specifies ticker symbol"
-  echo "    --host      Specifies the host that Reactor is running on. (Default: localhost)"
+  echo "    --host      Specifies the host that CDAP is running on. (Default: localhost)"
   echo "    --help      This help message"
   echo ""
 }

@@ -167,7 +167,7 @@ com.google.guava,guava
 asm,asm-commons
 asm,asm-tree
 org.slf4j,slf4j-log4j12
-com.continuuity,hive-exec
+co.cask,hive-exec
 com.google.guava,guava
 org.apache.avro,avro-mapred
 org.codehaus.groovy,groovy-all

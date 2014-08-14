@@ -186,7 +186,7 @@ public class TestResilientLogging {
     logTail.getLogPrev(loggingContext, -1, 10, Filter.EMPTY_FILTER,
                        logCallback1);
     List<LogEvent> allEvents = logCallback1.getEvents();
-    Assert.assertTrue(allEvents.size() > 5);
+    Assert.assertTrue(allEvents.size() >= 5);
 
     // Finally - stop all services
     Services.chainStop(dsService, opExecutorService, txManager);

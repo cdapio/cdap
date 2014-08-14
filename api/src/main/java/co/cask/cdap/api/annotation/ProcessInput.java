@@ -40,8 +40,8 @@ import java.lang.annotation.Target;
  * </pre>
  *
  * <p>
- * See the <i><a href="http://continuuity.com/docs/reactor/current/en/">Continuuity Reactor Developer Guides</a></i>
- * and the Reactor example applications for more information.
+ * See the <i><a href="http://cask.co/docs/cdap/current/en/">Cask DAP Developer Guides</a></i>
+ * and the CDAP example applications for more information.
  * </p>
  *
  * @see co.cask.cdap.api.flow.flowlet.Flowlet

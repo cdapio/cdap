@@ -47,7 +47,7 @@ build_jars() {
 }
 
 #
-# Checks if local reactor is running.
+# Checks if Local DAP is running.
 # 
 ensure_environment() {
   response=$(curl --write-out %{http_code} -s --output /dev/null -f http://$gateway/v2/apps)

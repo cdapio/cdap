@@ -1,38 +1,38 @@
-.. :Author: Continuuity, Inc.
-   :Description: Reactor Security
+.. :author: Cask, Inc.
+   :description: Cask Data Application Platform Security
 
-=====================================
-Reactor Security
-=====================================
+=============
+CDAP Security
+=============
 
-Continuuity Reactor supports securing clusters using a perimeter security model.  With perimeter
+Cask Data Application Platform (CDAP) supports securing clusters using a perimeter security model.  With perimeter
 security, access to cluster nodes is restricted through a firewall.  Cluster nodes can communicate
 with each other, but outside clients can only communicate with the cluster through a secured
-host.  Using Reactor security, the Reactor authentication server issues credentials (access
-tokens) to authenticated clients.  Clients then send these credentials on requests to Reactor.
+host.  Using CDAP security, the CDAP authentication server issues credentials (access
+tokens) to authenticated clients.  Clients then send these credentials on requests to the Cask DAP.
 Calls that lack valid access tokens will be rejected, limiting access to only authenticated
 clients.
 
-Authentication in Reactor consists of two components:
+Authentication in CDAP consists of two components:
 
 - **Authentication Server** - the authentication server integrates with different authentication
   backends (LDAP, JASPI plugins) using a plugin API.  Clients must first authenticate with the
   authentication server through this configured backend.  Once authenticated, clients are issued
   an access token representing their identity.
-- **Reactor Router** - the Reactor router serves as the secured host in the perimeter security
+- **CDAP Router** - the CDAP router serves as the secured host in the perimeter security
   model.  All client calls to the cluster go through the router, and must present a valid access
   token when security is enabled.
 
 For more details on the authentication process, see `Client Authentication`_.
 
-By enabling perimeter security for Reactor, you can prevent access by any clients without valid
-credentials.  In addition, access logging can be enabled in Reactor to provide an audit log of all
+By enabling perimeter security for the Cask DAP, you can prevent access by any clients without valid
+credentials.  In addition, access logging can be enabled in the Cask DAP to provide an audit log of all
 operations.
 
 
 Enabling Security
 ==================
-To enable security in the Continuuity Reactor, add these properties to ``continuuity-site.xml``:
+To enable security in the Cask DAP, add these properties to ``cdap-site.xml``:
 
 ==========================================  ===========
    Property                                   Value
@@ -44,7 +44,7 @@ security.auth.server.address                  <hostname>
 
 Configuring SSL
 ================
-To configure the granting of ``AccessToken``\s via SSL, add these properties to ``continuuity-site.xml``:
+To configure the granting of ``AccessToken``\s via SSL, add these properties to ``cdap-site.xml``:
 
 ==========================================  ===========
    Property                                   Value
@@ -56,7 +56,10 @@ security.server.ssl.keystore.password        <password>
 
 Enabling Access Logging
 ========================
-To enable access logging, add the following to ``logback.xml`` (typically under ``/etc/continuuity/conf/``) ::
+
+.. highlight:: console
+
+To enable access logging, add the following to ``logback.xml`` (typically under ``/etc/cdap/conf/``) ::
 
     <appender name="AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
       <file>access.log</file>
@@ -76,17 +79,17 @@ You may also configure the file being logged to by changing the path under ``<fi
 
 Configuring Authentication Mechanisms
 ======================================
-Reactor provides several ways to authenticate a user's identity.
+CDAP provides several ways to authenticate a user's identity.
 
 Basic Authentication
 ---------------------
 The simplest way to identity a user is to authenticate against a realm file.
-To configure basic authentication add the following properties to ``continuuity-site.xml``:
+To configure basic authentication add the following properties to ``cdap-site.xml``:
 
 ==========================================  ===========
    Property                                   Value
 ==========================================  ===========
-security.authentication.handlerClassName     com.continuuity.security.server.BasicAuthenticationHandler
+security.authentication.handlerClassName     co.cask.cdap.security.server.BasicAuthenticationHandler
 security.authentication.basic.realmfile      <path>
 ==========================================  ===========
 
@@ -99,13 +102,13 @@ other methods described below.
 
 LDAP Authentication
 --------------------
-You can configure Reactor to authenticate against an LDAP instance by adding these
-properties to ``continuuity-site.xml``:
+You can configure the Cask DAP to authenticate against an LDAP instance by adding these
+properties to ``cdap-site.xml``:
 
 ================================================  ===========
    Property                                         Value
 ================================================  ===========
-security.authentication.handlerClassName            com.continuuity.security.server.LDAPAuthenticationHandler
+security.authentication.handlerClassName            co.cask.cdap.security.server.LDAPAuthenticationHandler
 security.authentication.loginmodule.className       org.eclipse.jetty.plus.jaas.spi.LdapLoginModule
 security.authentication.handler.debug               true/false
 security.authentication.handler.hostname            <hostname>
@@ -132,12 +135,12 @@ security.authentication.handler.roleObjectClass         <roleObjectClass>
 
 Java Authentication Service Provider Interface (JASPI) Authentication
 ----------------------------------------------------------------------
-To authenticate a user using JASPI add the following properties to ``continuuity-site.xml``:
+To authenticate a user using JASPI add the following properties to ``cdap-site.xml``:
 
 ================================================  ===========
    Property                                         Value
 ================================================  ===========
-security.authentication.handlerClassName            com.continuuity.security.server.JASPIAuthenticationHandler
+security.authentication.handlerClassName            co.cask.cdap.security.server.JASPIAuthenticationHandler
 security.authentication.loginmodule.className       <custom-login-module>
 ================================================  ===========
 
@@ -145,6 +148,8 @@ In addition, any properties with the prefix ``security.authentication.handler.``
 such as ``security.authentication.handler.hostname``, will also be used by the handler.
 These properties, without the prefix, will be used to instantiate the ``javax.security.auth.login.Configuration`` used
 by the ``LoginModule``.
+
+.. highlight:: java
 
 Custom Authentication
 ----------------------
@@ -175,12 +180,15 @@ To provide a custom authentication mechanism you may create your own ``Authentic
   }
 
 To make your custom handler class available to the authentication service, copy your packaged jar file (and any
-additional dependency jars) to the ``security/lib/`` directory within your Reactor installation
-(typically under ``/opt/continuuity``).
+additional dependency jars) to the ``security/lib/`` directory within your Cask DAP installation
+(typically under ``/opt/cdap``).
 
 Example Configuration
 =======================
-This is what your ``continuuity-site.xml`` could include when configured to enable security, SSL, and
+
+.. highlight:: xml
+
+This is what your ``cdap-site.xml`` could include when configured to enable security, SSL, and
 authentication using LDAP::
 
   <property>
@@ -209,7 +217,7 @@ authentication using LDAP::
   <!-- LDAP configuration -->
   <property>
     <name>security.authentication.handlerClassName</name>
-    <value>com.continuuity.security.server.LDAPAuthenticationHandler</value>
+    <value>co.cask.cdap.security.server.LDAPAuthenticationHandler</value>
   </property>
 
   <property>
@@ -255,10 +263,13 @@ authentication using LDAP::
 
 Testing Security
 =================
+
+.. highlight:: console
+
 To ensure that you've configured security correctly, run these simple tests to verify that the
 security components are working as expected:
 
-- After configuring Reactor as described above, restart the Reactor and attempt to use a service::
+- After configuring the Cask DAP as described above, restart the Cask DAP and attempt to use a service::
 
 	curl -v <base-url>/apps
 
@@ -273,14 +284,14 @@ security components are working as expected:
 
 - This should return a 200 OK response.
 
-- Visiting the Reactor Dashboard should redirect you to a login page that prompts for credentials.
-  Entering the credentials should let you work with the Reactor Dashboard as normally.
+- Visiting the CDAP Console should redirect you to a login page that prompts for credentials.
+  Entering the credentials should let you work with the CDAP Console as normally.
 
 
 Client Authentication
 =====================
-Reactor provides support for authenticating clients using OAuth 2 Bearer tokens, which are issued
-by the Reactor authentication server.  The authentication server provides the integration point
+CDAP provides support for authenticating clients using OAuth 2 Bearer tokens, which are issued
+by the CDAP authentication server.  The authentication server provides the integration point
 for all external authentication systems.  Clients authenticate with the authentication server as
 follows:
 
@@ -297,7 +308,7 @@ follows:
       the client can retry.
 
 #. The client stores the resulting Access Token and supplies it in subsequent requests.
-#. Reactor processes validate the supplied Access Token on each request.
+#. Cask DAP processes validate the supplied Access Token on each request.
 
    a. If validation succeeds, processing continues to authorization.
    #. If the submitted token is invalid, an "invalid token" error is returned.
@@ -385,14 +396,14 @@ Comments
 __ rfc6750_
 
 
-Authentication with REST Endpoints
-----------------------------------
-When security is enabled on a Reactor cluster, only requests with a valid access token will be
-allowed by Reactor.  Clients accessing REST endpoints will first need to obtain an access token
+Authentication with RESTful Endpoints
+-------------------------------------
+When security is enabled on a CDAP cluster, only requests with a valid access token will be
+allowed by the Cask DAP.  Clients accessing CDAP RESTful endpoints will first need to obtain an access token
 from the authentication server, as described above, which will be passed to the Router daemon on
 subsequent HTTP requests.
 
-The following request and response descriptions apply to all Reactor REST endpoints::
+The following request and response descriptions apply to all CDAP RESTful endpoints::
 
    GET /<resource> HTTP/1.1
 
@@ -400,7 +411,7 @@ In order to authenticate, all client requests must supply the ``Authorization`` 
 
    Authorization: Bearer wohng8Xae7thahfohshahphaeNeeM5ie
 
-For Reactor issued access tokens, the authentication scheme must always be ``Bearer``.
+For CDAP issued access tokens, the authentication scheme must always be ``Bearer``.
 
 
 HTTP Responses
@@ -492,10 +503,11 @@ Comments
 - The ``auth_uri`` value in the error responses indicates where the authentication server(s) are
   running, allowing clients to discover instances from which they can obtain access tokens.
 
+.. highlight:: java
 
 Where to Go Next
 ================
-Now that you've secured your Continuuity Reactor, take a look at:
+Now that you've secured your Cask DAP, take a look at:
 
-- `Operating a Continuuity Reactor <operations.html>`__,
-  which covers putting Continuuity Reactor into production.
+- `Cask Data Application Platform Operations Guide <operations.html>`__,
+  which covers putting CDAP into production.

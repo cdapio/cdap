@@ -15,7 +15,6 @@
  */
 
 /**
- * Defines deployment of custom {@link co.cask.cdap.api.dataset.Dataset}s to make them available within Continuuity
- * Reactor.
+ * Defines deployment of custom {@link co.cask.cdap.api.dataset.Dataset}s to make them available within CDAP.
  */
 package co.cask.cdap.api.dataset.module;

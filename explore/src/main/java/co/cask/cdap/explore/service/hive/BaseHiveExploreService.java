@@ -152,7 +152,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting {}...", Hive13ExploreService.class.getSimpleName());
+    LOG.info("Starting {}...", BaseHiveExploreService.class.getSimpleName());
     cliService.init(getHiveConf());
     cliService.start();
 

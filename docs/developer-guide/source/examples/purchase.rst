@@ -1,28 +1,23 @@
-.. :Author: Continuuity, Inc.
-   :Description: Continuuity Reactor Purchase Application
+.. :Author: Cask, Inc.
+   :Description: Cask Data Application Platform Purchase Application
 
 ============================
 Purchase Application Example
 ============================
 
----------------------------------------------------------------------------
-A Continuuity Reactor Application demonstrating all Reactor elements
----------------------------------------------------------------------------
-
-.. reST Editor: .. section-numbering::
-.. reST Editor: .. contents::
+**A Cask Data Application Platform (CDAP) Example demonstrating all CDAP elements**
 
 Overview
 ========
-This example demonstrates use of each of the Reactor elements: Streams, Flows, Flowlets,
-Datasets, Queries, Procedures, MapReduce jobs, Workflows, and Custom Services in a single Application.
+This example demonstrates use of each of the CDAP elements: Streams, Flows, Flowlets,
+Datasets, Queries, Procedures, MapReduce Jobs, Workflows, and Custom Services in a single Application.
 
-The application uses a scheduled MapReduce job and Workflow to read from one ObjectStore Dataset
+The application uses a scheduled MapReduce Job and Workflow to read from one ObjectStore Dataset
 and write to another.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the ``purchaseStream``.
     You can send sentences either by using a ``curl`` call, using the ``inject-data`` script
-    included in the example's ``/bin`` directory, or using the Continuuity Reactor Dashboard.
+    included in the example's ``/bin`` directory, or using the CDAP Console.
   - The ``PurchaseFlow`` reads the ``purchaseStream`` and converts every input String into a
     Purchase object and stores the object in the *purchases* Dataset.
   - The ``CatalogLookupService`` fetches the catalog id for a given product. The CatalogLookupService
@@ -31,7 +26,7 @@ and write to another.
   - When scheduled by the ``PurchaseHistoryWorkFlow``, the ``PurchaseHistoryBuilder`` MapReduce
     job reads the *purchases* Dataset, creates a purchase history, and stores the purchase
     history in the *history* Dataset every morning at 4:00 A.M.
-  - You can either manually (in the Process screen of the Reactor Dashboard) or 
+  - You can either manually (in the Process screen of the CDAP Console) or 
     programmatically execute the ``PurchaseHistoryBuilder`` MapReduce job to store 
     customers' purchase history in the *history* Dataset.
   - Execute the ``PurchaseProcedure`` procedure to query the *history* Dataset to discover the
@@ -112,13 +107,16 @@ This procedure has a ``history`` method to obtain the purchase history of a give
 
 Building and Running the Application and Example
 ================================================
-In this remainder of this document, we refer to the Continuuity Reactor runtime as "Reactor", and the
+
+.. highlight:: console
+
+In this remainder of this document, we refer to the CDAP runtime as "CDAP", and the
 example code that is running on it as an "Application".
 
 We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
 
 In this example, you need to build the app from source and then deploy the compiled JAR file.
-You start a Continuuity Reactor, deploy the app, start the flow and then run the example by
+You start the CDAP, deploy the app, start the Flow and then run the example by
 injecting sentence entries into the stream.
 
 Then you can start the Workflow that builds purchase histories, and after that is finished,
@@ -141,23 +139,23 @@ skip the tests by using the command::
 
 Deploying and Starting the Application
 --------------------------------------
-Make sure an instance of the Continuuity Reactor is running and available.
-From within the SDK root directory, this command will start Reactor in local mode::
+Make sure an instance of the CDAP is running and available.
+From within the SDK root directory, this command will start CDAP in local mode::
 
-	$ ./bin/reactor.sh start
+	$ ./bin/cdap.sh start
 
 On Windows::
 
-	~SDK> bin\reactor.bat start
+	~SDK> bin\cdap.bat start
 
-From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
+From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
 #. Drag and drop the Application .JAR file (``target/Purchase-<version>.jar``)
    onto your browser window.
-   Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
+   Alternatively, use the *Load App* button found on the *Overview* of the CDAP Console.
 #. Once loaded, select the ``Purchase`` Application from the list.
    On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
-#. Note: the CatalogLookupService will not be displayed in the dashboard
+#. Note: the CatalogLookupService will not be displayed in the Console
 
 On Windows:
 
@@ -177,7 +175,7 @@ to the Stream named *purchaseStream* in the ``Purchase`` application::
 
 	$ ./bin/inject-data.sh [--host <hostname>]
 
-:Note:	``[--host <hostname>]`` is not available for a *Local Reactor*.
+:Note:	``[--host <hostname>]`` is not available for a *Local CDAP*.
 
 On Windows::
 
@@ -187,16 +185,16 @@ On Windows::
 Starting the Workflow
 .....................
 The easiest way to start the ``PurchaseHistoryWorkflow`` is to click on the Workflow in the Application
-page of the Reactor dashboard and then click the start button. You can see the status of the Workflow and observe when it finishes.
+page of the CDAP Console and then click the start button. You can see the status of the Workflow and observe when it finishes.
 
-Alternatively, you can send a ``curl`` request to the Reactor::
+Alternatively, you can send a ``curl`` request to the CDAP::
   
   curl -v -X POST http://localhost:10000/v2/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/start
 
 Querying the Results
 ....................
 If the Procedure has not already been started, you start it either through the 
-Continuuity Reactor Dashboard or via an HTTP request using the ``curl`` command::
+CDAP Console or via an HTTP request using the ``curl`` command::
 
 	curl -v -X POST 'http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseProcedure/start'
 	
@@ -211,14 +209,14 @@ There are two ways to query the *history* ObjectStore through the ``PurchaseProc
 
 	  libexec\curl...
 
-2. Click on the ``PurchaseProcedure`` in the Application page of the Dashboard to get to the 
+2. Click on the ``PurchaseProcedure`` in the Application page of the Console to get to the 
    Procedure dialogue. Type in the method name ``history``, and enter the customer name in the parameters
    field, such as::
 
 	{ "customer" : "Alice" }
 
    Then click the *Execute* button. The purchase history for that customer will be displayed in the
-   Dashboard in JSON format, for example [reformatted to fit]::
+   Console in JSON format, for example [reformatted to fit]::
 
 	{"customer":"Alice","purchases"
 	   [{"customer":"Alice",
@@ -227,14 +225,15 @@ There are two ways to query the *history* ObjectStore through the ``PurchaseProc
 Exploring the Results Using SQL
 ...............................
 You can use SQL to formulate ad-hoc queries over the *history* Dataset. This is done by a series of
-``curl`` calls, as described in the REST API section of the Developer Guide. For your convenience, the SDK
+``curl`` calls, as described in the RESTful API section of the Developer Guide. For your convenience, the SDK
 includes a script, ``bin/send-query.sh``, that will execute a series of calls.
 
 From within the SDK root directory::
 
-  send-query.sh --query  "SELECT * FROM continuuity_user_history WHERE customer IN ('Alice','Bob')"
+  send-query.sh --query  "SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"
 
-This will submit the query, wait for its completion and then retrieve and print all results, one by one::
+This will submit the query, using the *History* table in the ``cdap_user`` namespace, wait for its completion and 
+then retrieve and print all results, one by one::
 
   Query handle is ad004d63-7e8d-44f8-b53a-33f3cf3bd5c8.
   ["Alice","[{\"customer\":\"Alice\",\"product\":\"grapefruit\",\"quantity\":12,\"price\":10
@@ -247,7 +246,7 @@ If you prefer to use ``curl`` directly, here is the sequence of steps to execute
 
 First, submit the query for execution::
 
-  curl -v -d '{"query": "'"SELECT * FROM continuuity_user_history WHERE customer IN ('Alice','Bob')"'"}'
+  curl -v -d '{"query": "'"SELECT * FROM cask_user_history WHERE customer IN ('Alice','Bob')"'"}'
     -X POST http://localhost:10000/v2/data/queries
 
 Note that due to the mix and repetition of single and double quotes, it can be tricky to escape all quotes
@@ -283,17 +282,18 @@ Stopping the Application
 ------------------------
 Either:
 
-- On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; 
+- On the Application detail page of the CDAP Console, click the *Stop* button on **both** the *Process* and *Query* lists; 
 
 or:
 
 - Run ``$ ./bin/app-manager.sh --action stop [--host <hostname>]``
 
-  :Note:	[--host <hostname>] is not available for a *Local Reactor*.
+  :Note:	[--host <hostname>] is not available for a *Local CDAP*.
 
   On Windows, run ``~SDK> bin\app-manager.bat stop``
 
+.. highlight:: java
 
 Downloading the Example
 =======================
-This example (and more!) is included with our `software development kit <http://continuuity.com/download>`__.
+This example (and more!) is included with our `software development kit <http://cask.co/download>`__.

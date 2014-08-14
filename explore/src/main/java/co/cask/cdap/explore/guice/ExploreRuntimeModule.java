@@ -51,6 +51,7 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -282,7 +283,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
     // Setup HADOOP_CLASSPATH hack, more info on why this is needed - REACTOR-325
     LocalMapreduceClasspathSetter classpathSetter =
-      new LocalMapreduceClasspathSetter(new HiveConf(), System.getProperty("java.io.tmpdir"));
+      new LocalMapreduceClasspathSetter(new HiveConf(), System.getProperty("java.io.tmpdir"), orderedDependenciesStr);
     for (File jar : hBaseTableDeps) {
       classpathSetter.accept(jar.getAbsolutePath());
     }

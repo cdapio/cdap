@@ -247,9 +247,9 @@ public class SingleNodeMain {
     out.println("");
     out.println("Usage: ");
     if (OSDetector.isWindows()) {
-      out.println("  reactor.bat [options]");
+      out.println("  cdap.bat [options]");
     } else {
-      out.println("  ./reactor.sh [options]");
+      out.println("  ./cdap.sh [options]");
     }
     out.println("");
     out.println("Additional options:");

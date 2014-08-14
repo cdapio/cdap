@@ -29,7 +29,7 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.Workflow;
 
 /**
- * Configures a Reactor Application.
+ * Configures a CDAP Application.
  */
 public interface ApplicationConfigurer {
   /**
@@ -54,7 +54,7 @@ public interface ApplicationConfigurer {
   void addStream(Stream stream);
 
   /**
-   * Adds a {@link DatasetModule} to be deployed automatically (if absent in the Reactor) during application
+   * Adds a {@link DatasetModule} to be deployed automatically (if absent in the CDAP instance) during application
    * deployment.
    *
    * @param moduleName Name of the module to deploy
@@ -64,7 +64,7 @@ public interface ApplicationConfigurer {
   void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass);
 
   /**
-   * Adds a {@link DatasetModule} to be deployed automatically (if absent in the Reactor) during application
+   * Adds a {@link DatasetModule} to be deployed automatically (if absent in the CDAP instance) during application
    * deployment, using {@link Dataset} as a base for the {@link DatasetModule}.
    * The module will have a single dataset type identical to the name of the class in the datasetClass parameter.
    *
@@ -74,7 +74,7 @@ public interface ApplicationConfigurer {
   void addDatasetType(Class<? extends Dataset> datasetClass);
 
   /**
-   * Adds a Dataset instance, created automatically if absent in the Reactor.
+   * Adds a Dataset instance, created automatically if absent in the CDAP instance.
    * See {@link co.cask.cdap.api.dataset.DatasetDefinition} for details.
    *
    * @param datasetName Name of the dataset instance
@@ -85,7 +85,7 @@ public interface ApplicationConfigurer {
   void createDataset(String datasetName, String typeName, DatasetProperties properties);
 
   /**
-   * Adds a Dataset instance, created automatically (if absent in the Reactor), deploying a Dataset type
+   * Adds a Dataset instance, created automatically (if absent in the CDAP instance), deploying a Dataset type
    * using the datasetClass parameter as the dataset class and the given properties.
    *
    * @param datasetName dataset instance name

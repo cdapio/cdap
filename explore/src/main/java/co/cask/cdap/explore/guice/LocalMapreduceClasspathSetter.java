@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -40,11 +41,13 @@ public class LocalMapreduceClasspathSetter {
 
   private final HiveConf hiveConf;
   private final String directory;
+  private final List<String> hiveAuxJars;
   private Set<String> hbaseProtocolJarPaths = new LinkedHashSet<String>();
 
-  public LocalMapreduceClasspathSetter(HiveConf hiveConf, String directory) {
+  public LocalMapreduceClasspathSetter(HiveConf hiveConf, String directory, List<String> hiveAuxJars) {
     this.hiveConf = hiveConf;
     this.directory = directory;
+    this.hiveAuxJars = hiveAuxJars;
   }
 
   public void accept(String jar) {
@@ -69,6 +72,8 @@ public class LocalMapreduceClasspathSetter {
     // map reduce jobs.
     // The below script updates HADOOP_CLASSPATH to contain hbase-protocol jar for RunJar commands,
     // so that the right version of protocol buffer jar gets loaded for HBase.
+    // It also puts all the user jars, ie hive aux jars, in this classpath and in first position, so that
+    // the right version of ASM jar gets loaded for Twill.
     // It then calls the real Hadoop bin with the same arguments.
     StringBuilder fileBuilder = new StringBuilder();
     fileBuilder.append("#!/usr/bin/env bash\n");
@@ -78,8 +83,13 @@ public class LocalMapreduceClasspathSetter {
     fileBuilder.append("\n");
     fileBuilder.append("function join { local IFS=\"$1\"; shift; echo \"$*\"; }\n");
     fileBuilder.append("if [ $# -ge 1 -a \"$1\" = \"jar\" ]; then\n");
-    fileBuilder.append("  HADOOP_CLASSPATH=$(join ").append(File.pathSeparatorChar).append(" ${HADOOP_CLASSPATH} ")
+    fileBuilder.append("  HADOOP_CLASSPATH=$(join ").append(File.pathSeparatorChar)
+      .append(" ").append(Joiner.on(' ').join(hiveAuxJars))
+      .append(" ${HADOOP_CLASSPATH} ")
       .append(Joiner.on(' ').join(hbaseProtocolJarPaths)).append(')').append("\n");
+    fileBuilder.append("  # Put user jars first in Hadoop classpath so that the ASM jar needed by Twill has\n");
+    fileBuilder.append("  # the right version, and not the one provided with the Hadoop libs.\n");
+    fileBuilder.append("  export HADOOP_USER_CLASSPATH_FIRST=true\n");
     fileBuilder.append("  export HADOOP_CLASSPATH\n");
     fileBuilder.append("  echo \"Explore modified HADOOP_CLASSPATH = $HADOOP_CLASSPATH\" 1>&2\n");
     fileBuilder.append("fi\n");

@@ -17,7 +17,7 @@
 package co.cask.cdap.api.app;
 
 /**
- * Defines a Continuuity Reactor Application.
+ * Defines a CDAP Application.
  *
  */
 public interface Application {
