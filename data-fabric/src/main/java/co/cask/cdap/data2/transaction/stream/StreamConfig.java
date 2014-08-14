@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
+import co.cask.cdap.proto.StreamConfigMeta;
 import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
 
@@ -93,5 +94,9 @@ public final class StreamConfig {
       .add("ttl", ttl)
       .add("location", location.toURI())
       .toString();
+  }
+
+  public StreamConfigMeta toMeta() {
+    return new StreamConfigMeta(name, ttl);
   }
 }

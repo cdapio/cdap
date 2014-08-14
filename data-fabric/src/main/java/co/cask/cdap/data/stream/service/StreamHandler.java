@@ -34,6 +34,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.cdap.proto.StreamConfigMeta;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
@@ -130,8 +131,9 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountID = getAuthenticatedAccountId(request);
 
     if (streamMetaStore.streamExists(accountID, stream)) {
-      StreamConfig config = streamAdmin.getConfig(stream);
-      responder.sendJson(HttpResponseStatus.OK, config, StreamConfig.class, GSON);
+      StreamConfig streamConfig = streamAdmin.getConfig(stream);
+      StreamConfigMeta streamConfigMeta = streamConfig.toMeta();
+      responder.sendJson(HttpResponseStatus.OK, streamConfigMeta, StreamConfigMeta.class, GSON);
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
