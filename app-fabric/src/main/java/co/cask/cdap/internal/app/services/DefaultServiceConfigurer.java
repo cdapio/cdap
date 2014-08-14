@@ -24,13 +24,16 @@ import org.apache.twill.api.TwillRunnable;
 import java.util.List;
 
 /**
- *
+ * A default implementation of Configurer for Services.
  */
 public class DefaultServiceConfigurer implements ServiceConfigurer {
   private String description;
   private List<TwillRunnable> workers;
   private HttpServiceHandler serviceHandler;
 
+  /**
+   * Create an instance of {@link ServiceConfigurer}
+   */
   public DefaultServiceConfigurer() {
     this.workers = Lists.newArrayList();
   }
@@ -46,7 +49,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   @Override
-  public void addHandler(HttpServiceHandler serviceHandler) {
+  public void setHandler(HttpServiceHandler serviceHandler) {
     this.serviceHandler = serviceHandler;
   }
 

@@ -22,17 +22,31 @@ import org.apache.twill.api.TwillRunnable;
 import java.util.List;
 
 /**
- *
+ * Defines a custom user Service.
  */
 public interface Service {
 
+  /**
+   * Get the name of the service.
+   * @return name of the service.
+   */
   String getName();
 
-  public void initialize(ServiceContext context);
-
+  /**
+   * Configure the service.
+   * @param serviceConfigurer
+   */
   void configure(ServiceConfigurer serviceConfigurer);
 
+  /**
+   * Get the primary request handler for the Service.
+   * @return a request handler.
+   */
   public HttpServiceHandler getHandler();
 
+  /**
+   * Get a list of workers for the service.
+   * @return workers for the service.
+   */
   public List<? extends TwillRunnable> getWorkers();
 }

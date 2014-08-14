@@ -22,18 +22,38 @@ import org.apache.twill.api.TwillRunnable;
 import java.util.List;
 
 /**
- *
+ * Interface for Configurers used to create custom Services.
  */
 public interface ServiceConfigurer {
 
+  /**
+   * Set description of the Service.
+   * @param description to set for the Service.
+   */
   void setDescription(String description);
 
+  /**
+   * Add a worker to the Service.
+   * @param runnable to add as worker.
+   */
   void addWorker(TwillRunnable runnable);
 
-  void addHandler(HttpServiceHandler serviceHandler);
+  /**
+   * Set the primary request handler for the Service.
+   * @param serviceHandler to serve requests.
+   */
+  void setHandler(HttpServiceHandler serviceHandler);
 
+  /**
+   * Get the primary handler used to service requests.
+   * @return the handler that serves requests.
+   */
   HttpServiceHandler getHandler();
 
+  /**
+   * Get a list of workers for the Service.
+   * @return a list of workers for the Service.
+   */
   List<TwillRunnable> getWorkers();
 
 }

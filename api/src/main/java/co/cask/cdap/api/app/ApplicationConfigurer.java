@@ -153,5 +153,9 @@ public interface ApplicationConfigurer {
    */
   void addService(String name, HttpServiceHandler handler);
 
+  /**
+   * Adds a custom {@link Service} to the Application.
+   * @param service
+   */
   void addService(Service service);
 }

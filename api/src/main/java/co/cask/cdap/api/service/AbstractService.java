@@ -22,11 +22,11 @@ import org.apache.twill.api.TwillRunnable;
 import java.util.List;
 
 /**
- *
+ * An abstract implementation of {@link co.cask.cdap.api.service.Service}. Users may extend this to write their own
+ * custom service.
  */
 public abstract class AbstractService implements Service {
   protected ServiceConfigurer serviceConfigurer;
-  private ServiceContext serviceContext;
   private String name;
 
   protected AbstractService(String name) {
@@ -37,23 +37,26 @@ public abstract class AbstractService implements Service {
     return this.name;
   }
 
-  public void initialize(ServiceContext context) {
-    this.serviceContext = context;
-  }
-
+  @Override
   public final void configure(ServiceConfigurer serviceConfigurer) {
     this.serviceConfigurer = serviceConfigurer;
     configure();
   }
 
+  @Override
   public HttpServiceHandler getHandler() {
     return serviceConfigurer.getHandler();
   }
 
+  @Override
   public List<? extends TwillRunnable> getWorkers() {
     return serviceConfigurer.getWorkers();
   }
 
+  /**
+   * Implement this method and use a {@link co.cask.cdap.api.service.ServiceConfigurer} to add a request handler
+   * and workers.
+   */
   protected abstract void configure();
 
 }
