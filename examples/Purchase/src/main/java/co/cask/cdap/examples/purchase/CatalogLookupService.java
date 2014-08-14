@@ -16,6 +16,7 @@
 
 package co.cask.cdap.examples.purchase;
 
+import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
@@ -26,15 +27,28 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * Lookup Handler to handle users interest HTTP call.
+ *
  */
-@Path("/v1")
-public final class ProductCatalogLookup extends AbstractHttpServiceHandler {
+public class CatalogLookupService extends AbstractService {
 
-  @Path("product/{id}/catalog")
-  @GET
-  public void handler(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("id") String id) {
-    // send string Cat-<id> with 200 OK response.
-    responder.sendString(200, "Cat-" + id, Charsets.UTF_8);
+  @Override
+  protected void configure() {
+    serviceConfigurer.setName(PurchaseApp.SERVICE_NAME);
+    serviceConfigurer.setHandler(new ProductCatalogLookup());
+    serviceConfigurer.setDescription("Service to lookup product ids.");
+  }
+
+  /**
+   * Lookup Handler to handle users interest HTTP call.
+   */
+  @Path("/v1")
+  public static final class ProductCatalogLookup extends AbstractHttpServiceHandler {
+
+    @Path("product/{id}/catalog")
+    @GET
+    public void handler(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("id") String id) {
+      // send string Cat-<id> with 200 OK response.
+      responder.sendString(200, "Cat-" + id, Charsets.UTF_8);
+    }
   }
 }
