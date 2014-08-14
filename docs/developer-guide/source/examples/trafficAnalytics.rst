@@ -1,14 +1,11 @@
-.. :Author: Continuuity, Inc.
-   :Description: Continuuity Reactor Intermediate Apache Log Event Logger
+.. :Author: Cask, Inc.
+   :Description: Cask Data Application Platform Intermediate Apache Log Event Logger
 
 ==========================
 TrafficAnalytics Example
 ==========================
 
-**A Continuuity Reactor Application Demonstrating MapReduce**
-
-.. reST Editor: .. section-numbering::
-.. reST Editor: .. contents::
+**A Cask Data Application Platform (CDAP) Example Demonstrating MapReduce**
 
 Overview
 ========
@@ -18,7 +15,7 @@ in each hour of the last twenty-four hours, processing in real-time Apache acces
 The application expands on the other `examples <index.html>`__
 to show how to use a MapReduce job.
 
-Data from a log will be sent to the Continuuity Reactor by an external script *inject-log*
+Data from a log will be sent to the CDAP by an external script *inject-log*
 to the *logEventStream*. The logs are processed by the
 ``LogAnalyticsFlow``, which stores the log event in its entirety in *logEventTable*, a ``TimeseriesTable``.
 
@@ -76,11 +73,11 @@ to determine the results for the *countTable*.
 
 ``LogCountMapReduce``: MapReduce Job
 ------------------------------------
-This introduces us to a powerful element of Continuuity Reactor: its facility for running MapReduce jobs.
-Once the data has been loaded into the Reactor, you can run the MapReduce job, which takes the 
+This introduces us to a powerful element of CDAP: its facility for running MapReduce Jobs.
+Once the data has been loaded into the CDAP, you can run the MapReduce Job, which takes the 
 data in the *logEventTable* and aggregates the log data by hour. 
 
-There are three methods required for the implementation of a MapReduce job. In this case,
+There are three methods required for the implementation of a MapReduce Job. In this case,
 we'll use the default ``onFinish`` implementation (which does nothing), as we do not require
 anything be done after the job has run. That leaves two methods to actually be 
 implemented: ``configure`` and ``beforeSubmit``::
@@ -151,13 +148,16 @@ and in an actual application that would be common.
 
 Building and Running the Application and Example
 ================================================
-In this remainder of this document, we refer to the Continuuity Reactor runtime as "Reactor", and the
+
+.. highlight:: console
+
+In this remainder of this document, we refer to the Cask Data Application Platform runtime as "CDAP", and the
 example code that is running on it as an "Application".
 
 We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
 
 In this example, you can either build the Application from source or deploy the already-compiled JAR file.
-In either case, you then start a Continuuity Reactor, deploy the Application, and then run the example by
+In either case, you then start the CDAP, deploy the Application, and then run the example by
 injecting Apache access log entries from an example file into the Application. 
 
 As you do so, you can query the Application to see the results
@@ -180,19 +180,19 @@ skip the tests by using the command::
 
 Deploying and Starting the Application
 --------------------------------------
-Make sure an instance of the Continuuity Reactor is running and available. 
-From within the SDK root directory, this command will start Reactor in local mode::
+Make sure an instance of the CDAP is running and available. 
+From within the SDK root directory, this command will start CDAP in local mode::
 
-	$ bin/continuuity-reactor start
+	$ ./bin/cdap.sh start
 
 On Windows::
 
-	~SDK> bin\reactor.bat start
+	~SDK> bin\cdap.bat start
 
-From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
+From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
 #. Drag and drop the Application .JAR file (``target/TrafficAnalytics-<version>.jar``) onto your browser window.
-   Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
+   Alternatively, use the *Load App* button found on the *Overview* of the CDAP Console.
 #. Once loaded, select the ``TrafficAnalytics`` Application from the list.
    On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
 	
@@ -201,7 +201,7 @@ Command line tools are also available to deploy and manage apps. From within the
 #. To deploy the Application JAR file, run ``$ bin/app-manager.sh --action deploy [--host <hostname>]``
 #. To start the Application, run ``$ bin/app-manager.sh --action start [--host <hostname>]``
 
-:Note:	[--host <hostname>] is not available for a *Local Reactor*.
+:Note:	[--host <hostname>] is not available for a *Local DAP*.
 
 On Windows:
 
@@ -222,7 +222,7 @@ to the Stream named *logEventStream* in the ``AccessLogApp``::
 
 	$ ./bin/inject-log.sh [--host <hostname>]
 
-:Note:	[--host <hostname>] is not available for a *Local Reactor*.
+:Note:	[--host <hostname>] is not available for a *Local DAP*.
 
 On Windows::
 
@@ -232,7 +232,7 @@ Running the MapReduce Job
 .........................
 Start the MapReduce job by:
 
-- In the Continuuity Reactor Dashboard:
+- In the CDAP Console:
 
   #. Click the *Process* button.
   #. Click on the *RequestCountMapReduce* MapReduce.
@@ -244,7 +244,7 @@ Start the MapReduce job by:
 Querying the Results
 ....................
 If the Procedure has not already been started, you start it either through the 
-Continuuity Reactor Dashboard or via an HTTP request using the ``curl`` command::
+CDAP Console or via an HTTP request using the ``curl`` command::
 
 	curl -v -X POST 'http://localhost:10000/v2/apps/TrafficAnalytics/procedures/LogCountProcedure/start'
 	
@@ -258,15 +258,15 @@ There are two ways to query the *countTable* Dataset:
 
 	libexec\curl...
 
-- Type a Procedure method name, in this case ``getCounts``, in the Query page of the Reactor Dashboard:
+- Type a Procedure method name, in this case ``getCounts``, in the Query page of the CDAP Console:
 
-  In the Continuuity Reactor Dashboard:
+  In the CDAP Console:
 
   #. Click the *Query* button.
   #. Click on the *LogCountProcedure* Procedure.
   #. Type ``getCounts`` in the *Method* text box.
   #. Click the *Execute* button.
-  #. The results of the occurrences for each HTTP status code are displayed in the Dashboard
+  #. The results of the occurrences for each HTTP status code are displayed in the Console
      in JSON format. The returned results will be unsorted, with time stamps in milliseconds.
      For example::
 
@@ -278,14 +278,15 @@ Stopping the Application
 ------------------------
 Either:
 
-- On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
+- On the Application detail page of the CDAP Console, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ ./bin/app-manager.sh --action stop [--host <hostname>]``
 
-  :Note:	[--host <hostname>] is not available for a *Local Reactor*.
+  :Note:	[--host <hostname>] is not available for a *Local DAP*.
 
   On Windows, run ``~SDK> bin\app-manager.bat stop``
 
+.. highlight:: java
 
 Downloading the Example
 =======================
-This example (and more!) is included with our `software development kit <http://continuuity.com/download>`__.
+This example (and more!) is included with our `software development kit <http://cask.co/download>`__.

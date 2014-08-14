@@ -312,13 +312,13 @@ div.body p.centered {
 table.docutils {
     border: 0;
     border-collapse: collapse;
-    width: 80%;
-    margin-left: 5%;
-    margin-right: 5%;
+    width: 100%;
+    margin-left: 0%;
+    margin-right: 0%;
 }
 
 table.docutils td, table.docutils th {
-    padding: 1px 8px 1px 5px;
+    padding: 1px 8px 1px 15px;
     border-top: 0;
     border-left: 0;
     border-right: 0;

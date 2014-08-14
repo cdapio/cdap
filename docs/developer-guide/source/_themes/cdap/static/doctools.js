@@ -240,7 +240,7 @@ $(document).ready(function() {
 });
 
 /**
- * Modification by Continuuity to scroll to anchors correctly.
+ * Modification by Cask to scroll to anchors correctly.
  # Takes into account height of header bar and space between header bar and first heading.
  */
 

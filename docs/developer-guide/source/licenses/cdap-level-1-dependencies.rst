@@ -1,12 +1,12 @@
-.. :author: Continuuity, Inc.
+.. :author: Cask, Inc.
    :version: 2.4.0
 
 ============================================
-Continuuity Reactor 2.4.0
+Cask Data Application Platform 2.4.0
 ============================================
 
-Continuuity Reactor Level 1 Dependencies
---------------------------------------------
+Cask Data Application Platform Level 1 Dependencies
+---------------------------------------------------
 
 .. rst2pdf: PageBreak
 .. rst2pdf: .. contents::
@@ -15,7 +15,7 @@ Continuuity Reactor Level 1 Dependencies
 .. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
 .. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
 
-.. csv-table:: **Continuuity Reactor Level 1 Dependencies**
+.. csv-table:: **Cask Data Application Platform Level 1 Dependencies**
    :header: "Package","Artifact","License","License URL"
    :widths: 20, 20, 20, 40
 
@@ -24,7 +24,7 @@ Continuuity Reactor Level 1 Dependencies
    "asm","asm-tree","BSD License","http://opensource.org/licenses/BSD-3-Clause"
    "ch.qos.logback","logback-classic","LGPL and EPL","http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html"
    "ch.qos.logback","logback-core","LGPL and EPL","http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html"
-   "com.continuuity","hive-exec","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "co.cask","hive-exec","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.code.findbugs","jsr305","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.code.gson","gson","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.guava","guava","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
