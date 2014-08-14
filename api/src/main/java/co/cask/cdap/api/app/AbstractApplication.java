@@ -27,7 +27,9 @@ import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
+import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.Workflow;
+import org.apache.twill.api.TwillApplication;
 
 /**
  * A support class for {@link Application Applications} which reduces repetition and results in
@@ -176,6 +178,13 @@ public abstract class AbstractApplication implements Application {
    */
   protected void addMapReduce(MapReduce mapReduce) {
     configurer.addMapReduce(mapReduce);
+  }
+
+  /**
+   * @see ApplicationConfigurer#addSpark(Spark)
+   */
+  protected void addSpark(Spark spark) {
+    configurer.addSpark(spark);
   }
 
   /**
