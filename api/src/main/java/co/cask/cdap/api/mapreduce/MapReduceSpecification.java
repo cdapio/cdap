@@ -84,8 +84,10 @@ public interface MapReduceSpecification extends ProgramSpecification, PropertyPr
     private String outputDataSet;
     private Map<String, String> arguments;
     private final ImmutableSet.Builder<String> dataSets = ImmutableSet.builder();
-    private int mapperMemoryMB = 1024;
-    private int reducerMemoryMB = 1024;
+
+    // Default memory size to use the one from the cluster configuration (mapred-site.xml)
+    private int mapperMemoryMB = -1;
+    private int reducerMemoryMB = -1;
 
     /**
      * Start defining {@link MapReduceSpecification}.
