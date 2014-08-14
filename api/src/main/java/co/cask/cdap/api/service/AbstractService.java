@@ -33,6 +33,7 @@ public abstract class AbstractService implements Service {
     this.name = name;
   }
 
+  @Override
   public String getName() {
     return this.name;
   }

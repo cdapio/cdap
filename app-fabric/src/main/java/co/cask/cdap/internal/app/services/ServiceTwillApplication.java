@@ -25,11 +25,15 @@ import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillSpecification;
 
 /**
- *
+ * TwillApplication to run custom user Services.
  */
 public class ServiceTwillApplication implements TwillApplication {
   private final Service service;
 
+  /**
+   * Create a TwillApplication from a custom user Service.
+   * @param service
+   */
   public ServiceTwillApplication(Service service) {
     this.service = service;
   }
