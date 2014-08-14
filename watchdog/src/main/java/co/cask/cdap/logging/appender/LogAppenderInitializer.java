@@ -18,8 +18,6 @@ package co.cask.cdap.logging.appender;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.status.OnConsoleStatusListener;
 import ch.qos.logback.core.status.StatusManager;
 import com.google.common.collect.Maps;
@@ -43,17 +41,16 @@ public class LogAppenderInitializer implements Closeable {
     this.logAppender = logAppender;
   }
 
-  public LogAppender initialize() {
-    return initialize(org.slf4j.Logger.ROOT_LOGGER_NAME);
+  public void initialize() {
+    initialize(org.slf4j.Logger.ROOT_LOGGER_NAME);
   }
 
-  public LogAppender initialize(String rootLoggerName) {
+  public void initialize(String rootLoggerName) {
     ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
     // TODO: fix logging issue in mapreduce:  ENG-3279
     if (!(loggerFactory instanceof LoggerContext)) {
       LOG.warn("LoggerFactory is not a logback LoggerContext. No log appender is added. " +
                  "Logback might not be in the classpath");
-      return null;
     }
 
     LoggerContext loggerContext = (LoggerContext) loggerFactory;
@@ -62,15 +59,7 @@ public class LogAppenderInitializer implements Closeable {
     if (initMap.putIfAbsent(rootLoggerName, logAppender.getName()) != null) {
       // Already initialized.
       LOG.trace("Log appender {} is already initialized.", logAppender.getName());
-
-      Appender<ILoggingEvent> appender = rootLogger.getAppender(logAppender.getName());
-      if (appender instanceof LogAppender) {
-        return (LogAppender) appender;
-      } else {
-        throw new IllegalArgumentException(
-          String.format("%s appender is already initialized, but not able to fetch it",
-                        logAppender.getName()));
-      }
+      return;
     }
 
     LOG.info("Initializing log appender {}", logAppender.getName());
@@ -85,7 +74,6 @@ public class LogAppenderInitializer implements Closeable {
     logAppender.start();
 
     rootLogger.addAppender(logAppender);
-    return logAppender;
   }
 
   @Override

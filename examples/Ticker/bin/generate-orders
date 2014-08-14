@@ -24,7 +24,7 @@ function usage() {
   echo "Usage: $script [--host <host>]"
   echo ""
   echo "  Options"
-  echo "    --host      Specifies the host that Reactor is running on. (Default: localhost)"
+  echo "    --host      Specifies the host that CDAP is running on. (Default: localhost)"
   echo "    --help      This help message"
   echo ""
 }

@@ -44,7 +44,7 @@ public class DefaultTransactionStateCacheSupplier extends TransactionStateCacheS
         if (instance == null) {
           instance = new DefaultTransactionStateCache(namespace);
           instance.setConf(conf);
-          instance.startAndWait();
+          instance.start();
         }
       }
     }

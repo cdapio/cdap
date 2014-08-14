@@ -91,6 +91,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
 
   @Override
   protected void triggerShutdown() {
+    LOG.info("Shutdown is triggered.");
     stopping = true;
     super.triggerShutdown();
   }
@@ -107,11 +108,15 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
   }
 
   private KafkaConsumerMetaTable getMetaTable() {
-    while (!stopping && metaTable == null) {
+    while (metaTable == null) {
+      if (stopping) {
+        LOG.info("We are shutting down, giving up on acquiring KafkaConsumerMetaTable.");
+        break;
+      }
       try {
         metaTable = metricsTableFactory.createKafkaConsumerMeta("default");
       } catch (Exception e) {
-        LOG.warn("Cannot access kafka consumer metaTable, will retry in 1 sec");
+        LOG.warn("Cannot access kafka consumer metaTable, will retry in 1 sec.");
         try {
           TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException ie) {
@@ -149,7 +154,12 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
   private long getOffset(String topic, int partition) {
     LOG.info("Retrieve offset for topic: {}, partition: {}", topic, partition);
     try {
-      long offset = getMetaTable().get(new TopicPartition(topic, partition));
+      KafkaConsumerMetaTable metaTable = getMetaTable();
+      if (metaTable == null) {
+        LOG.info("Could not get KafkaConsumerMetaTable, seems like we are being shut down");
+        return -1L;
+      }
+      long offset = metaTable.get(new TopicPartition(topic, partition));
       LOG.info("Offset for topic: {}, partition: {} is {}", topic, partition, offset);
       return offset;
     } catch (OperationException e) {

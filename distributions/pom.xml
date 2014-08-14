@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>distributions</artifactId>
-  <name>Cask CDAP Distributions</name>
+  <name>Cask DAP Distributions</name>
   <packaging>jar</packaging>
 
   <profiles>
@@ -78,9 +78,9 @@
                   <executable>fpm</executable>
                   <commandlineArgs>
                     --name "cdap"
-                    --vendor "Cask Inc."
-                    --maintainer "support@cask.com"
-                    --license "Copyright ${package.build.year} Cask,Inc. Licensed under the Apache License, Version 2.0."
+                    --vendor "Cask, Inc."
+                    --maintainer "support@cask.co"
+                    --license "Copyright ${package.build.year} Cask, Inc. Licensed under the Apache License, Version 2.0."
                     --description "Component of Cask CDAP"
                     --category misc
                     -s dir
@@ -154,9 +154,9 @@
                   <executable>fpm</executable>
                   <commandlineArgs>
                     --name "cdap"
-                    --vendor "Cask Inc."
+                    --vendor "Cask, Inc."
                     --maintainer "support@cask.co"
-                    --license "Copyright 2014 Cask,Inc. All Rights Reserved."
+                    --license "Copyright 2014 Cask, Inc. All Rights Reserved."
                     --description "Component of Cask CDAP"
                     --category misc
                     -s dir

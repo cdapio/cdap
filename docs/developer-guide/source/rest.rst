@@ -21,7 +21,6 @@ The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude 
 
 - **Stream:** sending data events to a Stream, or to inspect the contents of a Stream
 - **Dataset:** interacting with Datasets, Dataset Modules, and Dataset Types
-- **Data:** interacting with Datasets (deprecated)
 - **Query:** sending ad-hoc queries to CDAP Datasets
 - **Procedure:** sending calls to a stored Procedure
 - **Client:** deploying and managing Applications, and managing the life cycle of Flows,
@@ -709,448 +708,6 @@ HTTP Responses
 .. rst2pdf: PageBreak
 
 
-Data HTTP API (Deprecated)
-==========================
-
-The Data API allows you to interact with CDAP Tables (the core Datasets) through HTTP.
-You can create Tables, truncate Tables, and read, write, modify, or delete data.
-
-For Datasets other than Tables, you can truncate the Dataset using this API.
-
-Creating a new Table
---------------------
-
-To create a new table, issue an HTTP PUT method to the URL::
-
-  PUT <base-url>/tables/<table-name>
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<table-name>``
-     - Name of the Table to be created
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The event was successfully received and the Table was either created or already exists
-   * - ``409 Conflict``
-     - A Dataset of a different type already exists with the given name
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``PUT <base-url>/tables/streams/mytable``
-   * - Description
-     - Create a new Table named *mytable*
-
-Comments
-........
-This will create a Table with the name given by ``<table-name>``.
-Table names should only contain ASCII letters, digits and hyphens.
-If a Table with the same name already exists, no error is returned,
-and the existing Table remains in place.
-
-However, if a Dataset of a different type exists with the same name—for example,
-a key/value Table or ``KeyValueTable``—this call will return a ``409 Conflict`` error.
-
-.. rst2pdf: PageBreak
-
-Writing Data to a Table
------------------------
-To write to a table, send an HTTP PUT method to the table’s URI::
-
-  PUT <base-url>/tables/<table-name>/rows/<row-key>
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<table-name>``
-     - Name of the Table to be written to
-   * - ``<row-key>``
-     - Row identifier
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The event was successfully received and the Table was successfully written to
-   * - ``400 Bad Request``
-     - The JSON String map is not well-formed or cannot be parsed as a map from String to String
-   * - ``404 Not Found``
-     - A Table with the given name does not exist
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``PUT <base-url>/tables/mytable/rows/status``
-   * - Description
-     - Write to the existing Table named *mytable* in a row identified as *status*
-
-Comments
-........
-In the body of the request, you must specify the columns and values
-that you want to write to the Table as a JSON String map. For example::
-
-  { "x":"y", "y":"a", "z":"1" }
-
-This writes three columns named *x*, *y*, and *z* with values *y*, *a*, and *1*, respectively.
-
-.. rst2pdf: PageBreak
-
-Reading Data from a Table
--------------------------
-To read data from a Table, address the row that you want to read directly
-in an HTTP GET method to the table’s URI::
-
-  GET <base-url>/tables/<table-name>/rows/<row-key>[?<column-identifier>]
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<table-name>``
-     - Name of the Table to be read from
-   * - ``<row-key>``
-     - Row identifier
-   * - ``<column-identifiers>``
-     - An optional combination of attributes and values such as:
-       ``start=<column-id> | stop=<column-id> | columns=<column-id>,<column-id>``
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The event was successfully received and the Table was successfully read from
-   * - ``400 Bad Request``
-     - The column list is not well-formed or cannot be parsed
-   * - ``404 Not Found``
-     - A Table with the given name does not exist
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/tables/mytable/rows/status``
-   * - Description
-     - Read from an existing Table named *mytable*, a row identified as *status*
-
-.. rst2pdf: PageBreak
-
-Comments
-........
-The response will be a JSON String representing a map from column name to value.
-For example, reading the row that was written in the `Writing Data to a Table`_, the response is::
-
-  {"x":"y","y":"a","z":"1"}
-
-If you are only interested in selected columns,
-you can specify a list of columns explicitly or give a range of columns.
-
-For example:
-
-To return only columns *x* and *y*::
-
-  GET ... /rows/<row-key>?columns=x,y
-
-To return all columns equal to or greater than (inclusive) *c5*::
-
-  GET ... /rows/<row-key>?start=c5
-
-To return all columns less than (exclusive, not including) *c5*::
-
-  GET ... /rows/<row-key>?stop=c5
-
-To return all columns equal to or greater than (inclusive) *c2* and less than (exclusive, not including) *c5*::
-
-  GET .../rows/<row-key>?start=c2&stop=c5
-
-
-.. rst2pdf: PageBreak
-
-Increment Data in a Table
--------------------------
-You can perform an atomic increment of cells of a Table's row, and receive back the incremented values,
-by issue an HTTP POST method to the row’s URL::
-
-  POST <base-url>/tables/<table-name>/rows/<row-key>/increment
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<table-name>``
-     - Name of the Table to be read from
-   * - ``<row-key>``
-     - Row identifier of row to be read
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The event successfully incremented the row of the Table
-   * - ``400 Bad Request``
-     - The JSON String is not well-formed; or cannot be parsed as a map from a String to a Long;
-       or one of the existing column values is not an 8-byte long value
-   * - ``404 Not Found``
-     - A table with the given name does not exist
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``POST <base-url>/streams/mytable/rows/status/increment``
-   * - Description
-     - To increment the columns of *mytable*, in a row identified as *status*, by 1
-
-Comments
-........
-In the body of the method, you must specify the columns and values that you want to increment them by
-as a JSON map from Strings to Long numbers, such as::
-
-  { "x": 1, "y": 7 }
-
-This HTTP call has the same effect as the corresponding Java Table Increment method.
-
-If successful, the response contains a JSON String map from the column keys to the incremented values.
-
-For example, if the existing value of column *x* was 4, and column *y* did not exist, then the response would be::
-
-  {"x":5,"y":7}
-
-Column *y* is newly created.
-
-.. rst2pdf: PageBreak
-
-Delete Data from a Table
-------------------------
-To delete from a table, submit an HTTP DELETE method::
-
-  DELETE <base-url>/tables/<table-name>/rows/<row-key>[?<column-identifier>]
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<table-name>``
-     - Name of the Table to be deleted from
-   * - ``<row-key>``
-     - Row identifier
-   * - ``<column-identifiers>``
-     - An optional combination of attributes and values such as::
-
-         start=<column-id> | stop=<column-id> | columns=<column-id>,<column-id>
-
-..
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The event successfully deleted the data of the Table
-   * - ``404 Not Found``
-     - A table with the given name does not exist
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``DELETE <base-url>/tables/mytable/rows/status``
-   * - Description
-     - Deletes from an existing Table named *mytable*, a row identified as *status*
-
-Comments
-........
-Similarly to `Reading Data from a Table`_, explicitly list the columns that you want to delete
-by adding a parameter of the form ``?columns=<column-key,...>``.
-See the examples under `Reading Data from a Table`_.
-
-.. rst2pdf: PageBreak
-
-Deleting Data from a Dataset
-----------------------------
-
-To clear a Dataset of all data, submit an HTTP POST request::
-
-  POST <base-url>/datasets/<dataset-name>/truncate
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<dataset-name>``
-     - Name of the Dataset to be truncated
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The event successfully deleted the data of the Dataset
-   * - ``404 Not Found``
-     - A Dataset with the given name does not exist
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``POST <base-url>/datasets/mydataset/truncate``
-   * - Description
-     - Delete all of the data from an existing Dataset named *mydataset*
-
-Comments
-........
-Note that this works not only for Tables but with other Datasets, including user-defined Custom Datasets.
-
-.. rst2pdf: PageBreak
-
-Encoding of Keys and Values
----------------------------
-
-The URLs and JSON bodies of your HTTP requests contain row keys, column keys and values,
-all of which are binary byte Arrays in the Java API.
-
-You need to encode these binary keys and values as Strings in the URL and the JSON body
-(the exception is the `Increment Data in a Table`_ method, which always interprets values as long integers).
-
-The encoding parameter of the URL specifies the encoding used in both the URL and the JSON body.
-
-For example, if you append a parameter ``encoding=hex`` to the request URL,
-then all keys and values are interpreted as hexadecimal strings,
-and the returned JSON from read requests also has keys and values encoded as hexadecimal string.
-
-Be aware that the same encoding applies to all keys and values involved in a request.
-
-For example, suppose you incremented table *counters*, row *a*, column *x* by 42::
-
-  POST <base-url>/tables/counters/rows/a/increment {"x":42}
-
-Now the value of column *x* is the 8-byte number 42. If you query for the value of this column::
-
-  GET <base-url>/tables/counters/rows/a?columns=x
-
-The returned JSON String map will contain a non-printable string for the value of column *x*::
-
-  {"x":"\u0000\u0000\u0000\u0000\u0000\u0000\u0000*"}
-
-Note the Unicode escapes in the string, and the asterisk at the end (which is the character at code point 42).
-
-To make this legible, you can specify hexadecimal notation in your request;
-that will require that you also encode the row key
-(*a*, encoded as *61*)
-and the column key (*x*, encoded as *78*) in your request as hexadecimal::
-
-  GET <base-url>/tables/counters/rows/61?columns=78&encoding=hex
-
-The response now contains both the column key and the value as hexadecimal strings::
-
-  {"78":"000000000000002a"}
-
-The supported encodings are:
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Encoding
-     - Description
-   * - ``encoding=ascii``
-     - Only ASCII characters are supported and are mapped to bytes one-to-one (Default)
-   * - ``encoding=hex``
-     - Hexadecimal strings. Example: the ASCII string ``a:b`` is represented as ``613A62``
-   * - ``encoding=url``
-     - URL encoding (also known as %-encoding or percent-encoding).
-       URL-safe characters use ASCII-encoding, while other bytes values are escaped using a ``%`` sign.
-       Example: the hexadecimal value ``613A62`` (ASCII string ``a:b``)
-       is represented as the string ``a%3Ab``.
-   * - ``encoding=base64``
-     - URL-safe Base-64 encoding without padding.
-       For more information, see `Internet RFC 2045 <http://www.ietf.org/rfc/rfc2045.txt>`_.
-       Example: the hexadecimal value ``613A62`` is represented as the string ``YTpi``.
-
-If you specify an encoding that is not supported, or you specify keys or values that cannot be decoded using that encoding, the request will return HTTP code ``400 Bad Request``.
-
-
-Counter Values
---------------
-Your Table values may frequently be counters (numbers), whereas the row and column keys might not be numbers.
-
-In such cases, it is more convenient to represent your Table values as numeric strings,
-by specifying ``counter=true``. For example::
-
-  GET <base-url>/tables/counters/rows/a?columns=x&counter=true
-
-The response now contains the column key as text and the row value as a numeric string::
-
-  {"x":"42"}
-
-Note that you can also specify the ``counter=true`` parameter when writing to a Table.
-This allows you to specify values as numeric strings while using a different encoding for row and column keys.
-
 Query HTTP API
 ==============
 
@@ -1614,6 +1171,45 @@ jobs, Workflows, and Custom Services, and query for their status using HTTP POST
    * - ``<operation>``
      - One of ``start`` or ``stop``
 
+You can retrieve the status of multiple elements from different applications and element types
+using an HTTP POST method::
+
+  POST <base-url>/status
+
+with a JSON array in the request body consisting of multiple JSON objects with these parameters:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``"appId"``
+     - Name of the Application being called
+   * - ``"programType"``
+     - One of ``flow``, ``procedure``, ``mapreduce``, ``workflow`` or ``service``
+   * - ``"programId"``
+     - Name of the element (*Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*)
+       being called
+
+The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``"status"``
+     - Maps to the status of an individual JSON object's queried element if the query is valid and the element was found.
+   * - ``"statusCode"``
+     - The status code from retrieving the status of an individual JSON object.
+   * - ``"error"``
+     - If an error, a description of why the status was not retrieved (the specified element was not found,
+       the requested JSON object was missing a parameter, etc.)
+
+Note that the ``status`` and ``error`` fields are mutually exclusive.
+
 Examples
 ........
 
@@ -1657,6 +1253,23 @@ request to the element's URL using the same parameter ``runtimeargs``::
   GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
 This will return the saved runtime arguments in JSON format.
+
+To retrieve the status of multiple programs in different applications, use the HTTP POST command::
+
+  POST <base-url>/status
+
+with the arguments for the different applications and programs as a JSON string map in the body, such as::
+
+  [{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1"},
+   {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2"},
+   {"appId":"MyApp3","programType":"Service","programId":"MySvc1}]
+
+If there was no procedure named ``MyProc2`` in the application ``MyApp1``, a possible response could be::
+
+  [{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1","status":"RUNNING","statusCode":200},
+   {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2","statusCode":404,"error":"Program: MyProc2 not found"},
+   {"appId":"MyApp3","programType":"Service","programId":"MySvc1,"status":"STOPPED","statusCode":200}]
+
 
 Container Information
 ---------------------
@@ -1745,6 +1358,72 @@ Note that this feature is experimental and may be deprecated or removed in futur
 
 Scale
 -----
+
+You can retrieve the instance count executing different elements from various applications and
+different element types using an HTTP POST method::
+
+  POST <base-url>/instances
+
+with a JSON array in the request body consisting of multiple JSON objects with these parameters:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``"appId"``
+     - Name of the Application being called
+   * - ``"programType"``
+     - One of ``flow``, ``procedure``, or ``service``
+   * - ``"programId"``
+     - Name of the element (*Flow*, *Procedure*, or *Custom Service*) being called
+   * - ``"runnableId"``
+     - Name of the *Flowlet* or *Runnable* if querying either a *Flow* or *Service*. This parameter
+       does not apply to *Procedures* because the ``programId`` is the same as the ``runnableId`` for a *Procedure*
+
+The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``"requested"``
+     - Maps to the number of instances the user requested for the program defined by the individual JSON object's parameters
+   * - ``"provisioned"``
+     - Maps to the number of instances that are actually running for the program defined by the individual JSON object's parameters.
+   * - ``"statusCode"``
+     - The status code from retrieving the instance count of an individual JSON object.
+   * - ``"error"``
+     - If an error, a description of why the status was not retrieved (the specified element was not found,
+       the requested JSON object was missing a parameter, etc.)
+
+Note that the ``requested`` and ``provisioned`` fields are mutually exclusive of the ``error`` field.
+
+Example
+.......
+
+To retrieve the instance count of multiple program runnables in multiple applications, use the HTTP POST command::
+
+  POST <base-url>/instances
+
+with the arguments as a JSON string in the body::
+
+  [{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1","runnableId":"MyFlowlet5"},
+   {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2"},
+   {"appId":"MyApp3","programType":"Service","programId":"MySvc1,"runnableId":"MyRunnable1"}]
+
+If there was no procedure named ``MyProc2`` in the application ``MyApp1``, a possible response could be::
+
+  [ {"appId":"MyApp1","programType":"Flow","programId":"MyFlow1",
+      "runnableId":"MyFlowlet5","provisioned":2,"requested":2,"statusCode":200},
+    {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2",
+      "provisioned":0,"requested":1,"statusCode":200},
+    {"appId":"MyApp3","programType":"Service","programId":"MySvc1,
+      "runnableId":"MyRunnable1","statusCode":404,"error":"Runnable: MyRunnable1 not found"} ]
+
 
 Scaling Flowlets
 ................
