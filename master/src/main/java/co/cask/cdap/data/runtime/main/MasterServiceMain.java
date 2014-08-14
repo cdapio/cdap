@@ -479,7 +479,7 @@ public class MasterServiceMain extends DaemonMain {
     Iterable<File> hiveConfFilesFiles = ExploreServiceUtils.getClassPathJarsFiles(hiveConfFiles);
     for (File file : hiveConfFilesFiles) {
       if (file.getName().matches(".*\\.xml")) {
-        preparer = preparer.withResources(file.toURI());
+        preparer = preparer.withResources(ExploreServiceUtils.hijackHiveConfFile(file).toURI());
       }
     }
 
