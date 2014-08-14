@@ -33,6 +33,18 @@ define(['core/controllers/services'], function (servicesController) {
 
     },
 
+    keyPressed: function (evt) {
+      var btn = this.$().parent().parent().next();
+      var inp = this.value;
+      C.btn = btn;
+      if (inp.length > 0 && parseInt(inp) != this.placeholder){
+          btn.children().css("opacity",'1')
+
+      } else {
+          btn.children().css("opacity",'')
+      }
+      return true;
+    },
 
     runnableChangeInstances: function (service, runnable) {
       var inputStr = runnable.get('instancesInput');

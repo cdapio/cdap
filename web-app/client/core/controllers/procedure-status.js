@@ -94,6 +94,19 @@ define([], function () {
 
 		},
 
+    keyPressed: function (evt) {
+      var btn = this.$().next();
+      var inp = this.value;
+      C.btn = btn;
+      if (inp.length > 0 && parseInt(inp) != this.placeholder){
+          btn.css("opacity",'1')
+
+      } else {
+          btn.css("opacity",'')
+      }
+      return true;
+    },
+
     changeInstances: function () {
       var inputStr = this.get('instancesInput');
       var input = parseInt(inputStr);

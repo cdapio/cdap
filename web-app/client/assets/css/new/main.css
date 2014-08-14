@@ -1829,6 +1829,10 @@ a strong {
 	color: #fff;
 }
 
+.btn-transparent {
+  opacity: 0.2;
+}
+
 .btn:focus {
 	background-position: 0;
 }
