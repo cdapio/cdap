@@ -242,12 +242,12 @@ public class MapReduceProgramRunner implements ProgramRunner {
     if (mapperMemory > 0) {
       mapredConf.setInt(Job.MAP_MEMORY_MB, mapperMemory);
       // Also set the Xmx to be smaller than the container memory.
-      mapredConf.set(Job.MAP_JAVA_OPTS, "-Xmx" + mapperMemory * 0.8 + "m");
+      mapredConf.set(Job.MAP_JAVA_OPTS, "-Xmx" + (int) (mapperMemory * 0.8) + "m");
     }
     if (reducerMemory > 0) {
       mapredConf.setInt(Job.REDUCE_MEMORY_MB, reducerMemory);
       // Also set the Xmx to be smaller than the container memory.
-      mapredConf.set(Job.REDUCE_JAVA_OPTS, "-Xmx" + reducerMemory * 0.8 + "m");
+      mapredConf.set(Job.REDUCE_JAVA_OPTS, "-Xmx" + (int) (reducerMemory * 0.8) + "m");
     }
 
     // Prefer our job jar in the classpath
