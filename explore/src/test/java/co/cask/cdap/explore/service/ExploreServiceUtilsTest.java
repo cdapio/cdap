@@ -50,7 +50,7 @@ public class ExploreServiceUtilsTest {
     FileOutputStream fos = new FileOutputStream(confFile);
     try {
       conf.writeXml(fos);
-    } finally{
+    } finally {
       fos.close();
     }
 
