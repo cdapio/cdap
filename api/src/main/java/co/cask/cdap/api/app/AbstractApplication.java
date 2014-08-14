@@ -24,12 +24,10 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.procedure.Procedure;
+import co.cask.cdap.api.service.AbstractService;
+import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.workflow.Workflow;
-import com.google.common.util.concurrent.Service;
-import org.apache.twill.api.ResourceSpecification;
-import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillRunnable;
 
 /**
  * A support class for {@link Application Applications} which reduces repetition and results in
@@ -199,5 +197,9 @@ public abstract class AbstractApplication implements Application {
    */
   protected void addService(String name, HttpServiceHandler handler) {
     configurer.addService(name, handler);
+  }
+
+  protected void addService(Service service) {
+    configurer.addService(service);
   }
 }

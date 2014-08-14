@@ -24,12 +24,9 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.procedure.Procedure;
+import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.workflow.Workflow;
-import com.google.common.util.concurrent.Service;
-import org.apache.twill.api.ResourceSpecification;
-import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillRunnable;
 
 /**
  * Configures a Reactor Application.
@@ -147,4 +144,6 @@ public interface ApplicationConfigurer {
    * @param handler
    */
   void addService(String name, HttpServiceHandler handler);
+
+  void addService(Service service);
 }
