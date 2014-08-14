@@ -76,6 +76,8 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
   private final ConflictDetection conflictLevel;
   // name length + name of the table: handy to have one cached
   private final byte[] nameAsTxChangePrefix;
+  // Whether read-less increments should be used when incrementWrite() is called
+  private final boolean enableReadlessIncrements;
 
   // In-memory buffer that keeps not yet persisted data. It is row->(column->value) map. Value can be null which means
   // that the corresponded column was removed.
@@ -100,11 +102,20 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
    * @param name table name
    */
   public BufferingOrderedTable(String name, ConflictDetection level) {
+    this(name, level, false);
+  }
+
+  /**
+   * Creates an instance of {@link BufferingOrderedTable}.
+   * @param name table name
+   */
+  public BufferingOrderedTable(String name, ConflictDetection level, boolean enableReadlessIncrements) {
     // for optimization purposes we don't allow table name of length greater than Byte.MAX_VALUE
     Preconditions.checkArgument(name.length() < Byte.MAX_VALUE,
                                 "Too big table name: " + name + ", exceeds " + Byte.MAX_VALUE);
     this.name = name;
     this.conflictLevel = level;
+    this.enableReadlessIncrements = enableReadlessIncrements;
     // TODO: having central dataset management service will allow us to use table ids instead of names, which will
     //       reduce changeset size transferred to/from server
     // we want it to be of format length+value to avoid conflicts like table="ab", row="cd" vs table="abc", row="d"
@@ -427,15 +438,19 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
 
   @Override
   public void incrementWrite(byte[] row, byte[][] columns, long[] amounts) throws Exception {
-    reportWrite(1, getSize(row) + getSize(columns) + getSize(amounts));
-    NavigableMap<byte[], Update> colVals = buff.get(row);
-    if (colVals == null) {
-      colVals = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-      buff.put(row, colVals);
-      // ANDREAS: is this thread-safe?
-    }
-    for (int i = 0; i < columns.length; i++) {
-      colVals.put(columns[i], Updates.mergeUpdates(colVals.get(columns[i]), new IncrementValue(amounts[i])));
+    if (enableReadlessIncrements) {
+      reportWrite(1, getSize(row) + getSize(columns) + getSize(amounts));
+      NavigableMap<byte[], Update> colVals = buff.get(row);
+      if (colVals == null) {
+        colVals = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+        buff.put(row, colVals);
+        // ANDREAS: is this thread-safe?
+      }
+      for (int i = 0; i < columns.length; i++) {
+        colVals.put(columns[i], Updates.mergeUpdates(colVals.get(columns[i]), new IncrementValue(amounts[i])));
+      }
+    } else {
+      increment(row, columns, amounts);
     }
   }
 

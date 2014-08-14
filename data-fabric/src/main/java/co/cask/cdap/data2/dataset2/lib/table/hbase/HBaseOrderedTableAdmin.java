@@ -125,12 +125,14 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
 
   @Override
   protected CoprocessorJar createCoprocessorJar() throws IOException {
-    return createCoprocessorJarInternal(conf, locationFactory, tableUtil);
+    boolean supportsIncrement = supportsReadlessIncrements(spec);
+    return createCoprocessorJarInternal(conf, locationFactory, tableUtil, supportsIncrement);
   }
 
   public static CoprocessorJar createCoprocessorJarInternal(CConfiguration conf,
                                                              LocationFactory locationFactory,
-                                                             HBaseTableUtil tableUtil) throws IOException {
+                                                             HBaseTableUtil tableUtil,
+                                                             boolean supportsIncrement) throws IOException {
     if (!conf.getBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE,
                          TxConstants.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
       return CoprocessorJar.EMPTY;
@@ -140,12 +142,27 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
     Location jarDir = locationFactory.create(conf.get(Constants.CFG_HDFS_LIB_DIR));
     Class<? extends Coprocessor> dataJanitorClass = tableUtil.getTransactionDataJanitorClassForVersion();
     Class<? extends Coprocessor> incrementClass = tableUtil.getIncrementHandlerClassForVersion();
-    ImmutableList<Class<? extends Coprocessor>> coprocessors = ImmutableList.of(dataJanitorClass, incrementClass);
-    Location jarFile = HBaseTableUtil.createCoProcessorJar("table", jarDir, coprocessors);
-    CoprocessorJar cpJar = new CoprocessorJar(coprocessors, jarFile);
+    ImmutableList.Builder<Class<? extends Coprocessor>> coprocessors = ImmutableList.builder();
+    coprocessors.add(dataJanitorClass);
+    if (supportsIncrement) {
+      coprocessors.add(incrementClass);
+    }
+    ImmutableList<Class<? extends Coprocessor>> coprocessorList = coprocessors.build();
+    Location jarFile = HBaseTableUtil.createCoProcessorJar("table", jarDir, coprocessorList);
+    CoprocessorJar cpJar = new CoprocessorJar(coprocessorList, jarFile);
     // TODO: this is hacky, the priority should come from the CP implementation
     cpJar.setPriority(dataJanitorClass, 1);
-    cpJar.setPriority(incrementClass, 2);
+    if (supportsIncrement) {
+      cpJar.setPriority(incrementClass, 2);
+    }
     return cpJar;
+  }
+
+  /**
+   * Returns whether or not the dataset defined in the given specification should enable read-less increments.
+   * Defaults to false.
+   */
+  public static boolean supportsReadlessIncrements(DatasetSpecification spec) {
+    return "true".equalsIgnoreCase(spec.getProperty(OrderedTable.PROPERTY_READLESS_INCREMENT));
   }
 }

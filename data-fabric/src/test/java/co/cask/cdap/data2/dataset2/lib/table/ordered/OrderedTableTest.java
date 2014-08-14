@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.table.ordered;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Row;
@@ -70,10 +71,14 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
   protected TransactionSystemClient txClient;
 
   protected abstract T getTable(String name, ConflictDetection conflictLevel) throws Exception;
-  protected abstract DatasetAdmin getTableAdmin(String name) throws Exception;
+  protected abstract DatasetAdmin getTableAdmin(String name, DatasetProperties props) throws Exception;
 
   protected T getTable(String name) throws Exception {
     return getTable(name, ConflictDetection.ROW);
+  }
+
+  protected DatasetAdmin getTableAdmin(String name) throws Exception {
+    return getTableAdmin(name, DatasetProperties.EMPTY);
   }
 
   @Before
@@ -450,7 +455,9 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
   // todo: unify with testBasicIncrementWithTx - it is exactly same
   @Test
   public void testBasicIncrementWriteWithTxSmall() throws Exception {
-    DatasetAdmin admin = getTableAdmin("myTable");
+    DatasetProperties props = DatasetProperties.builder().add(
+      OrderedTable.PROPERTY_READLESS_INCREMENT, Boolean.TRUE.toString()).build();
+    DatasetAdmin admin = getTableAdmin("myTable", props);
     admin.create();
     OrderedTable myTable = getTable("myTable");
 
@@ -489,7 +496,9 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
 
   @Test
   public void testBasicIncrementWriteWithTx() throws Exception {
-    DatasetAdmin admin = getTableAdmin("myTable");
+    DatasetProperties props = DatasetProperties.builder().add(
+      OrderedTable.PROPERTY_READLESS_INCREMENT, Boolean.TRUE.toString()).build();
+    DatasetAdmin admin = getTableAdmin("myTable", props);
     admin.create();
     OrderedTable myTable1, myTable2, myTable3, myTable4;
     try {
