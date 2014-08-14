@@ -27,7 +27,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- *
+ * A Catalog Lookup Service implementation that provides ids for products.
  */
 public class CatalogLookupService extends AbstractService {
 
@@ -39,7 +39,7 @@ public class CatalogLookupService extends AbstractService {
   }
 
   /**
-   * Lookup Handler to handle users interest HTTP call.
+   * Lookup Handler to serve requests.
    */
   @Path("/v1")
   public static final class ProductCatalogLookup extends AbstractHttpServiceHandler {
