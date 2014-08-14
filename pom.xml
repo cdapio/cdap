@@ -99,6 +99,7 @@
     <kafka.version>0.8.0</kafka.version>
     <leveldb.version>0.6</leveldb.version>
     <logback.version>1.0.9</logback.version>
+    <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
     <netty.http.version>0.4.0-SNAPSHOT</netty.http.version>
@@ -248,6 +249,11 @@
         <groupId>jline</groupId>
         <artifactId>jline</artifactId>
         <version>${jline.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${mockito.version}</version>
       </dependency>
       <dependency>
         <groupId>com.googlecode.concurrent-trees</groupId>
