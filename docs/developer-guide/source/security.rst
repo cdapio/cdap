@@ -59,14 +59,12 @@ Configuring Kerberos (required)
 To configure which Kerberos keytabs and principals are to be used for various CDAP services, add these properties to
 ``cdap-site.xml``:
 
-==========================================  =======================
+==========================================  =============================
    Property                                   Value
-==========================================  =======================
-security.external.auth.server.keytab.path    <path-to-keytab-file>
-security.external.auth.server.principal      <principal>
-security.router.keytab.path                  <path-to-keytab-file>
-security.router.principal                    <principal>
-==========================================  =======================
+==========================================  =============================
+cdap.master.kerberos.keytab                  <kerberos-keytab-file-path>
+cdap.master.kerberos.principal               <kerberos-principal>
+==========================================  =============================
 
 Enabling Access Logging
 ========================

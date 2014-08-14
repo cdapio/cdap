@@ -18,10 +18,8 @@ package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.kerberos.KerberosUtil;
-import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import com.google.common.base.Throwables;
-import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -65,8 +63,6 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
   private Server server;
   private InetAddress address;
-
-  private File tmpDir;
 
   /**
    * Constants for a valid JSON response.
@@ -173,10 +169,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         server.setConnectors(new Connector[]{connector});
       }
 
-      tmpDir = Files.createTempDir();
-      KerberosUtil.enable(
-        tmpDir, new File(configuration.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH)),
-        configuration.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL));
+      SecurityUtil.enableKerberos(new File(configuration.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH)),
+                                  configuration.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL));
 
       server.setHandler(context);
     } catch (Exception e) {
@@ -214,13 +208,6 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
     } catch (Exception e) {
       LOG.error("Error stopping ExternalAuthenticationServer.");
       LOG.error(e.getMessage());
-    }
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    if (tmpDir != null && tmpDir.exists()) {
-      DirUtils.deleteDirectoryContents(tmpDir);
     }
   }
 }

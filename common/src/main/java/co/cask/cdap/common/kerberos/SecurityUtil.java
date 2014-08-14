@@ -17,37 +17,37 @@
 package co.cask.cdap.common.kerberos;
 
 import co.cask.cdap.common.conf.Constants;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.io.Files;
+import org.apache.hadoop.security.authentication.util.KerberosUtil;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.Configuration;
 
 /**
  * Utility functions for Kerberos.
  */
-public final class KerberosUtil {
+public final class SecurityUtil {
 
-  private static final Logger LOG = LoggerFactory.getLogger(KerberosUtil.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SecurityUtil.class);
 
-  private KerberosUtil() { }
+  private SecurityUtil() { }
 
   /**
    * Enables Kerberos authentication.
    *
-   * @param tmpDir temporary directory to write jaas.conf to
    * @param keyTabFile Kerberos keytab file
    * @param principal Kerberos principal corresponding to the keytab file
    */
-  public static void enable(File tmpDir, File keyTabFile, String principal) throws IOException {
+  public static void enableKerberos(File keyTabFile, String principal) throws IOException {
     if (System.getProperty(Constants.External.JavaSecurity.ENV_AUTH_LOGIN_CONFIG) != null) {
-      LOG.warn("Environment variable '{}' was already set to {}. This may cause unexpected behavior in Java security.",
+      LOG.warn("Environment variable '{}' was already set to {}. This may cause unexpected behavior.",
                Constants.External.JavaSecurity.ENV_AUTH_LOGIN_CONFIG,
                System.getProperty(Constants.External.JavaSecurity.ENV_AUTH_LOGIN_CONFIG));
     }
@@ -65,26 +65,25 @@ public final class KerberosUtil {
     System.setProperty(Constants.External.Zookeeper.ENV_ALLOW_SASL_FAILED_CLIENTS, "true");
     System.setProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "Client");
 
-    // Generate the jaas.conf file which will be used by the Kerberos client library for authentication,
-    // due to setting the environment variable "java.security.auth.login.config"
-    File saslConfFile = new File(tmpDir, "jaas.conf");
-    PrintWriter writer = new PrintWriter(new FileWriter(saslConfFile));
+    final Map<String, String> properties = new HashMap<String, String>();
+    properties.put("doNotPrompt", "true");
+    properties.put("useKeyTab", "true");
+    properties.put("useTicketCache", "false");
+    properties.put("doNotPrompt", "true");
+    properties.put("principal", principal);
+    properties.put("keyTab", keyTabFile.getAbsolutePath());
 
-    try {
-      writer.printf("Client {\n");
-      writer.printf("  com.sun.security.auth.module.Krb5LoginModule required\n");
-      writer.printf("  useKeyTab=true\n");
-      writer.printf("  keyTab=\"%s\"\n", keyTabFile.getAbsolutePath());
-      writer.printf("  useTicketCache=false\n");
-      writer.printf("  principal=\"%s\";\n", principal);
-      writer.printf("};\n");
-    } finally {
-      writer.close();
-    }
+    final AppConfigurationEntry configurationEntry = new AppConfigurationEntry(
+      KerberosUtil.getKrb5LoginModuleName(), AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, properties);
 
-    System.setProperty(Constants.External.JavaSecurity.ENV_AUTH_LOGIN_CONFIG, saslConfFile.getAbsolutePath());
-    LOG.debug("Set {} to {}", Constants.External.JavaSecurity.ENV_AUTH_LOGIN_CONFIG, saslConfFile.getAbsolutePath());
-    LOG.debug("Contents of {} file:\n{}", Constants.External.JavaSecurity.ENV_AUTH_LOGIN_CONFIG,
-              Files.toString(saslConfFile, Charsets.UTF_8));
+    Configuration configuration = new Configuration() {
+      @Override
+      public AppConfigurationEntry[] getAppConfigurationEntry(String s) {
+        return new AppConfigurationEntry[] { configurationEntry };
+      }
+    };
+
+    // apply the configuration
+    Configuration.setConfiguration(configuration);
   }
 }
