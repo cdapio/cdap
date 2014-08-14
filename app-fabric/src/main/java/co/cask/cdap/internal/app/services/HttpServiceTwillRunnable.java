@@ -64,10 +64,12 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   private static final String CONF_RUNNABLE = "service.runnable.name";
   private static final String CONF_HANDLER = "service.runnable.handlers";
   private static final String CONF_SPEC = "service.runnable.handler.spec";
+  private static final String CONF_APP = "app.name";
 
   private Metrics metrics;
   private ClassLoader programClassLoader;
-  private String name;
+  private String serviceName;
+  private String appName;
   private List<HttpServiceHandler> handlers;
   private NettyHttpService service;
 
@@ -75,12 +77,14 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
    * Instantiates this class with a name which will be used when this service is announced
    * and a list of {@link HttpServiceHandler}s used to to handle the HTTP requests.
    *
-   * @param name the name which will be used to announce the service
+   * @param appName the name of the app which will be used to announce the service
+   * @param serviceName the name of the service which will be used to announce the service
    * @param handlers the handlers of the HTTP requests
    */
-  public HttpServiceTwillRunnable(String name, Iterable<? extends HttpServiceHandler> handlers) {
-    this.name = name;
+  public HttpServiceTwillRunnable(String appName, String serviceName, Iterable<? extends HttpServiceHandler> handlers) {
+    this.serviceName = serviceName;
     this.handlers = ImmutableList.copyOf(handlers);
+    this.appName = appName;
   }
 
   /**
@@ -102,7 +106,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     service.startAndWait();
     // announce the twill runnable
     int port = service.getBindAddress().getPort();
-    Cancellable contextCancellable = getContext().announce(name, port);
+    Cancellable contextCancellable = getContext().announce(serviceName, port);
     LOG.info("Announced HTTP Service");
     try {
       completion.get();
@@ -124,7 +128,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   public TwillRunnableSpecification configure() {
     LOG.info("In configure method in HTTP Service");
     Map<String, String> runnableArgs = Maps.newHashMap();
-    runnableArgs.put(CONF_RUNNABLE, name);
+    runnableArgs.put(CONF_RUNNABLE, serviceName);
     List<String> handlerNames = Lists.newArrayList();
     List<HttpServiceSpecification> specs = Lists.newArrayList();
     for (HttpServiceHandler handler : handlers) {
@@ -136,8 +140,9 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     }
     runnableArgs.put(CONF_HANDLER, GSON.toJson(handlerNames));
     runnableArgs.put(CONF_SPEC, GSON.toJson(specs));
+    runnableArgs.put(CONF_APP, appName);
     return TwillRunnableSpecification.Builder.with()
-      .setName(name)
+      .setName(serviceName)
       .withConfigs(ImmutableMap.copyOf(runnableArgs))
       .build();
   }
@@ -153,7 +158,8 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     // initialize the base class so that we can use this context later
     super.initialize(context);
     Map<String, String> runnableArgs = Maps.newHashMap(context.getSpecification().getConfigs());
-    name = runnableArgs.get(CONF_RUNNABLE);
+    appName = runnableArgs.get(CONF_APP);
+    serviceName = runnableArgs.get(CONF_RUNNABLE);
     handlers = Lists.newArrayList();
     List<String> handlerNames = GSON.fromJson(runnableArgs.get(CONF_HANDLER), HANDLER_NAMES_TYPE);
     List<HttpServiceSpecification> specs = GSON.fromJson(runnableArgs.get(CONF_SPEC), HANDLER_SPEC_TYPE);
@@ -178,7 +184,9 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
         Throwables.propagate(e);
       }
     }
-    service = createNettyHttpService(context.getHost().getCanonicalHostName(), handlerContextPairs);
+    String pathPrefix = String.format("/v2/apps/%s/services/%s/runnables/%s/methods", appName, serviceName,
+                                      serviceName);
+    service = createNettyHttpService(context.getHost().getCanonicalHostName(), handlerContextPairs, pathPrefix);
   }
 
   /**
@@ -206,9 +214,10 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
    * @param handlerContextPairs the list of pairs of HttpServiceHandlers and HttpServiceContexts
    * @return a NettyHttpService which delegates to the {@link HttpServiceHandler}s to handle the HTTP requests
    */
-  private static NettyHttpService createNettyHttpService(String host, List<HandlerContextPair> handlerContextPairs) {
+  private static NettyHttpService createNettyHttpService(String host, List<HandlerContextPair> handlerContextPairs,
+                                                         String pathPrefix) {
     // Create HttpHandlers which delegate to the HttpServiceHandlers
-    HttpHandlerFactory factory = new HttpHandlerFactory();
+    HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix);
     List<HttpHandler> nettyHttpHandlers = Lists.newArrayList();
     // get the runtime args from the twill context
     for (HandlerContextPair pair : handlerContextPairs) {

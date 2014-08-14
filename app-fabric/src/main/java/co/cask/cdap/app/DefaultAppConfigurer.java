@@ -200,8 +200,8 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void addService(String name, Iterable<HttpServiceHandler> handlers) {
-    addService(new HttpServiceTwillApplication(name, handlers));
+  public void addService(String serviceName, Iterable<HttpServiceHandler> handlers) {
+    addService(new HttpServiceTwillApplication(name, serviceName, handlers));
   }
 
   @Override

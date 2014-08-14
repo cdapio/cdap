@@ -25,18 +25,21 @@ import org.apache.twill.api.TwillSpecification;
  * HTTP Service using handlers passed to the constructor.
  */
 public class HttpServiceTwillApplication implements TwillApplication {
-  private final String name;
+  private final String appName;
+  private final String serviceName;
   private final Iterable<HttpServiceHandler> handlers;
 
   /**
    * Instantiates the class with the given name and {@link HttpServiceHandler}s. The name is the
    * name used when announcing this service. The handlers will handle the HTTP requests.
    *
-   * @param name the name of the service used when announcing the service
+   * @param appName the name of the app used when announcing the service
+   * @param serviceName the name of the service used when announcing the service
    * @param handlers the handlers of the HTTP request
    */
-  public HttpServiceTwillApplication(String name, Iterable<HttpServiceHandler> handlers) {
-    this.name = name;
+  public HttpServiceTwillApplication(String appName, String serviceName, Iterable<HttpServiceHandler> handlers) {
+    this.appName = appName;
+    this.serviceName = serviceName;
     this.handlers = handlers;
   }
 
@@ -48,9 +51,9 @@ public class HttpServiceTwillApplication implements TwillApplication {
   @Override
   public TwillSpecification configure() {
     return TwillSpecification.Builder.with()
-      .setName(name)
+      .setName(serviceName)
       .withRunnable()
-      .add(new HttpServiceTwillRunnable(name, handlers))
+      .add(new HttpServiceTwillRunnable(appName, serviceName, handlers))
       .noLocalFiles()
       .anyOrder()
       .build();

@@ -70,7 +70,7 @@ public class HttpHandlerGeneratorTest {
 
   @Test
   public void testHttpHandlerGenerator() throws Exception {
-    HttpHandlerFactory factory = new HttpHandlerFactory();
+    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix");
     HttpHandler httpHandler = factory.createHttpHandler(new MyHttpHandler(), new HttpServiceContext() {
       @Override
       public HttpServiceSpecification getSpecification() {
@@ -89,14 +89,14 @@ public class HttpHandlerGeneratorTest {
       InetSocketAddress bindAddress = service.getBindAddress();
 
       // Make a GET call
-      URLConnection urlConn = new URL(String.format("http://%s:%d/v2/handle",
+      URLConnection urlConn = new URL(String.format("http://%s:%d/prefix/v2/handle",
                                                     bindAddress.getHostName(), bindAddress.getPort())).openConnection();
       urlConn.setReadTimeout(2000);
 
       Assert.assertEquals("Hello World", new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));
 
       // Make a POST call
-      urlConn = new URL(String.format("http://%s:%d/v2/echo/test",
+      urlConn = new URL(String.format("http://%s:%d/prefix/v2/echo/test",
                                       bindAddress.getHostName(), bindAddress.getPort())).openConnection();
       urlConn.setReadTimeout(2000);
       urlConn.setDoOutput(true);
