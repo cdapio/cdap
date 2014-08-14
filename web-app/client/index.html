@@ -218,7 +218,7 @@
                   <div class="instance-wrapper">
                     <div>
                     <form {{action "changeInstances" service on="submit"}}>
-                      {{input keyUp=keyPressed placeholder=service.requested maxlength="3" value=service.instancesInput class="system-services-instances-input" }}
+                      {{input keyUp=keyPressed placeholder=service.requested maxlength="3" value=service.instancesInput class="services-instances-input" }}
                     </form>
                     </div>
                     <div>
@@ -301,7 +301,7 @@
                 <div class="instance-wrapper">
                   <div>
                     <form {{action "runnableChangeInstances" model runnable on="submit"}}>
-                      {{input keyUp=keyPressed placeholder=runnable.requested maxlength="3" value=runnable.instancesInput class="system-services-instances-input" }}
+                      {{input keyUp=keyPressed placeholder=runnable.requested maxlength="3" value=runnable.instancesInput class="services-instances-input" }}
                     </form>
                   </div>
                   <div>

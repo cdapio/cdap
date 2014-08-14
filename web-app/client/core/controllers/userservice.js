@@ -36,7 +36,6 @@ define(['core/controllers/services'], function (servicesController) {
     keyPressed: function (evt) {
       var btn = this.$().parent().parent().next();
       var inp = this.value;
-      C.btn = btn;
       if (inp.length > 0 && parseInt(inp) != this.placeholder){
           btn.children().css("opacity",'1')
 
@@ -51,6 +50,9 @@ define(['core/controllers/services'], function (servicesController) {
       var input = parseInt(inputStr);
 
       runnable.set('instancesInput', '');
+      setTimeout(function () {
+        $('.services-instances-input').keyup();
+      },500);
 
       if(!inputStr || inputStr.length === 0){
         C.Modal.show('Change Instances','Enter a valid number of instances.');

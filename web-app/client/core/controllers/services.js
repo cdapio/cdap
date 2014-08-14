@@ -110,9 +110,9 @@ define([], function () {
     },
 
     keyPressed: function (evt) {
+      console.log('cakked');
       var btn = this.$().parent().parent().next();
       var inp = this.value;
-      C.btn = btn;
       if (inp.length > 0 && parseInt(inp) != this.placeholder){
           btn.children().css("opacity",'1')
 
@@ -127,6 +127,9 @@ define([], function () {
       var input = parseInt(inputStr);
 
       service.set('instancesInput', '');
+      setTimeout(function () {
+        $('.services-instances-input').keyup();
+      },500);
 
       if(!inputStr || inputStr.length === 0){
         C.Modal.show('Change Instances','Enter a valid number of instances.');

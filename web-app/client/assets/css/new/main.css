@@ -1641,7 +1641,7 @@ span.log-icon.complete {
    color: black;
 }
 
-.system-services-instances-input{
+.services-instances-input{
   height: 29px ! important;
   max-width: 50px ! important;
   font-weight: bold ! important;
