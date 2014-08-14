@@ -27,6 +27,12 @@ import java.util.List;
 public interface ServiceConfigurer {
 
   /**
+   * Set name of the service.
+   * @param name of the service.
+   */
+  void setName(String name);
+
+  /**
    * Set description of the Service.
    * @param description to set for the Service.
    */
@@ -56,4 +62,15 @@ public interface ServiceConfigurer {
    */
   List<TwillRunnable> getWorkers();
 
+  /**
+   * Get the name of the Service.
+   * @return name of the service.
+   */
+  String getName();
+
+  /**
+   * Get the description of the Service.
+   * @return description of the Service.
+   */
+  String getDescription();
 }

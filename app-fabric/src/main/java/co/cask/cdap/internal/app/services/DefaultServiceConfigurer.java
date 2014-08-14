@@ -28,6 +28,7 @@ import java.util.List;
  */
 public class DefaultServiceConfigurer implements ServiceConfigurer {
   private String description;
+  private String name;
   private List<TwillRunnable> workers;
   private HttpServiceHandler serviceHandler;
 
@@ -39,13 +40,18 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   @Override
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  @Override
   public void setDescription(String description) {
     this.description = description;
   }
 
   @Override
   public void addWorker(TwillRunnable runnable) {
-    this.workers.add(runnable);
+    workers.add(runnable);
   }
 
   @Override
@@ -55,11 +61,21 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
 
   @Override
   public HttpServiceHandler getHandler() {
-    return this.serviceHandler;
+    return serviceHandler;
   }
 
   @Override
   public List<TwillRunnable> getWorkers() {
-    return this.workers;
+    return workers;
+  }
+
+  @Override
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public String getDescription() {
+    return description;
   }
 }

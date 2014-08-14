@@ -27,15 +27,10 @@ import java.util.List;
  */
 public abstract class AbstractService implements Service {
   protected ServiceConfigurer serviceConfigurer;
-  private String name;
-
-  protected AbstractService(String name) {
-    this.name = name;
-  }
 
   @Override
   public String getName() {
-    return this.name;
+    return this.serviceConfigurer.getName();
   }
 
   @Override
