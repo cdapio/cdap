@@ -18,8 +18,6 @@ package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.ProgramLifecycle;
 
-import java.util.Map;
-
 /**
  * Workers for user services must implement this interface.
  */
@@ -36,9 +34,4 @@ public interface ServiceWorker extends Runnable, ProgramLifecycle<ServiceWorkerC
    * This method will be invoked from a different thread than the one calling the {@link #run()} ) method
    */
   void stop();
-
-  /**
-   * Get runtime arguments for the worker.
-   */
-  Map<String, String> getRuntimeArguments();
 }

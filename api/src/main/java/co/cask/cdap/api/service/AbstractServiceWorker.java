@@ -44,9 +44,4 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
   public void initialize(ServiceWorkerContext context) throws Exception {
 
   }
-
-  @Override
-  public Map<String, String> getRuntimeArguments() {
-    return this.args;
-  }
 }

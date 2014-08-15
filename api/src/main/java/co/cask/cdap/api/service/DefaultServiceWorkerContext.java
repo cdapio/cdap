@@ -29,7 +29,7 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
 
   /**
    * Create a ServiceWorkerContext with runtime arguments.
-   * @param runtimeArgs
+   * @param runtimeArgs for the worker.
    */
   public DefaultServiceWorkerContext(Map<String, String> runtimeArgs) {
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);

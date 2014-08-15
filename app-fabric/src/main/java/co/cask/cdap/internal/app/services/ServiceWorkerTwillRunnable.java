@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.service.DefaultServiceWorkerContext;
 import co.cask.cdap.api.service.ServiceWorker;
+import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import com.google.common.base.Throwables;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.TwillContext;
@@ -25,20 +26,25 @@ import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
 
 /**
- *
+ * TwillRunnable to run a custom Service worker.
  */
 public class ServiceWorkerTwillRunnable implements TwillRunnable {
   private ServiceWorker worker;
 
+  /**
+   * Create a TwillRunnable for a custom Service worker.
+   * @param worker
+   */
   public ServiceWorkerTwillRunnable(ServiceWorker worker) {
     this.worker = worker;
   }
 
   @Override
   public TwillRunnableSpecification configure() {
+    ServiceWorkerSpecification workerSpecification = worker.configure();
     return TwillRunnableSpecification.Builder.with()
                                              .setName(worker.getClass().getSimpleName())
-                                             .withConfigs(worker.getRuntimeArguments())
+                                             .withConfigs(workerSpecification.getProperties())
                                              .build();
   }
 
