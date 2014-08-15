@@ -27,7 +27,6 @@ import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
@@ -40,6 +39,7 @@ import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
@@ -70,7 +70,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillSpecification;
@@ -135,11 +134,12 @@ public class DefaultStore implements Store {
         });
   }
 
-  public static void upgrade(DatasetFramework framework) throws Exception {
-    DatasetAdmin admin = framework.getAdmin(APP_META_TABLE, null);
-    if (admin != null) {
-      admin.upgrade();
-    }
+  /**
+   * Adds datasets and types to the given {@link DatasetFramework} used by app mds.
+   * @param framework framework to add types and datasets to
+   */
+  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
+    framework.addInstance(Table.class.getName(), APP_META_TABLE, DatasetProperties.EMPTY);
   }
 
   @Nullable

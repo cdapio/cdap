@@ -71,7 +71,6 @@ public class IndexedTableDefinition
 
     String columnToIndex = spec.getProperty("columnToIndex");
     Preconditions.checkNotNull(columnToIndex, "columnToIndex must be specified");
-//    int ttl = spec.getIntProperty("ttl", -1);
 
     return new IndexedTable(spec.getName(), table, index, columnToIndex);
   }

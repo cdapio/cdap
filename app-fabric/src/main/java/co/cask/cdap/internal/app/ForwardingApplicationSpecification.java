@@ -21,6 +21,7 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -66,6 +67,11 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   @Override
   public Map<String, MapReduceSpecification> getMapReduce() {
     return delegate.getMapReduce();
+  }
+
+  @Override
+  public Map<String, SparkSpecification> getSpark() {
+    return delegate.getSpark();
   }
 
   @Override

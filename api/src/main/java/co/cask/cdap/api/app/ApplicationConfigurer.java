@@ -25,11 +25,8 @@ import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
+import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.Workflow;
-import com.google.common.util.concurrent.Service;
-import org.apache.twill.api.ResourceSpecification;
-import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillRunnable;
 
 /**
  * Configures a Reactor Application.
@@ -57,7 +54,7 @@ public interface ApplicationConfigurer {
   void addStream(Stream stream);
 
   /**
-   * Adds a {@link DatasetModule} to be deployed automatically (if absent in the Reactor) during application 
+   * Adds a {@link DatasetModule} to be deployed automatically (if absent in the Reactor) during application
    * deployment.
    *
    * @param moduleName Name of the module to deploy
@@ -130,34 +127,18 @@ public interface ApplicationConfigurer {
   void addMapReduce(MapReduce mapReduce);
 
   /**
+   * Adds a {@link Spark} job to the Application.
+   *
+   * @param spark The {@link Spark} job to include in the Application
+   */
+  void addSpark(Spark spark);
+
+  /**
    * Adds a {@link Workflow} to the Application.
    *
    * @param workflow The {@link Workflow} to include in the Application
    */
   void addWorkflow(Workflow workflow);
-
-  /**
-   * Adds a Custom Service {@link TwillApplication} to the Application.
-   *
-   * @param application Custom Service {@link TwillApplication} to include in the Application
-   */
-  void addService(TwillApplication application);
-
-  /**
-   * Adds {@link TwillRunnable} TwillRunnable as a Custom Service {@link TwillApplication} to the Application.
-   * @param runnable TwillRunnable to run as service
-   * @param specification ResourceSpecification for Twill container.
-   */
-  void addService(TwillRunnable runnable, ResourceSpecification specification);
-
-  /**
-   * Adds {@link com.google.common.util.concurrent.Service} as a Custom Service {@link TwillApplication}
-   * to the Application.
-   * @param name Name of runnable.
-   * @param service Guava service to be added.
-   * @param specification ResourceSpecification for Twill container.
-   */
-  void addService(String name, Service service, ResourceSpecification specification);
 
   /**
    * Adds a list of {@link HttpServiceHandler} as a Custom Service to the Application.

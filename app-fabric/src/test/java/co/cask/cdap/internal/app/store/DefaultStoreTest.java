@@ -350,11 +350,11 @@ public class DefaultStoreTest {
     store.addApplication(appId, appSpec, new LocalLocationFactory().create("/appwithservices"));
 
     Id.Program programId = Id.Program.from(appId, "NoOpService");
-    int count = store.getServiceRunnableInstances(programId, "DummyService");
+    int count = store.getServiceRunnableInstances(programId, "NoOpService");
     Assert.assertEquals(1, count);
 
-    store.setServiceRunnableInstances(programId, "DummyService", 10);
-    count = store.getServiceRunnableInstances(programId, "DummyService");
+    store.setServiceRunnableInstances(programId, "NoOpService", 10);
+    count = store.getServiceRunnableInstances(programId, "NoOpService");
     Assert.assertEquals(10, count);
 
     ApplicationSpecification newSpec = store.getApplication(appId);
@@ -363,7 +363,7 @@ public class DefaultStoreTest {
 
     Map<String, RuntimeSpecification> runtimeSpecs = services.get("NoOpService").getRunnables();
     Assert.assertEquals(1, runtimeSpecs.size());
-    Assert.assertEquals(10, runtimeSpecs.get("DummyService").getResourceSpecification().getInstances());
+    Assert.assertEquals(10, runtimeSpecs.get("NoOpService").getResourceSpecification().getInstances());
   }
 
   @Test

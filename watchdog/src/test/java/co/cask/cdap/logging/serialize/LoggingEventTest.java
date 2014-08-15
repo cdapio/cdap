@@ -55,7 +55,8 @@ public class LoggingEventTest {
     iLoggingEvent.setMDCPropertyMap(mdcMap);
 
     Schema schema = new Schema.Parser().parse(getClass().getResourceAsStream("/logging/schema/LoggingEvent.avsc"));
-    GenericRecord datum = LoggingEvent.encode(schema, iLoggingEvent);
+    GenericRecord datum = LoggingEvent.encode(schema, iLoggingEvent,
+                                              LoggingContextAccessor.getLoggingContext());
 
     LoggingEvent actualEvent = new LoggingEvent(LoggingEvent.decode(datum));
     LoggingEventSerializerTest.assertLoggingEventEquals(iLoggingEvent, actualEvent);
@@ -67,7 +68,7 @@ public class LoggingEventTest {
     iLoggingEvent.setLevel(Level.ERROR);
 
     Schema schema = new Schema.Parser().parse(getClass().getResourceAsStream("/logging/schema/LoggingEvent.avsc"));
-    GenericRecord datum = LoggingEvent.encode(schema, iLoggingEvent);
+    GenericRecord datum = LoggingEvent.encode(schema, iLoggingEvent, LoggingContextAccessor.getLoggingContext());
 
     LoggingEvent actualEvent = new LoggingEvent(LoggingEvent.decode(datum));
     LoggingEventSerializerTest.assertLoggingEventEquals(iLoggingEvent, actualEvent);

@@ -25,11 +25,9 @@ import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
+import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.Workflow;
-import com.google.common.util.concurrent.Service;
-import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillRunnable;
 
 /**
  * A support class for {@link Application Applications} which reduces repetition and results in
@@ -181,6 +179,13 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
+   * @see ApplicationConfigurer#addSpark(Spark)
+   */
+  protected void addSpark(Spark spark) {
+    configurer.addSpark(spark);
+  }
+
+  /**
    * @see ApplicationConfigurer#addWorkflow(Workflow)
    */
   protected void addWorkflow(Workflow workflow) {
@@ -188,54 +193,14 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @see ApplicationConfigurer#addService(TwillApplication)
-   */
-  protected void addService(TwillApplication application) {
-    configurer.addService(application);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addService(TwillRunnable, org.apache.twill.api.ResourceSpecification)
-   */
-  protected void addService(TwillRunnable runnable, ResourceSpecification specification) {
-    configurer.addService(runnable, specification);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addService(TwillRunnable, org.apache.twill.api.ResourceSpecification)
-   * ResourceSpecification is defaulted to ResourceSpecification.BASIC
-   */
-  protected void addService(TwillRunnable runnable) {
-    configurer.addService(runnable, ResourceSpecification.BASIC);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addService(String name, com.google.common.util.concurrent.Service,
-   *                                        org.apache.twill.api.ResourceSpecification)
-   */
-  protected void addService(String name, Service service, ResourceSpecification specification) {
-    configurer.addService(name, service, specification);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addService(String name, com.google.common.util.concurrent.Service,
-   *                                        org.apache.twill.api.ResourceSpecification)
-   * ResourceSpecification is defaulted to ResourceSpecification.BASIC
-   * Args is defaulted to an empty Map.
-   */
-  protected void addService(String name, Service service) {
-    addService(name, service, ResourceSpecification.BASIC);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addService(TwillApplication)
+   * @see ApplicationConfigurer#addService(String, Iterable<HttpServiceHandler>);
    */
   protected void addService(String name, Iterable<HttpServiceHandler> handlers) {
     configurer.addService(name, handlers);
   }
 
   /**
-   * @see ApplicationConfigurer#addService(TwillApplication)
+   * @see ApplicationConfigurer#addService(String, HttpServiceHandler)
    */
   protected void addService(String name, HttpServiceHandler handler) {
     configurer.addService(name, handler);

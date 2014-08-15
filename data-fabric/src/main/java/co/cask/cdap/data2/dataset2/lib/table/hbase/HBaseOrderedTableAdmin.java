@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
@@ -69,7 +70,7 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
     columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
     tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
 
-    String ttlProp = spec.getProperties().get(TxConstants.PROPERTY_TTL);
+    String ttlProp = spec.getProperties().get(OrderedTable.PROPERTY_TTL);
     if (ttlProp != null) {
       int ttl = Integer.parseInt(ttlProp);
       if (ttl > 0) {
@@ -108,12 +109,12 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
       tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
       needUpgrade = true;
     }
-    if (spec.getProperty(TxConstants.PROPERTY_TTL) == null &&
+    if (spec.getProperty(OrderedTable.PROPERTY_TTL) == null &&
         columnDescriptor.getValue(TxConstants.PROPERTY_TTL) != null) {
       columnDescriptor.remove(TxConstants.PROPERTY_TTL.getBytes());
       needUpgrade = true;
-    } else if (spec.getProperty(TxConstants.PROPERTY_TTL) != null &&
-               !spec.getProperty(TxConstants.PROPERTY_TTL).equals
+    } else if (spec.getProperty(OrderedTable.PROPERTY_TTL) != null &&
+               !spec.getProperty(OrderedTable.PROPERTY_TTL).equals
                   (columnDescriptor.getValue(TxConstants.PROPERTY_TTL))) {
       columnDescriptor.setValue(TxConstants.PROPERTY_TTL, spec.getProperty(TxConstants.PROPERTY_TTL));
       needUpgrade = true;
@@ -124,6 +125,12 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
 
   @Override
   protected CoprocessorJar createCoprocessorJar() throws IOException {
+    return createCoprocessorJarInternal(conf, locationFactory, tableUtil);
+  }
+
+  public static CoprocessorJar createCoprocessorJarInternal(CConfiguration conf,
+                                                             LocationFactory locationFactory,
+                                                             HBaseTableUtil tableUtil) throws IOException {
     if (!conf.getBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE,
                          TxConstants.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
       return CoprocessorJar.EMPTY;
@@ -133,8 +140,7 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
     Location jarDir = locationFactory.create(conf.get(Constants.CFG_HDFS_LIB_DIR));
     Class<? extends Coprocessor> dataJanitorClass = tableUtil.getTransactionDataJanitorClassForVersion();
     Class<? extends Coprocessor> incrementClass = tableUtil.getIncrementHandlerClassForVersion();
-    ImmutableList<Class<? extends Coprocessor>> coprocessors =
-      ImmutableList.<Class<? extends Coprocessor>>of(dataJanitorClass, incrementClass);
+    ImmutableList<Class<? extends Coprocessor>> coprocessors = ImmutableList.of(dataJanitorClass, incrementClass);
     Location jarFile = HBaseTableUtil.createCoProcessorJar("table", jarDir, coprocessors);
     CoprocessorJar cpJar = new CoprocessorJar(coprocessors, jarFile);
     // TODO: this is hacky, the priority should come from the CP implementation

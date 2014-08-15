@@ -100,8 +100,9 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
     zkClientService = injector.getInstance(ZKClientService.class);
     zkClientService.start();
 
-    // todo: we should do this in AbstractMapReduceContextBuilder, see REACTOR-682
-    // Initialize log appender
+
+    // Initialize log appender in distributed mode.
+    // In single node the log appender is initialized during process startup.
     LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
 

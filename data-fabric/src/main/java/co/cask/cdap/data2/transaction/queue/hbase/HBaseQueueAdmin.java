@@ -507,7 +507,9 @@ public class HBaseQueueAdmin implements QueueAdmin {
       String tableName = Bytes.toString(desc.getName());
       // It's important to skip config table enabled.
       if (tableName.startsWith(tableNamePrefix) && !tableName.equals(configTableName)) {
+        LOG.info(String.format("Upgrading queue hbase table: %s", tableName));
         upgrade(tableName, properties);
+        LOG.info(String.format("Upgraded queue hbase table: %s", tableName));
       }
     }
   }

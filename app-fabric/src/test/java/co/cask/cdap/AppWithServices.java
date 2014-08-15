@@ -21,6 +21,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
@@ -39,27 +40,11 @@ public class AppWithServices extends AbstractApplication {
     setName("AppWithServices");
     setDescription("Application with Services");
     addProcedure(new NoOpProcedure());
-    addService(new DummyTwillApplication());
+    addService("NoOpService", new NoOpService());
   }
 
-  public static final class DummyTwillApplication implements TwillApplication {
-   @Override
-    public TwillSpecification configure() {
-      return TwillSpecification.Builder.with()
-               .setName("NoOpService")
-               .withRunnable()
-               .add(new DummyService())
-               .noLocalFiles()
-               .anyOrder()
-               .build();
-     }
-  }
-
-  public static final class DummyService extends AbstractTwillRunnable {
-    @Override
-    public void run() {
-     //No-op
-    }
+  public static final class NoOpService extends AbstractHttpServiceHandler {
+    // no-op service
   }
 
   public static final class NoOpProcedure extends AbstractProcedure {

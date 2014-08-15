@@ -17,11 +17,12 @@
 package co.cask.cdap.api.procedure;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.data.DataSetContext;
 
 /**
  * This interface represents the Procedure context.
  */
-public interface ProcedureContext extends RuntimeContext {
+public interface ProcedureContext extends RuntimeContext, DataSetContext {
   /**
    * @return The specification used to configure this {@link Procedure} instance.
    */
