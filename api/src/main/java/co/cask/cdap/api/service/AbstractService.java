@@ -17,7 +17,6 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.service.http.HttpServiceHandler;
-import org.apache.twill.api.TwillRunnable;
 
 import java.util.List;
 
@@ -26,27 +25,27 @@ import java.util.List;
  * custom service.
  */
 public abstract class AbstractService implements Service {
-  protected ServiceConfigurer serviceConfigurer;
+  protected ServiceConfigurer configurer;
 
   @Override
   public String getName() {
-    return this.serviceConfigurer.getName();
+    return this.configurer.getName();
   }
 
   @Override
   public final void configure(ServiceConfigurer serviceConfigurer) {
-    this.serviceConfigurer = serviceConfigurer;
+    this.configurer = serviceConfigurer;
     configure();
   }
 
   @Override
   public HttpServiceHandler getHandler() {
-    return serviceConfigurer.getHandler();
+    return configurer.getHandler();
   }
 
   @Override
-  public List<? extends TwillRunnable> getWorkers() {
-    return serviceConfigurer.getWorkers();
+  public List<ServiceWorker> getWorkers() {
+    return configurer.getWorkers();
   }
 
   /**

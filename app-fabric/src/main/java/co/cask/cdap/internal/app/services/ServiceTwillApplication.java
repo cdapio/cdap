@@ -16,7 +16,9 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.service.DefaultServiceWorkerContext;
 import co.cask.cdap.api.service.Service;
+import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import com.google.common.base.Preconditions;
 import com.sun.tools.javac.util.List;
@@ -48,8 +50,9 @@ public class ServiceTwillApplication implements TwillApplication {
                                      .withRunnable()
                                      .add(new HttpServiceTwillRunnable(service.getName(), List.of(serviceHandler)))
                                      .noLocalFiles();
-    for (TwillRunnable runnable : service.getWorkers()) {
-      runnableSetter.add(runnable);
+    for (ServiceWorker worker : service.getWorkers()) {
+      worker.configure(new DefaultServiceWorkerContext(worker.getRuntimeArguments()));
+      runnableSetter.add((TwillRunnable) worker);
     }
     return runnableSetter.anyOrder().build();
   }

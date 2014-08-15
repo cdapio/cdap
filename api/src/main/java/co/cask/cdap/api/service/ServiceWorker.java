@@ -16,12 +16,29 @@
 
 package co.cask.cdap.api.service;
 
-import co.cask.cdap.api.ProgramSpecification;
-import org.apache.twill.api.TwillSpecification;
+import co.cask.cdap.api.ProgramLifecycle;
+
+import java.util.Map;
 
 /**
- * Provide the specification of a Service.
+ * Workers for user services must implement this interface.
  */
-public interface ServiceSpecification extends ProgramSpecification, TwillSpecification {
+public interface ServiceWorker extends Runnable, ProgramLifecycle<ServiceWorkerContext> {
 
+  /**
+   * Configure a ServiceWorker.
+   * @param context for the worker.
+   * @return a ServiceWorkerSpecification.
+   */
+  ServiceWorkerSpecification configure(ServiceWorkerContext context);
+
+  /**
+   * Stop the worker.
+   */
+  void stop();
+
+  /**
+   * Get runtime arguments for the worker.
+   */
+  Map<String, String> getRuntimeArguments();
 }

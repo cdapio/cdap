@@ -17,7 +17,6 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.service.http.HttpServiceHandler;
-import org.apache.twill.api.TwillRunnable;
 
 import java.util.List;
 
@@ -48,5 +47,5 @@ public interface Service {
    * Get a list of workers for the service.
    * @return workers for the service.
    */
-  public List<? extends TwillRunnable> getWorkers();
+  public List<ServiceWorker> getWorkers();
 }

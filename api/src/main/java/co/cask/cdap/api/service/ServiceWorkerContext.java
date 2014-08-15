@@ -16,12 +16,11 @@
 
 package co.cask.cdap.api.service;
 
-import co.cask.cdap.api.ProgramSpecification;
-import org.apache.twill.api.TwillSpecification;
+import co.cask.cdap.api.RuntimeContext;
 
 /**
- * Provide the specification of a Service.
+ * Context for custom Service workers.
  */
-public interface ServiceSpecification extends ProgramSpecification, TwillSpecification {
+public interface ServiceWorkerContext extends RuntimeContext {
 
 }

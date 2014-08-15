@@ -17,7 +17,6 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.service.http.HttpServiceHandler;
-import org.apache.twill.api.TwillRunnable;
 
 import java.util.List;
 
@@ -40,9 +39,9 @@ public interface ServiceConfigurer {
 
   /**
    * Add a worker to the Service.
-   * @param runnable to add as worker.
+   * @param worker to add as worker.
    */
-  void addWorker(TwillRunnable runnable);
+  void addWorker(ServiceWorker worker);
 
   /**
    * Set the primary request handler for the Service.
@@ -60,7 +59,7 @@ public interface ServiceConfigurer {
    * Get a list of workers for the Service.
    * @return a list of workers for the Service.
    */
-  List<TwillRunnable> getWorkers();
+  List<ServiceWorker> getWorkers();
 
   /**
    * Get the name of the Service.

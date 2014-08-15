@@ -17,9 +17,9 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.service.ServiceConfigurer;
+import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import com.google.common.collect.Lists;
-import org.apache.twill.api.TwillRunnable;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ import java.util.List;
 public class DefaultServiceConfigurer implements ServiceConfigurer {
   private String description;
   private String name;
-  private List<TwillRunnable> workers;
+  private List<ServiceWorker> workers;
   private HttpServiceHandler serviceHandler;
 
   /**
@@ -50,8 +50,8 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   @Override
-  public void addWorker(TwillRunnable runnable) {
-    workers.add(runnable);
+  public void addWorker(ServiceWorker worker) {
+    workers.add(worker);
   }
 
   @Override
@@ -65,7 +65,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   @Override
-  public List<TwillRunnable> getWorkers() {
+  public List<ServiceWorker> getWorkers() {
     return workers;
   }
 
