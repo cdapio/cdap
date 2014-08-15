@@ -32,7 +32,7 @@ public abstract class AbstractService implements Service {
 
     return new DefaultServiceSpecification(getClass().getSimpleName(), configurer.getName(),
                                            configurer.getDescription(), configurer.getProperties(),
-                                           configurer.getWorkers(), configurer.getHandler());
+                                           configurer.getWorkers(), configurer.getHandlers());
   }
 
   /**

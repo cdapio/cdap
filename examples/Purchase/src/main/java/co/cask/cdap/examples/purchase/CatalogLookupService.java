@@ -34,7 +34,7 @@ public class CatalogLookupService extends AbstractService {
   @Override
   protected void configure() {
     configurer.setName(PurchaseApp.SERVICE_NAME);
-    configurer.setHandler(new ProductCatalogLookup());
+    configurer.addHandler(new ProductCatalogLookup());
     configurer.setDescription("Service to lookup product ids.");
   }
 

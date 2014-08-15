@@ -23,11 +23,11 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 import java.util.List;
 
 /**
- *
+ * Specification for custom user Services.
  */
 public interface ServiceSpecification extends ProgramSpecification, PropertyProvider {
 
   List<? extends ServiceWorker> getWorkers();
 
-  HttpServiceHandler getHandler();
+  List<? extends HttpServiceHandler> getHandlers();
 }

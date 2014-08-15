@@ -42,13 +42,13 @@ public interface ServiceConfigurer {
    * Add a worker to the Service.
    * @param worker to add as worker.
    */
-  void addWorker(ServiceWorker worker);
+  <T extends ServiceWorker> void addWorker(T worker);
 
   /**
-   * Set the primary request handler for the Service.
+   * Add a request handler to the Service.
    * @param serviceHandler to serve requests.
    */
-  void setHandler(HttpServiceHandler serviceHandler);
+  <T extends HttpServiceHandler> void addHandler(T serviceHandler);
 
   /**
    * Set the properties for the Service.
@@ -60,13 +60,13 @@ public interface ServiceConfigurer {
    * Get the primary handler used to service requests.
    * @return the handler that serves requests.
    */
-  HttpServiceHandler getHandler();
+  List<? extends HttpServiceHandler> getHandlers();
 
   /**
    * Get a list of workers for the Service.
    * @return a list of workers for the Service.
    */
-  List<ServiceWorker> getWorkers();
+  List<? extends ServiceWorker> getWorkers();
 
   /**
    * Get the name of the Service.

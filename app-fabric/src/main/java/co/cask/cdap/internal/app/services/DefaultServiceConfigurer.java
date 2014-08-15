@@ -21,6 +21,7 @@ import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import java.util.List;
 import java.util.Map;
@@ -31,15 +32,16 @@ import java.util.Map;
 public class DefaultServiceConfigurer implements ServiceConfigurer {
   private String description;
   private String name;
-  Map<String, String> properties;
+  private Map<String, String> properties;
   private List<ServiceWorker> workers;
-  private HttpServiceHandler serviceHandler;
+  private List<HttpServiceHandler> serviceHandlers;
 
   /**
    * Create an instance of {@link ServiceConfigurer}
    */
   public DefaultServiceConfigurer() {
     this.workers = Lists.newArrayList();
+    this.properties = Maps.newHashMap();
   }
 
   @Override
@@ -53,13 +55,13 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   @Override
-  public void addWorker(ServiceWorker worker) {
+  public <T extends ServiceWorker> void addWorker(T worker) {
     workers.add(worker);
   }
 
   @Override
-  public void setHandler(HttpServiceHandler serviceHandler) {
-    this.serviceHandler = serviceHandler;
+  public <T extends HttpServiceHandler> void addHandler(T serviceHandler) {
+    serviceHandlers.add(serviceHandler);
   }
 
   @Override
@@ -68,12 +70,12 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   @Override
-  public HttpServiceHandler getHandler() {
-    return serviceHandler;
+  public List<? extends HttpServiceHandler> getHandlers() {
+    return serviceHandlers;
   }
 
   @Override
-  public List<ServiceWorker> getWorkers() {
+  public List<? extends ServiceWorker> getWorkers() {
     return workers;
   }
 

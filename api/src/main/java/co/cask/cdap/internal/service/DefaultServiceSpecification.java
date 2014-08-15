@@ -32,7 +32,7 @@ public class DefaultServiceSpecification implements ServiceSpecification {
   private final String description;
   private final Map<String, String> properties;
   private final List<? extends ServiceWorker> workers;
-  private final HttpServiceHandler serviceHandler;
+  private final List<? extends HttpServiceHandler> serviceHandlers;
 
   /**
    * Create a ServiceSpecification for a custom user Service.
@@ -43,14 +43,15 @@ public class DefaultServiceSpecification implements ServiceSpecification {
    * @param workers of service.
    * @param serviceHandler of service.
    */
-  public DefaultServiceSpecification(String className, String name, String description, Map<String, String> properties,
-                                     List<? extends ServiceWorker> workers, HttpServiceHandler serviceHandler) {
+  public DefaultServiceSpecification(String className, String name, String description, Map<String,
+                                      String> properties, List<? extends ServiceWorker> workers,
+                                      List<? extends HttpServiceHandler> serviceHandler) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.properties = properties;
     this.workers = workers;
-    this.serviceHandler = serviceHandler;
+    this.serviceHandlers = serviceHandler;
   }
 
   @Override
@@ -84,7 +85,7 @@ public class DefaultServiceSpecification implements ServiceSpecification {
   }
 
   @Override
-  public HttpServiceHandler getHandler() {
-    return serviceHandler;
+  public List<? extends HttpServiceHandler> getHandlers() {
+    return serviceHandlers;
   }
 }

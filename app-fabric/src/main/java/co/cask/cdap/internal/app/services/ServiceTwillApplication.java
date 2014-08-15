@@ -20,10 +20,11 @@ import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
+
+import java.security.InvalidParameterException;
+import java.util.List;
 
 /**
  * TwillApplication to run custom user Services.
@@ -42,13 +43,15 @@ public class ServiceTwillApplication implements TwillApplication {
   @Override
   public TwillSpecification configure() {
     ServiceSpecification serviceSpecification = service.configure(new DefaultServiceConfigurer());
-    HttpServiceHandler serviceHandler = serviceSpecification.getHandler();
-    Preconditions.checkNotNull(serviceHandler, "No ServiceHandler found. Add a handler using the configurer.");
+    List<? extends HttpServiceHandler> serviceHandlers = serviceSpecification.getHandlers();
+    if (serviceHandlers.size() == 0) {
+      throw new InvalidParameterException("No handlers provided. Add handlers using configurer.");
+    }
     TwillSpecification.Builder.RunnableSetter runnableSetter = TwillSpecification.Builder.with()
                                      .setName(serviceSpecification.getName())
                                      .withRunnable()
                                      .add(new HttpServiceTwillRunnable(serviceSpecification.getName(),
-                                                                       ImmutableList.of(serviceHandler)))
+                                                                       serviceHandlers))
                                      .noLocalFiles();
     for (ServiceWorker worker : serviceSpecification.getWorkers()) {
       ServiceWorkerTwillRunnable runnable = new ServiceWorkerTwillRunnable(worker);
