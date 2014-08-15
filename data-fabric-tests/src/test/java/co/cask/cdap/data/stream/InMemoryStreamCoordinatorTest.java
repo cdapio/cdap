@@ -40,7 +40,6 @@ public class InMemoryStreamCoordinatorTest extends StreamCoordinatorTestBase {
       new ConfigModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new DataSetsModules().getInMemoryModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
       new AbstractModule() {

@@ -46,7 +46,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -357,6 +356,53 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     stmt.close();
 
     connection.close();
+  }
+
+  @Test
+  public void getDatasetsTest() throws Exception {
+
+    datasetFramework.addModule("module2", new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
+    datasetFramework.addInstance("NotRecordScannableTableDef", "my_table_not_record_scannable",
+                                 DatasetProperties.EMPTY);
+
+    ObjectResponse<List<?>> datasets;
+    HttpRequest request;
+    InetSocketAddress address = datasetManagerEndpointStrategy.pick().getSocketAddress();
+    URI baseURI = new URI(String.format("http://%s:%d/", address.getHostName(), address.getPort()));
+
+    request = HttpRequest.get(baseURI.resolve("v2/data/datasets?explorable=true").toURL()).build();
+    datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
+                                           new TypeToken<List<DatasetSpecification>>() { }.getType());
+    Assert.assertEquals(1, datasets.getResponseObject().size());
+    Assert.assertEquals("my_table", ((DatasetSpecification) datasets.getResponseObject().get(0)).getName());
+
+    request = HttpRequest.get(baseURI.resolve("v2/data/datasets?explorable=false").toURL()).build();
+    datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request), new TypeToken<List<DatasetSpecification>>() {
+    }.getType());
+    Assert.assertEquals(1, datasets.getResponseObject().size());
+    Assert.assertEquals("my_table_not_record_scannable",
+                        ((DatasetSpecification) datasets.getResponseObject().get(0)).getName());
+
+    request = HttpRequest.get(baseURI.resolve("v2/data/datasets?meta=true&explorable=true").toURL()).build();
+    datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request), new TypeToken<List<DatasetMeta>>() {
+    }.getType());
+    Assert.assertEquals(1, datasets.getResponseObject().size());
+    Assert.assertEquals("my_table", ((DatasetMeta) datasets.getResponseObject().get(0)).getSpec().getName());
+
+    request = HttpRequest.get(baseURI.resolve("v2/data/datasets?meta=true&explorable=false").toURL()).build();
+    datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
+                                           new TypeToken<List<DatasetMeta>>() { }.getType());
+    Assert.assertEquals(1, datasets.getResponseObject().size());
+    Assert.assertEquals("my_table_not_record_scannable",
+                        ((DatasetMeta) datasets.getResponseObject().get(0)).getSpec().getName());
+
+    request = HttpRequest.get(baseURI.resolve("v2/data/datasets?meta=true").toURL()).build();
+    datasets = ObjectResponse.fromJsonBody(HttpRequests.execute(request),
+                                           new TypeToken<List<DatasetMeta>>() { }.getType());
+    Assert.assertEquals(2, datasets.getResponseObject().size());
+
+    datasetFramework.deleteInstance("my_table_not_record_scannable");
+    datasetFramework.deleteModule("module2");
   }
 
   @Test
