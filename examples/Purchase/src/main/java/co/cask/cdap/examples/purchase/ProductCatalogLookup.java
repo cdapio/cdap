@@ -27,7 +27,7 @@ import javax.ws.rs.PathParam;
 
 /**
  * Lookup Handler to handle users interest HTTP call.
-*/
+  */
 @Path("/v1")
 public final class ProductCatalogLookup extends AbstractHttpServiceHandler {
 

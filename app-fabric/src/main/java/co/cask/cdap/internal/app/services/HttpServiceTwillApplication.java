@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.service.http.HttpServiceHandler;
+import com.google.common.collect.ImmutableList;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
 
@@ -27,7 +28,7 @@ import org.apache.twill.api.TwillSpecification;
 public class HttpServiceTwillApplication implements TwillApplication {
   private final String appName;
   private final String serviceName;
-  private final Iterable<HttpServiceHandler> handlers;
+  private final Iterable<? extends HttpServiceHandler> handlers;
 
   /**
    * Instantiates the class with the given name and {@link HttpServiceHandler}s. The name is the
@@ -37,10 +38,10 @@ public class HttpServiceTwillApplication implements TwillApplication {
    * @param serviceName the name of the service used when announcing the service
    * @param handlers the handlers of the HTTP request
    */
-  public HttpServiceTwillApplication(String appName, String serviceName, Iterable<HttpServiceHandler> handlers) {
+  public HttpServiceTwillApplication(String appName, String serviceName, Iterable<? extends HttpServiceHandler> handlers) {
     this.appName = appName;
     this.serviceName = serviceName;
-    this.handlers = handlers;
+    this.handlers = ImmutableList.copyOf(handlers);
   }
 
   /**

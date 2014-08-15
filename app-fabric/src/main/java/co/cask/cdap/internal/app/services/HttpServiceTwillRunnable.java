@@ -212,6 +212,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
    *
    * @param host the host which the service will run on
    * @param handlerContextPairs the list of pairs of HttpServiceHandlers and HttpServiceContexts
+   * @param pathPrefix a string prepended to the paths which the handlers in handlerContextPairs will bind to
    * @return a NettyHttpService which delegates to the {@link HttpServiceHandler}s to handle the HTTP requests
    */
   private static NettyHttpService createNettyHttpService(String host, List<HandlerContextPair> handlerContextPairs,

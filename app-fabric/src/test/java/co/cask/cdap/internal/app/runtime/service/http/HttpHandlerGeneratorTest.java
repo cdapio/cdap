@@ -61,11 +61,6 @@ public class HttpHandlerGeneratorTest {
     public void echo(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("name") String name) {
       responder.sendString(Charsets.UTF_8.decode(request.getContent()).toString() + " " + name);
     }
-
-    @Override
-    public void configure() {
-
-    }
   }
 
   // Omit class-level PATH annotation, to verify that prefix is still prepended to handled path.
@@ -75,11 +70,6 @@ public class HttpHandlerGeneratorTest {
     @GET
     public void echo(HttpServiceRequest request, HttpServiceResponder responder) {
       responder.sendString("OK");
-    }
-
-    @Override
-    public void configure() {
-
     }
   }
 
@@ -139,8 +129,8 @@ public class HttpHandlerGeneratorTest {
 
       // Ensure that even though the handler did not have a class-level annotation, we still prefix the path that it
       // handles by "/prefix"
-      urlConn = new URL(String.format("http://%s:%d/prefix/ping",
-                                                    bindAddress.getHostName(), bindAddress.getPort())).openConnection();
+      urlConn = new URL(String.format("http://%s:%d/prefix/ping", bindAddress.getHostName(), bindAddress.getPort()))
+        .openConnection();
       urlConn.setReadTimeout(2000);
 
       Assert.assertEquals("OK", new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));
