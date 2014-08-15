@@ -219,20 +219,20 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
       int oldInstances = store.getServiceRunnableInstances(programId, runnableName);
 
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getAccountId(),
-                                                                      programId.getApplicationId(),
-                                                                      programId.getId(),
-                                                                      ProgramType.SERVICE);
-      if (runtimeInfo != null) {
+      if (oldInstances != instances) {
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getAccountId(),
+                                                                        programId.getApplicationId(),
+                                                                        programId.getId(),
+                                                                        ProgramType.SERVICE);
         store.setServiceRunnableInstances(programId, runnableName, instances);
-        runtimeInfo.getController().command(ProgramOptionConstants.RUNNABLE_INSTANCES,
-                                            ImmutableMap.of("runnable", runnableName,
-                                                            "newInstances", String.valueOf(instances),
-                                                            "oldInstances", String.valueOf(oldInstances))).get();
-        responder.sendStatus(HttpResponseStatus.OK);
-      } else {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        if (runtimeInfo != null) {
+          runtimeInfo.getController().command(ProgramOptionConstants.RUNNABLE_INSTANCES,
+                                              ImmutableMap.of("runnable", runnableName,
+                                                              "newInstances", String.valueOf(instances),
+                                                              "oldInstances", String.valueOf(oldInstances))).get();
+        }
       }
+      responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable throwable) {
