@@ -69,7 +69,6 @@ final class HttpHandlerGenerator {
   public static final Type SUPER_CLASS_TYPE = Type.getType(AbstractHttpHandlerDelegator.class);
 
   private ClassWriter classWriter;
-  private String pathPrefix;
   private Type classType;
   private TypeToken<?> delegateType;
 
@@ -77,7 +76,6 @@ final class HttpHandlerGenerator {
     Class<?> rawType = delegateType.getRawType();
 
     this.classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-    this.pathPrefix = pathPrefix;
     this.delegateType = delegateType;
 
     String internalName = Type.getInternalName(rawType);
@@ -93,7 +91,7 @@ final class HttpHandlerGenerator {
     boolean firstVisit = true;
     for (TypeToken<?> type : delegateType.getTypes().classes()) {
       if (!Object.class.equals(type.getRawType())) {
-        inspectHandler(type, firstVisit);
+        inspectHandler(type, firstVisit, pathPrefix);
         firstVisit = false;
       }
     }
@@ -115,7 +113,7 @@ final class HttpHandlerGenerator {
   /**
    * Inspects the given type and copy/rewrite handler methods from it into the newly generated class.
    */
-  private void inspectHandler(TypeToken<?> type, final boolean firstVisit) throws IOException {
+  private void inspectHandler(TypeToken<?> type, final boolean firstVisit, final String pathPrefix) throws IOException {
     Class<?> rawType = type.getRawType();
 
     // Visit the delegate class, copy and rewrite handler method, with method body just do delegation
@@ -142,6 +140,7 @@ final class HttpHandlerGenerator {
             return new AnnotationVisitor(Opcodes.ASM4, annotationVisitor) {
               @Override
               public void visit(String name, Object value) {
+                // "value" is the key for the Path annotation string.
                 if (name.equals("value")) {
                   super.visit(name, pathPrefix + value.toString());
                 } else {

@@ -28,10 +28,10 @@ import javax.ws.rs.PathParam;
 /**
  * Lookup Handler to handle users interest HTTP call.
 */
-@Path("/v1/")
+@Path("/v1")
 public final class ProductCatalogLookup extends AbstractHttpServiceHandler {
 
-  @Path("product/{id}/catalog")
+  @Path("/product/{id}/catalog")
   @GET
   public void handler(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("id") String id) {
     // send string Cat-<id> with 200 OK response.

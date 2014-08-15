@@ -97,7 +97,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
         //Discoverable Service Name -> procedure.%s.%s.%s", accountId, appId, procedureName ;
         String serviceName = String.format("procedure.%s.%s.%s", accId, uriParts[2], uriParts[4]);
         return serviceName;
-      } else if ((uriParts.length >= 8) && uriParts[3].equals("services") && uriParts[7].equals("methods")) {
+      } else if ((uriParts.length >= 9) && uriParts[3].equals("services") && uriParts[7].equals("methods")) {
         //User defined services handle methods on them:
         //Service Path:  "/v2/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/methods/<user-defined-method-path>"
         String accId = getAuthenticatedAccountId(httpRequest);

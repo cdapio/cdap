@@ -136,6 +136,46 @@ public class RouterPathTest {
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
   }
 
+
+  @Test
+  public void testServicePath() throws Exception {
+    // Service Path "/v2/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/methods/<user-defined-method-path>"
+    // Discoverable Service Name -> "service.%s.%s.%s.%s", accountId, appId, serviceId, runnableId
+    String accId = "developer";
+
+    String servicePath = "/v2/apps//PurchaseHistory///services/CatalogLookup/runnables/someRunnable///methods//ping/1";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
+    httpRequest.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
+    Assert.assertEquals("service." + accId + ".PurchaseHistory.CatalogLookup.someRunnable", result);
+
+    servicePath = "///v2///apps/PurchaseHistory-123//services/weird!service@@NAme/runnables/someRunnable//methods/echo/someParam";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), servicePath);
+    httpRequest.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
+    Assert.assertEquals("service." + accId + ".PurchaseHistory-123.weird!service@@NAme.someRunnable", result);
+
+    servicePath = "v2/apps/SomeApp_Name/services/CatalogLookup/runnables/otherRunnableName/methods/getHistory/itemID";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
+    httpRequest.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
+    Assert.assertEquals("service." + accId + ".SomeApp_Name.CatalogLookup.otherRunnableName", result);
+
+    // The following two should resort to resort to APP_FABRIC_HTTP, because there is no actual method being called.
+    // (Similar to how procedures methods are routed).
+    servicePath = "v2/apps/AppName/services/CatalogLookup/runnables/someRunnable/methods////";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), servicePath);
+    httpRequest.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+
+    servicePath = "v2/apps/otherAppName/services/CatalogLookup/runnables/someRunnable/methods////";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
+    httpRequest.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+  }
+
   @Test
   public void testStreamPath() throws Exception {
     //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
