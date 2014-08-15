@@ -132,7 +132,7 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
   public static CoprocessorJar createCoprocessorJarInternal(CConfiguration conf,
                                                              LocationFactory locationFactory,
                                                              HBaseTableUtil tableUtil,
-                                                             boolean supportsIncrement) throws IOException {
+                                                             boolean supportsReadlessIncrement) throws IOException {
     if (!conf.getBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE,
                          TxConstants.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
       return CoprocessorJar.EMPTY;
@@ -144,18 +144,12 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
     Class<? extends Coprocessor> incrementClass = tableUtil.getIncrementHandlerClassForVersion();
     ImmutableList.Builder<Class<? extends Coprocessor>> coprocessors = ImmutableList.builder();
     coprocessors.add(dataJanitorClass);
-    if (supportsIncrement) {
+    if (supportsReadlessIncrement) {
       coprocessors.add(incrementClass);
     }
     ImmutableList<Class<? extends Coprocessor>> coprocessorList = coprocessors.build();
     Location jarFile = HBaseTableUtil.createCoProcessorJar("table", jarDir, coprocessorList);
-    CoprocessorJar cpJar = new CoprocessorJar(coprocessorList, jarFile);
-    // TODO: this is hacky, the priority should come from the CP implementation
-    cpJar.setPriority(dataJanitorClass, 1);
-    if (supportsIncrement) {
-      cpJar.setPriority(incrementClass, 2);
-    }
-    return cpJar;
+    return new CoprocessorJar(coprocessorList, jarFile);
   }
 
   /**
@@ -163,6 +157,6 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
    * Defaults to false.
    */
   public static boolean supportsReadlessIncrements(DatasetSpecification spec) {
-    return "true".equalsIgnoreCase(spec.getProperty(OrderedTable.PROPERTY_READLESS_INCREMENT));
+    return "true".equalsIgnoreCase(spec.getProperty(OrderedTable.PROPERTY_READLESS_INCREMENT_WRITE));
   }
 }

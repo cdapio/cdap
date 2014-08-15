@@ -38,7 +38,7 @@ public interface OrderedTable extends Dataset {
    * Property set to configure read-less increment support for a dataset.  When not set, calling the
    * {@link Table#incrementWrite(byte[], byte[], long)} method will result in a normal read-modify-write operation.
    */
-  public static final String PROPERTY_READLESS_INCREMENT = "dataset.table.readless.increment";
+  public static final String PROPERTY_READLESS_INCREMENT_WRITE = "dataset.table.readless.increment.write";
 
   /**
    * Reads the values of the specified columns in the specified row.

@@ -444,7 +444,6 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
       if (colVals == null) {
         colVals = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
         buff.put(row, colVals);
-        // ANDREAS: is this thread-safe?
       }
       for (int i = 0; i < columns.length; i++) {
         colVals.put(columns[i], Updates.mergeUpdates(colVals.get(columns[i]), new IncrementValue(amounts[i])));

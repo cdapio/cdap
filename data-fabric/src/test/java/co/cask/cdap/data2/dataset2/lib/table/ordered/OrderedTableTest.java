@@ -456,7 +456,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
   @Test
   public void testBasicIncrementWriteWithTxSmall() throws Exception {
     DatasetProperties props = DatasetProperties.builder().add(
-      OrderedTable.PROPERTY_READLESS_INCREMENT, Boolean.TRUE.toString()).build();
+      OrderedTable.PROPERTY_READLESS_INCREMENT_WRITE, Boolean.TRUE.toString()).build();
     DatasetAdmin admin = getTableAdmin("myTable", props);
     admin.create();
     OrderedTable myTable = getTable("myTable");
@@ -497,7 +497,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
   @Test
   public void testBasicIncrementWriteWithTx() throws Exception {
     DatasetProperties props = DatasetProperties.builder().add(
-      OrderedTable.PROPERTY_READLESS_INCREMENT, Boolean.TRUE.toString()).build();
+      OrderedTable.PROPERTY_READLESS_INCREMENT_WRITE, Boolean.TRUE.toString()).build();
     DatasetAdmin admin = getTableAdmin("myTable", props);
     admin.create();
     OrderedTable myTable1, myTable2, myTable3, myTable4;
