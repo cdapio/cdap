@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.services.http;
 
+import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
@@ -26,32 +27,53 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
+import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ObjectArrays;
+import com.google.common.io.ByteStreams;
+import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.util.EntityUtils;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.internal.utils.Dependencies;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
+import javax.annotation.Nullable;
 
 /**
  * AppFabric HttpHandler Test classes can extend this class, this will allow the HttpService be setup before
  * running the handler tests, this also gives the ability to run individual test cases.
  */
 public abstract class AppFabricTestBase {
+  private static final Gson GSON = new Gson();
   private static final String API_KEY = "SampleTestApiKey";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
   private static final String CLUSTER = "SampleTestClusterName";
@@ -206,4 +228,76 @@ public abstract class AppFabricTestBase {
     return client.execute(delete);
   }
 
+  protected static String readResponse(HttpResponse response) throws IOException {
+    HttpEntity entity = response.getEntity();
+    return EntityUtils.toString(entity, "UTF-8");
+  }
+
+  protected static <T> T readResponse(HttpResponse response, Type type) throws IOException {
+    return GSON.fromJson(readResponse(response), type);
+  }
+
+  /**
+   * Deploys and application.
+   */
+  protected static HttpResponse deploy(Class<?> application) throws Exception {
+    return deploy(application, null);
+  }
+  /**
+   * Deploys and application with (optionally) defined app name
+   */
+  protected static HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
+    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    final JarOutputStream jarOut = new JarOutputStream(bos, manifest);
+    final String pkgName = application.getPackage().getName();
+
+    // Grab every classes under the application class package.
+    try {
+      ClassLoader classLoader = application.getClassLoader();
+      if (classLoader == null) {
+        classLoader = ClassLoader.getSystemClassLoader();
+      }
+      Dependencies.findClassDependencies(classLoader, new Dependencies.ClassAcceptor() {
+        @Override
+        public boolean accept(String className, URL classUrl, URL classPathUrl) {
+          try {
+            if (className.startsWith(pkgName)) {
+              jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
+              InputStream in = classUrl.openStream();
+              try {
+                ByteStreams.copy(in, jarOut);
+              } finally {
+                in.close();
+              }
+              return true;
+            }
+            return false;
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+        }
+      }, application.getName());
+
+      // Add webapp
+      jarOut.putNextEntry(new ZipEntry("webapp/default/netlens/src/1.txt"));
+      ByteStreams.copy(new ByteArrayInputStream("dummy data".getBytes(Charsets.UTF_8)), jarOut);
+    } finally {
+      jarOut.close();
+    }
+
+    HttpEntityEnclosingRequestBase request;
+    if (appName == null) {
+      request = getPost("/v2/apps");
+    } else {
+      request = getPut("/v2/apps/" + appName);
+    }
+    request.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, "api-key-example");
+    request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
+    request.setEntity(new ByteArrayEntity(bos.toByteArray()));
+    return execute(request);
+  }
 }
