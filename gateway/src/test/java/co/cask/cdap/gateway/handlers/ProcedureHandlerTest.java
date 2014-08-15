@@ -28,7 +28,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -51,7 +50,6 @@ import java.net.InetSocketAddress;
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -394,20 +392,6 @@ public class ProcedureHandlerTest extends GatewayTestBase {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       }
     }
-  }
-
-  private void waitState(String runnableType, String appId, String runnableId, String state) throws Exception {
-    int trials = 0;
-    // it may take a while for workflow/mr to start...
-    while (trials++ < 20) {
-      HttpResponse response = doGet(String.format("/v2/apps/%s/%s/%s/status", appId, runnableType, runnableId));
-      JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
-      if (status != null && status.has("status") && state.equals(status.get("status").getAsString())) {
-        break;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertTrue(trials < 20);
   }
 
   private static void testTestServer() throws Exception {
