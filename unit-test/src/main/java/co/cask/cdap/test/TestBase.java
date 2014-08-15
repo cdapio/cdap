@@ -39,6 +39,7 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.runtime.DataFabricModules;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -47,6 +48,8 @@ import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamServiceModule;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -132,6 +135,8 @@ public class TestBase {
   private static DiscoveryServiceClient discoveryClient;
   private static ExploreExecutorService exploreExecutorService;
   private static ExploreClient exploreClient;
+  private static DatasetOpExecutor dsOpService;
+  private static DatasetService datasetService;
   private static TransactionManager txService;
 
   /**
@@ -215,7 +220,8 @@ public class TestBase {
 
     injector = Guice.createInjector(
       createDataFabricModule(cConf),
-      new DataSetsModules().getInMemoryModule(),
+      new DataSetsModules().getLocalModule(),
+      new DataSetServiceModules().getInMemoryModule(),
       new ConfigModule(cConf, hConf),
       new IOModule(),
       new AuthModule(),
@@ -256,6 +262,10 @@ public class TestBase {
     );
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
+    dsOpService = injector.getInstance(DatasetOpExecutor.class);
+    dsOpService.startAndWait();
+    datasetService = injector.getInstance(DatasetService.class);
+    datasetService.startAndWait();
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
@@ -325,6 +335,8 @@ public class TestBase {
       throw Throwables.propagate(e);
     }
     exploreExecutorService.stopAndWait();
+    datasetService.stopAndWait();
+    dsOpService.stopAndWait();
     txService.stopAndWait();
   }
 

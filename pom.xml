@@ -24,11 +24,11 @@
   <artifactId>cdap</artifactId>
   <version>2.5.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Cask CDAP</name>
+  <name>Cask DAP</name>
 
   <organization>
     <name>Cask</name>
-    <url>http://www.cask.co</url>
+    <url>http://cask.co</url>
   </organization>
 
   <repositories>
@@ -66,7 +66,7 @@
     </snapshotRepository>
     <site>
       <id>continuuity</id>
-      <url>http://www.continuuity.com</url>
+      <url>http://continuuity.com</url>
     </site>
   </distributionManagement>
 
@@ -99,6 +99,7 @@
     <kafka.version>0.8.0</kafka.version>
     <leveldb.version>0.6</leveldb.version>
     <logback.version>1.0.9</logback.version>
+    <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
     <netty.http.version>0.4.0-SNAPSHOT</netty.http.version>
@@ -248,6 +249,11 @@
         <groupId>jline</groupId>
         <artifactId>jline</artifactId>
         <version>${jline.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${mockito.version}</version>
       </dependency>
       <dependency>
         <groupId>com.googlecode.concurrent-trees</groupId>
@@ -1336,7 +1342,7 @@
                   <link>http://download.oracle.com/javase/6/docs/api/</link>
                 </links>
                 <bottom>
-                  <![CDATA[Copyright &#169; {currentYear} <a href="http://www.cask.co">Cask Inc.</a>. <a href="http://www.apache.org/licenses/LICENSE-2.0">Licensed under the Apache License, Version 2.0</a>.]]>
+                  <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co">Cask Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.]]>
                 </bottom>
               </configuration>
               <executions>
@@ -1792,10 +1798,10 @@
                     <executable>fpm</executable>
                     <commandlineArgs>
                       --name "cdap-${project.artifactId}"
-                      --vendor "Cask Inc."
+                      --vendor "Cask, Inc."
                       --maintainer "support@cask.co"
-                      --license "Copyright ${package.build.year} Cask,Inc. Licensed under the Apache License, Version 2.0."
-                      --description "Component of Cask CDAP"
+                      --license "Copyright ${package.build.year} Cask, Inc. Licensed under the Apache License, Version 2.0."
+                      --description "Component of Cask DAP"
                       --category misc
                       -s dir
                       -t rpm
@@ -1803,7 +1809,7 @@
                       --directories "/opt/cdap/${project.artifactId}"
                       --version "${package.version}"
                       --architecture all
-                      --url "http://www.cask.co"
+                      --url "http://cask.co"
                       --template-value "project=${project.artifactId}"
                       --after-install "${project.parent.basedir}/distributions/src/rpm/scripts/postinst"
                       --before-remove "${project.parent.basedir}/distributions/src/rpm/scripts/prerm"
@@ -1843,10 +1849,10 @@
                     <executable>fpm</executable>
                     <commandlineArgs>
                       --name "cdap-${project.artifactId}"
-                      --vendor "Cask Inc."
+                      --vendor "Cask, Inc."
                       --maintainer "support@cask.co"
-                      --license "Copyright ${package.build.year} Cask,Inc. Licensed under the Apache License, Version 2.0."
-                      --description "Component of Cask CDAP"
+                      --license "Copyright ${package.build.year} Cask, Inc. Licensed under the Apache License, Version 2.0."
+                      --description "Component of Cask DAP"
                       --category misc
                       -s dir
                       -t deb
@@ -1854,7 +1860,7 @@
                       --directories "/opt/cdap/${project.artifactId}"
                       --version "${package.version}"
                       --architecture all
-                      --url "http://www.cask.co"
+                      --url "http://cask.co"
                       --template-value "project=${project.artifactId}"
                       --after-install "${project.parent.basedir}/distributions/src/debian/scripts/postinst"
                       --before-remove "${project.parent.basedir}/distributions/src/debian/scripts/prerm"
@@ -1940,7 +1946,7 @@
             <link>http://download.oracle.com/javase/6/docs/api/</link>
           </links>
           <bottom>
-            <![CDATA[Copyright &#169; {currentYear} <a href="http://www.cask.co">Cask Inc.</a>. <a href="http://www.apache.org/licenses/LICENSE-2.0">Licensed under the Apache License, Version 2.0</a>.]]>
+            <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co">Cask Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.]]>
           </bottom>
         </configuration>
         <reportSets>

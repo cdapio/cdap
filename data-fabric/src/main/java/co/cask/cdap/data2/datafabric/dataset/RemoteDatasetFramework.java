@@ -35,6 +35,7 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -49,6 +50,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
@@ -178,13 +180,13 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   private void addModule(String moduleName, Class<?> typeClass) throws DatasetManagementException {
-    Location tempJarPath;
     try {
-      tempJarPath = createDeploymentJar(typeClass);
+      File tempFile = File.createTempFile(typeClass.getName(), ".jar");
       try {
+        Location tempJarPath = createDeploymentJar(typeClass, new LocalLocationFactory().create(tempFile.toURI()));
         client.addModule(moduleName, typeClass.getName(), tempJarPath);
       } finally {
-        tempJarPath.delete();
+        tempFile.delete();
       }
     } catch (IOException e) {
       String msg = String.format("Could not create jar for deploying dataset module %s with main class %s",
@@ -194,59 +196,61 @@ public class RemoteDatasetFramework implements DatasetFramework {
     }
   }
 
-  private static Location createDeploymentJar(Class<?> clz) throws IOException {
-    File tempFile = File.createTempFile(clz.getName(), ".jar");
-    Location tempJarLocation = new LocalLocationFactory().create(tempFile.getPath());
-
-    ClassLoader remembered = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(clz.getClassLoader());
+  private static Location createDeploymentJar(Class<?> clz, Location destination) throws IOException {
+    Location tempBundle = destination.getTempFile(".jar");
     try {
-      ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
-                                                                           "org.apache.hadoop",
-                                                                           "org.apache.hbase",
-                                                                           "org.apache.hive"));
-      bundler.createBundle(tempJarLocation, clz);
-    } finally {
-      Thread.currentThread().setContextClassLoader(remembered);
-    }
-
-    // Create the program jar for deployment. It removes the "classes/" prefix as that's the convention taken
-    // by the ApplicationBundler inside Twill.
-    File outFile = File.createTempFile(clz.getName(), ".jar");
-    Location outJarLocation = new LocalLocationFactory().create(outFile.getPath());
-
-    JarOutputStream jarOutput = new JarOutputStream(outJarLocation.getOutputStream());
-    try {
-      JarInputStream jarInput = new JarInputStream(tempJarLocation.getInputStream());
+      ClassLoader remembered = Thread.currentThread().getContextClassLoader();
+      Thread.currentThread().setContextClassLoader(clz.getClassLoader());
       try {
-        JarEntry jarEntry = jarInput.getNextJarEntry();
-        while (jarEntry != null) {
-          boolean isDir = jarEntry.isDirectory();
-          String entryName = jarEntry.getName();
-          if (!entryName.equals("classes/")) {
-            if (entryName.startsWith("classes/")) {
-              jarEntry = new JarEntry(entryName.substring("classes/".length()));
-            } else {
-              jarEntry = new JarEntry(entryName);
-            }
-            jarOutput.putNextEntry(jarEntry);
-
-            if (!isDir) {
-              ByteStreams.copy(jarInput, jarOutput);
-            }
-          }
-
-          jarEntry = jarInput.getNextJarEntry();
-        }
+        ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
+                                                                             "org.apache.hadoop",
+                                                                             "org.apache.hbase",
+                                                                             "org.apache.hive"));
+        bundler.createBundle(tempBundle, clz);
       } finally {
-        jarInput.close();
+        Thread.currentThread().setContextClassLoader(remembered);
       }
 
-    } finally {
-      jarOutput.close();
-    }
+      // Create the program jar for deployment. It removes the "classes/" prefix as that's the convention taken
+      // by the ApplicationBundler inside Twill.
+      JarOutputStream jarOutput = new JarOutputStream(destination.getOutputStream());
+      try {
+        JarInputStream jarInput = new JarInputStream(tempBundle.getInputStream());
+        try {
+          Set<String> seen = Sets.newHashSet();
+          JarEntry jarEntry = jarInput.getNextJarEntry();
+          while (jarEntry != null) {
+            boolean isDir = jarEntry.isDirectory();
+            String entryName = jarEntry.getName();
+            if (!entryName.equals("classes/")) {
+              if (entryName.startsWith("classes/")) {
+                jarEntry = new JarEntry(entryName.substring("classes/".length()));
+              } else {
+                jarEntry = new JarEntry(entryName);
+              }
+              if (seen.add(jarEntry.getName())) {
+                jarOutput.putNextEntry(jarEntry);
 
-    return outJarLocation;
+                if (!isDir) {
+                  ByteStreams.copy(jarInput, jarOutput);
+                }
+              }
+            }
+
+            jarEntry = jarInput.getNextJarEntry();
+          }
+        } finally {
+          jarInput.close();
+        }
+
+      } finally {
+        jarOutput.close();
+      }
+
+      return destination;
+    } finally {
+      tempBundle.delete();
+    }
   }
 
   // can be used directly if DatasetTypeMeta is known, like in create dataset by dataset ops executor service

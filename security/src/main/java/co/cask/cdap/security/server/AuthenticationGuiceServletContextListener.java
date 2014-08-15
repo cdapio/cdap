@@ -16,35 +16,39 @@
 
 package co.cask.cdap.security.server;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import com.google.common.collect.Lists;
+import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import org.jboss.resteasy.plugins.guice.GuiceResteasyBootstrapServletContextListener;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.ServletContext;
 
 /**
  * RestEasy context listener used to bind handlers. Enables usage of JAX-RS annotations.
  */
 public class AuthenticationGuiceServletContextListener extends GuiceResteasyBootstrapServletContextListener {
-  private final HashMap<String, Object> handlerMap;
-  private final CConfiguration configuration;
+  private final Map<String, Object> handlerMap;
 
   /**
    * Create an AuthenticationGuiceServletContextListener that binds handlers.
-   * @param map
-   * @param configuration
+   * @param handlerMap map of handlers.
    */
-  public AuthenticationGuiceServletContextListener(HashMap<String, Object> map, CConfiguration configuration) {
-    this.handlerMap = map;
-    this.configuration = configuration;
+  public AuthenticationGuiceServletContextListener(Map<String, Object> handlerMap) {
+    this.handlerMap = handlerMap;
   }
 
   @Override
   protected List<? extends Module> getModules(ServletContext context) {
-    return Lists.newArrayList(new SecurityHandlerModule(handlerMap, configuration));
+    return Lists.newArrayList(
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(GrantAccessToken.class).toInstance(
+            (GrantAccessToken) handlerMap.get(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER)
+          );
+        }
+      });
   }
-
 }

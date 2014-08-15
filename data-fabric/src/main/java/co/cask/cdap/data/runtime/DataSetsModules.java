@@ -17,7 +17,6 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.datafabric.dataset.type.DistributedDatasetTypeClassLoaderFactory;
@@ -25,39 +24,14 @@ import co.cask.cdap.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFac
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
-import co.cask.cdap.data2.dataset2.InMemoryDatasetService;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
-import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Names;
-
-import java.util.Map;
 
 /**
  * DataSets framework bindings
  */
 public class DataSetsModules {
-  public Module getInMemoryModule() {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        install(new FactoryModuleBuilder()
-                  .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                  .build(DatasetDefinitionRegistryFactory.class));
-        bind(DatasetTypeClassLoaderFactory.class).to(LocalDatasetTypeClassLoaderFactory.class);
-        expose(DatasetTypeClassLoaderFactory.class);
-
-        bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
-          .annotatedWith(Names.named("defaultDatasetModules"))
-          .toInstance(DataSetServiceModules.INMEMORY_DATASET_MODULES);
-
-        bind(DatasetFramework.class).toInstance(InMemoryDatasetService.getInstance());
-        expose(DatasetFramework.class);
-      }
-    };
-
-  }
 
   public Module getLocalModule() {
     return new PrivateModule() {

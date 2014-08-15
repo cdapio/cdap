@@ -492,7 +492,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         );
         // wait for status to come back in case we are polling mapreduce status in workflow
         // status map contains either a status or an error
-        while (statusMap.getStatus().isEmpty() && statusMap.getError().isEmpty()) {
+        while (statusMap.getStatus() == null ||
+               (statusMap.getStatus().isEmpty() && statusMap.getError().isEmpty())) {
           Thread.sleep(1);
         }
       } else {

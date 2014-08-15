@@ -20,12 +20,21 @@ bin=`dirname "${BASH_SOURCE-$0}"`
 bin=`cd "$bin"; pwd`
 script=`basename $0`
 
+auth_token=
+auth_file="$HOME/.cdap.accesstoken"
+
+function get_auth_token() {
+  if [ -f $auth_file ]; then
+    auth_token=`cat $auth_file`
+  fi
+}
+
 function usage() {
   echo "Tool for sending data to the ResponseCodeAnalytics"
   echo "Usage: $script [--host <hostname>]"
   echo ""
   echo "  Options"
-  echo "    --host      Specifies the host that Reactor is running on. (Default: localhost)"
+  echo "    --host      Specifies the host that CDAP is running on. (Default: localhost)"
   echo "    --help      This help message"
   echo ""
 }
@@ -39,11 +48,16 @@ stream="logEventStream"
       *)  usage; exit 1
      esac
   done
+
+#  get the access token
+get_auth_token
+
 OLD_IFS=IFS
 IFS=$'\n'
 lines=`cat "$bin"/../resources/apache.accesslog`
+
 for line in $lines
 do
-  curl -X POST -d "$line" http://$gateway:10000/v2/streams/$stream;
+  curl -H "Authorization: Bearer $auth_token" -X POST -d "$line" http://$gateway:10000/v2/streams/$stream;
 done
 IFS=$OLD_IFS

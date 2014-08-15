@@ -1,6 +1,6 @@
-=================================
-Continuuity Reactor Documentation
-=================================
+============================================
+Cask Data Application Platform Documentation
+============================================
 
 .. toctree::
    :maxdepth: 2
@@ -14,7 +14,7 @@ Continuuity Reactor Documentation
    Testing and Debugging </debugging>
    Security </security>
    Operations Guide </operations>
-   HTTP REST API </rest>
+   HTTP RESTful API </rest>
    Java Client API </java_client>
    /javadocs/index
    Licenses and Dependencies </licenses/index>
@@ -41,6 +41,6 @@ Examples
    /examples/responseCodeAnalytics
    /examples/trafficAnalytics
    /examples/purchase
-   /licenses/reactor-enterprise-dependencies
-   /licenses/reactor-level-1-dependencies
-   /licenses/reactor-singlenode-dependencies	
+   /licenses/cdap-enterprise-dependencies
+   /licenses/cdap-level-1-dependencies
+   /licenses/cdap-singlenode-dependencies

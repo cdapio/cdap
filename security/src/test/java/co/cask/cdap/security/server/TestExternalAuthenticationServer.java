@@ -31,8 +31,12 @@ import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import com.unboundid.ldap.listener.InMemoryDirectoryServer;
 import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
 import com.unboundid.ldap.listener.InMemoryListenerConfig;
@@ -57,6 +61,11 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.contains;
+import static org.mockito.Matchers.matches;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  * Test class for ExternalAuthenticationServer.
@@ -71,9 +80,23 @@ public class TestExternalAuthenticationServer {
   private static InMemoryDirectoryServer ldapServer;
   private static int ldapPort = Networks.getRandomPort();
 
+  private static Logger testAuditLogger;
+
   @BeforeClass
   public static void setup() {
-    Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(),
+    Module securityModule = Modules.override(new InMemorySecurityModule()).with(
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(AuditLogHandler.class)
+            .annotatedWith(Names.named(
+              ExternalAuthenticationServer.NAMED_EXTERNAL_AUTH))
+            .toInstance(new AuditLogHandler(testAuditLogger));
+        }
+      }
+    );
+    testAuditLogger = mock(Logger.class);
+    Injector injector = Guice.createInjector(new IOModule(), securityModule,
                                              new ConfigModule(getConfiguration()),
                                              new DiscoveryRuntimeModule().getInMemoryModules());
     server = injector.getInstance(ExternalAuthenticationServer.class);
@@ -159,6 +182,7 @@ public class TestExternalAuthenticationServer {
     HttpResponse response = client.execute(request);
 
     assertEquals(response.getStatusLine().getStatusCode(), 200);
+    verify(testAuditLogger, atLeastOnce()).trace(contains("admin"));
 
     // Test correct headers being returned
     String cacheControlHeader = response.getFirstHeader("Cache-Control").getValue();
@@ -214,6 +238,7 @@ public class TestExternalAuthenticationServer {
 
     // Request is Unauthorized
     assertEquals(response.getStatusLine().getStatusCode(), 401);
+    verify(testAuditLogger, atLeastOnce()).trace(contains("401"));
 
     server.stopAndWait();
     ldapServer.shutDown(true);

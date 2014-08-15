@@ -21,7 +21,7 @@ bin=`cd "$bin"; pwd`
 script=`basename $0`
 
 auth_token=
-auth_file="$HOME/.continuuity.accesstoken"
+auth_file="$HOME/.cdap.accesstoken"
 
 function get_auth_token() {
   if [ -f $auth_file ]; then
@@ -34,7 +34,7 @@ function usage() {
   echo "Usage: $script [--host <hostname>]"
   echo ""
   echo "  Options"
-  echo "    --host      Specifies the host that Reactor is running on. (Default: localhost)"
+  echo "    --host      Specifies the host that CDAP is running on. (Default: localhost)"
   echo "    --help      This help message"
   echo ""
 }
