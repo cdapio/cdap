@@ -1,70 +1,69 @@
-.. :author: Continuuity, Inc.
-   :version: 2.3.0
-   :description: HTTP Interface to the Continuuity Reactor
+.. :author: Cask, Inc.
+   :description: HTTP RESTful Interface to the Cask DAP
 
-=================================
-Continuuity Reactor HTTP REST API
-=================================
+.. highlight:: console
 
-.. reST Editor: .. section-numbering::
-.. reST Editor: .. contents::
+=====================
+CDAP HTTP RESTful API
+=====================
 
 .. rst2pdf: .. contents::
 .. rst2pdf: config _templates/pdf-config
 .. rst2pdf: stylesheets _templates/pdf-stylesheet
 .. rst2pdf: build ../build-pdf/
 
+.. highlight:: console
+
 Introduction
 ============
 
-The Continuuity Reactor has an HTTP interface for a multitude of purposes:
+The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude of purposes:
 
 - **Stream:** sending data events to a Stream, or to inspect the contents of a Stream
 - **Dataset:** interacting with Datasets, Dataset Modules, and Dataset Types
-- **Data:** interacting with Datasets (deprecated)
-- **Query:** sending ad-hoc queries to Reactor Datasets
+- **Query:** sending ad-hoc queries to CDAP Datasets
 - **Procedure:** sending calls to a stored Procedure
-- **Reactor Client:** deploying and managing Applications, and managing the life cycle of Flows,
-  Procedures, MapReduce jobs, Workflows, and Custom Services
+- **Client:** deploying and managing Applications, and managing the life cycle of Flows,
+  Procedures, MapReduce Jobs, Workflows, and Custom Services
 - **Logging:** retrieving Application logs
 - **Metrics:** retrieving metrics for system and user Applications (user-defined metrics)
-- **Monitor:** checking the status of various Reactor services, both System and Custom
+- **Monitor:** checking the status of various CDAP services, both System and Custom
 
 **Note:** The HTTP interface binds to port ``10000``. This port cannot be changed.
 
 Conventions
 -----------
 
-In this API, *client* refers to an external application that is calling the Continuuity Reactor using the HTTP interface.
+In this API, *client* refers to an external application that is calling the Cask DAP using the HTTP interface.
 
-In this API, *Application* refers to a user Application that has been deployed into the Continuuity Reactor.
+In this API, *Application* refers to a user Application that has been deployed into the Cask DAP.
 
-All URLs referenced in this API have this base::
+All URLs referenced in this API have this base URL::
 
-	http://<gateway>:10000/v2
+  http://<host>:10000/v2
 
-where ``<gateway>`` is the URL of the Continuuity Reactor. The base URL is represented as::
+where ``<host>`` is the URL of the Cask DAP Instance. The base URL is represented as::
 
-	<base-url>
+  <base-url>
 
 For example::
 
-	PUT <base-url>/streams/<new-stream-id>
+  PUT <base-url>/streams/<new-stream-id>
 
 means
 ::
 
-	PUT http://<gateway>:10000/v2/streams/<new-stream-id>
-	
+  PUT http://<host>:10000/v2/streams/<new-stream-id>
+  
 
 Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
 
-	PUT <base-url>/streams/<new-stream-id>
+  PUT <base-url>/streams/<new-stream-id>
 
 indicates that—in addition to the ``<base-url>``—the text ``<new-stream-id>`` is a variable
 and that you are to replace it with your value, perhaps in this case *mystream*::
 
-	PUT <base-url>/streams/mystream
+  PUT <base-url>/streams/mystream
 
 .. rst2pdf: PageBreak
 
@@ -113,36 +112,18 @@ Status Codes
 but a request may return any of these.
 
 
-SSL Required for Sandboxed Continuuity Reactor
-----------------------------------------------
-When you interact with a Sandboxed Continuuity Reactor,
-the Continuuity HTTP APIs require that you use SSL for the connection
-and that you authenticate your request by sending your API key in an HTTP header::
-
-	X-Continuuity-ApiKey: <api-key>
-
-.. list-table::
-   :widths: 15 85
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<api-key>``
-     - Continuuity Reactor API key, obtained from an account at
-       `Continuuity Accounts <http://accounts.continuuity.com>`__
-
-
-Working with Reactor Security
+Working with CDAP Security
 -----------------------------
-When working with a Reactor cluster with security enabled (``security.enabled=true`` in
-``continuuity-site.xml``), all calls to the HTTP APIs must be authenticated.  Clients must first
-obtain an access token from the authentication server (see the "Security" section of the
-guide). In order to authenticate, all client requests must supply this access token in the
+When working with a Cask DAP cluster with security enabled (``security.enabled=true`` in
+``cdap-site.xml``), all calls to the HTTP RESTful APIs must be authenticated. Clients must first
+obtain an access token from the authentication server (see the *Client Authentication* section of the
+Developer Guide `CDAP Security <security.html#client-authentication>`__).
+In order to authenticate, all client requests must supply this access token in the
 ``Authorization`` header of the request::
 
    Authorization: Bearer wohng8Xae7thahfohshahphaeNeeM5ie
 
-For Reactor-issued access tokens, the authentication scheme must always be ``Bearer``.
+For CDAP-issued access tokens, the authentication scheme must always be ``Bearer``.
 
 
 Stream HTTP API
@@ -158,7 +139,7 @@ Creating a Stream
 -----------------
 A Stream can be created with an HTTP PUT method to the URL::
 
-	PUT <base-url>/streams/<new-stream-id>
+  PUT <base-url>/streams/<new-stream-id>
 
 .. list-table::
    :widths: 20 80
@@ -202,7 +183,7 @@ Sending Events to a Stream
 --------------------------
 An event can be sent to a Stream by sending an HTTP POST method to the URL of the Stream::
 
-	POST <base-url>/streams/<stream-id>
+  POST <base-url>/streams/<stream-id>
 
 .. list-table::
    :widths: 20 80
@@ -244,7 +225,7 @@ Comments
 - The body of the request must contain the event in binary form.
 - You can pass headers for the event as HTTP headers by prefixing them with the *stream-id*::
 
-	<stream-id>.<property>:<string value>
+  <stream-id>.<property>:<string value>
 
   After receiving the request, the HTTP handler transforms it into a Stream event:
 
@@ -260,7 +241,7 @@ Reading Events from a Stream: Getting a Consumer-ID
 ---------------------------------------------------
 Get a *Consumer-ID* for a Stream by sending an HTTP POST method to the URL::
 
-	POST <base-url>/streams/<stream-id>/consumer-id
+  POST <base-url>/streams/<stream-id>/consumer-id
 
 .. list-table::
    :widths: 20 80
@@ -303,7 +284,7 @@ Comments
   first obtain a consumer (group) id, which is then passed to subsequent read requests.
 - The ``Consumer-ID`` is returned in a response header and—for convenience—also in the body of the response::
 
-	X-Continuuity-ConsumerId: <consumer-id>
+    X-CDAP-ConsumerId: <consumer-id>
 
   Once you have the ``Consumer-ID``, single events can be read from the Stream.
 
@@ -313,7 +294,7 @@ Reading Events from a Stream: Using the Consumer-ID
 ---------------------------------------------------
 A read is performed as an HTTP POST method to the URL::
 
-	POST <base-url>/streams/<stream-id>/dequeue
+  POST <base-url>/streams/<stream-id>/dequeue
 
 .. list-table::
    :widths: 20 80
@@ -326,7 +307,7 @@ A read is performed as an HTTP POST method to the URL::
 
 The request must pass the ``Consumer-ID`` in a header of the form::
 
-	X-Continuuity-ConsumerId: <consumer-id>
+  X-CDAP-ConsumerId: <consumer-id>
 
 HTTP Responses
 ..............
@@ -367,7 +348,7 @@ You can always start reading from the first event by getting a new ``Consumer-ID
 The response will contain the binary body of the event in its body and a header for each header of the Stream event,
 analogous to how you send headers when posting an event to the Stream::
 
-	<stream-id>.<property>:<value>
+  <stream-id>.<property>:<value>
 
 .. rst2pdf: PageBreak
 
@@ -377,7 +358,7 @@ Truncation means the deletion of all events that were written to the Stream.
 This is permanent and cannot be undone.
 A Stream can be truncated with an HTTP POST method to the URL::
 
-	POST <base-url>/streams/<stream-id>/truncate
+  POST <base-url>/streams/<stream-id>/truncate
 
 .. list-table::
    :widths: 20 80
@@ -421,7 +402,7 @@ it was written to the Stream.
 The default TTL for all Streams is infinite, meaning that events will never expire.
 The TTL property of a Stream can be changed with an HTTP PUT method to the URL::
 
-	PUT <base-url>/streams/<stream-id>/config
+  PUT <base-url>/streams/<stream-id>/config
 
 .. list-table::
    :widths: 20 80
@@ -434,7 +415,7 @@ The TTL property of a Stream can be changed with an HTTP PUT method to the URL::
 
 The new TTL value is passed in the request body as::
 
-	{ "ttl" : <ttl-in-seconds> }
+  { "ttl" : <ttl-in-seconds> }
 
 .. list-table::
    :widths: 20 80
@@ -471,7 +452,7 @@ Example
 
        with the new TTL value as a JSON string in the body::
 
-	  { "ttl" : 86400 }
+         { "ttl" : 86400 }
      
    * - Description
      - Change the TTL property of the Stream named *mystream* to 1 day
@@ -483,52 +464,53 @@ Reading multiple events is not supported directly by the Stream HTTP API,
 but the command-line tool ``stream-client`` demonstrates how to view *all*, the *first N*, or the *last N* events in the Stream.
 
 For more information, see the Stream Command Line Client ``stream-client`` in the ``/bin`` directory of the
-Continuuity Reactor SDK distribution.
+CDAP SDK distribution.
 
 For usage and documentation of options, run at the command line::
 
-	$ stream-client --help
+  $ stream-client --help
 
 
 .. rst2pdf: PageBreak
 
 Dataset HTTP API
 ================
-The Dataset API allows you to interact with Datasets through HTTP. You can list, create, delete, and truncate Datasets. For details, see the Developer Guide:
 
 .. rst2pdf: CutStart
 
 .. only:: html
 
-	`Continuuity Reactor Advanced Features, Datasets section <advanced.html#datasets-system>`__
+  The Dataset API allows you to interact with Datasets through HTTP. You can list, create, delete, and truncate Datasets. For details, see the 
+  `CDAP Developer Guide Advanced Features, Datasets section <advanced.html#datasets-system>`__
 
 .. only:: pdf
 
 .. rst2pdf: CutStop
 
-	`Continuuity Reactor Advanced Features, Datasets section <http://continuuity.com/docs/reactor/current/en/advanced.html#datasets-system>`__
+  The Dataset API allows you to interact with Datasets through HTTP. You can list, create, delete, and truncate Datasets. For details, see the 
+  `CDAP Developer Guide Advanced Features, Datasets section <http://cask.co/docs/cdap/current/en/advanced.html#datasets-system>`__
 
 
 Listing all Datasets
 --------------------
 
-You can list all Datasets in the Continuuity Reactor by issuing an HTTP GET request to the URL::
+You can list all Datasets in the Cask DAP by issuing an HTTP GET request to the URL::
 
-	GET <base-url>/data/datasets
+  GET <base-url>/data/datasets
 
 The response body will contain a JSON-formatted list of the existing Datasets::
 
-	{
-	   "name":"continuuity.user.purchases",
-	   "type":"com.continuuity.api.dataset.lib.ObjectStore",
-	   "properties":{
-	      "schema":"...",
-	      "type":"..."
-	   },
-	   "datasetSpecs":{
-	      ...
-	   }
-	 }
+  {
+     "name":"cdap.user.purchases",
+     "type":"co.cask.cdap.api.dataset.lib.ObjectStore",
+     "properties":{
+        "schema":"...",
+        "type":"..."
+     },
+     "datasetSpecs":{
+        ...
+     }
+   }
 
 .. rst2pdf: PageBreak
 
@@ -537,7 +519,7 @@ Creating a Dataset
 
 You can create a Dataset by issuing an HTTP PUT request to the URL::
 
-	PUT <base-url>/data/datasets/<dataset-name>
+  PUT <base-url>/data/datasets/<dataset-name>
   
 with JSON-formatted name of the dataset type and properties in a body::
 
@@ -584,9 +566,69 @@ Example
    * - HTTP Request
      - ``PUT <base-url>/data/datasets/mydataset``
    * - Body
-     - ``{"typeName":"com.continuuity.api.dataset.table.Table",`` ``"properties":{"ttl":"3600000"}}``
+     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"ttl":"3600000"}}``
    * - Description
      - Creates a Dataset named "mydataset" of the type "table" and time-to-live property set to 1 hour
+
+.. rst2pdf: PageBreak
+
+
+Updating an Existing Dataset
+----------------------------
+
+You can update an existing Dataset's table and properties by issuing an HTTP PUT request to the URL::
+
+	PUT <base-url>/data/datasets/<dataset-name>/properties
+
+with JSON-formatted name of the dataset type and properties in the body::
+
+  {
+     "typeName":"<type-name>",
+     "properties":{<properties>}
+  }
+
+:Note: The Dataset must exist, and the instance and type passed must match with the existing Dataset.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<dataset-name>``
+     - Name of the existing Dataset
+   * - ``<type-name>``
+     - Type of the existing Dataset
+   * - ``<properties>``
+     - Dataset properties as a map of String to String
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Requested Dataset was successfully updated
+   * - ``404 Not Found``
+     - Requested Dataset instance was not found
+   * - ``409 Conflict``
+     - Dataset Type provided for update is different from the existing Dataset Type
+
+Example
+.......
+.. list-table::
+   :widths: 25 75
+   :stub-columns: 1
+
+   * - HTTP Request
+     - ``PUT <base-url>/data/datasets/mydataset/properties``
+   * - Body
+     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"ttl":"7200000"}}``
+   * - Description
+     - For the "mydataset" of type "Table", updates the Dataset and its time-to-live property to 2 hours
 
 .. rst2pdf: PageBreak
 
@@ -626,7 +668,7 @@ Example
 Deleting all Datasets
 ---------------------
 
-You can delete all Datasets by issuing an HTTP DELETE request to the URL::
+You can delete all Datasets (see **Note** below) by issuing an HTTP DELETE request to the URL::
 
   DELETE <base-url>/data/unrecoverable/datasets
 
@@ -640,6 +682,8 @@ HTTP Responses
      - Description
    * - ``200 OK``
      - All Datasets were successfully deleted
+
+:Note: This operation will only be successful if the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is set to ``true``. Otherwise, this operation will return "403 Forbidden".
 
 Truncating a Dataset
 --------------------
@@ -663,448 +707,6 @@ HTTP Responses
 
 .. rst2pdf: PageBreak
 
-
-Data HTTP API (Deprecated)
-==========================
-
-The Data API allows you to interact with Continuuity Reactor Tables (the core Datasets) through HTTP.
-You can create Tables, truncate Tables, and read, write, modify, or delete data.
-
-For Datasets other than Tables, you can truncate the Dataset using this API.
-
-Creating a new Table
---------------------
-
-To create a new table, issue an HTTP PUT method to the URL::
-
-	PUT <base-url>/tables/<table-name>
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<table-name>``
-     - Name of the Table to be created
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The event was successfully received and the Table was either created or already exists
-   * - ``409 Conflict``
-     - A Dataset of a different type already exists with the given name
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``PUT <base-url>/tables/streams/mytable``
-   * - Description
-     - Create a new Table named *mytable*
-
-Comments
-........
-This will create a Table with the name given by ``<table-name>``.
-Table names should only contain ASCII letters, digits and hyphens.
-If a Table with the same name already exists, no error is returned,
-and the existing Table remains in place.
-
-However, if a Dataset of a different type exists with the same name—for example,
-a key/value Table or ``KeyValueTable``—this call will return a ``409 Conflict`` error.
-
-.. rst2pdf: PageBreak
-
-Writing Data to a Table
------------------------
-To write to a table, send an HTTP PUT method to the table’s URI::
-
-	PUT <base-url>/tables/<table-name>/rows/<row-key>
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<table-name>``
-     - Name of the Table to be written to
-   * - ``<row-key>``
-     - Row identifier
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The event was successfully received and the Table was successfully written to
-   * - ``400 Bad Request``
-     - The JSON String map is not well-formed or cannot be parsed as a map from String to String
-   * - ``404 Not Found``
-     - A Table with the given name does not exist
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``PUT <base-url>/tables/mytable/rows/status``
-   * - Description
-     - Write to the existing Table named *mytable* in a row identified as *status*
-
-Comments
-........
-In the body of the request, you must specify the columns and values
-that you want to write to the Table as a JSON String map. For example::
-
-	{ "x":"y", "y":"a", "z":"1" }
-
-This writes three columns named *x*, *y*, and *z* with values *y*, *a*, and *1*, respectively.
-
-.. rst2pdf: PageBreak
-
-Reading Data from a Table
--------------------------
-To read data from a Table, address the row that you want to read directly
-in an HTTP GET method to the table’s URI::
-
-	GET <base-url>/tables/<table-name>/rows/<row-key>[?<column-identifier>]
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<table-name>``
-     - Name of the Table to be read from
-   * - ``<row-key>``
-     - Row identifier
-   * - ``<column-identifiers>``
-     - An optional combination of attributes and values such as:
-       ``start=<column-id> | stop=<column-id> | columns=<column-id>,<column-id>``
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The event was successfully received and the Table was successfully read from
-   * - ``400 Bad Request``
-     - The column list is not well-formed or cannot be parsed
-   * - ``404 Not Found``
-     - A Table with the given name does not exist
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/tables/mytable/rows/status``
-   * - Description
-     - Read from an existing Table named *mytable*, a row identified as *status*
-
-.. rst2pdf: PageBreak
-
-Comments
-........
-The response will be a JSON String representing a map from column name to value.
-For example, reading the row that was written in the `Writing Data to a Table`_, the response is::
-
-	{"x":"y","y":"a","z":"1"}
-
-If you are only interested in selected columns,
-you can specify a list of columns explicitly or give a range of columns.
-
-For example:
-
-To return only columns *x* and *y*::
-
-	GET ... /rows/<row-key>?columns=x,y
-
-To return all columns equal to or greater than (inclusive) *c5*::
-
-	GET ... /rows/<row-key>?start=c5
-
-To return all columns less than (exclusive, not including) *c5*::
-
-	GET ... /rows/<row-key>?stop=c5
-
-To return all columns equal to or greater than (inclusive) *c2* and less than (exclusive, not including) *c5*::
-
-	GET .../rows/<row-key>?start=c2&stop=c5
-
-
-.. rst2pdf: PageBreak
-
-Increment Data in a Table
--------------------------
-You can perform an atomic increment of cells of a Table's row, and receive back the incremented values,
-by issue an HTTP POST method to the row’s URL::
-
-	POST <base-url>/tables/<table-name>/rows/<row-key>/increment
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<table-name>``
-     - Name of the Table to be read from
-   * - ``<row-key>``
-     - Row identifier of row to be read
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The event successfully incremented the row of the Table
-   * - ``400 Bad Request``
-     - The JSON String is not well-formed; or cannot be parsed as a map from a String to a Long;
-       or one of the existing column values is not an 8-byte long value
-   * - ``404 Not Found``
-     - A table with the given name does not exist
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``POST <base-url>/streams/mytable/rows/status/increment``
-   * - Description
-     - To increment the columns of *mytable*, in a row identified as *status*, by 1
-
-Comments
-........
-In the body of the method, you must specify the columns and values that you want to increment them by
-as a JSON map from Strings to Long numbers, such as::
-
-	{ "x": 1, "y": 7 }
-
-This HTTP call has the same effect as the corresponding Java Table Increment method.
-
-If successful, the response contains a JSON String map from the column keys to the incremented values.
-
-For example, if the existing value of column *x* was 4, and column *y* did not exist, then the response would be::
-
-	{"x":5,"y":7}
-
-Column *y* is newly created.
-
-.. rst2pdf: PageBreak
-
-Delete Data from a Table
-------------------------
-To delete from a table, submit an HTTP DELETE method::
-
-	DELETE <base-url>/tables/<table-name>/rows/<row-key>[?<column-identifier>]
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<table-name>``
-     - Name of the Table to be deleted from
-   * - ``<row-key>``
-     - Row identifier
-   * - ``<column-identifiers>``
-     - An optional combination of attributes and values such as::
-
-       	start=<column-id> | stop=<column-id> | columns=<column-id>,<column-id>
-
-..
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The event successfully deleted the data of the Table
-   * - ``404 Not Found``
-     - A table with the given name does not exist
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``DELETE <base-url>/tables/mytable/rows/status``
-   * - Description
-     - Deletes from an existing Table named *mytable*, a row identified as *status*
-
-Comments
-........
-Similarly to `Reading Data from a Table`_, explicitly list the columns that you want to delete
-by adding a parameter of the form ``?columns=<column-key,...>``.
-See the examples under `Reading Data from a Table`_.
-
-.. rst2pdf: PageBreak
-
-Deleting Data from a Dataset
-----------------------------
-
-To clear a Dataset of all data, submit an HTTP POST request::
-
-	POST <base-url>/datasets/<dataset-name>/truncate
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<dataset-name>``
-     - Name of the Dataset to be truncated
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The event successfully deleted the data of the Dataset
-   * - ``404 Not Found``
-     - A Dataset with the given name does not exist
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``POST <base-url>/datasets/mydataset/truncate``
-   * - Description
-     - Delete all of the data from an existing Dataset named *mydataset*
-
-Comments
-........
-Note that this works not only for Tables but with other Datasets, including user-defined Custom Datasets.
-
-.. rst2pdf: PageBreak
-
-Encoding of Keys and Values
----------------------------
-
-The URLs and JSON bodies of your HTTP requests contain row keys, column keys and values,
-all of which are binary byte Arrays in the Java API.
-
-You need to encode these binary keys and values as Strings in the URL and the JSON body
-(the exception is the `Increment Data in a Table`_ method, which always interprets values as long integers).
-
-The encoding parameter of the URL specifies the encoding used in both the URL and the JSON body.
-
-For example, if you append a parameter ``encoding=hex`` to the request URL,
-then all keys and values are interpreted as hexadecimal strings,
-and the returned JSON from read requests also has keys and values encoded as hexadecimal string.
-
-Be aware that the same encoding applies to all keys and values involved in a request.
-
-For example, suppose you incremented table *counters*, row *a*, column *x* by 42::
-
-	POST <base-url>/tables/counters/rows/a/increment {"x":42}
-
-Now the value of column *x* is the 8-byte number 42. If you query for the value of this column::
-
-	GET <base-url>/tables/counters/rows/a?columns=x
-
-The returned JSON String map will contain a non-printable string for the value of column *x*::
-
-	{"x":"\u0000\u0000\u0000\u0000\u0000\u0000\u0000*"}
-
-Note the Unicode escapes in the string, and the asterisk at the end (which is the character at code point 42).
-
-To make this legible, you can specify hexadecimal notation in your request;
-that will require that you also encode the row key
-(*a*, encoded as *61*)
-and the column key (*x*, encoded as *78*) in your request as hexadecimal::
-
-	GET <base-url>/tables/counters/rows/61?columns=78&encoding=hex
-
-The response now contains both the column key and the value as hexadecimal strings::
-
-	{"78":"000000000000002a"}
-
-The supported encodings are:
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Encoding
-     - Description
-   * - ``encoding=ascii``
-     - Only ASCII characters are supported and are mapped to bytes one-to-one (Default)
-   * - ``encoding=hex``
-     - Hexadecimal strings. Example: the ASCII string ``a:b`` is represented as ``613A62``
-   * - ``encoding=url``
-     - URL encoding (also known as %-encoding or percent-encoding).
-       URL-safe characters use ASCII-encoding, while other bytes values are escaped using a ``%`` sign.
-       Example: the hexadecimal value ``613A62`` (ASCII string ``a:b``)
-       is represented as the string ``a%3Ab``.
-   * - ``encoding=base64``
-     - URL-safe Base-64 encoding without padding.
-       For more information, see `Internet RFC 2045 <http://www.ietf.org/rfc/rfc2045.txt>`_.
-       Example: the hexadecimal value ``613A62`` is represented as the string ``YTpi``.
-
-If you specify an encoding that is not supported, or you specify keys or values that cannot be decoded using that encoding, the request will return HTTP code ``400 Bad Request``.
-
-
-Counter Values
---------------
-Your Table values may frequently be counters (numbers), whereas the row and column keys might not be numbers.
-
-In such cases, it is more convenient to represent your Table values as numeric strings,
-by specifying ``counter=true``. For example::
-
-	GET <base-url>/tables/counters/rows/a?columns=x&counter=true
-
-The response now contains the column key as text and the row value as a numeric string::
-
-	{"x":"42"}
-
-Note that you can also specify the ``counter=true`` parameter when writing to a Table.
-This allows you to specify values as numeric strings while using a different encoding for row and column keys.
 
 Query HTTP API
 ==============
@@ -1149,7 +751,7 @@ Comments
 If the query execution was successfully initiated, the body will contain a handle 
 used to identify the query in subsequent requests::
 
-	{ "handle":"<query-handle>" }
+  { "handle":"<query-handle>" }
 
 .. rst2pdf: PageBreak
 
@@ -1158,6 +760,15 @@ Status of a Query
 The status of a query is obtained using a HTTP GET request to the query's URL::
 
   GET <base-url>/data/explore/queries/<query-handle>/status
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<query-handle>``
+     - Handle obtained when the query was submitted
 
 HTTP Responses
 ..............
@@ -1177,10 +788,10 @@ Comments
 If the query exists, the body will contain the status of its execution
 and whether the query has a results set::
 
-	{
-	  "status":"<status-code>",
-	  "hasResults":<boolean>
-	 }
+  {
+    "status":"<status-code>",
+    "hasResults":<boolean>
+   }
 
 Status codes include ``INITIALIZED``, ``RUNNING``, ``FINISHED``, ``CANCELED``, ``CLOSED``,
 ``ERROR``, ``UNKNOWN``, and ``PENDING``.
@@ -1191,6 +802,15 @@ Obtaining the Result Schema
 If the query's status is ``FINISHED`` and it has results, you can obtain the schema of the results::
 
   GET <base-url>/data/explore/queries/<query-handle>/schema
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<query-handle>``
+     - Handle obtained when the query was submitted
 
 HTTP Responses
 ..............
@@ -1210,10 +830,10 @@ Comments
 The query's result schema is returned in a JSON body as a list of columns,
 each given by its name, type and position; if the query has no result set, this list is empty::
 
-	[
-	  {"name":"<name>", "type":"<type>", "position":<int>},
-	  ...
-	]
+  [
+    {"name":"<name>", "type":"<type>", "position":<int>},
+    ...
+  ]
 
 The type of each column is a data type as defined in the `Hive language manual
 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL>`_.
@@ -1232,7 +852,16 @@ The body of the request can contain a JSON string specifying the batch size::
     "size":<int>
   }
 
-If the batch size is not specified, it defaults to 20.
+If the batch size is not specified, the default is 20.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<query-handle>``
+     - Handle obtained when the query was submitted
 
 HTTP Responses
 ..............
@@ -1252,10 +881,10 @@ Comments
 The results are returned in a JSON body as a list of columns,
 each given as a structure containing a list of column values.::
 
-	[
-	  { "columns": [ <value_1>, <value_2>, ..., ] },
-	  ...
-	]
+  [
+    { "columns": [ <value_1>, <value_2>, ..., ] },
+    ...
+  ]
 
 The value at each position has the type that was returned in the result schema for that position.
 For example, if the returned type was ``INT``, then the value will be an integer literal,
@@ -1274,6 +903,15 @@ The query can be closed by issuing an HTTP DELETE against its URL::
 
 This frees all resources that are held by this query.
 
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<query-handle>``
+     - Handle obtained when the query was submitted
+
 HTTP Responses
 ..............
 .. list-table::
@@ -1289,16 +927,57 @@ HTTP Responses
    * - ``404 Not Found``
      - The query handle does not match any current query
 
-Canceling a Query
------------------
-Execution of a query can be canceled before it is finished with an HTTP POST::
+List of Queries
+---------------
+To return a list of queries, use::
 
-  POST <base-url>/data/explore/queries/<query-handle>/cancel
+   GET <base-url>/data/explore/queries?limit=<limit>&cursor=<cursor>&offset=<offset>
 
-After this, the query can only be closed.
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
 
-**Note:** This operation is not supported with CDH 4.x distributions. It will return a
-``500 Internal Server Error`` status code.
+   * - Parameter
+     - Description
+   * - ``<limit>``
+     - Number of results to return in the response.; by default, 50 results will be returned
+   * - ``<cursor>``
+     - Specifies if the results returned should be in the forward or reverse direction by specifying ``next`` or ``prev``
+   * - ``<offset>``
+     - Offset for pagination, returns the results that are greater than offset if the cursor is ``next`` or 
+       results that are less than offset if cursor is ``prev``
+
+Comments
+........
+The results are returned as a JSON array, with each element containing information about the query::
+
+  [
+    {"timestamp":1407192465183,"statement":"SHOW TABLES","status":"FINISHED",
+     "query_handle":"319d9438-903f-49b8-9fff-ac71cf5d173d","has_results":true,"is_active":false},
+    ...
+  ]
+
+Download Query Results
+----------------------
+To download the results of a query, use::
+  
+  GET <base-url>/data/explore/queries/<query-handle>
+
+The results of the query are returned in CSV format.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<query-handle>``
+     - Handle obtained when the query was submitted or via a list of queries
+
+Comments
+........
+The query results can be downloaded only once. The RESTful API will return a Status Code ``409 Conflict`` 
+if results for the ``query-handle`` are attempted to be downloaded again.
 
 HTTP Responses
 ..............
@@ -1309,18 +988,56 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The query was canceled
-   * - ``400 Bad Request``
-     - The query was not in a state that can be canceled
+     - The HTTP call was successful.
    * - ``404 Not Found``
-     - The query handle does not match any current query
+     - The query handle does not match any current query.
+   * - ``409 Conflict``
+     - The query results was already downloaded.
+
+Hive Table Schema
+-----------------
+You can obtain the schema of the underlying Hive Table with::
+
+  GET <base-url>/data/explore/datasets/<dataset-name>/schema
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<dataset-name>``
+     - Name of the Dataset whose schema is to be retrieved
+
+Comments
+........
+The results are returned as a JSON Map, with ``key`` containing the column names of the underlying table and 
+``value`` containing the column types of the underlying table::
+
+  {
+    "key": "array<tinyint>",
+    "value": "array<tinyint>"
+  }
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The HTTP call was successful.
+   * - ``404 Not Found``
+     - The dataset was not found.
 
 
 Procedure HTTP API
 ==================
 
 This interface supports sending calls to the methods of an Application’s Procedures.
-See the `Reactor Client HTTP API <#reactor-client-http-api>`__ for how to control the life cycle of
+See the `CDAP Client HTTP API <#cdap-client-http-api>`__ for how to control the life cycle of
 Procedures. 
 
 Executing Procedures
@@ -1331,7 +1048,7 @@ and the arguments as a JSON string in the body of the request.
 
 The request is an HTTP POST::
 
-	POST <base-url>/apps/<app-id>/procedures/<procedure-id>/methods/<method-id>
+  POST <base-url>/apps/<app-id>/procedures/<procedure-id>/methods/<method-id>
 
 .. list-table::
    :widths: 20 80
@@ -1378,32 +1095,32 @@ Example
 
 .. rst2pdf: PageBreak
 
-Reactor Client HTTP API
+CDAP Client HTTP API
 =======================
 
-Use the Reactor Client HTTP API to deploy or delete Applications and manage the life cycle of 
+Use the CDAP Client HTTP API to deploy or delete Applications and manage the life cycle of 
 Flows, Procedures, MapReduce jobs, Workflows, and Custom Services.
 
 Deploy an Application
 ---------------------
 To deploy an Application from your local file system, submit an HTTP POST request::
 
-	POST <base-url>/apps
+  POST <base-url>/apps
 
 with the name of the JAR file as a header::
 
-	X-Archive-Name: <JAR filename>
+  X-Archive-Name: <JAR filename>
 
 and its content as the body of the request::
 
-	<JAR binary content>
+  <JAR binary content>
 
 Invoke the same command to update an Application to a newer version.
 However, be sure to stop all of its Flows, Procedures and MapReduce jobs before updating the Application.
 
 To list all of the deployed applications, issue an HTTP GET request::
 
-	GET <base-url>/apps
+  GET <base-url>/apps
 
 This will return a JSON String map that lists each Application with its name and description.
 
@@ -1411,7 +1128,7 @@ Delete an Application
 ---------------------
 To delete an Application together with all of its Flows, Procedures and MapReduce jobs, submit an HTTP DELETE::
 
-	DELETE <base-url>/apps/<application-name>
+  DELETE <base-url>/apps/<application-name>
 
 .. list-table::
    :widths: 25 75
@@ -1435,8 +1152,8 @@ Start, Stop, Status, and Runtime Arguments
 After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce 
 jobs, Workflows, and Custom Services, and query for their status using HTTP POST and GET methods::
 
-	POST <base-url>/apps/<app-id>/<element-type>/<element-id>/<operation>
-	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/status
+  POST <base-url>/apps/<app-id>/<element-type>/<element-id>/<operation>
+  GET <base-url>/apps/<app-id>/<element-type>/<element-id>/status
 
 .. list-table::
    :widths: 20 80
@@ -1453,6 +1170,45 @@ jobs, Workflows, and Custom Services, and query for their status using HTTP POST
        being called
    * - ``<operation>``
      - One of ``start`` or ``stop``
+
+You can retrieve the status of multiple elements from different applications and element types
+using an HTTP POST method::
+
+  POST <base-url>/status
+
+with a JSON array in the request body consisting of multiple JSON objects with these parameters:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``"appId"``
+     - Name of the Application being called
+   * - ``"programType"``
+     - One of ``flow``, ``procedure``, ``mapreduce``, ``workflow`` or ``service``
+   * - ``"programId"``
+     - Name of the element (*Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*)
+       being called
+
+The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``"status"``
+     - Maps to the status of an individual JSON object's queried element if the query is valid and the element was found.
+   * - ``"statusCode"``
+     - The status code from retrieving the status of an individual JSON object.
+   * - ``"error"``
+     - If an error, a description of why the status was not retrieved (the specified element was not found,
+       the requested JSON object was missing a parameter, etc.)
+
+Note that the ``status`` and ``error`` fields are mutually exclusive.
 
 Examples
 ........
@@ -1473,38 +1229,55 @@ Examples
 
 When starting an element, you can optionally specify runtime arguments as a JSON map in the request body::
 
-	POST <base-url>/apps/HelloWorld/flows/WhoFlow/start
+  POST <base-url>/apps/HelloWorld/flows/WhoFlow/start
 
 with the arguments as a JSON string in the body::
 
-	{"foo":"bar","this":"that"}
+  {"foo":"bar","this":"that"}
 
-The Continuuity Reactor will use these these runtime arguments only for this single invocation of the
-element. To save the runtime arguments so that the Reactor will use them every time you start the element,
+The Cask DAP will use these these runtime arguments only for this single invocation of the
+element. To save the runtime arguments so that the Cask DAP will use them every time you start the element,
 issue an HTTP PUT with the parameter ``runtimeargs``::
 
-	PUT <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
+  PUT <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
 with the arguments as a JSON string in the body::
 
-	{"foo":"bar","this":"that"}
+  {"foo":"bar","this":"that"}
 
 .. rst2pdf: PageBreak
 
 To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET 
 request to the element's URL using the same parameter ``runtimeargs``::
 
-	GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
+  GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
 This will return the saved runtime arguments in JSON format.
+
+To retrieve the status of multiple programs in different applications, use the HTTP POST command::
+
+  POST <base-url>/status
+
+with the arguments for the different applications and programs as a JSON string map in the body, such as::
+
+  [{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1"},
+   {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2"},
+   {"appId":"MyApp3","programType":"Service","programId":"MySvc1}]
+
+If there was no procedure named ``MyProc2`` in the application ``MyApp1``, a possible response could be::
+
+  [{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1","status":"RUNNING","statusCode":200},
+   {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2","statusCode":404,"error":"Program: MyProc2 not found"},
+   {"appId":"MyApp3","programType":"Service","programId":"MySvc1,"status":"STOPPED","statusCode":200}]
+
 
 Container Information
 ---------------------
 
 To find out the address of an element's container host and the container’s debug port, you can query
-the Reactor for a Procedure, Flow or Service’s live info via an HTTP GET method::
+the Cask DAP for a Procedure, Flow or Service’s live info via an HTTP GET method::
 
-	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/live-info
+  GET <base-url>/apps/<app-id>/<element-type>/<element-id>/live-info
 
 .. list-table::
    :widths: 20 80
@@ -1521,38 +1294,148 @@ the Reactor for a Procedure, Flow or Service’s live info via an HTTP GET metho
 
 Example::
 
-	GET <base-url>/apps/WordCount/flows/WordCounter/live-info
+  GET <base-url>/apps/WordCount/flows/WordCounter/live-info
 
-The response is formatted in JSON; an example of this is shown in: 
+The response is formatted in JSON; an example of this is shown in the 
 
 .. rst2pdf: CutStart
 
 .. only:: html
 
-	`Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`__
+  `CDAP Testing and Debugging Guide <debugging.html#debugging-cdap-applications>`__.
 
 .. only:: pdf
 
 .. rst2pdf: CutStop
 
-	`Continuuity Reactor Testing and Debugging Guide <http://continuuity.com/docs/reactor/current/en/debugging.html#debugging-reactor-applications>`__
+  `CDAP Testing and Debugging Guide <http://cask.co/docs/cdap/current/en/debugging.html#debugging-cdap-applications>`__.
+
+Service Discovery
+------------------
+To find a list of the host and ports of an announced discoverable, you can query the Service's ``discover`` method via
+an HTTP GET method::
+
+  GET <base-url>/apps/<app-id>/services/<service-name>/discover/<discoverable-id>
+
+.. list-table::
+    :widths: 20 80
+    :header-rows: 1
+
+    * - Parameter
+      - Description
+    * - ``<app-id>``
+      - Name of the Application being called
+    * - ``<service-name>``
+      - Name of the Custom Service
+    * - ``<discoverable-id>``
+      - ID of ``TwillRunnable`` to be discovered
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/apps/PurchaseHistory/services/CatalogLookupService/discover/LookupByProductId``
+   * - Description
+     - Find the host and port of ``LookupByProductId`` service announced from ``CatalogLookupService``.
+   * - Result
+     - ::
+
+         [
+          {
+            "host": "node-1003.my.cluster.net",
+            "port": 40324
+          }
+         ]
+
+Accessing Services directly via their host and port is not advisable as it bypasses all CDAP security.
+
+Note that this feature is experimental and may be deprecated or removed in future releases.
 
 .. rst2pdf: PageBreak
 
 Scale
 -----
 
+You can retrieve the instance count executing different elements from various applications and
+different element types using an HTTP POST method::
+
+  POST <base-url>/instances
+
+with a JSON array in the request body consisting of multiple JSON objects with these parameters:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``"appId"``
+     - Name of the Application being called
+   * - ``"programType"``
+     - One of ``flow``, ``procedure``, or ``service``
+   * - ``"programId"``
+     - Name of the element (*Flow*, *Procedure*, or *Custom Service*) being called
+   * - ``"runnableId"``
+     - Name of the *Flowlet* or *Runnable* if querying either a *Flow* or *Service*. This parameter
+       does not apply to *Procedures* because the ``programId`` is the same as the ``runnableId`` for a *Procedure*
+
+The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``"requested"``
+     - Maps to the number of instances the user requested for the program defined by the individual JSON object's parameters
+   * - ``"provisioned"``
+     - Maps to the number of instances that are actually running for the program defined by the individual JSON object's parameters.
+   * - ``"statusCode"``
+     - The status code from retrieving the instance count of an individual JSON object.
+   * - ``"error"``
+     - If an error, a description of why the status was not retrieved (the specified element was not found,
+       the requested JSON object was missing a parameter, etc.)
+
+Note that the ``requested`` and ``provisioned`` fields are mutually exclusive of the ``error`` field.
+
+Example
+.......
+
+To retrieve the instance count of multiple program runnables in multiple applications, use the HTTP POST command::
+
+  POST <base-url>/instances
+
+with the arguments as a JSON string in the body::
+
+  [{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1","runnableId":"MyFlowlet5"},
+   {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2"},
+   {"appId":"MyApp3","programType":"Service","programId":"MySvc1,"runnableId":"MyRunnable1"}]
+
+If there was no procedure named ``MyProc2`` in the application ``MyApp1``, a possible response could be::
+
+  [ {"appId":"MyApp1","programType":"Flow","programId":"MyFlow1",
+      "runnableId":"MyFlowlet5","provisioned":2,"requested":2,"statusCode":200},
+    {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2",
+      "provisioned":0,"requested":1,"statusCode":200},
+    {"appId":"MyApp3","programType":"Service","programId":"MySvc1,
+      "runnableId":"MyRunnable1","statusCode":404,"error":"Runnable: MyRunnable1 not found"} ]
+
+
 Scaling Flowlets
 ................
 You can query and set the number of instances executing a given Flowlet
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-	GET <base-url>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
-	PUT <base-url>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
+  GET <base-url>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
+  PUT <base-url>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
 
 with the arguments as a JSON string in the body::
 
-	{ "instances" : <quantity> }
+  { "instances" : <quantity> }
 
 .. list-table::
    :widths: 20 80
@@ -1592,7 +1475,8 @@ Examples
 
        with the arguments as a JSON string in the body::
 
-	  { "instances" : 2 }
+         { "instances" : 2 }
+
    * - Description
      - Change the number of instances of the Flowlet *saver*
        in the Flow *WhoFlow* of the Application *HelloWorld*
@@ -1604,12 +1488,12 @@ Scaling Procedures
 In a similar way to `Scaling Flowlets`_, you can query or change the number of instances 
 of a Procedure by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-	GET <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
-	PUT <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
+  GET <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
+  PUT <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
 
 with the arguments as a JSON string in the body::
 
-	{ "instances" : <quantity> }
+  { "instances" : <quantity> }
 
 .. list-table::
    :widths: 20 80
@@ -1644,12 +1528,12 @@ Scaling Services
 You can query or change the number of instances of a Service's runnable
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-	GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
-	PUT <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
+  GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
+  PUT <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
 
 with the arguments as a JSON string in the body::
 
-	{ "instances" : <quantity> }
+  { "instances" : <quantity> }
 
 .. list-table::
    :widths: 20 80
@@ -1687,7 +1571,7 @@ Services), issue an HTTP GET to the element’s URL with the ``history`` paramet
 This will return a JSON list of all completed runs, each with a start time,
 end time and termination status::
 
-	GET <base-url>/apps/<app-id>/<element>/<element-id>/history
+  GET <base-url>/apps/<app-id>/<element>/<element-id>/history
 
 .. list-table::
    :widths: 20 80
@@ -1716,7 +1600,7 @@ Example
      - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
        ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
 
-The *runid* field is a UUID that uniquely identifies a run within the Continuuity Reactor,
+The *runid* field is a UUID that uniquely identifies a run within the Cask DAP,
 with the start and end times in seconds since the start of the Epoch (midnight 1/1/1970).
 
 For Services, you can retrieve the history of a Twill Service using::
@@ -1741,41 +1625,11 @@ For Workflows, you can also retrieve:
 
 - the schedules defined for a workflow (using the parameter ``schedules``)::
 
-	  GET <base-url>/apps/<app-id>/workflows/<workflow-id>/schedules
+    GET <base-url>/apps/<app-id>/workflows/<workflow-id>/schedules
 
 - the next time that the workflow is scheduled to run (using the parameter ``nextruntime``)::
 
-	  GET <base-url>/apps/<app-id>/workflows/<workflow-id>/nextruntime
-
-.. rst2pdf: PageBreak
-
-Promote
--------
-To promote an Application from your local Continuuity Reactor to your Sandbox Continuuity Reactor,
-send a POST request with the host name of your Sandbox in the request body.
-You must include the API key for the Sandbox in the request header.
-
-Example
-.......
-Promote the Application *HelloWorld* from your Local Reactor to your Sandbox::
-
-	POST <base-url>/apps/HelloWorld/promote
-
-with the API Key in the header::
-
-	X-Continuuity-ApiKey: <api-key> {"hostname":"<sandbox>.continuuity.net"}
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<api-key>``
-     - Continuuity Reactor API key, obtained from an account at
-       `Continuuity Accounts <http://accounts.continuuity.com>`_
-   * - ``<sandbox>``
-     - Sandbox located on ``continuuity.net``
+    GET <base-url>/apps/<app-id>/workflows/<workflow-id>/nextruntime
 
 
 Logging HTTP API
@@ -1784,9 +1638,9 @@ Logging HTTP API
 Downloading Logs
 ----------------
 You can download the logs that are emitted by any of the *Flows*, *Procedures*, *MapReduce* jobs,
-or *Services* running in the Continuuity Reactor. To do that, send an HTTP GET request::
+or *Services* running in the Cask DAP. To do that, send an HTTP GET request::
 
-	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
+  GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
 
 .. list-table::
    :widths: 20 80
@@ -1822,7 +1676,7 @@ Comments
 ........
 The output is formatted as HTML-embeddable text; that is, characters that have a special meaning in HTML will be escaped. A line of the log may look like this::
 
-	2013-10-23 18:03:09,793 - INFO [FlowletProcessDriver-source-0-
+  2013-10-23 18:03:09,793 - INFO [FlowletProcessDriver-source-0-
         executor:c.c.e.c.StreamSource@-1] – source: Emitting line: this is an &amp; character
 
 Note how the context of the log line shows the name of the Flowlet (*source*), its instance number (0) as well as the original line in the Application code. The character *&* is escaped as ``&amp;``; if you don’t desire this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
@@ -1830,30 +1684,30 @@ Note how the context of the log line shows the name of the Flowlet (*source*), i
 
 Metrics HTTP API
 ================
-As Applications process data, the Continuuity Reactor collects metrics about the Application’s behavior and performance. Some of these metrics are the same for every Application—how many events are processed, how many data operations are performed, etc.—and are thus called system or Reactor metrics.
-
-Other metrics are user-defined and differ from Application to Application. 
-For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-the Developer Guide:
+As Applications process data, the Cask DAP collects metrics about the Application’s behavior and performance. Some of these metrics are the same for every Application—how many events are processed, how many data operations are performed, etc.—and are thus called system or CDAP metrics.
 
 .. rst2pdf: CutStart
 
 .. only:: html
 
-	`Continuuity Reactor Operations Guide <operations.html>`__
+   Other metrics are user-defined and differ from Application to Application. 
+   For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
+   the Developer Guide, `CDAP Operations Guide <operations.html>`__.
 
 .. only:: pdf
 
 .. rst2pdf: CutStop
 
-	`Continuuity Reactor Operations Guide <http://continuuity.com/docs/reactor/current/en/operations.html>`__
+   Other metrics are user-defined and differ from Application to Application. 
+   For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
+   the Developer Guide, `CDAP Operations Guide <http://cask.co/docs/cdap/current/en/operations.html>`__.
 
 
 Metrics Requests
 ----------------
 The general form of a metrics request is::
 
-	GET <base-url>/metrics/<scope>/<context>/<metric>?<time-range>
+  GET <base-url>/metrics/<scope>/<context>/<metric>?<time-range>
 
 .. list-table::
    :widths: 20 80
@@ -1862,7 +1716,7 @@ The general form of a metrics request is::
    * - Parameter
      - Description
    * - ``<scope>``
-     - Either ``reactor`` (system metrics) or ``user`` (user-defined metrics)
+     - Either ``cdap`` (system metrics) or ``user`` (user-defined metrics)
    * - ``<context>``
      - Hierarchy of context; see `Available Contexts`_
    * - ``<metric>``
@@ -1877,7 +1731,7 @@ Examples
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/metrics/reactor/apps/HelloWorld/flows/``
+     - ``GET <base-url>/metrics/cdap/apps/HelloWorld/flows/``
        ``WhoFlow/flowlets/saver/process.bytes?aggregate=true``
    * - Description
      - Using a *System* metric, *process.bytes*
@@ -1900,7 +1754,7 @@ Examples
 
 Comments
 ........
-The scope must be either ``reactor`` for system metrics or ``user`` for user-defined metrics.
+The scope must be either ``cdap`` for system metrics or ``user`` for user-defined metrics.
 
 System metrics are either Application metrics (about Applications and their Flows, Procedures, MapReduce and Workflows) or they are Data metrics (relating to Streams or Datasets).
 
@@ -1908,50 +1762,50 @@ User metrics are always in the Application context.
 
 For example, to retrieve the number of input data objects (“events”) processed by a Flowlet named *splitter*, in the Flow *CountRandomFlow* of the Application *CountRandom*, over the last 5 seconds, you can issue an HTTP GET method::
 
-	GET <base-url>/metrics/reactor/apps/CountRandom/flows/CountRandomFlow/flowlets/
+  GET <base-url>/metrics/cdap/apps/CountRandom/flows/CountRandomFlow/flowlets/
           splitter/process.events?start=now-5s&count=5
 
 This returns a JSON response that has one entry for every second in the requested time interval. It will have values only for the times where the metric was actually emitted (shown here "pretty-printed", unlike the actual responses)::
 
-	HTTP/1.1 200 OK
-	Content-Type: application/json
-	{"start":1382637108,"end":1382637112,"data":[
-	{"time":1382637108,"value":6868},
-	{"time":1382637109,"value":6895},
-	{"time":1382637110,"value":6856},
-	{"time":1382637111,"value":6816},
-	{"time":1382637112,"value":6765}]}
+  HTTP/1.1 200 OK
+  Content-Type: application/json
+  {"start":1382637108,"end":1382637112,"data":[
+  {"time":1382637108,"value":6868},
+  {"time":1382637109,"value":6895},
+  {"time":1382637110,"value":6856},
+  {"time":1382637111,"value":6816},
+  {"time":1382637112,"value":6765}]}
 
 If you want the number of input objects processed across all Flowlets of a Flow, you address the metrics API at the Flow context::
 
-	GET <base-url>/metrics/reactor/apps/CountRandom/flows/
-		CountRandomFlow/process.events?start=now-5s&count=5
+  GET <base-url>/metrics/cdap/apps/CountRandom/flows/
+    CountRandomFlow/process.events?start=now-5s&count=5
 
-Similarly, you can address the context of all flows of an Application, an entire Application, or the entire Reactor::
+Similarly, you can address the context of all flows of an Application, an entire Application, or the entire Cask DAP::
 
-	GET <base-url>/metrics/reactor/apps/CountRandom/
-		flows/process.events?start=now-5s&count=5
-	GET <base-url>/metrics/reactor/apps/CountRandom/
-		process.events?start=now-5s&count=5
-	GET <base-url>/metrics/reactor/process.events?start=now-5s&count=5
+  GET <base-url>/metrics/cdap/apps/CountRandom/
+    flows/process.events?start=now-5s&count=5
+  GET <base-url>/metrics/cdap/apps/CountRandom/
+    process.events?start=now-5s&count=5
+  GET <base-url>/metrics/cdap/process.events?start=now-5s&count=5
 
-To request user-defined metrics instead of system metrics, specify ``user`` instead of ``reactor`` in the URL
+To request user-defined metrics instead of system metrics, specify ``user`` instead of ``cdap`` in the URL
 and specify the user-defined metric at the end of the request.
 
 For example, to request a user-defined metric for the *HelloWorld* Application's *WhoFlow* Flow::
 
-	GET <base-url>/metrics/user/apps/HelloWorld/flows/
-		WhoFlow/flowlets/saver/names.bytes?aggregate=true
+  GET <base-url>/metrics/user/apps/HelloWorld/flows/
+    WhoFlow/flowlets/saver/names.bytes?aggregate=true
 
 To retrieve multiple metrics at once, instead of a GET, issue an HTTP POST, with a JSON list as the request body that enumerates the name and attributes for each metrics. For example::
 
-	POST <base-url>/metrics
+  POST <base-url>/metrics
 
 with the arguments as a JSON string in the body::
 
-	Content-Type: application/json
-	[ "/reactor/collect.events?aggregate=true",
-	"/reactor/apps/HelloWorld/process.events?start=1380323712&count=6000" ]
+  Content-Type: application/json
+  [ "/cdap/collect.events?aggregate=true",
+  "/cdap/apps/HelloWorld/process.events?start=1380323712&count=6000" ]
 
 If the context of the requested metric or metric itself doesn't exist the system returns status 200 (OK) with JSON formed as per above description and with values being zeroes.
 
@@ -1979,15 +1833,15 @@ The time range of a metric query can be specified in various ways:
      - The same as before, but with the count given as a number of seconds
 
 Instead of getting the values for each second of a time range, you can also retrieve the
-aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that the Reactor has not been stopped or restarted (you cannot specify a time range for aggregates)::
+aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that the Cask DAP has not been stopped or restarted (you cannot specify a time range for aggregates)::
 
-	GET <base-url>/metrics/reactor/apps/CountRandom/process.events?aggregate=true
+  GET <base-url>/metrics/cdap/apps/CountRandom/process.events?aggregate=true
 
 .. rst2pdf: PageBreak
 
 Available Contexts
 ------------------
-The context of a metric is typically enclosed into a hierarchy of contexts. For example, the Flowlet context is enclosed in the Flow context, which in turn is enclosed in the Application context. A metric can always be queried (and aggregated) relative to any enclosing context. These are the available Application contexts of the Continuuity Reactor:
+The context of a metric is typically enclosed into a hierarchy of contexts. For example, the Flowlet context is enclosed in the Flow context, which in turn is enclosed in the Application context. A metric can always be queried (and aggregated) relative to any enclosing context. These are the available Application contexts of the Cask DAP:
 
 .. list-table::
    :header-rows: 1
@@ -2062,7 +1916,7 @@ Flowlet, Procedure, Mapper, or Reducer level:
 
 Available Metrics
 -----------------
-For Continuuity Reactor metrics, the available metrics depend on the context.
+For Cask DAP metrics, the available metrics depend on the context.
 User-defined metrics will be available at whatever context that they are emitted from.
 
 These metrics are available in the Flowlet context:
@@ -2153,14 +2007,14 @@ These metrics are available in the Datasets context:
 
 Monitor HTTP API
 ================
-Reactor internally uses a variety of System Services that are critical to its functionality. This section describes the REST APIs that can be used to see into System Services.
+CDAP internally uses a variety of System Services that are critical to its functionality. This section describes the RESTful APIs that can be used to see into System Services.
 
 Details of All Available System Services
 ----------------------------------------
 
 For the detailed information of all available System Services, use::
 
-	GET <base-url>/system/services
+  GET <base-url>/system/services
 
 HTTP Responses
 ..............
@@ -2173,11 +2027,11 @@ HTTP Responses
    * - ``200 OK``
      - The event successfully called the method, and the body contains the results
 
-Checking Status of All Reactor System Services
+Checking Status of All CDAP System Services
 ----------------------------------------------
 To check the status of all the System Services, use::
 
-	GET <base-url>/system/services/status
+  GET <base-url>/system/services/status
 
 HTTP Responses
 ..............
@@ -2192,17 +2046,17 @@ HTTP Responses
 
 .. rst2pdf: PageBreak
 
-Checking Status of a Specific Reactor System Service
+Checking Status of a Specific CDAP System Service
 ----------------------------------------------------
 To check the status of a specific System Service, use::
 
-	GET <base-url>/system/services/<service-name>/status
+  GET <base-url>/system/services/<service-name>/status
 
-The status of these Reactor System Servcies can be checked:
+The status of these CDAP System Servcies can be checked:
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 20 60
+   :widths: 25 25 50
    
    * - Service 
      - Service-Name
@@ -2232,7 +2086,7 @@ The status of these Reactor System Servcies can be checked:
      - ``explore.service``
      - Service that handles all HTTP requests for ad-hoc data exploration
 
-Note that the Service status checks are more useful when the Reactor is running in a distributed cluster mode.
+Note that the Service status checks are more useful when the Cask DAP is running in a distributed cluster mode.
 
 Example
 .......
@@ -2262,10 +2116,11 @@ HTTP Responses
 
 Scaling System Services
 -----------------------
-The number of instances for system services can be queried and changed by using these commands::
+In distributed Cask DAP installations, the number of instances for system services 
+can be queried and changed by using these commands::
 
-	GET <base-url>/system/services/<service-name>/instances
-	PUT <base-url>/system/services/<service-name>/instances
+  GET <base-url>/system/services/<service-name>/instances
+  PUT <base-url>/system/services/<service-name>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -2281,6 +2136,8 @@ with the arguments as a JSON string in the body::
      - Name of the system service 
    * - ``<quantity>``
      - Number of instances to be used
+     
+:Note: In single-node Cask DAP, these commands will return a Status Code ``400 Bad Request``.
 
 Examples
 ........
@@ -2308,15 +2165,46 @@ Examples
    * - Description
      - Sets the number of instances of the metrics HTTP service to 2
 
+Details of A Deployed Application
+---------------------------------
+
+For detailed information on an application that has been deployed, use::
+
+  GET <base-url>/apps/<app-id>
+
+The information will be returned in the body of the response.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application 
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The event successfully called the method, and the body contains the results
+
+.. highlight:: java
+
 .. rst2pdf: CutStart
 
 Where to Go Next
 ================
-Now that you've seen Continuuity Reactor's HTTP REST API, 
+Now that you've seen CDAP's HTTP RESTful API, 
 the last of our documentation is:
 
-- `Continuuity Reactor Javadocs <javadocs/index.html>`__,
-  a complete Javadoc of the Continuuity Reactor Java APIs.
+- `Cask Data Application Platform Javadocs <javadocs/index.html>`__,
+  a complete Javadoc of the CDAP Java APIs.
 
 .. rst2pdf: CutStop
 

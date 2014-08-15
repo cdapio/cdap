@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Continuuity, Inc.
+# Copyright 2014 Cask, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -80,7 +80,7 @@ set_hbase()
   fi
 
   if [ -z "$HBASE_VERSION" ]; then
-    HBASE_VERSION=`$JAVA -cp $CLASSPATH com.continuuity.data2.util.hbase.HBaseVersion 2> /dev/null`
+    HBASE_VERSION=`$JAVA -cp $CLASSPATH co.cask.cdap.data2.util.hbase.HBaseVersion 2> /dev/null`
     retvalue=$?
   fi
 
@@ -88,13 +88,13 @@ set_hbase()
   if [ $retvalue == 0 ]; then
     case "$HBASE_VERSION" in
       0.94*)
-        hbasecompat="$CONTINUUITY_HOME/hbase-compat-0.94/lib/*"
+        hbasecompat="$CDAP_HOME/hbase-compat-0.94/lib/*"
         ;;
       0.96*)
-        hbasecompat="$CONTINUUITY_HOME/hbase-compat-0.96/lib/*"
+        hbasecompat="$CDAP_HOME/hbase-compat-0.96/lib/*"
         ;;
       0.98*)
-        hbasecompat="$CONTINUUITY_HOME/hbase-compat-0.96/lib/*"
+        hbasecompat="$CDAP_HOME/hbase-compat-0.96/lib/*"
         ;;
       *)
         echo "ERROR: Unknown/unsupported version of HBase found: $HBASE_VERSION"
@@ -184,7 +184,7 @@ set_hive_classpath() {
     HIVE_EXEC=`ls $HIVE_HOME/lib/hive-exec-*`
     OTHER_HIVE_JARS=`ls $HIVE_HOME/lib/*.jar | tr '\n' ':'`
 
-    # We put in the explore classpath all the jars that are not in the regular reactor classpath.
+    # We put in the explore classpath all the jars that are not in the regular classpath.
     EXPLORE_CLASSPATH=$HIVE_EXEC:$OTHER_HIVE_JARS
 
     export EXPLORE_CLASSPATH

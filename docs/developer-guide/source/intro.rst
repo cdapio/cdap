@@ -1,12 +1,9 @@
-.. :Author: Continuuity, Inc.
-   :Description: Introduction to Continuuity Reactor
+.. :author: Cask, Inc.
+   :description: Introduction to the Cask Data Application Platform
 
-===================================
-Introduction
-===================================
-
-.. reST Editor: .. section-numbering::
-.. reST Editor: .. contents::
+==================================================
+Introduction to the Cask Data Application Platform
+==================================================
 
 The Challenge of Big Data Applications
 ======================================
@@ -63,12 +60,35 @@ Once your application is ready for production, you'll need to monitor and manage
 Operability of each of the technology frameworks presents its own set of challenges. 
 A lack of proper tools makes application operations a full-time job.
 
+Why is Apache Hadoop hard?
+--------------------------
 
-Continuuity Reactor Overview
-============================
-Under the covers, Continuuity Reactor™ is a Java-based middleware solution that abstracts 
-the complexities and integrates the components of the Hadoop ecosystem (YARN, MapReduce, 
-HBase, Zookeeper, etc.). Simply stated, Reactor behaves like a modern-day application 
+Though Apache Hadoop |(TM)| has demonstrated its value in many use-cases, developers spend too much time
+working with infrastructure issues instead of their core concerns. As a consequence,
+Hadoop will never be a mainstream technology for data applications unless that can be changed.
+
+If you are building a data application and managing enterprise-scale data, 
+you will need to address:
+
+- Consistency of data
+- Scalability of performance and storage
+- Monitoring and management
+- Security of access and modification
+- and so forth...
+
+Consistency of data can be handled by using a platform providing transactions. 
+Scalability requires elastic scale.
+Monitoring and management requires logging, metrics and a testing and debugging framework.
+Security requires authentication and the handling of credentials.
+
+To do all of this, you'll need to build an entire platform that provides an infrastructure for Hadoop.
+
+
+Cask Data Application Platform Overview
+=======================================
+Under the covers, **Cask Data Application Platform (CDAP)** is a Java-based middleware solution that 
+abstracts the complexities and integrates the components of the Hadoop ecosystem (YARN, MapReduce, 
+HBase, Zookeeper, etc.). Simply stated, CDAP behaves like a modern-day application 
 server, distributed and scalable, sitting on top of a Hadoop distribution (such as CDH, 
 HDP, or Apache). It provides a programming framework and scalable runtime environment 
 that allows any Java developer to build Big Data applications without having to 
@@ -78,7 +98,7 @@ Integrated Framework
 --------------------
 Without a Big Data middleware layer, a developer has to piece together multiple open 
 source frameworks and runtimes to assemble a complete Big Data infrastructure stack. 
-Reactor provides an integrated platform that makes it easy to create all the elements of 
+CDAP provides an integrated platform that makes it easy to create all the elements of 
 Big Data applications: collecting, processing, storing, and querying data. Data can be 
 collected and stored in both structured and unstructured forms, processed in real-time 
 and in batch, and results can be made available for retrieval, visualization, and 
@@ -86,31 +106,31 @@ further analysis.
 
 Simple APIs
 -----------
-Continuuity Reactor aims to reduce the time it takes to create and implement applications 
+CDAP aims to reduce the time it takes to create and implement applications 
 by hiding the complexity of these distributed technologies with a set of powerful yet 
 simple APIs. You don’t need to be an expert on scalable, highly-available system 
 architectures, nor do you need to worry about the low-level Hadoop and HBase APIs.
 
 Full Development Lifecycle Support
 ----------------------------------
-Reactor supports developers through the entire application development lifecycle: 
+CDAP supports developers through the entire application development lifecycle: 
 development, debugging, testing, continuous integration and production. Using familiar 
-development tools like *IntelliJ* and *Eclipse*, you can build, test and debug your 
-application right on your laptop with a *Local Reactor*. Utilize the application unit 
-test framework for continuous integration. Deploy it to a development cloud (*Sandbox 
-Reactor*) or production cloud (*Enterprise Reactor*) with a push of a button.
+development tools such as *IntelliJ* and *Eclipse*, you can build, test and debug your 
+application right on your laptop with a *Local DAP*. Utilize the application unit 
+test framework for continuous integration. Deploy it to a development cloud or production
+cloud (*Distributed DAP*) with a push of a button.
 
 Easy Application Operations
 ---------------------------
-Once your Big Data application is in production, Continuuity Reactor is designed 
+Once your Big Data application is in production, CDAP is designed 
 specifically to monitor your applications and scale with your data processing needs: 
 increase capacity with a click of a button without taking your application offline. Use 
-the Reactor dashboard or REST APIs to monitor and manage the lifecycle and scale of your 
+the CDAP Console or RESTful APIs to monitor and manage the lifecycle and scale of your 
 application.
 
-Reactor Components
-==================
-Now, let’s talk about the components within Reactor. Continuuity Reactor provides four 
+CDAP Components
+===============
+Now, let’s talk about the components within CDAP. Cask DAP provides four 
 basic abstractions:
 
 - `Streams <programming.html#streams>`__ for real-time data collection from any external system;
@@ -123,14 +143,54 @@ basic abstractions:
 
 These are grouped into Applications for configuring and packaging.
 
-Applications are built in Java using the Continuuity Core APIs. Once an application is 
+Applications are built in Java using the CDAP Core APIs. Once an application is 
 deployed and running, you can easily interact with it from virtually any external system 
-by accessing the Streams, Datasets, and Procedures using the Java APIs, REST or other 
+by accessing the Streams, Datasets, and Procedures using the Java APIs, RESTful or other 
 network protocols.
+
+CDAP functions as a middle-tier application platform. As seen in the diagram below,
+it provides an interface (using either HTTP RESTful or Java APIs) to clients through a Router 
+along with services and features that run inside YARN containers in Hadoop.
+
+.. image:: _images/Arch_Diagram.png
+   :width: 6in
+   :align: center
+
+These services and features include:
+
+- **Dataset Abstractions:** with globally consistent transactions provided by using 
+  `Cask Tephra <http://github.com/continuuity/tephra/>`__, these 
+  abstractions provide generic, reusable Java implementations of common data patterns;
+
+- **Streams:** the means for ingesting data from external systems in real time;
+
+- **Realtime Processing using Flows:** developer-implemented, real-time Stream processors,
+  comprised of one or more *Flowlets* wired together into a directed acyclic graph;
+
+- **Batch Processing:** using MapReduce and Workflow Schedules, as in conventional
+  Hadoop systems;
+
+- **Ad-Hoc SQL Queries:** for datasets that implement methods for obtaining the schema
+  and scanning the data record by record, you can access and query data using SQL;
+
+- **Stored Procedures:** allowing synchronous calls into the Server from an external system
+  and the performance of server-side processing on-demand, similar to a stored procedure in
+  a traditional database;
+
+- **Metrics, Logging and Monitoring:** system and user-defined metrics, along with standard
+  SLF4J logs, a testing framework and the ability to attach a remote debugger;
+
+- **Management Console:** available for deploying, querying and managing the Server;
+
+- **Different Runtimes:** single-node (useful for learning, prototyping and testing),
+  hosted in the Cloud, and Distributed versions;
+
+- **YARN containers:** services are run in YARN containers in Hadoop, providing access to
+  HBase and HDFS, giving the scalability and performance of Hadoop without the complexity. 
 
 In the next section, we will compare three application architectures and their pros and cons.
 This will give you a good understanding of the benefit of architecting
-Big Data applications using Continuuity Reactor.
+Big Data applications using CDAP.
 
 Architecture Comparison: Building A Big Data Application
 ============================================================
@@ -151,6 +211,8 @@ a log collector to extract data, transformation of the logs with simple filterin
 normalization, and performs the loading into the database of the events.
 
 .. image:: _images/ArchitectureDiagram_1.png
+   :width: 6in
+   :align: center
 
 The disadvantages of this approach include:
 
@@ -173,6 +235,8 @@ This is just a summary of the many components required to implement this solutio
 (Don’t worry if you are not familiar with these technology frameworks.)
 
 .. image:: _images/ArchitectureDiagram_2.png
+   :width: 6in
+   :align: center
 
 The disadvantages of this approach include:
 
@@ -182,34 +246,38 @@ The disadvantages of this approach include:
 - Operating the composite software stack
 - No single unified architecture
 
-Continuuity Reactor Log Analysis Framework
+CDAP Log Analysis Framework
 ------------------------------------------
-Designing Big Data applications using **Continuuity Reactor™** provides a clear separation
-between infrastructure components and application code.
+Designing Big Data applications using the **Cask Data Application Platform** provides a clear
+separation between infrastructure components and application code.
 
-Reactor functions as a middle-tier application platform, exposing simple, high-level 
+CDAP functions as a middle-tier application platform, exposing simple, high-level 
 abstractions to perform data collection, processing, storage and query. Logs are collected
 by `Streams <programming.html#streams>`__, while `Flows <programming.html#flows>`__
 do basic aggregation and realtime analysis. Advanced, off-line
-aggregation is performed by `Map Reduce jobs <programming.html#mapreduce>`__ and 
+aggregation is performed by `MapReduce <programming.html#mapreduce>`__ and 
 `Workflow <programming.html#workflows>`__ components. 
 `Procedures <programming.html#procedures>`__ provide
-stored queries. The application can now be scaled independent of the underlying
-infrastructure.
+stored queries, with `Ad-hoc Queries <query.html>`__ accessing the data using SQL. 
+The application can now be scaled independent of the underlying infrastructure.
 
-.. image:: _images/ArchitectureDiagram_3.png
+.. image:: _images/ArchitectureDiagram_4.png
+   :width: 6in
+   :align: center
 
 The advantages of this approach include:
 
 - A single unified architecture to perform data collection, processing, storage and query,
   with interoperability designed into the framework.
 - Horizontal scalability is derived from the underlying Apache Hadoop layer, while the
-  **Continuuity Reactor** APIs reduce the application complexity and development time.
+  **CDAP** APIs reduce the application complexity and development time.
 
 Where to Go Next
 ================
-Now that you've had an introduction to Continuuity Reactor, take a look at:
+Now that you've had an introduction to CDAP, take a look at:
 
-- `Continuuity Reactor Quick Start <quickstart.html>`_,
-  which guides you through installing Continuuity Reactor and
-  running and modifying an example application.
+- `Cask Data Application Platform Quick Start <quickstart.html>`__,
+  which guides you through installing CDAP and running and modifying an example application.
+
+.. |(TM)| unicode:: U+2122 .. trademark sign
+   :trim:

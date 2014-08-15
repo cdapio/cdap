@@ -2,9 +2,9 @@
  * Flowlet Model
  */
 
-define(['core/models/element'], function (Element) {
+define(['core/models/program'], function (Program) {
 
-	var Model = Element.extend({
+	var Model = Program.extend({
 		type: 'Flow',
 		href: function () {
 			return '#/flows/' + this.get('app') + ':' + this.get('flow') + '/flowlets/' + this.get('id');
@@ -37,6 +37,13 @@ define(['core/models/element'], function (Element) {
 				.replace(/\{id\}/, this.get('id'));
 
 		},
+    actualInstances: function () {
+      if (C.get('isLocal')) {
+        return this.instances;
+      } else {
+        return this.containersLabel;
+      }
+    }.property('instances','containersLabel'),
 
 		doubleCount: function () {
 			return 'Add ' + this.instances;

@@ -68,6 +68,18 @@ define(['core/lib/date', 'core/models/program'],
 
     },
 
+    trackMetric: function (path, kind, label, interpolate) {
+
+      path = this.interpolate(path);
+      this.get(kind).set(C.Util.enc(path), Em.Object.create({
+        path: path,
+        value: label || [],
+        interpolate: 'linear&maxInterpolateGap=3',
+      }));
+      return path;
+
+    },
+
     getStartDate: function() {
       var time = parseInt(this.get('startTime'), 10);
       return new Date(time).toString('MMM d, yyyy');
@@ -95,7 +107,7 @@ define(['core/lib/date', 'core/models/program'],
      */
     context: function () {
 
-      return this.interpolate('/apps/{parent}/mapreduce/{id}');
+      return this.interpolate('apps/{parent}/mapreduce/{id}');
 
     }.property('app', 'name'),
 
@@ -225,6 +237,8 @@ define(['core/lib/date', 'core/models/program'],
         var model = self.transformModel(model);
         model.app = app_id;
         model = C.Mapreduce.create(model);
+        model.id = mapreduce_id;
+        model.name = mapreduce_id;
 
         http.rest('apps', app_id, 'mapreduce', mapreduce_id, 'status', function (response) {
 

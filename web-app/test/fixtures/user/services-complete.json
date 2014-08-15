@@ -1,0 +1,16 @@
+[
+  {
+    "type":"Service",
+    "app":"CountCounts",
+    "id":"loadgen",
+    "name":"loadgen",
+    "description":"Load generator"
+  },
+  {
+    "type":"Service",
+    "app":"CountCounts",
+    "id":"simpleName",
+    "name":"simpleName",
+    "description":"Simply description."
+  }
+]

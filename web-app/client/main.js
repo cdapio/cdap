@@ -62,10 +62,24 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 
 		this.resource('Loading', { path: '/loading' } );
     this.resource('ConnectionError', { path: '/connectionerror' } );
-		this.resource('Services', { path: '/services' } );
-    this.resource('Service', { path: '/services/:service_id' }, function() {
+
+    /**
+     * Services routes.
+     */
+		this.resource('Services', { path: '/services' });
+
+    this.resource('Service', { path: '/services/system/:service_id' }, function() {
       this.route('Log', { path: '/log' });
     });
+
+    this.resource('Userservice', { path: '/services/user/:userservice_id' }, function () {
+      this.resource('UserserviceStatus', { path: '/' } , function () {
+        this.route('Config', { path: '/config' } );
+      });
+      this.route('Log', { path: '/log' } );
+      this.route('History', { path: '/history' });
+    });
+
 
 		this.resource('Login', { path: '/login' } );
 		this.resource('AccessToken', { path: '/accesstoken' } );
@@ -97,6 +111,10 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		});
 
 		this.resource('Datasets', { path: '/datasets' });
+		this.resource('DataExplore', { path: '/dataexplore' }, function () {
+      this.route('Query', { path: '/query'});
+      this.route('Results', { path: '/results'});
+		});
 		this.resource('Dataset', { path: '/datasets/:dataset_id' });
 
 		this.resource('Procedures', { path: '/procedures' });
@@ -107,6 +125,7 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 				this.route('Config', { path: '/config' });
 			});
 
+			this.route('History', { path: '/history'});
 			this.route('Log', { path: '/log' });
 
 		});
@@ -183,7 +202,6 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 				}
 			}
 
-			window.scrollTo(0, 0);
 		},
 		/*
 		 * Override to unload the Controller once the Route has been deactivated.
@@ -211,6 +229,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
        */
       activate: function() {
         var routeHandler = this;
+        window.scrollTo(0, 0);
+
         if (C.Env.security_enabled) {
           C.setupAuth(routeHandler)
         }
@@ -266,7 +286,9 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
       }
     }),
 
-    ServicesRoute: basicRouter.extend(),
+    ServicesRoute: basicRouter.extend({
+      model: modelFinder
+    }),
 
     ServiceRoute: Ember.Route.extend({
       model: modelFinder
@@ -280,6 +302,46 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
         this.render('Runnable/Log');
       }
     }),
+
+    UserserviceRoute: basicRouter.extend({
+      model: modelFinder
+    }),
+
+    UserserviceStatusRoute: basicRouter.extend({
+      model: function () {
+        return this.modelFor('Userservice');
+      },
+      setupController: function(controller, model) {
+        this.controllerFor('Userservice').setProperties({isNew:true,content:model});
+      },
+      renderTemplate: function () {
+        this.render({controller: 'Userservice'});
+      },
+      unload: function() {
+
+      }
+    }),
+
+    UserserviceStatusConfigRoute: basicRouter.extend({
+      renderTemplate: function () {
+        this.render('Runnable/Config', {outlet: "config"});
+      }
+    }),
+
+    UserserviceLogRoute: basicRouter.extend({
+      model: function () {
+        return this.modelFor('Userservice');
+      },
+      renderTemplate: function () {
+        this.render('Runnable/Log');
+      }
+    }),
+
+		UserserviceHistoryRoute: basicRouter.extend({
+			model: function () {
+				return this.modelFor('Userservice');
+			}
+		}),
 
     LoginRoute: basicRouter.extend(),
 
@@ -405,6 +467,30 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 
 		DatasetRoute: basicRouter.extend(),
 
+		DataExploreRoute: basicRouter.extend({
+		  renderTemplate: function () {
+		    this.render('DataExplore');
+		  }
+		}),
+
+		DataExploreQueryRoute: Ember.Route.extend({
+		  controllerName: 'DataExplore',
+      renderTemplate: function () {
+        var controller = this.controllerFor('DataExplore');
+        this.render('DataExploreQuery');
+        controller.set('page', 'query');
+      }
+    }),
+
+		DataExploreResultsRoute: Ember.Route.extend({
+		  controllerName: 'DataExplore',
+      renderTemplate: function () {
+        var controller = this.controllerFor('DataExplore');
+        this.render('DataExploreResults');
+        controller.set('page', 'results');
+      }
+    }),
+
 		/*
 		 * Ensures that the HTTP injection is handled properly (see basicRouter)
 		 */
@@ -427,9 +513,15 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 			}
 		}),
 
+    ProcedureHistoryRoute: basicRouter.extend({
+      model: function() {
+        return this.modelFor('Procedure');
+      }
+    }),
+
 		/*
-		 * This will use the FlowStatusConfigController with the RunnableConfig template.
-		 * FlowStatusConfigController extends RunnableConfigController.
+		 * This will use the ProcedureStatusConfigController with the RunnableConfig template.
+		 * ProcedureStatusConfigController extends RunnableConfigController.
 		 */
 		ProcedureStatusConfigRoute: basicRouter.extend({
 			renderTemplate: function () {
@@ -447,6 +539,23 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 
 	});
 
+  var datasetListHandler = getListHandler(['Dataset']);
+  datasetListHandler.renderTemplate = function () {
+    /*
+     * Render the List Page template (i.e. the header / time selector)
+     */
+    this.render('datasets-list-page', {
+      controller: 'List'
+    });
+    /*
+     * Render a list type partial into the List Page template
+     */
+    this.render('_datasets-list', {
+      controller: 'List',
+      into: 'datasets-list-page'
+    });
+  };
+
 	$.extend(C, {
 
 		StreamsRoute: Em.Route.extend(getListHandler(['Stream'])),
@@ -455,11 +564,12 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 
 		WorkflowsRoute: Em.Route.extend(getListHandler(['Workflow'])),
 
-		DatasetsRoute: Em.Route.extend(getListHandler(['Dataset'])),
+		ProceduresRoute: Em.Route.extend(getListHandler(['Procedure'])),
 
-		ProceduresRoute: Em.Route.extend(getListHandler(['Procedure']))
+    DatasetsRoute: Em.Route.extend(datasetListHandler),
 
 	});
+
 
 	return C;
 });

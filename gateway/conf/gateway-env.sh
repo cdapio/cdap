@@ -1,5 +1,5 @@
 #
-# Copyright 2012-2014 Continuuity, Inc.
+# Copyright 2014 Cask, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 # Set environment variables here.
 
 # Main class to be invoked.
-MAIN_CLASS=com.continuuity.gateway.runtime.Main
+MAIN_CLASS=co.cask.cdap.gateway.runtime.Main
 
 export JAVA_HEAPMAX=-Xmx512m
 

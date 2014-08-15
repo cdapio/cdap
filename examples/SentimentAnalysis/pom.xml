@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2014 Continuuity, Inc.
+  Copyright 2014 Cask, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,8 @@
 
     <parent>
         <artifactId>examples</artifactId>
-        <groupId>com.continuuity</groupId>
-        <version>2.4.0-SNAPSHOT</version>
+        <groupId>co.cask.cdap</groupId>
+        <version>2.5.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -30,13 +30,13 @@
     <packaging>jar</packaging>
 
     <properties>
-        <app.main.class>com.continuuity.examples.sentiment.SentimentAnalysisApp</app.main.class>
+        <app.main.class>co.cask.cdap.examples.sentiment.SentimentAnalysisApp</app.main.class>
         <archive>sentiment-process.zip</archive>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>com.continuuity</groupId>
+            <groupId>co.cask.cdap</groupId>
             <artifactId>power-pack</artifactId>
         </dependency>
         <dependency>

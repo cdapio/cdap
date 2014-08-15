@@ -1,0 +1,141 @@
+/*
+ * Copyright 2014 Cask, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package co.cask.cdap.data2.dataset2.lib.table.ordered;
+
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Scanner;
+import com.continuuity.tephra.Transaction;
+import com.continuuity.tephra.TransactionAware;
+import com.google.common.collect.Maps;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.NavigableMap;
+
+/**
+ * unit-test
+ * @param <T> table type
+ */
+public abstract class BufferingOrederedTableTest<T extends BufferingOrderedTable>
+  extends OrderedTableConcurrentTest<T> {
+
+  @Test
+  public void testRollingBackAfterExceptionDuringPersist() throws Exception {
+    DatasetAdmin admin = getTableAdmin("myTable");
+    admin.create();
+    try {
+      Transaction tx1 = txClient.startShort();
+      BufferingOrderedTable myTable1 =
+        new BufferingOrderedTableWithPersistingFailure(getTable("myTable"));
+      myTable1.startTx(tx1);
+      // write some data but not commit
+      myTable1.put(R1, a(C1), a(V1));
+      myTable1.put(R2, a(C2), a(V2));
+      // verify can see changes inside tx
+      verify(a(C1, V1), myTable1.get(R1, a(C1)));
+      verify(a(C2, V2), myTable1.get(R2, a(C2)));
+
+      // persisting changes
+      try {
+        // should simulate exception
+        myTable1.commitTx();
+        Assert.assertFalse(true);
+      } catch (Throwable th) {
+        // Expected simulated exception
+      }
+
+      // let's pretend that after persisting changes we still got conflict when finalizing tx, so
+      // rolling back changes
+      Assert.assertTrue(myTable1.rollbackTx());
+
+      // making tx visible
+      txClient.abort(tx1);
+
+      // start new tx
+      Transaction tx2 = txClient.startShort();
+      OrderedTable myTable2 = getTable("myTable");
+      ((TransactionAware) myTable2).startTx(tx2);
+
+      // verify don't see rolled back changes
+      verify(a(), myTable2.get(R1, a(C1)));
+      verify(a(), myTable2.get(R2, a(C2)));
+
+    } finally {
+      admin.drop();
+    }
+  }
+
+  // This class looks weird, this is what we have to do to override persist method to make it throw exception in the
+  // middle. NOTE: We want to test how every implementation of BufferingOrderedTable handles undoing changes in this
+  // case, otherwise we would just test the method of BufferingOrderedTable directly.
+
+  public static class BufferingOrderedTableWithPersistingFailure extends BufferingOrderedTable {
+    private BufferingOrderedTable delegate;
+
+    public BufferingOrderedTableWithPersistingFailure(BufferingOrderedTable delegate) {
+      super(delegate.getTableName());
+      this.delegate = delegate;
+    }
+
+    // override persist to simulate failure in the middle
+
+    @Override
+    protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> buff) throws Exception {
+      // persists only first change and throws exception
+      NavigableMap<byte[], NavigableMap<byte[], Update>> toPersist = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      if (buff.size() > 0) {
+        toPersist.put(buff.firstEntry().getKey(), buff.firstEntry().getValue());
+      }
+      delegate.persist(toPersist);
+      throw new RuntimeException("Simulating failure in the middle of persist");
+    }
+
+    // implementing abstract methods
+
+    @Override
+    protected void undo(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted) throws Exception {
+      delegate.undo(persisted);
+    }
+
+    @Override
+    protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[][] columns) throws Exception {
+      return delegate.getPersisted(row, columns);
+    }
+
+    @Override
+    protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[] startColumn, byte[] stopColumn, int limit)
+      throws Exception {
+      return delegate.getPersisted(row, startColumn, stopColumn, limit);
+    }
+
+    @Override
+    protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) throws Exception {
+      return delegate.scanPersisted(startRow, stopRow);
+    }
+
+    // propagating tx to delegate
+
+    @Override
+    public void startTx(Transaction tx) {
+      super.startTx(tx);
+      delegate.startTx(tx);
+    }
+  }
+
+}

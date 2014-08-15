@@ -1,7 +1,7 @@
 {
     "type" : "record",
     "name" : "LoggingEvent",
-    "namespace" : "com.continuuity.logging.serialize",
+    "namespace" : "co.cask.cdap.logging.serialize",
     "fields" : [ {
         "name" : "timestamp",
         "type" : "long"

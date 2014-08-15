@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Copyright 2012-2014 Continuuity, Inc.
+# Copyright 2014 Cask, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@
 # timestamp=20131007T103055,symbol=AAPL,exchange=NYSE,broker=JPMC,currency=USD,payload=iVBORw0KGgo
 
 auth_token=
-auth_file="$HOME/.continuuity.accesstoken"
+auth_file="$HOME/.cdap.accesstoken"
 
 function get_auth_token() {
   if [ -f $auth_file ]; then

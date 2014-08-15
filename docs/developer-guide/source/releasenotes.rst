@@ -1,70 +1,58 @@
-.. :Author: Continuuity, Inc 
-   :Description: Release notes for Continuuity Reactor
+.. :author: Cask, Inc 
+   :description: Release notes for the Cask Data Application Platform
 
 .. _overview_release-notes:
 
 .. index::
    single: Release Notes
 
-=============
-Release Notes
-=============
+==================
+CDAP Release Notes
+==================
 .. _release-notes:
 
-New Application, Stream, Flowlet, and Dataset Features
-======================================================
-- New Application API with an easier and cleaner way to define application components
-- Stream support for retention policy for its data; configurable at runtime, 
-  while the Stream is in use
-- Stream truncate support via REST
-- Simplified Flowlet ``@Batch`` support: process methods don't require an ``Iterator`` as a parameter
-- New `Datasets API <advanced.html#datasets-system>`__ that gives more power & flexibility for developing custom Datasets
-- Datasets management outside of applications: a REST interface to create, truncate, drop and discover
-  Datasets
+Release 2.4.0
+=============
 
-New Ad-hoc Querying Feature
-===========================
-- Continuuity Reactor now supports `ad-hoc SQL queries over Datasets <query.html>`__
-- A new API that allows developers to expose the schema of the Dataset and make it query-able
-- A new REST API to submit SQL queries over Datasets and retrieve the results
+New Features
+------------
+- To allow external programs access to the services hosted by Custom Services, service discovery 
+  is exposed through the RESTful end-points
+- Hive CLIService has started successfully
+- Redesign Explore client so that it returns a Future object
+- Allow variables in SQL Statements
+- Allow additional options in JDBC connection URL
+- Ability to perform ad-hoc queries from the CDAP Console:
 
-New Security Features
-=====================
-- Continuuity Reactor now supports `perimeter security, restricting access to resources only to authenticated users
-  <security.html>`__
-- With ``security.enabled=true``, users must then login in order to access the Reactor UI
-- Access to all Reactor REST APIs can be secured by an ``OAuth 2`` Bearer token, which is obtained by
-  authentication with the Reactor authentication service using a pluggable mechanism
-- The Reactor authentication service supports authentication via either LDAP or a JASPI plugin 
-  out of the  box and can be extended to other mechanisms through a simple plug-in API
-- Access to the Reactor authentication service can be secured by enabling SSL support
+  - Execute a SQL query from the Console
+  - View list of active, completed queries
+  - Download query results
+  
+- Datasets can be tested with TestBase outside of the context of an Application
+- CDAP now checks Datasets for compatibility in a verification stage
+- The Transaction engine uses server-side filtering for efficient transactional reads
+- Dataset specifications can now be dynamically reconfigured through the use of RESTful endpoints
+- The RESTful endpoint now can modify Dataset instance specifications
+- The Bundle jar format is now used for Dataset libs
+- Increments on Datasets are now read-less
+- Added a Command-line Interface
+- Added a Java Client Interface
 
-New Reactor Services Features
-=============================
-- Continuuity Reactor now supports adding Custom User Services  
-- Custom User Services can be discovered from Flows, Procedures and MapReduce jobs
-- The number of User Service instances can be scaled
-- Facility to see into Reactor system components via the Reactor Dashboard
-- The number of Reactor system component instances can be scaled via the Reactor Dashboard
+Major CDAP Bug Fixes
+--------------------
+- Fixed a problem with a HADOOP_HOME exception stacktrace when unit-testing an Application
+- Fixed an issue with Hive creating directories in /tmp in the Singlenode and unit-test frameworks
+- Fixed a problem with type inconsistency of Service API calls, where numbers were showing up as strings
+- Fixed an issue with the premature expiration of long-term Authentication Tokens
+- Fixed a problem with the cliService returning a double when an integer was stored
 
-Documentation Changes
-=====================
-- `Programming Guide <programming.html>`__ was restructured for easier access to its sections
-- Sidebar with the Table of Contents was made "sticky" to help navigate longer documents
-
-Major Reactor Bug Fixes
-=======================
-- Fixed a problem with empty log directories not being deleted after the log files in them were deleted
-- Fixed an issue in the Reactor Dashboard's Metric Explorer, where the user interface controls for 
-  selecting metrics were enabled inappropriately
-
-Other Reactor Changes
-=====================
+Other CDAP Changes
+------------------
 - `A list of deprecated Interfaces, Classes and Methods <javadocs/deprecated-list.html>`__ 
   is included in the Javadocs
   
 Known Issues
-============
+------------
 - Metrics for MapReduce jobs aren't populated on secure Hadoop clusters
-- The metric for the number of cores shown in the Resources view of the Reactor Dashboard will be zero
+- The metric for the number of cores shown in the Resources view of the CDAP Console will be zero
   unless YARN has been setup to enable virtual cores

@@ -20,6 +20,9 @@
 #
 # PDF generation
 # python docs.py -g pdf -o ../../install-guide/build-pdf/install.pdf ../../install-guide/source/install.rst
+# python docs.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-enterprise-dependencies.pdf ../../developer-guide/source/licenses/cdap-enterprise-dependencies.rst
+# python docs.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-level-1-dependencies.pdf    ../../developer-guide/source/licenses/cdap-level-1-dependencies.rst
+# python docs.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-singlenode-dependencies.pdf ../../developer-guide/source/licenses/cdap-singlenode-dependencies.rst
 #
 
 VERSION = "0.0.1"
@@ -174,10 +177,10 @@ def process_pdf(input_file, options):
 
     # Generate PDF
 #     /usr/local/bin/rst2pdf 
-#     --config="/Users/john/Source/reactor_2.3.0_docs/docs/developer-guide/source/_templates/pdf-config" 
-#     --stylesheets="/Users/john/Source/reactor_2.3.0_docs/docs/developer-guide/source/_templates/pdf-stylesheet" 
-#     -o "/Users/john/Source/reactor_2.3.0_docs/docs/developer-guide/build-pdf/rest2.pdf" 
-#     "/Users/john/Source/reactor_2.3.0_docs/docs/developer-guide/source/rest.rst_temp”
+#     --config="/Users/john/Source/cdap_2.3.0_docs/docs/developer-guide/source/_templates/pdf-config" 
+#     --stylesheets="/Users/john/Source/cdap_2.3.0_docs/docs/developer-guide/source/_templates/pdf-stylesheet" 
+#     -o "/Users/john/Source/cdap_2.3.0_docs/docs/developer-guide/build-pdf/rest2.pdf" 
+#     "/Users/john/Source/cdap_2.3.0_docs/docs/developer-guide/source/rest.rst_temp”
 
     command = '/usr/local/bin/rst2pdf --config="%s" --stylesheets="%s" -o "%s" %s' % (config, stylesheets, output, temp_file)
     print "command: %s" % command

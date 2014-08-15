@@ -1,0 +1,76 @@
+#!/bin/bash
+
+#
+# Copyright 2014 Cask, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+#
+
+#
+# chkconfig: 2345 96 15
+# description: Starts and stops the @service.name@ service
+# 
+### BEGIN INIT INFO
+# Provides:          cdap-@service.name@
+# Short-Description: Cask CDAP @service.name@
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Required-Start:    $syslog $remote_fs
+# Required-Stop:     $syslog $remote_fs
+# Should-Start:
+# Should-Stop:
+### END INIT INFO
+
+# source configuration, if it exists
+if [[ -r /etc/default/cdap-@service.name@ ]]; then
+  . /etc/default/cdap-@service.name@
+fi
+
+SVC_COMMAND="/opt/cdap/@package.name@/bin/svc-@service.name@ $*"
+K5PID="/var/cdap/run/k5start.pid"
+KRB_COMMAND="k5start -b -L -K 10 -p $K5PID -f $CDAP_KEYTAB -u $CDAP_PRINCIPAL"
+
+# check for kerberos
+if [[ -n $CDAP_KEYTAB ]] && [[ -n $CDAP_PRINCIPAL ]]; then
+  # Check for k5start and exit if it doesn't exist
+  if [[ $(which k5start) ]]; then
+    :
+  else
+    echo 'Fatal: Missing k5start command! Please install k5start!'
+    exit 1
+  fi
+  if [[ $1 =~ "start" ]]; then
+    if [[ $UID -eq 0 ]]; then
+      su cdap -c "$KRB_COMMAND"
+    else
+      $KRB_COMMAND
+    fi
+  elif [[ $1 == "stop" ]]; then
+    if [[ -e $K5PID ]]; then
+      k5pid=$(<$K5PID)
+      if [[ $(ps auxwww | grep k5start | awk '{print $2}' | grep $k5pid) ]]; then
+        kill $k5pid
+      fi
+      rm -f $K5PID
+    fi
+  fi
+fi
+
+# drop permissions to cdap user and run service script
+
+if [[ $UID -eq 0 ]]; then
+    su cdap -c "$SVC_COMMAND"
+else
+    $SVC_COMMAND
+fi
+

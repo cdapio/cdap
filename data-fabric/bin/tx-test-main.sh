@@ -2,7 +2,7 @@
 #!/bin/sh
 
 #
-# Copyright 2014 Continuuity, Inc.
+# Copyright 2014 Cask, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -40,7 +40,7 @@ SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.."
 APP_HOME="`pwd -P`"
 
-# Where log files are stored.  $CONTINUUITY_HOME/logs by default.
+# Where log files are stored.  $CDAP_HOME/logs by default.
 export LOG_DIR=/var/log
 
 # A string representing this instance of hbase. $USER by default.
@@ -145,7 +145,7 @@ if [ $# -ne 1 ]; then
 fi
 
 if [ "x$1" == "xstart" ]; then
-  java -cp ${CLASSPATH} -Dscript=$script com.continuuity.data2.transaction.TransactionServiceMain "$@" <$loglog >>$loglog 2>&1 &
+  java -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.data2.transaction.TransactionServiceMain "$@" <$loglog >>$loglog 2>&1 &
   echo $! >$pid
   exit 0
 fi

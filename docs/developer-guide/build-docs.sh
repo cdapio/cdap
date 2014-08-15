@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Build script for Product docs
+# Build script for docs
 # Builds the docs
 # Copies the javadocs into place
 # Zips everything up so it can be staged
@@ -16,8 +16,8 @@ APIDOCS="apidocs"
 JAVADOCS="javadocs"
 LICENSES="licenses"
 LICENSES_PDF="licenses-pdf"
-PRODUCT="reactor"
-PRODUCT_INIT_CAP="Reactor"
+PRODUCT="cdap"
+PRODUCT_CAPS="CDAP"
 
 SCRIPT_PATH=`pwd`
 SOURCE_PATH="$SCRIPT_PATH/$SOURCE"
@@ -39,7 +39,7 @@ if [ "x$2" == "x" ]; then
 else
   PRODUCT_PATH="$2"
 fi
-PRODUCT_JAVADOCS="$PRODUCT_PATH/continuuity-api/target/site/apidocs"
+PRODUCT_JAVADOCS="$PRODUCT_PATH/target/site/apidocs"
 
 ZIP_FILE_NAME=$HTML
 ZIP="$ZIP_FILE_NAME.zip"
@@ -47,7 +47,7 @@ ZIP="$ZIP_FILE_NAME.zip"
 function usage() {
   cd $PRODUCT_PATH
   PRODUCT_PATH=`pwd`
-  echo "Build script for '$PRODUCT' docs"
+  echo "Build script for '$PRODUCT_CAPS' docs"
   echo "Usage: $SCRIPT < option > [source]"
   echo ""
   echo "  Options (select one)"
@@ -58,7 +58,7 @@ function usage() {
   echo "    pdf-rest     Clean build of REST PDF"
   echo "    zip          Zips docs into $ZIP"
   echo "  or"
-  echo "    depends      Build Site listing dependencies"  
+  echo "    depends      Build Site listing dependencies"
   echo "    sdk          Build SDK"
   echo "  with"
   echo "    source       Path to $PRODUCT source for javadocs, if not $PRODUCT_PATH"
@@ -72,7 +72,7 @@ function clean() {
 
 function build_javadocs() {
   cd $PRODUCT_PATH
-  mvn clean package site -pl continuuity-api -am -Pjavadocs -DskipTests
+  mvn clean site -DskipTests
 }
 
 function build_docs() {
@@ -112,10 +112,14 @@ function build() {
    make_zip
 }
 
-function build_sdk() {
-  build_pdf_rest
+function build_single_node() {
   cd $PRODUCT_PATH
   mvn clean package -DskipTests -P examples && mvn package -pl singlenode -am -DskipTests -P dist,release
+}
+
+function build_sdk() {
+  build_pdf_rest
+  build_single_node
 }
 
 function build_dependencies() {
@@ -130,6 +134,11 @@ function version() {
   GIT_BRANCH="${branch[1]}"
 }
 
+function print_version() {
+  version
+  echo "PRODUCT_VERSION: $PRODUCT_VERSION"
+}
+
 if [ $# -lt 1 ]; then
   usage
   exit 1
@@ -139,13 +148,14 @@ case "$1" in
   build )             build; exit 1;;
   build-javadocs )    build_javadocs; exit 1;;
   build-docs )        build_docs; exit 1;;
+  build_single_node ) build_single_node; exit 1;;
   copy_javadocs )     copy_javadocs; exit 1;;
   copy_license_pdfs ) copy_license_pdfs; exit 1;;
   javadocs )          build_javadocs; exit 1;;
   depends )           build_dependencies; exit 1;;
   pdf-rest )          build_pdf_rest; exit 1;;
   sdk )               build_sdk; exit 1;;
-  version )           version; exit 1;;
+  version )           print_version; exit 1;;
   zip )               make_zip; exit 1;;
   * )                 usage; exit 1;;
 esac

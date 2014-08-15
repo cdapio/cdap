@@ -1,0 +1,125 @@
+/*
+ * Copyright 2014 Cask, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package co.cask.cdap.metrics.query;
+
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.service.ServerException;
+import co.cask.cdap.data2.OperationException;
+import co.cask.cdap.gateway.auth.Authenticator;
+import co.cask.cdap.metrics.data.MetricsTableFactory;
+import co.cask.http.HttpResponder;
+import com.google.inject.Inject;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+/**
+ * Class for handling requests for a single metric in a context.
+ */
+@Path(Constants.Gateway.GATEWAY_VERSION + "/metrics")
+public class MetricsQueryHandler extends BaseMetricsHandler {
+
+  private final MetricsRequestExecutor requestExecutor;
+
+  @Inject
+
+  public MetricsQueryHandler(Authenticator authenticator, final MetricsTableFactory metricsTableFactory) {
+    super(authenticator);
+    this.requestExecutor = new MetricsRequestExecutor(metricsTableFactory);
+  }
+
+  @GET
+  @Path("/{scope}/{metric}")
+  public void handleOverview(HttpRequest request, HttpResponder responder) throws IOException {
+    handleRequest(request, responder);
+  }
+
+  @GET
+  @Path("/reactor/cluster/{metric}")
+  public void handleClusterMetrics(HttpRequest request, HttpResponder responder) throws IOException {
+    handleRequest(request, responder);
+  }
+
+  // ex: /reactor/apps/appX/process.events.processed
+  @GET
+  @Path("/{scope}/{type}/{type-id}/{metric}")
+  public void handleTopLevel(HttpRequest request, HttpResponder responder) throws IOException {
+    handleRequest(request, responder);
+  }
+
+  // ex: /reactor/apps/appX/flows/process.events.processed
+  @GET
+  @Path("/{scope}/{type}/{type-id}/{request-type}/{metric}")
+  public void handleProgramType(HttpRequest request, HttpResponder responder) throws IOException {
+    handleRequest(request, responder);
+  }
+
+  // ex: /reactor/apps/appX/flows/flowY/process.events.processed
+  @GET
+  @Path("/{scope}/{type}/{type-id}/{request-type}/{request-id}/{metric}")
+  public void handleProgram(HttpRequest request, HttpResponder responder) throws IOException {
+    handleRequest(request, responder);
+  }
+
+  // ex: /reactor/apps/appX/mapreduce/jobId/mappers/process.entries.in
+  @GET
+  @Path("/{scope}/{type}/{type-id}/{request-type}/{request-id}/{component-type}/{metric}")
+  public void handleComponentType(HttpRequest request, HttpResponder responder) throws IOException {
+    handleRequest(request, responder);
+  }
+
+  // ex: /reactor/apps/appX/flows/flowY/flowlets/flowletZ/process.events.processed
+  // ex2: /reactor/services/{service-name}/handlers/{handler-name}/methods/{method-name}/{metric}
+  @GET
+  @Path("/{scope}/{type}/{type-id}/{request-type}/{request-id}/{component-type}/{component-id}/{metric}")
+  public void handleComponent(HttpRequest request, HttpResponder responder) throws IOException {
+    handleRequest(request, responder);
+  }
+
+  // ex: /reactor/datasets/tickTimeseries/apps/Ticker/flows/TickerTimeseriesFlow/flowlets/saver/store.bytes
+  @GET
+  @Path("/reactor/datasets/{dataset-id}/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/{metric}")
+  public void handleFlowletDatasetMetrics(HttpRequest request, HttpResponder responder)
+    throws IOException, OperationException {
+    handleRequest(request, responder);
+  }
+
+  @GET
+  @Path("/reactor/transactions/{metric}")
+  public void handleTransactionMetrics(HttpRequest request, HttpResponder response) throws IOException {
+    handleRequest(request, response);
+  }
+
+  private void handleRequest(HttpRequest request, HttpResponder responder) throws IOException {
+    try {
+      URI uri = new URI(MetricsRequestParser.stripVersionAndMetricsFromPath(request.getUri()));
+      MetricsRequest metricsRequest = parseAndValidate(request, uri);
+      responder.sendJson(HttpResponseStatus.OK, requestExecutor.executeQuery(metricsRequest));
+    } catch (URISyntaxException e) {
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (MetricsPathException e) {
+      responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (OperationException e) {
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying metrics");
+    } catch (ServerException e) {
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying metrics");
+    }
+  }
+}

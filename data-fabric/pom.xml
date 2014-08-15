@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2012-2014 Continuuity, Inc.
+  Copyright 2014 Cask, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -21,23 +21,23 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.continuuity</groupId>
-    <artifactId>reactor</artifactId>
-    <version>2.4.0-SNAPSHOT</version>
+    <groupId>co.cask.cdap</groupId>
+    <artifactId>cdap</artifactId>
+    <version>2.5.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>data-fabric</artifactId>
-  <name>Continuuity Data-Fabric</name>
+  <name>Cask CDAP Data-Fabric</name>
   <packaging>jar</packaging>
 
   <dependencies>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>common</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>proto</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -46,11 +46,11 @@
       <artifactId>tephra-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
-      <artifactId>http</artifactId>
+      <groupId>co.cask.http</groupId>
+      <artifactId>netty-http</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>explore-client</artifactId>
         <version>${project.version}</version>
     </dependency>
@@ -87,7 +87,7 @@
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>common-unit-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>

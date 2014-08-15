@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Continuuity, Inc.
+# Copyright 2014 Cask, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -32,8 +32,8 @@ export OPTS="-XX:+UseConcMarkSweepGC"
 # Uncomment below (along with above GC logging) to put GC information in its own logfile
 # export USE_GC_LOGFILE=true
 
-# Where log files are stored.  $CONTINUUITY_HOME/logs by default.
-export LOG_DIR=/var/log/continuuity
+# Where log files are stored.  $CDAP_HOME/logs by default.
+export LOG_DIR=/var/log/cdap
 
 # A string representing this instance of hbase. $USER by default.
 export IDENT_STRING=$USER
@@ -42,7 +42,7 @@ export IDENT_STRING=$USER
 # export NICENESS=10
 
 # The directory where pid files are stored. /tmp by default.
-export PID_DIR=/var/continuuity/run
+export PID_DIR=/var/cdap/run
 
 # Specifies the JAVA_HEAPMAX
 export JAVA_HEAPMAX=-Xmx128m
@@ -53,7 +53,7 @@ MAIN_CLASS=
 # Arguments for main class.
 #MAIN_CLASS_ARGS=""
 
-# Reactor adds Hadoop and HBase libs to the classpath on startup.
+# Adds Hadoop and HBase libs to the classpath on startup.
 # If the "hbase" command is on the PATH, this will be done automatically.
 # Or uncomment the line below to point to the HBase installation directly.
 # HBASE_HOME=

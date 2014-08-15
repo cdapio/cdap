@@ -1,195 +1,114 @@
-.. :Author: Continuuity, Inc.
-   :Description: Advanced Reactor Features
+.. :author: Cask, Inc.
+   :description: Advanced Cask Data Application Platform Features
 
-=====================================
-Advanced Continuuity Reactor Features
-=====================================
+======================
+Advanced CDAP Features
+======================
 
 **Custom Services, Flow, Dataset, and Transaction Systems, 
-with Best Practices for the Continuuity Reactor**
-
-.. reST Editor: .. section-numbering::
-.. reST Editor: .. contents::
+with Best Practices for the Cask Data Application Platform**
 
 Custom Services
 ===============
 In addition to Flows, MapReduce jobs, and Procedures, additional Services can be run in a 
-Reactor Application. Developers can implement Custom Services that run in program containers,
-to interface with a legacy system and perform additional processing beyond the Continuuity processing
+Cask Data Application Platform (CDAP) Application. Developers can implement Custom Services that run in program containers,
+to interface with a legacy system and perform additional processing beyond the CDAP processing
 paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
 
-Services are implemented as `Twill applications <http://twill.incubator.apache.org>`__ and are run in
-YARN. A service's lifecycle can be controlled by using REST endpoints. 
-
-You can add services to your application by calling the ``addService`` method in the 
+Services are implemented by extending ``AbstractHttpServiceHandler`` and are run in
+YARN. You can add services to your application by calling the ``addService`` method in the
 Application's ``configure`` method::
 
-	public class AnalyticsApp extends AbstractApplication {
-	  @Override
-	  public void configure() {
-	    setName("AnalyticsApp");
-	    setDescription("Application for generating mobile analytics");
-	    addStream(new Stream("event"));
-	    addFlow(new EventProcessingFlow());
-	    ....
-	    addService(new IpGeoLookupService());
-	    addService(new UserLookupServiceService());
-	    ...
-	  }
-	}
-
-
-A Custom Service is implemented as a Twill application, with one or more runnables. See the 
-`Apache Twill guide <http://twill.incubator.apache.org>`__ for additional information.
+  public class AnalyticsApp extends AbstractApplication {
+    @Override
+    public void configure() {
+      setName("AnalyticsApp");
+      setDescription("Application for generating mobile analytics");
+      addStream(new Stream("event"));
+      addFlow(new EventProcessingFlow());
+      ....
+      addService("IpLookupService", new IpGeoLookupService());
+      addService("UserLookupService", new UserLookupService());
+      ...
+    }
+  }
 
 ::
 
-	 public class IpGeoLookupService implements TwillApplication {
-	   @Override
-	   public TwillSpecification configure() {
-	     return TwillSpecification.Builder.with()
-	       .setName("IpGeoApplication")
-	       .withRunnable()
-	       .add(new IpGeoRunnable())
-	       .noLocalFiles()
-	       .anyOrder()
-	       .build();
-	  }
-	}
+  public class IpGeoLookupService implements AbstractHttpServiceHandler {
 
-The service logic is implemented by extending the ``AbstractTwillRunnable`` and implementing these
-methods:
-
-- ``intialize()``
-- ``run()``
-- ``stop()``
-- ``destroy()``
-
-::
-
-	public final class IpGeoRunnable extends AbstractTwillRunnable {
-	
-	   @Override
-	   public void initialize(TwillContext context) {
-	     // Service initialization
-	   }
-	
-	   @Override
-	   public void run() {
-	     // Start the custom service
-	   }
-	
-	   @Override
-	   public void stop() {
-	     // Called to stop the running the service
-	   }
-	
-	   @Override
-	   public void destroy() {
-	     // Called before shutting down the service
-	   }
-	}
-
-
-Services Integration with Metrics and Logging
----------------------------------------------
-Services are integrated with the Reactor Metrics and Logging framework. Programs 
-implementing Custom Services can declare Metrics and Logger (SLF4J) member variables and 
-the appropriate implementation will be injected by the run-time.
-
-::
-
-	public class IpGeoRunnable extends AbstractTwillRunnable {
-	  private Metrics metrics;
-	  private static final Logger LOG = LoggerFactory.getLogger(IpGeoRunnable.class);
-	
-	  @Override
-	  public void run() {
-	    LOG.info("Running ip geo lookup service");
-	           metrics.count("ipgeo.instance", 1);
-	  }
-	}
-
-The metrics and logs that are emitted by the service are aggregated and accessed similar 
-to other program types. See the sections in the 
-`Continuuity Reactor Operations Guide <operations.html>`__ on accessing 
-`logs <operations.html#logging>`__ and `metrics <operations.html#metrics>`__. 
-
+    @Path("lookup/{ip}")
+    @GET
+    public void lookup(HttpServiceRequest request, HttpServiceResponder responder,
+                                                      @PathParam("ip") String ip) {
+      // ...
+      responder.sendString(200, location, Charsets.UTF_8);
+    }
+  }
 
 Service Discovery
 -----------------
 Services announce the host and port they are running on so that they can be discovered by—and provide
 access to—other programs: Flows, Procedures, MapReduce jobs, and other Custom Services.
 
-To announce a Service, call the ``announce`` method from ``TwillContext`` during the 
-initialize method. The announce method takes a name—which the Service can register 
-under—and the port which the Service is running on. The application name, service ID, and 
-hostname required for registering the Service are automatically obtained.
-
-::
-
-	@Override
-	public void initialize (TwillContext context) {
-	  context.announce("GeoLookup", 7000);
-	}
-
+Service are announced using the name passed in the ``configure`` method. The *application name*, *service id*, and
+*hostname* required for registering the Service are automatically obtained.
 
 The service can then be discovered in Flows, Procedures, MapReduce jobs, and other Services using
 appropriate program contexts.
 
 For example, in Flows::
 
-	public class GeoFlowlet extends AbstractFlowlet {
-	
-	  // Service discovery for ip-geo service
-	  private ServiceDiscovered serviceDiscovered;
-	
-	  @Override
-	  public void intialize(FlowletContext context) {
-	    serviceDiscovered = context.discover("MyApp", "IpGeoLookupService", "GeoLookup"); 
-	  }
-	
-	  @ProcessInput
-	  public void process(String ip) {
-	    Discoverable discoverable = Iterables.getFirst(serviceDiscovered, null);
-	    if (discoverable != null) {
-	      String hostName = discoverable.getSocketAddress().getHostName();
-	      int port = discoverable.getSocketAddress().getPort();
-	      // Access the appropriate service using the host and port info
-	      ...
-	    }
-	  }
-	}
+  public class GeoFlowlet extends AbstractFlowlet {
+  
+    // Service discovery for ip-geo service
+    private ServiceDiscovered serviceDiscovered;
+  
+    @Override
+    public void intialize(FlowletContext context) {
+      serviceDiscovered = context.discover("AnalyticsApp", "IpGeoLookupService", "IpLookupService");
+    }
+  
+    @ProcessInput
+    public void process(String ip) {
+      Discoverable discoverable = Iterables.getFirst(serviceDiscovered, null);
+      if (discoverable != null) {
+        String hostName = discoverable.getSocketAddress().getHostName();
+        int port = discoverable.getSocketAddress().getPort();
+        // Access the appropriate service using the host and port info
+        ...
+      }
+    }
+  }
 
 In MapReduce Mapper/Reducer jobs::
 
-	public class GeoMapper extends Mapper<byte[], Location, Text, Text> 
-	    implements ProgramLifecycle<MapReduceContext> {
-	
-	  private ServiceDiscovered serviceDiscovered;
-	  
-	  @Override
-	  public void initialize(MapReduceContext mapReduceContext) throws Exception {
-	    serviceDiscovered = mapReduceContext.discover("MyApp", "IpGeoLookupService", "GeoLookup");
-	  }
-	  
-	  @Override
-	  public void map(byte[] key, Location location, Context context) throws IOException, InterruptedException {
-	    Discoverable discoverable = Iterables.getFirst(serviceDiscovered, null);
-	    if (discoverable != null) {
-	      String hostName = discoverable.getSocketAddress().getHostName();
-	      int port = discoverable.getSocketAddress().getPort();
-	      // Access the appropriate service using the host and port info
-	    }
-	  }
-	}
+  public class GeoMapper extends Mapper<byte[], Location, Text, Text> 
+      implements ProgramLifecycle<MapReduceContext> {
+  
+    private ServiceDiscovered serviceDiscovered;
+    
+    @Override
+    public void initialize(MapReduceContext mapReduceContext) throws Exception {
+      serviceDiscovered = mapReduceContext.discover("AnalyticsApp", "IpGeoLookupService", "IpLookupService");
+    }
+    
+    @Override
+    public void map(byte[] key, Location location, Context context) throws IOException, InterruptedException {
+      Discoverable discoverable = Iterables.getFirst(serviceDiscovered, null);
+      if (discoverable != null) {
+        String hostName = discoverable.getSocketAddress().getHostName();
+        int port = discoverable.getSocketAddress().getPort();
+        // Access the appropriate service using the host and port info
+      }
+    }
+  }
 
 Using Services
 -----------------
-Custom Services are not displayed in the Continuuity Reactor Dashboard. To control their
-lifecycle, use the `Reactor Client API <rest.html#reactor-client-http-api>`__ as described
-in the `Continuuity Reactor HTTP REST API <rest.html#reactor-client-http-api>`__.
-
+Custom Services lifecycle can be controlled via the Continuuity Reactor Dashboard or by using the
+`CDAP Client API <rest.html#cdap-client-http-api>`__ as described in the
+`CDAP HTTP REST API <rest.html#cdap-client-http-api>`__.
 
 Flow System
 ===========
@@ -212,10 +131,10 @@ By default, a Flowlet processes a single data object at a time within a single
 transaction. To increase throughput, you can also process a batch of data objects within
 the same transaction::
 
-	@Batch(100)
-	@ProcessInput
-	public void process(String words) {
-	  ...
+  @Batch(100)
+  @ProcessInput
+  public void process(String words) {
+    ...
 
 For the above batch example, the **process** method will be called up to 100 times per
 transaction, with different data objects read from the input each time it is called.
@@ -223,10 +142,10 @@ transaction, with different data objects read from the input each time it is cal
 If you are interested in knowing when a batch begins and ends, you can use an **Iterator**
 as the method argument::
 
-	@Batch(100)
-	@ProcessInput
-	public void process(Iterator<String> words) {
-	  ...
+  @Batch(100)
+  @ProcessInput
+  public void process(Iterator<String> words) {
+    ...
 
 In this case, the **process** will be called once per transaction and the **Iterator**
 will contain up to 100 data objects read from the input.
@@ -235,11 +154,11 @@ Flowlets and Instances
 ----------------------
 You can have one or more instances of any given Flowlet, each consuming a disjoint
 partition of each input. You can control the number of instances programmatically via the
-`REST interfaces <rest.html>`__ or via the Continuuity Reactor Dashboard. This enables you
+`REST interfaces <rest.html>`__ or via the CDAP Console. This enables you
 to scale your application to meet capacity at runtime.
 
-In the Local Reactor, multiple Flowlet instances are run in threads, so in some cases
-actual performance may not be improved. However, in the Hosted and Enterprise Reactors
+In the Local DAP, multiple Flowlet instances are run in threads, so in some cases
+actual performance may not be improved. However, in the Distributed DAP,
 each Flowlet instance runs in its own Java Virtual Machine (JVM) with independent compute
 resources. Scaling the number of Flowlets can improve performance and have a major impact
 depending on your implementation.
@@ -267,25 +186,25 @@ Flowlet can specify one of these three partitioning strategies:
 
 Suppose we have a Flowlet that counts words::
 
-	public class Counter extends AbstractFlowlet {
+  public class Counter extends AbstractFlowlet {
 
-	  @UseDataSet("wordCounts")
-	  private KeyValueTable wordCountsTable;
+    @UseDataSet("wordCounts")
+    private KeyValueTable wordCountsTable;
 
-	  @ProcessInput("wordOut")
-	  public void process(String word) {
-	    this.wordCountsTable.increment(Bytes.toBytes(word), 1L);
-	  }
-	}
+    @ProcessInput("wordOut")
+    public void process(String word) {
+      this.wordCountsTable.increment(Bytes.toBytes(word), 1L);
+    }
+  }
 
 This Flowlet uses the default strategy of FIFO. To increase the throughput when this
 Flowlet has many instances, we can specify round-robin partitioning::
 
-	@RoundRobin
-	@ProcessInput("wordOut")
-	public void process(String word) {
-	  this.wordCountsTable.increment(Bytes.toBytes(word), 1L);
-	}
+  @RoundRobin
+  @ProcessInput("wordOut")
+  public void process(String word) {
+    this.wordCountsTable.increment(Bytes.toBytes(word), 1L);
+  }
 
 Now, if we have three instances of this Flowlet, every instance will receive every third
 word. For example, for the sequence of words in the sentence, “I scream, you scream, we
@@ -299,24 +218,24 @@ The potential problem with this is that the first two instances might
 both attempt to increment the counter for the word *scream* at the same time,
 leading to a write conflict. To avoid conflicts, we can use hash-based partitioning::
 
-	@HashPartition("wordHash")
-	@ProcessInput("wordOut")
-	public void process(String word) {
-	  this.wordCountsTable.increment(Bytes.toBytes(word), 1L);
-	}
+  @HashPartition("wordHash")
+  @ProcessInput("wordOut")
+  public void process(String word) {
+    this.wordCountsTable.increment(Bytes.toBytes(word), 1L);
+  }
 
 Now only one of the Flowlet instances will receive the word *scream*, and there can be no
 more write conflicts. Note that in order to use hash-based partitioning, the emitting
 Flowlet must annotate each data object with the partitioning key::
 
-	@Output("wordOut")
-	private OutputEmitter<String> wordOutput;
-	...
-	public void process(StreamEvent event) {
-	  ...
-	  // emit the word with the partitioning key name "wordHash"
-	  wordOutput.emit(word, "wordHash", word.hashCode());
-	}
+  @Output("wordOut")
+  private OutputEmitter<String> wordOutput;
+  ...
+  public void process(StreamEvent event) {
+    ...
+    // emit the word with the partitioning key name "wordHash"
+    wordOutput.emit(word, "wordHash", word.hashCode());
+  }
 
 Note that the emitter must use the same name ("wordHash") for the key that the consuming
 Flowlet specifies as the partitioning key. If the output is connected to more than one
@@ -326,11 +245,11 @@ multiple keys, such as counting purchases by product ID as well as by customer I
 
 Partitioning can be combined with batch execution::
 
-	@Batch(100)
-	@HashPartition("wordHash")
-	@ProcessInput("wordOut")
-	public void process(Iterator<String> words) {
-	   ...
+  @Batch(100)
+  @HashPartition("wordHash")
+  @ProcessInput("wordOut")
+  public void process(Iterator<String> words) {
+     ...
 
 
 Datasets System
@@ -352,10 +271,10 @@ one holding the data and one holding the index.
 
 We distinguish three categories of Datasets: *core*, *system*, and *custom* Datasets:
 
-- The **core** Dataset of the Reactor is a Table. Its implementation may use internal
-  Continuuity classes hidden from developers.
+- The **core** Dataset of the CDAP is a Table. Its implementation may use internal
+  CDAP classes hidden from developers.
 
-- A **system** Dataset is bundled with the Reactor and is built around
+- A **system** Dataset is bundled with the CDAP and is built around
   one or more underlying core or system Datasets to implement a specific data pattern.
 
 - A **custom** Dataset is implemented by you and can have arbitrary code and methods.
@@ -395,36 +314,36 @@ Table API
 The ``Table`` API provides basic methods to perform read, write and delete operations,
 plus special scan, atomic increment and compare-and-swap operations::
 
-	// Read
-	public Row get(Get get)
-	public Row get(byte[] row)
-	public byte[] get(byte[] row, byte[] column)
-	public Row get(byte[] row, byte[][] columns)
-	public Row get(byte[] row, byte[] startColumn,
-	               byte[] stopColumn, int limit)
+  // Read
+  public Row get(Get get)
+  public Row get(byte[] row)
+  public byte[] get(byte[] row, byte[] column)
+  public Row get(byte[] row, byte[][] columns)
+  public Row get(byte[] row, byte[] startColumn,
+                 byte[] stopColumn, int limit)
 
-	// Scan
-	public Scanner scan(byte[] startRow, byte[] stopRow)
+  // Scan
+  public Scanner scan(byte[] startRow, byte[] stopRow)
 
-	// Write
-	public void put(Put put)
-	public void put(byte[] row, byte[] column, byte[] value)
-	public void put(byte[] row, byte[][] columns, byte[][] values)
+  // Write
+  public void put(Put put)
+  public void put(byte[] row, byte[] column, byte[] value)
+  public void put(byte[] row, byte[][] columns, byte[][] values)
 
-	// Compare And Swap
-	public boolean compareAndSwap(byte[] row, byte[] column,
-	                              byte[] expectedValue, byte[] newValue)
+  // Compare And Swap
+  public boolean compareAndSwap(byte[] row, byte[] column,
+                                byte[] expectedValue, byte[] newValue)
 
-	// Increment
-	public Row increment(Increment increment)
-	public long increment(byte[] row, byte[] column, long amount)
-	public Row increment(byte[] row, byte[][] columns, long[] amounts)
+  // Increment
+  public Row increment(Increment increment)
+  public long increment(byte[] row, byte[] column, long amount)
+  public Row increment(byte[] row, byte[][] columns, long[] amounts)
 
-	// Delete
-	public void delete(Delete delete)
-	public void delete(byte[] row)
-	public void delete(byte[] row, byte[] column)
-	public void delete(byte[] row, byte[][] columns)
+  // Delete
+  public void delete(Delete delete)
+  public void delete(byte[] row)
+  public void delete(byte[] row, byte[] column)
+  public void delete(byte[] row, byte[][] columns)
 
 Each basic operation has a method that takes an operation-type object as a parameter
 plus handy methods for working directly with byte arrays.
@@ -434,79 +353,79 @@ Read
 ....
 A ``get`` operation reads all columns or selection of columns of a single row::
 
-	Table t;
-	byte[] rowKey1;
-	byte[] columnX;
-	byte[] columnY;
-	int n;
+  Table t;
+  byte[] rowKey1;
+  byte[] columnX;
+  byte[] columnY;
+  int n;
 
-	// Read all columns of a row
-	Row row = t.get(new Get("rowKey1"));
+  // Read all columns of a row
+  Row row = t.get(new Get("rowKey1"));
 
-	// Read specified columns from a row
-	Row rowSelection = t.get(new Get("rowKey1").add("column1").add("column2"));
+  // Read specified columns from a row
+  Row rowSelection = t.get(new Get("rowKey1").add("column1").add("column2"));
 
-	// Reads a column range from x (inclusive) to y (exclusive)
-	// with a limit of n return values
-	rowSelection = t.get(rowKey1, columnX, columnY; n);
+  // Reads a column range from x (inclusive) to y (exclusive)
+  // with a limit of n return values
+  rowSelection = t.get(rowKey1, columnX, columnY; n);
 
-	// Read only one column in one row byte[]
-	value = t.get(rowKey1, columnX);
+  // Read only one column in one row byte[]
+  value = t.get(rowKey1, columnX);
 
 The ``Row`` object provides access to the row data including its columns. If only a 
 selection of row columns is requested, the returned ``Row`` object will contain only these columns.
 The ``Row`` object provides an extensive API for accessing returned column values::
 
-	// Get column value as a byte array
-	byte[] value = row.get("column1");
+  // Get column value as a byte array
+  byte[] value = row.get("column1");
 
-	// Get column value of a specific type
-	String valueAsString = row.getString("column1");
-	Integer valueAsInteger = row.getInt("column1");
+  // Get column value of a specific type
+  String valueAsString = row.getString("column1");
+  Integer valueAsInteger = row.getInt("column1");
 
 When requested, the value of a column is converted to a specific type automatically.
 If the column is absent in a row, the returned value is ``null``. To return primitive types,
 the corresponding methods accepts default value to be returned when the column is absent::
 
-	// Get column value as a primitive type or 0 if column is absent
-	long valueAsLong = row.getLong("column1", 0);
+  // Get column value as a primitive type or 0 if column is absent
+  long valueAsLong = row.getLong("column1", 0);
 
 Scan
 ....
 A ``scan`` operation fetches a subset of rows or all of the rows of a Table::
 
-	byte[] startRow;
-	byte[] stopRow;
-	Row row;
+  byte[] startRow;
+  byte[] stopRow;
+  Row row;
 
-	// Scan all rows from startRow (inclusive) to
-	// stopRow (exclusive)
-	Scanner scanner = t.scan(startRow, stopRow);
-	try {
-	  while ((row = scanner.next()) != null) {
-	    LOG.info("column1: " + row.getString("column1", "null"));
-	  }
-	} finally {
-	  scanner.close();
-	}
+  // Scan all rows from startRow (inclusive) to
+  // stopRow (exclusive)
+  Scanner scanner = t.scan(startRow, stopRow);
+  try {
+    while ((row = scanner.next()) != null) {
+      LOG.info("column1: " + row.getString("column1", "null"));
+    }
+  } finally {
+    scanner.close();
+  }
 
 To scan a set of rows not bounded by ``startRow`` and/or ``stopRow``
 you can pass ``null`` as their value::
 
-	byte[] startRow;
-	// Scan all rows of a table
-	Scanner allRows = t.scan(null, null);
-	// Scan all columns up to stopRow (exclusive)
-	Scanner headRows = t.scan(null, stopRow);
-	// Scan all columns starting from startRow (inclusive)
-	Scanner tailRows = t.scan(startRow, null);
+  byte[] startRow;
+  // Scan all rows of a table
+  Scanner allRows = t.scan(null, null);
+  // Scan all columns up to stopRow (exclusive)
+  Scanner headRows = t.scan(null, stopRow);
+  // Scan all columns starting from startRow (inclusive)
+  Scanner tailRows = t.scan(startRow, null);
 
 Write
 .....
 A ``put`` operation writes data into a row::
 
-	// Write a set of columns with their values
-	t.put(new Put("rowKey1").add("column1", "value1").add("column2", 55L));
+  // Write a set of columns with their values
+  t.put(new Put("rowKey1").add("column1", "value1").add("column2", 55L));
 
 
 Compare and Swap
@@ -515,12 +434,12 @@ A swap operation compares the existing value of a column with an expected value,
 and if it matches, replaces it with a new value.
 The operation returns ``true`` if it succeeds and ``false`` otherwise::
 
-	byte[] expectedCurrentValue;
-	byte[] newValue;
-	if (!t.compareAndSwap(rowKey1, columnX,
-	      expectedCurrentValue, newValue)) {
-	  LOG.info("Current value was different from expected");
-	}
+  byte[] expectedCurrentValue;
+  byte[] newValue;
+  if (!t.compareAndSwap(rowKey1, columnX,
+        expectedCurrentValue, newValue)) {
+    LOG.info("Current value was different from expected");
+  }
 
 Increment
 .........
@@ -529,10 +448,10 @@ or an integer amount *n*.
 If a column doesn’t exist, it is created with an assumed value
 before the increment of zero::
 
-	// Write long value to a column of a row
-	t.put(new Put("rowKey1").add("column1", 55L));
-	// Increment values of several columns in a row
-	t.increment(new Increment("rowKey1").add("column1", 1L).add("column2", 23L));
+  // Write long value to a column of a row
+  t.put(new Put("rowKey1").add("column1", 55L));
+  // Increment values of several columns in a row
+  t.increment(new Increment("rowKey1").add("column1", 1L).add("column2", 23L));
 
 If the existing value of the column cannot be converted to a ``long``,
 a ``NumberFormatException`` will be thrown.
@@ -541,10 +460,10 @@ Delete
 ......
 A delete operation removes an entire row or a subset of its columns::
 
-	// Delete the entire row
-	t.delete(new Delete("rowKey1"));
-	// Delete a selection of columns from the row
-	t.delete(new Delete("rowKey1").add("column1").add("column2"));
+  // Delete the entire row
+  t.delete(new Delete("rowKey1"));
+  // Delete a selection of columns from the row
+  t.delete(new Delete("rowKey1").add("column1").add("column2"));
 
 Note that specifying a set of columns helps to perform delete operation faster.
 When you want to delete all the columns of a row and you know all of them,
@@ -552,7 +471,7 @@ passing all of them will make the deletion faster.
 
 System Datasets
 ---------------
-The Continuuity Reactor comes with several system-defined Datasets, including key/value Tables, 
+The Cask Data Application Platform comes with several system-defined Datasets, including key/value Tables, 
 indexed Tables and time series. Each of them is defined with the help of one or more embedded 
 Tables, but defines its own interface. For example:
 
@@ -648,7 +567,7 @@ Application components can access created Dataset via ``@UseDataSet``::
 A complete application demonstrating the use of a custom Dataset is included in our
 `PageViewAnalytics </examples/PageViewAnalytics/index.html>`__ example.
 
-You can also create/drop/truncate Datasets using `Continuuity Reactor HTTP REST API <rest.html>`__. Please refer to the
+You can also create/drop/truncate Datasets using `Cask Data Application Platform HTTP REST API <rest.html>`__. Please refer to the
 REST APIs guide for more details on how to do that.
 
 
@@ -661,10 +580,10 @@ The Dataset needs to implement specific interfaces to support this.
 When you run a MapReduce job, you can configure it to read its input from a Dataset. The 
 source Dataset must implement the ``BatchReadable`` interface, which requires two methods::
 
-	public interface BatchReadable<KEY, VALUE> {
-	  List<Split> getSplits();
-	  SplitReader<KEY, VALUE> createSplitReader(Split split);
-	}
+  public interface BatchReadable<KEY, VALUE> {
+    List<Split> getSplits();
+    SplitReader<KEY, VALUE> createSplitReader(Split split);
+  }
 
 These two methods complement each other: ``getSplits()`` must return all splits of the Dataset 
 that the MapReduce job will read; ``createSplitReader()`` is then called in every Mapper to 
@@ -679,30 +598,30 @@ method in your Dataset with additional parameters and explicitly set the input i
 For example, the system Dataset ``KeyValueTable`` implements ``BatchReadable<byte[], byte[]>`` 
 with an extra method that allows specification of the number of splits and a range of keys::
 
-	public class KeyValueTable extends AbstractDataset
-	                           implements BatchReadable<byte[], byte[]> {
-	  ...
-	  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop);
-	}
+  public class KeyValueTable extends AbstractDataset
+                             implements BatchReadable<byte[], byte[]> {
+    ...
+    public List<Split> getSplits(int numSplits, byte[] start, byte[] stop);
+  }
 
 To read a range of keys and give a hint that you want 16 splits, write::
 
-	@Override
-	@UseDataSet("myTable")
-	KeyValueTable kvTable;
-	...
-	public void beforeSubmit(MapReduceContext context) throws Exception {
-	  ...
-	  context.setInput(kvTable, kvTable.getSplits(16, startKey, stopKey);
-	}
+  @Override
+  @UseDataSet("myTable")
+  KeyValueTable kvTable;
+  ...
+  public void beforeSubmit(MapReduceContext context) throws Exception {
+    ...
+    context.setInput(kvTable, kvTable.getSplits(16, startKey, stopKey);
+  }
 
 Similarly to reading input from a Dataset, you have the option to write to a Dataset as 
 the output destination of a MapReduce job—if that Dataset implements the ``BatchWritable`` 
 interface::
 
-	public interface BatchWritable<KEY, VALUE> {
-	  void write(KEY key, VALUE value);
-	}
+  public interface BatchWritable<KEY, VALUE> {
+    void write(KEY key, VALUE value);
+  }
 
 The ``write()`` method is used to redirect all writes performed by a Reducer to the Dataset.
 Again, the ``KEY`` and ``VALUE`` type parameters must match the output key and value type 
@@ -738,7 +657,7 @@ object can be reattempted. This ensures "exactly-once" processing of each object
 OCC: Optimistic Concurrency Control
 -----------------------------------
 
-The Continuuity Reactor uses *Optimistic Concurrency Control* (OCC) to implement 
+The Cask Data Application Platform uses *Optimistic Concurrency Control* (OCC) to implement 
 transactions. Unlike most relational databases that use locks to prevent conflicting 
 operations between transactions, under OCC we allow these conflicting writes to happen. 
 When the transaction is committed, we can detect whether it has any conflicts: namely, if 
@@ -758,7 +677,7 @@ conflicts wherever possible.
 
 Here are some rules to follow for Flows, Flowlets and Procedures:
 
-- Keep transactions short. The Continuuity Reactor attempts to delay the beginning of each
+- Keep transactions short. The Cask Data Application Platform attempts to delay the beginning of each
   transaction as long as possible. For instance, if your Flowlet only performs write
   operations, but no read operations, then all writes are deferred until the process
   method returns. They are then performed and transacted, together with the
@@ -801,10 +720,10 @@ Disabling Transactions
 Transaction can be disabled for a Flow by annotating the Flow class with the 
 ``@DisableTransaction`` annotation::
 
-	@DisableTransaction
-	class MyExampleFlow implements Flow {
-	  ...
-	}
+  @DisableTransaction
+  class MyExampleFlow implements Flow {
+    ...
+  }
 
 While this may speed up performance, if—for example—a Flowlet fails, the system would not 
 be able to roll back to its previous state. You will need to judge whether the increase in 
@@ -856,24 +775,24 @@ The following example demonstrates the convenience of using ``@Property`` in a
 ``WordFilter`` flowlet
 that filters out specific words::
 
-	public static class WordFilter extends AbstractFlowlet {
-	
-	  private OutputEmitter<String> out;
-	
-	  @Property
-	  private final String toFilterOut;
-	
-	  public CountByField(String toFilterOut) {
-	    this.toFilterOut = toFilterOut;
-	  }
-	
-	  @ProcessInput()
-	  public void process(String word) {
-	    if (!toFilterOut.equals(word)) {
-	      out.emit(word);
-	    }
-	  }
-	}
+  public static class WordFilter extends AbstractFlowlet {
+  
+    private OutputEmitter<String> out;
+  
+    @Property
+    private final String toFilterOut;
+  
+    public CountByField(String toFilterOut) {
+      this.toFilterOut = toFilterOut;
+    }
+  
+    @ProcessInput()
+    public void process(String word) {
+      if (!toFilterOut.equals(word)) {
+        out.emit(word);
+      }
+    }
+  }
 
 
 The Flowlet constructor is called with the parameter when the Flow is configured::
@@ -903,7 +822,7 @@ boxed types (e.g. ``Integer``), ``String`` and ``enum``.
 
 Where to Go Next
 ================
-Now that you've looked at the advanced features of Continuuity Reactor, take a look at:
+Now that you've looked at the advanced features of CDAP, take a look at:
 
 - `Querying Datasets with SQL <query.html>`__,
-  which covers ad-hoc querying of Continuuity Reactor Datasets using SQL.
+  which covers ad-hoc querying of CDAP Datasets using SQL.

@@ -2,7 +2,7 @@
 
 REM #################################################################################
 REM ##
-REM ## Copyright 2012-2014 Continuuity, Inc.
+REM ## Copyright 2014 Cask, Inc.
 REM ##
 REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
 REM ## use this file except in compliance with the License. You may obtain a copy of
@@ -18,12 +18,12 @@ REM ## the License.
 REM ##
 REM #################################################################################
 
-SET CONTINUUITY_HOME=%~dp0
-SET CONTINUUITY_HOME=%CONTINUUITY_HOME:~0,-5%
+SET CDAP_HOME=%~dp0
+SET CDAP_HOME=%CDAP_HOME:~0,-5%
 SET JAVACMD=%JAVA_HOME%\bin\java.exe
 
-SET CLASSPATH=%CONTINUUITY_HOME%\lib\*;%CONTINUUITY_HOME%\conf\
-SET PATH=%PATH%;%CONTINUUITY_HOME%\libexec\bin
+SET CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\
+SET PATH=%PATH%;%CDAP_HOME%\libexec\bin
 
 REM Check for 64-bit version of OS. Currently not supporting 32-bit Windows
 IF NOT EXIST "%PROGRAMFILES(X86)%" (
@@ -55,9 +55,9 @@ if NOT "%line%" == "6" (
 )
 endlocal
 
-mkdir %CONTINUUITY_HOME%\logs > NUL 2>&1
+mkdir %CDAP_HOME%\logs > NUL 2>&1
 
-set auth_file=%HOMEPATH%\.continuuity.accesstoken
+set auth_file=%HOMEPATH%\.cdap.accesstoken
 REM check if token-file is provided. if not use the default file
 set tokenFileProvided=false
 for %%a in (%*) do (
@@ -67,9 +67,9 @@ for %%a in (%*) do (
 )
 
 if "%tokenFileProvided%" == "false" if exist %auth_file% (
-  %JAVACMD% -classpath %CLASSPATH% com.continuuity.gateway.tools.MetaDataClient %* --token-file %auth_file%
+  %JAVACMD% -classpath %CLASSPATH% co.cask.cdap.gateway.tools.MetaDataClient %* --token-file %auth_file%
   GOTO :FINALLY
 )
-%JAVACMD% -classpath %CLASSPATH% com.continuuity.gateway.tools.MetaDataClient %*
+%JAVACMD% -classpath %CLASSPATH% co.cask.cdap.gateway.tools.MetaDataClient %*
 :FINALLY
 

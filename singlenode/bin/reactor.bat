@@ -2,7 +2,7 @@
 
 REM #################################################################################
 REM ##
-REM ## Copyright 2012-2014 Continuuity, Inc.
+REM ## Copyright 2014 Cask, Inc.
 REM ##
 REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
 REM ## use this file except in compliance with the License. You may obtain a copy of
@@ -19,24 +19,24 @@ REM ##
 REM #################################################################################
 
 SET ORIGPATH=%cd%
-SET CONTINUUITY_HOME=%~dp0
-SET CONTINUUITY_HOME=%CONTINUUITY_HOME:~0,-5%
+SET CDAP_HOME=%~dp0
+SET CDAP_HOME=%CDAP_HOME:~0,-5%
 SET JAVACMD=%JAVA_HOME%\bin\java.exe
 
 REM Specifies Web App Path
-SET WEB_APP_PATH=%CONTINUUITY_HOME%\web-app\local\server\main.js
+SET WEB_APP_PATH=%CDAP_HOME%\web-app\local\server\main.js
 
-REM %CONTINUUITY_HOME%
-SET CLASSPATH=%CONTINUUITY_HOME%\lib\*;%CONTINUUITY_HOME%\conf\
-SET PATH=%PATH%;%CONTINUUITY_HOME%\libexec\bin
+REM %CDAP_HOME%
+SET CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\
+SET PATH=%PATH%;%CDAP_HOME%\libexec\bin
 
-cd %CONTINUUITY_HOME%
+cd %CDAP_HOME%
 
 
 
 REM Get app jar with latest version
 SET APP_JAR_PREFIX=ResponseCodeAnalytics
-for /r %CONTINUUITY_HOME%\examples\%APP_JAR_PREFIX%\target %%a in (%APP_JAR_PREFIX%*) do SET JAR_PATH=%%~dpnxa
+for /r %CDAP_HOME%\examples\%APP_JAR_PREFIX%\target %%a in (%APP_JAR_PREFIX%*) do SET JAR_PATH=%%~dpnxa
 
 if %JAR_PATH% == "" echo "Could not find example application jar with name %APP_JAR_PREFIX%"
 
@@ -82,9 +82,9 @@ if NOT "%answer%" == "y" (
 )
 
 REM delete logs and data directories
-echo Resetting Continuuity Reactor ...
-rmdir /S /Q %CONTINUUITY_HOME%\logs %CONTINUUITY_HOME%\data > NUL 2>&1
-echo Continuuity Reactor reset successfully.
+echo Resetting Cdap Reactor ...
+rmdir /S /Q %CDAP_HOME%\logs %CDAP_HOME%\data > NUL 2>&1
+echo Cdap Reactor reset successfully.
 GOTO :FINALLY
 
 
@@ -121,7 +121,7 @@ endlocal
 
 REM Check if Node.js is installed
 for %%x in (node.exe) do if [%%~$PATH:x]==[] (
-  echo Node.js Continuuity Reactor requires nodeJS but it's either not installed or not in path. Aborting. 1>&2
+  echo Node.js Cdap Reactor requires nodeJS but it's either not installed or not in path. Aborting. 1>&2
   GOTO :FINALLY
 )
 
@@ -166,7 +166,7 @@ if exist %~dsp0MyProg.pid (
 attrib +h %~dsp0MyProg.pid >NUL
 
 REM Check for new version of Reactor
-bitsadmin /Transfer NAME http://www.continuuity.com/version %~f0_version.txt > NUL 2>&1
+bitsadmin /Transfer NAME http://www.cdap.com/version %~f0_version.txt > NUL 2>&1
 if exist %~f0_version.txt (
   for /f "tokens=* delims= " %%f in (%~f0_version.txt) do (
     SET new_version = %%f
@@ -177,12 +177,12 @@ if exist %~f0_version.txt (
   del %~f0_version.txt > NUL 2>&1
 
   if not "%current_version%" == "%new_version%" (
-    echo UPDATE: There is a newer version of Continuuity Developer Suite available.
-    echo         Download it from your account: https://accounts.continuuity.com.
+    echo UPDATE: There is a newer version of Cdap Developer Suite available.
+    echo         Download it from your account: https://accounts.cdap.com.
   )
 )
 
-mkdir %CONTINUUITY_HOME%\logs > NUL 2>&1
+mkdir %CDAP_HOME%\logs > NUL 2>&1
 
 REM Log rotation
 call:LOG_ROTATE reactor
@@ -219,8 +219,8 @@ IF "%2" == "--enable-debug" (
   set DEBUG_OPTIONS="-agentlib:jdwp=transport=dt_socket,address=localhost:!port!,server=y,suspend=n"
 )
 
-start /B %JAVACMD% !DEBUG_OPTIONS! -Dhadoop.security.group.mapping=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback -Dhadoop.home.dir=%CONTINUUITY_HOME%\libexec -classpath %CLASSPATH% com.continuuity.SingleNodeMain --web-app-path %WEB_APP_PATH% >> %CONTINUUITY_HOME%\logs\reactor-process.log 2>&1 < NUL
-echo Starting Continuuity Reactor ...
+start /B %JAVACMD% !DEBUG_OPTIONS! -Dhadoop.security.group.mapping=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback -Dhadoop.home.dir=%CDAP_HOME%\libexec -classpath %CLASSPATH% co.cask.cdap.SingleNodeMain --web-app-path %WEB_APP_PATH% >> %CDAP_HOME%\logs\reactor-process.log 2>&1 < NUL
+echo Starting Cdap Reactor ...
 
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq java.exe"') DO SET MyPID=%%b
 echo %MyPID% > %~dsp0MyProg.pid
@@ -228,10 +228,10 @@ SET lastPid=%MyPID%
 attrib +h %~dsp0MyProg.pid >NUL
 
 :SearchLogs
-findstr /R /C:".*Failed to start server.*" %CONTINUUITY_HOME%\logs\reactor-process.log >NUL 2>&1
+findstr /R /C:".*Failed to start server.*" %CDAP_HOME%\logs\reactor-process.log >NUL 2>&1
 if %errorlevel% == 0 GOTO :ServerError
 
-findstr /R /C:".*Continuuity Reactor started successfully.*" %CONTINUUITY_HOME%\logs\reactor-process.log >NUL 2>&1
+findstr /R /C:"..* started successfully.*" %CDAP_HOME%\logs\reactor-process.log >NUL 2>&1
 if not %errorlevel% == 0 GOTO :SearchLogs
 if %errorlevel% == 0 GOTO :ServerSuccess
 :EndSearchLogs
@@ -261,7 +261,7 @@ GOTO :FINALLY
 
 :NUX
 REM New user experience, enable if it is not enabled already
-if not exist %CONTINUUITY_HOME%\.nux_dashboard (
+if not exist %CDAP_HOME%\.nux_dashboard (
 
   REM Deploy app
   FOR /F %%i IN ('curl -X POST -sL -w %%{http_code} -H "X-Archive-Name: LogAnalytics.jar" --data-binary @"%JAR_PATH%" http://127.0.0.1:10000/v2/apps') DO SET RESPONSE=%%i
@@ -274,7 +274,7 @@ if not exist %CONTINUUITY_HOME%\.nux_dashboard (
 GOTO :EOF
 
 :STOP
-echo Stopping Continuuity Reactor ...
+echo Stopping Cdap Reactor ...
 attrib -h %~dsp0MyProg.pid >NUL
 if exist %~dsp0MyProg.pid (
   for /F %%i in (%~dsp0MyProg.pid) do (
@@ -330,12 +330,12 @@ GOTO:EOF
 :LOG_ROTATE
 setlocal ENABLEDELAYEDEXPANSION
 set extension=%1.log
-for /F "TOKENS=*" %%b in ('dir  /a-d %CONTINUUITY_HOME%\logs 2^>NUL ^| find /c "%extension%" 2^>NUL') DO (
+for /F "TOKENS=*" %%b in ('dir  /a-d %CDAP_HOME%\logs 2^>NUL ^| find /c "%extension%" 2^>NUL') DO (
   set /a num=%%b
   FOR /L %%i IN (!num!,-1,1) DO (
     set /a prev_num=%%i+1
-    rename %CONTINUUITY_HOME%\logs\%extension%.%%i %extension%.!prev_num! >NUL 2>NUL
+    rename %CDAP_HOME%\logs\%extension%.%%i %extension%.!prev_num! >NUL 2>NUL
   )
-  rename %CONTINUUITY_HOME%\logs\%extension% %extension%.1 >NUL 2>NUL
+  rename %CDAP_HOME%\logs\%extension% %extension%.1 >NUL 2>NUL
 )
 endlocal

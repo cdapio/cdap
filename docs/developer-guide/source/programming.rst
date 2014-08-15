@@ -1,110 +1,115 @@
-.. :Author: Continuuity, Inc.
-   :Description: Introduction to Programming Applications for the Continuuity Reactor
+.. :author: Cask, Inc.
+   :description: Introduction to Programming Applications for the Cask Data Application Platform
 
-=================
-Programming Guide
-=================
+======================
+CDAP Programming Guide
+======================
 
-**Introduction to Programming Applications for the Continuuity Reactor**
-
-.. reST Editor: .. section-numbering::
-.. reST Editor: .. contents::
+**Introduction to Programming Applications for the Cask Data Application Platform**
 
 Introduction
 ============
 
-This document covers in detail the Continuuity Reactor core
+This document covers in detail the Cask Data Application Platform (CDAP) core
 elements—Applications, Streams, Datasets, Flows, Procedures, MapReduce,
 and Workflows—and how you work with them in Java to build a Big Data
 application.
 
-For a high-level view of the concepts of the Continuuity Reactor Java
-APIs, please see the `Introduction to Continuuity Reactor <intro>`__.
+For a high-level view of the concepts of the Cask Data Application Platform,
+please see the `Introduction to the Cask Data Application Platform <intro>`__.
 
 For more information beyond this document, see the
 `Javadocs <javadocs/index>`_  and the code in the
 `examples <examples/index>`_ directory, both of which are on the
-Continuuity.com `Developers website <http://continuuity.com/developers>`_ as well as in your
-Reactor installation directory.
+`Cask.co <http://cask.co>`__ `Developers website <http://cask.co/developers>`_ as well as in your
+CDAP installation directory.
 
+.. highlight:: console
 
 Conventions
 -----------
 
 In this document, *Application* refers to a user Application that has
-been deployed into the Continuuity Reactor.
+been deployed into CDAP.
 
 Text that are variables that you are to replace is indicated by a series
 of angle brackets (``< >``). For example::
 
-	PUT /v2/streams/<new-stream-id>
+  PUT /v2/streams/<new-stream-id>
 
 indicates that the text ``<new-stream-id>`` is a variable and that you
 are to replace it with your value, perhaps in this case *mystream*::
 
-	PUT /v2/streams/mystream
+  PUT /v2/streams/mystream
 
-Writing a Continuuity Reactor Application
+Writing a CDAP Application
 =========================================
 
-Note that the Continuuity Reactor API is written in a
+Note that the CDAP API is written in a
 `"fluent" interface style <http://en.wikipedia.org/wiki/Fluent_interface>`_,
-and relies heavily on ``Builder`` methods for creating many parts of the Application.
+and often relies on ``Builder`` methods for creating many parts of the Application.
 
-In writing a Continuuity Reactor, it's best to use an integrated
+In writing a CDAP Application, it's best to use an integrated
 development environment that understands the application interface to
 provide code-completion in writing interface methods.
 
-Using the Reactor Maven Archetype
+Using the CDAP Maven Archetype
 ---------------------------------
 
-To help you get started, Continuuity has created a Maven archetype to
+To help you get started, Cask has created a Maven archetype to
 generate a skeleton for your Java project.
 
 `Maven <http://maven.apache.org>`_ is the very popular Java build and
 dependencies management tool for creating and managing a Java
 application projects.
 
-This Maven archetype generates a Reactor application Java project with
+If you are running in an environment whose network access is mediated by a proxy server,
+look at the `Maven guide to configuring a proxy <http://maven.apache.org/guides/mini/guide-proxies.html>`__
+for instructions on how to modify your ``settings.xml`` file (usually ``${user.home}/.m2/settings.xml``)
+so that dependencies can be downloaded and resolved correctly.
+
+This Maven archetype generates a CDAP application Java project with
 the proper dependencies and sample code as a base to start writing your
 own Big Data application. To generate a new project, execute the
 following command::
 
-	$ mvn archetype:generate \
-	  -DarchetypeCatalog=https://repository.continuuity.com/content/groups/releases/archetype-catalog.xml \
-	  -DarchetypeGroupId=com.continuuity \
-	  -DarchetypeArtifactId=reactor-app-archetype \
-	  -DarchetypeVersion=2.3.0
+  $ mvn archetype:generate \
+    -DarchetypeCatalog=https://repository.cask.co/content/groups/releases/archetype-catalog.xml \
+    -DarchetypeGroupId=co.cask.cdap \
+    -DarchetypeArtifactId=cdap-app-archetype \
+    -DarchetypeVersion=2.4.0
 
 In the interactive shell that appears, specify basic properties for the
 new project. For example, to create a new project called
 *MyFirstBigDataApp*, setting appropriate properties, such as your domain
 and a version identifier::
 
-	Define value for property 'groupId': : com.example
-	Define value for property 'artifactId': : MyFirstBigDataApp
-	Define value for property 'version': 1.0-SNAPSHOT: :
-	Define value for property 'package': com.example: :
-	Confirm properties configuration:
-	groupId: com.example
-	artifactId: MyFirstBigDataApp
-	version: 1.0-SNAPSHOT
-	package: com.example
-	Y: : Y
+  Define value for property 'groupId': : com.example
+  Define value for property 'artifactId': : MyFirstBigDataApp
+  Define value for property 'version': 1.0-SNAPSHOT: :
+  Define value for property 'package': com.example: :
+  Confirm properties configuration:
+  groupId: com.example
+  artifactId: MyFirstBigDataApp
+  version: 1.0-SNAPSHOT
+  package: com.example
+  Y: : Y
 
 After you confirm the settings, the directory ``MyFirstBigDataApp`` is
 created under the current directory. To build the project::
 
-	$ cd MyFirstBigDataApp
-	$ mvn clean package
+  $ cd MyFirstBigDataApp
+  $ mvn clean package
 
 This creates ``MyFirstBigDataApp-1.0-SNAPSHOT.jar`` in the target
-directory. This JAR file is a skeleton Reactor application that is ready
+directory. This JAR file is a skeleton CDAP application that is ready
 to be edited with the contents of your Application. When finished and
-compiled, deploy it to the Continuuity Reactor by just dragging and
-dropping it anywhere on the Reactor Dashboard and it will be deployed.
+compiled, deploy it to the Cask DAP by just dragging and
+dropping it anywhere on the CDAP Console and it will be deployed.
 
 The remainder of this document covers what to put in that JAR file.
+
+.. highlight:: java
 
 .. _applications:
 
@@ -138,7 +143,7 @@ classes that implement correspondent interfaces and are referenced by passing
 an object, in addition to being assigned a unique name.
 
 Names used for *Streams* and *Datasets* need to be unique across the
-Reactor instance, while names used for *Flows*, *Flowlets* and
+DAP instance, while names used for *Flows*, *Flowlets* and
 *Procedures* need to be unique only to the application.
 
 .. _streams:
@@ -146,18 +151,18 @@ Reactor instance, while names used for *Flows*, *Flowlets* and
 Collecting Data: Streams
 ========================
 **Streams** are the primary means for bringing data
-from external systems into the Reactor in realtime.
+from external systems into the CDAP in realtime.
 You specify a Stream in your `Application`__ metadata::
 
-	addStream(new Stream("myStream"));
+  addStream(new Stream("myStream"));
 
 __ applications_
 
 specifies a new Stream named *myStream*. Names used for Streams need to
-be unique across the Reactor instance.
+be unique across the DAP instance.
 
 You can write to Streams either one operation at a time or in batches,
-using either the `Continuuity Reactor HTTP REST API <rest.html>`__
+using either the `Cask Data Application Platform HTTP RESTful API <rest.html>`__
 or command line tools.
 
 Each individual signal sent to a Stream is stored as an ``StreamEvent``,
@@ -166,8 +171,8 @@ body (a blob of arbitrary binary data).
 
 Streams are uniquely identified by an ID string (a "name") and are
 explicitly created before being used. They can be created
-programmatically within your application, through the Management
-Dashboard, or by or using a command line tool. Data written to a Stream
+programmatically within your application, through the CDAP Console, 
+or by or using a command line tool. Data written to a Stream
 can be consumed by Flows and processed in real-time. Streams are shared
 between applications, so they require a unique name.
 
@@ -193,7 +198,7 @@ assure a unique and core property of the Flow system: it guarantees
 atomic and "exactly-once" processing of each input object by each
 Flowlet in the DAG.
 
-Flows are deployed to the Reactor and hosted within containers. Each
+Flows are deployed to the DAP instance and hosted within containers. Each
 Flowlet instance runs in its own container. Each Flowlet in the DAG can
 have multiple concurrent instances, each consuming a partition of the
 Flowlet’s inputs.
@@ -209,20 +214,20 @@ and any `Datasets`_ used in the Flow.
 To create a Flow, implement ``Flow`` via a ``configure`` method that
 returns a ``FlowSpecification`` using ``FlowSpecification.Builder()``::
 
-	class MyExampleFlow implements Flow {
-	  @Override
-	  public FlowSpecification configure() {
-	    return FlowSpecification.Builder.with()
-	      .setName("mySampleFlow")
-	      .setDescription("Flow for showing examples")
-	      .withFlowlets()
-	        .add("flowlet1", new MyExampleFlowlet())
-	        .add("flowlet2", new MyExampleFlowlet2())
-	      .connect()
-	        .fromStream("myStream").to("flowlet1")
-	        .from("flowlet1").to("flowlet2")
-	      .build();
-	}
+  class MyExampleFlow implements Flow {
+    @Override
+    public FlowSpecification configure() {
+      return FlowSpecification.Builder.with()
+        .setName("mySampleFlow")
+        .setDescription("Flow for showing examples")
+        .withFlowlets()
+          .add("flowlet1", new MyExampleFlowlet())
+          .add("flowlet2", new MyExampleFlowlet2())
+        .connect()
+          .fromStream("myStream").to("flowlet1")
+          .from("flowlet1").to("flowlet2")
+        .build();
+  }
 
 In this example, the *name*, *description*, *with* (or *without*)
 Flowlets, and *connections* are specified before building the Flow.
@@ -243,29 +248,29 @@ The example below shows a Flowlet that reads *Double* values, rounds
 them, and emits the results. It has a simple configuration method and
 doesn't do anything for initialization or destruction::
 
-	class RoundingFlowlet implements Flowlet {
+  class RoundingFlowlet implements Flowlet {
 
-	  @Override
-	  public FlowletSpecification configure() {
-	    return FlowletSpecification.Builder.with().
-	      setName("round").
-	      setDescription("A rounding Flowlet").
-	      build();
-	  }
+    @Override
+    public FlowletSpecification configure() {
+      return FlowletSpecification.Builder.with().
+        setName("round").
+        setDescription("A rounding Flowlet").
+        build();
+    }
 
-	  @Override
-	    public void initialize(FlowletContext context) throws Exception {
-	  }
+    @Override
+      public void initialize(FlowletContext context) throws Exception {
+    }
 
-	  @Override
-	  public void destroy() {
-	  }
+    @Override
+    public void destroy() {
+    }
 
-	  OutputEmitter<Long> output;
-	  @ProcessInput
-	  public void round(Double number) {
-	    output.emit(Math.round(number));
-	  }
+    OutputEmitter<Long> output;
+    @ProcessInput
+    public void round(Double number) {
+      output.emit(Math.round(number));
+    }
 
 
 The most interesting method of this Flowlet is ``round()``, the method
@@ -273,11 +278,11 @@ that does the actual processing. It uses an output emitter to send data
 to its output. This is the only way that a Flowlet can emit output to
 another connected Flowlet::
 
-	OutputEmitter<Long> output;
-	@ProcessInput
-	public void round(Double number) {
-	  output.emit(Math.round(number));
-	}
+  OutputEmitter<Long> output;
+  @ProcessInput
+  public void round(Double number) {
+    output.emit(Math.round(number));
+  }
 
 Note that the Flowlet declares the output emitter but does not
 initialize it. The Flow system initializes and injects its
@@ -290,16 +295,16 @@ You can overload the process method of a Flowlet by adding multiple
 methods with different input types. When an input object comes in, the
 Flowlet will call the method that matches the object’s type::
 
-	OutputEmitter<Long> output;
+  OutputEmitter<Long> output;
 
-	@ProcessInput
-	public void round(Double number) {
-	  output.emit(Math.round(number));
-	}
-	@ProcessInput
-	public void round(Float number) {
-	  output.emit((long)Math.round(number));
-	}
+  @ProcessInput
+  public void round(Double number) {
+    output.emit(Math.round(number));
+  }
+  @ProcessInput
+  public void round(Float number) {
+    output.emit((long)Math.round(number));
+  }
 
 If you define multiple process methods, a method will be selected based
 on the input object’s origin; that is, the name of a Stream or the name
@@ -309,17 +314,17 @@ A Flowlet that emits data can specify this name using an annotation on
 the output emitter. In the absence of this annotation, the name of the
 output defaults to “out”::
 
-	@Output("code")
-	OutputEmitter<String> out;
+  @Output("code")
+  OutputEmitter<String> out;
 
 Data objects emitted through this output can then be directed to a
 process method of a receiving Flowlet by annotating the method with the
 origin name::
 
-	@ProcessInput("code")
-	public void tokenizeCode(String text) {
-	  ... // perform fancy code tokenization
-	}
+  @ProcessInput("code")
+  public void tokenizeCode(String text) {
+    ... // perform fancy code tokenization
+  }
 
 Input Context
 -------------
@@ -329,25 +334,25 @@ its origin and the number of times the object has been retried. For
 example, this Flowlet tokenizes text in a smart way and uses the input
 context to decide which tokenizer to use::
 
-	@ProcessInput
-	public void tokenize(String text, InputContext context) throws Exception {
-	  Tokenizer tokenizer;
-	  // If this failed before, fall back to simple white space
-	  if (context.getRetryCount() > 0) {
-	    tokenizer = new WhiteSpaceTokenizer();
-	  }
-	  // Is this code? If its origin is named "code", then assume yes
-	  else if ("code".equals(context.getOrigin())) {
-	    tokenizer = new CodeTokenizer();
-	  }
-	  else {
-	    // Use the smarter tokenizer
-	    tokenizer = new NaturalLanguageTokenizer();
-	  }
-	  for (String token : tokenizer.tokenize(text)) {
-	    output.emit(token);
-	  }
-	}
+  @ProcessInput
+  public void tokenize(String text, InputContext context) throws Exception {
+    Tokenizer tokenizer;
+    // If this failed before, fall back to simple white space
+    if (context.getRetryCount() > 0) {
+      tokenizer = new WhiteSpaceTokenizer();
+    }
+    // Is this code? If its origin is named "code", then assume yes
+    else if ("code".equals(context.getOrigin())) {
+      tokenizer = new CodeTokenizer();
+    }
+    else {
+      // Use the smarter tokenizer
+      tokenizer = new NaturalLanguageTokenizer();
+    }
+    for (String token : tokenizer.tokenize(text)) {
+      output.emit(token);
+    }
+  }
 
 Type Projection
 ---------------
@@ -356,18 +361,18 @@ not match exactly what the process method accepts as arguments. This
 allows you to write a single process method that can accept multiple
 **compatible** types. For example, if you have a process method::
 
-	@ProcessInput
-	count(String word) {
-	  ...
-	}
+  @ProcessInput
+  count(String word) {
+    ...
+  }
 
 and you send data of type ``Long`` to this Flowlet, then that type does
 not exactly match what the process method expects. You could now write
 another process method for ``Long`` numbers::
 
-	@ProcessInput count(Long number) {
-	count(number.toString());
-	}
+  @ProcessInput count(Long number) {
+    count(number.toString());
+  }
 
 and you could do that for every type that you might possibly want to
 count, but that would be rather tedious. Type projection does this for
@@ -400,16 +405,16 @@ conversions are:
   whereas the projection from ``Coordinate`` to ``Point`` will leave the ``color`` field
   as ``null``::
 
-	class Point {
-	  private int x;
-	  private int y;
-	  private String color;
-	}
-
-	class Coordinates {
-	  int x;
-	  int y;
-	}
+    class Point {
+      private int x;
+      private int y;
+      private String color;
+    }
+  
+    class Coordinates {
+      int x;
+      int y;
+    }
 
 Type projections help you keep your code generic and reusable. They also
 interact well with inheritance. If a Flowlet can process a specific
@@ -422,12 +427,12 @@ consists of a set of headers represented by a map from String to String,
 and a byte array as the body of the event. To consume a Stream with a
 Flow, define a Flowlet that processes data of type ``StreamEvent``::
 
-	class StreamReader extends AbstractFlowlet {
-	  ...
-	  @ProcessInput
-	  public void processEvent(StreamEvent event) {
-	    ...
-	  }
+  class StreamReader extends AbstractFlowlet {
+    ...
+    @ProcessInput
+    public void processEvent(StreamEvent event) {
+      ...
+    }
 
 Flowlet Method and @Tick Annotation
 -----------------------------------
@@ -440,17 +445,17 @@ a fixed cadence.
 In this code snippet from the *CountRandom* example, the ``@Tick``
 method in the Flowlet emits random numbers::
 
-	public class RandomSource extends AbstractFlowlet {
+  public class RandomSource extends AbstractFlowlet {
 
-	  private OutputEmitter<Integer> randomOutput;
+    private OutputEmitter<Integer> randomOutput;
 
-	  private final Random random = new Random();
+    private final Random random = new Random();
 
-	  @Tick(delay = 1L, unit = TimeUnit.MILLISECONDS)
-	  public void generate() throws InterruptedException {
-	    randomOutput.emit(random.nextInt(10000));
-	  }
-	}
+    @Tick(delay = 1L, unit = TimeUnit.MILLISECONDS)
+    public void generate() throws InterruptedException {
+      randomOutput.emit(random.nextInt(10000));
+    }
+  }
 
 Connection
 ----------
@@ -459,39 +464,36 @@ common form is to use the Flowlet name. Because the name of each Flowlet
 defaults to its class name, when building the Flow specification you can
 simply write::
 
-	.withFlowlets()
-	  .add(new RandomGenerator())
-	  .add(new RoundingFlowlet())
-	.connect()
-	  .fromStream("RandomGenerator").to("RoundingFlowlet")
+  .withFlowlets()
+    .add(new RandomGenerator())
+    .add(new RoundingFlowlet())
+  .connect()
+    .fromStream("RandomGenerator").to("RoundingFlowlet")
 
 If you have multiple Flowlets of the same class, you can give them explicit names::
 
-	.withFlowlets()
-	  .add("random", new RandomGenerator())
-	  .add("generator", new RandomGenerator())
-	  .add("rounding", new RoundingFlowlet())
-	.connect()
-	  .from("random").to("rounding")
+  .withFlowlets()
+    .add("random", new RandomGenerator())
+    .add("generator", new RandomGenerator())
+    .add("rounding", new RoundingFlowlet())
+  .connect()
+    .from("random").to("rounding")
 
 .. _mapreduce:
 
 Processing Data: MapReduce
 ==========================
 **MapReduce** is used to process data in batch. MapReduce jobs can be
-written as in a conventional Hadoop system. Additionally, Reactor
+written as in a conventional Hadoop system. Additionally, CDAP
 **Datasets** can be accessed from MapReduce jobs as both input and
 output.
 
 To process data using MapReduce, specify ``withMapReduce()`` in your
 Application specification::
 
-	public ApplicationSpecification configure() {
-	return ApplicationSpecification.Builder.with()
-	   ...
-	   .withMapReduce()
-	     .add(new WordCountJob())
-	   ...
+	public void configure() {
+	  ...
+    addMapReduce(new WordCountJob());
 
 You must implement the ``MapReduce`` interface, which requires the
 implementation of three methods:
@@ -502,16 +504,16 @@ implementation of three methods:
 
 ::
 
-	public class WordCountJob implements MapReduce {
-	  @Override
-	  public MapReduceSpecification configure() {
-	    return MapReduceSpecification.Builder.with()
-	      .setName("WordCountJob")
-	      .setDescription("Calculates word frequency")
-	      .useInputDataSet("messages")
-	      .useOutputDataSet("wordFrequency")
-	      .build();
-	  }
+  public class WordCountJob implements MapReduce {
+    @Override
+    public MapReduceSpecification configure() {
+      return MapReduceSpecification.Builder.with()
+        .setName("WordCountJob")
+        .setDescription("Calculates word frequency")
+        .useInputDataSet("messages")
+        .useOutputDataSet("wordFrequency")
+        .build();
+    }
 
 The configure method is similar to the one found in Flow and
 Application. It defines the name and description of the MapReduce job.
@@ -524,14 +526,14 @@ configuration, as though you were running the MapReduce job directly on
 Hadoop. For example, you can specify the Mapper and Reducer classes as
 well as the intermediate data format::
 
-	@Override
-	public void beforeSubmit(MapReduceContext context) throws Exception {
-	  Job job = context.getHadoopJob();
-	  job.setMapperClass(TokenizerMapper.class);
-	  job.setReducerClass(IntSumReducer.class);
-	  job.setMapOutputKeyClass(Text.class);
-	  job.setMapOutputValueClass(IntWritable.class);
-	}
+  @Override
+  public void beforeSubmit(MapReduceContext context) throws Exception {
+    Job job = context.getHadoopJob();
+    job.setMapperClass(TokenizerMapper.class);
+    job.setReducerClass(IntSumReducer.class);
+    job.setMapOutputKeyClass(Text.class);
+    job.setMapOutputValueClass(IntWritable.class);
+  }
 
 The ``onFinish()`` method is invoked after the MapReduce job has
 finished. You could perform cleanup or send a notification of job
@@ -539,44 +541,45 @@ completion, if that was required. Because many MapReduce jobs do not
 need this method, the ``AbstractMapReduce`` class provides a default
 implementation that does nothing::
 
-	@Override
-	public void onFinish(boolean succeeded, MapReduceContext context) {
-	  // do nothing
-	}
+  @Override
+  public void onFinish(boolean succeeded, MapReduceContext context) {
+    // do nothing
+  }
 
-Continuuity Reactor ``Mapper`` and ``Reducer`` implement the standard Hadoop APIs::
+CDAP ``Mapper`` and ``Reducer`` implement `the standard Hadoop APIs 
+<http://hadoop.apache.org/docs/r2.3.0/api/org/apache/hadoop/mapreduce/package-summary.html>`__::
 
-	public static class TokenizerMapper
-	    extends Mapper<byte[], byte[], Text, IntWritable> {
+  public static class TokenizerMapper
+      extends Mapper<byte[], byte[], Text, IntWritable> {
 
-	  private final static IntWritable one = new IntWritable(1);
-	  private Text word = new Text();
-	  public void map(byte[] key, byte[] value, Context context)
-	      throws IOException, InterruptedException {
-	    StringTokenizer itr = new StringTokenizer(Bytes.toString(value));
-	    while (itr.hasMoreTokens()) {
-	      word.set(itr.nextToken());
-	      context.write(word, one);
-	    }
-	  }
-	}
+    private final static IntWritable one = new IntWritable(1);
+    private Text word = new Text();
+    public void map(byte[] key, byte[] value, Context context)
+        throws IOException, InterruptedException {
+      StringTokenizer itr = new StringTokenizer(Bytes.toString(value));
+      while (itr.hasMoreTokens()) {
+        word.set(itr.nextToken());
+        context.write(word, one);
+      }
+    }
+  }
 
-	public static class IntSumReducer
-	    extends Reducer<Text, IntWritable, byte[], byte[]> {
+  public static class IntSumReducer
+      extends Reducer<Text, IntWritable, byte[], byte[]> {
 
-	  public void reduce(Text key, Iterable<IntWritable> values, Context context)
-	      throws IOException, InterruptedException {
-	    int sum = 0;
-	    for (IntWritable val : values) {
-	      sum += val.get();
-	    }
-	    context.write(key.copyBytes(), Bytes.toBytes(sum));
-	  }
-	}
+    public void reduce(Text key, Iterable<IntWritable> values, Context context)
+        throws IOException, InterruptedException {
+      int sum = 0;
+      for (IntWritable val : values) {
+        sum += val.get();
+      }
+      context.write(key.copyBytes(), Bytes.toBytes(sum));
+    }
+  }
 
 MapReduce and Datasets
 ----------------------
-Both Continuuity Reactor ``Mapper`` and ``Reducer`` can directly read
+Both CDAP ``Mapper`` and ``Reducer`` can directly read
 from a Dataset or write to a Dataset similar to the way a Flowlet or
 Procedure can.
 
@@ -586,27 +589,28 @@ declaration and (2) an injection:
 #. Declare the Dataset in the MapReduce job’s configure() method.
    For example, to have access to a Dataset named *catalog*::
 
-	public class MyMapReduceJob implements MapReduce {
-	  @Override
-	  public MapReduceSpecification configure() {
-	    return MapReduceSpecification.Builder.with()
-	      ...
-	    .useDataSet("catalog")
-	      ...
+     public class MyMapReduceJob implements MapReduce {
+       @Override
+       public MapReduceSpecification configure() {
+         return MapReduceSpecification.Builder.with()
+           ...
+           .useDataSet("catalog")
+           ...
+
 
 #. Inject the Dataset into the mapper or reducer that uses it::
 
-	public static class CatalogJoinMapper extends Mapper<byte[], Purchase, ...> {
-	  @UseDataSet("catalog")
-	  private ProductCatalog catalog;
-
-	  @Override
-	  public void map(byte[] key, Purchase purchase, Context context)
-	      throws IOException, InterruptedException {
-	    // join with catalog by product ID
-	    Product product = catalog.read(purchase.getProductId());
-	    ...
-	  }
+     public static class CatalogJoinMapper extends Mapper<byte[], Purchase, ...> {
+       @UseDataSet("catalog")
+       private ProductCatalog catalog;
+   
+       @Override
+       public void map(byte[] key, Purchase purchase, Context context)
+           throws IOException, InterruptedException {
+         // join with catalog by product ID
+         Product product = catalog.read(purchase.getProductId());
+         ...
+       }
 
 
 .. _Workflows:
@@ -624,59 +628,57 @@ sequence are executed.
 To process one or more MapReduce jobs in sequence, specify
 ``withWorkflows()`` in your application::
 
-	public ApplicationSpecification configure() {
-	  return ApplicationSpecification.Builder.with()
-	    ...
-	    .withWorkflows()
-	      .add(new PurchaseHistoryWorkflow())
+	public void configure() {
+    ...
+    addWorkflow(new PurchaseHistoryWorkflow());
 
 You'll then implement the ``Workflow`` interface, which requires the
 ``configure()`` method. From within ``configure``, call the
 ``addSchedule()`` method to run a WorkFlow job periodically::
 
-	public static class PurchaseHistoryWorkflow implements Workflow {
+  public static class PurchaseHistoryWorkflow implements Workflow {
 
-	  @Override
-	  public WorkflowSpecification configure() {
-	    return WorkflowSpecification.Builder.with()
-	      .setName("PurchaseHistoryWorkflow")
-	      .setDescription("PurchaseHistoryWorkflow description")
-	      .startWith(new PurchaseHistoryBuilder())
-	      .last(new PurchaseTrendBuilder())
-	      .addSchedule(new DefaultSchedule("FiveMinuteSchedule", "Run every 5 minutes",
-	                   "0/5 * * * *", Schedule.Action.START))
-	      .build();
-	  }
-	}
+    @Override
+    public WorkflowSpecification configure() {
+      return WorkflowSpecification.Builder.with()
+        .setName("PurchaseHistoryWorkflow")
+        .setDescription("PurchaseHistoryWorkflow description")
+        .startWith(new PurchaseHistoryBuilder())
+        .last(new PurchaseTrendBuilder())
+        .addSchedule(new DefaultSchedule("FiveMinuteSchedule", "Run every 5 minutes",
+                     "0/5 * * * *", Schedule.Action.START))
+        .build();
+    }
+  }
 
 If there is only one MapReduce job to be run as a part of a WorkFlow,
 use the ``onlyWith()`` method after ``setDescription()`` when building
 the Workflow::
 
-	public static class PurchaseHistoryWorkflow implements Workflow {
+  public static class PurchaseHistoryWorkflow implements Workflow {
 
-	  @Override
-	  public WorkflowSpecification configure() {
-	    return WorkflowSpecification.Builder.with() .setName("PurchaseHistoryWorkflow")
-	      .setDescription("PurchaseHistoryWorkflow description")
-	      .onlyWith(new PurchaseHistoryBuilder())
-	      .addSchedule(new DefaultSchedule("FiveMinuteSchedule", "Run every 5 minutes",
-	                   "0/5 * * * *", Schedule.Action.START))
-	      .build();
-	  }
-	}
+    @Override
+    public WorkflowSpecification configure() {
+      return WorkflowSpecification.Builder.with() .setName("PurchaseHistoryWorkflow")
+        .setDescription("PurchaseHistoryWorkflow description")
+        .onlyWith(new PurchaseHistoryBuilder())
+        .addSchedule(new DefaultSchedule("FiveMinuteSchedule", "Run every 5 minutes",
+                     "0/5 * * * *", Schedule.Action.START))
+        .build();
+    }
+  }
 
 .. _Datasets:
 
 Store Data: Datasets
 ====================
 **Datasets** store and retrieve data. Datasets are your means of reading
-from and writing data to the Reactor’s storage capabilities. Instead of
+from and writing data to the CDAP’s storage capabilities. Instead of
 requiring you to manipulate data with low-level APIs, Datasets provide
 higher-level abstractions and generic, reusable Java implementations of
 common data patterns.
 
-The core Dataset of the Reactor is a Table. Unlike relational database
+The core Dataset of the CDAP is a Table. Unlike relational database
 systems, these tables are not organized into rows with a fixed schema.
 They are optimized for efficient storage of semi-structured data, data
 with unknown or variable schema, or sparse data.
@@ -690,31 +692,31 @@ index itself.
 
 You can implement your own data patterns as custom Datasets on top of
 Tables. A number of useful Datasets—we refer to them as system Datasets—are
-included with Reactor, including key/value tables, indexed tables and
+included with CDAP, including key/value tables, indexed tables and
 time series.
 
-You can create a Dataset in Continuuity Reactor using either
-`Continuuity Reactor HTTP REST API <rest.html>`__ or command line tools.
+You can create a Dataset in CDAP using either
+`Cask Data Application Platform HTTP RESTful API <rest.html>`__ or command line tools.
 
 You can also specify to create a Dataset by Application components if one doesn't
 exist. For that you must declare its details in the Application specification.
 For example, to create a DataSet named *myCounters* of type `KeyValueTable`, write::
 
-	public void configure() {
-	    createDataset("myCounters", "KeyValueTable");
-	    ...
+  public void configure() {
+      createDataset("myCounters", "KeyValueTable");
+      ...
 
 To use the Dataset in a Flowlet or a Procedure, instruct the runtime
 system to inject an instance of the Dataset with the ``@UseDataSet``
 annotation::
 
-	Class MyFowlet extends AbstractFlowlet {
-	  @UseDataSet("myCounters")
-	  private KeyValueTable counters;
-	  ...
-	  void process(String key) {
-	    counters.increment(key.getBytes());
-	  }
+  class MyFowlet extends AbstractFlowlet {
+    @UseDataSet("myCounters")
+    private KeyValueTable counters;
+    ...
+    void process(String key) {
+      counters.increment(key.getBytes());
+    }
 
 The runtime system reads the Dataset specification for the key/value
 table *myCounters* from the metadata store and injects a functional
@@ -724,15 +726,15 @@ You can also implement custom Datasets by implementing the ``Dataset``
 interface or by extending existing Dataset types. See the 
 `PageViewAnalytics <examples/PageViewAnalytics/index.html>`__ 
 example for an implementation of a Custom Dataset. For more details, refer to
-`Advanced Continuuity Reactor Features <advanced.html>`__.
+`Advanced Cask Data Application Platform Features <advanced.html>`__.
 
 .. _Procedures:
 
 Query Data: Procedures
 ======================
-To query the Reactor and its Datasets and retrieve results, you use Procedures.
+To query CDAP and its Datasets and retrieve results, you use Procedures.
 
-Procedures allow you to make synchronous calls into the Reactor from an external system
+Procedures allow you to make synchronous calls into CDAP from an external system
 and perform server-side processing on-demand, similar to a stored procedure in a
 traditional database.
 
@@ -763,48 +765,49 @@ The most generic way to send a response is to obtain a
 ``Writer`` and stream out the response as bytes. Make sure to close the
 ``Writer`` when you are done::
 
-	import static com.continuuity.api.procedure.ProcedureResponse.Code.SUCCESS;
-	...
-	class HelloWorld extends AbstractProcedure {
+  import static co.cask.cdap.api.procedure.ProcedureResponse.Code.SUCCESS;
+  ...
+  class HelloWorld extends AbstractProcedure {
 
-	  @Handle("hello")
-	  public void wave(ProcedureRequest request,
-	                   ProcedureResponder responder) throws IOException {
-	    String hello = "Hello " + request.getArgument("who");
-	    ProcedureResponse.Writer writer =
-	      responder.stream(new ProcedureResponse(SUCCESS));
-	    writer.write(ByteBuffer.wrap(hello.getBytes())).close();
-	  }
-	}
+    @Handle("hello")
+    public void wave(ProcedureRequest request,
+                     ProcedureResponder responder) throws IOException {
+      String hello = "Hello " + request.getArgument("who");
+      ProcedureResponse.Writer writer =
+        responder.stream(new ProcedureResponse(SUCCESS));
+      writer.write(ByteBuffer.wrap(hello.getBytes())).close();
+    }
+  }
 
 This uses the most generic way to create the response, which allows you
 to send arbitrary byte content as the response body. In many cases, you
-will actually respond with JSON. A Continuuity Reactor
+will actually respond with JSON. A CDAP
 ``ProcedureResponder`` has convenience methods for returning JSON maps::
 
-	// Return a JSON map
-	Map<String, Object> results = new TreeMap<String, Object>();
-	results.put("totalWords", totalWords);
-	results.put("uniqueWords", uniqueWords);
-	results.put("averageLength", averageLength);
-	responder.sendJson(results);
+  // Return a JSON map
+  Map<String, Object> results = new TreeMap<String, Object>();
+  results.put("totalWords", totalWords);
+  results.put("uniqueWords", uniqueWords);
+  results.put("averageLength", averageLength);
+  responder.sendJson(results);
 
 There is also a convenience method to respond with an error message::
 
-	@Handle("getCount")
-	public void getCount(ProcedureRequest request, ProcedureResponder responder)
-	                     throws IOException, InterruptedException{
-	  String word = request.getArgument("word");
-	  if (word == null) {
-	    responder.error(Code.CLIENT_ERROR,
-	                    "Method 'getCount' requires argument 'word'");
-	    return;
-	  }
+  @Handle("getCount")
+  public void getCount(ProcedureRequest request, ProcedureResponder responder)
+                       throws IOException, InterruptedException {
+    String word = request.getArgument("word");
+    if (word == null) {
+      responder.error(Code.CLIENT_ERROR,
+                      "Method 'getCount' requires argument 'word'");
+      return;
+    }
 
 Where to Go Next
 ================
 Now that you've had an introduction to programming applications
-for the Continuuity Reactor, take a look at:
+for CDAP, take a look at:
 
-- `Advanced Continuuity Reactor Features <advanced.html>`__,
-  with details of the Flow, Dataset and Transaction systems.
+- `Advanced Cask Data Application Platform Features <advanced.html>`__,
+  with details of the Custom Services, Flow, Dataset, and Transaction systems, and
+  best practices for developing applications.

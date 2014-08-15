@@ -33,7 +33,7 @@ define(['core/models/program'], function (Program) {
 		 */
 		context: function () {
 
-			return this.interpolate('/apps/{parent}/procedures/{id}');
+			return this.interpolate('apps/{parent}/procedures/{id}');
 
 		}.property('app', 'name'),
 

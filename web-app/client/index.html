@@ -101,6 +101,9 @@
           <br />
           Application
         </a></li>
+        <li><a class="nav-link nav-streams" id="nav-collect" href="#/streams">
+          <span class="left-nav-icon"></span>
+          Collect</a></li>
         <li><a class="nav-link nav-flows" id="nav-process" href="#/flows">
           <img class="left-nav-icon" src="/assets/img/v2/process_icon.png" />
           <br />
@@ -174,63 +177,71 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="Services">
-  <div id="reactor-services">
-    <div id="panels">
-
-      <div class="panel">
-        <table class="table">
-          <thead>
-            <th style="padding-left: 14px; min-width: 350px" class="service-col">Name</th>
-            <th style="min-width: 100px;" class="status-col center-align">Status
-            </th>
-            <th style="min-width: 100px;" class="logs-col center-align">Logs</th>
-            <th style="min-width: 200px;" class="instance-col center-align">Instances Requested</th>
-            <th style="min-width: 200px;" class="instance-col center-align">Provisioned</th>
-          </thead>
-          <tbody>
-          {{#each services}}
-            <tr>
-              <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
-                {{this.name}}
-              </a>
-                <br />
-                <span class="app-list-status">{{this.description}}</span>
-              </td>
-              <td style="max-width: 100px;" class="status-col center-align">
-                <span {{ bindAttr class=":service-icon this.imgClass" }} ></span>
-              </td>
-              <td style="max-width: 100px;" class="status-col center-align">
-
-                {{#if this.logsStatusOk}}
-                {{#linkTo 'Service.Log' this}}<span {{ bindAttr class=":log-icon this.logClass" }} ></span>{{/linkTo}}
-                {{ else }}
-                  <span data-toggle="tooltip" data-placement="right" title="Please contact your system admistrator for logs.">NA</span>
-                {{/if}}
-              </td>
-              <td style="max-width: 200px;" class="instance-col">
-                <div class="instance-wrapper">
-                  <div class="instance-num"><span>{{this.requested}}</span></div>
-                  <div>
-                    <a class="cursor-pointer" {{action decreaseInstance this.name this.requested }}>
-                      <span class="minus-icon"></span>
-                    </a>
-                    <a class="cursor-pointer" {{action increaseInstance this.name this.requested }}>
-                      <span class="plus-icon"></span>
-                    </a>
-                  </div>
-                </div>
-              <td style="max-width: 350px;" class="instance-provisioned service-col">
-                  <div class="instance-num auto-margin"><span>{{this.provisioned}}</span></div>
-              </td>
-            </tr>
-          {{/each}}
-          </tbody>
-        </table>
-      </div>
-
-
+    <div id="title">
+      <h1><span>Services</span></h1>
     </div>
-  </div>
+
+    <div id="reactor-services">
+      <div id="panels">
+
+
+        {{#if systemServices}}
+        <div class="panel">
+          <table class="table">
+            <thead>
+              <th style="padding-left: 14px; min-width: 350px" class="service-col">Name</th>
+              <th style="min-width: 100px;" class="status-col center-align">Status</th>
+              <th style="min-width: 100px;" class="logs-col center-align">Logs</th>
+              <th style="min-width: 200px;" class="instance-col center-align">Instances Requested</th>
+              <th style="min-width: 200px;" class="instance-col center-align">Provisioned</th>
+            </thead>
+            <tbody>
+            {{#each service in systemServices}}
+              <tr>
+                <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
+                  {{service.name}}
+                  </a>
+                  <br />
+                  <span class="app-list-status">{{service.description}}</span>
+                </td>
+                <td style="max-width: 100px;" class="status-col center-align">
+                  <span {{ bindAttr class=":service-icon service.imgClass" }} ></span>
+                </td>
+                <td style="max-width: 100px;" class="status-col center-align">
+                  {{#if service.logsStatusOk}}
+                    {{#linkTo 'Service.Log' service}}<span {{ bindAttr class=":log-icon service.logClass" }} ></span>{{/linkTo}}
+                  {{ else }}
+                    <span data-toggle="tooltip" data-placement="right" title="Please contact your system administrator for logs.">NA</span>
+                  {{/if}}
+                </td>
+                <td style="max-width: 200px;" class="instance-col">
+                  <div class="instance-wrapper">
+                    <div>
+                    <form {{action "changeInstances" service on="submit"}}>
+                      {{input keyUp=keyPressed placeholder=service.requested maxlength="3" value=service.instancesInput class="services-instances-input" }}
+                    </form>
+                    </div>
+                    <div>
+                      <button class="btn btn-transparent" {{action changeInstances service on="click"}}>
+                        <i class="icon-arrow-right"></i>
+                      </button>
+                    </div>
+                  </div>
+                </td>
+                <td style="max-width: 350px;" class="instance-provisioned service-col">
+                    <div class="instance-num auto-margin"><span>{{service.provisioned}}</span></div>
+                </td>
+              </tr>
+            {{/each}}
+            </tbody>
+          </table>
+        </div>
+      {{/if}}
+
+      </div>
+    </div>
+
+    {{outlet}}
   </script>
 
   <script type="text/x-handlebars" data-template-name="Service">
@@ -242,8 +253,294 @@
       <h1><span>Service</span> {{model.name}}</h1>
     </div>
 
+
     {{outlet}}
 
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="UserserviceStatus">
+{{#if model}}
+    <div id="info">
+      <div class="info-box">
+        <div class="flow-state">
+            <strong>{{model.name}}</strong>
+        </div>
+      </div>
+      <div class="info-box" style="float: right; border: 0;">
+          <div id="action-buttons" class="btn-group pull-right">
+            <button class="btn btn-blank start-stop" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+            <button class="btn btn-blank btn-icon" {{action "config"}}><span class="btn-config"></span></button>
+          </div>
+          <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+      </div>
+    </div>
+
+    <div id="panels">
+      <h2>Components</h2>
+      <br />
+      <div class="panel">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="padding-left: 14px; min-width: 200px" class="service-col">Name</th>
+              <th style="min-width: 200px;" class="center-align">Instances Requested</th>
+              <th style="min-width: 200px;" class="center-align">Instances Active</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{!--  RUNNABLES ROWS --}}
+            {{#each runnable in model.runnablesList}}
+            <tr>
+              <td class="app-list-name service-col"><a class="none-text-decoration">
+                {{runnable.id}}
+                </a>
+                <br />
+                <span class="app-list-status pull-left">component</span>
+              </td>
+              <td style="max-width: 200px;" class="instance-col">
+                <div class="instance-wrapper">
+                  <div>
+                    <form {{action "runnableChangeInstances" model runnable on="submit"}}>
+                      {{input keyUp=keyPressed placeholder=runnable.requested maxlength="3" value=runnable.instancesInput class="services-instances-input" }}
+                    </form>
+                  </div>
+                  <div>
+                    <button class="btn btn-transparent" {{action runnableChangeInstances model runnable on="click"}}>
+                      <i class="icon-arrow-right"></i>
+                    </button>
+                  </div>
+                </div>
+              </td>
+              <td class="instance-provisioned service-col">
+                  <div class="instance-num auto-margin"><span>{{runnable.provisioned}}</span></div>
+              </td>
+            </tr>
+            {{/each}}
+            {{!--  RUNNABLES ROWS --}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  {{outlet config}}
+
+{{/if}}
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Userservice">
+
+    <div id="title">
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;"> 
+        <li>{{#linkTo UserserviceStatus model}}Status{{/linkTo }}</li>
+        <li>{{#linkTo Userservice.History model}}History{{/linkTo}}</li>        
+        <li>{{#linkTo Userservice.Log model}}Log{{/linkTo}}</li>
+      </ul>
+      <h1><span>Service</span> <a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}</h1>
+    </div>
+
+    {{outlet}}
+
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="DataExploreResults">
+
+  <div>
+     <hr style="margin-top: 0px"/>
+
+
+{{#if objArr}}
+    <table class="table" id="query-list-table">
+      <thead>
+        <th style="width: 12%">Time Started</th>
+        <th style="width: 8%">Status</th>
+        <th style="width: 10%" class="center">Results</th>
+        <th style="width: 35%">Query</th>
+        <th style="width: 43%">{{!-- Panel can potentially be here--}}</th>
+      </thead>
+    </table>
+    {{#each objArr}}
+    <table {{bindAttr id="query_handle_hashed"}} data-toggle="tooltip" data-placement="top" title="No results" data-trigger="manual" {{bindAttr class=":table :cursor-pointer :query-table-entry this.isSelected:selected:notselected" }} {{ action tableClicked this }}>
+      <tbody>
+        <tr>
+          <td style="width: 12%">
+            <span class="lighter-color">{{time_started}}</span>
+          </td>
+          <td style="width: 10%">
+            <span {{bindAttr class=":query-status status"}}>
+              {{status}}
+            </span>
+          </td>
+          <td style="width: 8%">
+              {{#if has_results}}
+                {{#if is_active}}
+                  <a data-toggle="tooltip" data-placement="right" title="Download" trigger="hover" {{action download this bubbles=false}} class="download-query-results-btn"></a>
+                {{ else }}
+                  <a data-toggle="tooltip" data-placement="right" title="Results Not Available" trigger="hover" class="download-query-results-disabled-btn"></a>
+                {{/if}}
+              {{ else }}
+                <a data-toggle="tooltip" data-placement="right" title="No results" trigger="hover" class="download-query-results-disabled-btn"></a>
+              {{/if}}
+          </td>
+          <td style="min-width: 35%"><span class="bolder-font">{{statement}}</span></td>
+{{!-- panel can go here
+          <td style="width: 43%" class="center-align">
+--}}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+        <div {{bindAttr id="query_handle"}} style="display:none">
+          <table class="table query-results-table-entry">
+            <thead>
+              {{#each schema}}
+                <th>{{name}}</th>
+              {{/each}}
+            </thead>
+            <tbody>
+            {{#each preview_cached}}
+              <tr>
+              {{#each col in columns}}
+                <td>{{col}}</td>
+              {{/each}}
+              </tr>
+            {{/each}}
+            </tbody>
+          </table>
+        </div>
+    {{/each}}
+    <div style="max-width:100%">
+            <button data-toggle="tooltip" title="No more results." data-trigger="manual" data-placement="bottom" style="min-width:40px;" class="btn btn-blank btn-default nextBtn" id="execute-explore-query" {{action 'nextPage' on="click"}}>></button>
+            <button data-toggle="tooltip" title="No more results." data-trigger="manual" data-placement="left" style="min-width:40px;" class="btn btn-blank btn-default prevBtn" id="execute-explore-query" {{action 'prevPage' on="click"}}><</button>
+    </div>
+  </div>
+    {{ else }}
+    <div class="object-list-empty" style="height:500px;padding-top:20px;">
+        <div class="object-list-empty-content">
+          <div>No Queries.</div>
+          <span>Please submit a query before using this feature.</span>
+        </div>
+      </div>
+  {{/if}}
+  </script>
+
+
+  <script type="text/x-handlebars" data-template-name="DataExploreQuery">
+    <div style="clear:both"></div>
+    {{#if datasets}}
+      <table class="table bordered-dataset-table">
+        <thead>
+          <th style="width: 350px">Dataset</th>
+          <th>Table: {{selectedDataset.name}}</th>
+        </thead>
+      </table>
+      <div id="query-display">        
+        <div class="left-float" id="query-tables">
+          <table class="table">
+            {{#each datasets}}
+            <tr {{action selectDataset this}} {{ bindAttr class=":cursor-pointer :table-name this.isSelected:selected:notselected" }} >
+              <td style="max-width: 350px; border-bottom: 0" class="app-list-name service-col">
+                <a class="none-text-decoration">{{shortName}}</a>
+                <br />
+                <span class="app-list-status">{{name}}</span>
+                {{#if this.isSelected}}
+                  <div class="arrow-right"></div>
+                {{/if}}
+              </td>
+            </tr>
+            {{/each}}
+          </table>
+        </div>
+        <div id="query-schema">
+          <table class="table" id="schema-table">
+              <thead>
+                  <th>col_name</th>
+                  <th>data_type</th>
+              </thead>
+              <tbody>
+              {{#each selectedDataset.results}}
+                <tr>
+                {{#each columns}}
+                  <td>{{this}}</td>
+                {{/each}}
+                </tr>
+              {{/each}}
+              </tbody>
+            </table>
+        </div>
+        <div style="clear:both"></div>
+      </div>
+
+  {{ else }}
+    <div class="object-list-empty" style="height:500px;padding-top:20px;">
+        <div class="object-list-empty-content">
+          <div>No discoverable dataset.</div>
+          <span>Please add a discoverable dataset before using this feature.</span>
+        </div>
+      </div>
+  {{/if}}
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="DataExplore">
+    <div id="title">
+      <h1>Explore</h1>
+    </div>
+    <div id="panels">
+      <div class="panel">
+         <ul class="nav nav-pills pull-left" id="explore-sub-menu">
+           <li>{{#linkTo DataExplore.Query}}Query{{/linkTo }}</li>
+           <li>{{#linkTo DataExplore.Results}}Results{{/linkTo}}</li>
+         </ul>
+         <div style="clear:both"></div>
+         <hr style="margin-top: 0px"/>
+        <td>
+          <div data-toggle="popover"  title="Error" data-trigger="manual" data-placement="top" class="text-area-container">
+          {{view C.Embed.Injector elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
+          </div>
+          {{#if renderExecuteBtn}}
+            <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
+          {{/if}}
+        </td>
+
+        {{outlet}}
+
+      </div>
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Userservice/History">
+    <div id="panels">
+      <div id="informer"></div>
+      <div class="panel">
+        <div id="object-list">
+          {{#if runs.length}}
+            <table class="table table-condensed">
+            <thead>
+              <tr><th style="width: 300px;">Started</th>
+              <th>Ended</th>
+              <th style="width:250px;">Result</th>
+              </tr>
+            </thead>
+            <tbody>
+            {{#each runs}}
+              <tr class="run-list">
+                <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
+                <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
+                <td>{{detail}}</td>
+              </tr>
+            {{/each}}
+            </tbody>
+            </table>
+          {{else}}
+            <div class="object-list-empty">
+            <div class="object-list-empty-content">
+            <div>No History.</div>
+            <span>This Userservice has not completed a run yet.</span>
+            </div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="Login">
@@ -490,12 +787,13 @@
     </div>
 
     <div id="panels">
+
       <div class="panel" id="collect-panel">
         <div class="panel-head"><div class="panel-title">Collect</div></div>
         {{partial "streams-list"}}
       </div>
-      <div class="panel" id="process-panel">
 
+      <div class="panel" id="process-panel">
         <div class="panel-head">
           {{#if elements.Flow.length}}
             <div class="btn-group pull-right start-stop-btns" style="margin-top:2px;text-align:center;">
@@ -507,12 +805,13 @@
           <div class="panel-title">Process</div>
         </div>
         {{partial "flows-list"}}
-
       </div>
+
       <div class="panel" id="store-panel">
         <div class="panel-head"><div class="panel-title">Store</div></div>
         {{partial "datasets-list"}}
       </div>
+
       <div class="panel" id ="query-panel">
         <div class="panel-head">
           {{#if elements.Procedure.length}}
@@ -525,6 +824,20 @@
           <div class="panel-title">Query</div>
         </div>
         {{partial "procedures-list"}}
+      </div>
+
+      <div class="panel" id="userservice-panel">
+        <div class="panel-head">
+          {{#if elements.Userservice.length}}
+            <div class="btn-group pull-right start-stop-btns" style="margin-top:2px;text-align:center;">
+              <button {{action startAll "Userservice" on="click"}} class="btn start"><img src="/assets/img/v2/play_icon.png" /></button>
+              <img style="display: none;margin-top: 3px;" src="/assets/img/start-all-load-white.gif" />
+              <button {{action stopAll "Userservice" on="click"}} class="btn stop"><img src="/assets/img/v2/stop_active_icon.png" /></button>
+            </div>
+          {{/if}}
+          <div class="panel-title">Service</div>
+        </div>
+        {{partial "userservices-list"}}
       </div>
     </div>
 
@@ -574,7 +887,7 @@
         <li>{{#linkTo WorkflowStatus model}}Status{{/linkTo}}</li>
         <li>{{#linkTo Workflow.History model}}History{{/linkTo}}</li>
       </ul>
-      <h1><span>Workflow</span> {{model.name}}</h1>
+      <h1><span>Workflow</span> <a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}</h1>
     </div>
 
     {{outlet}}
@@ -710,7 +1023,11 @@
         <li>{{#linkTo Mapreduce.Log model}}Log{{/linkTo}}</li>
         <li>{{#linkTo Mapreduce.History model}}History{{/linkTo}}</li>
       </ul>
-      <h1><span>Mapreduce</span> {{model.name}}</h1>
+      <h1>
+        <span>Mapreduce</span> 
+        <span class="breadcrumb-app-name"><a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}
+        </span>
+      </h1>
     </div>
 
     {{outlet}}
@@ -819,7 +1136,7 @@
         <li>{{#linkTo Flow.Log model}}Log{{/linkTo}}</li>
         <li>{{#linkTo Flow.History model}}History{{/linkTo}}</li>
       </ul>
-      <h1><span>Flow</span> {{model.meta.name}}</h1>
+      <h1><span>Flow</span> <a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.meta.name}}</h1>
     </div>
 
     {{outlet}}
@@ -888,21 +1205,24 @@
         <div class="popup-body">
           <div class="popup-close" {{action close on="click"}}>×</div>
 
-          {{#if controllers.FlowStatus.model.running}}
-            <div class="btn-group pull-right" style="margin-top: 4px;">
-              <button class="btn btn-blank" {{action "addOneInstance" on="click"}}>+</button>
-              <button class="btn btn-blank" {{action "removeOneInstance" on="click"}}>-</button>
-              {{#if C.isLocal}}
-                <button disabled="disabled" class="btn btn-blank" style="width: 200px;text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
-              {{else}}
-                <button disabled="disabled" class="btn btn-blank" style="width: 200px;text-align:left;">{{model.containersLabel}} instance{{model.pluralInstances}} ({{model.instances}} Requested)</button>
-              {{/if}}
-            </div>
-          {{/if}}
-
           <div class="popup-icon"></div>
 
           <h1 class="popup-title"> {{model.name}}</h1>
+          <div class="btn-group" style="margin-top: 4px; width: 100%">
+            <div style="display: inline-block; width: 50%">
+              <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Provisioned: {{model.actualInstances}}</button>
+            </div>
+            <div style="display: inline-block; width: 50%">
+              <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
+              {{input keyUp=keyPressed action="changeInstances" id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
+              <button class="btn btn-transparent" {{action "changeInstances" on="click"}}>
+                <i class="icon-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+          <br />
+          <br />
+
           <div id="flowlet-popup-tabs">
             <div id="flowlet-popup-inputs-tab" class="flowlet-popup-tab tab-selected"><a href="#" {{action select "inputs"}}>Inputs</a></div>
             <div id="flowlet-popup-processed-tab" class="flowlet-popup-tab"><a href="#" {{action select "processed"}}>Processed</a></div>
@@ -1114,11 +1434,12 @@
     <div id="panels">
 
       <div class="panel">
-      <div class="panel-head"><div class="panel-title">Attached Flows</div></div>
+        <div class="panel-head"><div class="panel-title">Attached Flows</div>
+      </div>
 
         {{partial "flows-list"}}
 
-      </div>
+    </div>
   </script>
 
 <script type="text/x-handlebars" data-template-name="Procedure">
@@ -1128,8 +1449,9 @@
       <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
         <li>{{#linkTo ProcedureStatus model}}Status{{/linkTo}}</li>
         <li>{{#linkTo Procedure.Log model}}Log{{/linkTo}}</li>
+        <li>{{#linkTo Procedure.History model}}History{{/linkTo}}</li>
       </ul>
-      <h1><span>Procedure</span> {{model.name}}</h1>
+      <h1><span>Procedure</span> <a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}</h1>
     </div>
 
     {{outlet}}
@@ -1154,22 +1476,19 @@
 
       <div class="panel">
       <div class="panel-head">
-
-        {{#if model.running}}
-          <div class="btn-group pull-right">
-            <button class="btn btn-blank" {{action "addOneInstance" on="click"}}>+</button>
-            <button class="btn btn-blank" {{action "removeOneInstance" on="click"}}>-</button>
-
-            {{#if C.isLocal}}
-              <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
-            {{else}}
-              <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{actualInstances}} ({{model.instances}} Requested)</button>
-            {{/if}}
-
+        <div class="panel-title">Make a Request
+          <div class="btn-group" style="float: right">
+            <div>
+              <button style="border:0;padding-right:120px;" disabled="disabled" class="btn btn-blank">Instances Provisioned: {{actualInstances}}</button>
+              <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
+              {{input keyUp=keyPressed action="changeInstances" id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
+              <button class="btn btn-transparent" {{action "changeInstances" on="click"}}>
+                <i class="icon-arrow-right"></i>
+              </button>
+            </div>
           </div>
-        {{/if}}
-
-        <div class="panel-title">Make a Request</div></div>
+        </div>
+      </div>
 
         <table style="width: 100%" class="top-aligned">
           <thead>
@@ -1210,6 +1529,42 @@
 
     {{outlet}}
 
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Procedure/History">
+    <div id="panels">
+      <div id="informer"></div>
+      <div class="panel">
+        <div id="object-list">
+          {{#if runs.length}}
+            <table class="table table-condensed">
+            <thead>
+              <tr><th style="width: 300px;">Started</th>
+              <th>Ended</th>
+              <th style="width:250px;">Result</th>
+              </tr>
+            </thead>
+            <tbody>
+            {{#each runs}}
+              <tr class="run-list">
+                <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
+                <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
+                <td>{{detail}}</td>
+              </tr>
+            {{/each}}
+            </tbody>
+            </table>
+          {{else}}
+            <div class="object-list-empty">
+            <div class="object-list-empty-content">
+            <div>No History.</div>
+            <span>This Procedure job has not completed a run yet.</span>
+            </div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="ColorPicker">
@@ -1472,6 +1827,22 @@
     </div>
   </script>
 
+<script type="text/x-handlebars" data-template-name="datasets-list-page">
+    <div id="title">
+      {{view C.Embed.TimeSelector}}
+      <div class="pull-right">
+        <a class="btn-custom" id="explore-button" href="/#/dataexplore/query">Explore</a>
+      </div>
+      <h1><span>Data</span> {{controller.title}}</h1>
+    </div>
+
+    <div id="panels">
+      <div class="panel">
+        {{outlet}}
+      </div>
+    </div>
+  </script>
+
   <script type="text/x-handlebars" data-template-name="_streams-list">
 
     {{#if elements.Stream.length}}
@@ -1584,7 +1955,7 @@
         {{#each elements.Dataset }}
           <tr>
             <td class="app-list-name">
-            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{classname}}</span>
+              <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{classname}}</span>
             </td>
             <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
             <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Dataset" mode="singular" metrics="/reactor/datasets/{id}/dataset.store.bytes"}}</td>
@@ -1627,6 +1998,34 @@
     <div class="object-list-empty-content">
     <div>No Procedures.</div>
     <span>Add Procedures by uploading an Application JAR.</span>
+    </div>
+    </div>
+    {{/if}}
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="_userservices-list">
+    {{#if elements.Userservice.length}}
+      <table class="table">
+      <thead>
+        <th style="padding-left: 14px;">Services</th>
+        <th style="width: 262px;">Number of Components</th>
+      </thead>
+      <tbody>
+        {{#each elements.Userservice}}
+          <tr>
+            <td class="app-list-name">
+            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
+            </td>
+            <td class="app-list-count">{{numRunnables}}</td>
+          </tr>
+        {{/each}}
+      </tbody>
+      </table>
+    {{else}}
+    <div class="object-list-empty">
+    <div class="object-list-empty-content">
+    <div>No Userservices.</div>
+    <span>Add Userservices by uploading an Application JAR.</span>
     </div>
     </div>
     {{/if}}

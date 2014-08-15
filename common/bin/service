@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2012-2014 Continuuity, Inc.
+# Copyright 2014 Cask, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -54,17 +54,14 @@ if [[ "X$PKGNAME" == "X" ]]; then
   exit 1
 fi
 
-# Default CONTINUUITY_HOME to /opt/continuuity (package default)
-CONTINUUITY_HOME=${CONTINUUITY_HOME:-/opt/continuuity}
+# Default CDAP_HOME to /opt/cdap (package default)
+CDAP_HOME=${CDAP_HOME:-/opt/cdap}
 
-# Default CONTINUUITY_HADOOP_LIBS_HOME to /opt/continuuity/hadoop-libs (package default)
-CONTINUUITY_HADOOP_LIBS_HOME=${CONTINUUITY_HADOOP_LIBS_HOME:-/opt/continuuity/hadoop-libs}
-
-# Default CONTINUUITY_CONF to /etc/continuuity (package default)
-CONTINUUITY_CONF=${CONTINUUITY_CONF:-/etc/continuuity/conf}
+# Default CDAP_CONF to /etc/cdap (package default)
+CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
 
 # construct COMPONENT_HOME and COMPONENT_BIN
-COMPONENT_HOME="$CONTINUUITY_HOME"/"$PKGNAME"; export COMPONENT_HOME
+COMPONENT_HOME="$CDAP_HOME"/"$PKGNAME"; export COMPONENT_HOME
 COMPONENT_BIN="$COMPONENT_HOME"/bin
 
 # Load component comman.sh 
@@ -110,10 +107,10 @@ start() {
       # This app is configured as a JAVA app (default)
 
       # Check and set classpath if in development environment. 
-      check_and_set_classpath_for_dev_environment $CONTINUUITY_HOME
+      check_and_set_classpath_for_dev_environment $CDAP_HOME
 
       # Setup classpaths.
-      set_classpath $COMPONENT_HOME $CONTINUUITY_CONF
+      set_classpath $COMPONENT_HOME $CDAP_CONF
 
       # Setup hive classpath if hive is installed, this has to be run after HBASE_CP is setup by set_classpath.
       set_hive_classpath
@@ -130,7 +127,7 @@ start() {
       echo "`date` Starting Java $APP service on `hostname`" >> $loglog
       echo "`ulimit -a`" >> $loglog 2>&1
 
-      nohup nice -n $NICENESS "$JAVA" -Dcontinuuity.service=$APP -Dexplore.conf.files=$EXPLORE_CONF_FILES \
+      nohup nice -n $NICENESS "$JAVA" -Dcdap.service=$APP -Dexplore.conf.files=$EXPLORE_CONF_FILES \
         -Dexplore.classpath=$EXPLORE_CLASSPATH "$OPTS" \
         -cp $CLASSPATH "$JAVA_HEAPMAX" $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >>$loglog 2>&1 &
       echo $! >$pid
@@ -210,10 +207,10 @@ run() {
         exit 1
     fi
     # Check and set classpath if in development environment. 
-    check_and_set_classpath_for_dev_environment $CONTINUUITY_HOME
+    check_and_set_classpath_for_dev_environment $CDAP_HOME
 
     # Setup classpaths.
-    set_classpath $COMPONENT_HOME $CONTINUUITY_CONF
+    set_classpath $COMPONENT_HOME $CDAP_CONF
 
     # Setup hive classpath if hive is installed.
     set_hive_classpath
@@ -257,7 +254,7 @@ case "$1" in
   ;;
 
   classpath)
-    set_classpath $COMPONENT_HOME $CONTINUUITY_CONF
+    set_classpath $COMPONENT_HOME $CDAP_CONF
     set_java
     set_hbase
     echo $CLASSPATH

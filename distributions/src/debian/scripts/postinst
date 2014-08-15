@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Copyright 2012-2014 Continuuity, Inc.
+# Copyright 2014 Cask, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -25,28 +25,28 @@ version="<%= @version %>"
 
 case "$1" in
   configure)
-    mkdir -p /var/log/continuuity /var/run/continuuity /var/continuuity/run ||:
-    echo $version > /opt/continuuity/$package_name/VERSION
-    chown -R continuuity.continuuity /opt/continuuity/$package_name
-    chown -R continuuity.continuuity /var/log/continuuity
-    chown -R continuuity.continuuity /var/run/continuuity
-    chown -R continuuity.continuuity /var/continuuity/run
-    chmod +x /opt/continuuity/$package_name/bin/service
+    mkdir -p /var/log/cdap /var/run/cdap /var/cdap/run ||:
+    echo $version > /opt/cdap/$package_name/VERSION
+    chown -R cdap.cdap /opt/cdap/$package_name
+    chown -R cdap.cdap /var/log/cdap
+    chown -R cdap.cdap /var/run/cdap
+    chown -R cdap.cdap /var/cdap/run
+    chmod +x /opt/cdap/$package_name/bin/service
 
-    if stat -t /opt/continuuity/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
-      find /opt/continuuity/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
+    if stat -t /opt/cdap/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
+      find /opt/cdap/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
         # refresh internal symlinks
-        if [ -h "/opt/continuuity/$package_name/bin/svc-$svcname" ]; then
-          unlink /opt/continuuity/$package_name/bin/svc-$svcname
+        if [ -h "/opt/cdap/$package_name/bin/svc-$svcname" ]; then
+          unlink /opt/cdap/$package_name/bin/svc-$svcname
         fi
-        ln -s /opt/continuuity/$package_name/bin/service /opt/continuuity/$package_name/bin/svc-$svcname
+        ln -s /opt/cdap/$package_name/bin/service /opt/cdap/$package_name/bin/svc-$svcname
         # conditional-restart each service
-        if [ -x "/etc/init.d/continuuity-$svcname" ]; then
-          update-rc.d continuuity-$svcname defaults >/dev/null
+        if [ -x "/etc/init.d/cdap-$svcname" ]; then
+          update-rc.d cdap-$svcname defaults >/dev/null
           if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
-            invoke-rc.d continuuity-$svcname condrestart || :
+            invoke-rc.d cdap-$svcname condrestart || :
           else
-            /etc/init.d/continuuity-$svcname condrestart || :
+            /etc/init.d/cdap-$svcname condrestart || :
           fi
         fi
       done

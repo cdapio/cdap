@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Copyright 2012-2014 Continuuity, Inc.
+# Copyright 2014 Cask, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -24,27 +24,27 @@ version="<%= @version %>"
 
 case "$1" in
     remove)
-      if stat -t /opt/continuuity/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
-        find /opt/continuuity/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
+      if stat -t /opt/cdap/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
+        find /opt/cdap/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
           # stop each service
-          if [ -x "/etc/init.d/continuuity-$svcname" ]; then
-            invoke-rc.d continuuity-$svcname stop || :
+          if [ -x "/etc/init.d/cdap-$svcname" ]; then
+            invoke-rc.d cdap-$svcname stop || :
           fi
-          if [ -h "/opt/continuuity/$package_name/bin/svc-$svcname" ]; then
-            unlink /opt/continuuity/$package_name/bin/svc-$svcname > /dev/null 2>&1 ||:
+          if [ -h "/opt/cdap/$package_name/bin/svc-$svcname" ]; then
+            unlink /opt/cdap/$package_name/bin/svc-$svcname > /dev/null 2>&1 ||:
           fi
-          rm -f /opt/continuuity/$package_name/version ||:
+          rm -f /opt/cdap/$package_name/version ||:
         done
       fi
     ;;
 
     upgrade|deconfigure)
-      if stat -t /opt/continuuity/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
-        find /opt/continuuity/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
-          if [ -h "/opt/continuuity/$package_name/bin/svc-$svcname" ]; then
-            unlink /opt/continuuity/$package_name/bin/svc-$svcname > /dev/null 2>&1 ||:
+      if stat -t /opt/cdap/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
+        find /opt/cdap/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
+          if [ -h "/opt/cdap/$package_name/bin/svc-$svcname" ]; then
+            unlink /opt/cdap/$package_name/bin/svc-$svcname > /dev/null 2>&1 ||:
           fi
-          rm -f /opt/continuuity/$package_name/version ||:
+          rm -f /opt/cdap/$package_name/version ||:
           # services will be condrestarted on new package postinstall
         done
       fi

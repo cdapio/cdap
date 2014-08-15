@@ -27,7 +27,7 @@ define([], function () {
 			/*
 			 * Track container metric.
 			 */
-			model.trackMetric('/reactor' + model.get('context') + '/resources.used.containers', 'currents', 'containers');
+			model.trackMetric('/reactor/' + model.get('context') + '/resources.used.containers', 'currents', 'containers');
 
 			this.interval = setInterval(function () {
 				self.updateStats();
@@ -94,6 +94,44 @@ define([], function () {
 
 		},
 
+    keyPressed: function (evt) {
+      var btn = this.$().next();
+      var inp = this.value;
+      if (inp.length > 0 && parseInt(inp) != this.placeholder){
+          btn.css("opacity",'1')
+
+      } else {
+          btn.css("opacity",'')
+      }
+      return true;
+    },
+
+    changeInstances: function () {
+      var inputStr = this.get('instancesInput');
+      var input = parseInt(inputStr);
+      this.set('instancesInput', '');
+      setTimeout(function () {
+        $('#instancesInput').keyup();
+      },500);
+
+      if(!inputStr || inputStr.length === 0){
+        C.Modal.show('Change Instances','Enter a valid number of instances.');
+        return;
+      }
+
+      if(isNaN(input) || isNaN(inputStr)){
+        C.Modal.show('Incorrect Input', 'Instance count can only be set to numbers (between 1 and 100).');
+        return;
+      }
+
+      if(input < 1 || input > 100) {
+        C.Modal.show('Instances Requested out of bounds', 'Please select an instance count (between 1 and 100)');
+        return;
+      }
+
+      this.setInstances(input, "Change Instances to " + input + " for ");
+    },
+
 		setInstances: function (instances, message) {
 
 			var self = this;
@@ -104,7 +142,7 @@ define([], function () {
 				"Procedure Instances",
 				message + ' "' + procedureName + '" procedure?',
 				function () {
-
+//
 					self.HTTP.put('rest', 'apps', appId, 'procedures', procedureName, 'instances', {
 						data: '{"instances": ' + instances + '}'
 					}, function (response) {
@@ -138,12 +176,14 @@ define([], function () {
 
 		},
 
-		actualInstances: function () {
-
-			var instances = Math.max(0, (+this.get('model.containersLabel') - 1));
-			return instances + ' instance' + (instances === 1 ? '' : 's');
-
-		}.property('model.containersLabel'),
+    actualInstances: function () {
+      if (C.get('isLocal')) {
+        return this.get('model.instances');
+      } else {
+        var instances = Math.max(0, (+this.get('model.containersLabel') - 1));
+        return instances + ' instance' + (instances === 1 ? '' : 's');
+      }
+    }.property('model.instances','model.containersLabel'),
 
 		config: function () {
 

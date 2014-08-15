@@ -33,11 +33,11 @@ VERSION = "0.0.2"
 DEFAULT_VERSION = "2.3.0-SNAPSHOT"
 
 LICENSE_MASTERS = "license_masters"
-MASTER_CSV = "reactor-dependencies-master.csv"
+MASTER_CSV = "cdap-dependencies-master.csv"
 
-ENTERPRISE = "reactor-enterprise-dependencies"
-LEVEL_1 = "reactor-level-1-dependencies"
-SINGLENODE = "reactor-singlenode-dependencies"
+ENTERPRISE = "cdap-enterprise-dependencies"
+LEVEL_1 = "cdap-level-1-dependencies"
+SINGLENODE = "cdap-singlenode-dependencies"
 
 LICENSES_SOURCE = "../../developer-guide/source/licenses"
 
@@ -47,7 +47,7 @@ BACK_DASH = "\-"
 SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
 def get_sdk_version():
-    # Sets the Reactor Build Version via maven
+    # Sets the CDAP Build Version via maven
     mvn_version_cmd = "mvn help:evaluate -o -Dexpression=project.version -f ../../../ | grep -v '^\['"
     version = None
     try:
@@ -379,14 +379,14 @@ def print_rst_singlenode(input_file, options):
    
 def print_dependencies(title, file_base, header, widths, data_list):
 # Example: "Level 1", LEVEL_1, ...
-    RST_HEADER=""".. :author: Continuuity, Inc.
+    RST_HEADER=""".. :author: Cask, Inc.
    :version: %(version)s
 ============================================
-Continuuity Reactor %(version)s\
+Cask Data Application Platform %(version)s\
 ============================================
 
-Continuuity Reactor %(title)s Dependencies
---------------------------------------------
+Cask Data Application Platform %(title)s Dependencies
+-----------------------------------------------------
 
 .. rst2pdf: PageBreak
 .. rst2pdf: .. contents::
@@ -395,7 +395,7 @@ Continuuity Reactor %(title)s Dependencies
 .. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
 .. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
 
-.. csv-table:: **Continuuity Reactor %(title)s Dependencies**
+.. csv-table:: **Cask Data Application Platform %(title)s Dependencies**
    :header: %(header)s
    :widths: %(widths)s
 

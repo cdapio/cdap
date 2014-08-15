@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2012-2014 Continuuity, Inc.
+  Copyright 2014 Cask, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -22,13 +22,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.continuuity</groupId>
-    <artifactId>reactor</artifactId>
-    <version>2.4.0-SNAPSHOT</version>
+    <groupId>co.cask.cdap</groupId>
+    <artifactId>cdap</artifactId>
+    <version>2.5.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>gateway</artifactId>
-  <name>Continuuity Gateway</name>
+  <name>Cask CDAP Gateway</name>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -41,37 +41,45 @@
       <artifactId>logback-classic</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>common</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>data-fabric</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>watchdog</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>security</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>app-fabric</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.continuuity</groupId>
-      <artifactId>http</artifactId>
+      <groupId>co.cask.http</groupId>
+      <artifactId>netty-http</artifactId>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+    </dependency>
+    <!-- We want to re-use test apps -->
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>app-fabric</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -138,7 +146,7 @@
                 </goals>
                 <configuration>
                   <target>
-                    <copy file="${project.build.directory}/dist/rpm/unfilter/continuuity-service" tofile="${stage.dir}/etc/rc.d/init.d/continuuity-router">
+                    <copy file="${project.build.directory}/dist/rpm/unfilter/cdap-service" tofile="${stage.dir}/etc/rc.d/init.d/cdap-router">
                       <filterSet>
                         <filter token="package.name" value="${project.artifactId}" />
                         <filter token="service.name" value="router" />
@@ -175,7 +183,7 @@
                 </goals>
                 <configuration>
                   <target>
-                    <copy file="${project.build.directory}/dist/deb/unfilter/continuuity-service" tofile="${stage.dir}-deb/etc/init.d/continuuity-router">
+                    <copy file="${project.build.directory}/dist/deb/unfilter/cdap-service" tofile="${stage.dir}-deb/etc/init.d/cdap-router">
                       <filterSet>
                         <filter token="package.name" value="${project.artifactId}" />
                         <filter token="service.name" value="router" />
@@ -216,10 +224,10 @@
                 <configuration>
                   <version>${project.version}</version>
                   <groupId>${dist.deploy.groupId}</groupId>
-                  <artifactId>continuuity-${project.artifactId}</artifactId>
+                  <artifactId>cdap-${project.artifactId}</artifactId>
                   <packaging>noarch.rpm</packaging>
                   <generatePom>false</generatePom>
-                  <file>${project.build.directory}/continuuity-${project.artifactId}-${package.version}-1.noarch.rpm</file>
+                  <file>${project.build.directory}/cdap-${project.artifactId}-${package.version}-1.noarch.rpm</file>
                   <classifier>1</classifier>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
@@ -257,10 +265,10 @@
                 <configuration>
                   <version>${project.version}</version>
                   <groupId>${dist.deploy.groupId}</groupId>
-                  <artifactId>continuuity-${project.artifactId}</artifactId>
+                  <artifactId>cdap-${project.artifactId}</artifactId>
                   <packaging>deb</packaging>
                   <generatePom>false</generatePom>
-                  <file>${project.build.directory}/continuuity-${project.artifactId}_${package.version}-1_all.deb</file>
+                  <file>${project.build.directory}/cdap-${project.artifactId}_${package.version}-1_all.deb</file>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
                 </configuration>
@@ -297,10 +305,10 @@
                 <configuration>
                   <version>${project.version}</version>
                   <groupId>${dist.deploy.groupId}</groupId>
-                  <artifactId>continuuity-${project.artifactId}</artifactId>
+                  <artifactId>cdap-${project.artifactId}</artifactId>
                   <packaging>tar.gz</packaging>
                   <generatePom>false</generatePom>
-                  <file>${project.build.directory}/continuuity-${project.artifactId}-${package.version}.tar.gz</file>
+                  <file>${project.build.directory}/cdap-${project.artifactId}-${package.version}.tar.gz</file>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
                 </configuration>
