@@ -17,25 +17,40 @@
 package co.cask.cdap.internal.service;
 
 import co.cask.cdap.api.service.ServiceSpecification;
-import org.apache.twill.api.EventHandlerSpecification;
-import org.apache.twill.api.RuntimeSpecification;
-import org.apache.twill.api.TwillSpecification;
+import co.cask.cdap.api.service.ServiceWorker;
+import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
- * This class defines a specification for a {@link co.cask.cdap.api.service.ServiceSpecification}.
+ * Default implementation of {@link co.cask.cdap.api.service.ServiceSpecification}.
  */
 public class DefaultServiceSpecification implements ServiceSpecification {
-
-  private final TwillSpecification specification;
   private final String className;
+  private final String name;
+  private final String description;
+  private final Map<String, String> properties;
+  private final List<? extends ServiceWorker> workers;
+  private final HttpServiceHandler serviceHandler;
 
-  public DefaultServiceSpecification(String className, TwillSpecification specification) {
-    this.specification = specification;
+  /**
+   * Create a ServiceSpecification for a custom user Service.
+   * @param className of service.
+   * @param name of service.
+   * @param description of service.
+   * @param properties of service.
+   * @param workers of service.
+   * @param serviceHandler of service.
+   */
+  public DefaultServiceSpecification(String className, String name, String description, Map<String, String> properties,
+                                     List<? extends ServiceWorker> workers, HttpServiceHandler serviceHandler) {
     this.className = className;
+    this.name = name;
+    this.description = description;
+    this.properties = properties;
+    this.workers = workers;
+    this.serviceHandler = serviceHandler;
   }
 
   @Override
@@ -45,32 +60,31 @@ public class DefaultServiceSpecification implements ServiceSpecification {
 
   @Override
   public String getName() {
-    return specification.getName();
-  }
-
-  @Override
-  public Map<String, RuntimeSpecification> getRunnables() {
-    return specification.getRunnables();
-  }
-
-  @Override
-  public List<Order> getOrders() {
-    return specification.getOrders();
-  }
-
-  @Override
-  public List<PlacementPolicy> getPlacementPolicies() {
-    return specification.getPlacementPolicies();
-  }
-
-  @Nullable
-  @Override
-  public EventHandlerSpecification getEventHandler() {
-    return specification.getEventHandler();
+    return name;
   }
 
   @Override
   public String getDescription() {
-    return "";
+    return description;
+  }
+
+  @Override
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
+  @Override
+  public String getProperty(String key) {
+    return properties.get(key);
+  }
+
+  @Override
+  public List<? extends ServiceWorker> getWorkers() {
+    return workers;
+  }
+
+  @Override
+  public HttpServiceHandler getHandler() {
+    return serviceHandler;
   }
 }

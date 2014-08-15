@@ -17,17 +17,11 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.common.PropertyProvider;
-import co.cask.cdap.api.service.http.HttpServiceHandler;
-
-import java.util.List;
+import org.apache.twill.api.TwillSpecification;
 
 /**
- *
+ * Provide the specification of a custom TwillApplication.
  */
-public interface ServiceSpecification extends ProgramSpecification, PropertyProvider {
+public interface TwillAppSpecification extends ProgramSpecification, TwillSpecification {
 
-  List<? extends ServiceWorker> getWorkers();
-
-  HttpServiceHandler getHandler();
 }

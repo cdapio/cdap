@@ -20,7 +20,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
-import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.TwillAppSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -44,7 +44,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final Map<String, MapReduceSpecification> mapReduces;
   private final Map<String, SparkSpecification> sparks;
   private final Map<String, WorkflowSpecification> workflows;
-  private final Map<String, ServiceSpecification> services;
+  private final Map<String, TwillAppSpecification> services;
 
 
   public DefaultApplicationSpecification(String name, String description,
@@ -56,7 +56,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, MapReduceSpecification> mapReduces,
                                          Map<String, SparkSpecification> sparks,
                                          Map<String, WorkflowSpecification> workflows,
-                                         Map<String, ServiceSpecification> services) {
+                                         Map<String, TwillAppSpecification> services) {
     this.name = name;
     this.description = description;
     this.streams = ImmutableMap.copyOf(streams);
@@ -129,7 +129,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     return workflows;
   }
 
-  public Map<String, ServiceSpecification> getServices() {
+  public Map<String, TwillAppSpecification> getServices() {
     return services;
   }
 }

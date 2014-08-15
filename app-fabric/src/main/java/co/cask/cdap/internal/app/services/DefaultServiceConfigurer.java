@@ -19,9 +19,11 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.api.service.ServiceConfigurer;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * A default implementation of Configurer for Services.
@@ -29,6 +31,7 @@ import java.util.List;
 public class DefaultServiceConfigurer implements ServiceConfigurer {
   private String description;
   private String name;
+  Map<String, String> properties;
   private List<ServiceWorker> workers;
   private HttpServiceHandler serviceHandler;
 
@@ -60,6 +63,11 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   @Override
+  public void setProperties(Map<String, String> properties) {
+    this.properties = ImmutableMap.copyOf(properties);
+  }
+
+  @Override
   public HttpServiceHandler getHandler() {
     return serviceHandler;
   }
@@ -77,5 +85,10 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   @Override
   public String getDescription() {
     return description;
+  }
+
+  @Override
+  public Map<String, String> getProperties() {
+    return this.properties;
   }
 }

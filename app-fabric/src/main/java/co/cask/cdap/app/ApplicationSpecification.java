@@ -24,7 +24,7 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
-import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.TwillAppSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -98,8 +98,8 @@ public interface ApplicationSpecification {
   Map<String, WorkflowSpecification> getWorkflows();
 
   /**
-   * @return An immutable {@link Map} from service name to {@link ServiceSpecification}
+   * @return An immutable {@link Map} from service name to {@link co.cask.cdap.api.service.TwillAppSpecification}
    *         for services configured for the Application.
    */
-  Map<String, ServiceSpecification> getServices();
+  Map<String, TwillAppSpecification> getServices();
 }

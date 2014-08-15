@@ -19,6 +19,7 @@ package co.cask.cdap.api.service;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Interface for Configurers used to create custom Services.
@@ -50,6 +51,12 @@ public interface ServiceConfigurer {
   void setHandler(HttpServiceHandler serviceHandler);
 
   /**
+   * Set the properties for the Service.
+   * @param properties
+   */
+  void setProperties(Map<String, String> properties);
+
+  /**
    * Get the primary handler used to service requests.
    * @return the handler that serves requests.
    */
@@ -72,4 +79,10 @@ public interface ServiceConfigurer {
    * @return description of the Service.
    */
   String getDescription();
+
+  /**
+   * Get the properties for the Service.
+   * @return properties of the Service.
+   */
+  Map<String, String> getProperties();
 }

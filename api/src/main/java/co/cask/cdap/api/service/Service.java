@@ -16,36 +16,14 @@
 
 package co.cask.cdap.api.service;
 
-import co.cask.cdap.api.service.http.HttpServiceHandler;
-
-import java.util.List;
-
 /**
  * Defines a custom user Service.
  */
 public interface Service {
 
   /**
-   * Get the name of the service.
-   * @return name of the service.
-   */
-  String getName();
-
-  /**
    * Configure the service.
    * @param serviceConfigurer
    */
-  void configure(ServiceConfigurer serviceConfigurer);
-
-  /**
-   * Get the primary request handler for the Service.
-   * @return a request handler.
-   */
-  public HttpServiceHandler getHandler();
-
-  /**
-   * Get a list of workers for the service.
-   * @return workers for the service.
-   */
-  public List<ServiceWorker> getWorkers();
+  ServiceSpecification configure(ServiceConfigurer serviceConfigurer);
 }

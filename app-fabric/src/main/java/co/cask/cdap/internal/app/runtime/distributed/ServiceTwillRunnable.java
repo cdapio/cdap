@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.service.GuavaServiceTwillRunnable;
-import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.TwillAppSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.metrics.ServiceRunnableMetrics;
 import co.cask.cdap.app.program.Program;
@@ -181,7 +181,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
       String processorName = program.getName();
       runnableName = programOpts.getName();
 
-      ServiceSpecification serviceSpec = appSpec.getServices().get(processorName);
+      TwillAppSpecification serviceSpec = appSpec.getServices().get(processorName);
       final RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnableName);
 
       String className = runtimeSpec.getRunnableSpecification().getClassName();

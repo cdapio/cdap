@@ -20,7 +20,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
-import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.TwillAppSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -54,7 +54,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     jsonObj.add("mapReduces", serializeMap(src.getMapReduce(), context, MapReduceSpecification.class));
     jsonObj.add("sparks", serializeMap(src.getSpark(), context, SparkSpecification.class));
     jsonObj.add("workflows", serializeMap(src.getWorkflows(), context, WorkflowSpecification.class));
-    jsonObj.add("services", serializeMap(src.getServices(), context, ServiceSpecification.class));
+    jsonObj.add("services", serializeMap(src.getServices(), context, TwillAppSpecification.class));
 
     return jsonObj;
   }
@@ -84,8 +84,8 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     Map<String, WorkflowSpecification> workflows = deserializeMap(jsonObj.get("workflows"),
                                                                   context, WorkflowSpecification.class);
 
-    Map<String, ServiceSpecification> services = deserializeMap(jsonObj.get("services"),
-                                                                context, ServiceSpecification.class);
+    Map<String, TwillAppSpecification> services = deserializeMap(jsonObj.get("services"),
+                                                                context, TwillAppSpecification.class);
 
     return new DefaultApplicationSpecification(name, description, streams,
                                                datasetModules, datasetInstances,

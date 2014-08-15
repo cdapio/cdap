@@ -25,7 +25,7 @@ import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
-import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.TwillAppSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -1090,7 +1090,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             }
           } else {
             // Services
-            ServiceSpecification serviceSpec = spec.getServices().get(programId);
+            TwillAppSpecification serviceSpec = spec.getServices().get(programId);
             if (serviceSpec != null) {
               Map<String, RuntimeSpecification> runtimeSpecs = serviceSpec.getRunnables();
               if (runtimeSpecs != null && runtimeSpecs.containsKey(runnableId)) {

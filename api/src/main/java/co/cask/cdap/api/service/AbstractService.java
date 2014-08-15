@@ -16,9 +16,7 @@
 
 package co.cask.cdap.api.service;
 
-import co.cask.cdap.api.service.http.HttpServiceHandler;
-
-import java.util.List;
+import co.cask.cdap.internal.service.DefaultServiceSpecification;
 
 /**
  * An abstract implementation of {@link co.cask.cdap.api.service.Service}. Users may extend this to write their own
@@ -28,24 +26,13 @@ public abstract class AbstractService implements Service {
   protected ServiceConfigurer configurer;
 
   @Override
-  public String getName() {
-    return this.configurer.getName();
-  }
-
-  @Override
-  public final void configure(ServiceConfigurer serviceConfigurer) {
+  public final ServiceSpecification configure(ServiceConfigurer serviceConfigurer) {
     this.configurer = serviceConfigurer;
     configure();
-  }
 
-  @Override
-  public HttpServiceHandler getHandler() {
-    return configurer.getHandler();
-  }
-
-  @Override
-  public List<ServiceWorker> getWorkers() {
-    return configurer.getWorkers();
+    return new DefaultServiceSpecification(getClass().getSimpleName(), configurer.getName(),
+                                           configurer.getDescription(), configurer.getProperties(),
+                                           configurer.getWorkers(), configurer.getHandler());
   }
 
   /**

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.TwillAppSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
@@ -40,7 +40,6 @@ import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.ServiceMeta;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -57,7 +56,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -103,8 +101,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
       ApplicationSpecification spec = store.getApplication(Id.Application.from(accountId, appId));
       if (spec != null) {
         List<ProgramRecord> services = Lists.newArrayList();
-        for (Map.Entry<String, ServiceSpecification> entry : spec.getServices().entrySet()) {
-          ServiceSpecification specification = entry.getValue();
+        for (Map.Entry<String, TwillAppSpecification> entry : spec.getServices().entrySet()) {
+          TwillAppSpecification specification = entry.getValue();
           services.add(new ProgramRecord(ProgramType.SERVICE, appId, specification.getName(),
                                          specification.getName(), specification.getDescription()));
         }
@@ -131,7 +129,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
-      ServiceSpecification spec = getServiceSpecification(accountId, appId, serviceId);
+      TwillAppSpecification spec = getServiceSpecification(accountId, appId, serviceId);
       if (spec != null) {
         responder.sendJson(HttpResponseStatus.OK, new ServiceMeta(
           spec.getName(), spec.getName(), spec.getDescription(), spec.getRunnables().keySet()));
@@ -265,13 +263,13 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @Nullable
-  private ServiceSpecification getServiceSpecification(String accountId, String id,
+  private TwillAppSpecification getServiceSpecification(String accountId, String id,
                                                        String serviceName) throws OperationException {
     ApplicationSpecification applicationSpecification = store.getApplication(Id.Application.from(accountId, id));
     if (applicationSpecification == null) {
       return null;
     }
-    Map<String, ServiceSpecification> serviceSpecs = applicationSpecification.getServices();
+    Map<String, TwillAppSpecification> serviceSpecs = applicationSpecification.getServices();
     if (serviceSpecs.containsKey(serviceName)) {
       return serviceSpecs.get(serviceName);
     } else {
@@ -282,7 +280,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   @Nullable
   private RuntimeSpecification getRuntimeSpecification(String accountId, String appId, String serviceName,
                                                         String runnableName) throws OperationException {
-    ServiceSpecification specification = getServiceSpecification(accountId, appId, serviceName);
+    TwillAppSpecification specification = getServiceSpecification(accountId, appId, serviceName);
     if (specification != null) {
       Map<String, RuntimeSpecification> runtimeSpecs =  specification.getRunnables();
       return runtimeSpecs.containsKey(runnableName) ? runtimeSpecs.get(runnableName) : null;

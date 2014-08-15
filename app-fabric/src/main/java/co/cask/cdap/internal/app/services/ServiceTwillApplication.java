@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.service.Service;
+import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import com.google.common.base.Preconditions;
@@ -40,16 +41,16 @@ public class ServiceTwillApplication implements TwillApplication {
 
   @Override
   public TwillSpecification configure() {
-    service.configure(new DefaultServiceConfigurer());
-    HttpServiceHandler serviceHandler = service.getHandler();
+    ServiceSpecification serviceSpecification = service.configure(new DefaultServiceConfigurer());
+    HttpServiceHandler serviceHandler = serviceSpecification.getHandler();
     Preconditions.checkNotNull(serviceHandler, "No ServiceHandler found. Add a handler using the configurer.");
     TwillSpecification.Builder.RunnableSetter runnableSetter = TwillSpecification.Builder.with()
-                                     .setName(service.getName())
+                                     .setName(serviceSpecification.getName())
                                      .withRunnable()
-                                     .add(new HttpServiceTwillRunnable(service.getName(),
+                                     .add(new HttpServiceTwillRunnable(serviceSpecification.getName(),
                                                                        ImmutableList.of(serviceHandler)))
                                      .noLocalFiles();
-    for (ServiceWorker worker : service.getWorkers()) {
+    for (ServiceWorker worker : serviceSpecification.getWorkers()) {
       ServiceWorkerTwillRunnable runnable = new ServiceWorkerTwillRunnable(worker);
       runnable.configure();
       runnableSetter.add(runnable);
