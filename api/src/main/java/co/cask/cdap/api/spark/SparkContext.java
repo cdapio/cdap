@@ -17,6 +17,7 @@
 package co.cask.cdap.api.spark;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.dataset.Dataset;
 
 /**
  * Spark job execution context.
@@ -35,4 +36,34 @@ public interface SparkContext extends RuntimeContext {
    * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
    */
   long getLogicalStartTime();
+
+  /**
+   * Function to get a {@link Dataset} as a Spark RDD
+   *
+   * @param datasetName the name of the {@link Dataset} to be read as an RDD
+   * @param kClass      the key class
+   * @param vClass      the value class
+   * @param <T>         type of RDD
+   * @return the RDD created from Dataset
+   */
+  <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass);
+
+  /**
+   * Function to store a Spark RDD to {@link Dataset}
+   *
+   * @param rdd         the rdd to be stored
+   * @param datasetName the name of the {@link Dataset} where the RDD should be stored
+   * @param kClass      the key class
+   * @param vClass      the value class
+   * @param <T>         type of RDD
+   */
+  <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass);
+
+  /**
+   * Getter method to get Apache Spark's SparkContext object
+   *
+   * @param <T> the type of Apache Spark Context
+   * @return the Apache Spark Context
+   */
+  <T> T getApacheSparkContext();
 }
