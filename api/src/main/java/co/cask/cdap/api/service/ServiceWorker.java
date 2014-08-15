@@ -27,13 +27,13 @@ public interface ServiceWorker extends Runnable, ProgramLifecycle<ServiceWorkerC
 
   /**
    * Configure a ServiceWorker.
-   * @param context for the worker.
    * @return a ServiceWorkerSpecification.
    */
-  ServiceWorkerSpecification configure(ServiceWorkerContext context);
+  ServiceWorkerSpecification configure();
 
   /**
-   * Stop the worker.
+   * Request to stop the running worker.
+   * This method will be invoked from a different thread than the one calling the {@link #run()} ) method
    */
   void stop();
 

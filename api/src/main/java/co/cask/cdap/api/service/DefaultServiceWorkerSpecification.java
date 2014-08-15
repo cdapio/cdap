@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.service;
 
+import com.google.common.collect.ImmutableMap;
+
 import java.util.Map;
 
 /**
@@ -39,8 +41,7 @@ public class DefaultServiceWorkerSpecification implements ServiceWorkerSpecifica
     this.className = className;
     this.name = name;
     this.description = description;
-    this.properties = properties;
-
+    this.properties = ImmutableMap.copyOf(properties);
   }
 
   @Override

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.service;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.util.Map;
@@ -31,7 +32,7 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
    * @param runtimeArgs
    */
   public DefaultServiceWorkerContext(Map<String, String> runtimeArgs) {
-    this.runtimeArgs = runtimeArgs;
+    this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
   }
 
   @Override
