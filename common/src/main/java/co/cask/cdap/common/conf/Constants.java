@@ -443,13 +443,15 @@ public final class Constants {
 
     /** SSL keystore type */
     public static final String SSL_KEYSTORE_TYPE = "security.server.ssl.keystore.type";
-    /** SSL keystore location specified in reactor-security.xml. Can be accessed through SConfiguration object */
+    /** Configuration for enabling SSL for router */
+    public static final String ROUTER_SSL_ENABLED = "security.router.ssl.enabled";
+    /** SSL keystore location specified in cdap-security.xml. Can be accessed through SConfiguration object */
     public static final String ROUTER_SSL_KEYSTORE_PATH = "security.router.ssl.keystore.path";
-    /** SSL keystore type specified in reactor-security.xml. Can be accessed through SConfiguration object */
+    /** SSL keystore type specified in cdap-security.xml. Can be accessed through SConfiguration object */
     public static final String ROUTER_SSL_KEYSTORE_TYPE = "security.router.ssl.keystore.type";
-    /** SSL keystore key password specified in reactor-security.xml. Can be accessed through SConfiguration object */
+    /** SSL keystore key password specified in cdap-security.xml. Can be accessed through SConfiguration object */
     public static final String ROUTER_SSL_KEYPASSWORD = "security.router.ssl.keystore.keypassword";
-    /** SSL keystore password specified in reactor-security.xml. Can be accessed through SConfiguration object */
+    /** SSL keystore password specified in cdap-security.xml. Can be accessed through SConfiguration object */
     public static final String ROUTER_SSL_KEYSTORE_PASSWORD = "security.router.ssl.keystore.password";
     /** SSL port for Router */
     public static final String ROUTER_SSL_PORT = "security.router.ssl.port";

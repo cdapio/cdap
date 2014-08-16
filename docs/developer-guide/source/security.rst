@@ -34,25 +34,36 @@ Enabling Security
 ==================
 To enable security in the Cask DAP, add these properties to ``cdap-site.xml``:
 
-==========================================  ===========
+==========================================  ==============
    Property                                   Value
-==========================================  ===========
+==========================================  ==============
 security.enabled                              true
 security.auth.server.address                  <hostname>
-==========================================  ===========
+==========================================  ==============
 
-
-Configuring SSL
-================
+Configuring SSL for the Authentication Server
+==============================================
 To configure the granting of ``AccessToken``\s via SSL, add these properties to ``cdap-site.xml``:
 
-==========================================  ===========
+==========================================  ==============
    Property                                   Value
-==========================================  ===========
+==========================================  ==============
 security.server.ssl.enabled                   true
-security.server.ssl.keystore.path            <path>
-security.server.ssl.keystore.password        <password>
-==========================================  ===========
+security.server.ssl.keystore.path             <path>
+security.server.ssl.keystore.password         <password>
+==========================================  ==============
+
+Configuring SSL for the Router
+==============================================
+To configure SSL for the Router, add these properties to ``cdap-site.xml``:
+
+==========================================  ==============
+   Property                                   Value
+==========================================  ==============
+security.router.ssl.enabled                   true
+security.router.ssl.keystore.path             <path>
+security.router.ssl.keystore.password         <password>
+==========================================  ==============
 
 Enabling Access Logging
 ========================

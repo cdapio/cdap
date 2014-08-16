@@ -140,7 +140,7 @@ public class NettyRouter extends AbstractIdleService {
     this.discoveryServiceClient = discoveryServiceClient;
     this.configuration = cConf;
 
-    this.sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
+    this.sslEnabled = cConf.getBoolean(Constants.Security.ROUTER_SSL_ENABLED);
     if (isSSLEnabled()) {
       File keystore;
       try {
