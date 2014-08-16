@@ -19,8 +19,9 @@ package co.cask.cdap.api.service;
 import co.cask.cdap.internal.service.DefaultServiceSpecification;
 
 /**
- * An abstract implementation of {@link Service}. Users may extend this to write their own
- * custom service.
+ * An abstract implementation of {@link Service}. Users may extend this to write a {@link Service}.
+ *
+ * The default no-op constructor must be implemented.
  */
 public abstract class AbstractService implements Service {
   protected ServiceConfigurer configurer;
