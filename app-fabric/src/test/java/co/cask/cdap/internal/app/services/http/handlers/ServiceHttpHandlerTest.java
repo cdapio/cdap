@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -33,7 +32,6 @@ import java.util.Map;
  * Test User Services handler in app-fabric - ServiceHttpHandler.java.
  */
 public class ServiceHttpHandlerTest extends AppFabricTestBase {
-  private static final Gson GSON = new Gson();
 
   @Test
   public void testServices() throws Exception {
