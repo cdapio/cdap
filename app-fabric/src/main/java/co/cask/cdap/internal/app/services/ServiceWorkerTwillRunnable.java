@@ -26,13 +26,13 @@ import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
 
 /**
- * TwillRunnable to run a custom Service worker.
+ * {@link TwillRunnable} to run a {@link ServiceWorker}.
  */
 public class ServiceWorkerTwillRunnable implements TwillRunnable {
-  private ServiceWorker worker;
+  private final ServiceWorker worker;
 
   /**
-   * Create a TwillRunnable for a custom Service worker.
+   * Create a {@link TwillRunnable} for a {@link ServiceWorker}.
    * @param worker
    */
   public ServiceWorkerTwillRunnable(ServiceWorker worker) {

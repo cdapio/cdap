@@ -201,7 +201,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   /**
-   * Adds {@link com.google.common.util.concurrent.Service} as a Custom Service {@link TwillApplication}
+   * Adds {@link Service} as a Custom Service {@link TwillApplication}
    * to the Application.
    * @param name Name of runnable.
    * @param service Guava service to be added.

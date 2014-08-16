@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Default implementation of {@link co.cask.cdap.api.service.ServiceSpecification}.
+ * Default implementation of {@link ServiceSpecification}.
  */
 public class DefaultServiceSpecification implements ServiceSpecification {
   private final String className;

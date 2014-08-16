@@ -22,7 +22,7 @@ import org.apache.twill.discovery.ServiceDiscovered;
 import java.util.Map;
 
 /**
- * Default implementation of {@link co.cask.cdap.api.service.ServiceWorkerContext}.
+ * Default implementation of {@link ServiceWorkerContext}.
  */
 public class DefaultServiceWorkerContext implements ServiceWorkerContext {
   private final Map<String, String> runtimeArgs;
@@ -37,7 +37,7 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
 
   @Override
   public Map<String, String> getRuntimeArguments() {
-    return this.runtimeArgs;
+    return runtimeArgs;
   }
 
   @Override

@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A default implementation of Configurer for Services.
+ * A default implementation of {@link ServiceConfigurer}.
  */
 public class DefaultServiceConfigurer implements ServiceConfigurer {
   private String description;
@@ -37,11 +37,12 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   private List<HttpServiceHandler> serviceHandlers;
 
   /**
-   * Create an instance of {@link ServiceConfigurer}
+   * Create an instance of {@link DefaultServiceConfigurer}
    */
   public DefaultServiceConfigurer() {
     this.workers = Lists.newArrayList();
     this.properties = Maps.newHashMap();
+    this.serviceHandlers = Lists.newArrayList();
   }
 
   @Override

@@ -20,7 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
 
 /**
- * Specification for custom user Service workers.
+ * Specification for user Service's {@link ServiceWorker}s.
  */
 public interface ServiceWorkerSpecification extends ProgramSpecification, PropertyProvider {
 

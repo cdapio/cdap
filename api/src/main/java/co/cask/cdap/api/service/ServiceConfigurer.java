@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Interface for Configurers used to create custom Services.
+ * Interface for configurers used to create custom Services.
  */
 public interface ServiceConfigurer {
 

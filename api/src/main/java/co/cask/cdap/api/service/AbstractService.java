@@ -19,7 +19,7 @@ package co.cask.cdap.api.service;
 import co.cask.cdap.internal.service.DefaultServiceSpecification;
 
 /**
- * An abstract implementation of {@link co.cask.cdap.api.service.Service}. Users may extend this to write their own
+ * An abstract implementation of {@link Service}. Users may extend this to write their own
  * custom service.
  */
 public abstract class AbstractService implements Service {
@@ -36,7 +36,7 @@ public abstract class AbstractService implements Service {
   }
 
   /**
-   * Implement this method and use a {@link co.cask.cdap.api.service.ServiceConfigurer} to add a request handler
+   * Implement this method and use a {@link ServiceConfigurer} to add a request handler
    * and workers.
    */
   protected abstract void configure();

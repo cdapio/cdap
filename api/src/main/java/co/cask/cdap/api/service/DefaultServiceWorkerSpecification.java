@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
- * Default implementation of {@link co.cask.cdap.api.service.ServiceWorkerSpecification}
+ * Default implementation of {@link ServiceWorkerSpecification}
  */
 public class DefaultServiceWorkerSpecification implements ServiceWorkerSpecification {
   private final String className;
@@ -46,26 +46,26 @@ public class DefaultServiceWorkerSpecification implements ServiceWorkerSpecifica
 
   @Override
   public String getClassName() {
-    return this.className;
+    return className;
   }
 
   @Override
   public String getName() {
-    return this.name;
+    return name;
   }
 
   @Override
   public String getDescription() {
-    return this.description;
+    return description;
   }
 
   @Override
   public Map<String, String> getProperties() {
-    return this.properties;
+    return properties;
   }
 
   @Override
   public String getProperty(String key) {
-    return this.properties.get(key);
+    return properties.get(key);
   }
 }

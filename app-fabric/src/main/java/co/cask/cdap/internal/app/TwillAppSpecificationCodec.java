@@ -29,7 +29,7 @@ import org.apache.twill.internal.json.TwillSpecificationAdapter;
 import java.lang.reflect.Type;
 
 /**
- * Codec to serialize and serialize {@link co.cask.cdap.api.service.TwillAppSpecification}
+ * Codec to serialize and serialize {@link TwillAppSpecification}
  */
 public class TwillAppSpecificationCodec extends AbstractSpecificationCodec<TwillAppSpecification>  {
 

@@ -98,7 +98,7 @@ public interface ApplicationSpecification {
   Map<String, WorkflowSpecification> getWorkflows();
 
   /**
-   * @return An immutable {@link Map} from service name to {@link co.cask.cdap.api.service.TwillAppSpecification}
+   * @return An immutable {@link Map} from service name to {@link TwillAppSpecification}
    *         for services configured for the Application.
    */
   Map<String, TwillAppSpecification> getServices();

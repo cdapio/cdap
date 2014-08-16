@@ -22,9 +22,9 @@ import java.util.Map;
  * Extend this class to add workers to a custom Service.
  */
 public abstract class AbstractServiceWorker implements ServiceWorker {
-  private String name;
-  private String description;
-  private Map<String, String> args;
+  private final String name;
+  private final String description;
+  private final Map<String, String> args;
 
   /**
    * Create a ServiceWorker with no runtime arguments.

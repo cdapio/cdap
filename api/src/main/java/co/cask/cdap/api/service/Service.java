@@ -16,14 +16,16 @@
 
 package co.cask.cdap.api.service;
 
+import co.cask.cdap.api.service.http.HttpServiceHandler;
+
 /**
  * Defines a custom user Service.
  */
 public interface Service {
 
   /**
-   * Configure the service.
-   * @param serviceConfigurer
+   * Configure the Service by adding {@link HttpServiceHandler}s to service requests and {@link ServiceWorker}s.
+   * @param configurer
    */
-  ServiceSpecification configure(ServiceConfigurer serviceConfigurer);
+  ServiceSpecification configure(ServiceConfigurer configurer);
 }

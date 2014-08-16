@@ -26,7 +26,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * This class defines a specification for a {@link co.cask.cdap.api.service.TwillAppSpecification}.
+ * This class defines a specification for a {@link TwillAppSpecification}.
  */
 public class DefaultTwillAppSpecification implements TwillAppSpecification {
 

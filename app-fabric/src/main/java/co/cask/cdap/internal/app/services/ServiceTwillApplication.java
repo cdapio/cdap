@@ -27,13 +27,13 @@ import java.security.InvalidParameterException;
 import java.util.List;
 
 /**
- * TwillApplication to run custom user Services.
+ * TwillApplication to run a {@link Service}.
  */
 public class ServiceTwillApplication implements TwillApplication {
   private final Service service;
 
   /**
-   * Create a TwillApplication from a custom user Service.
+   * Create a TwillApplication from a {@link Service}.
    * @param service
    */
   public ServiceTwillApplication(Service service) {
