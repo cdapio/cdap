@@ -287,9 +287,28 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
     waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
 
-    // Get instances for a non-existent flowlet
+    // Get instances for a non-existent flowlet, flow, and app.
     HttpResponse response = doGet("/v2/apps/WordCountApp/flows/WordCountFlow/flowlets/XXXX/instances");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    response = doGet("/v2/apps/WordCountApp/flows/XXXX/flowlets/StreamSource/instances");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    response = doGet("/v2/apps/XXXX/flows/WordCountFlow/flowlets/StreamSource/instances");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+
+    // PUT instances for non-existent flowlet, flow, and app.
+    String payload = "{instances: 1}";
+    response = doPut("/v2/apps/WordCountApp/flows/WordCountFlow/flowlets/XXXX/instances", payload);
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    response = doPut("/v2/apps/WordCountApp/flows/XXXX/flowlets/StreamSource/instances", payload);
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    response = doPut("/v2/apps/XXXX/flows/WordCountFlow/flowlets/StreamSource/instances", payload);
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
 
     //Get Flowlet Instances
     Assert.assertEquals(1, getFlowletInstances("WordCountApp", "WordCountFlow", "StreamSource"));
@@ -671,6 +690,23 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     result = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
     Assert.assertEquals(1, result.size());
     Assert.assertEquals(10, Integer.parseInt(result.get("instances")));
+
+
+    // Get instances for a non-existent procedure and app.
+    response = doGet("/v2/apps/WordCountApp/procedures/XXXX/instances");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    response = doGet("/v2/apps/XXXX/procedures/WordFrequency/instances");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    // PUT instances for non-existent procedure and app.
+    String payload = "{instances: 1}";
+    response = doPut("/v2/apps/WordCountApp/procedures/XXXX/instances", payload);
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    response = doPut("/v2/apps/XXXX/procedures/WordFrequency/instances", payload);
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
 
     Assert.assertEquals(200, doDelete("/v2/apps/WordCountApp").getStatusLine().getStatusCode());
   }
