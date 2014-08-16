@@ -55,8 +55,7 @@ public class ServiceTwillApplication implements TwillApplication {
                                      .noLocalFiles();
     for (ServiceWorker worker : serviceSpecification.getWorkers()) {
       ServiceWorkerTwillRunnable runnable = new ServiceWorkerTwillRunnable(worker);
-      runnable.configure();
-      runnableSetter.add(runnable);
+      runnableSetter = runnableSetter.add(runnable).noLocalFiles();
     }
     return runnableSetter.anyOrder().build();
   }

@@ -41,17 +41,17 @@ public class DefaultServiceSpecification implements ServiceSpecification {
    * @param description of service.
    * @param properties of service.
    * @param workers of service.
-   * @param serviceHandler of service.
+   * @param handlers of service.
    */
   public DefaultServiceSpecification(String className, String name, String description, Map<String,
                                       String> properties, List<? extends ServiceWorker> workers,
-                                      List<? extends HttpServiceHandler> serviceHandler) {
+                                      List<? extends HttpServiceHandler> handlers) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.properties = properties;
     this.workers = workers;
-    this.serviceHandlers = serviceHandler;
+    this.serviceHandlers = handlers;
   }
 
   @Override

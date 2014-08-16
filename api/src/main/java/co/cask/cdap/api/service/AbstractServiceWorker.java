@@ -16,15 +16,26 @@
 
 package co.cask.cdap.api.service;
 
+import com.google.common.collect.Maps;
+
 import java.util.Map;
 
 /**
  * Extend this class to add workers to a custom Service.
  */
 public abstract class AbstractServiceWorker implements ServiceWorker {
-  private final String name;
-  private final String description;
-  private final Map<String, String> args;
+  protected String name;
+  protected String description;
+  protected Map<String, String> args;
+
+  /**
+   * Default constructor used to instantiate a ServiceWorker.
+   */
+  public AbstractServiceWorker() {
+    this.name = "";
+    this.description = "";
+    this.args = Maps.newHashMap();
+  }
 
   /**
    * Create a ServiceWorker with no runtime arguments.
@@ -37,7 +48,7 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
 
   @Override
   public ServiceWorkerSpecification configure() {
-    return new DefaultServiceWorkerSpecification(getClass().getSimpleName(), name, description, args);
+    return new DefaultServiceWorkerSpecification(getClass().getName(), name, description, args);
   }
 
   @Override

@@ -703,7 +703,8 @@ public class DefaultStore implements Store {
     private final TwillAppSpecification twillAppSpecification;
 
     private ApplicationSpecificationWithChangedServices(ApplicationSpecification delegate,
-                                                        String serviceName, TwillAppSpecification twillAppSpecification) {
+                                                        String serviceName,
+                                                        TwillAppSpecification twillAppSpecification) {
       super(delegate);
       this.serviceName = serviceName;
       this.twillAppSpecification = twillAppSpecification;

@@ -17,44 +17,68 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.service.DefaultServiceWorkerContext;
+import co.cask.cdap.api.service.GuavaServiceTwillRunnable;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * {@link TwillRunnable} to run a {@link ServiceWorker}.
  */
 public class ServiceWorkerTwillRunnable implements TwillRunnable {
-  private final ServiceWorker worker;
+  private static final Logger LOG = LoggerFactory.getLogger(ServiceWorkerTwillRunnable.class);
+  private ServiceWorker worker;
+  private ClassLoader programClassLoader;
 
   /**
    * Create a {@link TwillRunnable} for a {@link ServiceWorker}.
-   * @param worker
+   * @param worker to run as runnable.
    */
   public ServiceWorkerTwillRunnable(ServiceWorker worker) {
     this.worker = worker;
   }
 
+  /**
+   * Create a {@link TwillRunnable} for a {@link ServiceWorker} from a classloader.
+   * @param classLoader to create runnable with.
+   */
+  public ServiceWorkerTwillRunnable(ClassLoader classLoader) {
+    this.programClassLoader = classLoader;
+  }
+
   @Override
   public TwillRunnableSpecification configure() {
     ServiceWorkerSpecification workerSpecification = worker.configure();
+    Map<String, String> runnableArgs = Maps.newHashMap(workerSpecification.getProperties());
+    runnableArgs.put("service.class.name", workerSpecification.getClassName());
     return TwillRunnableSpecification.Builder.with()
                                              .setName(worker.getClass().getSimpleName())
-                                             .withConfigs(workerSpecification.getProperties())
+                                             .withConfigs(runnableArgs)
                                              .build();
   }
 
   @Override
   public void initialize(TwillContext context) {
+    Map<String, String> runnableArgs = context.getSpecification().getConfigs();
+    String serviceClassName = runnableArgs.get("service.class.name");
     try {
+      Class<?> serviceClass = programClassLoader.loadClass(serviceClassName);
+      worker = (ServiceWorker) serviceClass.newInstance();
       worker.initialize(new DefaultServiceWorkerContext(context.getSpecification().getConfigs()));
     } catch (Exception e) {
+      LOG.error("Could not instantiate service " + serviceClassName);
       Throwables.propagate(e);
     }
+    LOG.info("Instantiated service " + serviceClassName);
   }
 
   @Override

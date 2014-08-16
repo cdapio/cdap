@@ -44,6 +44,7 @@ import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.services.HttpServiceTwillRunnable;
+import co.cask.cdap.internal.app.services.ServiceWorkerTwillRunnable;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
@@ -197,6 +198,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
         // Special case for running http services since we need to instantiate the http service
         // using the program classloader.
         delegate = new HttpServiceTwillRunnable(program.getClassLoader());
+      } else if (clz.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
+        delegate = new ServiceWorkerTwillRunnable(program.getClassLoader());
       } else {
         delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
       }

@@ -32,6 +32,7 @@ import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.services.HttpServiceTwillRunnable;
+import co.cask.cdap.internal.app.services.ServiceWorkerTwillRunnable;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.proto.ProgramType;
@@ -155,7 +156,6 @@ public class InMemoryRunnableRunner implements ProgramRunner {
                                            program.getName(), s);
         }
       };
-
       twillContext = new InMemoryTwillContext(twillRunId, runId, InetAddress.getLocalHost(), new String[0], argArray,
                                               runnableSpec.getRunnableSpecification(), instanceId,
                                               runnableSpec.getResourceSpecification().getVirtualCores(),
@@ -172,6 +172,8 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       } else if (runnableClass.isAssignableFrom(HttpServiceTwillRunnable.class)) {
         // Special case for running HTTP services
         runnable = new HttpServiceTwillRunnable(program.getClassLoader());
+      } else if (runnableClass.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
+        runnable = new ServiceWorkerTwillRunnable(program.getClassLoader());
       } else {
         runnable = new InstantiatorFactory(false).get(runnableType).create();
       }
