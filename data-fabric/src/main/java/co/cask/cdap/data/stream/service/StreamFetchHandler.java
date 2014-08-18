@@ -83,7 +83,7 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Handler for the HTTP API {@code /streams/[stream_name]/events?start=[start_ts]&end=[end_ts]&count=[event_count]}
+   * Handler for the HTTP API {@code /streams/[stream_name]/events?start=[start_ts]&end=[end_ts]&limit=[event_limit]}
    *
    * Response with
    *   404 if stream not exists.
