@@ -17,12 +17,12 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.router.handlers.HttpRequestHandler;
 import co.cask.cdap.gateway.router.handlers.SecurityAuthenticationHttpHandler;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.auth.TokenValidator;
-import co.cask.cdap.conf.SConfiguration;
 import com.continuuity.security.tools.SSLHandlerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -107,13 +107,13 @@ public class NettyRouter extends AbstractIdleService {
                      AccessTokenTransformer accessTokenTransformer,
                      DiscoveryServiceClient discoveryServiceClient) {
     this(cConf, hostname, serviceLookup, tokenValidator, accessTokenTransformer, discoveryServiceClient,
-         SConfiguration.create());
+         new Configuration());
   }
 
   NettyRouter(CConfiguration cConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
               RouterServiceLookup serviceLookup, TokenValidator tokenValidator,
               AccessTokenTransformer accessTokenTransformer,
-              DiscoveryServiceClient discoveryServiceClient, SConfiguration sslConfiguration) {
+              DiscoveryServiceClient discoveryServiceClient, Configuration sslConfiguration) {
 
     this.serverBossThreadPoolSize = cConf.getInt(Constants.Router.SERVER_BOSS_THREADS,
                                                  Constants.Router.DEFAULT_SERVER_BOSS_THREADS);
@@ -146,7 +146,8 @@ public class NettyRouter extends AbstractIdleService {
       try {
         keystore = new File(sslConfiguration.get(Constants.Security.ROUTER_SSL_KEYSTORE_PATH));
       } catch (Exception e) {
-        throw new RuntimeException("Cannot read keystore file : " + sslConfiguration.get(Constants.Security.ROUTER_SSL_KEYSTORE_PATH));
+        throw new RuntimeException("Cannot read keystore file : "
+                                     + sslConfiguration.get(Constants.Security.ROUTER_SSL_KEYSTORE_PATH));
       }
       this.sslHandlerFactory = new SSLHandlerFactory(keystore
         , sslConfiguration.get(Constants.Security.ROUTER_SSL_KEYSTORE_PASSWORD)

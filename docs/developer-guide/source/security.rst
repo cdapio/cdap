@@ -63,6 +63,7 @@ To configure SSL for the Router, add these properties to ``cdap-site.xml``:
 security.router.ssl.enabled                   true
 security.router.ssl.keystore.path             <path>
 security.router.ssl.keystore.password         <password>
+security.router.ssl.keystore.keypassword      <password>
 ==========================================  ==============
 
 Enabling Access Logging

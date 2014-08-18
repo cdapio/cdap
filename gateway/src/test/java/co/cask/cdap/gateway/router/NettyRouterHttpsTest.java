@@ -17,11 +17,11 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.conf.SConfiguration;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
@@ -121,11 +121,11 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       URL certUrl = getClass().getClassLoader().getResource("cert.jks");
       Assert.assertNotNull(certUrl);
 
-      SConfiguration sConfiguration = SConfiguration.create();
-      sConfiguration.set(Constants.Security.ROUTER_SSL_KEYPASSWORD, "secret");
-      sConfiguration.set(Constants.Security.ROUTER_SSL_KEYSTORE_PASSWORD, "secret");
-      sConfiguration.set(Constants.Security.ROUTER_SSL_KEYSTORE_TYPE, "jks");
-      sConfiguration.set(Constants.Security.ROUTER_SSL_KEYSTORE_PATH, certUrl.getPath());
+      Configuration configuration = new Configuration();
+      configuration.set(Constants.Security.ROUTER_SSL_KEYPASSWORD, "secret");
+      configuration.set(Constants.Security.ROUTER_SSL_KEYSTORE_PASSWORD, "secret");
+      configuration.set(Constants.Security.ROUTER_SSL_KEYSTORE_TYPE, "jks");
+      configuration.set(Constants.Security.ROUTER_SSL_KEYSTORE_PATH, certUrl.getPath());
 
       Injector injector = Guice.createInjector(new ConfigModule(), new IOModule(),
                                                new SecurityModules().getInMemoryModules(),
@@ -138,7 +138,7 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
         new NettyRouter(cConf, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
                                                 new RouterPathLookup(new NoAuthenticator())),
-                        new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient, sConfiguration);
+                        new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient, configuration);
       router.startAndWait();
 
       for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {

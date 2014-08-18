@@ -17,8 +17,8 @@
 package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.conf.SConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -152,7 +152,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
         SslContextFactory sslContextFactory = new SslContextFactory();
-        SConfiguration sslConfiguration = SConfiguration.create();
+        Configuration sslConfiguration = new Configuration();
         String keyStorePath = sslConfiguration.get(Constants.Security.SSL_KEYSTORE_PATH);
         String keyStorePassword = sslConfiguration.get(Constants.Security.SSL_KEYSTORE_PASSWORD);
         String keyStoreType = sslConfiguration.get(Constants.Security.SSL_KEYSTORE_TYPE);
