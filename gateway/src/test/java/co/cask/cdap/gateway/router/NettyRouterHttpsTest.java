@@ -121,12 +121,6 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       URL certUrl = getClass().getClassLoader().getResource("cert.jks");
       Assert.assertNotNull(certUrl);
 
-      Configuration configuration = new Configuration();
-      configuration.set(Constants.Security.ROUTER_SSL_KEYPASSWORD, "secret");
-      configuration.set(Constants.Security.ROUTER_SSL_KEYSTORE_PASSWORD, "secret");
-      configuration.set(Constants.Security.ROUTER_SSL_KEYSTORE_TYPE, "jks");
-      configuration.set(Constants.Security.ROUTER_SSL_KEYSTORE_PATH, certUrl.getPath());
-
       Injector injector = Guice.createInjector(new ConfigModule(), new IOModule(),
                                                new SecurityModules().getInMemoryModules(),
                                                new DiscoveryRuntimeModule().getInMemoryModules());
@@ -134,11 +128,17 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
       cConf.set(Constants.Router.ADDRESS, hostname);
       cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
+
+      cConf.set(Constants.Security.ROUTER_SSL_KEYPASSWORD, "secret");
+      cConf.set(Constants.Security.ROUTER_SSL_KEYSTORE_PASSWORD, "secret");
+      cConf.set(Constants.Security.ROUTER_SSL_KEYSTORE_TYPE, "jks");
+      cConf.set(Constants.Security.ROUTER_SSL_KEYSTORE_PATH, certUrl.getPath());
+
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
                                                 new RouterPathLookup(new NoAuthenticator())),
-                        new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient, configuration);
+                        new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
       router.startAndWait();
 
       for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {

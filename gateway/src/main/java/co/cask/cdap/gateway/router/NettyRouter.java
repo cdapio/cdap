@@ -106,14 +106,6 @@ public class NettyRouter extends AbstractIdleService {
                      RouterServiceLookup serviceLookup, TokenValidator tokenValidator,
                      AccessTokenTransformer accessTokenTransformer,
                      DiscoveryServiceClient discoveryServiceClient) {
-    this(cConf, hostname, serviceLookup, tokenValidator, accessTokenTransformer, discoveryServiceClient,
-         new Configuration());
-  }
-
-  NettyRouter(CConfiguration cConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
-              RouterServiceLookup serviceLookup, TokenValidator tokenValidator,
-              AccessTokenTransformer accessTokenTransformer,
-              DiscoveryServiceClient discoveryServiceClient, Configuration sslConfiguration) {
 
     this.serverBossThreadPoolSize = cConf.getInt(Constants.Router.SERVER_BOSS_THREADS,
                                                  Constants.Router.DEFAULT_SERVER_BOSS_THREADS);
@@ -144,14 +136,14 @@ public class NettyRouter extends AbstractIdleService {
     if (isSSLEnabled()) {
       File keystore;
       try {
-        keystore = new File(sslConfiguration.get(Constants.Security.ROUTER_SSL_KEYSTORE_PATH));
+        keystore = new File(cConf.get(Constants.Security.ROUTER_SSL_KEYSTORE_PATH));
       } catch (Exception e) {
         throw new RuntimeException("Cannot read keystore file : "
-                                     + sslConfiguration.get(Constants.Security.ROUTER_SSL_KEYSTORE_PATH));
+                                     + cConf.get(Constants.Security.ROUTER_SSL_KEYSTORE_PATH));
       }
-      this.sslHandlerFactory = new SSLHandlerFactory(keystore
-        , sslConfiguration.get(Constants.Security.ROUTER_SSL_KEYSTORE_PASSWORD)
-        , sslConfiguration.get(Constants.Security.ROUTER_SSL_KEYPASSWORD));
+      this.sslHandlerFactory = new SSLHandlerFactory(
+        keystore, cConf.get(Constants.Security.ROUTER_SSL_KEYSTORE_PASSWORD),
+        cConf.get(Constants.Security.ROUTER_SSL_KEYPASSWORD));
     } else {
       this.sslHandlerFactory = null;
     }
@@ -289,17 +281,15 @@ public class NettyRouter extends AbstractIdleService {
         new NioClientBossPool(clientBossExecutor, clientBossThreadPoolSize),
         new ShareableWorkerPool<NioWorker>(new NioWorkerPool(clientWorkerExecutor, clientWorkerThreadPoolSize))));
 
-    clientBootstrap.setPipelineFactory(
-      new ChannelPipelineFactory() {
-        @Override
-        public ChannelPipeline getPipeline() throws Exception {
-          ChannelPipeline pipeline = Channels.pipeline();
-          pipeline.addLast("tracker", connectionTracker);
-          pipeline.addLast("request-encoder", new HttpRequestEncoder());
-          return pipeline;
-        }
+    clientBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+      @Override
+      public ChannelPipeline getPipeline() throws Exception {
+        ChannelPipeline pipeline = Channels.pipeline();
+        pipeline.addLast("tracker", connectionTracker);
+        pipeline.addLast("request-encoder", new HttpRequestEncoder());
+        return pipeline;
       }
-    );
+    });
 
     clientBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
   }
