@@ -71,12 +71,12 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   @Override
-  public List<? extends HttpServiceHandler> getHandlers() {
+  public List<HttpServiceHandler> getHandlers() {
     return serviceHandlers;
   }
 
   @Override
-  public List<? extends ServiceWorker> getWorkers() {
+  public List<ServiceWorker> getWorkers() {
     return workers;
   }
 

@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime.service;
 
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.service.GuavaServiceTwillRunnable;
-import co.cask.cdap.api.service.TwillAppSpecification;
+import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.metrics.ServiceRunnableMetrics;
 import co.cask.cdap.app.program.Program;
@@ -109,7 +109,7 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       String processorName = program.getName();
       Preconditions.checkNotNull(processorName, "Missing processor name.");
 
-      TwillAppSpecification serviceSpec = appSpec.getServices().get(processorName);
+      ServiceSpecification serviceSpec = appSpec.getServices().get(processorName);
       RuntimeSpecification runnableSpec = serviceSpec.getRunnables().get(runnableName);
       Preconditions.checkNotNull(runnableSpec, "RuntimeSpecification missing for Runnable \"%s\"", runnableName);
 

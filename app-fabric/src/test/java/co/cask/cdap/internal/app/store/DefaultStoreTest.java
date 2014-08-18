@@ -41,7 +41,7 @@ import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.service.TwillAppSpecification;
+import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.program.Program;
@@ -358,7 +358,7 @@ public class DefaultStoreTest {
     Assert.assertEquals(10, count);
 
     ApplicationSpecification newSpec = store.getApplication(appId);
-    Map<String, TwillAppSpecification> services = newSpec.getServices();
+    Map<String, ServiceSpecification> services = newSpec.getServices();
     Assert.assertEquals(1, services.size());
 
     Map<String, RuntimeSpecification> runtimeSpecs = services.get("NoOpService").getRunnables();

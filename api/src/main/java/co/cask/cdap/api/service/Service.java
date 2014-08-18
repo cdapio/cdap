@@ -27,5 +27,5 @@ public interface Service {
    * Configure the Service by adding {@link HttpServiceHandler}s to service requests and {@link ServiceWorker}s.
    * @param configurer
    */
-  ServiceSpecification configure(ServiceConfigurer configurer);
+  void configure(ServiceConfigurer configurer);
 }

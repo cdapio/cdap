@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
-import co.cask.cdap.api.service.TwillAppSpecification;
+import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
@@ -73,7 +73,7 @@ public class InMemoryServiceRunner implements ProgramRunner {
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == ProgramType.SERVICE, "Only SERVICE process type is supported.");
 
-    TwillAppSpecification serviceSpec = appSpec.getServices().get(program.getName());
+    ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
     Preconditions.checkNotNull(serviceSpec, "Missing ServiceSpecification for %s", program.getName());
 
     //RuIid for the service
@@ -84,7 +84,7 @@ public class InMemoryServiceRunner implements ProgramRunner {
   }
 
   private Table<String, Integer, ProgramController> createRunnables(Program program, RunId runId,
-                                                                    TwillAppSpecification serviceSpec) {
+                                                                    ServiceSpecification serviceSpec) {
     Table<String, Integer, ProgramController> runnables = HashBasedTable.create();
 
     try {
@@ -136,10 +136,10 @@ public class InMemoryServiceRunner implements ProgramRunner {
 
   class ServiceProgramController extends AbstractProgramController {
     private final Table<String, Integer, ProgramController> runnables;
-    private final TwillAppSpecification serviceSpec;
+    private final ServiceSpecification serviceSpec;
 
     ServiceProgramController(Table<String, Integer, ProgramController> runnables,
-                             RunId runId, Program program, TwillAppSpecification serviceSpec) {
+                             RunId runId, Program program, ServiceSpecification serviceSpec) {
       super(program.getName(), runId);
       this.runnables = runnables;
       this.serviceSpec = serviceSpec;

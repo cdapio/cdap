@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.service.TwillAppSpecification;
+import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -59,7 +59,7 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == ProgramType.SERVICE, "Only SERVICE process type is supported.");
 
-    final TwillAppSpecification serviceSpec = appSpec.getServices().get(program.getName());
+    final ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
     Preconditions.checkNotNull(serviceSpec, "Missing ServiceSpecification for %s", program.getName());
 
     // Launch service runnables program runners

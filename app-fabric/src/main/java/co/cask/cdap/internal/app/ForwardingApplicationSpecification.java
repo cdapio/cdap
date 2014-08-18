@@ -20,7 +20,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
-import co.cask.cdap.api.service.TwillAppSpecification;
+import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -90,7 +90,7 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   }
 
   @Override
-  public Map<String, TwillAppSpecification> getServices() {
+  public Map<String, ServiceSpecification> getServices() {
     return delegate.getServices();
   }
 }

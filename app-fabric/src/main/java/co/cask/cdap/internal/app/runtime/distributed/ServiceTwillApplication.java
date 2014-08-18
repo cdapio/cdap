@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.service.TwillAppSpecification;
+import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
@@ -35,13 +35,13 @@ import java.util.Map;
  */
 public class ServiceTwillApplication implements TwillApplication {
 
-  private final TwillAppSpecification spec;
+  private final ServiceSpecification spec;
   private final Program program;
   private final File hConfig;
   private final File cConfig;
   private final EventHandler eventHandler;
 
-  public ServiceTwillApplication(Program program, TwillAppSpecification spec, File hConfig, File cConfig,
+  public ServiceTwillApplication(Program program, ServiceSpecification spec, File hConfig, File cConfig,
                                  EventHandler eventHandler) {
     this.program = program;
     this.spec = spec;

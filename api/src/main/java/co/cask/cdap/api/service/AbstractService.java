@@ -16,8 +16,6 @@
 
 package co.cask.cdap.api.service;
 
-import co.cask.cdap.internal.service.DefaultServiceSpecification;
-
 /**
  * An abstract implementation of {@link Service}. Users may extend this to write a {@link Service}.
  *
@@ -27,13 +25,9 @@ public abstract class AbstractService implements Service {
   protected ServiceConfigurer configurer;
 
   @Override
-  public final ServiceSpecification configure(ServiceConfigurer serviceConfigurer) {
+  public final void configure(ServiceConfigurer serviceConfigurer) {
     this.configurer = serviceConfigurer;
     configure();
-
-    return new DefaultServiceSpecification(getClass().getSimpleName(), configurer.getName(),
-                                           configurer.getDescription(), configurer.getProperties(),
-                                           configurer.getWorkers(), configurer.getHandlers());
   }
 
   /**

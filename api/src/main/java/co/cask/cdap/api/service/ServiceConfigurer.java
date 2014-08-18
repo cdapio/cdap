@@ -60,13 +60,13 @@ public interface ServiceConfigurer {
    * Get the primary handler used to service requests.
    * @return the handler that serves requests.
    */
-  List<? extends HttpServiceHandler> getHandlers();
+  List<HttpServiceHandler> getHandlers();
 
   /**
    * Get a list of workers for the Service.
    * @return a list of workers for the Service.
    */
-  List<? extends ServiceWorker> getWorkers();
+  List<ServiceWorker> getWorkers();
 
   /**
    * Get the name of the Service.

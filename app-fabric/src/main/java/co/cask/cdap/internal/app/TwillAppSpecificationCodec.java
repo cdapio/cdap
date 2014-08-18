@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.service.TwillAppSpecification;
-import co.cask.cdap.internal.service.DefaultTwillAppSpecification;
+import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.internal.service.DefaultServiceSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -29,9 +29,9 @@ import org.apache.twill.internal.json.TwillSpecificationAdapter;
 import java.lang.reflect.Type;
 
 /**
- * Codec to serialize and serialize {@link TwillAppSpecification}
+ * Codec to serialize and serialize {@link ServiceSpecification}
  */
-public class TwillAppSpecificationCodec extends AbstractSpecificationCodec<TwillAppSpecification>  {
+public class TwillAppSpecificationCodec extends AbstractSpecificationCodec<ServiceSpecification>  {
 
   private final TwillSpecificationAdapter adapter;
 
@@ -40,16 +40,16 @@ public class TwillAppSpecificationCodec extends AbstractSpecificationCodec<Twill
   }
 
   @Override
-  public TwillAppSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+  public ServiceSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
     throws JsonParseException {
     JsonObject jsonObj = (JsonObject) json;
     String className = jsonObj.get("classname").getAsString();
     TwillSpecification spec = adapter.fromJson(jsonObj.get("spec").getAsString());
-    return new DefaultTwillAppSpecification(className, spec);
+    return new DefaultServiceSpecification(className, spec);
   }
 
   @Override
-  public JsonElement serialize(TwillAppSpecification spec, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(ServiceSpecification spec, Type typeOfSrc, JsonSerializationContext context) {
     JsonObject object = new JsonObject();
     object.addProperty("spec", adapter.toJson(spec));
     object.addProperty("classname", spec.getClassName());

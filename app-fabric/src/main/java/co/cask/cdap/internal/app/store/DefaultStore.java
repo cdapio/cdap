@@ -26,7 +26,7 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
-import co.cask.cdap.api.service.TwillAppSpecification;
+import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
@@ -49,7 +49,7 @@ import co.cask.cdap.internal.app.ForwardingRuntimeSpecification;
 import co.cask.cdap.internal.app.ForwardingTwillSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
-import co.cask.cdap.internal.service.DefaultTwillAppSpecification;
+import co.cask.cdap.internal.service.DefaultServiceSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -380,7 +380,7 @@ public class DefaultStore implements Store {
       @Override
       public Integer apply(AppMds mds) throws Exception {
         ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
-        TwillAppSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
+        ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
         RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnable);
         return runtimeSpec.getResourceSpecification().getInstances();
       }
@@ -396,7 +396,7 @@ public class DefaultStore implements Store {
       @Override
       public Void apply(AppMds mds) throws Exception {
         ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
-        TwillAppSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
+        ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
 
         RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnable);
         if (runtimeSpec == null) {
@@ -694,33 +694,33 @@ public class DefaultStore implements Store {
 
   private static ApplicationSpecification replaceServiceSpec(final ApplicationSpecification appSpec,
                                                       final String serviceName,
-                                                      final TwillAppSpecification twillAppSpecification) {
-    return new ApplicationSpecificationWithChangedServices(appSpec, serviceName, twillAppSpecification);
+                                                      final ServiceSpecification serviceSpecification) {
+    return new ApplicationSpecificationWithChangedServices(appSpec, serviceName, serviceSpecification);
   }
 
   private static final class ApplicationSpecificationWithChangedServices extends ForwardingApplicationSpecification {
     private final String serviceName;
-    private final TwillAppSpecification twillAppSpecification;
+    private final ServiceSpecification serviceSpecification;
 
     private ApplicationSpecificationWithChangedServices(ApplicationSpecification delegate,
                                                         String serviceName,
-                                                        TwillAppSpecification twillAppSpecification) {
+                                                        ServiceSpecification serviceSpecification) {
       super(delegate);
       this.serviceName = serviceName;
-      this.twillAppSpecification = twillAppSpecification;
+      this.serviceSpecification = serviceSpecification;
     }
 
     @Override
-    public Map<String, TwillAppSpecification> getServices() {
-      Map<String, TwillAppSpecification> services = Maps.newHashMap(super.getServices());
-      services.put(serviceName, twillAppSpecification);
+    public Map<String, ServiceSpecification> getServices() {
+      Map<String, ServiceSpecification> services = Maps.newHashMap(super.getServices());
+      services.put(serviceName, serviceSpecification);
       return services;
     }
   }
 
-  private static TwillAppSpecification replaceRuntimeSpec(final String runnable, final TwillAppSpecification spec,
+  private static ServiceSpecification replaceRuntimeSpec(final String runnable, final ServiceSpecification spec,
                                                   final RuntimeSpecification runtimeSpec) {
-    return new DefaultTwillAppSpecification(spec.getName(),
+    return new DefaultServiceSpecification(spec.getName(),
                                            new TwillSpecificationWithChangedRunnable(spec, runnable, runtimeSpec));
   }
 
@@ -794,8 +794,8 @@ public class DefaultStore implements Store {
     return flowSpec;
   }
 
-  private static TwillAppSpecification getServiceSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
-    TwillAppSpecification spec = appSpec.getServices().get(id.getId());
+  private static ServiceSpecification getServiceSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
+    ServiceSpecification spec = appSpec.getServices().get(id.getId());
     if (spec == null) {
       throw new NoSuchElementException("no such service @ account id: " + id.getAccountId() +
                                            ", app id: " + id.getApplication() +
