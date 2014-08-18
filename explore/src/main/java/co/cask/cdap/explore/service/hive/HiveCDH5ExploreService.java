@@ -54,11 +54,6 @@ public class HiveCDH5ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  protected IMetaStoreClient getMetaStoreClient() throws ExploreException {
-    return null;
-  }
-
-  @Override
   protected QueryStatus fetchStatus(OperationHandle handle)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     OperationStatus operationStatus = getCliService().getOperationStatus(handle);

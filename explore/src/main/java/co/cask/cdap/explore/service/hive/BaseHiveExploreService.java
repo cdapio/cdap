@@ -33,9 +33,9 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.proto.TableInfo;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionSystemClient;
-import co.cask.cdap.proto.TableInfo;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -51,7 +51,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.UnknownDBException;
 import org.apache.hadoop.hive.metastore.api.UnknownTableException;
 import org.apache.hive.service.cli.CLIService;
@@ -117,7 +116,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     HandleNotFoundException;
   protected abstract OperationHandle doExecute(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException;
-  protected abstract IMetaStoreClient getMetaStoreClient() throws ExploreException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf, File previewsDir) {
@@ -159,6 +157,16 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   protected CLIService getCliService() {
     return cliService;
+  }
+
+  protected IMetaStoreClient getMetaStoreClient() throws ExploreException {
+    try {
+      Field f = getCliService().getClass().getDeclaredField("metastoreClient");
+      f.setAccessible(true);
+      return (IMetaStoreClient) f.get(getCliService());
+    } catch (Throwable e) {
+      throw new ExploreException(e);
+    }
   }
 
   @Override

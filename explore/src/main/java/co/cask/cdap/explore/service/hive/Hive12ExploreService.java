@@ -60,11 +60,6 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  protected IMetaStoreClient getMetaStoreClient() throws ExploreException {
-    return null;
-  }
-
-  @Override
   protected QueryStatus fetchStatus(OperationHandle operationHandle)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     try {

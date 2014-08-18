@@ -60,17 +60,6 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  protected IMetaStoreClient getMetaStoreClient() throws ExploreException {
-    try {
-      Field f = getCliService().getClass().getDeclaredField("metastoreClient");
-      f.setAccessible(true);
-      return (IMetaStoreClient) f.get(getCliService());
-    } catch (Throwable e) {
-      throw new ExploreException(e);
-    }
-  }
-
-  @Override
   protected QueryStatus fetchStatus(OperationHandle operationHandle)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     OperationStatus operationStatus = getCliService().getOperationStatus(operationHandle);
