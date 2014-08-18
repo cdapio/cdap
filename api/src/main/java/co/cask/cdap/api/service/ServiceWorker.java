@@ -31,7 +31,7 @@ public interface ServiceWorker extends Runnable, ProgramLifecycle<ServiceWorkerC
 
   /**
    * Request to stop the running worker.
-   * This method will be invoked from a different thread than the one calling the {@link #run()} ) method
+   * This method will be invoked from a different thread than the one calling the {@link #run()} ) method.
    */
   void stop();
 }
