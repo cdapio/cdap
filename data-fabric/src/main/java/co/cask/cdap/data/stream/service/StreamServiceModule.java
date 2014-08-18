@@ -33,6 +33,7 @@ public class StreamServiceModule extends PrivateModule {
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                       Names.named(Constants.Stream.STREAM_HANDLER));
     handlerBinder.addBinding().to(StreamHandler.class);
+    handlerBinder.addBinding().to(StreamFetchHandler.class);
     handlerBinder.addBinding().to(PingHandler.class);
 
     bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
