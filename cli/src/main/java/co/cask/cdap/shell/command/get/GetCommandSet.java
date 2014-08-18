@@ -30,8 +30,9 @@ public class GetCommandSet extends CommandSet {
                        GetInstancesCommandSet getInstancesCommandSet,
                        GetLiveInfoCommandSet getLiveInfoCommandSet,
                        GetLogsCommandSet getLogsCommandSet,
-                       GetStatusCommandSet getStatusCommandSet) {
+                       GetStatusCommandSet getStatusCommandSet,
+                       GetStreamEventsCommand getStreamEventsCommand) {
     super("get", getHistoryCommandSet, getInstancesCommandSet, getLiveInfoCommandSet,
-          getLogsCommandSet, getStatusCommandSet);
+          getLogsCommandSet, getStatusCommandSet, getStreamEventsCommand);
   }
 }
