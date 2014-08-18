@@ -703,8 +703,7 @@ public class DefaultStore implements Store {
     private final ServiceSpecification serviceSpecification;
 
     private ApplicationSpecificationWithChangedServices(ApplicationSpecification delegate,
-                                                        String serviceName,
-                                                        ServiceSpecification serviceSpecification) {
+                                                        String serviceName, ServiceSpecification serviceSpecification) {
       super(delegate);
       this.serviceName = serviceName;
       this.serviceSpecification = serviceSpecification;

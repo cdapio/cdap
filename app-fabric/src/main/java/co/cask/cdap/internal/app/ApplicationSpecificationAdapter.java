@@ -86,7 +86,7 @@ public final class ApplicationSpecificationAdapter {
       .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
       .registerTypeAdapter(Schedule.class, new ScheduleCodec())
       .registerTypeAdapter(ResourceSpecification.class, new ResourceSpecificationCodec())
-      .registerTypeAdapter(ServiceSpecification.class, new TwillAppSpecificationCodec())
+      .registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec())
       .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory());
   }
 

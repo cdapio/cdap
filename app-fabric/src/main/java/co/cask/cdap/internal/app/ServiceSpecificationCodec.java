@@ -31,11 +31,11 @@ import java.lang.reflect.Type;
 /**
  * Codec to serialize and serialize {@link ServiceSpecification}
  */
-public class TwillAppSpecificationCodec extends AbstractSpecificationCodec<ServiceSpecification>  {
+public class ServiceSpecificationCodec extends AbstractSpecificationCodec<ServiceSpecification>  {
 
   private final TwillSpecificationAdapter adapter;
 
-  public TwillAppSpecificationCodec() {
+  public ServiceSpecificationCodec() {
     adapter = TwillSpecificationAdapter.create();
   }
 
