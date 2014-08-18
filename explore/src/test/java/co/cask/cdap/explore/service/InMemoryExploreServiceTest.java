@@ -23,7 +23,11 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -56,6 +60,8 @@ import java.util.concurrent.TimeUnit;
 public class InMemoryExploreServiceTest {
   private static TransactionManager transactionManager;
   private static ExploreService exploreService;
+  private static DatasetOpExecutor dsOpService;
+  private static DatasetService datasetService;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -71,12 +77,20 @@ public class InMemoryExploreServiceTest {
         new DiscoveryRuntimeModule().getInMemoryModules(),
         new LocationRuntimeModule().getInMemoryModules(),
         new DataFabricModules().getInMemoryModules(),
-        new DataSetsModules().getInMemoryModule(),
+        new DataSetsModules().getLocalModule(),
+        new DataSetServiceModules().getInMemoryModule(),
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new AuthModule(),
-        new ExploreRuntimeModule().getInMemoryModules());
+        new ExploreRuntimeModule().getInMemoryModules(),
+        new ExploreClientModule());
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
+
+    dsOpService = injector.getInstance(DatasetOpExecutor.class);
+    dsOpService.startAndWait();
+
+    datasetService = injector.getInstance(DatasetService.class);
+    datasetService.startAndWait();
 
     exploreService = injector.getInstance(ExploreService.class);
     exploreService.startAndWait();
@@ -85,6 +99,8 @@ public class InMemoryExploreServiceTest {
   @AfterClass
   public static void stop() throws Exception {
     exploreService.stop();
+    datasetService.stopAndWait();
+    dsOpService.stopAndWait();
     transactionManager.stopAndWait();
   }
 

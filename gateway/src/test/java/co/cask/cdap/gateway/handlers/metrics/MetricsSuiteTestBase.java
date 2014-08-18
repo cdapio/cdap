@@ -27,8 +27,12 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.OperationException;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.MockMetricsCollectionService;
 import co.cask.cdap.gateway.MockedPassportClient;
 import co.cask.cdap.gateway.auth.AuthModule;
@@ -102,6 +106,10 @@ public abstract class MetricsSuiteTestBase {
   private static CConfiguration conf;
   private static TemporaryFolder tmpFolder;
 
+  private static TransactionManager transactionManager;
+  private static DatasetOpExecutor dsOpService;
+  private static DatasetService datasetService;
+
   private static Injector injector;
 
   @BeforeClass
@@ -155,7 +163,9 @@ public abstract class MetricsSuiteTestBase {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new DataSetsModules().getInMemoryModule()
+      new DataSetsModules().getLocalModule(),
+      new DataSetServiceModules().getInMemoryModule(),
+      new ExploreClientModule()
     ).with(new AbstractModule() {
       @Override
       protected void configure() {
@@ -219,8 +229,16 @@ public abstract class MetricsSuiteTestBase {
            }
     ));
 
+    transactionManager = injector.getInstance(TransactionManager.class);
+    transactionManager.startAndWait();
+
+    dsOpService = injector.getInstance(DatasetOpExecutor.class);
+    dsOpService.startAndWait();
+
+    datasetService = injector.getInstance(DatasetService.class);
+    datasetService.startAndWait();
+
     metrics = injector.getInstance(MetricsQueryService.class);
-    injector.getInstance(TransactionManager.class).startAndWait();
     metrics.startAndWait();
 
     // initialize the dataset instantiator
@@ -235,6 +253,9 @@ public abstract class MetricsSuiteTestBase {
   }
 
   public static void stopMetricsService(CConfiguration conf) {
+    datasetService.stopAndWait();
+    dsOpService.stopAndWait();
+    transactionManager.stopAndWait();
     metrics.stopAndWait();
     conf.clear();
   }

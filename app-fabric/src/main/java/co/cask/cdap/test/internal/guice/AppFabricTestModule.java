@@ -26,6 +26,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
@@ -69,7 +70,8 @@ public final class AppFabricTestModule extends AbstractModule {
   @Override
   protected void configure() {
     install(new DataFabricModules().getInMemoryModules());
-    install(new DataSetsModules().getInMemoryModule());
+    install(new DataSetsModules().getLocalModule());
+    install(new DataSetServiceModules().getInMemoryModule());
     install(new ConfigModule(cConf, hConf));
     install(new IOModule());
     install(new AuthModule());

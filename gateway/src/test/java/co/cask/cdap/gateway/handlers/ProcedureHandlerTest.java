@@ -325,6 +325,7 @@ public class ProcedureHandlerTest extends GatewayTestBase {
     response =
       GatewayFastTestsSuite.doPost("/v2/apps/ProcedureTestApp/procedures/TestProcedure/stop", null);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    waitState("procedures", "ProcedureTestApp", "TestProcedure", "STOPPED");
 
     request = "/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" + getQueryParams(content);
     response =

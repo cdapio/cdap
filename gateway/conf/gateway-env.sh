@@ -19,5 +19,5 @@
 # Main class to be invoked.
 MAIN_CLASS=co.cask.cdap.gateway.runtime.Main
 
-export JAVA_HEAPMAX=-Xmx512m
+export JAVA_HEAPMAX=${GATEWAY_JAVA_HEAPMAX:--Xmx512m}
 

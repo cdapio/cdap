@@ -16,13 +16,9 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import co.cask.cdap.gateway.apps.HighPassFilterApp;
-import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -36,8 +32,6 @@ import java.util.concurrent.TimeUnit;
  * Tests the runtime args - setting it through runtimearg API and Program start API
  */
 public class RuntimeArgumentTest extends GatewayTestBase {
-
-  private static final Gson GSON = new Gson();
 
   @Test
   public void testFlowRuntimeArgs() throws Exception {
@@ -60,8 +54,7 @@ public class RuntimeArgumentTest extends GatewayTestBase {
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
     // Check the procedure status. Make sure it is running before querying it
-    waitState(ProgramType.PROCEDURE, Id.Program.from(
-      Constants.DEVELOPER_ACCOUNT_ID, "HighPassFilterApp", "Count"), "RUNNING");
+    waitState("procedures", "HighPassFilterApp", "Count", "RUNNING");
 
     // Check the count. Gives it couple trials as it takes time for flow to process and write to the table
     checkCount("1");
@@ -76,8 +69,7 @@ public class RuntimeArgumentTest extends GatewayTestBase {
     response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/flows/FilterFlow/stop", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
-    waitState(ProgramType.FLOW, Id.Program.from(
-      Constants.DEVELOPER_ACCOUNT_ID, "HighPassFilterApp", "FilterFlow"), "STOPPED");
+    waitState("flows", "HighPassFilterApp", "FilterFlow", "STOPPED");
 
     response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/flows/FilterFlow/start", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
@@ -95,8 +87,7 @@ public class RuntimeArgumentTest extends GatewayTestBase {
     response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/flows/FilterFlow/stop", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
-    waitState(ProgramType.FLOW, Id.Program.from(
-      Constants.DEVELOPER_ACCOUNT_ID, "HighPassFilterApp", "FilterFlow"), "STOPPED");
+    waitState("flows", "HighPassFilterApp", "FilterFlow", "STOPPED");
 
     json.addProperty("threshold", "100");
     response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/flows/FilterFlow/start", json.toString());
@@ -117,10 +108,8 @@ public class RuntimeArgumentTest extends GatewayTestBase {
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
     // Wait for program states. Make sure they are stopped before deletion
-    waitState(ProgramType.FLOW, Id.Program.from(
-      Constants.DEVELOPER_ACCOUNT_ID, "HighPassFilterApp", "FilterFlow"), "STOPPED");
-    waitState(ProgramType.PROCEDURE, Id.Program.from(
-      Constants.DEVELOPER_ACCOUNT_ID, "HighPassFilterApp", "Count"), "STOPPED");
+    waitState("flows", "HighPassFilterApp", "FilterFlow", "STOPPED");
+    waitState("procedures", "HighPassFilterApp", "Count", "STOPPED");
 
     response = GatewayFastTestsSuite.doDelete("/v2/apps/HighPassFilterApp");
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
@@ -136,21 +125,6 @@ public class RuntimeArgumentTest extends GatewayTestBase {
         if (expected.equals(count)) {
           break;
         }
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertTrue(trials < 5);
-  }
-
-  private void waitState(ProgramType type, Id.Program programId, String state) throws Exception {
-    int trials = 0;
-    while (trials++ < 5) {
-      HttpResponse response = GatewayFastTestsSuite.doGet(String.format("/v2/apps/%s/%ss/%s/status",
-                                                                        programId.getApplicationId(),
-                                                                        type.name().toLowerCase(), programId.getId()));
-      JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
-      if (status != null && status.has("status") && state.equals(status.get("status").getAsString())) {
-        break;
       }
       TimeUnit.SECONDS.sleep(1);
     }

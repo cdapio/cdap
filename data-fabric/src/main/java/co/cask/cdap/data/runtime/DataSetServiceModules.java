@@ -66,6 +66,44 @@ public class DataSetServiceModules {
     INMEMORY_DATASET_MODULES.put("core", new CoreDatasetsModule());
   }
 
+  public Module getInMemoryModule() {
+    return new PrivateModule() {
+      @Override
+      protected void configure() {
+        // NOTE: order is important due to dependencies between modules
+        Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
+        defaultModules.put("orderedTable-memory", new InMemoryOrderedTableModule());
+        defaultModules.put("metricsTable-memory", new InMemoryMetricsTableModule());
+        defaultModules.put("core", new CoreDatasetsModule());
+
+        bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
+          .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
+
+        install(new FactoryModuleBuilder()
+                  .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                  .build(DatasetDefinitionRegistryFactory.class));
+        // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
+        //       as long as the data is durably persisted
+        bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
+        bind(MDSDatasetsRegistry.class).in(Singleton.class);
+        bind(DatasetService.class);
+        expose(DatasetService.class);
+
+        Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
+        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
+        handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
+        handlerBinder.addBinding().to(PingHandler.class);
+
+        bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
+        expose(DatasetOpExecutorService.class);
+
+        bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
+        expose(DatasetOpExecutor.class);
+      }
+    };
+
+  }
+
   public Module getLocalModule() {
     return new PrivateModule() {
       @Override

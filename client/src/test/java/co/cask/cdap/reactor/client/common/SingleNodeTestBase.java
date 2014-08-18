@@ -53,7 +53,7 @@ public class SingleNodeTestBase {
         cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
         // Start singlenode without UI
-        singleNodeMain = SingleNodeMain.createSingleNodeMain(true, null, cConf, new Configuration());
+        singleNodeMain = SingleNodeMain.createSingleNodeMain(false, null, cConf, new Configuration());
         singleNodeMain.startUp();
       } catch (Throwable e) {
         LOG.error("Failed to start singlenode", e);
