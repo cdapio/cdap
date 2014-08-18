@@ -43,7 +43,7 @@ public class ServiceTwillApplication implements TwillApplication {
   @Override
   public TwillSpecification configure() {
     ServiceConfigurer configurer = new DefaultServiceConfigurer();
-    service.configure(new DefaultServiceConfigurer());
+    service.configure(configurer);
     List<? extends HttpServiceHandler> serviceHandlers = configurer.getHandlers();
     if (serviceHandlers.size() == 0) {
       throw new InvalidParameterException("No handlers provided. Add handlers using configurer.");
