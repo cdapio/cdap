@@ -16,18 +16,70 @@
 
 package co.cask.cdap.api.service;
 
+import co.cask.cdap.api.service.http.HttpServiceHandler;
+
+import java.util.List;
+
 /**
  * An abstract implementation of {@link Service}. Users may extend this to write a {@link Service}.
  *
  * The default no-op constructor must be implemented.
  */
 public abstract class AbstractService implements Service {
-  protected ServiceConfigurer configurer;
+  private ServiceConfigurer configurer;
 
   @Override
   public final void configure(ServiceConfigurer serviceConfigurer) {
     this.configurer = serviceConfigurer;
     configure();
+  }
+
+  /**
+   * Set the name for the Service.
+   * @param name of the service.
+   */
+  protected void setName(String name) {
+    configurer.setName(name);
+  }
+
+  /**
+   * Set the description of the Service.
+   * @param description of the service.
+   */
+  protected void setDescription(String description) {
+    configurer.setDescription(description);
+  }
+
+  /**
+   * Add handler to the Service.
+   * @param handler to serve requests with.
+   */
+  protected void addHandler(HttpServiceHandler handler) {
+    configurer.addHandler(handler);
+  }
+
+  /**
+   * Add a list of handlers to the Service.
+   * @param handlers to service requests with.
+   */
+  protected void addHandlers(List<HttpServiceHandler> handlers) {
+    configurer.addHandlers(handlers);
+  }
+
+  /**
+   * Add a worker to the Service.
+   * @param worker for the service.
+   */
+  protected void addWorker(ServiceWorker worker) {
+    configurer.addWorker(worker);
+  }
+
+  /**
+   * Add a list of workers to the Service.
+   * @param workers for the service.
+   */
+  protected void addWorkers(List<ServiceWorker> workers) {
+    configurer.addWorkers(workers);
   }
 
   /**

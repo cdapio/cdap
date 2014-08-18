@@ -45,10 +45,22 @@ public interface ServiceConfigurer {
   <T extends ServiceWorker> void addWorker(T worker);
 
   /**
-   * Add a request handler to the Service.
-   * @param serviceHandler to serve requests.
+   * Add a list of workers to the Service.
+   * @param worker
    */
-  <T extends HttpServiceHandler> void addHandler(T serviceHandler);
+  <T extends ServiceWorker> void addWorkers(List<T> worker);
+
+  /**
+   * Add a request handler to the Service.
+   * @param handler to serve requests.
+   */
+  <T extends HttpServiceHandler> void addHandler(T handler);
+
+  /**
+   * Add a a list of request handlers to the Service.
+   * @param handlers to serve requests.
+   */
+  <T extends HttpServiceHandler> void addHandlers(List<T> handlers);
 
   /**
    * Set the properties for the Service.

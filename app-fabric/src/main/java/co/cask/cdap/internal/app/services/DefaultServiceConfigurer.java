@@ -34,7 +34,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   private String name;
   private Map<String, String> properties;
   private List<ServiceWorker> workers;
-  private List<HttpServiceHandler> serviceHandlers;
+  private List<HttpServiceHandler> handlers;
 
   /**
    * Create an instance of {@link DefaultServiceConfigurer}
@@ -42,7 +42,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   public DefaultServiceConfigurer() {
     this.workers = Lists.newArrayList();
     this.properties = Maps.newHashMap();
-    this.serviceHandlers = Lists.newArrayList();
+    this.handlers = Lists.newArrayList();
   }
 
   @Override
@@ -61,8 +61,18 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   @Override
+  public <T extends ServiceWorker> void addWorkers(List<T> serviceWorkers) {
+    workers.addAll(serviceWorkers);
+  }
+
+  @Override
   public <T extends HttpServiceHandler> void addHandler(T serviceHandler) {
-    serviceHandlers.add(serviceHandler);
+    handlers.add(serviceHandler);
+  }
+
+  @Override
+  public <T extends HttpServiceHandler> void addHandlers(List<T> serviceHandlers) {
+    serviceHandlers.addAll(serviceHandlers);
   }
 
   @Override
@@ -72,7 +82,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
 
   @Override
   public List<HttpServiceHandler> getHandlers() {
-    return serviceHandlers;
+    return handlers;
   }
 
   @Override
