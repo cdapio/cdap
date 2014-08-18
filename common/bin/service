@@ -127,9 +127,10 @@ start() {
       echo "`date` Starting Java $APP service on `hostname`" >> $loglog
       echo "`ulimit -a`" >> $loglog 2>&1
 
-      nohup nice -n $NICENESS "$JAVA" -Dcdap.service=$APP -Dexplore.conf.files=$EXPLORE_CONF_FILES \
+      nohup nice -n $NICENESS "$JAVA" -Dcdap.service=$APP "$JAVA_HEAPMAX" \
+        -Dexplore.conf.files=$EXPLORE_CONF_FILES \
         -Dexplore.classpath=$EXPLORE_CLASSPATH "$OPTS" \
-        -cp $CLASSPATH "$JAVA_HEAPMAX" $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >>$loglog 2>&1 &
+        -cp $CLASSPATH $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >>$loglog 2>&1 &
       echo $! >$pid
 
     else
@@ -222,7 +223,7 @@ run() {
     set_hbase
 
     echo "Running class $classname"
-    "$JAVA" -Dhive.classpath=$HIVE_CLASSPATH "$OPTS" -cp $CLASSPATH "$JAVA_HEAPMAX" $classname $@
+    "$JAVA" "$JAVA_HEAPMAX" -Dhive.classpath=$HIVE_CLASSPATH "$OPTS" -cp $CLASSPATH $classname $@
 }
 
 case "$1" in

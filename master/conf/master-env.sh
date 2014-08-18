@@ -26,5 +26,5 @@ MAIN_CLASS_ARGS="start"
 # Assuming update-alternatives convention
 EXTRA_CLASSPATH="/etc/hbase/conf/"
 
-JAVA_HEAPMAX=-Xmx1024m
+JAVA_HEAPMAX=${MASTER_JAVA_HEAPMAX:--Xmx1024m}
 
