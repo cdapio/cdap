@@ -63,15 +63,46 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
     this.exploreService = exploreService;
   }
 
+  @GET
+  @Path("data/explore/tables")
+  public void getTables(HttpRequest request, HttpResponder responder) {
+    LOG.trace("Received get tables for current user");
+    try {
+      responder.sendJson(HttpResponseStatus.OK, exploreService.getTables(null));
+    } catch (ExploreException e) {
+      LOG.error("Got exception:", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  @GET
+  @Path("data/explore/tables/{table}/schema")
+  public void getTableSchema(HttpRequest request, HttpResponder responder, @PathParam("table") final String table) {
+    LOG.trace("Received get table schema for table {}", table);
+    try {
+      int dbSepIdx = table.indexOf('.');
+      String dbName = null;
+      String tableName = table;
+      if (dbSepIdx >= 0) {
+        dbName = table.substring(0, dbSepIdx);
+        tableName = table.substring(dbSepIdx + 1);
+      }
+      responder.sendJson(HttpResponseStatus.OK, exploreService.getTableSchema(dbName, tableName));
+    } catch (ExploreException e) {
+      LOG.error("Got exception:", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+
   @POST
   @Path("data/explore/jdbc/tables")
-  public void getTables(HttpRequest request, HttpResponder responder) {
+  public void getJDBCTables(HttpRequest request, HttpResponder responder) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
-        TablesArgs args = decodeArguments(request, TablesArgs.class,
-                                                            new TablesArgs(null, null, "%", null));
+        TablesArgs args = decodeArguments(request, TablesArgs.class, new TablesArgs(null, null, "%", null));
         LOG.trace("Received get tables with params: {}", args.toString());
         return exploreService.getTables(args.getCatalog(), args.getSchemaPattern(),
                                         args.getTableNamePattern(), args.getTableTypes());
@@ -81,13 +112,12 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("data/explore/jdbc/columns")
-  public void getColumns(HttpRequest request, HttpResponder responder) {
+  public void getJDBCColumns(HttpRequest request, HttpResponder responder) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
-        ColumnsArgs args = decodeArguments(request, ColumnsArgs.class,
-                                                             new ColumnsArgs(null, null, "%", "%"));
+        ColumnsArgs args = decodeArguments(request, ColumnsArgs.class, new ColumnsArgs(null, null, "%", "%"));
         LOG.trace("Received get columns with params: {}", args.toString());
         return exploreService.getColumns(args.getCatalog(), args.getSchemaPattern(),
                                          args.getTableNamePattern(), args.getColumnNamePattern());
@@ -97,7 +127,7 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("data/explore/jdbc/catalogs")
-  public void getCatalogs(HttpRequest request, HttpResponder responder) {
+  public void getJDBCCatalogs(HttpRequest request, HttpResponder responder) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -110,13 +140,12 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("data/explore/jdbc/schemas")
-  public void getSchemas(HttpRequest request, HttpResponder responder) {
+  public void getJDBCSchemas(HttpRequest request, HttpResponder responder) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
-        SchemasArgs args = decodeArguments(request, SchemasArgs.class,
-                                                            new SchemasArgs(null, null));
+        SchemasArgs args = decodeArguments(request, SchemasArgs.class, new SchemasArgs(null, null));
         LOG.trace("Received get schemas with params: {}", args.toString());
         return exploreService.getSchemas(args.getCatalog(), args.getSchemaPattern());
       }
@@ -125,13 +154,12 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("data/explore/jdbc/functions")
-  public void getFunctions(HttpRequest request, HttpResponder responder) {
+  public void getJDBCFunctions(HttpRequest request, HttpResponder responder) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
-        FunctionsArgs args = decodeArguments(request, FunctionsArgs.class,
-                                                               new FunctionsArgs(null, null, "%"));
+        FunctionsArgs args = decodeArguments(request, FunctionsArgs.class, new FunctionsArgs(null, null, "%"));
         LOG.trace("Received get functions with params: {}", args.toString());
         return exploreService.getFunctions(args.getCatalog(), args.getSchemaPattern(),
                                            args.getFunctionNamePattern());
@@ -141,7 +169,7 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("data/explore/jdbc/tableTypes")
-  public void getTableTypes(HttpRequest request, HttpResponder responder) {
+  public void getJDBCTableTypes(HttpRequest request, HttpResponder responder) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -154,7 +182,7 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("data/explore/jdbc/types")
-  public void getTypes(HttpRequest request, HttpResponder responder) {
+  public void getJDBCTypes(HttpRequest request, HttpResponder responder) {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -167,7 +195,7 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
 
   @GET
   @Path("data/explore/jdbc/info/{type}")
-  public void getInfo(HttpRequest request, HttpResponder responder, @PathParam("type") final String type) {
+  public void getJDBCInfo(HttpRequest request, HttpResponder responder, @PathParam("type") final String type) {
     genericEndpointExecution(request, responder, new EndpointCoreExecution<Void>() {
       @Override
       public Void execute(HttpRequest request, HttpResponder responder)

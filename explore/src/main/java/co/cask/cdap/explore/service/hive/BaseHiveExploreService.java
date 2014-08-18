@@ -35,10 +35,12 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionSystemClient;
+import co.cask.cdap.proto.TableInfo;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
@@ -47,6 +49,11 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.IMetaStoreClient;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.UnknownDBException;
+import org.apache.hadoop.hive.metastore.api.UnknownTableException;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
 import org.apache.hive.service.cli.FetchOrientation;
@@ -59,6 +66,7 @@ import org.apache.hive.service.cli.TableSchema;
 import org.apache.hive.service.cli.thrift.TColumnValue;
 import org.apache.hive.service.cli.thrift.TRow;
 import org.apache.hive.service.cli.thrift.TRowSet;
+import org.apache.thrift.TException;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +77,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
@@ -78,6 +87,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Defines common functionality used by different HiveExploreServices. The common functionality includes
@@ -107,6 +117,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     HandleNotFoundException;
   protected abstract OperationHandle doExecute(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException;
+  protected abstract IMetaStoreClient getMetaStoreClient() throws ExploreException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf, File previewsDir) {
@@ -334,6 +345,50 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       throw getSqlException(e);
     } catch (Throwable e) {
       throw new ExploreException(e);
+    }
+  }
+
+  @Override
+  public List<TableInfo> getTables(@Nullable String database) throws ExploreException {
+    // TODO change this database name once user namespace exists
+    if (database != null && !database.equals("default")) {
+      throw new ExploreException("Current user cannot access database " + database);
+    }
+
+    try {
+      List<String> tables = getMetaStoreClient().getAllTables("default");
+      ImmutableList.Builder<TableInfo> builder = ImmutableList.builder();
+      for (String table : tables) {
+        builder.add(new TableInfo("default", table));
+      }
+      return builder.build();
+    } catch (UnknownDBException e) {
+      throw new ExploreException("Unknow database " + database, e);
+    } catch (TException e) {
+      throw new ExploreException("Error accessing Hive MetaStore", e);
+    }
+  }
+
+  @Override
+  public Map<String, String> getTableSchema(@Nullable String database, String table) throws ExploreException {
+    // TODO change this database name once user namespace exists
+    if (database != null && !database.equals("default")) {
+      throw new ExploreException("Current user cannot access database " + database);
+    }
+
+    try {
+      List<FieldSchema> schema = getMetaStoreClient().getSchema("default", table);
+      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+      for (FieldSchema field : schema) {
+        builder.put(field.getName(), field.getType());
+      }
+      return builder.build();
+    } catch (UnknownDBException e) {
+      throw new ExploreException("Unknow database " + database, e);
+    } catch (UnknownTableException e) {
+      throw new ExploreException("Unknow table " + table + " for database " + database, e);
+    } catch (TException e) {
+      throw new ExploreException("Error accessing Hive MetaStore", e);
     }
   }
 

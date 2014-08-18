@@ -34,6 +34,7 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.proto.TableInfo;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
@@ -65,6 +66,7 @@ abstract class ExploreHttpClient implements Explore {
   private static final Gson GSON = new Gson();
 
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type TABLES_TYPE = new TypeToken<List<TableInfo>>() { }.getType();
   private static final Type COL_DESC_LIST_TYPE = new TypeToken<List<ColumnDesc>>() { }.getType();
   private static final Type QUERY_INFO_LIST_TYPE = new TypeToken<List<QueryInfo>>() { }.getType();
   private static final Type ROW_LIST_TYPE = new TypeToken<List<QueryResult>>() { }.getType();
@@ -99,14 +101,6 @@ abstract class ExploreHttpClient implements Explore {
     }
     throw new ExploreException("Cannot disable explore on dataset " + datasetInstance + ". Reason: " +
                                  getDetails(response));
-  }
-
-  public Map<String, String> getDatasetSchema(String datasetName) throws ExploreException {
-    HttpResponse response = doGet(String.format("data/explore/datasets/%s/schema", datasetName));
-    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return parseJson(response, MAP_TYPE_TOKEN);
-    }
-    throw new ExploreException("Cannot get dataset schema. Reason: " + getDetails(response));
   }
 
   @Override
@@ -238,14 +232,33 @@ abstract class ExploreHttpClient implements Explore {
 
   @Override
   public QueryHandle getTables(String catalog, String schemaPattern,
-                          String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
-    String body = GSON.toJson(new TablesArgs(catalog, schemaPattern,
-                                                               tableNamePattern, tableTypes));
+                               String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
+    String body = GSON.toJson(new TablesArgs(catalog, schemaPattern, tableNamePattern, tableTypes));
     HttpResponse response = doPost("data/explore/jdbc/tables", body, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
     throw new ExploreException("Cannot get the tables. Reason: " + getDetails(response));
+  }
+
+  @Override
+  public List<TableInfo> getTables(@Nullable String database) throws ExploreException {
+    HttpResponse response = doGet("data/explore/tables");
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return parseJson(response, TABLES_TYPE);
+    }
+    throw new ExploreException("Cannot get the tables. Reason: " + getDetails(response));
+  }
+
+  @Override
+  public Map<String, String> getTableSchema(@Nullable String database, String table) throws ExploreException {
+    String tableNamePrefix = (database != null) ? database + "." : "";
+    HttpResponse response = doGet(String.format("data/explore/tables/%s/schema", tableNamePrefix + table));
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return parseJson(response, MAP_TYPE_TOKEN);
+    }
+    throw new ExploreException("Cannot get the schema of table " + tableNamePrefix + table +
+                               ". Reason: " + getDetails(response));
   }
 
   @Override

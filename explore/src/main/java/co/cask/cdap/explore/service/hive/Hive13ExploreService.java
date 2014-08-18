@@ -31,6 +31,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
@@ -39,6 +40,7 @@ import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.SessionHandle;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,6 +57,17 @@ public class Hive13ExploreService extends BaseHiveExploreService {
     // This config sets the time Hive CLI getOperationStatus method will wait for the status of
     // a running query.
     System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_LONG_POLLING_TIMEOUT.toString(), "50");
+  }
+
+  @Override
+  protected IMetaStoreClient getMetaStoreClient() throws ExploreException {
+    try {
+      Field f = getCliService().getClass().getDeclaredField("metastoreClient");
+      f.setAccessible(true);
+      return (IMetaStoreClient) f.get(getCliService());
+    } catch (Throwable e) {
+      throw new ExploreException(e);
+    }
   }
 
   @Override
