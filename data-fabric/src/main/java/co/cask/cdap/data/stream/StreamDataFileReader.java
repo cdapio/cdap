@@ -275,7 +275,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
     if (offset > 0) {
       initByOffset();
     } else if (startTime > 0) {
-      initByTime();
+      initByTime(startTime);
     }
   }
 
@@ -312,11 +312,11 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
     });
   }
 
-  private void initByTime() throws IOException {
+  private void initByTime(final long time) throws IOException {
     // If index is provided, lookup the index find the offset closest to start time.
     // If no offset is found, starts from the beginning of the events
     StreamDataFileIndex index = getIndex();
-    long offset = index == null ? 0 : index.floorPositionByTime(startTime);
+    long offset = index == null ? 0 : index.floorPositionByTime(time);
     if (offset > 0) {
       eventInput.seek(offset);
     }
@@ -324,7 +324,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
     skipUntil(new SkipCondition() {
       @Override
       public boolean apply(long position, long timestamp) {
-        return timestamp >= startTime;
+        return timestamp >= time;
       }
     });
   }
@@ -432,8 +432,26 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
     boolean done = false;
 
     while (!done) {
+      boolean acceptTimestamp = true;
       if (timestamp < 0) {
         timestamp = readTimestamp();
+        if (timestamp >= 0) {
+          // See if this timestamp is accepted by the filter
+          filter.reset();
+          acceptTimestamp = filter.acceptTimestamp(timestamp);
+          if (!acceptTimestamp) {
+            // If not accepted, try to get a hint.
+            long nextTimestamp = filter.getNextTimestampHint();
+
+            // If have hint, re-init this reader with the hinted timestamp.
+            // The hint must be > timestamp of current block, as stream file can only read forward.
+            if (nextTimestamp > timestamp) {
+              timestamp = -1L;
+              initByTime(nextTimestamp);
+              continue;
+            }
+          }
+        }
       }
 
       // Timestamp == -1 indicate that's the end of file.
@@ -447,7 +465,9 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
         length = readLength();
       }
 
-      if (isReadBlockLength && !filter.acceptTimestamp(timestamp)) {
+      if (isReadBlockLength && !acceptTimestamp) {
+        // If able to read block length, but the timestamp filter return false without providing hint,
+        // just skip this timestamp block.
         long bytesSkipped = eventInput.skip(length);
         boolean skippedExpected = (bytesSkipped == length);
         timestamp = -1L;

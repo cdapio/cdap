@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.FileWriter;
+import co.cask.cdap.data.file.filter.TTLReadFilter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.test.SlowTests;
@@ -468,6 +469,70 @@ public abstract class StreamDataFileTestBase {
       eventFile.length() + 100);
 
     Assert.assertEquals(-1, reader.read(events, 10, 0, TimeUnit.SECONDS));
+  }
+
+  @Test
+  public void testTTLFilter() throws IOException, InterruptedException {
+    // Test the TTL filter by writing events with different timestamp and use the TTL to control what
+    // events to read.
+
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
+
+    // Writer 10 events, with 10 different timestamps, differ by 5, starting from 1.
+    // ts = {1, 6, 11, 16, 21, 26, 31, 36, 41, 46 }
+    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                           Locations.newOutputSupplier(indexFile),
+                                                           20L);
+    long ts = 1L;
+    for (int i = 0; i < 10; i++, ts += 5) {
+      writer.append(StreamFileTestUtils.createEvent(ts, "Testing " + i));
+    }
+    // Just flush writer, keep the write live to keep writing more events down below.
+    writer.flush();
+
+    List<StreamEvent> events = Lists.newArrayList();
+    // Create a reader
+    StreamDataFileReader reader = StreamDataFileReader.createByStartTime(Locations.newInputSupplier(eventFile),
+                                                                         Locations.newInputSupplier(indexFile),
+                                                                         0L);
+    try {
+      // Read with a TTL filter. The TTL makes the first valid event as TS >= 25, hence TS == 26.
+      reader.read(events, 1, 0, TimeUnit.SECONDS, new TTLReadFilter(0) {
+        @Override
+        protected long getCurrentTime() {
+          return 25L;
+        }
+      });
+      Assert.assertEquals(1, events.size());
+      Assert.assertEquals(26L, events.get(0).getTimestamp());
+
+      // Read with TTL filter that will skip all reaming events in the stream (TTL = 0).
+      events.clear();
+      reader.read(events, 1, 0, TimeUnit.SECONDS, new TTLReadFilter(0));
+      Assert.assertTrue(events.isEmpty());
+
+      // Write 5 more event, with TS starts at 56
+      for (int i = 0; i < 5; i++, ts += 5) {
+        writer.append(StreamFileTestUtils.createEvent(ts, "Testing " + i));
+      }
+      writer.close();
+
+      // Read with TTL filter that makes only the last event pass (TS = 76)
+      events.clear();
+      reader.read(events, 10, 0, TimeUnit.SECONDS, new TTLReadFilter(0) {
+        @Override
+        protected long getCurrentTime() {
+          return 71L;
+        }
+      });
+      Assert.assertEquals(1, events.size());
+      Assert.assertEquals(71L, events.get(0).getTimestamp());
+
+    } finally {
+      reader.close();
+    }
   }
 
   /**
