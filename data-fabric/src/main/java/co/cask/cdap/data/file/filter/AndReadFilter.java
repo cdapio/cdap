@@ -16,15 +16,26 @@
 package co.cask.cdap.data.file.filter;
 
 import co.cask.cdap.data.file.ReadFilter;
+import com.google.common.collect.ImmutableList;
+
+import java.util.List;
 
 /**
  * AND multiple @{link ReadFilter}s.
  */
 public final class AndReadFilter extends ReadFilter {
-  private ReadFilter[] filters;
+  private final List<ReadFilter> filters;
+
+  // The one that reject timestamp
+  private ReadFilter timestampRejectFilter;
 
   public AndReadFilter(ReadFilter...filters) {
-    this.filters = filters;
+    this.filters = ImmutableList.copyOf(filters);
+  }
+
+  @Override
+  public void reset() {
+    timestampRejectFilter = null;
   }
 
   @Override
@@ -41,9 +52,16 @@ public final class AndReadFilter extends ReadFilter {
   public boolean acceptTimestamp(long timestamp) {
     for (ReadFilter filter : filters) {
       if (!filter.acceptTimestamp(timestamp)) {
+        timestampRejectFilter = filter;
         return false;
       }
     }
     return true;
+  }
+
+  @Override
+  public long getNextTimestampHint() {
+    // If there is filter rejecting timestamp, use it to return hint
+    return (timestampRejectFilter == null) ? -1L : timestampRejectFilter.getNextTimestampHint();
   }
 }
