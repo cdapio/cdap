@@ -18,12 +18,6 @@ define([], function () {
       this.bindTooltips();
     }.observes('page'),
 
-    renderExecuteBtn: function () {
-      return true;
-      // Kind of redundant. Cannot have two consecutive returns statements.
-      //return this.get('page') == 'query';
-    }.property('page'),
-
     load: function () {
       var self = this;
       //largestEver is the largest timestamp of a query that the controller has seen.

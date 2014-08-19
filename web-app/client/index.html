@@ -496,9 +496,7 @@
           <div data-toggle="popover"  title="Error" data-trigger="manual" data-placement="top" class="text-area-container">
           {{view C.Embed.Injector elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
           </div>
-          {{#if renderExecuteBtn}}
-            <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
-          {{/if}}
+          <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
         </td>
 
         {{outlet}}
