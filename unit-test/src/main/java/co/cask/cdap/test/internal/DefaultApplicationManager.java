@@ -16,7 +16,6 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
@@ -89,8 +88,7 @@ public class DefaultApplicationManager implements ApplicationManager {
                                    TemporaryFolder tempFolder,
                                    @Assisted("accountId") String accountId,
                                    @Assisted("applicationId") String applicationId,
-                                   @Assisted Location deployedJar,
-                                   @Assisted ApplicationSpecification appSpec) {
+                                   @Assisted Location deployedJar) {
     this.accountId = accountId;
     this.applicationId = applicationId;
     this.streamWriterFactory = streamWriterFactory;
@@ -108,7 +106,6 @@ public class DefaultApplicationManager implements ApplicationManager {
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
-    this.dataSetInstantiator.setDataSets(appSpec.getDatasets().values());
   }
 
   @Override
