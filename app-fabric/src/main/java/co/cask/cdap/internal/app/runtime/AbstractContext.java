@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime;
 import co.cask.cdap.api.data.DataSetContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
@@ -42,11 +43,14 @@ public abstract class AbstractContext implements DataSetContext {
   private final Program program;
   private final RunId runId;
   private final Map<String, Closeable> datasets;
+  private final MetricsCollectionService metricsCollectionService;
 
-  public AbstractContext(Program program, RunId runId, Map<String, Closeable> datasets) {
+  public AbstractContext(Program program, RunId runId, Map<String, Closeable> datasets,
+                         MetricsCollectionService metricsCollectionService) {
     this.program = program;
     this.runId = runId;
     this.datasets = ImmutableMap.copyOf(datasets);
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   public abstract Metrics getMetrics();
@@ -98,6 +102,11 @@ public abstract class AbstractContext implements DataSetContext {
                                                        MetricsCollectionService collectionService, String context) {
     // NOTE: RunId metric is not supported now. Need UI refactoring to enable it.
     return collectionService.getCollector(scope, context, "0");
+  }
+
+  public MetricsCollector getDatasetMetrics() {
+    // NOTE: RunId metric is not supported now. Need UI refactoring to enable it.
+    return metricsCollectionService.getCollector(MetricsScope.REACTOR, Constants.Metrics.DATASET_CONTEXT, "0");
   }
 
   /**
