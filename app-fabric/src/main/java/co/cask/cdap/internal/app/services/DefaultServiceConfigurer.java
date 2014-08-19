@@ -20,6 +20,7 @@ import co.cask.cdap.api.service.ServiceConfigurer;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -61,8 +62,8 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   @Override
-  public <T extends ServiceWorker> void addWorkers(List<T> serviceWorkers) {
-    workers.addAll(serviceWorkers);
+  public <T extends ServiceWorker> void addWorkers(Iterable<T> serviceWorkers) {
+    Iterables.addAll(workers, serviceWorkers);
   }
 
   @Override
@@ -71,8 +72,8 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   @Override
-  public <T extends HttpServiceHandler> void addHandlers(List<T> serviceHandlers) {
-    serviceHandlers.addAll(serviceHandlers);
+  public <T extends HttpServiceHandler> void addHandlers(Iterable<T> serviceHandlers) {
+    Iterables.addAll(handlers, serviceHandlers);
   }
 
   @Override

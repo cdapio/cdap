@@ -62,7 +62,7 @@ public abstract class AbstractService implements Service {
    * Add a list of handlers to the Service.
    * @param handlers to service requests with.
    */
-  protected void addHandlers(List<? extends HttpServiceHandler> handlers) {
+  protected void addHandlers(Iterable<? extends HttpServiceHandler> handlers) {
     configurer.addHandlers(handlers);
   }
 
@@ -78,7 +78,7 @@ public abstract class AbstractService implements Service {
    * Add a list of workers to the Service.
    * @param workers for the service.
    */
-  protected void addWorkers(List<? extends ServiceWorker> workers) {
+  protected void addWorkers(Iterable<? extends ServiceWorker> workers) {
     configurer.addWorkers(workers);
   }
 
