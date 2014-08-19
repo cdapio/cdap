@@ -20,14 +20,14 @@ import com.google.common.base.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Represents the configuration of a stream.
+ * Represents the properties of a stream.
  */
-public final class StreamConfigMeta {
+public final class StreamProperties {
 
   private final String name;
   private final long ttl;
 
-  public StreamConfigMeta(String name, long ttl) {
+  public StreamProperties(String name, long ttl) {
     this.name = name;
     this.ttl = ttl;
   }
