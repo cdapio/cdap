@@ -17,7 +17,6 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
@@ -129,10 +128,10 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       cConf.set(Constants.Router.ADDRESS, hostname);
       cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
 
-      cConf.set(Constants.Security.ROUTER_SSL_KEYPASSWORD, "secret");
-      cConf.set(Constants.Security.ROUTER_SSL_KEYSTORE_PASSWORD, "secret");
-      cConf.set(Constants.Security.ROUTER_SSL_KEYSTORE_TYPE, "jks");
-      cConf.set(Constants.Security.ROUTER_SSL_KEYSTORE_PATH, certUrl.getPath());
+      cConf.set(Constants.Security.SSL_KEYPASSWORD, "secret");
+      cConf.set(Constants.Security.SSL_KEYSTORE_PASSWORD, "secret");
+      cConf.set(Constants.Security.SSL_KEYSTORE_TYPE, "jks");
+      cConf.set(Constants.Security.SSL_KEYSTORE_PATH, certUrl.getPath());
 
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),

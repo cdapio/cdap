@@ -17,7 +17,6 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.router.handlers.HttpRequestHandler;
 import co.cask.cdap.gateway.router.handlers.SecurityAuthenticationHttpHandler;
@@ -132,18 +131,18 @@ public class NettyRouter extends AbstractIdleService {
     this.discoveryServiceClient = discoveryServiceClient;
     this.configuration = cConf;
 
-    this.sslEnabled = cConf.getBoolean(Constants.Security.ROUTER_SSL_ENABLED);
+    this.sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
     if (isSSLEnabled()) {
       File keystore;
       try {
-        keystore = new File(cConf.get(Constants.Security.ROUTER_SSL_KEYSTORE_PATH));
+        keystore = new File(cConf.get(Constants.Security.SSL_KEYSTORE_PATH));
       } catch (Exception e) {
         throw new RuntimeException("Cannot read keystore file : "
-                                     + cConf.get(Constants.Security.ROUTER_SSL_KEYSTORE_PATH));
+                                     + cConf.get(Constants.Security.SSL_KEYSTORE_PATH));
       }
       this.sslHandlerFactory = new SSLHandlerFactory(
-        keystore, cConf.get(Constants.Security.ROUTER_SSL_KEYSTORE_PASSWORD),
-        cConf.get(Constants.Security.ROUTER_SSL_KEYPASSWORD));
+        keystore, cConf.get(Constants.Security.SSL_KEYSTORE_PASSWORD),
+        cConf.get(Constants.Security.SSL_KEYPASSWORD));
     } else {
       this.sslHandlerFactory = null;
     }

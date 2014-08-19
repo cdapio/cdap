@@ -98,4 +98,25 @@
         <description>Number of stream writer instance. In local mode, it's always one</description>
     </property>
 
+
+  <property>
+    <name>security.ssl.enabled</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>security.ssl.keystore.path</name>
+    <value>/Users/alvin/Work/workspace/caskco/cdap/gateway/src/test/resources/cert.jks</value>
+  </property>
+
+  <property>
+    <name>security.ssl.keystore.password</name>
+    <value>secret</value>
+  </property>
+
+  <property>
+    <name>security.ssl.keystore.keypassword</name>
+    <value>secret</value>
+  </property>
+
 </configuration>

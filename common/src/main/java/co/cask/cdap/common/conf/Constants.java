@@ -422,31 +422,24 @@ public final class Constants {
     public static final String AUTH_HANDLER_CONFIG_BASE = "security.authentication.handler.";
     /** Authentication Login Module class name */
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
-    /** Configuration for enabling SSL */
-    public static final String SSL_ENABLED = "security.server.ssl.enabled";
-    /** SSL secured port for ExternalAuthentication */
-    public static final String AUTH_SERVER_SSL_PORT = "security.server.ssl.port";
-    /** SSL keystore path */
-    public static final String SSL_KEYSTORE_PATH = "security.server.ssl.keystore.path";
-    /** SSL keystore password */
-    public static final String SSL_KEYSTORE_PASSWORD = "security.server.ssl.keystore.password";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
 
+    /** Enables SSL */
+    public static final String SSL_ENABLED = "security.ssl.enabled";
+    /** SSL keystore location */
+    public static final String SSL_KEYSTORE_PATH = "security.ssl.keystore.path";
     /** SSL keystore type */
-    public static final String SSL_KEYSTORE_TYPE = "security.server.ssl.keystore.type";
-    /** Configuration for enabling SSL for router */
-    public static final String ROUTER_SSL_ENABLED = "security.router.ssl.enabled";
-    /** SSL keystore location specified in cdap-security.xml. Can be accessed through SConfiguration object */
-    public static final String ROUTER_SSL_KEYSTORE_PATH = "security.router.ssl.keystore.path";
-    /** SSL keystore type specified in cdap-security.xml. Can be accessed through SConfiguration object */
-    public static final String ROUTER_SSL_KEYSTORE_TYPE = "security.router.ssl.keystore.type";
-    /** SSL keystore key password specified in cdap-security.xml. Can be accessed through SConfiguration object */
-    public static final String ROUTER_SSL_KEYPASSWORD = "security.router.ssl.keystore.keypassword";
-    /** SSL keystore password specified in cdap-security.xml. Can be accessed through SConfiguration object */
-    public static final String ROUTER_SSL_KEYSTORE_PASSWORD = "security.router.ssl.keystore.password";
+    public static final String SSL_KEYSTORE_TYPE = "security.ssl.keystore.type";
+    /** SSL keystore key password */
+    public static final String SSL_KEYPASSWORD = "security.ssl.keystore.keypassword";
+    /** SSL keystore password */
+    public static final String SSL_KEYSTORE_PASSWORD = "security.ssl.keystore.password";
+
     /** SSL port for Router */
     public static final String ROUTER_SSL_PORT = "security.router.ssl.port";
+    /** SSL secured port for ExternalAuthenticationServer */
+    public static final String AUTH_SERVER_SSL_PORT = "security.server.ssl.port";
   }
 
   /**

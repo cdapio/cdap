@@ -31,6 +31,7 @@ var Env = require('./env');
 var WebAppServer = function(dirPath, logLevel, httpsEnabled) {
   this.dirPath = dirPath;
   this.LOG_LEVEL = logLevel;
+  this.httpsEnabled = httpsEnabled;
   this.lib = http;
   if (httpsEnabled) {
     this.lib = https;
@@ -78,6 +79,14 @@ var PRODUCT_VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
  */
 var SECURITY_ENABLED, AUTH_SERVER_ADDRESSES;
 
+WebAppServer.prototype.getProtocol = function () {
+  if (this.httpsEnabled) {
+    return "https";
+  } else {
+    return "http"
+  }
+}
+
 /**
  * Determines security status. Continues until it is able to determine if security is enabled if
  * reactor is down.
@@ -88,16 +97,22 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
   var self = this;
 
   var path = '/' + this.API_VERSION + '/ping';
-  var url = ('http://' + this.config['gateway.server.address'] + ':'
+  var url = (this.getProtocol() + '://' + this.config['gateway.server.address'] + ':'
     + this.config['gateway.server.port'] + path);
   var interval = setInterval(function () {
     self.logger.info('Calling security endpoint: ', url);
     request({
       method: 'GET',
-      url: url
+      url: url,
+      rejectUnauthorized: false,
+      requestCert: true,
+      agent: false
     }, function (err, response, body) {
       // If the response is a 401 and contains "auth_uri" as part of the body, Reactor security is enabled.
       // On other response codes, and when "auth_uri" is not part of the body, Reactor security is disabled.
+      if (err) {
+        self.logger.info('Got error: ' + err + ', ' + response);
+      }
       if (!err && response) {
         clearInterval(interval);
         if (body) {
@@ -358,7 +373,7 @@ WebAppServer.prototype.bindRoutes = function() {
 
     request({
       method: 'DELETE',
-      url: 'http://' + path,
+      url: self.getProtocol() + '://' + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -388,7 +403,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'PUT',
-      url: 'http://' + path,
+      url: self.getProtocol() + '://' + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -425,7 +440,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'POST',
-      url: 'http://' + path,
+      url: self.getProtocol() + '://' + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -466,7 +481,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'POST',
-      url: 'http://' + path,
+      url: self.getProtocol() + '://' + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -505,7 +520,7 @@ WebAppServer.prototype.bindRoutes = function() {
 
     var opts = {
       method: 'GET',
-      url: 'http://' + path,
+      url: self.getProtocol() + '://' + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -602,7 +617,7 @@ WebAppServer.prototype.bindRoutes = function() {
    * Upload an Application archive.
    */
   this.app.post('/upload/:file', this.checkAuth, function (req, res) {
-    var url = 'http://' + self.config['gateway.server.address'] + ':' +
+    var url = self.getProtocol() + '://' + self.config['gateway.server.address'] + ':' +
       self.config['gateway.server.port'] + '/' + self.API_VERSION + '/apps';
 
     var opts = {
@@ -662,7 +677,7 @@ WebAppServer.prototype.bindRoutes = function() {
 
     var opts = {
       method: 'POST',
-      url: 'http://' + host + '/' + self.API_VERSION + '/unrecoverable/reset',
+      url: self.getProtocol() + '://' + host + '/' + self.API_VERSION + '/unrecoverable/reset',
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -773,10 +788,7 @@ WebAppServer.prototype.bindRoutes = function() {
           auth: {
             user: post.username,
             password: post.password
-          },
-          rejectUnauthorized: false,
-          requestCert: true,
-          agent: false
+          }
         }
         request(options, function (nerr, nres, nbody) {
           if (nerr || nres.statusCode !== 200) {
