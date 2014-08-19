@@ -22,10 +22,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -102,14 +99,12 @@ public class DataSetInstantiator implements DataSetContext {
                                             @Nullable DatasetFramework datasetFramework)
     throws DataSetInstantiationException {
 
-    if (datasetFramework != null) {
-      T dataSet = (T) getDataset(dataSetName, arguments, datasetFramework);
-      if (dataSet != null) {
-        return dataSet;
-      }
+    T dataSet = (T) getDataset(dataSetName, arguments, datasetFramework);
+    if (dataSet == null) {
+      throw logAndException(null, "No data set named %s can be instantiated.", dataSetName);
     }
 
-    throw logAndException(null, "No data set named %s can be instantiated.", dataSetName);
+    return dataSet;
   }
 
   private <T extends Dataset> T getDataset(String datasetName, Map<String, String> arguments,
@@ -179,11 +174,8 @@ public class DataSetInstantiator implements DataSetContext {
     return exn;
   }
 
-  public void setMetricsCollector(final MetricsCollectionService metricsCollectionService,
+  public void setMetricsCollector(final MetricsCollector dataSetMetrics,
                                   final MetricsCollector programContextMetrics) {
-
-    final MetricsCollector dataSetMetrics =
-      metricsCollectionService.getCollector(MetricsScope.REACTOR, Constants.Metrics.DATASET_CONTEXT, "0");
 
     for (Map.Entry<TransactionAware, String> txAware : this.txAwareToMetricNames.entrySet()) {
       if (txAware.getKey() instanceof MeteredDataset) {

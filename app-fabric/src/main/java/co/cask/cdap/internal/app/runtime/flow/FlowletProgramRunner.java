@@ -212,7 +212,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // hack for propagating metrics collector to datasets
       if (dataSetContext instanceof DataSetInstantiator) {
-        ((DataSetInstantiator) dataSetContext).setMetricsCollector(metricsCollectionService,
+        ((DataSetInstantiator) dataSetContext).setMetricsCollector(flowletContext.getDatasetMetrics(),
                                                                    flowletContext.getSystemMetrics());
       }
 

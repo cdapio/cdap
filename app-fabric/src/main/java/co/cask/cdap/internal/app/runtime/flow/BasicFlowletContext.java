@@ -59,7 +59,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       Map<String, Closeable> datasets, Arguments runtimeArguments,
                       FlowletSpecification flowletSpec, MetricsCollectionService metricsCollectionService,
                       ProgramServiceDiscovery serviceDiscovery) {
-    super(program, runId, datasets);
+    super(program, runId, datasets, metricsCollectionService);
     this.accountId = program.getAccountId();
     this.flowId = program.getName();
     this.flowletId = flowletId;
