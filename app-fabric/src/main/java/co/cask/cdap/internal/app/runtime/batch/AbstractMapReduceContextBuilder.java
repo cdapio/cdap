@@ -107,7 +107,6 @@ public abstract class AbstractMapReduceContextBuilder {
 
     DataSetInstantiator dataSetContext = new DataSetInstantiator(datasetFramework, configuration, classLoader);
     ApplicationSpecification programSpec = program.getSpecification();
-    dataSetContext.setDataSets(programSpec.getDatasets().values());
 
     // if this is not for a mapper or a reducer, we don't need the metrics collection service
     MetricsCollectionService metricsCollectionService =

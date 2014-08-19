@@ -60,8 +60,6 @@ public class DataSetInstantiator implements DataSetContext {
   private final DatasetFramework datasetFramework;
   // the class loader to use for data set classes
   private final ClassLoader classLoader;
-  // the known data set specifications
-  private final Map<String, DatasetCreationSpec> datasetsV2 = Maps.newHashMap();
   private final Set<TransactionAware> txAware = Sets.newIdentityHashSet();
   // in this collection we have only datasets initialized with getDataSet() which is OK for now...
   private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
@@ -89,14 +87,6 @@ public class DataSetInstantiator implements DataSetContext {
   public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
     throws DataSetInstantiationException {
     return (T) getDataSet(name, arguments, this.datasetFramework);
-  }
-
-  public void setDataSets(Iterable<DatasetCreationSpec> creationSpec) {
-    for (DatasetCreationSpec spec : creationSpec) {
-      if (spec != null) {
-        this.datasetsV2.put(spec.getInstanceName(), spec);
-      }
-    }
   }
 
   /**
