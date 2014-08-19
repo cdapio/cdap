@@ -24,6 +24,7 @@ import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.explore.service.TableNotFoundException;
+import co.cask.cdap.explore.service.UnexpectedQueryStatusException;
 import co.cask.cdap.hive.context.CConfCodec;
 import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
@@ -364,6 +365,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     } catch (SQLException e) {
       LOG.error("Error in query show tables", e);
       throw new ExploreException(e);
+    } catch (UnexpectedQueryStatusException e) {
+      LOG.error("Error in query show tables", e);
+      throw new ExploreException(e);
     }
   }
 
@@ -402,6 +406,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     } catch (SQLException e) {
       throw new TableNotFoundException("Error on running query '" + query + "'", e);
+    } catch (UnexpectedQueryStatusException e) {
+      throw new TableNotFoundException("Error on running query '" + query + "'", e);
     }
   }
 
@@ -409,7 +415,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * Run queries internally, without going through the logic of storing the operation info, timing out etc.
    * This is designed for fast queries that wouldn't block the explore service too long.
    */
-  private FullQueryResults runInternalQuery(String statement) throws ExploreException, SQLException {
+  private FullQueryResults runInternalQuery(String statement)
+    throws ExploreException, SQLException, UnexpectedQueryStatusException {
     SessionHandle sessionHandle = cliService.openSession("", "", Maps.<String, String>newHashMap());
     try {
       OperationHandle operationHandle = doExecute(sessionHandle, statement);
@@ -420,7 +427,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       } while (!status.getStatus().isDone());
 
       if (!status.getStatus().equals(QueryStatus.OpStatus.FINISHED)) {
-        throw new ExploreException("Query '" + statement + "' ended with status " + status.getStatus());
+        throw new UnexpectedQueryStatusException("Query '" + statement + "' ended with status " + status.getStatus(),
+                                                 status.getStatus());
       }
 
       ImmutableList.Builder<QueryResult> resultBuilder = ImmutableList.builder();
