@@ -239,7 +239,7 @@ Comments
 
 Reading Events from a Stream
 ---------------------------------------------------
-Reading is performed as an HTTP GET method to the URL::
+Reading events from an existing Stream is performed as an HTTP GET method to the URL::
 
   GET <base-url>/streams/<stream-id>/events?start=<startTime>&end=<endTime>&limit=<limit>
 
@@ -252,11 +252,11 @@ Reading is performed as an HTTP GET method to the URL::
    * - ``<stream-id>``
      - Name of an existing Stream
    * - ``<startTime>``
-     - Optional timestamp in milliseconds to start reading event from (inclusive). Default is 0
+     - Optional timestamp in milliseconds to start reading events from (inclusive); default is 0
    * - ``<endTime>``
-     - Optional timestamp in milliseconds for the last event to read (exclusive). Default is maximum timestamp (2^63)
+     - Optional timestamp in milliseconds for the last event to read (exclusive); default is the maximum timestamp (2^63)
    * - ``<limit>``
-     - Optional maximum number of events to read. Default is unlimited
+     - Optional maximum number of events to read; default is unlimited
 
 HTTP Responses
 ..............
@@ -269,15 +269,15 @@ HTTP Responses
    * - ``200 OK``
      - The event was successfully received and the result of the read was returned
    * - ``204 No Content``
-     - The Stream exists but there is no events that satisfy the request
+     - The Stream exists but there are no events that satisfy the request
    * - ``404 Not Found``
      - The Stream does not exist
 
-The response body is an JSON array, with the stream event objects as array elements::
+The response body is an JSON array, with the Stream event objects as array elements::
 
    [ 
-     {"timestamp": ... , "headers": { ... }, "body": ... }, 
-     {"timestamp": ... , "headers": { ... }, "body": ... } 
+     {"timestamp" : ... , "headers": { ... }, "body" : ... }, 
+     {"timestamp" : ... , "headers": { ... }, "body" : ... } 
    ]
 
 .. list-table::
@@ -287,11 +287,11 @@ The response body is an JSON array, with the stream event objects as array eleme
    * - Field
      - Description
    * - ``timestamp``
-     - Timestamp in milliseconds of the stream event at ingestion time
+     - Timestamp in milliseconds of the Stream event at ingestion time
    * - ``headers``
-     - A JSON map of all custom headers associated with the stream event
+     - A JSON map of all custom headers associated with the Stream event
    * - ``body``
-     - A printable string representing the event body. Non-printable bytes are hex escaped in the format ``\x[hex-digit][hex-digit]``, e.g. ``\x05``
+     - A printable string representing the event body; non-printable bytes are hex escaped in the format ``\x[hex-digit][hex-digit]``, e.g. ``\x05``
 
 Example
 .......
@@ -302,9 +302,9 @@ Example
    * - HTTP Method
      - ``GET <base-url>/streams/mystream/events?limit=1``
    * - Description
-     - Read the first events an existing Stream named *mystream*
+     - Read the initial event from an existing Stream named *mystream*
    * - Response body
-     - ``[ {"timestamp":1407806944181, "headers": { }, "body": "Hello World" } ]``
+     - ``[ {"timestamp" : 1407806944181, "headers" : { }, "body" : "Hello World" } ]``
 
 .. rst2pdf: PageBreak
 
