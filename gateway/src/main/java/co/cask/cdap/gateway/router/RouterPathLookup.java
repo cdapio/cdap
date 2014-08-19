@@ -98,6 +98,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
         String serviceName = String.format("procedure.%s.%s.%s", accId, uriParts[2], uriParts[4]);
         return serviceName;
       } else if ((uriParts.length >= 9) && uriParts[3].equals("services") && uriParts[7].equals("methods")) {
+        //TODO: review API: https://jira.continuuity.com/browse/REACTOR-812
         //User defined services handle methods on them:
         //Service Path:  "/v2/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/methods/<user-defined-method-path>"
         String accId = getAuthenticatedAccountId(httpRequest);
