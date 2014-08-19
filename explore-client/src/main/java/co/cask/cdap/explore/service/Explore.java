@@ -236,7 +236,8 @@ public interface Explore {
    * @return map of names of columns to their types.
    * @throws ExploreException on any error getting the tables.
    */
-  public Map<String, String> getTableSchema(@Nullable String database, String table) throws ExploreException;
+  public Map<String, String> getTableSchema(@Nullable String database, String table)
+    throws ExploreException, TableNotFoundException;
 
   /**
    * Retrieves the table types available in this database.

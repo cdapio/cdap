@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.MetaDataInfo;
+import co.cask.cdap.explore.service.TableNotFoundException;
 import co.cask.cdap.explore.utils.ColumnsArgs;
 import co.cask.cdap.explore.utils.FunctionsArgs;
 import co.cask.cdap.explore.utils.SchemasArgs;
@@ -88,6 +89,9 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
         tableName = table.substring(dbSepIdx + 1);
       }
       responder.sendJson(HttpResponseStatus.OK, exploreService.getTableSchema(dbName, tableName));
+    } catch (TableNotFoundException e) {
+      LOG.error("Could not find table {}", table, e);
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (ExploreException e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());

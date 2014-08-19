@@ -137,8 +137,6 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     exploreClient.submit("drop table if exists test").get();
   }
 
-
-
   @Test
   public void testHiveIntegration() throws Exception {
     runCommand("show tables",
@@ -327,6 +325,24 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     Map<String, String> datasetSchema = exploreService.getTableSchema(null, "my_table");
     Assert.assertEquals(ImmutableMap.of("key", "string", "value", "struct<name:string,ints:array<int>>"),
                         datasetSchema);
+
+    datasetSchema = exploreService.getTableSchema("default", "my_table");
+    Assert.assertEquals(ImmutableMap.of("key", "string", "value", "struct<name:string,ints:array<int>>"),
+                        datasetSchema);
+
+    try {
+      exploreService.getTableSchema(null, "foobar");
+      Assert.fail("Should throw TableNotFoundException on table foobar");
+    } catch (TableNotFoundException e) {
+      // Expected
+    }
+
+    try {
+      exploreService.getTableSchema("foo", "my_table");
+      Assert.fail("Should throw ExploreException as database foo is inaccessible to current user");
+    } catch (ExploreException e) {
+      // Expected
+    }
   }
 
   @Test

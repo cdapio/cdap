@@ -25,6 +25,7 @@ import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.MetaDataInfo;
+import co.cask.cdap.explore.service.TableNotFoundException;
 import co.cask.cdap.explore.utils.ColumnsArgs;
 import co.cask.cdap.explore.utils.FunctionsArgs;
 import co.cask.cdap.explore.utils.SchemasArgs;
@@ -251,11 +252,14 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   @Override
-  public Map<String, String> getTableSchema(@Nullable String database, String table) throws ExploreException {
+  public Map<String, String> getTableSchema(@Nullable String database, String table)
+    throws ExploreException, TableNotFoundException {
     String tableNamePrefix = (database != null) ? database + "." : "";
     HttpResponse response = doGet(String.format("data/explore/tables/%s/schema", tableNamePrefix + table));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, MAP_TYPE_TOKEN);
+    } else if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
+      throw new TableNotFoundException("Table " + tableNamePrefix + table + " not found.");
     }
     throw new ExploreException("Cannot get the schema of table " + tableNamePrefix + table +
                                ". Reason: " + getDetails(response));

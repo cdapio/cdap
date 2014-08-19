@@ -23,6 +23,7 @@ import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.MetaDataInfo;
+import co.cask.cdap.explore.service.TableNotFoundException;
 import co.cask.cdap.hive.context.CConfCodec;
 import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
@@ -157,16 +158,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   protected CLIService getCliService() {
     return cliService;
-  }
-
-  protected IMetaStoreClient getMetaStoreClient() throws ExploreException {
-    try {
-      Field f = getCliService().getClass().getDeclaredField("metastoreClient");
-      f.setAccessible(true);
-      return (IMetaStoreClient) f.get(getCliService());
-    } catch (Throwable e) {
-      throw new ExploreException(e);
-    }
   }
 
   @Override
@@ -364,39 +355,89 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
 
     try {
-      List<String> tables = getMetaStoreClient().getAllTables("default");
+      FullQueryResults fullResults = runInternalQuery(String.format("show tables in %s", "default"));
       ImmutableList.Builder<TableInfo> builder = ImmutableList.builder();
-      for (String table : tables) {
-        builder.add(new TableInfo("default", table));
+      for (QueryResult result : fullResults.getResults()) {
+        builder.add(new TableInfo("default", result.getColumns().get(0).toString()));
       }
       return builder.build();
-    } catch (UnknownDBException e) {
-      throw new ExploreException("Unknow database " + database, e);
-    } catch (TException e) {
-      throw new ExploreException("Error accessing Hive MetaStore", e);
+    } catch (SQLException e) {
+      LOG.error("Error in query show tables", e);
+      throw new ExploreException(e);
     }
   }
 
   @Override
-  public Map<String, String> getTableSchema(@Nullable String database, String table) throws ExploreException {
+  public Map<String, String> getTableSchema(@Nullable String database, String table)
+    throws ExploreException, TableNotFoundException {
     // TODO change this database name once user namespace exists
     if (database != null && !database.equals("default")) {
       throw new ExploreException("Current user cannot access database " + database);
     }
 
+    String tablePrefix = (database == null) ? "" : database + ".";
+    String query = "describe " + tablePrefix + table;
     try {
-      List<FieldSchema> schema = getMetaStoreClient().getSchema("default", table);
+      FullQueryResults fullResults = runInternalQuery(query);
+
+      int colNameIdx = -1;
+      int colTypeIdx = -1;
+      List<ColumnDesc> schema = fullResults.getSchema();
+      for (ColumnDesc col : schema) {
+        if (col.getName().equals("col_name")) {
+          colNameIdx = col.getPosition() - 1;
+        } else if (col.getName().equals("data_type")) {
+          colTypeIdx = col.getPosition() - 1;
+        }
+      }
+      if (colNameIdx == -1 || colTypeIdx == -1) {
+        throw new ExploreException("Could not parse query describe table results");
+      }
       ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-      for (FieldSchema field : schema) {
-        builder.put(field.getName(), field.getType());
+      for (QueryResult result : fullResults.getResults()) {
+        builder.put(result.getColumns().get(colNameIdx).toString(),
+                    result.getColumns().get(colTypeIdx).toString());
       }
       return builder.build();
-    } catch (UnknownDBException e) {
-      throw new ExploreException("Unknow database " + database, e);
-    } catch (UnknownTableException e) {
-      throw new ExploreException("Unknow table " + table + " for database " + database, e);
-    } catch (TException e) {
-      throw new ExploreException("Error accessing Hive MetaStore", e);
+
+    } catch (SQLException e) {
+      throw new TableNotFoundException("Error on running query '" + query + "'", e);
+    }
+  }
+
+  /**
+   * Run queries internally, without going through the logic of storing the operation info, timing out etc.
+   * This is designed for fast queries that wouldn't block the explore service too long.
+   */
+  private FullQueryResults runInternalQuery(String statement) throws ExploreException, SQLException {
+    SessionHandle sessionHandle = cliService.openSession("", "", Maps.<String, String>newHashMap());
+    try {
+      OperationHandle operationHandle = doExecute(sessionHandle, statement);
+      QueryStatus status;
+      do {
+        TimeUnit.MILLISECONDS.sleep(50);
+        status = fetchStatus(operationHandle);
+      } while (!status.getStatus().isDone());
+
+      if (!status.getStatus().equals(QueryStatus.OpStatus.FINISHED)) {
+        throw new ExploreException("Query '" + statement + "' ended with status " + status.getStatus());
+      }
+
+      ImmutableList.Builder<QueryResult> resultBuilder = ImmutableList.builder();
+      List<QueryResult> tmpResults;
+      do {
+        tmpResults = fetchNextResults(operationHandle, 1000);
+        resultBuilder.addAll(tmpResults);
+      } while (!tmpResults.isEmpty());
+
+      return new FullQueryResults(resultBuilder.build(), getResultSchemaInternal(operationHandle));
+    } catch (InterruptedException e) {
+      LOG.error("Could not wait for operation execution", e);
+      throw Throwables.propagate(e);
+    } catch (HandleNotFoundException e) {
+      throw new ExploreException("Handle not found for internal operation", e);
+    } finally {
+      closeSession(sessionHandle);
     }
   }
 
@@ -608,19 +649,23 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
       // Fetch schema from hive
       LOG.trace("Getting schema for handle {}", handle);
-      ImmutableList.Builder<ColumnDesc> listBuilder = ImmutableList.builder();
       OperationHandle operationHandle = getOperationHandle(handle);
-      if (operationHandle.hasResultSet()) {
-        TableSchema tableSchema = cliService.getResultSetMetadata(operationHandle);
-        for (ColumnDescriptor colDesc : tableSchema.getColumnDescriptors()) {
-          listBuilder.add(new ColumnDesc(colDesc.getName(), colDesc.getTypeName(),
-                                         colDesc.getOrdinalPosition(), colDesc.getComment()));
-        }
-      }
-      return listBuilder.build();
+      return getResultSchemaInternal(operationHandle);
     } catch (HiveSQLException e) {
       throw getSqlException(e);
     }
+  }
+
+  protected List<ColumnDesc> getResultSchemaInternal(OperationHandle operationHandle) throws SQLException {
+    ImmutableList.Builder<ColumnDesc> listBuilder = ImmutableList.builder();
+    if (operationHandle.hasResultSet()) {
+      TableSchema tableSchema = cliService.getResultSetMetadata(operationHandle);
+      for (ColumnDescriptor colDesc : tableSchema.getColumnDescriptors()) {
+        listBuilder.add(new ColumnDesc(colDesc.getName(), colDesc.getTypeName(),
+                                       colDesc.getOrdinalPosition(), colDesc.getComment()));
+      }
+    }
+    return listBuilder.build();
   }
 
   /**
@@ -934,6 +979,24 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     public QueryStatus getStatus() {
       return status;
+    }
+  }
+
+  private static class FullQueryResults {
+    private final List<QueryResult> results;
+    private final List<ColumnDesc> schema;
+
+    private FullQueryResults(List<QueryResult> results, List<ColumnDesc> schema) {
+      this.results = results;
+      this.schema = schema;
+    }
+
+    public List<ColumnDesc> getSchema() {
+      return schema;
+    }
+
+    public List<QueryResult> getResults() {
+      return results;
     }
   }
 }
