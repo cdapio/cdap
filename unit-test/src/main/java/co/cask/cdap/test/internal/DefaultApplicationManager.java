@@ -18,7 +18,10 @@ package co.cask.cdap.test.internal;
 
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.lang.jar.JarClassLoader;
+import co.cask.cdap.common.lang.ApiResourceListHolder;
+import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.lang.jar.ProgramClassLoader;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -49,7 +52,9 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +86,7 @@ public class DefaultApplicationManager implements ApplicationManager {
                                    CConfiguration configuration,
                                    DiscoveryServiceClient discoveryServiceClient,
                                    AppFabricHttpHandler httpHandler,
+                                   TemporaryFolder tempFolder,
                                    @Assisted("accountId") String accountId,
                                    @Assisted("applicationId") String applicationId,
                                    @Assisted Location deployedJar,
@@ -92,12 +98,13 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txSystemClient = txSystemClient;
     this.appFabricClient = new AppFabricClient(httpHandler, locationFactory);
-
     try {
-      // Since we expose the DataSet class, it has to be loaded using ClassLoader delegation.
-      // The drawback is we'll not be able to instrument DataSet classes using ASM.
+      File tempDir = tempFolder.newFolder();
+      BundleJarUtil.unpackProgramJar(deployedJar, tempDir);
+      ProgramClassLoader classLoader = ClassLoaders.newProgramClassLoader
+        (tempDir, ApiResourceListHolder.getResourceList(), this.getClass().getClassLoader());
       this.dataSetInstantiator = new DataSetInstantiator(datasetFramework, configuration,
-                                                         new DataSetClassLoader(new JarClassLoader(deployedJar)));
+                                                         new DataSetClassLoader(classLoader));
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

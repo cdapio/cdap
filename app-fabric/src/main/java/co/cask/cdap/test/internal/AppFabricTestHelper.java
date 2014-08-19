@@ -25,6 +25,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -71,10 +72,11 @@ public class AppFabricTestHelper {
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
       configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       injector = Guice.createInjector(new AppFabricTestModule(configuration));
+      // todo: this is not cool! who stops them? Anyhow - see todo on the top of class - we need to refactor the whole
       injector.getInstance(TransactionManager.class).startAndWait();
+      injector.getInstance(DatasetOpExecutor.class).startAndWait();
       injector.getInstance(DatasetService.class).startAndWait();
       injector.getInstance(SchedulerService.class).startAndWait();
-      injector.getInstance(DatasetService.class).startAndWait();
     }
     return injector;
   }

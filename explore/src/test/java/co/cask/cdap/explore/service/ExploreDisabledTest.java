@@ -28,6 +28,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreClient;
@@ -57,6 +58,7 @@ import java.util.List;
 public class ExploreDisabledTest {
   private static TransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
+  private static DatasetOpExecutor dsOpExecutor;
   private static DatasetService datasetService;
   private static ExploreClient exploreClient;
 
@@ -65,6 +67,9 @@ public class ExploreDisabledTest {
     Injector injector = Guice.createInjector(createInMemoryModules(CConfiguration.create(), new Configuration()));
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
+
+    dsOpExecutor = injector.getInstance(DatasetOpExecutor.class);
+    dsOpExecutor.startAndWait();
 
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
@@ -79,6 +84,7 @@ public class ExploreDisabledTest {
   public static void stop() throws Exception {
     exploreClient.close();
     datasetService.stopAndWait();
+    dsOpExecutor.stopAndWait();
     transactionManager.stopAndWait();
   }
 
@@ -171,9 +177,9 @@ public class ExploreDisabledTest {
         new IOModule(),
         new DiscoveryRuntimeModule().getInMemoryModules(),
         new LocationRuntimeModule().getInMemoryModules(),
-        new DataSetServiceModules().getInMemoryModule(),
         new DataFabricModules().getInMemoryModules(),
-        new DataSetsModules().getInMemoryModule(),
+        new DataSetsModules().getLocalModule(),
+        new DataSetServiceModules().getInMemoryModule(),
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new AuthModule(),
         new ExploreRuntimeModule().getInMemoryModules(),

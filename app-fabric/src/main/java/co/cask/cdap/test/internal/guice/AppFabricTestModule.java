@@ -70,7 +70,7 @@ public final class AppFabricTestModule extends AbstractModule {
   @Override
   protected void configure() {
     install(new DataFabricModules().getInMemoryModules());
-    install(new DataSetsModules().getInMemoryModule());
+    install(new DataSetsModules().getLocalModule());
     install(new DataSetServiceModules().getInMemoryModule());
     install(new ConfigModule(cConf, hConf));
     install(new IOModule());

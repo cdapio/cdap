@@ -43,8 +43,6 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
-import co.cask.cdap.gateway.handlers.PingHandler;
-import co.cask.http.HttpHandler;
 import com.continuuity.tephra.DefaultTransactionExecutor;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
@@ -53,14 +51,8 @@ import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
-import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Named;
-import com.google.inject.name.Names;
-import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
@@ -114,20 +106,8 @@ public class DatasetOpExecutorServiceTest {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new DataSetsModules().getInMemoryModule(),
-      Modules.override(new DataSetServiceModules().getInMemoryModule()).with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          Named name = Names.named(Constants.Service.DATASET_EXECUTOR);
-          Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, name);
-          handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
-          handlerBinder.addBinding().to(PingHandler.class);
-
-          bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
-
-          bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
-        }
-      }),
+      new DataSetsModules().getLocalModule(),
+      new DataSetServiceModules().getInMemoryModule(),
       new AuthModule(),
       new TransactionMetricsModule(),
       new ExploreClientModule());

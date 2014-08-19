@@ -27,7 +27,7 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import com.continuuity.tephra.TransactionAware;
@@ -76,7 +76,7 @@ public class DataSetInstantiator implements DataSetContext {
     this.classLoader = classLoader;
     this.datasetFramework =
       new NamespacedDatasetFramework(datasetFramework,
-                                     new ReactorDatasetNamespace(configuration, Namespace.USER));
+                                     new DefaultDatasetNamespace(configuration, Namespace.USER));
   }
 
   @Override
@@ -138,7 +138,7 @@ public class DataSetInstantiator implements DataSetContext {
       }
 
     } catch (Exception e) {
-      throw new DataSetInstantiationException("Failed to access dataset: " + datasetName);
+      throw new DataSetInstantiationException("Failed to access dataset: " + datasetName, e);
     }
 
     if (dataset instanceof TransactionAware) {

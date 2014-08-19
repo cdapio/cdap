@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
  * Constants used by different systems are all defined here.
  */
 public final class Constants {
+
   /**
    * Global Service names.
    */
@@ -32,7 +33,7 @@ public final class Constants {
     public static final String LOGSAVER = "log.saver";
     public static final String GATEWAY = "gateway";
     public static final String STREAMS = "streams";
-    public static final String REACTOR_SERVICES = "reactor.services";
+    public static final String MASTER_SERVICES = "master.services";
     public static final String METRICS_PROCESSOR = "metrics.processor";
     public static final String DATASET_MANAGER = "dataset.service";
     public static final String DATASET_EXECUTOR = "dataset.executor";
@@ -140,6 +141,9 @@ public final class Constants {
    * Datasets.
    */
   public static final class Dataset {
+
+    public static final String TABLE_PREFIX = "dataset.table.prefix";
+
     /**
      * DatasetManager service configuration.
      */
@@ -238,12 +242,6 @@ public final class Constants {
       public static final String CONSUMER_ID = "X-Continuuity-ConsumerId";
     }
 
-    // Time for a stream consumer to timeout in StreamHandler for REST API dequeue.
-    public static final long CONSUMER_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(60);
-
-    // The consumer state table namespace for consumers created from stream handler for REST API dequeue.
-    public static final String HANDLER_CONSUMER_NS = "http.stream.consumer";
-
     //max instances of stream handler service
     public static final String MAX_INSTANCES = "stream.container.instances";
 
@@ -289,11 +287,9 @@ public final class Constants {
      * Others.
      */
     public static final String GATEWAY_VERSION = "/v2";
-    public static final String CONTINUUITY_PREFIX = "X-Continuuity-";
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
-    public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";
     public static final String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
     public static final String CFG_PASSPORT_SERVER_URI = "passport.server.uri";
   }

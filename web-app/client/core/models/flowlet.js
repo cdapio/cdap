@@ -37,6 +37,13 @@ define(['core/models/program'], function (Program) {
 				.replace(/\{id\}/, this.get('id'));
 
 		},
+    actualInstances: function () {
+      if (C.get('isLocal')) {
+        return this.instances;
+      } else {
+        return this.containersLabel;
+      }
+    }.property('instances','containersLabel'),
 
 		doubleCount: function () {
 			return 'Add ' + this.instances;

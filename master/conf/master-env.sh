@@ -17,7 +17,7 @@
 # Set environment variables here.
 
 # Main class to be invoked.
-MAIN_CLASS=co.cask.cdap.data.runtime.main.ReactorServiceMain
+MAIN_CLASS=co.cask.cdap.data.runtime.main.MasterServiceMain
 
 # Arguments for main class.
 MAIN_CLASS_ARGS="start"
@@ -26,5 +26,5 @@ MAIN_CLASS_ARGS="start"
 # Assuming update-alternatives convention
 EXTRA_CLASSPATH="/etc/hbase/conf/"
 
-JAVA_HEAPMAX=-Xmx1024m
+JAVA_HEAPMAX=${MASTER_JAVA_HEAPMAX:--Xmx1024m}
 

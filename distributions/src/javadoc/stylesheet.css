@@ -17,10 +17,8 @@
 /* Javadoc style sheet */
 
 @font-face {
-  font-family: 'Maven Pro';
-  font-style: normal;
-  font-weight: 400;
-  src: local('Maven Pro Regular'), local('MavenProRegular'), url(http://themes.googleusercontent.com/static/fonts/mavenpro/v4/MG9KbUZFchDs94Tbv9U-pbO3LdcAZYWl9Si6vvxL-qU.woff) format('woff');
+    font-family: 'Source Sans Pro';
+    src: local('Source Sans Pro'), local('SourceSansPro'), url(http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600);
 }
 
 /* Define colors, fonts and other style attributes here to override the defaults */
@@ -28,7 +26,7 @@
 /* Page background color */
 body { background-color: #FFFFFF; color:#111; font-size: 100%; }
 
-body { font-size: 1em; line-height: 1.286em; font-family: "Maven Pro", "Helvetica", "Arial", sans-serif; }
+body { font-size: 1em; line-height: 1.286em; font-family: "Source Sans Pro", "Helvetica", "Arial", sans-serif; }
 
 code { line-height: 1.286em; font-family: "Consolas", "Lucida Console", "Droid Sans Mono", "Andale Mono", "Monaco", "Lucida Sans Typewriter"; }
 
@@ -37,16 +35,18 @@ a:hover { text-decoration: underline; }
 a:visited { color: #2f4e7c; }
 a:visited:hover { text-decoration: underline; }
 
-table[border="1"] { border: 1px solid #ddd;
-border-width: 1px 0px 0px 1px;
-border-radius: 3px;
+table[border="1"] {
+  border: 1px solid #ddd;
+  border-width: 1px 0px 0px 1px;
+  border-radius: 3px;
 }
+
 table[border="1"] .TableRowColor td, table[border="1"] th { border: 1px solid #ddd; border-width: 0px 1px 1px 0px; }
 table[border="1"] th { font-size: 12px; padding: 8px 12px; }
 table[cellpadding="3"] td { padding: 0.5em; }
 
-font[size="-1"] { font-size: 0.9em; line-height: 1.5em; }
 font[size="-2"] { font-size: 0.8em; }
+font[size="-1"] { font-size: 0.9em; line-height: 1.5em; }
 font[size="+2"] { font-size: 1.4em; line-height: 1.3em; padding: 0.4em 0; }
 
 hr {
@@ -55,7 +55,7 @@ hr {
 }
 
 /* Headings */
-h1 { font-size: 1.5em; line-height: 1.286em;}
+h1 { font-size: 1.5em; line-height: 1.286em; }
 
 h2 {
     font-weight: 500;
@@ -74,8 +74,8 @@ h2 b {
 /* Font used in left-hand frame lists */
 .FrameTitleFont   { font-size: 100%; }
 .FrameHeadingFont { font-size:  90%; }
-.FrameItemFont { font-size:  0.9em; line-height: 1.3em;
-}
+.FrameItemFont    { font-size: 0.9em; line-height: 1.3em; }
+
 /* Java Interfaces */
 .FrameItemFont a i {
     color: #2f4e7c;
@@ -85,14 +85,15 @@ h2 b {
 }
 
 /* Navigation bar fonts and colors */
-.NavBarCell1    { padding: 4px 8px; background-color:#162d50; color: #FFFFFF; } /* Light mauve */
-.NavBarCell1Rev { padding: 4px 8px; background-color:#49b1d2; color:#FFFFFF} /* Dark Blue */
-.NavBarFont1    { color: #FFFFFF;}
-.NavBarFont1Rev { color:#FFFFFF; }
+.NavBarCell1    { padding: 4px 8px; background-color: #4B5258; color: #FFFFFF; } /* Dark background */
+.NavBarCell1Rev { padding: 4px 8px; background-color: #F1EFEE; color: #FFFFFF; } /* Light background*/
 
-.NavBarCell2    { background-color:#FFFFFF; color:#000000}
-.NavBarCell3    { background-color:#FFFFFF; color:#000000}
+.NavBarFont1    { color: #FFFFFF; }
+.NavBarFont1Rev { color: #000000; }
 
+.NavBarCell2    { background-color: #FFFFFF; color: #000000; }
+.NavBarCell3    { background-color: #FFFFFF; color: #000000; }
+ 
 li {
     margin-left: 25px;
 }
@@ -100,6 +101,6 @@ li {
 pre {
     font-size: 1.1em;
     padding: 8px 16px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #E0E0E0;
     border-radius: 3px;
 }

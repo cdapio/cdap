@@ -25,19 +25,31 @@ public class TTLReadFilter extends ReadFilter {
   /**
    * Time to live.
    */
-  private long ttl;
+  private final long ttl;
+  private long minStartTime;
 
   public TTLReadFilter(long ttl) {
     this.ttl = ttl;
   }
 
-  public long getTTL() {
+  public final long getTTL() {
     return ttl;
   }
 
   @Override
-  public boolean acceptTimestamp(long timestamp) {
-    return getCurrentTime() - timestamp <= ttl;
+  public void reset() {
+    minStartTime = -1L;
+  }
+
+  @Override
+  public final boolean acceptTimestamp(long timestamp) {
+    minStartTime = getCurrentTime() - ttl;
+    return timestamp >= minStartTime;
+  }
+
+  @Override
+  public final long getNextTimestampHint() {
+    return minStartTime;
   }
 
   protected long getCurrentTime() {

@@ -8,7 +8,7 @@ define(['core/controllers/app', 'core/controllers/mapreduce-config', 'core/contr
   'core/controllers/dataset', 'core/controllers/overview', 'core/controllers/resources',
   'core/controllers/flow-history',
   'core/controllers/flow-stream', 'core/controllers/flow-config',
-  'core/controllers/procedure-status', 'core/controllers/procedure-config',
+  'core/controllers/procedure-status', 'core/controllers/procedure-config', 'core/controllers/procedure-history',
 	'core/controllers/flow-log', 'core/controllers/procedure-log', 'core/controllers/analyze',
   'core/controllers/workflow-status', 'core/controllers/workflow-history',
   'core/controllers/workflow-config', 'core/controllers/login', 'core/controllers/loading',

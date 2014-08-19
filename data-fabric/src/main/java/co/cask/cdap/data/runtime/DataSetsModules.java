@@ -32,21 +32,6 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
  * DataSets framework bindings
  */
 public class DataSetsModules {
-  public Module getInMemoryModule() {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        install(new FactoryModuleBuilder()
-                  .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                  .build(DatasetDefinitionRegistryFactory.class));
-        bind(DatasetTypeClassLoaderFactory.class).to(LocalDatasetTypeClassLoaderFactory.class);
-        expose(DatasetTypeClassLoaderFactory.class);
-        bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
-        expose(DatasetFramework.class);
-      }
-    };
-
-  }
 
   public Module getLocalModule() {
     return new PrivateModule() {

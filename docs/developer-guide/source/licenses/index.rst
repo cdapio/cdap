@@ -1,16 +1,16 @@
-.. :Author: Continuuity, Inc.
-   :Description: Continuuity Reactor Dependencies
+.. :author: Cask, Inc.
+   :description: CDAP Dependencies
 
-=============================================
-Continuuity Reactor Licenses and Dependencies
-=============================================
+==============================
+CDAP Licenses and Dependencies
+==============================
 
-Continuuity Reactor Product License
------------------------------------------
+CDAP Product License
+----------------------------------------------
 
-This product is copyright and licensed as follows:
+The Cask Data Application Platform (CDAP) product is copyright and licensed as follows:
 
-   Copyright 2014 Continuuity, Inc.
+   Copyright 2014 Cask, Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -26,12 +26,12 @@ This product is copyright and licensed as follows:
 
 
 
-Continuuity Reactor Documentation License
------------------------------------------
+CDAP Documentation License
+----------------------------------------------------
 
-The documentation for this product is copyright and licensed as follows:
+The Cask Data Application Platform (CDAP) documentation is copyright and licensed as follows:
 
-   Copyright 2014 Continuuity, Inc.
+   Copyright 2014 Cask, Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -46,12 +46,12 @@ The documentation for this product is copyright and licensed as follows:
    limitations under the License.
 
 
-Continuuity Reactor Dependent Packages, Licenses and License URLs
------------------------------------------------------------------
+CDAP Dependent Packages, Licenses and License URLs
+----------------------------------------------------------------------------
 
-- `Continuuity Reactor SingleNode Dependencies <reactor-singlenode-dependencies.html>`_
-  (`PDF <reactor-singlenode-dependencies.pdf>`__)
-- `Continuuity Reactor Level 1 Dependencies <reactor-level-1-dependencies.html>`_
-  (`PDF <reactor-level-1-dependencies.pdf>`__)
-- `Continuuity Reactor Distributed Dependencies <reactor-enterprise-dependencies.html>`_
-  (`PDF <reactor-enterprise-dependencies.pdf>`__)
+- `CDAP SingleNode Dependencies <cdap-singlenode-dependencies.html>`_
+  (`PDF <cdap-singlenode-dependencies.pdf>`__)
+- `CDAP Level 1 Dependencies <cdap-level-1-dependencies.html>`_
+  (`PDF <cdap-level-1-dependencies.pdf>`__)
+- `CDAP Distributed Dependencies <cdap-enterprise-dependencies.html>`_
+  (`PDF <cdap-enterprise-dependencies.pdf>`__)

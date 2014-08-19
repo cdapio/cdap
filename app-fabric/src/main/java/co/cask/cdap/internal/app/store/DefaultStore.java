@@ -36,9 +36,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
@@ -83,6 +84,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 
 /**
@@ -107,7 +109,7 @@ public class DefaultStore implements Store {
     this.locationFactory = locationFactory;
     this.configuration = conf;
     this.dsFramework =
-      new NamespacedDatasetFramework(framework, new ReactorDatasetNamespace(conf, Namespace.SYSTEM));
+      new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf, Namespace.SYSTEM));
 
     txnl =
       Transactional.of(
@@ -132,11 +134,12 @@ public class DefaultStore implements Store {
         });
   }
 
-  public static void upgrade(DatasetFramework framework) throws Exception {
-    DatasetAdmin admin = framework.getAdmin(APP_META_TABLE, null);
-    if (admin != null) {
-      admin.upgrade();
-    }
+  /**
+   * Adds datasets and types to the given {@link DatasetFramework} used by app mds.
+   * @param framework framework to add types and datasets to
+   */
+  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
+    framework.addInstance(Table.class.getName(), APP_META_TABLE, DatasetProperties.EMPTY);
   }
 
   @Nullable
@@ -591,6 +594,42 @@ public class DefaultStore implements Store {
     // todo: change stream "used by" flow mapping in metadata?
   }
 
+  @Override
+  public boolean programExists(final Id.Program id, final ProgramType type) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Boolean>() {
+      @Override
+      public Boolean apply(AppMds mds) throws Exception {
+        ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
+        if (appSpec == null) {
+          return false;
+        }
+        ProgramSpecification programSpecification = null;
+        try {
+          if (type == ProgramType.FLOW) {
+            programSpecification = getFlowSpecOrFail(id, appSpec);
+          } else if (type == ProgramType.PROCEDURE) {
+            programSpecification = getProcedureSpecOrFail(id, appSpec);
+          } else if (type == ProgramType.SERVICE) {
+            programSpecification = getServiceSpecOrFail(id, appSpec);
+          } else if (type == ProgramType.WORKFLOW) {
+            programSpecification = appSpec.getWorkflows().get(id.getId());
+          } else if (type == ProgramType.MAPREDUCE) {
+            programSpecification = appSpec.getMapReduce().get(id.getId());
+          } else if (type == ProgramType.WEBAPP) {
+            // no-op
+          } else {
+            throw new IllegalArgumentException("Invalid ProgramType");
+          }
+        } catch (NoSuchElementException e) {
+          programSpecification = null;
+        } catch (Exception e) {
+          Throwables.propagate(e);
+        }
+        return (programSpecification != null);
+      }
+    });
+  }
+
   @VisibleForTesting
   void clear() throws Exception {
     DatasetAdmin admin = dsFramework.getAdmin(APP_META_TABLE, null);
@@ -736,7 +775,7 @@ public class DefaultStore implements Store {
                                                               String flowletId, Id.Program id) {
     FlowletDefinition flowletDef = flowSpec.getFlowlets().get(flowletId);
     if (flowletDef == null) {
-      throw new IllegalArgumentException("no such flowlet @ account id: " + id.getAccountId() +
+      throw new NoSuchElementException("no such flowlet @ account id: " + id.getAccountId() +
                                            ", app id: " + id.getApplication() +
                                            ", flow id: " + id.getId() +
                                            ", flowlet id: " + id.getId());
@@ -747,7 +786,7 @@ public class DefaultStore implements Store {
   private static FlowSpecification getFlowSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
     FlowSpecification flowSpec = appSpec.getFlows().get(id.getId());
     if (flowSpec == null) {
-      throw new IllegalArgumentException("no such flow @ account id: " + id.getAccountId() +
+      throw new NoSuchElementException("no such flow @ account id: " + id.getAccountId() +
                                            ", app id: " + id.getApplication() +
                                            ", flow id: " + id.getId());
     }
@@ -757,7 +796,7 @@ public class DefaultStore implements Store {
   private static ServiceSpecification getServiceSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
     ServiceSpecification spec = appSpec.getServices().get(id.getId());
     if (spec == null) {
-      throw new IllegalArgumentException("no such service @ account id: " + id.getAccountId() +
+      throw new NoSuchElementException("no such service @ account id: " + id.getAccountId() +
                                            ", app id: " + id.getApplication() +
                                            ", service id: " + id.getId());
     }
@@ -767,7 +806,7 @@ public class DefaultStore implements Store {
   private static ProcedureSpecification getProcedureSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
     ProcedureSpecification procedureSpecification = appSpec.getProcedures().get(id.getId());
     if (procedureSpecification == null) {
-      throw new IllegalArgumentException("no such procedure @ account id: " + id.getAccountId() +
+      throw new NoSuchElementException("no such procedure @ account id: " + id.getAccountId() +
                                            ", app id: " + id.getApplication() +
                                            ", procedure id: " + id.getId());
     }
@@ -787,7 +826,7 @@ public class DefaultStore implements Store {
   private ApplicationSpecification getAppSpecOrFail(AppMds mds, Id.Program id) {
     ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
     if (appSpec == null) {
-      throw new IllegalArgumentException("no such application @ account id: " + id.getAccountId() +
+      throw new NoSuchElementException("no such application @ account id: " + id.getAccountId() +
                                            ", app id: " + id.getApplication().getId());
     }
     return appSpec;

@@ -16,6 +16,7 @@
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.file.FileReader;
@@ -24,8 +25,9 @@ import co.cask.cdap.data.file.filter.TTLReadFilter;
 import co.cask.cdap.data.stream.MultiLiveStreamFileReader;
 import co.cask.cdap.data.stream.StreamEventOffset;
 import co.cask.cdap.data.stream.StreamFileOffset;
+import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -54,6 +56,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamFileConsumerFactory.class);
 
+  private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
   private final StreamConsumerStateStoreFactory stateStoreFactory;
   private final String tablePrefix;
@@ -63,13 +66,14 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   private final QueueClientFactory queueClientFactory;
   private final StreamAdmin oldStreamAdmin;
 
-  protected AbstractStreamFileConsumerFactory(CConfiguration conf, StreamAdmin streamAdmin,
+  protected AbstractStreamFileConsumerFactory(CConfiguration cConf, StreamAdmin streamAdmin,
                                               StreamConsumerStateStoreFactory stateStoreFactory,
                                               QueueClientFactory queueClientFactory, StreamAdmin oldStreamAdmin) {
+    this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.stateStoreFactory = stateStoreFactory;
     this.tablePrefix =
-      new ReactorDatasetNamespace(conf, Namespace.SYSTEM).namespace(QueueConstants.STREAM_TABLE_PREFIX);
+      new DefaultDatasetNamespace(cConf, Namespace.SYSTEM).namespace(QueueConstants.STREAM_TABLE_PREFIX);
     this.queueClientFactory = queueClientFactory;
     this.oldStreamAdmin = oldStreamAdmin;
   }
@@ -97,16 +101,21 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
    */
   protected abstract void dropTable(String tableName) throws IOException;
 
-  /**
-   * Gathers stream file offsets.
-   *
-   * @param partitionLocation Location of the partition directory
-   * @param fileOffsets for collecting stream file offsets
-   * @param generation the stream generation
-   */
-  protected abstract void getFileOffsets(Location partitionLocation,
-                                         Collection<? super StreamFileOffset> fileOffsets,
-                                         int generation) throws IOException;
+  protected void getFileOffsets(Location partitionLocation,
+                                Collection<? super StreamFileOffset> fileOffsets,
+                                int generation) throws IOException {
+    // TODO: Support dynamic writer instances discovery
+    // Current assume it won't change and is based on cConf
+    int instances = cConf.getInt(Constants.Stream.CONTAINER_INSTANCES);
+    String filePrefix = cConf.get(Constants.Stream.FILE_PREFIX);
+    for (int i = 0; i < instances; i++) {
+      // The actual file prefix is formed by file prefix in cConf + writer instance id
+      String streamFilePrefix = filePrefix + '.' + i;
+      Location eventLocation = StreamUtils.createStreamLocation(partitionLocation, streamFilePrefix,
+                                                                0, StreamFileType.EVENT);
+      fileOffsets.add(new StreamFileOffset(eventLocation, 0, generation));
+    }
+  }
 
   @Override
   public final StreamConsumer create(QueueName streamName, String namespace,

@@ -18,13 +18,13 @@ package co.cask.cdap.logging.run;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.AbstractInMemoryReactorServiceManager;
+import co.cask.cdap.common.twill.AbstractInMemoryMasterServiceManager;
 import com.google.inject.Inject;
 
 /**
  * In memory explore service manager.
  */
-public class InMemoryExploreServiceManager extends AbstractInMemoryReactorServiceManager {
+public class InMemoryExploreServiceManager extends AbstractInMemoryMasterServiceManager {
 
   private final CConfiguration cConf;
 

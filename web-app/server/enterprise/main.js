@@ -13,7 +13,7 @@ var util = require('util'),
 var WebAppServer = require('../common/server');
 
 // The location of continuuity-site.xml
-var CONF_DIRECTORY = '/etc/continuuity/conf';
+var CONF_DIRECTORY = '/etc/cdap/conf';
 // Default port for the Dashboard.
 var DEFAULT_BIND_PORT = 9999;
 
@@ -51,10 +51,10 @@ util.inherits(EntServer, WebAppServer);
  */
 EntServer.prototype.getConfig = function(opt_callback) {
   var self = this;
-  fs.readFile(CONF_DIRECTORY + '/continuuity-site.xml', function(error, result) {
+  fs.readFile(CONF_DIRECTORY + '/cdap-site.xml', function(error, result) {
 
     if (error) {
-      self.logger.error('Could not read configuration file at ' + CONF_DIRECTORY + '/continuuity-site.xml');
+      self.logger.error('Could not read configuration file at ' + CONF_DIRECTORY + '/cdap-site.xml');
       return;
     }
 

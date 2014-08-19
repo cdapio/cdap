@@ -226,7 +226,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private void submit(final MapReduce job, MapReduceSpecification mapredSpec, Location jobJarLocation,
                       final BasicMapReduceContext context,
                       final DataSetInstantiator dataSetInstantiator) throws Exception {
-    Configuration mapredConf = new Configuration(hConf);
+    jobConf = Job.getInstance(new Configuration(hConf));
+    Configuration mapredConf = jobConf.getConfiguration();
 
     if (UserGroupInformation.isSecurityEnabled()) {
       // If runs in secure cluster, this program runner is running in a yarn container, hence not able
@@ -238,12 +239,21 @@ public class MapReduceProgramRunner implements ProgramRunner {
     int mapperMemory = mapredSpec.getMapperMemoryMB();
     int reducerMemory = mapredSpec.getReducerMemoryMB();
     // this will determine how much memory the yarn container will run with
-    mapredConf.setInt("mapreduce.map.memory.mb", mapperMemory);
-    mapredConf.setInt("mapreduce.reduce.memory.mb", reducerMemory);
-    // java heap size doesn't automatically get set to the yarn container memory...
-    mapredConf.set("mapreduce.map.java.opts", "-Xmx" + mapperMemory + "m");
-    mapredConf.set("mapreduce.reduce.java.opts", "-Xmx" + reducerMemory + "m");
-    jobConf = Job.getInstance(mapredConf);
+    if (mapperMemory > 0) {
+      mapredConf.setInt(Job.MAP_MEMORY_MB, mapperMemory);
+      // Also set the Xmx to be smaller than the container memory.
+      mapredConf.set(Job.MAP_JAVA_OPTS, "-Xmx" + (int) (mapperMemory * 0.8) + "m");
+    }
+    if (reducerMemory > 0) {
+      mapredConf.setInt(Job.REDUCE_MEMORY_MB, reducerMemory);
+      // Also set the Xmx to be smaller than the container memory.
+      mapredConf.set(Job.REDUCE_JAVA_OPTS, "-Xmx" + (int) (reducerMemory * 0.8) + "m");
+    }
+
+    // Prefer our job jar in the classpath
+    // Set both old and new keys
+    mapredConf.setBoolean("mapreduce.user.classpath.first", true);
+    mapredConf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
 
     if (UserGroupInformation.isSecurityEnabled()) {
       Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();

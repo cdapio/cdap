@@ -15,7 +15,7 @@
  */
 
 /**
- * Defines APIs for accessing and managing data within Continuuity Reactor.
+ * Defines APIs for accessing and managing data within CDAP.
  * <p>
  * Implement {@link co.cask.cdap.api.dataset.DatasetDefinition} or {@link co.cask.cdap.api.dataset.Dataset}
  * to define custom data set types.

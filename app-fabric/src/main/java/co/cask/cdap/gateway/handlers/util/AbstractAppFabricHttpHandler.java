@@ -19,7 +19,9 @@ package co.cask.cdap.gateway.handlers.util;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.proto.Instances;
+import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -27,6 +29,7 @@ import com.google.gson.reflect.TypeToken;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 
 /**
@@ -92,5 +96,23 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     } finally {
       reader.close();
     }
+  }
+
+  /**
+   * Respond with a 404 if a NoSuchElementException is thrown.
+   */
+  protected boolean respondIfElementNotFound(Throwable t, HttpResponder responder) {
+    return respondIfRootCauseOf(t, NoSuchElementException.class, HttpResponseStatus.NOT_FOUND, responder,
+                                "Could not find element.", null);
+  }
+
+  private <T extends Throwable> boolean respondIfRootCauseOf(Throwable t, Class<T> type, HttpResponseStatus status,
+                                                             HttpResponder responder, String msgFormat,
+                                                             Object... args) {
+    if (type.isAssignableFrom(Throwables.getRootCause(t).getClass())) {
+      responder.sendString(status, String.format(msgFormat, args));
+      return true;
+    }
+    return false;
   }
 }

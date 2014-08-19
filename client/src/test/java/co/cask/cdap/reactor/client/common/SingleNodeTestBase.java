@@ -19,16 +19,13 @@ package co.cask.cdap.reactor.client.common;
 import co.cask.cdap.SingleNodeMain;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
 import org.apache.hadoop.conf.Configuration;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
 
 /**
  *
@@ -40,35 +37,40 @@ public class SingleNodeTestBase {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private SingleNodeMain singleNodeMain;
+  private static SingleNodeMain singleNodeMain;
+  /**
+   * Index of the current test being run.
+   * TODO: Hack to handle when SingleNodeTestBase is used as a suite and part of a suite.
+   */
+  private static int testStackIndex = 0;
 
-  @Before
-  public void setUp() throws Throwable {
-    try {
-      CConfiguration cConf = CConfiguration.create();
-      cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+  @BeforeClass
+  public static void setUpClass() throws Throwable {
+    testStackIndex++;
+    if (singleNodeMain == null) {
+      try {
+        CConfiguration cConf = CConfiguration.create();
+        cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
-      // Start singlenode without UI
-      singleNodeMain = SingleNodeMain.createSingleNodeMain(true, null, cConf, new Configuration());
-      singleNodeMain.startUp();
-    } catch (Throwable e) {
-      LOG.error("Failed to start singlenode", e);
-      if (singleNodeMain != null) {
-        singleNodeMain.shutDown();
+        // Start singlenode without UI
+        singleNodeMain = SingleNodeMain.createSingleNodeMain(false, null, cConf, new Configuration());
+        singleNodeMain.startUp();
+      } catch (Throwable e) {
+        LOG.error("Failed to start singlenode", e);
+        if (singleNodeMain != null) {
+          singleNodeMain.shutDown();
+        }
+        throw e;
       }
-      throw e;
     }
   }
 
-  @After
-  public void tearDown() {
-    if (singleNodeMain != null) {
+  @AfterClass
+  public static void tearDownClass() {
+    testStackIndex--;
+    if (singleNodeMain != null && testStackIndex == 0) {
       singleNodeMain.shutDown();
+      singleNodeMain = null;
     }
   }
-
-  protected File createAppJarFile(Class<?> cls) {
-    return new File(AppFabricTestHelper.createAppJar(cls).toURI());
-  }
-
 }

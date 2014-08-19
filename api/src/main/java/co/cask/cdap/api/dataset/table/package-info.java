@@ -15,7 +15,6 @@
  */
 
 /**
- * Provides access to the system-level table {@link co.cask.cdap.api.dataset.Dataset}s available within Continuuity
- * Reactor.
+ * Provides access to the system-level table {@link co.cask.cdap.api.dataset.Dataset}s available within CDAP.
  */
 package co.cask.cdap.api.dataset.table;

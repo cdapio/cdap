@@ -17,18 +17,11 @@
 package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
-import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
-import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
 
 import java.io.IOException;
 
@@ -61,28 +54,16 @@ public class DatasetMetaTableUtil {
                                                                 DatasetProperties.EMPTY, null, null);
   }
 
-  public void upgrade() throws Exception {
-    DatasetsUtil.upgradeDataset(framework, META_TABLE_NAME, null);
-    DatasetsUtil.upgradeDataset(framework, INSTANCE_TABLE_NAME, null);
-  }
-
   /**
-   * Sets up a {@link DatasetFramework} instance for standalone usage.  NOTE: should NOT be used by applications!!!
+   * Adds datasets and types to the given {@link DatasetFramework} used by dataset service mds.
+   * @param datasetFramework framework to add types and datasets to
    */
-  public static DatasetFramework createRegisteredDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
-                                                                  CConfiguration cConf)
-    throws DatasetManagementException, IOException {
-    DatasetFramework mdsDatasetFramework =
-      new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory),
-                                     new ReactorDatasetNamespace(cConf, Namespace.SYSTEM));
-    mdsDatasetFramework.addModule("orderedTable", new HBaseOrderedTableModule());
-    addTypes(mdsDatasetFramework);
-    mdsDatasetFramework.addInstance(DatasetTypeMDS.class.getName(),
-                                    DatasetMetaTableUtil.META_TABLE_NAME, DatasetProperties.EMPTY);
-    mdsDatasetFramework.addInstance(DatasetInstanceMDS.class.getName(),
-                                    DatasetMetaTableUtil.INSTANCE_TABLE_NAME, DatasetProperties.EMPTY);
-    return mdsDatasetFramework;
-
+  public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
+    addTypes(datasetFramework);
+    datasetFramework.addInstance(DatasetTypeMDS.class.getName(),
+                                 DatasetMetaTableUtil.META_TABLE_NAME, DatasetProperties.EMPTY);
+    datasetFramework.addInstance(DatasetInstanceMDS.class.getName(),
+                                 DatasetMetaTableUtil.INSTANCE_TABLE_NAME, DatasetProperties.EMPTY);
   }
 
   private static void addTypes(DatasetFramework framework) throws DatasetManagementException {

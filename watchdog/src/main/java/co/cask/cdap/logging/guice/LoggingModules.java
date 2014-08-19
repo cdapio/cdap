@@ -17,6 +17,8 @@
 package co.cask.cdap.logging.guice;
 
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.logging.LoggingConfiguration;
+import co.cask.cdap.logging.appender.AsyncLogAppender;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.file.FileLogAppender;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
@@ -25,18 +27,23 @@ import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.logging.read.SingleNodeLogReader;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
+import com.google.inject.name.Names;
 
 /**
  * Injectable modules for logging.
  */
 public class LoggingModules extends RuntimeModule {
+
   @Override
   public Module getInMemoryModules() {
     return new AbstractModule() {
       @Override
       protected void configure() {
         bind(LogReader.class).to(SingleNodeLogReader.class);
-        bind(LogAppender.class).to(FileLogAppender.class);
+        bind(LogAppender.class).annotatedWith(Names.named(LoggingConfiguration.SYNC_LOG_APPENDER_ANNOTATION))
+          .to(FileLogAppender.class).in(Scopes.SINGLETON);
+        bind(LogAppender.class).to(AsyncLogAppender.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -47,7 +54,9 @@ public class LoggingModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(LogReader.class).to(SingleNodeLogReader.class);
-        bind(LogAppender.class).to(FileLogAppender.class);
+        bind(LogAppender.class).annotatedWith(Names.named(LoggingConfiguration.SYNC_LOG_APPENDER_ANNOTATION))
+          .to(FileLogAppender.class).in(Scopes.SINGLETON);
+        bind(LogAppender.class).to(AsyncLogAppender.class).in(Scopes.SINGLETON);
       }
     };
   }

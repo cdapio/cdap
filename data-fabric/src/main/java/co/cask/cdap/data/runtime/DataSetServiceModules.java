@@ -23,7 +23,6 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.LocalDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.YarnDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
@@ -57,6 +56,16 @@ import java.util.Map;
  * Bindings for DataSet Service.
  */
 public class DataSetServiceModules {
+  public static final Map<String, DatasetModule> INMEMORY_DATASET_MODULES;
+
+  static {
+    INMEMORY_DATASET_MODULES = Maps.newLinkedHashMap();
+    // NOTE: order is important due to dependencies between modules
+    INMEMORY_DATASET_MODULES.put("orderedTable-memory", new InMemoryOrderedTableModule());
+    INMEMORY_DATASET_MODULES.put("metricsTable-memory", new InMemoryMetricsTableModule());
+    INMEMORY_DATASET_MODULES.put("core", new CoreDatasetsModule());
+  }
+
   public Module getInMemoryModule() {
     return new PrivateModule() {
       @Override
@@ -80,7 +89,15 @@ public class DataSetServiceModules {
         bind(DatasetService.class);
         expose(DatasetService.class);
 
-        bind(DatasetOpExecutor.class).to(InMemoryDatasetOpExecutor.class);
+        Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
+        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
+        handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
+        handlerBinder.addBinding().to(PingHandler.class);
+
+        bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
+        expose(DatasetOpExecutorService.class);
+
+        bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
         expose(DatasetOpExecutor.class);
       }
     };

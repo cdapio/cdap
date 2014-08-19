@@ -17,10 +17,8 @@
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.data.operation.StatusCode;
-import co.cask.cdap.data2.OperationResult;
-import co.cask.cdap.data2.dataset.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
+import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
@@ -41,15 +39,12 @@ public class LevelDBMetricsTable implements MetricsTable {
   }
 
   @Override
-  public OperationResult<byte[]> get(byte[] row, byte[] column) throws Exception {
+  public byte[] get(byte[] row, byte[] column) throws Exception {
     NavigableMap<byte[], byte[]> result = core.getRow(row, new byte[][] { column }, null, null, -1, null);
     if (!result.isEmpty()) {
-      byte[] value = result.get(column);
-      if (value != null) {
-        return new OperationResult<byte[]>(value);
-      }
+      return result.get(column);
     }
-    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+    return null;
   }
 
   @Override

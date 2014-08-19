@@ -87,7 +87,7 @@ class IncrementSummingScanner implements RegionScanner {
     }
     throw new IllegalStateException(
       "RegionScanner.isFilterDone() called when the wrapped scanner is not a RegionScanner");
-}
+  }
 
   @Override
   public boolean nextRaw(List<KeyValue> cells, String metric) throws IOException {

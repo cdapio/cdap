@@ -1,7 +1,8 @@
-# This is an example config file. Modify and place in ~/.rst2pdf/config
+# This is the rst2pdf config file. Modify and place in /_templates/ 
+# and pass to rst2pdf by including it in the .rst file as a comment
 
 [general]
-# author="Continuuity, Inc."
+# author="Cask, Inc."
 
 # A comma-separated list of custom stylesheets. Example:
 # stylesheets="fruity.json,a4paper.json,verasans.json"

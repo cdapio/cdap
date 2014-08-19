@@ -267,9 +267,9 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   private static final class ClientExploreExecutionResult extends AbstractIterator<QueryResult>
     implements ExploreExecutionResult {
     private static final Logger LOG = LoggerFactory.getLogger(ClientExploreExecutionResult.class);
-    private static final int DEFAUL_FETCH_SIZE = 100;
+    private static final int DEFAULT_FETCH_SIZE = 100;
 
-    private int fetchSize = DEFAUL_FETCH_SIZE;
+    private int fetchSize = DEFAULT_FETCH_SIZE;
     private Iterator<QueryResult> delegate;
 
     private final ExploreHttpClient exploreClient;
@@ -331,7 +331,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
     @Override
     public void setFetchSize(int fetchSize) {
-      this.fetchSize = (fetchSize <= 0) ? DEFAUL_FETCH_SIZE : fetchSize;
+      this.fetchSize = (fetchSize <= 0) ? DEFAULT_FETCH_SIZE : fetchSize;
     }
 
     @Override

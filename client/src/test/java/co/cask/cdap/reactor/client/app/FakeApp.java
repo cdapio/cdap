@@ -20,6 +20,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import org.apache.twill.api.ResourceSpecification;
 
 import java.util.List;
 
@@ -49,9 +50,10 @@ public class FakeApp extends AbstractApplication {
   public void configure() {
     setName(NAME);
     addStream(new Stream(STREAM_NAME));
-    addDatasetModule("fakeDSModule", FakeDatasetModule.class);
+    addDatasetModule(FakeDatasetModule.NAME, FakeDatasetModule.class);
     createDataset(DS_NAME, FakeDataset.class.getName());
     addProcedure(new FakeProcedure());
     addFlow(new FakeFlow());
+    addService(FakeService.NAME, new FakeService());
   }
 }

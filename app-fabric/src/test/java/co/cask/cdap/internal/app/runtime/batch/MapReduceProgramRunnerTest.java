@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.TimeseriesTable;
@@ -29,7 +30,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
-import co.cask.cdap.data2.datafabric.ReactorDatasetNamespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.internal.app.Specifications;
@@ -48,7 +49,6 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -106,9 +106,8 @@ public class MapReduceProgramRunnerTest {
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = new NamespacedDatasetFramework(injector.getInstance(DatasetFramework.class),
-                                                 new ReactorDatasetNamespace(conf, Namespace.USER));
+                                                 new DefaultDatasetNamespace(conf, Namespace.USER));
 
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     dataSetInstantiator =
       new DataSetInstantiator(datasetFramework, injector.getInstance(CConfiguration.class),
@@ -125,7 +124,9 @@ public class MapReduceProgramRunnerTest {
   @After
   public void after() throws Exception {
     // cleanup user data (only user datasets)
-    dsFramework.deleteAllInstances();
+    for (DatasetSpecification spec : dsFramework.getInstances()) {
+      dsFramework.deleteInstance(spec.getName());
+    }
   }
 
   @Test

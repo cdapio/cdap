@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -40,7 +41,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Base class for writing HBase DataSetManager.
+ * Base class for writing HBase EntityAdmin.
  */
 public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
@@ -58,12 +59,14 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
   };
 
   protected final String tableName;
-  protected final HBaseAdmin admin;
+  protected final Configuration hConf;
   protected final HBaseTableUtil tableUtil;
 
-  protected AbstractHBaseDataSetAdmin(String name, HBaseAdmin admin, HBaseTableUtil tableUtil) {
+  private HBaseAdmin admin;
+
+  protected AbstractHBaseDataSetAdmin(String name, Configuration hConf, HBaseTableUtil tableUtil) {
     this.tableName = name;
-    this.admin = admin;
+    this.hConf = hConf;
     this.tableUtil = tableUtil;
   }
 
@@ -75,28 +78,30 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
   @Override
   public boolean exists() throws IOException {
-    return admin.tableExists(tableName);
+    return getAdmin().tableExists(tableName);
   }
 
   @Override
   public void truncate() throws IOException {
     byte[] tableName = Bytes.toBytes(this.tableName);
-    HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
-    admin.disableTable(tableName);
-    admin.deleteTable(tableName);
-    admin.createTable(tableDescriptor);
+    HTableDescriptor tableDescriptor = getAdmin().getTableDescriptor(tableName);
+    getAdmin().disableTable(tableName);
+    getAdmin().deleteTable(tableName);
+    getAdmin().createTable(tableDescriptor);
   }
 
   @Override
   public void drop() throws IOException {
     byte[] tableName = Bytes.toBytes(this.tableName);
-    admin.disableTable(tableName);
-    admin.deleteTable(tableName);
+    getAdmin().disableTable(tableName);
+    getAdmin().deleteTable(tableName);
   }
 
   @Override
   public void close() throws IOException {
-    admin.close();
+    if (admin != null) {
+      admin.close();
+    }
   }
 
   /**
@@ -108,7 +113,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
   protected void upgradeTable(String tableNameStr) throws IOException {
     byte[] tableName = Bytes.toBytes(tableNameStr);
 
-    HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
+    HTableDescriptor tableDescriptor = getAdmin().getTableDescriptor(tableName);
 
     // Upgrade any table properties if necessary
     boolean needUpgrade = upgradeTable(tableDescriptor);
@@ -166,15 +171,15 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     LOG.info("Upgrading table '{}'...", tableNameStr);
     boolean enableTable = false;
     try {
-      admin.disableTable(tableName);
+      getAdmin().disableTable(tableName);
       enableTable = true;
     } catch (TableNotEnabledException e) {
       LOG.debug("Table '{}' not enabled when try to disable it.", tableNameStr);
     }
 
-    admin.modifyTable(tableName, tableDescriptor);
+    getAdmin().modifyTable(tableName, tableDescriptor);
     if (enableTable) {
-      admin.enableTable(tableName);
+      getAdmin().enableTable(tableName);
     }
 
     LOG.info("Table '{}' upgrade completed.", tableNameStr);
@@ -236,5 +241,12 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     public int size() {
       return coprocessors.size();
     }
+  }
+
+  protected HBaseAdmin getAdmin() throws IOException {
+    if (admin == null) {
+      admin = new HBaseAdmin(hConf);
+    }
+    return admin;
   }
 }

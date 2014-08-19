@@ -28,7 +28,9 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
@@ -43,6 +45,7 @@ import org.junit.Test;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -71,21 +74,7 @@ public class IncrementSummingScannerTest {
     TableName tableName = TableName.valueOf("TestIncrementSummingScanner");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
-    HTableDescriptor htd = new HTableDescriptor(tableName);
-    HColumnDescriptor cfd = new HColumnDescriptor(familyBytes);
-    cfd.setMaxVersions(Integer.MAX_VALUE);
-    htd.addFamily(cfd);
-    htd.addCoprocessor(IncrementHandler.class.getName());
-    Path tablePath = new Path("/tmp/" + tableName);
-    Path hlogPath = new Path("/tmp/hlog");
-    Configuration hConf = conf;
-    FileSystem fs = FileSystem.get(hConf);
-    assertTrue(fs.mkdirs(tablePath));
-    HLog hLog = HLogFactory.createHLog(fs, hlogPath, "testRegionScanner", hConf);
-    HRegionInfo regionInfo = new HRegionInfo(tableName);
-    HRegionFileSystem regionFS = HRegionFileSystem.createRegionOnFileSystem(hConf, fs, tablePath, regionInfo);
-    HRegion region = new HRegion(regionFS, hLog, hConf, htd,
-                                 new MockRegionServerServices(hConf, null));
+    HRegion region = createRegion(tableName, familyBytes);
     try {
       region.initialize();
       
@@ -189,5 +178,80 @@ public class IncrementSummingScannerTest {
       region.close();
     }
 
+  }
+
+  @Test
+  public void testFlushAndCompact() throws Exception {
+    TableName tableName = TableName.valueOf("TestFlushAndCompact");
+    byte[] familyBytes = Bytes.toBytes("f");
+    byte[] columnBytes = Bytes.toBytes("c");
+    HRegion region = createRegion(tableName, familyBytes);
+    try {
+      region.initialize();
+
+      // load an initial set of increments
+      long ts = System.currentTimeMillis();
+      byte[] row1 = Bytes.toBytes("row1");
+      for (int i = 0; i < 50; i++) {
+        Put p = new Put(row1);
+        p.add(familyBytes, columnBytes, ts, Bytes.toBytes(1L));
+        p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
+        ts++;
+        region.put(p);
+      }
+
+      byte[] row2 = Bytes.toBytes("row2");
+      ts = System.currentTimeMillis();
+      // start with a full put
+      Put row2P = new Put(row2);
+      row2P.add(familyBytes, columnBytes, ts++, Bytes.toBytes(10L));
+      region.put(row2P);
+      for (int i = 0; i < 10; i++) {
+        Put p = new Put(row2);
+        p.add(familyBytes, columnBytes, ts++, Bytes.toBytes(1L));
+        p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
+        region.put(p);
+      }
+
+      // force a region flush
+      region.flushcache();
+      region.waitForFlushesAndCompactions();
+
+      Result r1 = region.get(new Get(row1));
+      assertNotNull(r1);
+      assertFalse(r1.isEmpty());
+      // row1 should have a full put aggregating all 50 incrments
+      Cell r1Cell = r1.getColumnLatestCell(familyBytes, columnBytes);
+      assertNotNull(r1Cell);
+      assertEquals(50L, Bytes.toLong(r1Cell.getValue()));
+
+      Result r2 = region.get(new Get(row2));
+      assertNotNull(r2);
+      assertFalse(r2.isEmpty());
+      // row2 should have a full put aggregating prior put + 10 increments
+      Cell r2Cell = r2.getColumnLatestCell(familyBytes, columnBytes);
+      assertNotNull(r2Cell);
+      assertEquals(20L, Bytes.toLong(r2Cell.getValue()));
+    } finally {
+      region.close();
+    }
+  }
+
+  private HRegion createRegion(TableName tableName, byte[] family) throws Exception {
+    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HColumnDescriptor cfd = new HColumnDescriptor(family);
+    cfd.setMaxVersions(Integer.MAX_VALUE);
+    htd.addFamily(cfd);
+    htd.addCoprocessor(IncrementHandler.class.getName());
+    Path tablePath = new Path("/tmp/" + tableName.getNameAsString());
+    Path hlogPath = new Path("/tmp/hlog-" + tableName.getNameAsString());
+    Configuration hConf = conf;
+    FileSystem fs = FileSystem.get(hConf);
+    assertTrue(fs.mkdirs(tablePath));
+    HLog hLog = HLogFactory.createHLog(fs, hlogPath, tableName.getNameAsString(), hConf);
+    HRegionInfo regionInfo = new HRegionInfo(tableName);
+    HRegionFileSystem regionFS = HRegionFileSystem.createRegionOnFileSystem(hConf, fs, tablePath, regionInfo);
+    return new HRegion(regionFS, hLog, hConf, htd,
+                                 new MockRegionServerServices(hConf, null));
   }
 }

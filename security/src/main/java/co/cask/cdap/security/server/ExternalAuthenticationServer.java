@@ -27,6 +27,7 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -39,7 +40,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -47,11 +48,15 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Jetty service for External Authentication.
  */
 public class ExternalAuthenticationServer extends AbstractExecutionThreadService {
+
+  public static final String NAMED_EXTERNAL_AUTH = "external.auth";
+
   private final int port;
   private final int maxThreads;
-  private final HashMap<String, Object> handlers;
+  private final Map<String, Object> handlers;
   private final DiscoveryService discoveryService;
   private final CConfiguration configuration;
+  private final AuditLogHandler auditLogHandler;
   private Cancellable serviceCancellable;
   private final GrantAccessToken grantAccessToken;
   private final AbstractAuthenticationHandler authenticationHandler;
@@ -79,7 +84,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
   @Inject
   public ExternalAuthenticationServer(CConfiguration configuration, DiscoveryService discoveryService,
-                                      @Named("security.handlers") HashMap handlers) {
+                                      @Named("security.handlers") Map<String, Object> handlers,
+                                      @Named(NAMED_EXTERNAL_AUTH) AuditLogHandler auditLogHandler) {
     this.port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
     this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;
@@ -87,6 +93,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
     this.configuration = configuration;
     this.grantAccessToken = (GrantAccessToken) handlers.get(HandlerType.GRANT_TOKEN_HANDLER);
     this.authenticationHandler = (AbstractAuthenticationHandler) handlers.get(HandlerType.AUTHENTICATION_HANDLER);
+    this.auditLogHandler = auditLogHandler;
   }
 
   /**
@@ -134,7 +141,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       ServletContextHandler context = new ServletContextHandler();
       context.setServer(server);
       context.addServlet(HttpServletDispatcher.class, "/");
-      context.addEventListener(new AuthenticationGuiceServletContextListener(handlers, configuration));
+      context.addEventListener(new AuthenticationGuiceServletContextListener(handlers));
       context.setSecurityHandler(authenticationHandler);
 
       SelectChannelConnector connector = new SelectChannelConnector();
@@ -164,7 +171,12 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         server.setConnectors(new Connector[]{connector});
       }
 
-      server.setHandler(context);
+      HandlerCollection handlers = new HandlerCollection();
+      handlers.addHandler(context);
+      // AuditLogHandler must be last, since it needs the response that was sent to the client
+      handlers.addHandler(auditLogHandler);
+
+      server.setHandler(handlers);
     } catch (Exception e) {
       LOG.error("Error while starting server.");
       LOG.error(e.getMessage());
@@ -173,7 +185,6 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
   /**
    * Initializes the handlers.
-   * @return
    */
   protected void initHandlers() throws Exception {
     authenticationHandler.init();
@@ -183,6 +194,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   @Override
   protected Executor executor() {
     final AtomicInteger id = new AtomicInteger();
+    //noinspection NullableProblems
     return new Executor() {
       @Override
       public void execute(Runnable runnable) {

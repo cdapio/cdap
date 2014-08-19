@@ -123,6 +123,8 @@ abstract class ExploreHttpClient implements Explore {
     HttpResponse response = doGet(String.format("data/explore/queries/%s/%s", handle.getHandle(), "status"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, QueryStatus.class);
+    } else if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
+      throw new HandleNotFoundException("Handle " + handle.getHandle() + "not found.");
     }
     throw new ExploreException("Cannot get status. Reason: " + getDetails(response));
   }
@@ -132,6 +134,8 @@ abstract class ExploreHttpClient implements Explore {
     HttpResponse response = doGet(String.format("data/explore/queries/%s/%s", handle.getHandle(), "schema"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, COL_DESC_LIST_TYPE);
+    } else if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
+      throw new HandleNotFoundException("Handle " + handle.getHandle() + "not found.");
     }
     throw new ExploreException("Cannot get result schema. Reason: " + getDetails(response));
   }
@@ -142,6 +146,8 @@ abstract class ExploreHttpClient implements Explore {
                                    GSON.toJson(ImmutableMap.of("size", size)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, ROW_LIST_TYPE);
+    } else if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
+      throw new HandleNotFoundException("Handle " + handle.getHandle() + "not found.");
     }
     throw new ExploreException("Cannot get next results. Reason: " + getDetails(response));
   }
@@ -153,6 +159,8 @@ abstract class ExploreHttpClient implements Explore {
                                    null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, ROW_LIST_TYPE);
+    } else if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
+      throw new HandleNotFoundException("Handle " + handle.getHandle() + "not found.");
     }
     throw new ExploreException("Cannot get results preview. Reason: " + getDetails(response));
   }
@@ -162,6 +170,8 @@ abstract class ExploreHttpClient implements Explore {
     HttpResponse response = doDelete(String.format("data/explore/queries/%s", handle.getHandle()));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return;
+    } else if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
+      throw new HandleNotFoundException("Handle " + handle.getHandle() + "not found.");
     }
     throw new ExploreException("Cannot close operation. Reason: " + getDetails(response));
   }
