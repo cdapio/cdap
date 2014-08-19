@@ -57,6 +57,8 @@ define([], function () {
     loadDiscoverableDatasets: function () {
       var self = this;
         var datasets = self.get('datasets');
+        // If jquery's ajax is used properly then the nesting could be avoided.
+        // http.js getJSON does not return $.get which internally calls $.ajax
         self.HTTP.rest('data/explore/tables', function(response) {
           response.forEach(function (dataset) {
             var name = dataset.table;
