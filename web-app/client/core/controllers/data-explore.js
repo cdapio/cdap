@@ -58,18 +58,17 @@ define([], function () {
 		loadDiscoverableDatasets: function () {
 		  var self = this;
       var datasets = self.get('datasets');
-		  self.HTTP.rest('data/datasets?meta=true&explorable=true', function (response) {
+		  self.HTTP.rest('data/explore/tables', function(response) {
 		    response.forEach(function (dataset) {
-		      var name = dataset.hive_table;
-          var shortName = dataset.spec.name.replace(/.*\./,'');
-          self.HTTP.rest('data/explore/datasets/' + shortName + '/schema', function (response, status) {
+		      var name = dataset.table;
+          self.HTTP.rest('data/explore/tables/' + name + '/schema', function(response, status) {
             var results = [];
             for(var key in response) {
               if(response.hasOwnProperty(key)){
                 results.push({columns:[key, response[key]]});
               }
             }
-            datasets.pushObject(Ember.Object.create({name:name, shortName:shortName, results:results}));
+            datasets.pushObject(Ember.Object.create({name:name, results:results}));
 
             if(datasets.length == 1){
               self.selectDataset(datasets[0]);
