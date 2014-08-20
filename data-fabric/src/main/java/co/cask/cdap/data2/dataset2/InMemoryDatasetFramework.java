@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -156,6 +157,12 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   @Override
   public synchronized boolean hasType(String typeName) throws DatasetManagementException {
     return registry.get(typeName) != null;
+  }
+
+  @Override
+  public DatasetTypeMeta getType(String typeName) throws DatasetManagementException {
+    // place holder for now
+    return null;
   }
 
   @Override

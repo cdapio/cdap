@@ -144,6 +144,11 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public DatasetTypeMeta getType(String typeName) throws DatasetManagementException {
+    return client.getType(typeName);
+  }
+
+  @Override
   public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
     client.deleteInstance(datasetInstanceName);
   }

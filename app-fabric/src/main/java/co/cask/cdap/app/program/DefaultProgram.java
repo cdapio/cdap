@@ -19,7 +19,9 @@ package co.cask.cdap.app.program;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.DatasetFilterClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.lang.jar.ProgramClassLoader;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -32,6 +34,8 @@ import org.apache.twill.filesystem.Location;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
@@ -50,6 +54,7 @@ public final class DefaultProgram implements Program {
   private final File expandFolder;
   private final ClassLoader parentClassLoader;
   private final File specFile;
+  private final List<Location> datasetTypeJars;
   private boolean expanded;
   private ClassLoader classLoader;
   private ApplicationSpecification specification;
@@ -62,9 +67,10 @@ public final class DefaultProgram implements Program {
    *                     the {@link #getClassLoader()} methods would throw exception.
    * @param parentClassLoader Parent classloader for the program class.
    */
-  DefaultProgram(Location programJarLocation,
+  DefaultProgram(Location programJarLocation, List<Location> datasetTypeJars,
                  @Nullable File expandFolder, ClassLoader parentClassLoader) throws IOException {
     this.programJarLocation = programJarLocation;
+    this.datasetTypeJars = datasetTypeJars;
     this.expandFolder = expandFolder;
     this.parentClassLoader = parentClassLoader;
 
@@ -92,8 +98,9 @@ public final class DefaultProgram implements Program {
     }
   }
 
-  public DefaultProgram(Location programJarLocation, ClassLoader classLoader) throws IOException {
-    this(programJarLocation, null, null);
+  public DefaultProgram(Location programJarLocation, List<Location> datasetTypeJars,
+                        ClassLoader classLoader) throws IOException {
+    this(programJarLocation, datasetTypeJars, null, null);
     this.classLoader = classLoader;
   }
 
@@ -157,8 +164,10 @@ public final class DefaultProgram implements Program {
     if (classLoader == null) {
       expandIfNeeded();
       try {
-        classLoader = ClassLoaders.newProgramClassLoader(
-          expandFolder, ApiResourceListHolder.getResourceList(), parentClassLoader);
+        DatasetFilterClassLoader datasetFilterClassLoader =
+          ClassLoaders.newDatasetClassLoader(datasetTypeJars,
+                                             ApiResourceListHolder.getResourceList(), parentClassLoader);
+        classLoader = new ProgramClassLoader(expandFolder, datasetFilterClassLoader);
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }

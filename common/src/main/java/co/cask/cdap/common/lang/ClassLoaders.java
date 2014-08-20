@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.utils.Dependencies;
 
 import java.io.File;
@@ -68,6 +69,17 @@ public final class ClassLoaders {
     ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                     ClassLoaders.class.getClassLoader());
     return new ProgramClassLoader(unpackedJarDir, new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
+                                                                         ImmutableList.of(parentClassLoader)));
+  }
+
+  public static DatasetFilterClassLoader newDatasetClassLoader(List<Location> datasetJars,
+                                                               Iterable<String> apiResourceList,
+                                                               ClassLoader parentClassLoader) throws IOException {
+    Predicate<String> predicate = Predicates.in(Sets.newHashSet(apiResourceList));
+    ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                    ClassLoaders.class.getClassLoader());
+    return new DatasetFilterClassLoader(datasetJars,
+                                        new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
                                                                          ImmutableList.of(parentClassLoader)));
   }
 

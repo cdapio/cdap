@@ -21,6 +21,8 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.proto.DatasetMeta;
+import co.cask.cdap.proto.DatasetTypeMeta;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -132,6 +134,14 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    */
   boolean hasType(String typeName) throws DatasetManagementException;
+
+  /**
+   *
+   * @param typeName
+   * @return  DatasetTypeMeta of given dataset type
+   * @throws DatasetManagementException
+   */
+  DatasetTypeMeta getType(String typeName) throws DatasetManagementException;
 
   /**
    * Deletes dataset instance from the system.

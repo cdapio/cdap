@@ -18,12 +18,15 @@ package co.cask.cdap.app.program;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Objects;
+import com.google.common.cache.LoadingCache;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -33,7 +36,7 @@ public final class Programs {
 
   public static Program createWithUnpack(Location location, File destinationUnpackedJarDir,
                                          ClassLoader parentClassLoader) throws IOException {
-    return new DefaultProgram(location, destinationUnpackedJarDir, parentClassLoader);
+    return new DefaultProgram(location, null, destinationUnpackedJarDir, parentClassLoader);
   }
 
   public static Program createWithUnpack(Location location, File destinationUnpackedJarDir) throws IOException {
@@ -45,11 +48,21 @@ public final class Programs {
    * would not function from the program this method returns.
    */
   public static Program create(Location location, ClassLoader classLoader) throws IOException {
-    return new DefaultProgram(location, classLoader);
+    return new DefaultProgram(location, null, classLoader);
+  }
+
+
+  /**
+   * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
+   * would not function from the program this method returns.
+   */
+  public static Program create(Location location, List<Location> datasetTypeJars,
+                               ClassLoader classLoader) throws IOException {
+    return new DefaultProgram(location, datasetTypeJars, classLoader);
   }
 
   public static Program create(Location location) throws IOException {
-    return new DefaultProgram(location, getClassLoader());
+    return new DefaultProgram(location, null, getClassLoader());
   }
 
   /**

@@ -46,7 +46,7 @@ public class ProgramGenerationStageTest {
     ApplicationSpecification appSpec = Specifications.from(new ToyApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
-    ProgramGenerationStage pgmStage = new ProgramGenerationStage(configuration, lf);
+    ProgramGenerationStage pgmStage = new ProgramGenerationStage(configuration, lf, null);
     pgmStage.process(new StageContext(Object.class));  // Can do better here - fixed right now to run the test.
     pgmStage.process(new ApplicationSpecLocation(DefaultId.APPLICATION, newSpec, appArchive));
     Assert.assertTrue(true);
