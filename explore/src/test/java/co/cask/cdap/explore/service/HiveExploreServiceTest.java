@@ -134,6 +134,15 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     Assert.assertEquals(ImmutableList.of(new TableInfo("default", "my_table"),
                                          new TableInfo("default", "test")),
                         tables);
+
+    tables = exploreService.getTables("default");
+    Assert.assertEquals(ImmutableList.of(new TableInfo("default", "my_table"),
+                                         new TableInfo("default", "test")),
+                        tables);
+
+    tables = exploreService.getTables("foobar");
+    Assert.assertEquals(ImmutableList.of(), tables);
+
     exploreClient.submit("drop table if exists test").get();
   }
 
@@ -339,8 +348,8 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
     try {
       exploreService.getTableSchema("foo", "my_table");
-      Assert.fail("Should throw ExploreException as database foo is inaccessible to current user");
-    } catch (ExploreException e) {
+      Assert.fail("Should throw TableNotFoundException on table foo.my_table");
+    } catch (TableNotFoundException e) {
       // Expected
     }
   }

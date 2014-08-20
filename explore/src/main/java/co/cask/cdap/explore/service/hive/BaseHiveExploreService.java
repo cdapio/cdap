@@ -51,10 +51,6 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.IMetaStoreClient;
-import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.metastore.api.UnknownDBException;
-import org.apache.hadoop.hive.metastore.api.UnknownTableException;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
 import org.apache.hive.service.cli.FetchOrientation;
@@ -67,7 +63,6 @@ import org.apache.hive.service.cli.TableSchema;
 import org.apache.hive.service.cli.thrift.TColumnValue;
 import org.apache.hive.service.cli.thrift.TRow;
 import org.apache.hive.service.cli.thrift.TRowSet;
-import org.apache.thrift.TException;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +73,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
@@ -325,8 +319,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public QueryHandle getTables(String catalog, String schemaPattern,
-                          String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
+  public QueryHandle getTables(String catalog, String schemaPattern, String tableNamePattern,
+                               List<String> tableTypes) throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
@@ -349,17 +343,34 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public List<TableInfo> getTables(@Nullable String database) throws ExploreException {
-    // TODO change this database name once user namespace exists
-    if (database != null && !database.equals("default")) {
-      throw new ExploreException("Current user cannot access database " + database);
-    }
+  public List<TableInfo> getTables(@Nullable final String database) throws ExploreException {
+    // TODO check the database user is allowed to access if security is enabled and
+    // namespacing is in place.
 
     try {
-      FullQueryResults fullResults = runInternalQuery(String.format("show tables in %s", "default"));
+      OperationResultInfo fullResults = runInternalQuery(new HandleProducer() {
+        @Override
+        public OperationHandle getHandle(SessionHandle sessionHandle) throws ExploreException, SQLException {
+          return cliService.getTables(sessionHandle, null, database, "%", null);
+        }
+      });
+      int iTableDB = -1;
+      int iTableName = -1;
+      List<ColumnDesc> schema = fullResults.getSchema();
+      for (ColumnDesc col : schema) {
+        if (col.getName().equals("TABLE_SCHEM")) {
+          iTableDB = col.getPosition() - 1;
+        } else if (col.getName().equals("TABLE_NAME")) {
+          iTableName = col.getPosition() - 1;
+        }
+      }
+      if (iTableDB == -1 || iTableName == -1) {
+        throw new ExploreException("Could not parse get tables results");
+      }
       ImmutableList.Builder<TableInfo> builder = ImmutableList.builder();
       for (QueryResult result : fullResults.getResults()) {
-        builder.add(new TableInfo("default", result.getColumns().get(0).toString()));
+        builder.add(new TableInfo(result.getColumns().get(iTableDB).toString(),
+                                  result.getColumns().get(iTableName).toString()));
       }
       return builder.build();
     } catch (SQLException e) {
@@ -374,15 +385,18 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   @Override
   public Map<String, String> getTableSchema(@Nullable String database, String table)
     throws ExploreException, TableNotFoundException {
-    // TODO change this database name once user namespace exists
-    if (database != null && !database.equals("default")) {
-      throw new ExploreException("Current user cannot access database " + database);
-    }
+    // TODO check the database user is allowed to access if security is enabled and
+    // namespacing is in place.
 
     String tablePrefix = (database == null) ? "" : database + ".";
-    String query = "describe " + tablePrefix + table;
+    final String query = String.format("describe %s%s", tablePrefix, table);
     try {
-      FullQueryResults fullResults = runInternalQuery(query);
+      OperationResultInfo fullResults = runInternalQuery(new HandleProducer() {
+        @Override
+        public OperationHandle getHandle(SessionHandle sessionHandle) throws ExploreException, SQLException {
+          return doExecute(sessionHandle, query);
+        }
+      });
 
       int colNameIdx = -1;
       int colTypeIdx = -1;
@@ -415,11 +429,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * Run queries internally, without going through the logic of storing the operation info, timing out etc.
    * This is designed for fast queries that wouldn't block the explore service too long.
    */
-  private FullQueryResults runInternalQuery(String statement)
+  private OperationResultInfo runInternalQuery(HandleProducer handleProducer)
     throws ExploreException, SQLException, UnexpectedQueryStatusException {
     SessionHandle sessionHandle = cliService.openSession("", "", Maps.<String, String>newHashMap());
     try {
-      OperationHandle operationHandle = doExecute(sessionHandle, statement);
+      OperationHandle operationHandle = handleProducer.getHandle(sessionHandle);
       QueryStatus status;
       do {
         TimeUnit.MILLISECONDS.sleep(50);
@@ -427,7 +441,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       } while (!status.getStatus().isDone());
 
       if (!status.getStatus().equals(QueryStatus.OpStatus.FINISHED)) {
-        throw new UnexpectedQueryStatusException("Query '" + statement + "' ended with status " + status.getStatus(),
+        throw new UnexpectedQueryStatusException("Query ended with status " + status.getStatus(),
                                                  status.getStatus());
       }
 
@@ -438,7 +452,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         resultBuilder.addAll(tmpResults);
       } while (!tmpResults.isEmpty());
 
-      return new FullQueryResults(resultBuilder.build(), getResultSchemaInternal(operationHandle));
+      return new OperationResultInfo(resultBuilder.build(), getResultSchemaInternal(operationHandle));
     } catch (InterruptedException e) {
       LOG.error("Could not wait for operation execution", e);
       throw Throwables.propagate(e);
@@ -990,11 +1004,14 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
-  private static class FullQueryResults {
+  /**
+   * Contains the results of a Hive operation execution as well as the schema of those.
+   */
+  private static class OperationResultInfo {
     private final List<QueryResult> results;
     private final List<ColumnDesc> schema;
 
-    private FullQueryResults(List<QueryResult> results, List<ColumnDesc> schema) {
+    private OperationResultInfo(List<QueryResult> results, List<ColumnDesc> schema) {
       this.results = results;
       this.schema = schema;
     }
@@ -1006,5 +1023,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     public List<QueryResult> getResults() {
       return results;
     }
+  }
+
+  /**
+   * Produces a Hive {@link OperationHandle}.
+   */
+  private interface HandleProducer {
+    OperationHandle getHandle(SessionHandle sessionHandle) throws ExploreException, SQLException;
   }
 }

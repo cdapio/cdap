@@ -62,8 +62,7 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
     this.queueClientFactory = queueClientFactory;
     this.streamConsumerFactory = streamConsumerFactory;
     this.txExecutorFactory = txExecutorFactory;
-    this.dataSetContext = createDataSetContext(program, locationFactory,
-                                               datasetFramework, configuration);
+    this.dataSetContext = createDataSetContext(program, datasetFramework, configuration);
     this.programId = program.getId();
   }
 
@@ -123,14 +122,11 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
   }
 
   private DataSetInstantiator createDataSetContext(Program program,
-                                                   LocationFactory locationFactory,
                                                    DatasetFramework datasetFramework,
                                                    CConfiguration configuration) {
     try {
-      DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(datasetFramework, configuration,
+      return new DataSetInstantiator(datasetFramework, configuration,
                                                                         program.getClassLoader());
-      dataSetInstantiator.setDataSets(program.getSpecification().getDatasets().values());
-      return dataSetInstantiator;
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

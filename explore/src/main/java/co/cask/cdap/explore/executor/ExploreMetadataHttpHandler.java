@@ -37,6 +37,7 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +45,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -68,8 +71,11 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   @Path("data/explore/tables")
   public void getTables(HttpRequest request, HttpResponder responder) {
     LOG.trace("Received get tables for current user");
+    Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
+    List<String> databaseNames = queryParams.get("db");
     try {
-      responder.sendJson(HttpResponseStatus.OK, exploreService.getTables(null));
+      responder.sendJson(HttpResponseStatus.OK, exploreService.getTables(
+        (databaseNames != null && !databaseNames.isEmpty()) ? databaseNames.get(0) : null));
     } catch (ExploreException e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());

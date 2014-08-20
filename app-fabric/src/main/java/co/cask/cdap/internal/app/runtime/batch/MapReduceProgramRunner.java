@@ -172,8 +172,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
     DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(datasetFramework,
                                                                       cConf, program.getClassLoader());
     Map<String, DatasetCreationSpec> datasetSpecs = program.getSpecification().getDatasets();
-    dataSetInstantiator.setDataSets(datasetSpecs.values());
-
     Map<String, Closeable> dataSets = DataSets.createDataSets(dataSetInstantiator, datasetSpecs.keySet());
 
     final BasicMapReduceContext context =

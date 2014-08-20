@@ -244,7 +244,7 @@ abstract class ExploreHttpClient implements Explore {
 
   @Override
   public List<TableInfo> getTables(@Nullable String database) throws ExploreException {
-    HttpResponse response = doGet("data/explore/tables");
+    HttpResponse response = doGet(String.format("data/explore/tables%s", (database != null) ? "?db=" + database : ""));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, TABLES_TYPE);
     }
