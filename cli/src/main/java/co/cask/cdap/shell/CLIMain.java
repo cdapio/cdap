@@ -159,7 +159,7 @@ public class CLIMain {
       }
 
       for (String argumentToken : argumentTokens) {
-        // chop off the < and >
+        // chop off the < and > or [ and ]
         String completerType = argumentToken.substring(1, argumentToken.length() - 1);
         Completer argumentCompleter = getCompleterForType(completerType);
         if (argumentCompleter != null) {

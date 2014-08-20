@@ -31,7 +31,7 @@ import static jline.internal.Preconditions.checkNotNull;
 /**
  * Completer for a set of strings.
  */
-public class StringsCompleter implements Completer {
+public class StringsCompleter extends AbstractCompleter {
 
   private final Supplier<Collection<String>> strings;
 
@@ -50,21 +50,27 @@ public class StringsCompleter implements Completer {
   }
 
   @Override
+  protected Collection<String> getAllCandidates() {
+    return getStrings();
+  }
+
+  @Override
+  protected Collection<String> getCandidates(String buffer) {
+    TreeSet<String> strings = getStrings();
+    for (String match : strings.tailSet(buffer)) {
+      if (!match.startsWith(buffer)) {
+        break;
+      }
+
+      strings.add(match);
+    }
+    return strings;
+  }
+
+  @Override
   public int complete(@Nullable final String buffer, final int cursor, final List<CharSequence> candidates) {
     checkNotNull(candidates);
 
-    TreeSet<String> strings = getStrings();
-    if (buffer == null) {
-      candidates.addAll(strings);
-    } else {
-      for (String match : strings.tailSet(buffer)) {
-        if (!match.startsWith(buffer)) {
-          break;
-        }
-
-        candidates.add(match);
-      }
-    }
 
     if (candidates.size() == 1) {
       candidates.set(0, candidates.get(0) + " ");
