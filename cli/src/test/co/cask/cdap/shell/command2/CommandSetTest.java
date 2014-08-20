@@ -34,6 +34,36 @@ public class CommandSetTest {
     Command greetCommand = new Command() {
       @Override
       public void execute(Arguments arguments, PrintStream output) throws Exception {
+        output.println("truncated!");
+      }
+
+      @Override
+      public String getPattern() {
+        return "truncate all streams";
+      }
+
+      @Override
+      public String getDescription() {
+        return "Truncates all streams";
+      }
+    };
+
+    CommandSet commandSet = new CommandSet(greetCommand);
+    CommandMatch match = commandSet.findMatch("truncate all streams");
+    Assert.assertTrue(match.getCommand() == greetCommand);
+    testCommand(match.getCommand(), match.getArguments(), "truncated!\n");
+
+    Assert.assertNull(commandSet.findMatch("truncate all streams!"));
+    Assert.assertNull(commandSet.findMatch("truncate no streams"));
+    Assert.assertNull(commandSet.findMatch("truncate all streams x"));
+    Assert.assertNull(commandSet.findMatch("x truncate all streams"));
+  }
+
+  @Test
+  public void testFindMatchWithArguments() throws Exception {
+    Command greetCommand = new Command() {
+      @Override
+      public void execute(Arguments arguments, PrintStream output) throws Exception {
         for (int i = 0; i < arguments.getInt("times", 1); i++) {
           output.println("Hello " + arguments.get("user"));
         }
@@ -53,15 +83,43 @@ public class CommandSetTest {
     CommandSet commandSet = new CommandSet(greetCommand);
     CommandMatch match = commandSet.findMatch("greet bob 5");
     Assert.assertTrue(match.getCommand() == greetCommand);
+    testCommand(match.getCommand(), match.getArguments(), Strings.repeat("Hello bob\n", 5));
+  }
 
+  @Test
+  public void testFindMatchWithOptionalArguments() throws Exception {
+    Command greetCommand = new Command() {
+      @Override
+      public void execute(Arguments arguments, PrintStream output) throws Exception {
+        for (int i = 0; i < arguments.getInt("times", 1); i++) {
+          output.printf("[%d] Hello %s %s\n", arguments.getInt("timestamp"),
+                        arguments.get("user"), arguments.get("suffix"));
+        }
+      }
 
+      @Override
+      public String getPattern() {
+        return "greet <user> <times> [timestamp] [suffix]";
+      }
+
+      @Override
+      public String getDescription() {
+        return "Greets a user";
+      }
+    };
+
+    CommandSet commandSet = new CommandSet(greetCommand);
+    CommandMatch match = commandSet.findMatch("greet bob 5 123 blah");
+    Assert.assertTrue(match.getCommand() == greetCommand);
+    testCommand(match.getCommand(), match.getArguments(), Strings.repeat("[123] Hello bob blah\n", 5));
+  }
+
+  private void testCommand(Command command, Arguments args, String expectedOutput) throws Exception {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     PrintStream printStream = new PrintStream(outputStream);
-
-    Command matchedCommand = match.getCommand();
-    matchedCommand.execute(match.getArguments(), printStream);
+    command.execute(args, printStream);
 
     String output = new String(outputStream.toByteArray(), Charsets.UTF_8);
-    Assert.assertEquals(Strings.repeat("Hello bob\n", 5), output);
+    Assert.assertEquals(expectedOutput, output);
   }
 }

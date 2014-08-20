@@ -16,16 +16,18 @@
 
 package co.cask.cdap.shell.command2;
 
+import co.cask.cdap.shell.CommandPattern;
+
 /**
  * Represents an input matching for a command and provided arguments.
  */
 public final class CommandMatch {
   private final Command command;
-  private final Arguments arguments;
+  private final String input;
 
-  public CommandMatch(Command command, Arguments arguments) {
+  public CommandMatch(Command command, String input) {
     this.command = command;
-    this.arguments = arguments;
+    this.input = input;
   }
 
   public Command getCommand() {
@@ -33,6 +35,6 @@ public final class CommandMatch {
   }
 
   public Arguments getArguments() {
-    return arguments;
+    return new CommandPattern(command.getPattern()).parseArguments(input);
   }
 }

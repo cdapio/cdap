@@ -55,4 +55,12 @@ public class Arguments {
       return defaultValue;
     }
   }
+
+  public Integer getInt(String key) throws MissingArgumentException {
+    String value = arguments.get(key);
+    if (value == null) {
+      throw new MissingArgumentException("Missing required argument <" + key + ">");
+    }
+    return Integer.parseInt(value);
+  }
 }

@@ -17,14 +17,8 @@
 package co.cask.cdap.shell.command2;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Set of {@link Command}s.
@@ -59,54 +53,16 @@ public class CommandSet {
         // if pattern has an argument, check if input startsWith the pattern before first argument
         String patternPrefix = pattern.substring(0, pattern.indexOf(" <"));
         if (input.startsWith(patternPrefix)) {
-          return new CommandMatch(command, parseArguments(command, input));
+          return new CommandMatch(command, input);
         }
       } else {
         // if pattern has no argument, the entire input must match
         if (input.equals(pattern)) {
-          return new CommandMatch(command, parseArguments(command, input));
+          return new CommandMatch(command, input);
         }
       }
     }
 
     return null;
   }
-
-  private Arguments parseArguments(Command command, String input) {
-    String pattern = command.getPattern();
-    Map<Integer, String> argumentNames = getArgumentNames(command);
-
-    String regexPatternString = pattern.replaceAll("<(\\S+)>", "(\\\\S+)");
-    Pattern regexPattern = Pattern.compile(regexPatternString);
-    Matcher matcher = regexPattern.matcher(input);
-
-    if (!matcher.matches()) {
-      throw new RuntimeException("Wrong arguments provided: " + pattern);
-    }
-
-    ImmutableMap.Builder<String, String> args = ImmutableMap.builder();
-    for (int i = 1; i < matcher.groupCount() + 1; i++) {
-      String argumentName = argumentNames.get(i);
-      String argumentValue = matcher.group(i);
-      args.put(argumentName, argumentValue);
-    }
-
-    return new Arguments(args.build());
-  }
-
-  private Map<Integer, String> getArgumentNames(Command command) {
-    ImmutableMap.Builder<Integer, String> argumentNames = new ImmutableMap.Builder<Integer, String>();
-    Pattern pattern = Pattern.compile(".*<(\\S+)>.*");
-    Matcher matcher = pattern.matcher(command.getPattern());
-
-    if (matcher.matches()) {
-      for (int i = 1; i < matcher.groupCount() + 1; i++) {
-        String match = matcher.group(i);
-        argumentNames.put(i, match);
-      }
-    }
-
-    return argumentNames.build();
-  }
-
 }
