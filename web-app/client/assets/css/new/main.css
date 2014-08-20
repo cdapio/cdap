@@ -3575,20 +3575,18 @@ div.tooltip-inner {
 
 #query-display {
 	background: #666666;
-	max-height: 600px;
+	max-height: 50vh;
 	overflow: auto;
 }
 
 #query-tables {
 	width: 350px;
 	background: white;
-	min-height: 600px;
 }
 
 #query-schema {
 	margin-left: 350px;
 	color: white;
-	max-height: 600px;
 	overflow: auto;
 }
 
