@@ -180,6 +180,11 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("runnable-name") String runnableName) {
     try {
       String accountId = getAuthenticatedAccountId(request);
+      Id.Program programId = Id.Program.from(accountId, appId, serviceId);
+      if (!store.programExists(programId, ProgramType.SERVICE)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
       RuntimeSpecification specification = getRuntimeSpecification(accountId, appId, serviceId, runnableName);
       if (specification == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -210,6 +215,10 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, appId, serviceId);
+      if (!store.programExists(programId, ProgramType.SERVICE)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
 
       int instances = getInstances(request);
       if (instances < 1) {

@@ -238,13 +238,13 @@ public abstract class AppFabricTestBase {
   }
 
   /**
-   * Deploys and application.
+   * Deploys an application.
    */
   protected static HttpResponse deploy(Class<?> application) throws Exception {
     return deploy(application, null);
   }
   /**
-   * Deploys and application with (optionally) defined app name
+   * Deploys an application with (optionally) a defined app name
    */
   protected static HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
     Manifest manifest = new Manifest();
