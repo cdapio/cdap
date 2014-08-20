@@ -134,6 +134,15 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     Assert.assertEquals(ImmutableList.of(new TableInfo("default", "my_table"),
                                          new TableInfo("default", "test")),
                         tables);
+
+    tables = exploreService.getTables("default");
+    Assert.assertEquals(ImmutableList.of(new TableInfo("default", "my_table"),
+                                         new TableInfo("default", "test")),
+                        tables);
+
+    tables = exploreService.getTables("foobar");
+    Assert.assertEquals(ImmutableList.of(), tables);
+
     exploreClient.submit("drop table if exists test").get();
   }
 
