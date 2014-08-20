@@ -115,7 +115,7 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
     @Override
     protected void startUp() {
       CConfiguration cConf = CConfiguration.create();
-      cConf.setBoolean(Constants.Security.SSL_ENABLED, true);
+      cConf.setBoolean(Constants.Security.Router.SSL_ENABLED, true);
 
       URL certUrl = getClass().getClassLoader().getResource("cert.jks");
       Assert.assertNotNull(certUrl);
@@ -128,10 +128,10 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       cConf.set(Constants.Router.ADDRESS, hostname);
       cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
 
-      cConf.set(Constants.Security.SSL_KEYPASSWORD, "secret");
-      cConf.set(Constants.Security.SSL_KEYSTORE_PASSWORD, "secret");
-      cConf.set(Constants.Security.SSL_KEYSTORE_TYPE, "jks");
-      cConf.set(Constants.Security.SSL_KEYSTORE_PATH, certUrl.getPath());
+      cConf.set(Constants.Security.Router.SSL_KEYPASSWORD, "secret");
+      cConf.set(Constants.Security.Router.SSL_KEYSTORE_PASSWORD, "secret");
+      cConf.set(Constants.Security.Router.SSL_KEYSTORE_TYPE, "jks");
+      cConf.set(Constants.Security.Router.SSL_KEYSTORE_PATH, certUrl.getPath());
 
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),

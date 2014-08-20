@@ -48,9 +48,9 @@ To configure the granting of ``AccessToken``\s via SSL, add these properties to 
 ==========================================  ==============
    Property                                   Value
 ==========================================  ==============
-security.server.ssl.enabled                   true
-security.server.ssl.keystore.path             <path>
-security.server.ssl.keystore.password         <password>
+security.authserver.ssl.enabled               true
+security.authserver.ssl.keystore.path         <path>
+security.authserver.ssl.keystore.password     <password>
 ==========================================  ==============
 
 Configuring SSL for the Router

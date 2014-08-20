@@ -425,21 +425,39 @@ public final class Constants {
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
 
-    /** Enables SSL */
-    public static final String SSL_ENABLED = "security.ssl.enabled";
-    /** SSL keystore location */
-    public static final String SSL_KEYSTORE_PATH = "security.ssl.keystore.path";
-    /** SSL keystore type */
-    public static final String SSL_KEYSTORE_TYPE = "security.ssl.keystore.type";
-    /** SSL keystore key password */
-    public static final String SSL_KEYPASSWORD = "security.ssl.keystore.keypassword";
-    /** SSL keystore password */
-    public static final String SSL_KEYSTORE_PASSWORD = "security.ssl.keystore.password";
+    /**
+     * Security configuration for Router.
+     */
+    public static final class Router {
+      /** Enables SSL */
+      public static final String SSL_ENABLED = "security.router.ssl.enabled";
+      /** SSL port */
+      public static final String SSL_PORT = "security.router.ssl.port";
+      /** SSL keystore location */
+      public static final String SSL_KEYSTORE_PATH = "security.router.ssl.keystore.path";
+      /** SSL keystore type */
+      public static final String SSL_KEYSTORE_TYPE = "security.router.ssl.keystore.type";
+      /** SSL keystore key password */
+      public static final String SSL_KEYPASSWORD = "security.router.ssl.keystore.keypassword";
+      /** SSL keystore password */
+      public static final String SSL_KEYSTORE_PASSWORD = "security.router.ssl.keystore.password";
+    }
 
-    /** SSL port for Router */
-    public static final String ROUTER_SSL_PORT = "security.router.ssl.port";
-    /** SSL secured port for ExternalAuthenticationServer */
-    public static final String AUTH_SERVER_SSL_PORT = "security.server.ssl.port";
+    /**
+     * Security configuration for ExternalAuthenticationServer.
+     */
+    public static final class AuthenticationServer {
+      /** Enables SSL */
+      public static final String SSL_ENABLED = "security.authserver.ssl.enabled";
+      /** SSL port */
+      public static final String SSL_PORT = "security.authserver.ssl.port";
+      /** SSL keystore location */
+      public static final String SSL_KEYSTORE_PATH = "security.authserver.ssl.keystore.path";
+      /** SSL keystore type */
+      public static final String SSL_KEYSTORE_TYPE = "security.authserver.ssl.keystore.type";
+      /** SSL keystore password */
+      public static final String SSL_KEYSTORE_PASSWORD = "security.authserver.ssl.keystore.password";
+    }
   }
 
   /**

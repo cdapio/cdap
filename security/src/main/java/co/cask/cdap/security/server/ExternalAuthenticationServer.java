@@ -150,12 +150,12 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       connector.setHost(address.getCanonicalHostName());
       connector.setPort(port);
 
-      if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
+      if (configuration.getBoolean(Constants.Security.AuthenticationServer.SSL_ENABLED, false)) {
         SslContextFactory sslContextFactory = new SslContextFactory();
         Configuration sslConfiguration = new Configuration();
-        String keyStorePath = sslConfiguration.get(Constants.Security.SSL_KEYSTORE_PATH);
-        String keyStorePassword = sslConfiguration.get(Constants.Security.SSL_KEYSTORE_PASSWORD);
-        String keyStoreType = sslConfiguration.get(Constants.Security.SSL_KEYSTORE_TYPE);
+        String keyStorePath = sslConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH);
+        String keyStorePassword = sslConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);
+        String keyStoreType = sslConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_TYPE);
 
         Preconditions.checkArgument(keyStorePath != null, "Key Store Path Not Configured");
         Preconditions.checkArgument(keyStorePassword != null, "KeyStore Password Not Configured");
@@ -166,7 +166,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         // TODO Figure out how to pick a certificate from key store
 
         SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
-        int sslPort = configuration.getInt(Constants.Security.AUTH_SERVER_SSL_PORT);
+        int sslPort = configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT);
         sslConnector.setHost(address.getCanonicalHostName());
         sslConnector.setPort(sslPort);
         connector.setConfidentialPort(sslPort);

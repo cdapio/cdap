@@ -984,53 +984,73 @@
         <description>Parent node in ZooKeeper used for secret key distribution in distributed mode</description>
     </property>
 
-    <!--
-        Security-enabled Flag
-    -->
-    <property>
-        <name>security.enabled</name>
-        <value>false</value>
-        <description>If this is set to true, security layer will be up and active</description>
-    </property>
-
-    <property>
-        <name>security.realm</name>
-        <value>cdap</value>
-        <description>Security realm used for authentication</description>
-    </property>
-
-    <property>
-      <name>security.server.ssl.enabled</name>
-      <value>false</value>
-    </property>
-
-    <property>
-      <name>security.server.ssl.port</name>
-      <value>10010</value>
-    </property>
-
-    <property>
-      <name>security.ssl.keystore.path</name>
-      <value></value>
-    </property>
-
-    <property>
-      <name>security.ssl.keystore.password</name>
-      <value></value>
-    </property>
-
+  <!--
+      Security-enabled Flag
+  -->
   <property>
-    <name>security.ssl.keystore.type</name>
-    <value>jks</value>
+      <name>security.enabled</name>
+      <value>false</value>
+      <description>If this is set to true, security layer will be up and active</description>
   </property>
 
   <property>
-    <name>security.ssl.keystore.type</name>
+      <name>security.realm</name>
+      <value>cdap</value>
+      <description>Security realm used for authentication</description>
+  </property>
+
+  <!-- Security configuration for the external authentication server -->
+
+  <property>
+    <name>security.authserver.ssl.enabled</name>
+    <value>false</value>
+  </property>
+
+  <property>
+    <name>security.authserver.ssl.port</name>
+    <value>10010</value>
+  </property>
+
+  <property>
+    <name>security.authserver.ssl.keystore.path</name>
+    <value></value>
+  </property>
+
+  <property>
+    <name>security.authserver.ssl.keystore.password</name>
+    <value></value>
+  </property>
+
+  <property>
+    <name>security.authserver.ssl.keystore.type</name>
     <value>jks</value>
+  </property>
+
+  <!-- Security configuration for the router -->
+
+  <property>
+    <name>security.router.ssl.enabled</name>
+    <value>false</value>
   </property>
 
   <property>
     <name>security.router.ssl.port</name>
     <value>9443</value>
   </property>
+
+  <property>
+    <name>security.router.ssl.keystore.path</name>
+    <value></value>
+  </property>
+
+  <property>
+    <name>security.router.ssl.keystore.password</name>
+    <value></value>
+  </property>
+
+  <property>
+    <name>security.router.ssl.keystore.type</name>
+    <value>jks</value>
+  </property>
+
 </configuration>

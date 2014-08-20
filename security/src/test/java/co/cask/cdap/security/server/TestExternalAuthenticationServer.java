@@ -128,7 +128,7 @@ public class TestExternalAuthenticationServer {
     cConf.set(configBase.concat("userBaseDn"), "dc=example,dc=com");
     cConf.set(configBase.concat("userRdnAttribute"), "cn");
     cConf.set(configBase.concat("userObjectClass"), "inetorgperson");
-    cConf.set(Constants.Security.SSL_ENABLED, "false");
+    cConf.set(Constants.Security.AuthenticationServer.SSL_ENABLED, "false");
     return cConf;
   }
 

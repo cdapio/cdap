@@ -131,18 +131,18 @@ public class NettyRouter extends AbstractIdleService {
     this.discoveryServiceClient = discoveryServiceClient;
     this.configuration = cConf;
 
-    this.sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
+    this.sslEnabled = cConf.getBoolean(Constants.Security.Router.SSL_ENABLED);
     if (isSSLEnabled()) {
       File keystore;
       try {
-        keystore = new File(cConf.get(Constants.Security.SSL_KEYSTORE_PATH));
+        keystore = new File(cConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
       } catch (Exception e) {
         throw new RuntimeException("Cannot read keystore file : "
-                                     + cConf.get(Constants.Security.SSL_KEYSTORE_PATH));
+                                     + cConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
       }
       this.sslHandlerFactory = new SSLHandlerFactory(
-        keystore, cConf.get(Constants.Security.SSL_KEYSTORE_PASSWORD),
-        cConf.get(Constants.Security.SSL_KEYPASSWORD));
+        keystore, cConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD),
+        cConf.get(Constants.Security.Router.SSL_KEYPASSWORD));
     } else {
       this.sslHandlerFactory = null;
     }
