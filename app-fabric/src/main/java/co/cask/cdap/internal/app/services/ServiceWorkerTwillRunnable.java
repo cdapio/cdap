@@ -20,8 +20,10 @@ import co.cask.cdap.api.service.DefaultServiceWorkerContext;
 import co.cask.cdap.api.service.GuavaServiceTwillRunnable;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
+import co.cask.cdap.common.lang.InstantiatorFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
@@ -70,9 +72,10 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
   public void initialize(TwillContext context) {
     Map<String, String> runnableArgs = context.getSpecification().getConfigs();
     String serviceClassName = runnableArgs.get("service.class.name");
+    InstantiatorFactory factory = new InstantiatorFactory(false);
     try {
-      Class<?> serviceClass = programClassLoader.loadClass(serviceClassName);
-      worker = (ServiceWorker) serviceClass.newInstance();
+      TypeToken<?> type = TypeToken.of(programClassLoader.loadClass(serviceClassName));
+      worker = (ServiceWorker) factory.get(type).create();
       worker.initialize(new DefaultServiceWorkerContext(context.getSpecification().getConfigs()));
     } catch (Exception e) {
       LOG.error("Could not instantiate service " + serviceClassName);

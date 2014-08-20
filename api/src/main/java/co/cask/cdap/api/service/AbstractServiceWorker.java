@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.service;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
@@ -24,31 +25,35 @@ import java.util.Map;
  * Extend this class to add workers to a custom Service.
  */
 public abstract class AbstractServiceWorker implements ServiceWorker {
-  protected String name;
-  protected String description;
-  protected Map<String, String> args;
-
-  /**
-   * Default constructor used to instantiate a ServiceWorker.
-   */
-  public AbstractServiceWorker() {
-    this.name = "";
-    this.description = "";
-    this.args = Maps.newHashMap();
-  }
-
-  /**
-   * Create a ServiceWorker with no runtime arguments.
-   */
-  public AbstractServiceWorker(String name, String description, Map<String, String> runtimeArgs) {
-    this.name = name;
-    this.description = description;
-    this.args = runtimeArgs;
-  }
 
   @Override
   public ServiceWorkerSpecification configure() {
-    return new DefaultServiceWorkerSpecification(getClass().getName(), name, description, args);
+    return new DefaultServiceWorkerSpecification(getClass().getName(), getName(),
+                                                 getDescription(), getRuntimeArguments());
+  }
+
+  /**
+   * Get the name of the worker. Defaults to the class name.
+   * @return name of the worker.
+   */
+  protected String getName() {
+    return getClass().getSimpleName();
+  }
+
+  /**
+   * Get the description of the worker. Defaults to an empty string.
+   * @return
+   */
+  protected String getDescription() {
+    return "";
+  }
+
+  /**
+   * Get the runtime arguments for the worker. Defaults to an empty map.
+   * @return
+   */
+  protected Map<String, String> getRuntimeArguments() {
+    return ImmutableMap.of();
   }
 
   @Override
