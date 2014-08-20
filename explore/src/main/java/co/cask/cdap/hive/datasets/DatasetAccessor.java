@@ -20,18 +20,29 @@ import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.ApiResourceListHolder;
+import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.DatasetFilterClassLoader;
+import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.TxnCodec;
+import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionAware;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -117,7 +128,9 @@ public class DatasetAccessor {
       // Some other call in parallel may have already loaded it, so use the same classlaoder
       return framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, datasetClassLoader);
     }
-
+    classLoader = ClassLoaders.newDatasetClassLoader
+      (getDatasetJars(framework.getType(framework.getDatasetSpec(datasetName).getType())),
+       ApiResourceListHolder.getResourceList(), classLoader);
     // No classloader for dataset exists, load the dataset and save the classloader.
     Dataset dataset = framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, classLoader);
     if (dataset != null) {
@@ -125,4 +138,18 @@ public class DatasetAccessor {
     }
     return dataset;
   }
+
+  private static synchronized List<Location> getDatasetJars(DatasetTypeMeta datasetTypeMeta) {
+    List<Location> datasetTypeJars = Lists.newArrayList();
+    LocationFactory locationFactory = new LocalLocationFactory();
+    if (datasetTypeMeta != null) {
+      for (DatasetModuleMeta moduleMeta : datasetTypeMeta.getModules()) {
+        if (moduleMeta.getJarLocation() != null) {
+          datasetTypeJars.add(locationFactory.create(moduleMeta.getJarLocation()));
+        }
+      }
+    }
+    return datasetTypeJars;
+  }
+
 }

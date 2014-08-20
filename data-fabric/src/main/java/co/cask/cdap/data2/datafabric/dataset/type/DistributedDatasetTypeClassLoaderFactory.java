@@ -20,12 +20,15 @@ import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.proto.DatasetModuleMeta;
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Creates a {@link ClassLoader} for a {@link DatasetModuleMeta} by unpacking the moduleMeta jar,
@@ -47,8 +50,8 @@ public class DistributedDatasetTypeClassLoaderFactory implements DatasetTypeClas
     }
 
     // creating tempDir is fine since it will be created inside a YARN container, so it will be cleaned up
-    File tempDir = Files.createTempDir();
-    BundleJarUtil.unpackProgramJar(locationFactory.create(moduleMeta.getJarLocation()), tempDir);
-    return ClassLoaders.newProgramClassLoader(tempDir, ApiResourceListHolder.getResourceList(), parentClassLoader);
+    List<Location> datasetJars = Lists.newArrayList();
+    datasetJars.add(locationFactory.create(moduleMeta.getJarLocation()));
+    return ClassLoaders.newDatasetClassLoader(datasetJars, ApiResourceListHolder.getResourceList(), parentClassLoader);
   }
 }

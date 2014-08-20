@@ -263,21 +263,24 @@ public class RemoteDatasetFramework implements DatasetFramework {
                                                   ClassLoader classLoader)
     throws DatasetManagementException {
 
-
+    boolean firstLoad = false;
     if (classLoader == null) {
       classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader());
+      firstLoad = true;
     }
 
     DatasetDefinitionRegistry registry = registryFactory.create();
     List<DatasetModuleMeta> modulesToLoad = implementationInfo.getModules();
     for (DatasetModuleMeta moduleMeta : modulesToLoad) {
       // adding dataset module jar to classloader
-      try {
-        classLoader = typeLoader.create(moduleMeta, classLoader);
-      } catch (IOException e) {
-        LOG.error("Was not able to init classloader for module {} while trying to load type {}",
-                  moduleMeta, implementationInfo, e);
-        throw Throwables.propagate(e);
+      if (firstLoad) {
+        try {
+          classLoader = typeLoader.create(moduleMeta, classLoader);
+        } catch (IOException e) {
+          LOG.error("Was not able to init classloader for module {} while trying to load type {}",
+                    moduleMeta, implementationInfo, e);
+          throw Throwables.propagate(e);
+        }
       }
 
       Class<?> moduleClass;
