@@ -53,6 +53,7 @@ define([], function () {
         var datasets = self.get('datasets');
         // If jquery's ajax is used properly then the nesting could be avoided.
         // http.js getJSON does not return $.get which internally calls $.ajax
+        $(".loading-icon.hide").removeClass("hide");
         self.HTTP.rest('data/explore/tables', function(response) {
           response.forEach(function (dataset) {
             var name = dataset.table;
@@ -72,6 +73,7 @@ define([], function () {
               if(datasets.length == 1) {
                 self.selectDataset(datasets[0]);
               }
+              $(".loading-icon").addClass("hide");
             });
           });
         });

@@ -63,7 +63,8 @@ public class HBaseOrderedTable extends BufferingOrderedTable {
 
   private final TransactionCodec txCodec;
 
-  public HBaseOrderedTable(String name, ConflictDetection level, Configuration hConf) throws IOException {
+  public HBaseOrderedTable(String name, ConflictDetection level, Configuration hConf, boolean enableReadlessIncrements)
+    throws IOException {
     super(name, level);
 
     hTableName = HBaseTableUtil.getHBaseTableName(name);

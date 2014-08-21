@@ -78,15 +78,11 @@ public class HBaseOrderedTableTest extends BufferingOrederedTableTest<BufferingO
   protected BufferingOrderedTable getTable(String name, ConflictDetection conflictLevel) throws Exception {
     // ttl=-1 means "keep data forever"
     return
-      new HBaseOrderedTable(name, ConflictDetection.valueOf(conflictLevel.name()), testHBase.getConfiguration());
+      new HBaseOrderedTable(name, ConflictDetection.valueOf(conflictLevel.name()), testHBase.getConfiguration(), true);
   }
 
   @Override
-  protected HBaseOrderedTableAdmin getTableAdmin(String name) throws Exception {
-    return getAdmin(name, DatasetProperties.EMPTY);
-  }
-
-  private HBaseOrderedTableAdmin getAdmin(String name, DatasetProperties props) throws IOException {
+  protected HBaseOrderedTableAdmin getTableAdmin(String name, DatasetProperties props) throws IOException {
     DatasetSpecification spec = new HBaseOrderedTableDefinition("foo").configure(name, props);
     return new HBaseOrderedTableAdmin(spec, testHBase.getConfiguration(), hBaseTableUtil,
                                       CConfiguration.create(), new LocalLocationFactory(tmpFolder.newFolder()));
@@ -98,8 +94,8 @@ public class HBaseOrderedTableTest extends BufferingOrederedTableTest<BufferingO
     // applies on reading
     int ttl = 1000;
     DatasetProperties props = DatasetProperties.builder().add(OrderedTable.PROPERTY_TTL, String.valueOf(ttl)).build();
-    getAdmin("ttl", props).create();
-    HBaseOrderedTable table = new HBaseOrderedTable("ttl", ConflictDetection.ROW, testHBase.getConfiguration());
+    getTableAdmin("ttl", props).create();
+    HBaseOrderedTable table = new HBaseOrderedTable("ttl", ConflictDetection.ROW, testHBase.getConfiguration(), false);
 
     DetachedTxSystemClient txSystemClient = new DetachedTxSystemClient();
     Transaction tx = txSystemClient.startShort();
@@ -126,8 +122,9 @@ public class HBaseOrderedTableTest extends BufferingOrederedTableTest<BufferingO
 
     // test a table with no TTL
     DatasetProperties props2 = DatasetProperties.builder().add(OrderedTable.PROPERTY_TTL, String.valueOf(-1)).build();
-    getAdmin("nottl", props2).create();
-    HBaseOrderedTable table2 = new HBaseOrderedTable("nottl", ConflictDetection.ROW, testHBase.getConfiguration());
+    getTableAdmin("nottl", props2).create();
+    HBaseOrderedTable table2 = new HBaseOrderedTable("nottl", ConflictDetection.ROW, testHBase.getConfiguration(),
+                                                     false);
 
     tx = txSystemClient.startShort();
     table2.startTx(tx);
@@ -152,7 +149,7 @@ public class HBaseOrderedTableTest extends BufferingOrederedTableTest<BufferingO
   public void testPreSplit() throws Exception {
     byte[][] splits = new byte[][] {Bytes.toBytes("a"), Bytes.toBytes("b"), Bytes.toBytes("c")};
     DatasetProperties props = DatasetProperties.builder().add("hbase.splits", new Gson().toJson(splits)).build();
-    getAdmin("presplitted", props).create();
+    getTableAdmin("presplitted", props).create();
 
     HBaseAdmin hBaseAdmin = testHBase.getHBaseAdmin();
     try {

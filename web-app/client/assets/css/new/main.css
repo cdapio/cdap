@@ -3575,20 +3575,18 @@ div.tooltip-inner {
 
 #query-display {
 	background: #666666;
-	max-height: 600px;
+	max-height: 50vh;
 	overflow: auto;
 }
 
 #query-tables {
 	width: 350px;
 	background: white;
-	min-height: 600px;
 }
 
 #query-schema {
 	margin-left: 350px;
 	color: white;
-	max-height: 600px;
 	overflow: auto;
 }
 
@@ -3758,3 +3756,35 @@ div.tooltip-inner {
 	width: 20px;
 	height: 20px
 }
+
+/**
+  * Loading icon styles
+  */
+
+.loading-icon {
+}
+
+.loading-icon.hide {
+  display: none;
+}
+
+.loading-icon .overlay-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #000;
+  opacity: .8;
+  filter: alpha(opacity=80);
+  z-index: 100;
+}
+
+.loading-icon .overlay-background img {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  border-radius: 10px;
+  transform: translate(-50%, -50%);
+}
+

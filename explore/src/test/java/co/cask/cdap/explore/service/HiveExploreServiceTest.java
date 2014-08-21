@@ -350,7 +350,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
     try {
       exploreService.getTableInfo("foo", "my_table");
-      Assert.fail("Should throw ExploreException as database foo is inaccessible to current user");
+      Assert.fail("Should throw TableNotFoundException on table foo.my_table");
     } catch (TableNotFoundException e) {
       // Expected
     }
