@@ -17,18 +17,18 @@
 package co.cask.cdap.api.spark;
 
 /**
- * Determines the type of Spark Context to provide to user program
- *
- * @param <T> an instance of Apache Spark's JavaSparkContext or SparkContext
+ * Creates a {@link SparkContext} depending upon the user's job type (Java or Scala). This {@link SparkContext} is
+ * then passed to the user.
  */
-public interface SparkContextFactory<T> {
+public interface SparkContextFactory {
   /**
-   * Function which returns an appropriate CDAP custom {@link SparkContext} depending upon the type of Apache Spark
+   * Returns an appropriate CDAP custom {@link SparkContext} depending upon the type of Apache Spark
    * Context passed to it
    *
    * @param context the Apache Spark context which can be either SparkContext (for scala job) or JavaSparkContext
    *                (for Java jobs)
-   * @return CDAP custom {@link SparkContext}
+   * @param <T> type of context
+   * @return custom {@link SparkContext}
    */
-  SparkContext create(T context);
+  <T> SparkContext create(T context);
 }

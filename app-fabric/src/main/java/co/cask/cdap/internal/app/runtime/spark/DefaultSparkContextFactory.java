@@ -62,7 +62,7 @@ public class DefaultSparkContextFactory implements SparkContextFactory {
   }
 
   /**
-   * Function to return the appropriate CDAP custom {@link SparkContext}
+   * Returns the appropriate CDAP custom {@link SparkContext}
    *
    * @param context the Apache Spark context which can be either SparkContext (for scala job) or JavaSparkContext
    *                (for Java jobs)
@@ -75,7 +75,7 @@ public class DefaultSparkContextFactory implements SparkContextFactory {
    * </ol>
    */
   @Override
-  public SparkContext create(Object context) {
+  public <T> SparkContext create(T context) {
     if (context instanceof org.apache.spark.api.java.JavaSparkContext) {
       return new JavaSparkContext((org.apache.spark.api.java.JavaSparkContext) context, logicalStartTime,
                                   spec, runtimeArguments);
@@ -83,8 +83,7 @@ public class DefaultSparkContextFactory implements SparkContextFactory {
       return new ScalaSparkContext((org.apache.spark.SparkContext) context,
                                    logicalStartTime, spec, runtimeArguments);
     } else {
-      LOG.warn("The passed context should be of type Apache Spark's SparkContext or JavaSparkContext. The passed " +
-                 "context is of class: " + context.getClass());
+      LOG.warn("The passed context should be of type Apache Spark's SparkContext or JavaSparkContext");
       throw new IllegalArgumentException("Invalid context type. Context type must be either JavaSparkContext or " +
                                            "SparkContext from Apache Spark");
     }

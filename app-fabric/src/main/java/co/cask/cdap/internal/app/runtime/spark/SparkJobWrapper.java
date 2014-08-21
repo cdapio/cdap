@@ -32,7 +32,7 @@ import java.lang.reflect.Method;
  * This Wrapper class is submitted to Spark and it does the following:
  * <ol>
  * <li>
- * Validates that there is at least {@link SparkJobWrapper#TOTAL_JOB_WRAPPER_ARGUMENTS} command line arguments
+ * Validates that there is at least {@link SparkJobWrapper#JOB_WRAPPER_ARGUMENTS_SIZE} command line arguments
  * </li>
  * <li>
  * Extract user job arguments by removing the first argument from the argument list
@@ -53,148 +53,167 @@ import java.lang.reflect.Method;
 public class SparkJobWrapper {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkJobWrapper.class);
-  private static final int TOTAL_JOB_WRAPPER_ARGUMENTS = 1;
+  private static final int JOB_WRAPPER_ARGUMENTS_SIZE = 1;
+  public static final String SCALA_SETTER_SUFFIX = "_$eq";
+
+  private final String[] arguments;
+  private final Class userJobClass;
+  private final Field sparkContextFactoryField;
+
+  /**
+   * Constructor
+   *
+   * @param args the command line arguments
+   * @throws RuntimeException if the user's job class is not found
+   */
+  public SparkJobWrapper(String[] args) {
+    arguments = validateArgs(args);
+    try {
+      userJobClass = Class.forName(arguments[0]);
+    } catch (ClassNotFoundException cnfe) {
+      LOG.warn("Unable to find the user job class: {}", arguments[0], cnfe);
+      throw Throwables.propagate(cnfe);
+    }
+    sparkContextFactoryField = getSparkContxtFactoryField();
+  }
 
   public static void main(String[] args) {
-    SparkJobWrapper jobWrapper = new SparkJobWrapper();
-    jobWrapper.validateArgs(args);
-    String[] userJobArgs = jobWrapper.extractUserArgs(args);
-
-    Object userJobObject = jobWrapper.sparkContextFactoryBinder(jobWrapper.instantiateUserJobClass(args[0]));
-    jobWrapper.invokeUserJobMain(userJobObject, userJobArgs);
+    new SparkJobWrapper(args).invoke();
   }
 
   /**
-   * Function to validate command line arguments being passed
-   * Expects at least {@link SparkJobWrapper#TOTAL_JOB_WRAPPER_ARGUMENTS} command line arguments to be present
-   *
-   * @param arguments String[] of command line arguments
-   * @throws IllegalArgumentException if the required numbers of command line arguments were not present
+   * Determines whether the user job is a scala job or not through {@link SparkJobWrapper#isScalaJob()} and then
+   * calls {@link SparkJobWrapper#invokeUserJobMain(Object)} accordingly.
    */
-  void validateArgs(String[] arguments) {
-    if (arguments.length < TOTAL_JOB_WRAPPER_ARGUMENTS) {
-      throw new IllegalArgumentException("Insufficient number of arguments. User's job class name followed by its " +
-                                           "arguments (if any) should be provided");
+  private void invoke() {
+    if (isScalaJob()) {
+      Object userJobObject = scalaJobSparkContextBinder();
+      invokeUserJobMain(userJobObject);
+    } else {
+      javaJobSparkContextBinder();
+      invokeUserJobMain(null);
     }
   }
 
   /**
-   * Function to extract arguments belonging to the user's job class
+   * Sets {@link SparkJobWrapper#sparkContextFactoryField} to the {@link SparkContextFactory} field in user's job class
    *
-   * @param arguments command line arguments provided to {@link SparkJobWrapper}
+   * @return {@link SparkContextFactory} {@link Field}
+   * @throws RuntimeException if the {@link SparkContextFactory} field is not found in user's job class
+   */
+  private Field getSparkContxtFactoryField() {
+    for (Field field : userJobClass.getDeclaredFields()) {
+      if (SparkContextFactory.class.isAssignableFrom(field.getType())) {
+        return field;
+      }
+    }
+    throw new RuntimeException("SparkContextFactory field not found in user's job class. Please include a member " +
+                                 "field of this class");
+  }
+
+  /**
+   * Validates command line arguments being passed
+   * Expects at least {@link SparkJobWrapper#JOB_WRAPPER_ARGUMENTS_SIZE} command line arguments to be present
+   *
+   * @param arguments String[] the arguments
+   * @return String[] if the command line arguments are sufficient else throws a {@link RuntimeException}
+   * @throws IllegalArgumentException if the required numbers of command line arguments were not present
+   */
+  String[] validateArgs(String[] arguments) {
+    if (arguments.length < JOB_WRAPPER_ARGUMENTS_SIZE) {
+      throw new IllegalArgumentException("Insufficient number of arguments. User's job class name followed by its " +
+                                           "arguments (if any) should be provided");
+    }
+    return arguments;
+  }
+
+  /**
+   * Extracts arguments belonging to the user's job class
+   *
    * @return String[] of arguments with which user's job class should be called
    */
-  String[] extractUserArgs(String[] arguments) {
-    String[] userJobArgs = new String[(arguments.length - TOTAL_JOB_WRAPPER_ARGUMENTS)];
-    System.arraycopy(arguments, TOTAL_JOB_WRAPPER_ARGUMENTS, userJobArgs, 0,
-                     (arguments.length - TOTAL_JOB_WRAPPER_ARGUMENTS));
+  String[] extractUserArgs() {
+    String[] userJobArgs = new String[(arguments.length - JOB_WRAPPER_ARGUMENTS_SIZE)];
+    System.arraycopy(arguments, JOB_WRAPPER_ARGUMENTS_SIZE, userJobArgs, 0,
+                     (arguments.length - JOB_WRAPPER_ARGUMENTS_SIZE));
     return userJobArgs;
   }
 
   /**
-   * Function to instantiate an object of user's job class
+   * Instantiate an object of user's job class
    *
-   * @param userJobClassName complete name of user's job class
    * @return a new object of user's job class
    * @throws RuntimeException if failed to instantiate an object of user's job class
    */
-  Object instantiateUserJobClass(String userJobClassName) {
+  Object instantiateUserJobClass() {
     Object userJobObject;
     try {
-      Class<?> userJobClass = Class.forName(userJobClassName);
       userJobObject = userJobClass.newInstance();
-    } catch (ClassNotFoundException cnfe) {
-      LOG.warn("Unable to find the user job class: " + userJobClassName, cnfe);
-      throw Throwables.propagate(cnfe);
     } catch (InstantiationException ie) {
-      LOG.warn("Unable to instantiate an object of user's job class: " + userJobClassName, ie);
+      LOG.warn("Unable to instantiate an object of user's job class: {}", arguments[0], ie);
       throw Throwables.propagate(ie);
     } catch (IllegalAccessException iae) {
-      LOG.warn("Illegal access to class: " + userJobClassName + "or to its constructor", iae);
+      LOG.warn("Illegal access to class: {}", arguments[0] + "or to its constructor", iae);
       throw Throwables.propagate(iae);
     }
     return userJobObject;
   }
 
   /**
-   * Function which binds the {@link SparkContextFactory} field in user's job class to a concrete implementation of
-   * {@link DefaultSparkContextFactory}
-   * The function checks if there is a method in user's code named as fieldname_$eq (scala's auto-generated setters) to
-   * assume the user's code to be written in Scala or else in Java and binds the field accordingly.
-   *
-   * @param userJobObject instance of user's job class
-   * @return modified user's job object in which {@link SparkContextFactory} is bind to
-   * {@link DefaultSparkContextFactory}
-   */
-  Object sparkContextFactoryBinder(Object userJobObject) {
-    for (Field field : userJobObject.getClass().getDeclaredFields()) {
-      if (SparkContextFactory.class.isAssignableFrom(field.getType())) {
-        if (isScalaJob(userJobObject, (field.getName() + "_$eq"))) {
-          scalaJobSparkContextBinder(userJobObject, field);
-        } else {
-          javaJobSparkContextBinder(userJobObject, field);
-        }
-      }
-    }
-    return userJobObject;
-  }
-
-  /**
-   * Function which injects {@link DefaultSparkContextFactory} to {@link SparkContextFactory} if the user's job class
+   * Injects {@link DefaultSparkContextFactory} to {@link SparkContextFactory} if the user's job class
    * is written in Java
    *
-   * @param userJobObject instance of user's job class
-   * @param field         the {@link SparkContextFactory} field
    * @throws RuntimeException if the binding to {@link DefaultSparkContextFactory} fails
    */
-  private void javaJobSparkContextBinder(Object userJobObject, Field field) {
-    field.setAccessible(true);
+  private void javaJobSparkContextBinder() {
+    if (!sparkContextFactoryField.isAccessible()) {
+      sparkContextFactoryField.setAccessible(true);
+    }
     try {
-      field.set(userJobObject, new DefaultSparkContextFactory());
+      sparkContextFactoryField.set(null, new DefaultSparkContextFactory());
     } catch (IllegalAccessException iae) {
-      LOG.warn("Unable to access field: " + field.getName(), iae);
+      LOG.warn("Unable to access field: {}", sparkContextFactoryField.getName(), iae);
       throw Throwables.propagate(iae);
     }
   }
 
   /**
-   * Function which injects {@link DefaultSparkContextFactory} to {@link SparkContextFactory} if the user's job class
+   * Injects {@link DefaultSparkContextFactory} to {@link SparkContextFactory} if the user's job class
    * is written in Scala
    *
-   * @param userJobObject instance of user's job class
-   * @param field         the {@link SparkContextFactory} field
    * @throws RuntimeException if the binding to {@link DefaultSparkContextFactory} fails
    */
-  private void scalaJobSparkContextBinder(Object userJobObject, Field field) {
+  private Object scalaJobSparkContextBinder() {
+    Object userJobObject = instantiateUserJobClass();
     try {
-      Method setSparkContext = userJobObject.getClass().getMethod(field.getName() + "_$eq",
-                                                                  SparkContextFactory.class);
+      Method setSparkContext = userJobObject.getClass().getMethod(sparkContextFactoryField.getName() +
+                                                                    SCALA_SETTER_SUFFIX, SparkContextFactory.class);
       setSparkContext.invoke(userJobObject, new DefaultSparkContextFactory());
     } catch (NoSuchMethodException nsme) {
-      LOG.warn("Unable to find setter method for field: " + field.getName(), nsme);
+      LOG.warn("Unable to find setter method for field: {}", sparkContextFactoryField.getName(), nsme);
       throw Throwables.propagate(nsme);
     } catch (IllegalAccessException iae) {
-      LOG.warn("Unable to access method: " + (field.getName() + "_$eq"), iae);
+      LOG.warn("Unable to access method: {}", (sparkContextFactoryField.getName() + SCALA_SETTER_SUFFIX), iae);
       throw Throwables.propagate(iae);
     } catch (InvocationTargetException ite) {
-      LOG.warn("The method: " + (field.getName() + "_$eq") + "threw an exception", ite);
+      LOG.warn("The method: {}", (sparkContextFactoryField.getName() + SCALA_SETTER_SUFFIX) + "threw an exception",
+               ite);
       throw Throwables.propagate(ite);
     }
+    return userJobObject;
   }
 
   /**
-   * Function which determines if the user's job is written in Scala or Java
+   * Determines if the user's job is written in Scala or Java
    * We assume that if we find a setter method for {@link SparkContextFactory} with method name "fieldname_$eq" then
    * the user's job is in Scala or else in Java.
    *
-   * @param userJobObject the user's job class instance
-   * @param methodName    the method name to look for through reflection
    * @return a boolean which is true if the job is in scala
    */
-  boolean isScalaJob(Object userJobObject, String methodName) {
-    Method[] methods = userJobObject.getClass().getMethods();
+  boolean isScalaJob() {
+    Method[] methods = userJobClass.getMethods();
     for (Method curMethod : methods) {
-      if (methodName.equalsIgnoreCase(curMethod.getName())) {
+      if (curMethod.getName().equalsIgnoreCase((sparkContextFactoryField.getName() + SCALA_SETTER_SUFFIX))) {
         return true;
       }
     }
@@ -202,21 +221,22 @@ public class SparkJobWrapper {
   }
 
   /**
-   * Function which invokes the main function on the user's job object
+   * Extracts arguments which belongs to user's job and then invokes the main function on the user's job object
+   * passing the arguments
    *
    * @param userJobObject the user job's object
-   * @param userJobArgs   String[] containing the arguments to be passed to user's job main function
    * @throws RuntimeException if failed to invoke main function on the user's job object
    */
-  void invokeUserJobMain(Object userJobObject, String[] userJobArgs) {
+  private void invokeUserJobMain(Object userJobObject) {
+    String[] userJobArgs = extractUserArgs();
     try {
-      Method userJobMain = userJobObject.getClass().getMethod("main", String[].class);
+      Method userJobMain = userJobClass.getMethod("main", String[].class);
       userJobMain.invoke(userJobObject, (Object) userJobArgs);
     } catch (NoSuchMethodException nsme) {
-      LOG.warn("Unable to find main method in user's job class: " + userJobObject.getClass().getName(), nsme);
+      LOG.warn("Unable to find main method in user's job class: {}", userJobObject.getClass().getName(), nsme);
       throw Throwables.propagate(nsme);
     } catch (IllegalAccessException iae) {
-      LOG.warn("Unable to access main method in user's job class: " + userJobObject.getClass().getName(), iae);
+      LOG.warn("Unable to access main method in user's job class: {}", userJobObject.getClass().getName(), iae);
       throw Throwables.propagate(iae);
     } catch (InvocationTargetException ite) {
       LOG.warn("User's job class main method threw an exception", ite);

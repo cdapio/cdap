@@ -25,6 +25,8 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.ServiceDiscovered;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.util.Map;
@@ -35,35 +37,43 @@ import java.util.Map;
  */
 abstract class AbstractSparkContext implements SparkContext {
 
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractSparkContext.class);
+
   private final Configuration hConf;
   private final long logicalStartTime;
   private final SparkSpecification spec;
   private final Arguments runtimeArguments;
 
   public AbstractSparkContext(long logicalStartTime, SparkSpecification spec, Arguments runtimeArguments) {
-    hConf = new Configuration();
-    hConf.clear();
     this.logicalStartTime = logicalStartTime;
     this.spec = spec;
     this.runtimeArguments = runtimeArguments;
-    loadHConf();
+    this.hConf = loadHConf();
   }
 
-  public Configuration gethConf() {
+  Configuration getHConf() {
     return hConf;
   }
 
   /**
-   * Function to add the supplied {@link Configuration} file as an resource
+   * Adds the supplied {@link Configuration} file as an resource
    * This configuration is needed to read/write {@link Dataset} using {@link DataSetInputFormat}/{@link
    * DataSetOutputFormat} by {@link JavaSparkContext#readFromDataset(String, Class, Class)} or
    * {@link ScalaSparkContext#readFromDataset(String, Class, Class)}
    * This function requires that the hConf.xml file containing {@link Configuration} is present in the job jar.
    */
-  private void loadHConf() {
+  private Configuration loadHConf() {
+    Configuration hConf = new Configuration();
+    hConf.clear();
     //TODO: The filename should be static final in the SparkRunner. Change this static string to that.
     URL url = getClass().getResource("/hConf.xml");
+    if (url == null) {
+      LOG.error("Unable to find Hadoop Configuration file in the submitted jar.");
+      throw new RuntimeException("Hadoop Configuration file not found in the supplied jar. Please include Hadoop " +
+                                   "Configuration file with name \"hConf.xml\"");
+    }
     hConf.addResource(url);
+    return hConf;
   }
 
   @Override
@@ -87,7 +97,7 @@ abstract class AbstractSparkContext implements SparkContext {
 
   @Override
   public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
-    //TODO: Change this once we start supporting user services in Spark.
+    //TODO: Change this once we start supporting services in Spark.
     throw new UnsupportedOperationException("Service Discovery not supported");
   }
 }

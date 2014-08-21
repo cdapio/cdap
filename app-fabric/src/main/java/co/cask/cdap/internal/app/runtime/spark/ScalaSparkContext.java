@@ -17,12 +17,19 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.spark.SparkContextFactory;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
+import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.SparkContext;
 import org.apache.spark.rdd.NewHadoopRDD;
+import org.apache.spark.rdd.PairRDDFunctions;
 import org.apache.spark.rdd.RDD;
+import scala.Tuple2;
+import scala.reflect.ClassTag;
+import scala.reflect.ClassTag$;
 
 /**
  * A concrete implementation of {@link AbstractSparkContext} which is used if the user's spark job is written in Scala.
@@ -38,7 +45,7 @@ class ScalaSparkContext extends AbstractSparkContext {
   }
 
   /**
-   * Function to get a {@link Dataset} as a {@link NewHadoopRDD}
+   * Gets a {@link Dataset} as a {@link NewHadoopRDD}
    *
    * @param datasetName the name of the {@link Dataset} to be read as an RDD
    * @param kClass      the key class
@@ -48,11 +55,13 @@ class ScalaSparkContext extends AbstractSparkContext {
    */
   @Override
   public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass) {
-    return (T) apacheContext.newAPIHadoopFile(datasetName, DataSetInputFormat.class, kClass, vClass, gethConf());
+    Configuration hConf = new Configuration(getHConf());
+    hConf.set(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET, datasetName);
+    return (T) apacheContext.newAPIHadoopFile(datasetName, DataSetInputFormat.class, kClass, vClass, hConf);
   }
 
   /**
-   * Function to store a {@link RDD} to {@link Dataset}
+   * Stores a {@link RDD} to {@link Dataset}
    *
    * @param rdd         the {@link RDD} to be stored
    * @param datasetName the name of the {@link Dataset} where the RDD should be stored
@@ -62,11 +71,20 @@ class ScalaSparkContext extends AbstractSparkContext {
    */
   @Override
   public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass) {
-    //TODO: Add here when figured out
+    writeToDatasetHelper(rdd, datasetName, kClass, vClass);
+  }
+
+  private <T, K, V> void writeToDatasetHelper(T rdd, String datasetName, Class<K> kClass, Class<V> vClass) {
+    ClassTag<K> kClassTag = ClassTag$.MODULE$.apply(kClass);
+    ClassTag<V> vClassTag = ClassTag$.MODULE$.apply(vClass);
+    PairRDDFunctions pairRDD = new PairRDDFunctions<K, V>((RDD<Tuple2<K, V>>) rdd, kClassTag, vClassTag, null);
+    Configuration hConf = new Configuration(getHConf());
+    hConf.set(DataSetOutputFormat.HCONF_ATTR_OUTPUT_DATASET, datasetName);
+    pairRDD.saveAsNewAPIHadoopFile(datasetName, kClass, vClass, DataSetOutputFormat.class, hConf);
   }
 
   /**
-   * Getter method to get Apache Spark's {@link SparkContext} object
+   * Return a {@link SparkContext} object
    *
    * @param <T> type of Apache Spark Context which is {@link SparkContext} here
    * @return the {@link SparkContext}

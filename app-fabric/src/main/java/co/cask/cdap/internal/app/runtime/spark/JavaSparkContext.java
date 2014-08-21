@@ -21,6 +21,7 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.api.java.JavaPairRDD;
 
 /**
@@ -37,7 +38,7 @@ class JavaSparkContext extends AbstractSparkContext {
   }
 
   /**
-   * Function to get a {@link Dataset} as a {@link JavaPairRDD}
+   * Gets a {@link Dataset} as a {@link JavaPairRDD}
    *
    * @param datasetName the name of the {@link Dataset} to be read as an RDD
    * @param kClass      the key class
@@ -47,11 +48,13 @@ class JavaSparkContext extends AbstractSparkContext {
    */
   @Override
   public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass) {
-    return (T) apacheContext.newAPIHadoopFile(datasetName, DataSetInputFormat.class, kClass, vClass, gethConf());
+    Configuration hConf = new Configuration(getHConf());
+    hConf.set(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET, datasetName);
+    return (T) apacheContext.newAPIHadoopFile(datasetName, DataSetInputFormat.class, kClass, vClass, hConf);
   }
 
   /**
-   * Function to store a {@link JavaPairRDD} to {@link Dataset}
+   * Stores a {@link JavaPairRDD} to {@link Dataset}
    *
    * @param rdd         the {@link JavaPairRDD} to be stored
    * @param datasetName the name of the {@link Dataset} where the RDD should be stored
@@ -61,11 +64,13 @@ class JavaSparkContext extends AbstractSparkContext {
    */
   @Override
   public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass) {
-    ((JavaPairRDD) rdd).saveAsNewAPIHadoopFile(datasetName, kClass, vClass, DataSetOutputFormat.class, gethConf());
+    Configuration hConf = new Configuration(getHConf());
+    hConf.set(DataSetOutputFormat.HCONF_ATTR_OUTPUT_DATASET, datasetName);
+    ((JavaPairRDD) rdd).saveAsNewAPIHadoopFile(datasetName, kClass, vClass, DataSetOutputFormat.class, hConf);
   }
 
   /**
-   * Getter method to get Apache Spark's {@link org.apache.spark.api.java.JavaSparkContext} object
+   * Returns a {@link org.apache.spark.api.java.JavaSparkContext} object
    *
    * @param <T> type of Apache Spark Context which is {@link org.apache.spark.api.java.JavaSparkContext} here
    * @return the {@link org.apache.spark.api.java.JavaSparkContext}
