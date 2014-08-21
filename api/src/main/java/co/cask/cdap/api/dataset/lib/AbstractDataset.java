@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.annotation.ExposeDataset;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import com.continuuity.tephra.Transaction;
@@ -32,6 +33,7 @@ import java.util.Collection;
  * implements {@link TransactionAware} and {@link MeteredDataset} interfaces by propagating corresponded
  * logic to each dataset in a list when possible.
  */
+@ExposeDataset
 public abstract class AbstractDataset implements Dataset, MeteredDataset, TransactionAware {
   private final String instanceName;
   private final Collection<Dataset> underlying;

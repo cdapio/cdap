@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.examples.wordcount;
 
+import co.cask.cdap.api.annotation.ExposeDataset;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
@@ -32,6 +33,7 @@ import java.util.TreeSet;
 /**
  *
  */
+@ExposeDataset
 public class AssociationTable extends AbstractDataset {
 
   private Table table;
@@ -111,7 +113,7 @@ public class AssociationTable extends AbstractDataset {
     return val == null ? 0 : val;
   }
 }
-
+@ExposeDataset
 class TopKCollector {
 
   class Entry implements Comparable<Entry> {

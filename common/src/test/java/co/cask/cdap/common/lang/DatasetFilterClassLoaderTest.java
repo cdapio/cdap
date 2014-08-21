@@ -47,15 +47,15 @@ public class DatasetFilterClassLoaderTest {
    // dsClassLoader.loadClass(DummyDataset2.class.getName());
   }
 
-//  @Test(expected = ClassNotFoundException.class)
-//  public void testUnExposedDataset() throws ClassNotFoundException {
-//    String jarPath = JarFinder.getJar(DummyDataset2.class);
-//    ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-//                                                    ClassLoaders.class.getClassLoader());
-//    List<Location> datasetJars = Lists.newArrayList();
-//    LocationFactory lf = new LocalLocationFactory();
-//    datasetJars.add(lf.create(jarPath));
-//    ClassLoader dsClassLoader = new DatasetFilterClassLoader(datasetJars, filterParent);
-//    dsClassLoader.loadClass(DummyDataset2.class.getName());
-//  }
+  @Test(expected = ClassNotFoundException.class)
+  public void testUnExposedDataset() throws ClassNotFoundException {
+    String jarPath = JarFinder.getJar(DummyDataset2.class);
+    ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                    ClassLoaders.class.getClassLoader());
+    List<Location> datasetJars = Lists.newArrayList();
+    LocationFactory lf = new LocalLocationFactory();
+    datasetJars.add(lf.create(jarPath));
+    ClassLoader dsClassLoader = new DatasetFilterClassLoader(datasetJars, null);
+    dsClassLoader.loadClass(DummyDataset2.class.getName());
+  }
 }

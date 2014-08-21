@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.examples.wordcount;
 
+import co.cask.cdap.api.annotation.ExposeDataset;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
@@ -25,6 +26,7 @@ import co.cask.cdap.api.dataset.table.Table;
 /**
  * Counts the number of unique entries seen given any number of entries.
  */
+@ExposeDataset
 public class UniqueCountTable extends AbstractDataset {
 
   /**

@@ -36,13 +36,17 @@ import java.util.List;
  * Classloader that loads the given class, checks if it has {@link co.cask.cdap.api.annotation.ExposeDataset} annotation
  * if it has, it loads the class otherwise delegates to the parent classloader
  */
-public class DatasetFilterClassLoader extends URLClassLoader {
+public class DatasetFilterClassLoader extends ClassLoader {
   private final ClassLoader parentClassLoader;
   private static final Logger LOG = LoggerFactory.getLogger(DatasetFilterClassLoader.class);
+  private final URL[] datasetUrls;
+  private URLClassLoader datasetClassLoader;
 
 
   public DatasetFilterClassLoader(List<Location> datasetTypeJars, ClassLoader parentClassLoader) {
-    super(getDatasetTypeUrls(datasetTypeJars), parentClassLoader);
+    super(parentClassLoader);
+    this.datasetUrls = getDatasetTypeUrls(datasetTypeJars);
+    this.datasetClassLoader = new URLClassLoader(datasetUrls);
     this.parentClassLoader = parentClassLoader;
   }
 
@@ -67,13 +71,12 @@ public class DatasetFilterClassLoader extends URLClassLoader {
 
   @Override
   public Class<?> findClass(String name) throws ClassNotFoundException {
-    Class<?> dataset = getClass().getClassLoader().loadClass(name);
-
+    Class<?> dataset = datasetClassLoader.loadClass(name);
     ExposeDataset dsExpose = dataset.getAnnotation(ExposeDataset.class);
     if (dsExpose != null) {
       return dataset;
     } else {
-      return parentClassLoader.loadClass(name);
+      throw new ClassNotFoundException("Trying to load an unExposed dataset class");
     }
   }
 
