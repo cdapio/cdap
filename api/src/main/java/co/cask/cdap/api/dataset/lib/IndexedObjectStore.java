@@ -65,6 +65,20 @@ public class IndexedObjectStore<T> extends AbstractDataset {
   }
 
   /**
+   * See {@link ObjectStore#read(byte[])}.
+   */
+  public T read(byte[] key) {
+    return objectStore.read(key);
+  }
+
+  /**
+   * See {@link ObjectStore#read(String)}.
+   */
+  public T read(String key) {
+    return objectStore.read(key);
+  }
+
+  /**
    * Read all the objects from the objectStore for a given index. Returns all the objects that match the secondaryKey.
    * Returns an empty list if no values are found. Never returns null.
    *
