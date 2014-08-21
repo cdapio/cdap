@@ -287,13 +287,9 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
       // try program class loader then reactor class loader
       try {
-        LOG.info("At DatasetFrameowrk Trying to get module class {}", moduleMeta.getClassName());
-        LOG.info("Classloader at RemoteDatasetFramework {}", classLoader);
         moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
       } catch (ClassNotFoundException e) {
         try {
-          LOG.info("Class not found exception caught for modue class {}, trying default classLoader",
-                   moduleMeta.getClassName());
           moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), null, this);
         } catch (ClassNotFoundException e2) {
           LOG.error("Was not able to load dataset module class {} while trying to load type {}",

@@ -34,10 +34,9 @@ import java.util.List;
 
 /**
  * Classloader that loads the given class, checks if it has {@link co.cask.cdap.api.annotation.ExposeDataset} annotation
- * if it has, it loads the class otherwise delegates to the parent classloader
+ * if it does not have the annotation , it throws {@link java.lang.ClassNotFoundException}
  */
 public class DatasetFilterClassLoader extends ClassLoader {
-  private final ClassLoader parentClassLoader;
   private static final Logger LOG = LoggerFactory.getLogger(DatasetFilterClassLoader.class);
   private final URL[] datasetUrls;
   private URLClassLoader datasetClassLoader;
@@ -46,8 +45,7 @@ public class DatasetFilterClassLoader extends ClassLoader {
   public DatasetFilterClassLoader(List<Location> datasetTypeJars, ClassLoader parentClassLoader) {
     super(parentClassLoader);
     this.datasetUrls = getDatasetTypeUrls(datasetTypeJars);
-    this.datasetClassLoader = new URLClassLoader(datasetUrls);
-    this.parentClassLoader = parentClassLoader;
+    this.datasetClassLoader = new URLClassLoader(datasetUrls, parentClassLoader);
   }
 
   private static URL[] getDatasetTypeUrls(List<Location> datasetTypeJars) {

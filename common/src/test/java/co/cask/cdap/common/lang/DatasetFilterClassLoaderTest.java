@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.lang;
 
+import co.cask.cdap.api.annotation.ExposeDataset;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
@@ -33,29 +34,32 @@ public class DatasetFilterClassLoaderTest {
 
   @Test
   public void testExposedDataset() throws ClassNotFoundException {
-    // create jar for DummyDataset1
-    // Create classloader with DatasetFilterClassloader
-    // try loading the class with this class loader
-    String jarPath = JarFinder.getJar(DummyDataset1.class);
+    String jarPath = JarFinder.getJar(ExposedDataset.class);
     ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                     ClassLoaders.class.getClassLoader());
     List<Location> datasetJars = Lists.newArrayList();
     LocationFactory lf = new LocalLocationFactory();
     datasetJars.add(lf.create(jarPath));
     ClassLoader dsClassLoader = new DatasetFilterClassLoader(datasetJars, filterParent);
-    dsClassLoader.loadClass(DummyDataset1.class.getName());
-   // dsClassLoader.loadClass(DummyDataset2.class.getName());
+    dsClassLoader.loadClass(ExposedDataset.class.getName());
   }
 
   @Test(expected = ClassNotFoundException.class)
   public void testUnExposedDataset() throws ClassNotFoundException {
-    String jarPath = JarFinder.getJar(DummyDataset2.class);
-    ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                                    ClassLoaders.class.getClassLoader());
+    String jarPath = JarFinder.getJar(UnExposedDataset.class);
     List<Location> datasetJars = Lists.newArrayList();
     LocationFactory lf = new LocalLocationFactory();
     datasetJars.add(lf.create(jarPath));
     ClassLoader dsClassLoader = new DatasetFilterClassLoader(datasetJars, null);
-    dsClassLoader.loadClass(DummyDataset2.class.getName());
+    dsClassLoader.loadClass(UnExposedDataset.class.getName());
+  }
+
+  @ExposeDataset
+  class ExposedDataset {
+
+  }
+
+  class UnExposedDataset {
+
   }
 }

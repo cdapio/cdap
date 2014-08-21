@@ -16,11 +16,19 @@
 
 package co.cask.cdap.data2.datafabric.dataset.type;
 
+import co.cask.cdap.common.lang.ApiResourceListHolder;
+import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.DatasetFilterClassLoader;
 import co.cask.cdap.proto.DatasetModuleMeta;
+import com.google.common.collect.Lists;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.List;
 
 /**
  * Creates a {@link ClassLoader} for a {@link DatasetModuleMeta} without unpacking the moduleMeta jar,
@@ -33,7 +41,9 @@ public class LocalDatasetTypeClassLoaderFactory implements DatasetTypeClassLoade
     if (moduleMeta.getJarLocation() == null) {
       return parentClassLoader;
     }
-
-    return new URLClassLoader(new URL[]{moduleMeta.getJarLocation().toURL()}, parentClassLoader);
+    LocationFactory lf = new LocalLocationFactory();
+    List<Location> datasetJars = Lists.newArrayList();
+    datasetJars.add(lf.create(moduleMeta.getJarLocation()));
+    return ClassLoaders.newDatasetClassLoader(datasetJars, ApiResourceListHolder.getResourceList(), parentClassLoader);
   }
 }
