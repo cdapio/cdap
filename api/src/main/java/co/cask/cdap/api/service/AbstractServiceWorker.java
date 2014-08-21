@@ -28,8 +28,7 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
 
   @Override
   public ServiceWorkerSpecification configure() {
-    return new DefaultServiceWorkerSpecification(getClass().getName(), getName(),
-                                                 getDescription(), getRuntimeArguments());
+    return new DefaultServiceWorkerSpecification(this, getName(), getDescription(), getRuntimeArguments());
   }
 
   /**

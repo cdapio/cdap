@@ -16,11 +16,14 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.DefaultServiceWorkerContext;
-import co.cask.cdap.api.service.GuavaServiceTwillRunnable;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.common.lang.InstantiatorFactory;
+import co.cask.cdap.common.lang.PropertyFieldSetter;
+import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
+import co.cask.cdap.internal.lang.Reflections;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -40,6 +43,7 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(ServiceWorkerTwillRunnable.class);
   private ServiceWorker worker;
   private ClassLoader programClassLoader;
+  private Metrics metrics;
 
   /**
    * Create a {@link TwillRunnable} for a {@link ServiceWorker}.
@@ -76,6 +80,8 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
     try {
       TypeToken<?> type = TypeToken.of(programClassLoader.loadClass(serviceClassName));
       worker = (ServiceWorker) factory.get(type).create();
+      Reflections.visit(worker, type, new MetricsFieldSetter(metrics),
+                                      new PropertyFieldSetter(runnableArgs));
       worker.initialize(new DefaultServiceWorkerContext(context.getSpecification().getConfigs()));
     } catch (Exception e) {
       LOG.error("Could not instantiate service " + serviceClassName);

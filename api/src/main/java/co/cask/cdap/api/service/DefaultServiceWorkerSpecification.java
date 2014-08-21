@@ -16,7 +16,10 @@
 
 package co.cask.cdap.api.service;
 
-import com.google.common.collect.ImmutableMap;
+import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.internal.specification.PropertyFieldExtractor;
+import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 
 import java.util.Map;
 
@@ -31,17 +34,20 @@ public class DefaultServiceWorkerSpecification implements ServiceWorkerSpecifica
 
   /**
    * Create a new instance of ServiceWorkerSpecification.
-   * @param className of worker.
+   * @param serviceWorker for a Service.
    * @param name of worker.
    * @param description of worker.
    * @param properties of worker.
    */
-  public DefaultServiceWorkerSpecification(String className, String name, String description,
+  public DefaultServiceWorkerSpecification(ServiceWorker serviceWorker, String name, String description,
                                            Map<String, String> properties) {
-    this.className = className;
+    this.className = serviceWorker.getClass().getName();
     this.name = name;
     this.description = description;
-    this.properties = ImmutableMap.copyOf(properties);
+    this.properties = Maps.newHashMap(properties);
+
+    Reflections.visit(serviceWorker, TypeToken.of(serviceWorker.getClass()),
+                                      new PropertyFieldExtractor(this.properties));
   }
 
   @Override

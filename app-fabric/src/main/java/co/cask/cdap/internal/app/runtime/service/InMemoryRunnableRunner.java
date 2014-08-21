@@ -27,6 +27,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.election.InMemoryElectionRegistry;
 import co.cask.cdap.common.lang.InstantiatorFactory;
+import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -188,7 +189,8 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       Reflections.visit(runnable, runnableType,
                         new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
                                                                           program.getApplicationId(),
-                                                                          serviceSpec.getName(), runnableName)));
+                                                                          serviceSpec.getName(), runnableName)),
+                        new PropertyFieldSetter(runnableSpec.getRunnableSpecification().getConfigs()));
 
       ProgramController controller = new InMemoryRunnableProgramController(program.getName(), runnableName,
                                                                            twillContext, driver,
