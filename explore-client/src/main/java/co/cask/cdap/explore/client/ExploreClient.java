@@ -62,17 +62,6 @@ public interface ExploreClient extends Closeable {
    */
   ListenableFuture<ExploreExecutionResult> submit(String statement);
 
-  /**
-   * Return a schema for the specified dataset.
-   *
-   * @param datasetName dataset name for which to retrieve the schema. This name should be understood by the
-   *                    underlying SQL engine.
-   * @return a map of <field_name: field_data_type>.
-   * @throws ExploreException on any error getting the table types.
-   */
-  Map<String, String> datasetSchema(String datasetName) throws ExploreException;
-
-
   ///// METADATA
 
   /**
