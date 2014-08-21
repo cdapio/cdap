@@ -457,7 +457,7 @@ method in the Flowlet emits random numbers::
     }
   }
 
-Note: @Tick method calls are serialized i.e. subsequent calls to the tick
+Note: @Tick method calls are serialized; subsequent calls to the tick
 method will be made only after the previous @Tick method call has returned.
 
 Connection
