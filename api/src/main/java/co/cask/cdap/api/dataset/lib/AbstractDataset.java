@@ -16,7 +16,6 @@
 
 package co.cask.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.annotation.ExposeDataset;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import com.continuuity.tephra.Transaction;

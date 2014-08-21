@@ -28,7 +28,6 @@ import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.pipeline.StageContext;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
-import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -43,7 +42,6 @@ public class ProgramGenerationStageTest {
 
   @Test
   public void testProgramGenerationForToyApp() throws Exception {
-    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     configuration.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     LocationFactory lf = new LocalLocationFactory();
     Location appArchive = lf.create(JarFinder.getJar(ToyApp.class));
