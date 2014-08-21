@@ -90,6 +90,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -515,7 +516,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     if (inputDataSetName != null) {
       // TODO: It's a hack for stream
       if (inputDataSetName.startsWith("stream://")) {
-        StreamBatchReadable stream = new StreamBatchReadable(inputDataSetName.substring("stream://".length()));
+        StreamBatchReadable stream = new StreamBatchReadable(URI.create(inputDataSetName));
         StreamConfig streamConfig = streamAdmin.getConfig(stream.getStreamName());
         Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                    StreamUtils.getGeneration(streamConfig));
