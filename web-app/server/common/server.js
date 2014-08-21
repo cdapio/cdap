@@ -217,24 +217,12 @@ WebAppServer.prototype.setCookieSession = function(cookieName, secret) {
  * @param {Object} app framework.
  * @return {Object} instance of the http server.
  */
-WebAppServer.prototype.getServerInstance = function(app) {
-  return this.lib.createServer(app);
-};
+WebAppServer.prototype.getServerInstance = function(options, app) {
+  if (Object.keys(options).length > 0) {
+    return this.lib.createServer(options, app);
+  }
 
-/**
- * Creates https server based on app framework.
- * Currently works only with express.
- * @param {Object} app framework.
- * @param {string} key path to SSL key
- * @param {string} cert path to SSL cert
- * @return {Object} instance of the http server.
- */
-WebAppServer.prototype.getHttpsServerInstance = function(app, key, cert) {
-  var options = {
-    key: fs.readFileSync(key),
-    cert: fs.readFileSync(cert)
-  };
-  return this.lib.createServer(options, app);
+  return this.lib.createServer(app);
 };
 
 WebAppServer.prototype.checkAuth = function(req, res, next) {

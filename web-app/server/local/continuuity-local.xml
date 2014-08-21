@@ -4,9 +4,27 @@
 <configuration>
 
 	<property>
-		<name>dashboard.bind.port</name>
-		<value>9999</value>
+		<name>dashboard.bind.port.ssl</name>
+		<value>443</value>
 	</property>
+    <property>
+        <name>dashboard.bind.port.nonssl</name>
+        <value>80</value>
+    </property>
+  <property>
+    <name>dashboard.https.enabled</name>
+    <value>false</value>
+  </property>
+
+  <!--TODO: fix these defaults when possible-->
+  <property>
+    <name>dashboard.ssl.key</name>
+    <value>/Users/ajainarayanan/server.key</value>
+  </property>
+  <property>
+    <name>dashboard.ssl.cert</name>
+    <value>/Users/ajainarayanan/server.crt</value>
+  </property>
 
 	<property>
 		<name>accounts.server.address</name>
