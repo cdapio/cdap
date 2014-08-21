@@ -96,7 +96,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                String workflowBatch,
                                ProgramServiceDiscovery serviceDiscovery,
                                MetricsCollectionService metricsCollectionService) {
-    super(program, runId, datasets);
+    super(program, runId, datasets, metricsCollectionService);
     this.accountId = program.getAccountId();
     this.runtimeArguments = runtimeArguments;
     this.logicalStartTime = logicalStartTime;

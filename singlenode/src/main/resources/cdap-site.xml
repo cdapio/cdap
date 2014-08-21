@@ -89,4 +89,13 @@
         <description>Enable Explore functionality</description>
     </property>
 
+    <!--
+        Stream configuration
+    -->
+    <property>
+        <name>stream.container.instances</name>
+        <value>1</value>
+        <description>Number of stream writer instance. In local mode, it's always one</description>
+    </property>
+
 </configuration>

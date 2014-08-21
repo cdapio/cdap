@@ -21,9 +21,11 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.proto.TableInfo;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -132,7 +134,7 @@ public interface Explore {
    * @throws SQLException if there are errors in the SQL statement.
    */
   public QueryHandle getColumns(@Nullable String catalog, @Nullable String schemaPattern,
-                           String tableNamePattern, String columnNamePattern)
+                                String tableNamePattern, String columnNamePattern)
     throws ExploreException, SQLException;
 
   /**
@@ -215,6 +217,27 @@ public interface Explore {
    */
   public QueryHandle getTables(@Nullable String catalog, @Nullable String schemaPattern, String tableNamePattern,
                                @Nullable List<String> tableTypes) throws ExploreException, SQLException;
+
+  /**
+   * Retrieve a list of all the tables present in Hive Metastore that match the given database name.
+   *
+   * @param database database name from which to list the tables. The database has to be accessible by the current
+   *                 user. If it is null, all the databases the user has access to will be inspected.
+   * @return list of table names present in the database.
+   * @throws ExploreException on any error getting the tables.
+   */
+  public List<TableInfo> getTables(@Nullable String database) throws ExploreException;
+
+  /**
+   * Get the schema of a table, as a map of names to types.
+   *
+   * @param database name of the database the table belongs to.
+   * @param table table name for which to get the schema.
+   * @return map of names of columns to their types.
+   * @throws ExploreException on any error getting the tables.
+   */
+  public Map<String, String> getTableSchema(@Nullable String database, String table)
+    throws ExploreException, TableNotFoundException;
 
   /**
    * Retrieves the table types available in this database.

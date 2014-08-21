@@ -97,68 +97,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/datasets/")
   public void list(HttpRequest request, final HttpResponder responder) {
-    Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
-
-    // if meta is true, then DatasetMeta objects will be returned by this endpoint
-    // Otherwise, by default and for any other value, DatasetSpecification objects will be returned.
-    boolean isMeta = queryParams.containsKey("meta") && queryParams.get("meta").contains("true");
-
-    // If explorable is true, only explorable datasets (defined as ones for which a Hive table exists) will
-    // be returned. If it is false, only non-explorable datasets will be returned.
-    // If this option is not set, or neither true nor false, then all datasets are returned.
-    boolean explorableDatasetsOption = queryParams.containsKey("explorable")
-      && (queryParams.get("explorable").contains("true") || queryParams.get("explorable").contains("false"));
-    boolean getExplorableDatasets = explorableDatasetsOption && queryParams.get("explorable").contains("true");
-
-    Collection<DatasetSpecification> datasetSpecifications = instanceManager.getAll();
-
-    if (explorableDatasetsOption) {
-      try {
-        // Do a join/disjoin of the list of datasets, and the list of Hive tables
-        List<String> hiveTables = datasetExploreFacade.getExplorableDatasetsTableNames();
-        ImmutableList.Builder<?> joinBuilder = ImmutableList.builder();
-
-        for (DatasetSpecification spec : datasetSpecifications) {
-          // True if this dataset has a Hive table associated with it
-          boolean isExplorable = hiveTables.contains(DatasetExploreFacade.getHiveTableName(spec.getName()));
-          if (isExplorable && getExplorableDatasets || !isExplorable && !getExplorableDatasets) {
-            if (isMeta) {
-              // Return DatasetMeta objects
-              DatasetMeta meta;
-              if (isExplorable) {
-                // Add dataset Hive table name to the DatasetMeta object
-                meta = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()),
-                                       DatasetExploreFacade.getHiveTableName(spec.getName()));
-              } else {
-                meta = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null);
-              }
-              joinBuilder.add(meta);
-            } else {
-              // Return DatasetSpecification objects
-              joinBuilder.add(spec);
-            }
-          }
-        }
-        responder.sendJson(HttpResponseStatus.OK, joinBuilder.build(),
-                           new TypeToken<List<?>>() { }.getType(), GSON);
-        return;
-      } catch (Throwable t) {
-        LOG.error("Caught exception while listing explorable datasets", t);
-        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-        return;
-      }
-    }
-    if (isMeta) {
-      ImmutableList.Builder<DatasetMeta> builder = ImmutableList.builder();
-      for (DatasetSpecification spec : datasetSpecifications) {
-        builder.add(new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null));
-      }
-      responder.sendJson(HttpResponseStatus.OK, builder.build(),
-                         new TypeToken<List<DatasetMeta>>() { }.getType(), GSON);
-    } else {
-      responder.sendJson(HttpResponseStatus.OK, datasetSpecifications,
-                         new TypeToken<Collection<DatasetSpecification>>() { }.getType(), GSON);
-    }
+    responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll());
   }
 
   @DELETE

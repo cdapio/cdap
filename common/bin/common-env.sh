@@ -45,7 +45,7 @@ export IDENT_STRING=$USER
 export PID_DIR=/var/cdap/run
 
 # Specifies the JAVA_HEAPMAX
-export JAVA_HEAPMAX=-Xmx128m
+export JAVA_HEAPMAX=${JAVA_HEAPMAX:--Xmx128m}
 
 # Main class to be invoked.
 MAIN_CLASS=
