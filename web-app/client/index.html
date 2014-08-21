@@ -48,7 +48,11 @@
       <span class="warning-text">Experiencing connection issues.</span>
     </div>
   </div>
-
+  <div class="loading-icon hide">
+      <div class="overlay-background">
+          <img src="/assets/img/loading_new.gif" />
+      </div>
+  </div>
   <script type="text/x-handlebars" data-template-name="application">
     <div id="header">
       <div class="logo-holder left-float">
@@ -496,9 +500,7 @@
           <div data-toggle="popover"  title="Error" data-trigger="manual" data-placement="top" class="text-area-container">
           {{view C.Embed.Injector elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
           </div>
-          {{#if renderExecuteBtn}}
-            <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
-          {{/if}}
+          <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
         </td>
 
         {{outlet}}

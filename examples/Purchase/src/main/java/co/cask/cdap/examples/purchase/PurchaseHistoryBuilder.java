@@ -43,7 +43,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
       .useDataSet("frequentCustomers")
       .useInputDataSet("purchases")
       .useOutputDataSet("history")
-      .setMapperMemoryMB(512)
+      .setMapperMemoryMB(1024)
       .setReducerMemoryMB(1024)
       .build();
   }

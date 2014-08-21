@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrederedTableTest;
 
@@ -30,7 +31,7 @@ public class InMemoryOrderedTableTest extends BufferingOrederedTableTest<InMemor
   }
 
   @Override
-  protected DatasetAdmin getTableAdmin(String name) throws Exception {
+  protected DatasetAdmin getTableAdmin(String name, DatasetProperties ignored) throws Exception {
     return new InMemoryOrderedTableAdmin(name);
   }
 }
