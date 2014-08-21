@@ -18,6 +18,7 @@ package co.cask.cdap.common.lang;
 
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.common.internal.guava.ClassPath;
+import co.cask.cdap.common.lang.jar.DatasetFilterClassLoader;
 import co.cask.cdap.common.lang.jar.ProgramClassLoader;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;

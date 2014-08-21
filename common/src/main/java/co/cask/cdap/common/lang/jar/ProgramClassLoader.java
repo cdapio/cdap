@@ -57,7 +57,7 @@ public class ProgramClassLoader extends URLClassLoader {
     super(getClassPathUrls(unpackedJarDir), parentDelegate);
   }
 
-  private static URL[] getClassPathUrls(File unpackedJarDir) {
+   static URL[] getClassPathUrls(File unpackedJarDir) {
     List<URL> classPathUrls = new LinkedList<URL>();
 
     try {
@@ -81,7 +81,7 @@ public class ProgramClassLoader extends URLClassLoader {
     return classPathUrls.toArray(new URL[classPathUrls.size()]);
   }
 
-  private static List<URL> getJarURLs(File dir) throws MalformedURLException {
+   static List<URL> getJarURLs(File dir) throws MalformedURLException {
     File[] files = dir.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {

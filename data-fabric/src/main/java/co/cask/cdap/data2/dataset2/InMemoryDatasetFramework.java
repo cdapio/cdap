@@ -161,7 +161,6 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public DatasetTypeMeta getType(String typeName) throws DatasetManagementException {
-    // place holder for now
     return null;
   }
 

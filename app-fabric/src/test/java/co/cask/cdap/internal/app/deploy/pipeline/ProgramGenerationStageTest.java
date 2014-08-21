@@ -21,8 +21,6 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.jar.JarFinder;
-import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
-import co.cask.cdap.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.Specifications;
@@ -46,9 +44,6 @@ public class ProgramGenerationStageTest {
   @Test
   public void testProgramGenerationForToyApp() throws Exception {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-    RemoteDatasetFramework framework =
-      new RemoteDatasetFramework(discoveryService, null,
-                                           new LocalDatasetTypeClassLoaderFactory());
     configuration.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     LocationFactory lf = new LocalLocationFactory();
     Location appArchive = lf.create(JarFinder.getJar(ToyApp.class));

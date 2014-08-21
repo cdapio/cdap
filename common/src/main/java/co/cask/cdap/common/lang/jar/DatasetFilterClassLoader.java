@@ -14,10 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang;
+package co.cask.cdap.common.lang.jar;
 
 import co.cask.cdap.api.annotation.ExposeDataset;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.Location;
@@ -25,11 +24,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FilenameFilter;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.LinkedList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -48,7 +45,7 @@ public class DatasetFilterClassLoader extends ClassLoader {
     this.datasetClassLoader = new URLClassLoader(datasetUrls, parentClassLoader);
   }
 
-  private static URL[] getDatasetTypeUrls(List<Location> datasetTypeJars) {
+  private URL[] getDatasetTypeUrls(List<Location> datasetTypeJars) {
     List<URL> datasetUrls = Lists.newLinkedList();
     File unpackedLocation = Files.createTempDir();
     int index = 0;
@@ -58,7 +55,7 @@ public class DatasetFilterClassLoader extends ClassLoader {
         temp.mkdir();
         if (datasetType != null) {
           BundleJarUtil.unpackProgramJar(datasetType, temp);
-          datasetUrls.addAll(getClassPathUrls(temp));
+          datasetUrls.addAll(Arrays.asList(ProgramClassLoader.getClassPathUrls(temp)));
         }
       }
     } catch (Exception e) {
@@ -77,46 +74,4 @@ public class DatasetFilterClassLoader extends ClassLoader {
       throw new ClassNotFoundException("Trying to load an unExposed dataset class");
     }
   }
-
-  private static List<URL> getClassPathUrls(File unpackedJarDir) {
-    List<URL> classPathUrls = new LinkedList<URL>();
-
-    try {
-      classPathUrls.add(unpackedJarDir.toURI().toURL());
-    } catch (MalformedURLException e) {
-      LOG.error("Error in adding unpackedJarDir to classPathUrls", e);
-    }
-
-    try {
-      classPathUrls.addAll(getJarURLs(unpackedJarDir));
-    } catch (MalformedURLException e) {
-      LOG.error("Error in adding jar URLs to classPathUrls", e);
-    }
-
-    try {
-      classPathUrls.addAll(getJarURLs(new File(unpackedJarDir, "lib")));
-    } catch (MalformedURLException e) {
-      LOG.error("Error in adding jar URLs to classPathUrls", e);
-    }
-
-    return classPathUrls;
-  }
-
-  private static List<URL> getJarURLs(File dir) throws MalformedURLException {
-    File[] files = dir.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return name.endsWith(".jar");
-      }
-    });
-    List<URL> urls = new LinkedList<URL>();
-
-    if (files != null) {
-      for (File file : files) {
-        urls.add(file.toURI().toURL());
-      }
-    }
-    return urls;
-  }
-
 }

@@ -90,7 +90,6 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     DatasetProperties props = GSON.fromJson(propsHeader, DatasetProperties.class);
     DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
 
-    LOG.info("At DatasetAdminHandler Trying to get Type {}", typeMeta);
     DatasetType type = dsFramework.getDatasetType(typeMeta, null);
 
     if (type == null) {

@@ -19,6 +19,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Objects;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Lists;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -36,7 +37,8 @@ public final class Programs {
 
   public static Program createWithUnpack(Location location, File destinationUnpackedJarDir,
                                          ClassLoader parentClassLoader) throws IOException {
-    return new DefaultProgram(location, null, destinationUnpackedJarDir, parentClassLoader);
+    List<Location> emptyDatasetJarsList = Lists.newArrayList();
+    return new DefaultProgram(location, emptyDatasetJarsList, destinationUnpackedJarDir, parentClassLoader);
   }
 
   public static Program createWithUnpack(Location location, File destinationUnpackedJarDir) throws IOException {
@@ -62,7 +64,8 @@ public final class Programs {
   }
 
   public static Program create(Location location) throws IOException {
-    return new DefaultProgram(location, null, getClassLoader());
+    List<Location> emptyDatasetJarsList = Lists.newArrayList();
+    return new DefaultProgram(location, emptyDatasetJarsList, getClassLoader());
   }
 
   /**

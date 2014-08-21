@@ -19,8 +19,8 @@ package co.cask.cdap.app.program;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.DatasetFilterClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.lang.jar.DatasetFilterClassLoader;
 import co.cask.cdap.common.lang.jar.ProgramClassLoader;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.proto.Id;
@@ -34,7 +34,6 @@ import org.apache.twill.filesystem.Location;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;

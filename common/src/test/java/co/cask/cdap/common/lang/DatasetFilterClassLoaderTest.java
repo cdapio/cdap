@@ -17,6 +17,7 @@
 package co.cask.cdap.common.lang;
 
 import co.cask.cdap.api.annotation.ExposeDataset;
+import co.cask.cdap.common.lang.jar.DatasetFilterClassLoader;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
