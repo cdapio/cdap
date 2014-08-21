@@ -30,12 +30,14 @@ import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
+import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.proto.TableInfo;
+import co.cask.cdap.proto.TableDescriptionInfo;
+import co.cask.cdap.proto.TableNameInfo;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
@@ -343,7 +345,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public List<TableInfo> getTables(@Nullable final String database) throws ExploreException {
+  public List<TableNameInfo> getTables(@Nullable final String database) throws ExploreException {
     // TODO check the database user is allowed to access if security is enabled and
     // namespacing is in place.
 
@@ -367,9 +369,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       if (iTableDB == -1 || iTableName == -1) {
         throw new ExploreException("Could not parse get tables results");
       }
-      ImmutableList.Builder<TableInfo> builder = ImmutableList.builder();
+      ImmutableList.Builder<TableNameInfo> builder = ImmutableList.builder();
       for (QueryResult result : fullResults.getResults()) {
-        builder.add(new TableInfo(result.getColumns().get(iTableDB).toString(),
+        builder.add(new TableNameInfo(result.getColumns().get(iTableDB).toString(),
                                   result.getColumns().get(iTableName).toString()));
       }
       return builder.build();
@@ -383,13 +385,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public Map<String, String> getTableSchema(@Nullable String database, String table)
+  public TableDescriptionInfo getTableInfo(@Nullable String database, String table)
     throws ExploreException, TableNotFoundException {
     // TODO check the database user is allowed to access if security is enabled and
     // namespacing is in place.
 
     String tablePrefix = (database == null) ? "" : database + ".";
-    final String query = String.format("describe %s%s", tablePrefix, table);
+    final String query = String.format("describe formatted %s%s", tablePrefix, table);
     try {
       OperationResultInfo fullResults = runInternalQuery(new HandleProducer() {
         @Override
@@ -400,24 +402,48 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
       int colNameIdx = -1;
       int colTypeIdx = -1;
+      int commentIdx = -1;
       List<ColumnDesc> schema = fullResults.getSchema();
       for (ColumnDesc col : schema) {
         if (col.getName().equals("col_name")) {
           colNameIdx = col.getPosition() - 1;
         } else if (col.getName().equals("data_type")) {
           colTypeIdx = col.getPosition() - 1;
+        } else if (col.getName().equals("comment")) {
+          commentIdx = col.getPosition() - 1;
         }
       }
-      if (colNameIdx == -1 || colTypeIdx == -1) {
+      if (colNameIdx == -1 || colTypeIdx == -1 || commentIdx == -1) {
         throw new ExploreException("Could not parse query describe table results");
       }
-      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-      for (QueryResult result : fullResults.getResults()) {
-        builder.put(result.getColumns().get(colNameIdx).toString(),
-                    result.getColumns().get(colTypeIdx).toString());
-      }
-      return builder.build();
 
+      // Iterate through the results to get the schema, and other info
+      ImmutableMap.Builder<String, String> schemaBuilder = ImmutableMap.builder();
+      int i = 0;
+      while (!fullResults.getResults().get(i).getColumns().get(colNameIdx).toString().isEmpty() &&
+        fullResults.getResults().get(i).getColumns().get(colTypeIdx) != null) {
+        i++;
+      }
+      i++;
+      while (!fullResults.getResults().get(i).getColumns().get(colNameIdx).toString().isEmpty() &&
+        fullResults.getResults().get(i).getColumns().get(colTypeIdx) != null) {
+        schemaBuilder.put(fullResults.getResults().get(i).getColumns().get(colNameIdx).toString(),
+                          fullResults.getResults().get(i).getColumns().get(colTypeIdx).toString());
+        i++;
+      }
+      i++;
+      while (i < fullResults.getResults().size()) {
+        QueryResult result = fullResults.getResults().get(i);
+        if (result.getColumns().get(colTypeIdx) != null
+          && result.getColumns().get(colTypeIdx).toString().startsWith("storage_handler")) {
+          if (result.getColumns().get(commentIdx).equals(DatasetStorageHandler.class.getName())) {
+            return new TableDescriptionInfo(schemaBuilder.build(), true);
+          }
+          break;
+        }
+        i++;
+      }
+      return new TableDescriptionInfo(schemaBuilder.build(), false);
     } catch (SQLException e) {
       throw new TableNotFoundException("Error on running query '" + query + "'", e);
     } catch (UnexpectedQueryStatusException e) {

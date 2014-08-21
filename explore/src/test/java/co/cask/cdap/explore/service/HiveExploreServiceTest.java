@@ -28,7 +28,8 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.proto.TableInfo;
+import co.cask.cdap.proto.TableDescriptionInfo;
+import co.cask.cdap.proto.TableNameInfo;
 import co.cask.cdap.test.SlowTests;
 import com.continuuity.tephra.Transaction;
 import com.google.common.collect.ImmutableList;
@@ -130,14 +131,12 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
   public void getUserTables() throws Exception {
     exploreClient.submit("create table test (first INT, second STRING) " +
                            "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
-    List<TableInfo> tables = exploreService.getTables(null);
-    Assert.assertEquals(ImmutableList.of(new TableInfo("default", "my_table"),
-                                         new TableInfo("default", "test")),
-                        tables);
+    List<TableNameInfo> tables = exploreService.getTables(null);
+    Assert.assertEquals(ImmutableList.of(new TableNameInfo("default", "my_table"), new TableNameInfo("default", "test")), tables);
 
     tables = exploreService.getTables("default");
-    Assert.assertEquals(ImmutableList.of(new TableInfo("default", "my_table"),
-                                         new TableInfo("default", "test")),
+    Assert.assertEquals(ImmutableList.of(new TableNameInfo("default", "my_table"),
+                                         new TableNameInfo("default", "test")),
                         tables);
 
     tables = exploreService.getTables("foobar");
@@ -331,27 +330,40 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void getDatasetSchemaTest() throws Exception {
-    Map<String, String> datasetSchema = exploreService.getTableSchema(null, "my_table");
-    Assert.assertEquals(ImmutableMap.of("key", "string", "value", "struct<name:string,ints:array<int>>"),
-                        datasetSchema);
+    TableDescriptionInfo tableInfo = exploreService.getTableInfo(null, "my_table");
+    Assert.assertEquals(new TableDescriptionInfo(
+                          ImmutableMap.of("key", "string", "value", "struct<name:string,ints:array<int>>"),
+                          true),
+                        tableInfo);
 
-    datasetSchema = exploreService.getTableSchema("default", "my_table");
-    Assert.assertEquals(ImmutableMap.of("key", "string", "value", "struct<name:string,ints:array<int>>"),
-                        datasetSchema);
-
+    tableInfo = exploreService.getTableInfo("default", "my_table");
+    Assert.assertEquals(new TableDescriptionInfo(
+                          ImmutableMap.of("key", "string", "value", "struct<name:string,ints:array<int>>"),
+                          true),
+                        tableInfo);
     try {
-      exploreService.getTableSchema(null, "foobar");
+      exploreService.getTableInfo(null, "foobar");
       Assert.fail("Should throw TableNotFoundException on table foobar");
     } catch (TableNotFoundException e) {
       // Expected
     }
 
     try {
-      exploreService.getTableSchema("foo", "my_table");
+      exploreService.getTableInfo("foo", "my_table");
       Assert.fail("Should throw ExploreException as database foo is inaccessible to current user");
-    } catch (ExploreException e) {
+    } catch (TableNotFoundException e) {
       // Expected
     }
+
+    exploreClient.submit("create table test (first INT, second STRING) " +
+                           "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
+    tableInfo = exploreService.getTableInfo(null, "test");
+    Assert.assertEquals(new TableDescriptionInfo(
+                          ImmutableMap.of("first", "int", "second", "string"),
+                          false),
+                        tableInfo);
+    exploreClient.submit("drop table if exists test").get();
+
   }
 
   @Test

@@ -19,27 +19,28 @@ package co.cask.cdap.proto;
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Map;
+
 /**
- * Basic information about a Hive table.
+ * Schema and other information about a Hive table.
  */
-public class TableInfo {
-  @SerializedName("database")
-  private final String databaseName;
+public class TableDescriptionInfo {
+  private final Map<String, String> schema;
 
-  @SerializedName("table")
-  private final String tableName;
+  @SerializedName("from_dataset")
+  private final boolean isBackedByDataset;
 
-  public TableInfo(String databaseName, String tableName) {
-    this.databaseName = databaseName;
-    this.tableName = tableName;
+  public TableDescriptionInfo(Map<String, String> schema, boolean isBackedByDataset) {
+    this.schema = schema;
+    this.isBackedByDataset = isBackedByDataset;
   }
 
-  public String getTableName() {
-    return tableName;
+  public boolean isBackedByDataset() {
+    return isBackedByDataset;
   }
 
-  public String getDatabaseName() {
-    return databaseName;
+  public Map<String, String> getSchema() {
+    return schema;
   }
 
   @Override
@@ -51,14 +52,15 @@ public class TableInfo {
       return false;
     }
 
-    TableInfo that = (TableInfo) o;
+    TableDescriptionInfo that = (TableDescriptionInfo) o;
 
-    return Objects.equal(this.databaseName, that.databaseName)
-      && Objects.equal(this.tableName, that.tableName);
+    return Objects.equal(this.schema, that.schema)
+      && Objects.equal(this.isBackedByDataset, that.isBackedByDataset);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(databaseName, tableName);
+    return Objects.hashCode(schema, isBackedByDataset);
   }
+
 }
