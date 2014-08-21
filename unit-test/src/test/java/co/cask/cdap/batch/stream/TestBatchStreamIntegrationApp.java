@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -67,7 +68,6 @@ public class TestBatchStreamIntegrationApp extends AbstractApplication {
       return MapReduceSpecification.Builder.with()
         .setName("StreamTestBatch")
         .setDescription("Batch job for testing batch stream read")
-        .useInputDataSet("stream://s1")
         .useOutputDataSet("results")
         .build();
     }
@@ -79,6 +79,8 @@ public class TestBatchStreamIntegrationApp extends AbstractApplication {
       job.setMapOutputKeyClass(Text.class);
       job.setMapOutputValueClass(Text.class);
       job.setReducerClass(StreamTestBatchReducer.class);
+
+      StreamBatchReadable.useStreamInput(context, "s1");
     }
   }
 
