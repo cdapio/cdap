@@ -49,6 +49,7 @@ import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
@@ -81,6 +82,7 @@ import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Services;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -218,6 +220,16 @@ public class ServiceTwillRunnable implements TwillRunnable {
         @Override
         public TwillRunnableSpecification getSpecification() {
           return runtimeSpec.getRunnableSpecification();
+        }
+
+
+        @Override
+        public Cancellable announce(String runnable, int i) {
+          String serviceContextString = String.format("%s.%s.%s.%s", ProgramType.SERVICE.name().toLowerCase(),
+                                               program.getAccountId(), program.getApplicationId(), program.getName());
+          // Currently ignoring the runnable's name (the param passed into announce), and simply announcing by the name
+          // of the service it belongs to.
+          return super.announce(serviceContextString, i);
         }
       });
 

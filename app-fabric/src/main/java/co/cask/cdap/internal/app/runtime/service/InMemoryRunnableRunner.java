@@ -136,8 +136,8 @@ public class InMemoryRunnableRunner implements ProgramRunner {
           return dsService.register(new Discoverable() {
             @Override
             public String getName() {
-              return String.format("service.%s.%s.%s.%s", program.getAccountId(),
-                                   program.getApplicationId(), program.getName(), discoverable.getName());
+              return String.format("service.%s.%s.%s", program.getAccountId(),
+                                   program.getApplicationId(), program.getName());
             }
 
             @Override

@@ -38,7 +38,8 @@ public class HttpServiceTwillApplication implements TwillApplication {
    * @param serviceName the name of the service used when announcing the service
    * @param handlers the handlers of the HTTP request
    */
-  public HttpServiceTwillApplication(String appName, String serviceName, Iterable<? extends HttpServiceHandler> handlers) {
+  public HttpServiceTwillApplication(String appName, String serviceName,
+                                     Iterable<? extends HttpServiceHandler> handlers) {
     this.appName = appName;
     this.serviceName = serviceName;
     this.handlers = ImmutableList.copyOf(handlers);

@@ -184,8 +184,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
         Throwables.propagate(e);
       }
     }
-    String pathPrefix = String.format("/v2/apps/%s/services/%s/runnables/%s/methods", appName, serviceName,
-                                      serviceName);
+    String pathPrefix = String.format("/v2/apps/%s/services/%s/methods", appName, serviceName);
     service = createNettyHttpService(context.getHost().getCanonicalHostName(), handlerContextPairs, pathPrefix);
   }
 
