@@ -55,7 +55,7 @@ public class TestBatchStreamIntegrationApp extends AbstractApplication {
   @Override
   public void configure() {
     setName("TestFlowStreamIntegrationApp");
-    addStream(new Stream("s1"));
+    addStream(new Stream("s_1"));
     createDataset("results", KeyValueTable.class);
     addFlow(new StreamTestFlow());
     addMapReduce(new StreamTestBatch());
@@ -80,7 +80,7 @@ public class TestBatchStreamIntegrationApp extends AbstractApplication {
       job.setMapOutputValueClass(Text.class);
       job.setReducerClass(StreamTestBatchReducer.class);
 
-      StreamBatchReadable.useStreamInput(context, "s1");
+      StreamBatchReadable.useStreamInput(context, "s_1");
     }
   }
 
@@ -109,7 +109,7 @@ public class TestBatchStreamIntegrationApp extends AbstractApplication {
         .setName("StreamTestFlow")
         .setDescription("Flow for testing batch stream dequeue")
         .withFlowlets().add(new StreamReader())
-        .connect().fromStream("s1").to("StreamReader")
+        .connect().fromStream("s_1").to("StreamReader")
         .build();
     }
   }

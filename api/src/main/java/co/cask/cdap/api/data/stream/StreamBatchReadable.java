@@ -85,7 +85,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    */
   public StreamBatchReadable(URI uri) {
     Preconditions.checkArgument("stream".equals(uri.getScheme()));
-    streamName = uri.getHost();
+    streamName = uri.getAuthority();
 
     String query = uri.getQuery();
     if (query != null && !query.isEmpty()) {
