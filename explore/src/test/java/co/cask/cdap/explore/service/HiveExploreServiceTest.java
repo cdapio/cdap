@@ -132,7 +132,9 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     exploreClient.submit("create table test (first INT, second STRING) " +
                            "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
     List<TableNameInfo> tables = exploreService.getTables(null);
-    Assert.assertEquals(ImmutableList.of(new TableNameInfo("default", "my_table"), new TableNameInfo("default", "test")), tables);
+    Assert.assertEquals(ImmutableList.of(new TableNameInfo("default", "my_table"),
+                                         new TableNameInfo("default", "test")),
+                        tables);
 
     tables = exploreService.getTables("default");
     Assert.assertEquals(ImmutableList.of(new TableNameInfo("default", "my_table"),
