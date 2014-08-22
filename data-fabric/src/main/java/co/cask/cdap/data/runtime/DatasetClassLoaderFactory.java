@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
@@ -33,8 +33,8 @@ import java.util.List;
  */
 public class DatasetClassLoaderFactory {
 
-  public static ClassLoader createDatasetClassLoader(ClassLoader cl, DatasetTypeMeta typeMeta,
-                                              LocationFactory locationFactory) {
+  public static ClassLoader createDatasetClassLoaderFromType(ClassLoader cl, DatasetTypeMeta typeMeta,
+                                                             LocationFactory locationFactory) {
     try {
       List<DatasetModuleMeta> modulesToLoad = typeMeta.getModules();
       List<Location> datasetJars = Lists.newArrayList();

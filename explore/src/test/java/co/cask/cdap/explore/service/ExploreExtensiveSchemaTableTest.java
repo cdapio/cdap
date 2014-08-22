@@ -19,6 +19,7 @@ package co.cask.cdap.explore.service;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data.runtime.DatasetClassLoaderFactory;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.QueryResult;
@@ -50,7 +51,7 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
 
     ClassLoader cl = Thread.currentThread().getContextClassLoader();
     DatasetTypeMeta typeMeta = datasetFramework.getType("ExtensiveSchemaTable");
-    cl = DatasetClassLoaderFactory.createDatasetClassLoader(cl, typeMeta, locationFactory);
+    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
 
 
     // Accessing dataset instance to perform data operations

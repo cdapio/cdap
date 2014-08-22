@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.data.runtime.DatasetClassLoaderFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -66,7 +67,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
     ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
-    createDatasetClassLoader(cl, typeMeta);
+    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
     DatasetType type = client.getDatasetType(typeMeta, cl);
 
     if (type == null) {
@@ -85,7 +86,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
     ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
-    createDatasetClassLoader(cl, typeMeta);
+    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
     DatasetType type = client.getDatasetType(typeMeta, cl);
 
     if (type == null) {
@@ -120,23 +121,4 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
     return client.getAdmin(instanceName, null);
   }
 
-  private ClassLoader createDatasetClassLoader(ClassLoader cl, DatasetTypeMeta typeMeta) {
-    try {
-      List<DatasetModuleMeta> modulesToLoad = typeMeta.getModules();
-      List<Location> datasetJars = Lists.newArrayList();
-      for (DatasetModuleMeta module : modulesToLoad) {
-        if (module.getJarLocation() != null) {
-          datasetJars.add(locationFactory.create(module.getJarLocation()));
-        }
-      }
-      if (!datasetJars.isEmpty()) {
-        return ClassLoaders.newDatasetClassLoader(datasetJars, ApiResourceListHolder.getResourceList(), cl);
-      } else {
-        return cl;
-      }
-    } catch (IOException e) {
-      LOG.error("Exception while creating DatasetClassLoader");
-      throw Throwables.propagate(e);
-    }
-  }
 }

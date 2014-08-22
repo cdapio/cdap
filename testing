@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><configuration>
+<property><name>mapreduce.user.classpath.first</name><value>true</value><source>programatically</source></property>
+<property><name>mapreduce.job.user.classpath.first</name><value>true</value><source>programatically</source></property>
+<property><name>foo</name><value>bar</value><source>programatically</source><source>file:/Users/shankar/project/cdap/explore/target/junit5778656186549316434/hive-site.xml</source></property>
+</configuration>

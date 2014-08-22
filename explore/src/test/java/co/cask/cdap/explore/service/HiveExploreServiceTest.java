@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.data.runtime.DatasetClassLoaderFactory;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.proto.ColumnDesc;
@@ -76,7 +77,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
     cl = Thread.currentThread().getContextClassLoader();
     DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
-    cl = DatasetClassLoaderFactory.createDatasetClassLoader(cl, typeMeta, locationFactory);
+    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
 
 
     // Accessing dataset instance to perform data operations
@@ -410,7 +411,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
       ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                             getClass().getClassLoader());
       DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
-      cl = DatasetClassLoaderFactory.createDatasetClassLoader(cl, typeMeta, locationFactory);
+      cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
 
 
       // Accessing dataset instance to perform data operations

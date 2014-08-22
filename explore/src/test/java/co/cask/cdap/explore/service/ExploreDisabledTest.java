@@ -27,6 +27,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.DatasetClassLoaderFactory;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -113,7 +114,7 @@ public class ExploreDisabledTest {
     ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
     DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
-    cl = DatasetClassLoaderFactory.createDatasetClassLoader(cl, typeMeta, locationFactory);
+    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
 
     Transaction tx1 = transactionManager.startShort(100);
 
@@ -160,7 +161,7 @@ public class ExploreDisabledTest {
     ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
     DatasetTypeMeta typeMeta = datasetFramework.getType("NotRecordScannableTableDef");
-    cl = DatasetClassLoaderFactory.createDatasetClassLoader(cl, typeMeta, locationFactory);
+    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
 
     Transaction tx1 = transactionManager.startShort(100);
 

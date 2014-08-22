@@ -43,6 +43,7 @@ import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.DatasetClassLoaderFactory;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
@@ -413,7 +414,7 @@ public class TestBase {
     ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
     DatasetTypeMeta typeMeta = datasetFramework.getType(datasetTypeName);
-    cl = createDatasetClassLoader(cl, typeMeta);
+    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
     final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, new HashMap<String, String>(), cl);
     try {
       TransactionAware txAwareDataset = (TransactionAware) dataSet;
@@ -464,24 +465,5 @@ public class TestBase {
     String connectString = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, host, port);
 
     return DriverManager.getConnection(connectString);
-  }
-
-  protected ClassLoader createDatasetClassLoader(ClassLoader cl, DatasetTypeMeta typeMeta) {
-    try {
-      List<DatasetModuleMeta> modulesToLoad = typeMeta.getModules();
-      List<Location> datasetJars = Lists.newArrayList();
-      for (DatasetModuleMeta module : modulesToLoad) {
-        if (module.getJarLocation() != null) {
-          datasetJars.add(locationFactory.create(module.getJarLocation()));
-        }
-      }
-      if (!datasetJars.isEmpty()) {
-        return ClassLoaders.newDatasetClassLoader(datasetJars, ApiResourceListHolder.getResourceList(), cl);
-      } else {
-        return cl;
-      }
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
   }
 }

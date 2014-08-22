@@ -387,13 +387,20 @@ public class ExploreServiceUtils {
 
     try {
       conf.writeXml(fos);
+      fos.flush();
     } catch (IOException e) {
       LOG.error("Could not write modified configuration to temporary hive-site.xml at {}", newHiveConfFile, e);
       throw Throwables.propagate(e);
     } finally {
       Closeables.closeQuietly(fos);
     }
-
+    Configuration test = new Configuration(false);
+    try {
+      test.addResource(newHiveConfFile.toURI().toURL());
+      test.size();
+    } catch (MalformedURLException e) {
+      e.printStackTrace();
+    }
     return newHiveConfFile;
   }
 }

@@ -58,6 +58,8 @@ public class ExploreServiceUtilsTest {
 
     conf = new Configuration(false);
     conf.addResource(newConfFile.toURI().toURL());
+    Configuration test = new Configuration(false);
+    test.addResource(newConfFile.toURI().toURL());
     Assert.assertEquals(3, conf.size());
     Assert.assertEquals("true", conf.get("mapreduce.user.classpath.first"));
     Assert.assertEquals("true", conf.get(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST));

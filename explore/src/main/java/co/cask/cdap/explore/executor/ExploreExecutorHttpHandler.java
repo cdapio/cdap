@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.data.runtime.DatasetClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.service.ExploreService;
@@ -87,7 +88,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                               getClass().getClassLoader());
         DatasetTypeMeta typeMeta = datasetFramework.getType(datasetFramework.getDatasetSpec(datasetName).getType());
-        cl = createDatasetClassLoader(cl, typeMeta);
+        cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
         dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, cl);
       } catch (Exception e) {
         String className = isClassNotFoundException(e);
@@ -165,7 +166,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                             getClass().getClassLoader());
       DatasetTypeMeta typeMeta = datasetFramework.getType(datasetFramework.getDatasetSpec(datasetName).getType());
-      cl = createDatasetClassLoader(cl, typeMeta);
+      cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
       Dataset dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, cl);
 
       if (dataset == null) {
@@ -208,7 +209,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                             getClass().getClassLoader());
       DatasetTypeMeta typeMeta = datasetFramework.getType(datasetFramework.getDatasetSpec(datasetName).getType());
-      cl = createDatasetClassLoader(cl, typeMeta);
+      cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
       Dataset dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, cl);
       if (dataset == null) {
         responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot find dataset " + datasetName);
@@ -246,25 +247,4 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
-
-  private ClassLoader createDatasetClassLoader(ClassLoader cl, DatasetTypeMeta typeMeta) {
-    try {
-      List<DatasetModuleMeta> modulesToLoad = typeMeta.getModules();
-      List<Location> datasetJars = Lists.newArrayList();
-      for (DatasetModuleMeta module : modulesToLoad) {
-        if (module.getJarLocation() != null) {
-          datasetJars.add(locationFactory.create(module.getJarLocation()));
-        }
-      }
-      if (!datasetJars.isEmpty()) {
-        return ClassLoaders.newDatasetClassLoader(datasetJars, ApiResourceListHolder.getResourceList(), cl);
-      } else {
-        return cl;
-      }
-    } catch (IOException e) {
-      LOG.error("Exception while creating DatasetClassLoader");
-      throw Throwables.propagate(e);
-    }
-  }
-
 }

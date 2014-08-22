@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.HandlerException;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.data.runtime.DatasetClassLoaderFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -103,7 +104,8 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
     ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
-    cl = createDatasetClassLoader(cl, typeMeta);
+    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
+
     DatasetType type = dsFramework.getDatasetType(typeMeta, cl);
 
     if (type == null) {
@@ -117,26 +119,6 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     DatasetAdmin admin = type.getAdmin(spec);
     admin.create();
     responder.sendJson(HttpResponseStatus.OK, spec);
-  }
-
-  private ClassLoader createDatasetClassLoader(ClassLoader cl, DatasetTypeMeta typeMeta) {
-    try {
-      List<DatasetModuleMeta> modulesToLoad = typeMeta.getModules();
-      List<Location> datasetJars = Lists.newArrayList();
-      for (DatasetModuleMeta module : modulesToLoad) {
-        if (module.getJarLocation() != null) {
-          datasetJars.add(locationFactory.create(module.getJarLocation()));
-        }
-      }
-      if (!datasetJars.isEmpty()) {
-        return ClassLoaders.newDatasetClassLoader(datasetJars, ApiResourceListHolder.getResourceList(), cl);
-      } else {
-        return cl;
-      }
-    } catch (IOException e) {
-      LOG.error("Exception while creating DatasetClassLoader");
-      throw Throwables.propagate(e);
-    }
   }
 
   @POST
@@ -155,7 +137,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
     ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
-    cl = createDatasetClassLoader(cl, typeMeta);
+    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
     DatasetType type = dsFramework.getDatasetType(typeMeta, cl);
 
     if (type == null) {
