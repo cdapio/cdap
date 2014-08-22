@@ -35,7 +35,7 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.proto.TableDescriptionInfo;
+import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -253,12 +253,12 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   @Override
-  public TableDescriptionInfo getTableInfo(@Nullable String database, String table)
+  public TableInfo getTableInfo(@Nullable String database, String table)
     throws ExploreException, TableNotFoundException {
     String tableNamePrefix = (database != null) ? database + "." : "";
     HttpResponse response = doGet(String.format("data/explore/tables/%s/info", tableNamePrefix + table));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return parseJson(response, TableDescriptionInfo.class);
+      return parseJson(response, TableInfo.class);
     } else if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
       throw new TableNotFoundException("Table " + tableNamePrefix + table + " not found.");
     }
