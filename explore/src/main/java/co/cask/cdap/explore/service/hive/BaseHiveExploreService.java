@@ -23,6 +23,8 @@ import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.MetaDataInfo;
+import co.cask.cdap.explore.service.TableNotFoundException;
+import co.cask.cdap.explore.service.UnexpectedQueryStatusException;
 import co.cask.cdap.hive.context.CConfCodec;
 import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
@@ -33,12 +35,14 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.proto.TableInfo;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
@@ -78,6 +82,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Defines common functionality used by different HiveExploreServices. The common functionality includes
@@ -152,7 +157,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting {}...", Hive13ExploreService.class.getSimpleName());
+    LOG.info("Starting {}...", BaseHiveExploreService.class.getSimpleName());
     cliService.init(getHiveConf());
     cliService.start();
 
@@ -314,8 +319,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public QueryHandle getTables(String catalog, String schemaPattern,
-                          String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
+  public QueryHandle getTables(String catalog, String schemaPattern, String tableNamePattern,
+                               List<String> tableTypes) throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
@@ -334,6 +339,127 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       throw getSqlException(e);
     } catch (Throwable e) {
       throw new ExploreException(e);
+    }
+  }
+
+  @Override
+  public List<TableInfo> getTables(@Nullable final String database) throws ExploreException {
+    // TODO check the database user is allowed to access if security is enabled and
+    // namespacing is in place.
+
+    try {
+      OperationResultInfo fullResults = runInternalQuery(new HandleProducer() {
+        @Override
+        public OperationHandle getHandle(SessionHandle sessionHandle) throws ExploreException, SQLException {
+          return cliService.getTables(sessionHandle, null, database, "%", null);
+        }
+      });
+      int iTableDB = -1;
+      int iTableName = -1;
+      List<ColumnDesc> schema = fullResults.getSchema();
+      for (ColumnDesc col : schema) {
+        if (col.getName().equals("TABLE_SCHEM")) {
+          iTableDB = col.getPosition() - 1;
+        } else if (col.getName().equals("TABLE_NAME")) {
+          iTableName = col.getPosition() - 1;
+        }
+      }
+      if (iTableDB == -1 || iTableName == -1) {
+        throw new ExploreException("Could not parse get tables results");
+      }
+      ImmutableList.Builder<TableInfo> builder = ImmutableList.builder();
+      for (QueryResult result : fullResults.getResults()) {
+        builder.add(new TableInfo(result.getColumns().get(iTableDB).toString(),
+                                  result.getColumns().get(iTableName).toString()));
+      }
+      return builder.build();
+    } catch (SQLException e) {
+      LOG.error("Error in query show tables", e);
+      throw new ExploreException(e);
+    } catch (UnexpectedQueryStatusException e) {
+      LOG.error("Error in query show tables", e);
+      throw new ExploreException(e);
+    }
+  }
+
+  @Override
+  public Map<String, String> getTableSchema(@Nullable String database, String table)
+    throws ExploreException, TableNotFoundException {
+    // TODO check the database user is allowed to access if security is enabled and
+    // namespacing is in place.
+
+    String tablePrefix = (database == null) ? "" : database + ".";
+    final String query = String.format("describe %s%s", tablePrefix, table);
+    try {
+      OperationResultInfo fullResults = runInternalQuery(new HandleProducer() {
+        @Override
+        public OperationHandle getHandle(SessionHandle sessionHandle) throws ExploreException, SQLException {
+          return doExecute(sessionHandle, query);
+        }
+      });
+
+      int colNameIdx = -1;
+      int colTypeIdx = -1;
+      List<ColumnDesc> schema = fullResults.getSchema();
+      for (ColumnDesc col : schema) {
+        if (col.getName().equals("col_name")) {
+          colNameIdx = col.getPosition() - 1;
+        } else if (col.getName().equals("data_type")) {
+          colTypeIdx = col.getPosition() - 1;
+        }
+      }
+      if (colNameIdx == -1 || colTypeIdx == -1) {
+        throw new ExploreException("Could not parse query describe table results");
+      }
+      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+      for (QueryResult result : fullResults.getResults()) {
+        builder.put(result.getColumns().get(colNameIdx).toString(),
+                    result.getColumns().get(colTypeIdx).toString());
+      }
+      return builder.build();
+
+    } catch (SQLException e) {
+      throw new TableNotFoundException("Error on running query '" + query + "'", e);
+    } catch (UnexpectedQueryStatusException e) {
+      throw new TableNotFoundException("Error on running query '" + query + "'", e);
+    }
+  }
+
+  /**
+   * Run queries internally, without going through the logic of storing the operation info, timing out etc.
+   * This is designed for fast queries that wouldn't block the explore service too long.
+   */
+  private OperationResultInfo runInternalQuery(HandleProducer handleProducer)
+    throws ExploreException, SQLException, UnexpectedQueryStatusException {
+    SessionHandle sessionHandle = cliService.openSession("", "", Maps.<String, String>newHashMap());
+    try {
+      OperationHandle operationHandle = handleProducer.getHandle(sessionHandle);
+      QueryStatus status;
+      do {
+        TimeUnit.MILLISECONDS.sleep(50);
+        status = fetchStatus(operationHandle);
+      } while (!status.getStatus().isDone());
+
+      if (!status.getStatus().equals(QueryStatus.OpStatus.FINISHED)) {
+        throw new UnexpectedQueryStatusException("Query ended with status " + status.getStatus(),
+                                                 status.getStatus());
+      }
+
+      ImmutableList.Builder<QueryResult> resultBuilder = ImmutableList.builder();
+      List<QueryResult> tmpResults;
+      do {
+        tmpResults = fetchNextResults(operationHandle, 1000);
+        resultBuilder.addAll(tmpResults);
+      } while (!tmpResults.isEmpty());
+
+      return new OperationResultInfo(resultBuilder.build(), getResultSchemaInternal(operationHandle));
+    } catch (InterruptedException e) {
+      LOG.error("Could not wait for operation execution", e);
+      throw Throwables.propagate(e);
+    } catch (HandleNotFoundException e) {
+      throw new ExploreException("Handle not found for internal operation", e);
+    } finally {
+      closeSession(sessionHandle);
     }
   }
 
@@ -545,19 +671,23 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
       // Fetch schema from hive
       LOG.trace("Getting schema for handle {}", handle);
-      ImmutableList.Builder<ColumnDesc> listBuilder = ImmutableList.builder();
       OperationHandle operationHandle = getOperationHandle(handle);
-      if (operationHandle.hasResultSet()) {
-        TableSchema tableSchema = cliService.getResultSetMetadata(operationHandle);
-        for (ColumnDescriptor colDesc : tableSchema.getColumnDescriptors()) {
-          listBuilder.add(new ColumnDesc(colDesc.getName(), colDesc.getTypeName(),
-                                         colDesc.getOrdinalPosition(), colDesc.getComment()));
-        }
-      }
-      return listBuilder.build();
+      return getResultSchemaInternal(operationHandle);
     } catch (HiveSQLException e) {
       throw getSqlException(e);
     }
+  }
+
+  protected List<ColumnDesc> getResultSchemaInternal(OperationHandle operationHandle) throws SQLException {
+    ImmutableList.Builder<ColumnDesc> listBuilder = ImmutableList.builder();
+    if (operationHandle.hasResultSet()) {
+      TableSchema tableSchema = cliService.getResultSetMetadata(operationHandle);
+      for (ColumnDescriptor colDesc : tableSchema.getColumnDescriptors()) {
+        listBuilder.add(new ColumnDesc(colDesc.getName(), colDesc.getTypeName(),
+                                       colDesc.getOrdinalPosition(), colDesc.getComment()));
+      }
+    }
+    return listBuilder.build();
   }
 
   /**
@@ -872,5 +1002,33 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     public QueryStatus getStatus() {
       return status;
     }
+  }
+
+  /**
+   * Contains the results of a Hive operation execution as well as the schema of those.
+   */
+  private static class OperationResultInfo {
+    private final List<QueryResult> results;
+    private final List<ColumnDesc> schema;
+
+    private OperationResultInfo(List<QueryResult> results, List<ColumnDesc> schema) {
+      this.results = results;
+      this.schema = schema;
+    }
+
+    public List<ColumnDesc> getSchema() {
+      return schema;
+    }
+
+    public List<QueryResult> getResults() {
+      return results;
+    }
+  }
+
+  /**
+   * Produces a Hive {@link OperationHandle}.
+   */
+  private interface HandleProducer {
+    OperationHandle getHandle(SessionHandle sessionHandle) throws ExploreException, SQLException;
   }
 }

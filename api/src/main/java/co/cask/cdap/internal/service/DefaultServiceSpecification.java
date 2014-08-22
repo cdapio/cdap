@@ -26,7 +26,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * This class defines a specification for a {@link co.cask.cdap.api.service.ServiceSpecification}.
+ * This class defines a specification for a {@link ServiceSpecification}.
  */
 public class DefaultServiceSpecification implements ServiceSpecification {
 

@@ -22,10 +22,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -60,8 +57,6 @@ public class DataSetInstantiator implements DataSetContext {
   private final DatasetFramework datasetFramework;
   // the class loader to use for data set classes
   private final ClassLoader classLoader;
-  // the known data set specifications
-  private final Map<String, DatasetCreationSpec> datasetsV2 = Maps.newHashMap();
   private final Set<TransactionAware> txAware = Sets.newIdentityHashSet();
   // in this collection we have only datasets initialized with getDataSet() which is OK for now...
   private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
@@ -91,14 +86,6 @@ public class DataSetInstantiator implements DataSetContext {
     return (T) getDataSet(name, arguments, this.datasetFramework);
   }
 
-  public void setDataSets(Iterable<DatasetCreationSpec> creationSpec) {
-    for (DatasetCreationSpec spec : creationSpec) {
-      if (spec != null) {
-        this.datasetsV2.put(spec.getInstanceName(), spec);
-      }
-    }
-  }
-
   /**
    *  The main value of this class: Creates a new instance of a data set, as
    *  specified by the matching data set spec, and injects the data fabric
@@ -112,14 +99,12 @@ public class DataSetInstantiator implements DataSetContext {
                                             @Nullable DatasetFramework datasetFramework)
     throws DataSetInstantiationException {
 
-    if (datasetFramework != null) {
-      T dataSet = (T) getDataset(dataSetName, arguments, datasetFramework);
-      if (dataSet != null) {
-        return dataSet;
-      }
+    T dataSet = (T) getDataset(dataSetName, arguments, datasetFramework);
+    if (dataSet == null) {
+      throw logAndException(null, "No data set named %s can be instantiated.", dataSetName);
     }
 
-    throw logAndException(null, "No data set named %s can be instantiated.", dataSetName);
+    return dataSet;
   }
 
   private <T extends Dataset> T getDataset(String datasetName, Map<String, String> arguments,
@@ -189,11 +174,8 @@ public class DataSetInstantiator implements DataSetContext {
     return exn;
   }
 
-  public void setMetricsCollector(final MetricsCollectionService metricsCollectionService,
+  public void setMetricsCollector(final MetricsCollector dataSetMetrics,
                                   final MetricsCollector programContextMetrics) {
-
-    final MetricsCollector dataSetMetrics =
-      metricsCollectionService.getCollector(MetricsScope.REACTOR, Constants.Metrics.DATASET_CONTEXT, "0");
 
     for (Map.Entry<TransactionAware, String> txAware : this.txAwareToMetricNames.entrySet()) {
       if (txAware.getKey() instanceof MeteredDataset) {

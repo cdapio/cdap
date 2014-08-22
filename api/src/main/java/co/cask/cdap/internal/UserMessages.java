@@ -31,7 +31,7 @@ public final class UserMessages {
       return getBundle().getString(key);
 
     } catch (Exception e) {
-      return "Unknown Error. Please check the Reactor log.";
+      return "Unknown Error. Please check the CDAP Instance log.";
     }
 
   }

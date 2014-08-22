@@ -50,7 +50,6 @@ import javax.annotation.Nullable;
  * A simple implementation of {@link co.cask.cdap.data2.dataset2.DatasetFramework} that keeps its state in
  * memory
  */
-@Singleton
 public class InMemoryDatasetFramework implements DatasetFramework {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryDatasetFramework.class);
 

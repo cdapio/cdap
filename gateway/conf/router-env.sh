@@ -19,7 +19,7 @@
 # Main class to be invoked.
 MAIN_CLASS=co.cask.cdap.gateway.router.RouterMain
 
-export JAVA_HEAPMAX=-Xmx1024m
+export JAVA_HEAPMAX=${ROUTER_JAVA_HEAPMAX:--Xmx1024m}
 
 # Arguments for main class.
 #MAIN_CLASS_ARGS=

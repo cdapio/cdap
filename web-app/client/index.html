@@ -48,7 +48,11 @@
       <span class="warning-text">Experiencing connection issues.</span>
     </div>
   </div>
-
+  <div class="loading-icon hide">
+      <div class="overlay-background">
+          <img src="/assets/img/loading_new.gif" />
+      </div>
+  </div>
   <script type="text/x-handlebars" data-template-name="application">
     <div id="header">
       <div class="logo-holder left-float">
@@ -190,45 +194,46 @@
           <table class="table">
             <thead>
               <th style="padding-left: 14px; min-width: 350px" class="service-col">Name</th>
-              <th style="min-width: 100px;" class="status-col center-align">Status
-              </th>
+              <th style="min-width: 100px;" class="status-col center-align">Status</th>
               <th style="min-width: 100px;" class="logs-col center-align">Logs</th>
               <th style="min-width: 200px;" class="instance-col center-align">Instances Requested</th>
               <th style="min-width: 200px;" class="instance-col center-align">Provisioned</th>
             </thead>
             <tbody>
-            {{#each systemServices}}
+            {{#each service in systemServices}}
               <tr>
                 <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
-                  {{this.name}}
+                  {{service.name}}
                   </a>
                   <br />
-                  <span class="app-list-status">{{this.description}}</span>
+                  <span class="app-list-status">{{service.description}}</span>
                 </td>
                 <td style="max-width: 100px;" class="status-col center-align">
-                  <span {{ bindAttr class=":service-icon this.imgClass" }} ></span>
+                  <span {{ bindAttr class=":service-icon service.imgClass" }} ></span>
                 </td>
                 <td style="max-width: 100px;" class="status-col center-align">
-                  {{#if this.logsStatusOk}}
-                    {{#linkTo 'Service.Log' this}}<span {{ bindAttr class=":log-icon this.logClass" }} ></span>{{/linkTo}}
+                  {{#if service.logsStatusOk}}
+                    {{#linkTo 'Service.Log' service}}<span {{ bindAttr class=":log-icon service.logClass" }} ></span>{{/linkTo}}
                   {{ else }}
-                    <span data-toggle="tooltip" data-placement="right" title="Please contact your system admistrator for logs.">NA</span>
+                    <span data-toggle="tooltip" data-placement="right" title="Please contact your system administrator for logs.">NA</span>
                   {{/if}}
                 </td>
                 <td style="max-width: 200px;" class="instance-col">
                   <div class="instance-wrapper">
-                    <div class="instance-num"><span>{{this.requested}}</span></div>
                     <div>
-                      <a class="cursor-pointer" {{action decreaseInstance this this.requested }}>
-                        <span class="minus-icon"></span>
-                      </a>
-                      <a class="cursor-pointer" {{action increaseInstance this this.requested }}>
-                        <span class="plus-icon"></span>
-                      </a>
+                    <form {{action "changeInstances" service on="submit"}}>
+                      {{input keyUp=keyPressed placeholder=service.requested maxlength="3" value=service.instancesInput class="services-instances-input" }}
+                    </form>
+                    </div>
+                    <div>
+                      <button class="btn btn-transparent" {{action changeInstances service on="click"}}>
+                        <i class="icon-arrow-right"></i>
+                      </button>
                     </div>
                   </div>
+                </td>
                 <td style="max-width: 350px;" class="instance-provisioned service-col">
-                    <div class="instance-num auto-margin"><span>{{this.provisioned}}</span></div>
+                    <div class="instance-num auto-margin"><span>{{service.provisioned}}</span></div>
                 </td>
               </tr>
             {{/each}}
@@ -288,8 +293,8 @@
           </thead>
           <tbody>
             {{!--  RUNNABLES ROWS --}}
-              {{#each runnable in model.runnablesList}}
-              <tr>
+            {{#each runnable in model.runnablesList}}
+            <tr>
               <td class="app-list-name service-col"><a class="none-text-decoration">
                 {{runnable.id}}
                 </a>
@@ -298,18 +303,18 @@
               </td>
               <td style="max-width: 200px;" class="instance-col">
                 <div class="instance-wrapper">
-                  <div class="instance-num left-float"><span>{{runnable.requested}}</span></div>
-                  {{#if model.isRunning}}
                   <div>
-                    <a class="cursor-pointer" {{action runnableDecreaseInstance model runnable.id runnable.requested }}>
-                      <span class="minus-icon"></span>
-                    </a>
-                    <a class="cursor-pointer" {{action runnableIncreaseInstance model runnable.id runnable.requested }}>
-                      <span class="plus-icon"></span>
-                    </a>
+                    <form {{action "runnableChangeInstances" model runnable on="submit"}}>
+                      {{input keyUp=keyPressed placeholder=runnable.requested maxlength="3" value=runnable.instancesInput class="services-instances-input" }}
+                    </form>
                   </div>
-                  {{/if}}
+                  <div>
+                    <button class="btn btn-transparent" {{action runnableChangeInstances model runnable on="click"}}>
+                      <i class="icon-arrow-right"></i>
+                    </button>
+                  </div>
                 </div>
+              </td>
               <td class="instance-provisioned service-col">
                   <div class="instance-num auto-margin"><span>{{runnable.provisioned}}</span></div>
               </td>
@@ -495,9 +500,7 @@
           <div data-toggle="popover"  title="Error" data-trigger="manual" data-placement="top" class="text-area-container">
           {{view C.Embed.Injector elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
           </div>
-          {{#if renderExecuteBtn}}
-            <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
-          {{/if}}
+          <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
         </td>
 
         {{outlet}}
@@ -1204,19 +1207,24 @@
         <div class="popup-body">
           <div class="popup-close" {{action close on="click"}}>×</div>
 
-            <div class="btn-group pull-right" style="margin-top: 4px;">
-              <button class="btn btn-blank" {{action "addOneInstance" on="click"}}>+</button>
-              <button class="btn btn-blank" {{action "removeOneInstance" on="click"}}>-</button>
-              {{#if C.isLocal}}
-                <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
-              {{else}}
-                <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{model.containersLabel}} instance{{model.pluralInstances}} ({{model.instances}} Requested)</button>
-              {{/if}}
-            </div>
-
           <div class="popup-icon"></div>
 
           <h1 class="popup-title"> {{model.name}}</h1>
+          <div class="btn-group" style="margin-top: 4px; width: 100%">
+            <div style="display: inline-block; width: 50%">
+              <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Provisioned: {{model.actualInstances}}</button>
+            </div>
+            <div style="display: inline-block; width: 50%">
+              <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
+              {{input keyUp=keyPressed action="changeInstances" id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
+              <button class="btn btn-transparent" {{action "changeInstances" on="click"}}>
+                <i class="icon-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+          <br />
+          <br />
+
           <div id="flowlet-popup-tabs">
             <div id="flowlet-popup-inputs-tab" class="flowlet-popup-tab tab-selected"><a href="#" {{action select "inputs"}}>Inputs</a></div>
             <div id="flowlet-popup-processed-tab" class="flowlet-popup-tab"><a href="#" {{action select "processed"}}>Processed</a></div>
@@ -1470,20 +1478,19 @@
 
       <div class="panel">
       <div class="panel-head">
-
-          <div class="btn-group pull-right">
-            <button class="btn btn-blank" {{action "addOneInstance" on="click"}}>+</button>
-            <button class="btn btn-blank" {{action "removeOneInstance" on="click"}}>-</button>
-
-            {{#if C.isLocal}}
-              <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
-            {{else}}
-              <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{actualInstances}} ({{model.instances}} Requested)</button>
-            {{/if}}
-
+        <div class="panel-title">Make a Request
+          <div class="btn-group" style="float: right">
+            <div>
+              <button style="border:0;padding-right:120px;" disabled="disabled" class="btn btn-blank">Instances Provisioned: {{actualInstances}}</button>
+              <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
+              {{input keyUp=keyPressed action="changeInstances" id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
+              <button class="btn btn-transparent" {{action "changeInstances" on="click"}}>
+                <i class="icon-arrow-right"></i>
+              </button>
+            </div>
           </div>
-
-        <div class="panel-title">Make a Request</div></div>
+        </div>
+      </div>
 
         <table style="width: 100%" class="top-aligned">
           <thead>

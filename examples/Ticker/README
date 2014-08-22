@@ -3,7 +3,7 @@ Ticker Application
 This application pulls in stock market activity data and stores it in 
 datasets that allow querying for that data with various filters.
 
-Copyright 2013-2014 Cask, Inc.
+Copyright 2014 Cask, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
 
@@ -14,13 +14,13 @@ Unless required by applicable law or agreed to in writing, software distributed 
 Installation
 ============
 
-Build the application jar:
+Build the Application jar:
 mvn clean package
 
-Deploy the application to a reactor instance defined by its host (defaults to localhost):
+Deploy the Application to a CDAP instance defined by its host (defaults to localhost):
 bin/app-manager.sh --host [host] --action deploy
 
-Start application flows and procedures:
+Start Application Flows and Procedures:
 bin/app-manager.sh --host [host] --action start
 
 Make sure they are running:

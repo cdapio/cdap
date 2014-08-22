@@ -20,7 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import org.apache.twill.api.TwillSpecification;
 
 /**
- * This class provides the specification of a Service.
+ * Provide the specification of a custom TwillApplication.
  */
 public interface ServiceSpecification extends ProgramSpecification, TwillSpecification {
 

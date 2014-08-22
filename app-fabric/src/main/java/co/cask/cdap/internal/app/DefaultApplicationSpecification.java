@@ -21,6 +21,7 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -41,6 +42,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final Map<String, FlowSpecification> flows;
   private final Map<String, ProcedureSpecification> procedures;
   private final Map<String, MapReduceSpecification> mapReduces;
+  private final Map<String, SparkSpecification> sparks;
   private final Map<String, WorkflowSpecification> workflows;
   private final Map<String, ServiceSpecification> services;
 
@@ -52,6 +54,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, FlowSpecification> flows,
                                          Map<String, ProcedureSpecification> procedures,
                                          Map<String, MapReduceSpecification> mapReduces,
+                                         Map<String, SparkSpecification> sparks,
                                          Map<String, WorkflowSpecification> workflows,
                                          Map<String, ServiceSpecification> services) {
     this.name = name;
@@ -62,6 +65,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this.flows = ImmutableMap.copyOf(flows);
     this.procedures = ImmutableMap.copyOf(procedures);
     this.mapReduces = ImmutableMap.copyOf(mapReduces);
+    this.sparks = ImmutableMap.copyOf(sparks);
     this.workflows = ImmutableMap.copyOf(workflows);
     this.services = ImmutableMap.copyOf(services);
   }
@@ -71,7 +75,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                                spec.getStreams(),
                                                spec.getDatasetModules(), spec.getDatasets(),
                                                spec.getFlows(), spec.getProcedures(),
-                                               spec.getMapReduce(), spec.getWorkflows(),
+                                               spec.getMapReduce(), spec.getSpark(), spec.getWorkflows(),
                                                spec.getServices());
   }
 
@@ -113,6 +117,11 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   @Override
   public Map<String, MapReduceSpecification> getMapReduce() {
     return mapReduces;
+  }
+
+  @Override
+  public Map<String, SparkSpecification> getSpark() {
+    return sparks;
   }
 
   @Override

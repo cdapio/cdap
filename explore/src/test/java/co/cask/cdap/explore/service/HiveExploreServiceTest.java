@@ -18,21 +18,17 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.http.HttpRequest;
-import co.cask.cdap.common.http.HttpRequests;
-import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.test.SlowTests;
 import com.continuuity.tephra.Transaction;
 import com.google.common.collect.ImmutableList;
@@ -40,18 +36,15 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.gson.reflect.TypeToken;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -60,7 +53,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static co.cask.cdap.explore.service.KeyStructValueTableDefinition.KeyValue;
 
@@ -132,6 +124,26 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     table.startTx(tx);
     Assert.assertEquals(new KeyValue.Value("first", Lists.newArrayList(1, 2, 3, 4, 5)), table.get("1"));
     transactionManager.abort(tx);
+  }
+
+  @Test
+  public void getUserTables() throws Exception {
+    exploreClient.submit("create table test (first INT, second STRING) " +
+                           "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
+    List<TableInfo> tables = exploreService.getTables(null);
+    Assert.assertEquals(ImmutableList.of(new TableInfo("default", "my_table"),
+                                         new TableInfo("default", "test")),
+                        tables);
+
+    tables = exploreService.getTables("default");
+    Assert.assertEquals(ImmutableList.of(new TableInfo("default", "my_table"),
+                                         new TableInfo("default", "test")),
+                        tables);
+
+    tables = exploreService.getTables("foobar");
+    Assert.assertEquals(ImmutableList.of(), tables);
+
+    exploreClient.submit("drop table if exists test").get();
   }
 
   @Test
@@ -319,9 +331,27 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void getDatasetSchemaTest() throws Exception {
-    Map<String, String> datasetSchema = exploreClient.datasetSchema("my_table");
+    Map<String, String> datasetSchema = exploreService.getTableSchema(null, "my_table");
     Assert.assertEquals(ImmutableMap.of("key", "string", "value", "struct<name:string,ints:array<int>>"),
                         datasetSchema);
+
+    datasetSchema = exploreService.getTableSchema("default", "my_table");
+    Assert.assertEquals(ImmutableMap.of("key", "string", "value", "struct<name:string,ints:array<int>>"),
+                        datasetSchema);
+
+    try {
+      exploreService.getTableSchema(null, "foobar");
+      Assert.fail("Should throw TableNotFoundException on table foobar");
+    } catch (TableNotFoundException e) {
+      // Expected
+    }
+
+    try {
+      exploreService.getTableSchema("foo", "my_table");
+      Assert.fail("Should throw TableNotFoundException on table foo.my_table");
+    } catch (TableNotFoundException e) {
+      // Expected
+    }
   }
 
   @Test

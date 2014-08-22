@@ -107,11 +107,6 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public Map<String, String> datasetSchema(String datasetName) throws ExploreException {
-    return getDatasetSchema(datasetName);
-  }
-
-  @Override
   public ListenableFuture<ExploreExecutionResult> columns(@Nullable final String catalog,
                                                           @Nullable final String schemaPattern,
                                                           final String tableNamePattern,

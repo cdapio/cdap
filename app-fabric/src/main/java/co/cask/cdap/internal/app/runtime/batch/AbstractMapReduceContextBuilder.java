@@ -107,7 +107,6 @@ public abstract class AbstractMapReduceContextBuilder {
 
     DataSetInstantiator dataSetContext = new DataSetInstantiator(datasetFramework, configuration, classLoader);
     ApplicationSpecification programSpec = program.getSpecification();
-    dataSetContext.setDataSets(programSpec.getDatasets().values());
 
     // if this is not for a mapper or a reducer, we don't need the metrics collection service
     MetricsCollectionService metricsCollectionService =
@@ -131,9 +130,9 @@ public abstract class AbstractMapReduceContextBuilder {
                                 workflowBatch, serviceDiscovery, metricsCollectionService);
 
     if (type == MapReduceMetrics.TaskType.Mapper) {
-      dataSetContext.setMetricsCollector(metricsCollectionService, context.getSystemMapperMetrics());
+      dataSetContext.setMetricsCollector(context.getDatasetMetrics(), context.getSystemMapperMetrics());
     } else if (type == MapReduceMetrics.TaskType.Reducer) {
-      dataSetContext.setMetricsCollector(metricsCollectionService, context.getSystemReducerMetrics());
+      dataSetContext.setMetricsCollector(context.getDatasetMetrics(), context.getSystemReducerMetrics());
     }
 
     // propagating tx to all txAware guys

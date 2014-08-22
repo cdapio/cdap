@@ -27,7 +27,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
  */
 public class FakeDatasetModule implements DatasetModule {
 
-  public static final String NAME = "fakeModule";
+  public static final String NAME = "fakeDSModule";
 
   @Override
   public void register(DatasetDefinitionRegistry registry) {

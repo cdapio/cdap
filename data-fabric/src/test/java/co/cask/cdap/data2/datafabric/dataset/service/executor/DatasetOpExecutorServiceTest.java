@@ -18,7 +18,6 @@ package co.cask.cdap.data2.datafabric.dataset.service.executor;
 
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
@@ -52,12 +51,8 @@ import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.TypeLiteral;
-import com.google.inject.name.Names;
-import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
@@ -73,7 +68,6 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -113,15 +107,7 @@ public class DatasetOpExecutorServiceTest {
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getLocalModule(),
-      // NOTE: we want real service, but we don't need persistence
-      Modules.override(new DataSetServiceModules().getLocalModule()).with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
-            .annotatedWith(Names.named("defaultDatasetModules"))
-            .toInstance(DataSetServiceModules.INMEMORY_DATASET_MODULES);
-        }
-      }),
+      new DataSetServiceModules().getInMemoryModule(),
       new AuthModule(),
       new TransactionMetricsModule(),
       new ExploreClientModule());
