@@ -50,7 +50,7 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
 
     ClassLoader cl = Thread.currentThread().getContextClassLoader();
     DatasetTypeMeta typeMeta = datasetFramework.getType("ExtensiveSchemaTable");
-    cl = BaseHiveExploreServiceTest.createDatasetClassLoader(cl, typeMeta);
+    cl = DatasetClassLoaderFactory.createDatasetClassLoader(cl, typeMeta, locationFactory);
 
 
     // Accessing dataset instance to perform data operations

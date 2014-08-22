@@ -73,7 +73,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
 
     ClassLoader cl = Thread.currentThread().getContextClassLoader();
     DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
-    cl = BaseHiveExploreServiceTest.createDatasetClassLoader(cl, typeMeta);
+    cl = DatasetClassLoaderFactory.createDatasetClassLoader(cl, typeMeta, locationFactory);
 
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =

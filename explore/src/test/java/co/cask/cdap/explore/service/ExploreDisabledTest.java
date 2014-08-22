@@ -46,6 +46,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -66,6 +67,7 @@ public class ExploreDisabledTest {
   private static DatasetOpExecutor dsOpExecutor;
   private static DatasetService datasetService;
   private static ExploreClient exploreClient;
+  private static LocationFactory locationFactory;
 
 
 
@@ -86,6 +88,7 @@ public class ExploreDisabledTest {
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
 
+    locationFactory = injector.getInstance(LocationFactory.class);
   }
 
   @AfterClass
@@ -110,7 +113,7 @@ public class ExploreDisabledTest {
     ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
     DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
-    cl = BaseHiveExploreServiceTest.createDatasetClassLoader(cl, typeMeta);
+    cl = DatasetClassLoaderFactory.createDatasetClassLoader(cl, typeMeta, locationFactory);
 
     Transaction tx1 = transactionManager.startShort(100);
 
@@ -157,7 +160,7 @@ public class ExploreDisabledTest {
     ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
     DatasetTypeMeta typeMeta = datasetFramework.getType("NotRecordScannableTableDef");
-    cl = BaseHiveExploreServiceTest.createDatasetClassLoader(cl, typeMeta);
+    cl = DatasetClassLoaderFactory.createDatasetClassLoader(cl, typeMeta, locationFactory);
 
     Transaction tx1 = transactionManager.startShort(100);
 

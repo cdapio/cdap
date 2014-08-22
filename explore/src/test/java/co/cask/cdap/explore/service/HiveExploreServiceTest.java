@@ -76,7 +76,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
     cl = Thread.currentThread().getContextClassLoader();
     DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
-    cl = BaseHiveExploreServiceTest.createDatasetClassLoader(cl, typeMeta);
+    cl = DatasetClassLoaderFactory.createDatasetClassLoader(cl, typeMeta, locationFactory);
 
 
     // Accessing dataset instance to perform data operations
@@ -410,7 +410,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
       ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                             getClass().getClassLoader());
       DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
-      cl = BaseHiveExploreServiceTest.createDatasetClassLoader(cl, typeMeta);
+      cl = DatasetClassLoaderFactory.createDatasetClassLoader(cl, typeMeta, locationFactory);
 
 
       // Accessing dataset instance to perform data operations

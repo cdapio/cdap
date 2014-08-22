@@ -25,6 +25,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -227,22 +228,4 @@ public class BaseHiveExploreServiceTest {
     );
   }
 
-  static ClassLoader createDatasetClassLoader(ClassLoader cl, DatasetTypeMeta typeMeta) {
-    try {
-      List<DatasetModuleMeta> modulesToLoad = typeMeta.getModules();
-      List<Location> datasetJars = Lists.newArrayList();
-      for (DatasetModuleMeta module : modulesToLoad) {
-        if (module.getJarLocation() != null) {
-          datasetJars.add(locationFactory.create(module.getJarLocation()));
-        }
-      }
-      if (!datasetJars.isEmpty()) {
-        return ClassLoaders.newDatasetClassLoader(datasetJars, ApiResourceListHolder.getResourceList(), cl);
-      } else {
-        return cl;
-      }
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
-  }
 }
