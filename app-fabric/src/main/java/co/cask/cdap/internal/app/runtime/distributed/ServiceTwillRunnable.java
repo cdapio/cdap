@@ -229,12 +229,13 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
 
         @Override
-        public Cancellable announce(String runnable, int i) {
-          String serviceContextString = String.format("%s.%s.%s.%s", ProgramType.SERVICE.name().toLowerCase(),
+        public Cancellable announce(String runnable, int port) {
+          String serviceContextPath = String.format("%s.%s.%s.%s", ProgramType.SERVICE.name().toLowerCase(),
                                                program.getAccountId(), program.getApplicationId(), program.getName());
           // Currently ignoring the runnable's name (the param passed into announce), and simply announcing by the name
-          // of the service it belongs to.
-          return super.announce(serviceContextString, i);
+          // of the service it belongs to (reasoning: the primary runnable of a service will be identified by the
+          // service's name, and the other runnables within the service are not discoverable externally).
+          return super.announce(serviceContextPath, port);
         }
       });
 
