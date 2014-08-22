@@ -37,11 +37,13 @@ public class TableInfo {
 
   private final String owner;
 
+  // In milliseconds
   @SerializedName("creation_time")
-  private final int creationTime;
+  private final long creationTime;
 
+  // In milliseconds
   @SerializedName("last_access_time")
-  private final int lastAccessTime;
+  private final long lastAccessTime;
 
   private final int retention;
 
@@ -76,11 +78,11 @@ public class TableInfo {
   @SerializedName("from_dataset")
   private final boolean isBackedByDataset;
 
-  public TableInfo(String tableName, String dbName, String owner, int creationTime, int lastAccessTime, int retention,
-                   List<ColumnInfo> partitionKeys, Map<String, String> parameters, String tableType,
-                   List<ColumnInfo> schema, String location, String inputFormat, String outputFormat,
-                   boolean compressed, int numBuckets, String serde, Map<String, String> serdeParameters,
-                   boolean isBackedByDataset) {
+  public TableInfo(String tableName, String dbName, String owner, long creationTime, long lastAccessTime,
+                   int retention, List<ColumnInfo> partitionKeys, Map<String, String> parameters,
+                   String tableType, List<ColumnInfo> schema, String location, String inputFormat,
+                   String outputFormat, boolean compressed, int numBuckets, String serde,
+                   Map<String, String> serdeParameters, boolean isBackedByDataset) {
     this.tableName = tableName;
     this.dbName = dbName;
     this.owner = owner;
@@ -101,7 +103,7 @@ public class TableInfo {
     this.isBackedByDataset = isBackedByDataset;
   }
 
-  public int getCreationTime() {
+  public long getCreationTime() {
     return creationTime;
   }
 
