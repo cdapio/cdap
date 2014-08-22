@@ -339,11 +339,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     Assert.assertEquals(new TableDescriptionInfo(
                           "my_table", "default", System.getProperty("user.name"), tableInfo.getCreationTime(), 0, 0,
                           ImmutableList.<TableDescriptionInfo.ColumnInfo>of(),
-                          ImmutableMap.of(
-                            "EXTERNAL", "TRUE",
-                            "transient_lastDdlTime", tableInfo.getParameters().get("transient_lastDdlTime"),
-                            "comment", "Cask CDAP Dataset",
-                            "storage_handler", DatasetStorageHandler.class.getName()),
+                          tableInfo.getParameters(),
                           "EXTERNAL_TABLE",
                           new TableDescriptionInfo.TableStorageInfo(
                             ImmutableList.of(new TableDescriptionInfo.ColumnInfo("key", "string", null),
@@ -358,16 +354,13 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                           true
                         ),
                         tableInfo);
+    Assert.assertEquals(DatasetStorageHandler.class.getName(), tableInfo.getParameters().get("storage_handler"));
 
     tableInfo = exploreService.getTableInfo("default", "my_table");
     Assert.assertEquals(new TableDescriptionInfo(
                           "my_table", "default", System.getProperty("user.name"), tableInfo.getCreationTime(), 0, 0,
                           ImmutableList.<TableDescriptionInfo.ColumnInfo>of(),
-                          ImmutableMap.of(
-                            "EXTERNAL", "TRUE",
-                            "transient_lastDdlTime", tableInfo.getParameters().get("transient_lastDdlTime"),
-                            "comment", "Cask CDAP Dataset",
-                            "storage_handler", DatasetStorageHandler.class.getName()),
+                          tableInfo.getParameters(),
                           "EXTERNAL_TABLE",
                           new TableDescriptionInfo.TableStorageInfo(
                             ImmutableList.of(new TableDescriptionInfo.ColumnInfo("key", "string", null),
@@ -382,6 +375,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                           true
                         ),
                         tableInfo);
+    Assert.assertEquals(DatasetStorageHandler.class.getName(), tableInfo.getParameters().get("storage_handler"));
 
     try {
       exploreService.getTableInfo(null, "foobar");
@@ -430,9 +424,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                             new TableDescriptionInfo.ColumnInfo("dt", "string", null),
                             new TableDescriptionInfo.ColumnInfo("country", "string", null)
                           ),
-                          ImmutableMap.of(
-                            "transient_lastDdlTime", tableInfo.getParameters().get("transient_lastDdlTime"),
-                            "comment", "This is the page view table"),
+                          tableInfo.getParameters(),
                           "MANAGED_TABLE",
                           new TableDescriptionInfo.TableStorageInfo(
                             ImmutableList.of(
@@ -451,6 +443,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                           false
                         ),
                         tableInfo);
+    Assert.assertEquals("This is the page view table", tableInfo.getParameters().get("comment"));
     exploreClient.submit("drop table if exists page_view").get();
   }
 
