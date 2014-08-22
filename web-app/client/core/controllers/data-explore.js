@@ -61,18 +61,8 @@ define([], function () {
               var result = _.pick(response, "table_name", "db_name", "owner", "creation_time", "from_dataset", "partitioned_keys", "schema"),
                   schema_array = [],
                   partition_array = [];
-              result.schema.forEach(function(column) {
-                schema_array.push({
-                  columns: [column.name, column.type]
-                });
-              });
-              for(var key in result.partition) {
-                if(result.partition.hasOwnProperty(key)){
-                  partition_array.push({
-                    columns:[key, result.partition[key]]
-                  });
-                }
-              }
+              schema_array = self.extractColumns(result.schema);
+              partition_array = self.extractColumns(result.partitioned_keys);
 
               datasets.pushObject(Ember.Object.create({
                 tablename: result.table_name,
@@ -92,6 +82,16 @@ define([], function () {
             });
           });
         });
+    },
+
+    extractColumns: function (table) {
+      var columns_array = [];
+      table.forEach(function(column) {
+        columns_array.push({
+          columns: [column.name, column.type]
+        });
+      });
+      return columns_array;
     },
 
     tableClicked: function (obj) {
@@ -152,7 +152,7 @@ define([], function () {
 
     selectDataset: function (dataset) {
       this.set('selectedDataset', dataset);
-      this.injectorTextArea.set('value', 'SELECT * FROM ' + dataset.name + ' LIMIT 5');
+      this.injectorTextArea.set('value', 'SELECT * FROM ' + dataset.tablename + ' LIMIT 5');
       var datasets = this.get('datasets');
       datasets.forEach(function (entry) {
         entry.set('isSelected', false);

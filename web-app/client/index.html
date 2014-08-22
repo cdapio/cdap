@@ -434,8 +434,8 @@
     {{#if datasets}}
       <table class="table bordered-dataset-table">
         <thead>
-          <th style="width: 350px">Dataset</th>
-          <th>Table: {{selectedDataset.name}}</th>
+          <th style="width: 350px">Hive Tables</th>
+          <th>Information {{selectedDataset.name}}</th>
         </thead>
       </table>
       <div id="query-display">        
@@ -456,8 +456,8 @@
             </tr>
             {{/each}}
           </table>
-        </div>
-        <div class="table-info" style="margin-left: 350px;">
+        </div><!-- This is needed as two elements placed side-by-side using display:inline-block technique will have whitespace between actual elements.
+      --><div class="table-info">
           <div class="metadata-title table-title" {{action 'showTableProperties' on="click"}}> Table Properties </div>
           <div class="metadata-wrapper">
             <div class="metadata">
@@ -484,8 +484,8 @@
             {{ else }}
             <table class="table partition-table hide">
              <thead>
-                  <th>col_name</th>
-                  <th>data_type</th>
+                  <th>Column Name</th>
+                  <th>Column Type</th>
               </thead>
               <tbody>
               {{#each selectedDataset.partition}}
@@ -506,8 +506,8 @@
             {{ else }}
             <table class="table hide" id="schema-table">
               <thead>
-                  <th>col_name</th>
-                  <th>data_type</th>
+                  <th>Column Name</th>
+                  <th>Column Type</th>
               </thead>
               <tbody>
               {{#each selectedDataset.schema}}

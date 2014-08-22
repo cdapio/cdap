@@ -3576,7 +3576,6 @@ div.tooltip-inner {
 #query-display {
 	background: #666666;
 	max-height: 50vh;
-	overflow: auto;
 }
 
 #query-display .table td.app-list-name.dataset-name {
@@ -3585,11 +3584,20 @@ div.tooltip-inner {
   padding: 14px;
 }
 
-
+#query-display .table-info {
+  display: inline-block;
+  max-height: inherit;
+  overflow: auto;
+  width: 70%;
+}
 
 #query-tables {
-	width: 350px;
-	background: white;
+  width: 30%;
+  display: inline-block;
+  background: white;
+  vertical-align: top;
+  overflow: auto;
+  max-height: inherit;
 }
 
 #query-schema {
@@ -3651,12 +3659,12 @@ div.tooltip-inner {
   color: white;
 }
 
-.partition-table th {
-	background: #EEE;
+.query-partition .partition-table th {
+	background: #535353;
 	color: white;
 }
 
-.partition-table th, .partition-table td {
+.query-partition .partition-table th, .partition-table td {
 	border-color: #515151;
 	max-width: 400px;
 	word-wrap: break-word;
