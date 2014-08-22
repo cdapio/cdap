@@ -17,11 +17,11 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.ProgramSpecification;
-import org.apache.twill.api.TwillSpecification;
+import co.cask.cdap.api.common.PropertyProvider;
 
 /**
- * Provide the specification of a custom TwillApplication.
+ * Specification for user Service's {@link ServiceWorker}s.
  */
-public interface ServiceSpecification extends ProgramSpecification, TwillSpecification {
+public interface ServiceWorkerSpecification extends ProgramSpecification, PropertyProvider {
 
 }

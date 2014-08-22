@@ -34,6 +34,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.lang.InstantiatorFactory;
+import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -44,6 +45,7 @@ import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.services.HttpServiceTwillRunnable;
+import co.cask.cdap.internal.app.services.ServiceWorkerTwillRunnable;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
@@ -197,6 +199,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
         // Special case for running http services since we need to instantiate the http service
         // using the program classloader.
         delegate = new HttpServiceTwillRunnable(program.getClassLoader());
+      } else if (clz.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
+        delegate = new ServiceWorkerTwillRunnable(program.getClassLoader());
       } else {
         delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
       }
@@ -204,7 +208,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
       Reflections.visit(delegate, TypeToken.of(delegate.getClass()),
                         new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
                                                                           program.getApplicationId(),
-                                                                          program.getName(), runnableName)));
+                                                                          program.getName(), runnableName)),
+                        new PropertyFieldSetter(runtimeSpec.getRunnableSpecification().getConfigs()));
 
       final String[] argArray = RuntimeArguments.toPosixArray(programOpts.getUserArguments());
       LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(

@@ -16,12 +16,18 @@
 
 package co.cask.cdap.api.service;
 
-import co.cask.cdap.api.ProgramSpecification;
-import org.apache.twill.api.TwillSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 /**
- * Provide the specification of a custom TwillApplication.
+ * Defines a custom user Service. Services are custom applications that run in program containers and provide
+ * endpoints to serve requests. {@link ServiceWorker}s may also be added to perform additional operations and tasks on
+ * behalf of the Service.
  */
-public interface ServiceSpecification extends ProgramSpecification, TwillSpecification {
+public interface Service {
 
+  /**
+   * Configure the Service by adding {@link HttpServiceHandler}s to handle requests and {@link ServiceWorker}s.
+   * @param configurer to use to add handlers and workers to the Service.
+   */
+  void configure(ServiceConfigurer configurer);
 }

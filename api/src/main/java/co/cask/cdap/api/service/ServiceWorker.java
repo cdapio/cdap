@@ -16,12 +16,22 @@
 
 package co.cask.cdap.api.service;
 
-import co.cask.cdap.api.ProgramSpecification;
-import org.apache.twill.api.TwillSpecification;
+import co.cask.cdap.api.ProgramLifecycle;
 
 /**
- * Provide the specification of a custom TwillApplication.
+ * Workers for user services must implement this interface.
  */
-public interface ServiceSpecification extends ProgramSpecification, TwillSpecification {
+public interface ServiceWorker extends Runnable, ProgramLifecycle<ServiceWorkerContext> {
 
+  /**
+   * Configure a ServiceWorker.
+   * @return a {@link ServiceWorkerSpecification}.
+   */
+  ServiceWorkerSpecification configure();
+
+  /**
+   * Request to stop the running worker.
+   * This method will be invoked from a different thread than the one calling the {@link #run()} ) method.
+   */
+  void stop();
 }
