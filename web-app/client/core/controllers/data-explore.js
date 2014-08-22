@@ -57,18 +57,20 @@ define([], function () {
         self.HTTP.rest('data/explore/tables', function(response) {
           response.forEach(function (dataset) {
             var name = dataset.table;
-            self.HTTP.rest('data/explore/tables/' + name + '/schema', function (response, status) {
+            self.HTTP.rest('data/explore/tables/' + name + '/info', function (response, status) {
               var results = [];
-              for(var key in response) {
-                if(response.hasOwnProperty(key)){
+              var tableInfo = response["schema"];
+              for(var key in tableInfo) {
+                if(tableInfo.hasOwnProperty(key)){
                   results.push({
-                    columns:[key, response[key]]
+                    columns:[key, tableInfo[key]]
                   });
                 }
               }
               datasets.pushObject(Ember.Object.create({
                 name:name,
-                results:results
+                results:results,
+                dataset_backup: response["from_dataset"]
               }));
               if(datasets.length == 1) {
                 self.selectDataset(datasets[0]);
