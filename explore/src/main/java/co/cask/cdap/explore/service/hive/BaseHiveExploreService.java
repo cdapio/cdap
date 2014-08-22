@@ -24,7 +24,6 @@ import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.explore.service.TableNotFoundException;
-import co.cask.cdap.explore.service.UnexpectedQueryStatusException;
 import co.cask.cdap.hive.context.CConfCodec;
 import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
@@ -36,7 +35,7 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.proto.TableDescriptionInfo;
+import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionSystemClient;
@@ -44,7 +43,6 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
@@ -391,7 +389,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public TableDescriptionInfo getTableInfo(@Nullable String database, String table)
+  public TableInfo getTableInfo(@Nullable String database, String table)
     throws ExploreException, TableNotFoundException {
     // TODO check if the database user is allowed to access if security is enabled and
     // namespacing is in place.
@@ -399,27 +397,27 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       String db = database == null ? "default" : database;
       Table tableInfo = metastoreClient.getTable(db, table);
-      ImmutableList.Builder<TableDescriptionInfo.ColumnInfo> schemaBuilder = ImmutableList.builder();
-      ImmutableList.Builder<TableDescriptionInfo.ColumnInfo> partitionKeysBuilder = ImmutableList.builder();
+      ImmutableList.Builder<TableInfo.ColumnInfo> schemaBuilder = ImmutableList.builder();
+      ImmutableList.Builder<TableInfo.ColumnInfo> partitionKeysBuilder = ImmutableList.builder();
       for (FieldSchema column : tableInfo.getSd().getCols()) {
-        schemaBuilder.add(new TableDescriptionInfo.ColumnInfo(column.getName(), column.getType(), column.getComment()));
+        schemaBuilder.add(new TableInfo.ColumnInfo(column.getName(), column.getType(), column.getComment()));
       }
       for (FieldSchema column : tableInfo.getPartitionKeys()) {
-        partitionKeysBuilder.add(new TableDescriptionInfo.ColumnInfo(column.getName(), column.getType(),
+        partitionKeysBuilder.add(new TableInfo.ColumnInfo(column.getName(), column.getType(),
                                                                      column.getComment()));
       }
       String storageHandler = tableInfo.getParameters().get("storage_handler");
       boolean isDatasetTable = storageHandler != null &&
         storageHandler.equals(DatasetStorageHandler.class.getName());
 
-      TableDescriptionInfo.TableStorageInfo storageInfo = new TableDescriptionInfo.TableStorageInfo(
-        schemaBuilder.build(), tableInfo.getSd().getLocation(), tableInfo.getSd().getInputFormat(),
-        tableInfo.getSd().getOutputFormat(), tableInfo.getSd().isCompressed(), tableInfo.getSd().getNumBuckets(),
-        tableInfo.getSd().getSerdeInfo().getSerializationLib(), tableInfo.getSd().getSerdeInfo().getParameters());
-      return new TableDescriptionInfo(tableInfo.getTableName(), tableInfo.getDbName(), tableInfo.getOwner(),
+      return new TableInfo(tableInfo.getTableName(), tableInfo.getDbName(), tableInfo.getOwner(),
                                       tableInfo.getCreateTime(), tableInfo.getLastAccessTime(),
                                       tableInfo.getRetention(), partitionKeysBuilder.build(), tableInfo.getParameters(),
-                                      tableInfo.getTableType(), storageInfo, isDatasetTable);
+                                      tableInfo.getTableType(), schemaBuilder.build(), tableInfo.getSd().getLocation(),
+                                      tableInfo.getSd().getInputFormat(), tableInfo.getSd().getOutputFormat(),
+                                      tableInfo.getSd().isCompressed(), tableInfo.getSd().getNumBuckets(),
+                                      tableInfo.getSd().getSerdeInfo().getSerializationLib(),
+                                      tableInfo.getSd().getSerdeInfo().getParameters(), isDatasetTable);
     } catch (NoSuchObjectException e) {
       throw new TableNotFoundException(e);
     } catch (TException e) {

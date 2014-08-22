@@ -21,12 +21,11 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.proto.TableDescriptionInfo;
+import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -237,7 +236,7 @@ public interface Explore {
    * @return information about a table.
    * @throws ExploreException on any error getting the tables.
    */
-  public TableDescriptionInfo getTableInfo(@Nullable String database, String table)
+  public TableInfo getTableInfo(@Nullable String database, String table)
     throws ExploreException, TableNotFoundException;
 
   /**
