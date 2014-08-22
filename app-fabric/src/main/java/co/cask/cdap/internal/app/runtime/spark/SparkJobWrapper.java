@@ -54,7 +54,7 @@ public class SparkJobWrapper {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkJobWrapper.class);
   private static final int JOB_WRAPPER_ARGUMENTS_SIZE = 1;
-  public static final String SCALA_SETTER_SUFFIX = "_$eq";
+  private static final String SCALA_SETTER_SUFFIX = "_$eq";
 
   private final String[] arguments;
   private final Class userJobClass;
@@ -119,7 +119,7 @@ public class SparkJobWrapper {
    * @return String[] if the command line arguments are sufficient else throws a {@link RuntimeException}
    * @throws IllegalArgumentException if the required numbers of command line arguments were not present
    */
-  String[] validateArgs(String[] arguments) {
+  private String[] validateArgs(String[] arguments) {
     if (arguments.length < JOB_WRAPPER_ARGUMENTS_SIZE) {
       throw new IllegalArgumentException("Insufficient number of arguments. User's job class name followed by its " +
                                            "arguments (if any) should be provided");
@@ -132,7 +132,7 @@ public class SparkJobWrapper {
    *
    * @return String[] of arguments with which user's job class should be called
    */
-  String[] extractUserArgs() {
+  private String[] extractUserArgs() {
     String[] userJobArgs = new String[(arguments.length - JOB_WRAPPER_ARGUMENTS_SIZE)];
     System.arraycopy(arguments, JOB_WRAPPER_ARGUMENTS_SIZE, userJobArgs, 0,
                      (arguments.length - JOB_WRAPPER_ARGUMENTS_SIZE));
@@ -145,7 +145,7 @@ public class SparkJobWrapper {
    * @return a new object of user's job class
    * @throws RuntimeException if failed to instantiate an object of user's job class
    */
-  Object instantiateUserJobClass() {
+  private Object instantiateUserJobClass() {
     Object userJobObject;
     try {
       userJobObject = userJobClass.newInstance();
@@ -210,7 +210,7 @@ public class SparkJobWrapper {
    *
    * @return a boolean which is true if the job is in scala
    */
-  boolean isScalaJob() {
+  private boolean isScalaJob() {
     Method[] methods = userJobClass.getMethods();
     for (Method curMethod : methods) {
       if (curMethod.getName().equalsIgnoreCase((sparkContextFactoryField.getName() + SCALA_SETTER_SUFFIX))) {
