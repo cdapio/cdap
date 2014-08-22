@@ -411,13 +411,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         storageHandler.equals(DatasetStorageHandler.class.getName());
 
       return new TableInfo(tableInfo.getTableName(), tableInfo.getDbName(), tableInfo.getOwner(),
-                                      tableInfo.getCreateTime(), tableInfo.getLastAccessTime(),
-                                      tableInfo.getRetention(), partitionKeysBuilder.build(), tableInfo.getParameters(),
-                                      tableInfo.getTableType(), schemaBuilder.build(), tableInfo.getSd().getLocation(),
-                                      tableInfo.getSd().getInputFormat(), tableInfo.getSd().getOutputFormat(),
-                                      tableInfo.getSd().isCompressed(), tableInfo.getSd().getNumBuckets(),
-                                      tableInfo.getSd().getSerdeInfo().getSerializationLib(),
-                                      tableInfo.getSd().getSerdeInfo().getParameters(), isDatasetTable);
+                           (long) tableInfo.getCreateTime() * 1000, (long) tableInfo.getLastAccessTime() * 1000,
+                           tableInfo.getRetention(), partitionKeysBuilder.build(), tableInfo.getParameters(),
+                           tableInfo.getTableType(), schemaBuilder.build(), tableInfo.getSd().getLocation(),
+                           tableInfo.getSd().getInputFormat(), tableInfo.getSd().getOutputFormat(),
+                           tableInfo.getSd().isCompressed(), tableInfo.getSd().getNumBuckets(),
+                           tableInfo.getSd().getSerdeInfo().getSerializationLib(),
+                           tableInfo.getSd().getSerdeInfo().getParameters(), isDatasetTable);
     } catch (NoSuchObjectException e) {
       throw new TableNotFoundException(e);
     } catch (TException e) {
