@@ -40,6 +40,7 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.services.HttpServiceTwillApplication;
+import co.cask.cdap.internal.app.services.ServiceTwillApplication;
 import co.cask.cdap.internal.batch.DefaultMapReduceSpecification;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
@@ -200,7 +201,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   /**
-   * Adds {@link com.google.common.util.concurrent.Service} as a Custom Service {@link TwillApplication}
+   * Adds {@link Service} as a Custom Service {@link TwillApplication}
    * to the Application.
    * @param name Name of runnable.
    * @param service Guava service to be added.
@@ -218,6 +219,10 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addService(String name, HttpServiceHandler handler) {
     addService(name, Arrays.asList(handler));
+  }
+
+  public void addService(co.cask.cdap.api.service.Service service) {
+    addService(new ServiceTwillApplication(service));
   }
 
   public ApplicationSpecification createApplicationSpec() {

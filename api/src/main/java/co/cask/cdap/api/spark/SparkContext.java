@@ -17,9 +17,19 @@
 package co.cask.cdap.api.spark;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.dataset.Dataset;
 
 /**
- * Spark job execution context.
+ * Spark job execution context. This context is shared between CDAP and User's Spark job.
+ * This interface exposes two prominent methods:
+ * <ol>
+ * <li>{@link SparkContext#readFromDataset(String, Class, Class)}: Allows user to read a {@link Dataset} as an
+ * RDD</li>
+ * <li>{@link SparkContext#writeToDataset(Object, String, Class, Class)}: Allows user to write a RDD to a {@link
+ * Dataset}</li>
+ * </ol>
+ * Classes implementing this interface should also have a Spark Context member of appropriate type on which these
+ * method acts.
  */
 public interface SparkContext extends RuntimeContext {
   /**
@@ -35,4 +45,42 @@ public interface SparkContext extends RuntimeContext {
    * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
    */
   long getLogicalStartTime();
+
+  /**
+   * Create a Spark RDD that uses {@link Dataset} as input source
+   *
+   * @param datasetName the name of the {@link Dataset} to be read as an RDD
+   * @param kClass      the key class
+   * @param vClass      the value class
+   * @param <T>         type of RDD
+   * @return the RDD created from Dataset
+   * @throws UnsupportedOperationException if the SparkContext is not yet initialized through
+   * {@link SparkContextFactory}
+   */
+  <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass);
+
+  /**
+   * Writes a Spark RDD to {@link Dataset}
+   *
+   * @param rdd         the rdd to be stored
+   * @param datasetName the name of the {@link Dataset} where the RDD should be stored
+   * @param kClass      the key class
+   * @param vClass      the value class
+   * @param <T>         type of RDD
+   * @throws UnsupportedOperationException if the SparkContext is not yet initialized through
+   * {@link SparkContextFactory}
+   */
+  <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass);
+
+  /**
+   * Returns
+   * <a href="http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.api.java.JavaSparkContext">
+   * JavaSparkContext</a> or
+   * <a href="http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.SparkContext">SparkContext</a>
+   * depending on user's job type.
+   *
+   * @param <T> the type of Apache Spark Context
+   * @return the Apache Spark Context
+   */
+  <T> T getApacheSparkContext();
 }

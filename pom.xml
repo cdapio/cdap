@@ -114,6 +114,7 @@
     <twill.version>0.4.0-incubating-SNAPSHOT</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
+    <spark.version>1.0.1</spark.version>
   </properties>
 
   <modules>
@@ -1117,6 +1118,18 @@
         <artifactId>unboundid-ldapsdk</artifactId>
         <version>${unboundid.version}</version>
         <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-core_2.10</artifactId>
+        <version>${spark.version}</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
     </dependencies>
   </dependencyManagement>
