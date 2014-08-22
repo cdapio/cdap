@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
+import co.cask.cdap.proto.StreamProperties;
 import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
 
@@ -70,7 +71,7 @@ public final class StreamConfig {
   }
 
   /**
-   * @return The time to live in milliseconds for events in this stream.
+   * @return The time to live in seconds for events in this stream.
    */
   public long getTTL() {
     return ttl;
