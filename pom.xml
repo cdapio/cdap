@@ -24,7 +24,7 @@
   <artifactId>cdap</artifactId>
   <version>2.5.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Cask DAP</name>
+  <name>Cask Data Application Platform (CDAP)</name>
 
   <organization>
     <name>Cask</name>
@@ -1220,6 +1220,29 @@
             </execution>
           </executions>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>2.9.1</version>
+          <configuration>
+            <stylesheetfile>distributions/src/javadoc/stylesheet.css</stylesheetfile>
+            <links>
+              <link>http://download.oracle.com/javase/6/docs/api/</link>
+            </links>
+            <bottom>
+              <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
+            </bottom>
+          </configuration>
+          <executions>
+            <execution>
+              <id>attach-javadoc</id>
+              <phase>package</phase>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -1253,6 +1276,11 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
         <version>2.8</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.9.1</version>
       </plugin>
     </plugins>
   </build>
@@ -1338,11 +1366,12 @@
               <artifactId>maven-javadoc-plugin</artifactId>
               <version>2.9.1</version>
               <configuration>
+                <stylesheetfile>distributions/src/javadoc/stylesheet.css</stylesheetfile>
                 <links>
                   <link>http://download.oracle.com/javase/6/docs/api/</link>
                 </links>
                 <bottom>
-                  <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co">Cask Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.]]>
+                  <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
                 </bottom>
               </configuration>
               <executions>
@@ -1946,7 +1975,7 @@
             <link>http://download.oracle.com/javase/6/docs/api/</link>
           </links>
           <bottom>
-            <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co">Cask Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.]]>
+            <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
           </bottom>
         </configuration>
         <reportSets>
