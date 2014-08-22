@@ -595,8 +595,10 @@ define([], function () {
 						map[metric.path] = models[j];
 						path = metric.path + '?start=' + start + '&end=' + end + '&count=' + count;
 
-						if (metric.interpolate) {
+						if (metric.interpolate && typeof metric.interpolate === 'string') {
 							path += '&interpolate=' + metric.interpolate;
+						} else {
+							path += '&interpolate=step';
 						}
 
 						queries.push(path);
