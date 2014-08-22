@@ -46,7 +46,7 @@ public class PurchaseStore extends AbstractFlowlet {
   public void initialize(FlowletContext context) {
     //Discover the UserInterestsLookup service via discovery service
     // the service name and runnable are the same as the one provided in the Application configure method
-    serviceDiscovered = context.discover("PurchaseHistory", PurchaseApp.SERVICE_NAME, PurchaseApp.SERVICE_NAME);
+    serviceDiscovered = context.discoverService("PurchaseHistory", PurchaseApp.SERVICE_NAME);
   }
   @ProcessInput
   public void process(Purchase purchase) {

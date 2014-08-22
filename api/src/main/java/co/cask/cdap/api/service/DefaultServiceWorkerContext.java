@@ -44,4 +44,14 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
   public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
     throw new UnsupportedOperationException("Service discovery not yet supported.");
   }
+
+  @Override
+  public ServiceDiscovered discoverService(String applicationId, String serviceId) {
+    throw new UnsupportedOperationException("Service discovery not yet supported.");
+  }
+
+  @Override
+  public ServiceDiscovered discoverService(String serviceId) {
+    throw new UnsupportedOperationException("Service discovery not yet supported.");
+  }
 }

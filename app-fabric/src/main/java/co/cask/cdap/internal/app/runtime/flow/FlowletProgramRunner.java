@@ -98,6 +98,7 @@ import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,6 +132,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final QueueReaderFactory queueReaderFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final ProgramServiceDiscovery serviceDiscovery;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator,
@@ -138,7 +140,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               DataFabricFacadeFactory dataFabricFacadeFactory, StreamCoordinator streamCoordinator,
                               QueueReaderFactory queueReaderFactory,
                               MetricsCollectionService metricsCollectionService,
-                              ProgramServiceDiscovery serviceDiscovery) {
+                              ProgramServiceDiscovery serviceDiscovery,
+                              DiscoveryServiceClient discoveryServiceClient) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
@@ -146,6 +149,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.queueReaderFactory = queueReaderFactory;
     this.metricsCollectionService = metricsCollectionService;
     this.serviceDiscovery = serviceDiscovery;
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @SuppressWarnings("unused")
@@ -208,7 +212,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                runId, instanceCount,
                                                DataSets.createDataSets(dataSetContext, flowletDef.getDatasets()),
                                                options.getUserArguments(), flowletDef.getFlowletSpec(),
-                                               metricsCollectionService, serviceDiscovery);
+                                               metricsCollectionService, serviceDiscovery, discoveryServiceClient);
 
       // hack for propagating metrics collector to datasets
       if (dataSetContext instanceof DataSetInstantiator) {

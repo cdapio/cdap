@@ -31,6 +31,7 @@ import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.io.Closeable;
@@ -52,13 +53,14 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   private final FlowletMetrics flowletMetrics;
   private final Arguments runtimeArguments;
   private final ProgramServiceDiscovery serviceDiscovery;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
   private final MetricsCollector systemMetricsCollector;
 
   BasicFlowletContext(Program program, String flowletId, int instanceId, RunId runId, int instanceCount,
                       Map<String, Closeable> datasets, Arguments runtimeArguments,
                       FlowletSpecification flowletSpec, MetricsCollectionService metricsCollectionService,
-                      ProgramServiceDiscovery serviceDiscovery) {
+                      ProgramServiceDiscovery serviceDiscovery, DiscoveryServiceClient discoveryServiceClient) {
     super(program, runId, datasets, metricsCollectionService);
     this.accountId = program.getAccountId();
     this.flowId = program.getName();
@@ -72,6 +74,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.systemMetricsCollector = getMetricsCollector(MetricsScope.REACTOR,
                                                       metricsCollectionService, getMetricContext());
     this.serviceDiscovery = serviceDiscovery;
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @Override
@@ -110,6 +113,16 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   @Override
   public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
     return serviceDiscovery.discover(accountId, appId, serviceId, serviceName);
+  }
+
+  @Override
+  public ServiceDiscovered discoverService(String applicationId, String serviceId) {
+    return discoveryServiceClient.discover(String.format("service.%s.%s.%s", accountId, applicationId, serviceId));
+  }
+
+  @Override
+  public ServiceDiscovered discoverService(String serviceId) {
+    return discoveryServiceClient.discover(String.format("service.%s.%s.%s", accountId, getApplicationId(), serviceId));
   }
 
   public MetricsCollector getSystemMetrics() {

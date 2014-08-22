@@ -90,7 +90,7 @@ public class HttpServiceApp extends AbstractApplication {
     @Override
     public void initialize(ProcedureContext context) {
       //Discover the UserInterestsLookup service via discovery service
-      serviceDiscovered = context.discover("HttpServiceApp", "HttpService", "HttpService");
+      serviceDiscovered = context.discoverService("HttpServiceApp", "HttpService");
     }
 
     /**

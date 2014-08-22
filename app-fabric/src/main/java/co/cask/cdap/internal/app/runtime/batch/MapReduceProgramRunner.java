@@ -79,6 +79,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
@@ -113,6 +114,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private final TransactionSystemClient txSystemClient;
   private final TransactionExecutorFactory txExecutorFactory;
   private final ProgramServiceDiscovery serviceDiscovery;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
   private Job jobConf;
   private MapReduceProgramController controller;
@@ -125,7 +127,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
                                 TransactionExecutorFactory txExecutorFactory,
-                                ProgramServiceDiscovery serviceDiscovery) {
+                                ProgramServiceDiscovery serviceDiscovery,
+                                DiscoveryServiceClient discoveryServiceClient) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -135,6 +138,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.txSystemClient = txSystemClient;
     this.txExecutorFactory = txExecutorFactory;
     this.serviceDiscovery = serviceDiscovery;
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @Inject (optional = true)
@@ -180,7 +184,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 dataSets, spec,
                                 dataSetInstantiator.getTransactionAware(),
                                 logicalStartTime,
-                                workflowBatch, serviceDiscovery, metricsCollectionService);
+                                workflowBatch, serviceDiscovery, discoveryServiceClient, metricsCollectionService);
 
     try {
       MapReduce job = program.<MapReduce>getMainClass().newInstance();

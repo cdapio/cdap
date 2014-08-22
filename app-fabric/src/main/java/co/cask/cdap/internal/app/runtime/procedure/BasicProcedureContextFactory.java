@@ -27,6 +27,7 @@ import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.internal.app.runtime.DataSets;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.Closeable;
 import java.util.Map;
@@ -44,10 +45,12 @@ final class BasicProcedureContextFactory {
   private final ProcedureSpecification procedureSpec;
   private final MetricsCollectionService collectionService;
   private final ProgramServiceDiscovery serviceDiscovery;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
   BasicProcedureContextFactory(Program program, RunId runId, int instanceId, int instanceCount,
                                Arguments userArguments, ProcedureSpecification procedureSpec,
-                               MetricsCollectionService collectionService, ProgramServiceDiscovery serviceDiscovery) {
+                               MetricsCollectionService collectionService, ProgramServiceDiscovery serviceDiscovery,
+                               DiscoveryServiceClient discoveryServiceClient) {
     this.program = program;
     this.runId = runId;
     this.instanceId = instanceId;
@@ -56,6 +59,7 @@ final class BasicProcedureContextFactory {
     this.procedureSpec = procedureSpec;
     this.collectionService = collectionService;
     this.serviceDiscovery = serviceDiscovery;
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   BasicProcedureContext create(DataFabricFacade dataFabricFacade) {
@@ -64,7 +68,8 @@ final class BasicProcedureContextFactory {
                                                             procedureSpec.getDataSets());
     BasicProcedureContext context = new BasicProcedureContext(program, runId, instanceId, instanceCount,
                                                               dataSets, userArguments, procedureSpec,
-                                                              collectionService, serviceDiscovery);
+                                                              collectionService, serviceDiscovery,
+                                                              discoveryServiceClient);
 
     // hack for propagating metrics collector to datasets
     if (dataSetContext instanceof DataSetInstantiator) {

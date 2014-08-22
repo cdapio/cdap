@@ -35,6 +35,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.io.Closeable;
@@ -60,6 +61,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final Metrics mapredMetrics;
   private final MetricsCollectionService metricsCollectionService;
   private final ProgramServiceDiscovery serviceDiscovery;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
   private String inputDatasetName;
   private List<Split> inputDataSelection;
@@ -79,9 +81,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                Iterable<TransactionAware> txAwares,
                                long logicalStartTime,
                                String workflowBatch,
-                               ProgramServiceDiscovery serviceDiscovery) {
+                               ProgramServiceDiscovery serviceDiscovery,
+                               DiscoveryServiceClient discoveryServiceClient) {
     this(program, type, runId, runtimeArguments, datasets,
-         spec, txAwares, logicalStartTime, workflowBatch, serviceDiscovery, null);
+         spec, txAwares, logicalStartTime, workflowBatch, serviceDiscovery, discoveryServiceClient, null);
   }
 
 
@@ -95,6 +98,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                long logicalStartTime,
                                String workflowBatch,
                                ProgramServiceDiscovery serviceDiscovery,
+                               DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService) {
     super(program, runId, datasets, metricsCollectionService);
     this.accountId = program.getAccountId();
@@ -102,6 +106,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
     this.serviceDiscovery = serviceDiscovery;
+    this.discoveryServiceClient = discoveryServiceClient;
     this.metricsCollectionService = metricsCollectionService;
 
     if (metricsCollectionService != null) {
@@ -258,6 +263,16 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   @Override
   public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
     return serviceDiscovery.discover(accountId, appId, serviceId, serviceName);
+  }
+
+  @Override
+  public ServiceDiscovered discoverService(String applicationId, String serviceId) {
+    return discoveryServiceClient.discover(String.format("service.%s.%s.%s", accountId, applicationId, serviceId));
+  }
+
+  @Override
+  public ServiceDiscovered discoverService(String serviceId) {
+    return discoveryServiceClient.discover(String.format("service.%s.%s.%s", accountId, getApplicationId(), serviceId));
   }
 
   public void flushOperations() throws Exception {
