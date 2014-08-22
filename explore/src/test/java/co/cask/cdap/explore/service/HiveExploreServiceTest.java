@@ -23,6 +23,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
+import co.cask.cdap.hive.datasets.DatasetInputFormat;
+import co.cask.cdap.hive.datasets.DatasetSerDe;
+import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
@@ -333,16 +336,53 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
   @Test
   public void getDatasetSchemaTest() throws Exception {
     TableDescriptionInfo tableInfo = exploreService.getTableInfo(null, "my_table");
-//    Assert.assertEquals(new TableDescriptionInfo(
-//                          ImmutableMap.of("key", "string", "value", "struct<ints:array<int>,name:string>"),
-//                          true),
-//                        tableInfo);
-//
-//    tableInfo = exploreService.getTableInfo("default", "my_table");
-//    Assert.assertEquals(new TableDescriptionInfo(
-//                          ImmutableMap.of("key", "string", "value", "struct<ints:array<int>,name:string>"),
-//                          true),
-//                        tableInfo);
+    Assert.assertEquals(new TableDescriptionInfo(
+                          "my_table", "default", System.getProperty("user.name"), tableInfo.getCreationTime(), 0, 0,
+                          ImmutableList.<TableDescriptionInfo.ColumnInfo>of(),
+                          ImmutableMap.of(
+                            "EXTERNAL", "TRUE",
+                            "transient_lastDdlTime", tableInfo.getParameters().get("transient_lastDdlTime"),
+                            "comment", "Cask CDAP Dataset",
+                            "storage_handler", DatasetStorageHandler.class.getName()),
+                          "EXTERNAL_TABLE",
+                          new TableDescriptionInfo.TableStorageInfo(
+                            ImmutableList.of(new TableDescriptionInfo.ColumnInfo("key", "string", null),
+                                             new TableDescriptionInfo.ColumnInfo("value",
+                                                                                 "struct<ints:array<int>,name:string>",
+                                                                                 null)),
+                            tableInfo.getStorageInfo().getLocation(), DatasetInputFormat.class.getName(),
+                            "org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat", false, -1,
+                            DatasetSerDe.class.getName(),
+                            ImmutableMap.of("serialization.format", "1", "reactor.dataset.name", "my_table")
+                          ),
+                          true
+                        ),
+                        tableInfo);
+
+    tableInfo = exploreService.getTableInfo("default", "my_table");
+    Assert.assertEquals(new TableDescriptionInfo(
+                          "my_table", "default", System.getProperty("user.name"), tableInfo.getCreationTime(), 0, 0,
+                          ImmutableList.<TableDescriptionInfo.ColumnInfo>of(),
+                          ImmutableMap.of(
+                            "EXTERNAL", "TRUE",
+                            "transient_lastDdlTime", tableInfo.getParameters().get("transient_lastDdlTime"),
+                            "comment", "Cask CDAP Dataset",
+                            "storage_handler", DatasetStorageHandler.class.getName()),
+                          "EXTERNAL_TABLE",
+                          new TableDescriptionInfo.TableStorageInfo(
+                            ImmutableList.of(new TableDescriptionInfo.ColumnInfo("key", "string", null),
+                                             new TableDescriptionInfo.ColumnInfo("value",
+                                                                                 "struct<ints:array<int>,name:string>",
+                                                                                 null)),
+                            tableInfo.getStorageInfo().getLocation(), DatasetInputFormat.class.getName(),
+                            "org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat", false, -1,
+                            DatasetSerDe.class.getName(),
+                            ImmutableMap.of("serialization.format", "1", "reactor.dataset.name", "my_table")
+                          ),
+                          true
+                        ),
+                        tableInfo);
+
     try {
       exploreService.getTableInfo(null, "foobar");
       Assert.fail("Should throw TableNotFoundException on table foobar");
@@ -357,15 +397,61 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
       // Expected
     }
 
+    // Get info of a Hive table
     exploreClient.submit("create table test (first INT, second STRING) " +
                            "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
     tableInfo = exploreService.getTableInfo(null, "test");
-//    Assert.assertEquals(new TableDescriptionInfo(
-//                          ImmutableMap.of("first", "int", "second", "string"),
-//                          false),
-//                        tableInfo);
+    Assert.assertEquals(new TableDescriptionInfo(
+                          "test", "default", System.getProperty("user.name"), tableInfo.getCreationTime(), 0, 0,
+                          ImmutableList.<TableDescriptionInfo.ColumnInfo>of(),
+                          tableInfo.getParameters(),
+                          "MANAGED_TABLE",
+                          new TableDescriptionInfo.TableStorageInfo(
+                            ImmutableList.of(new TableDescriptionInfo.ColumnInfo("first", "int", null),
+                                             new TableDescriptionInfo.ColumnInfo("second", "string", null)),
+                            tableInfo.getStorageInfo().getLocation(), "org.apache.hadoop.mapred.TextInputFormat",
+                            "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat", false, -1,
+                            "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe",
+                            ImmutableMap.of("serialization.format", "\t", "field.delim", "\t")
+                          ),
+                          false
+                        ),
+                        tableInfo);
     exploreClient.submit("drop table if exists test").get();
 
+    // Get info of a partitioned table
+    exploreClient.submit("CREATE TABLE page_view(viewTime INT, userid BIGINT, page_url STRING, referrer_url STRING, " +
+                           "ip STRING COMMENT \"IP Address of the User\") COMMENT \"This is the page view table\" " +
+                           "PARTITIONED BY(dt STRING, country STRING) STORED AS SEQUENCEFILE").get();
+    tableInfo = exploreService.getTableInfo(null, "page_view");
+    Assert.assertEquals(new TableDescriptionInfo(
+                          "page_view", "default", System.getProperty("user.name"), tableInfo.getCreationTime(), 0, 0,
+                          ImmutableList.of(
+                            new TableDescriptionInfo.ColumnInfo("dt", "string", null),
+                            new TableDescriptionInfo.ColumnInfo("country", "string", null)
+                          ),
+                          ImmutableMap.of(
+                            "transient_lastDdlTime", tableInfo.getParameters().get("transient_lastDdlTime"),
+                            "comment", "This is the page view table"),
+                          "MANAGED_TABLE",
+                          new TableDescriptionInfo.TableStorageInfo(
+                            ImmutableList.of(
+                              new TableDescriptionInfo.ColumnInfo("viewtime", "int", null),
+                              new TableDescriptionInfo.ColumnInfo("userid", "bigint", null),
+                              new TableDescriptionInfo.ColumnInfo("page_url", "string", null),
+                              new TableDescriptionInfo.ColumnInfo("referrer_url", "string", null),
+                              new TableDescriptionInfo.ColumnInfo("ip", "string", "IP Address of the User")
+                            ),
+                            tableInfo.getStorageInfo().getLocation(),
+                            "org.apache.hadoop.mapred.SequenceFileInputFormat",
+                            "org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat", false, -1,
+                            "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe",
+                            ImmutableMap.of("serialization.format", "1")
+                          ),
+                          false
+                        ),
+                        tableInfo);
+    exploreClient.submit("drop table if exists page_view").get();
   }
 
   @Test

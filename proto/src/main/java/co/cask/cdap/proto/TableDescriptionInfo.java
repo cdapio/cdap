@@ -75,6 +75,18 @@ public class TableDescriptionInfo {
     this.isBackedByDataset = isBackedByDataset;
   }
 
+  public int getCreationTime() {
+    return creationTime;
+  }
+
+  public Map<String, String> getParameters() {
+    return parameters;
+  }
+
+  public TableStorageInfo getStorageInfo() {
+    return storageInfo;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -201,6 +213,10 @@ public class TableDescriptionInfo {
       this.numBuckets = numBuckets;
       this.serde = serde;
       this.serdeParameters = ImmutableMap.copyOf(serdeParameters);
+    }
+
+    public String getLocation() {
+      return location;
     }
 
     @Override
