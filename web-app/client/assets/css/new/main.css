@@ -1420,7 +1420,7 @@ input[type="text"] {
 	color: #9698A5;
 	font-size: 12px;
 	height: 14px;
-	display: block;
+	/*display: block; */
 	overflow: hidden;
 	white-space: nowrap;
 }

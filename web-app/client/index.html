@@ -445,6 +445,9 @@
               <td style="max-width: 350px; border-bottom: 0" class="app-list-name service-col">
                 <a class="none-text-decoration">{{shortName}}</a>
                 <br />
+                {{#if dataset_backup}}
+                  <img src="/assets/img/v2/store_icon_data_explore1.png" style="height:20px;"/>
+                {{/if}}
                 <span class="app-list-status">{{name}}</span>
                 {{#if this.isSelected}}
                   <div class="arrow-right"></div>
