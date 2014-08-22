@@ -31,7 +31,7 @@ See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/exampl
     mvn clean package -DskipTests -P examples && mvn package -pl singlenode -am -DskipTests -P dist,release
     
 ### Build the limited set of Javadocs used in distribution ZIP
-    mvn clean javadoc:javadoc -pl api -am -DskipTests
+    mvn clean javadoc:javadoc -pl api -am -DskipTests -P release
 
 ### Build the complete set of Javadocs, for all modules
     mvn clean site -DskipTests
