@@ -3584,11 +3584,8 @@ div.tooltip-inner {
   padding: 14px;
 }
 
-#query-display .table-info {
-  display: inline-block;
-  max-height: inherit;
-  overflow: auto;
-  width: 70%;
+#query-display .table .table-name {
+  border-bottom: 1px solid #EEE;
 }
 
 #query-tables {
@@ -3597,7 +3594,7 @@ div.tooltip-inner {
   background: white;
   vertical-align: top;
   overflow: auto;
-  max-height: inherit;
+  height: 50vh;
 }
 
 #query-schema {
@@ -3610,6 +3607,13 @@ div.tooltip-inner {
   /*margin-left: 350px;*/
   color: white;
   overflow: auto;
+}
+
+#query-display .table-info {
+  display: inline-block;
+  overflow: auto;
+  width: 70%;
+  height: 50vh;
 }
 
 .table-info .query-partition .table-title,
@@ -3652,6 +3656,7 @@ div.tooltip-inner {
   text-align: right;
   padding-right: 7px;
   display: inline-block;
+  color: white
 }
 .table-info .metadata-wrapper .metadata .metadata-value{
   width: 50%;

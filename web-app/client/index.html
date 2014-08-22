@@ -439,7 +439,7 @@
         </thead>
       </table>
       <div id="query-display">        
-        <div class="left-float" id="query-tables">
+        <div id="query-tables">
           <table class="table">
             {{#each datasets}}
             <tr {{action selectDataset this}} {{ bindAttr class=":cursor-pointer :table-name this.isSelected:selected:notselected" }} >
@@ -461,19 +461,19 @@
           <div class="metadata-title table-title" {{action 'showTableProperties' on="click"}}> Table Properties </div>
           <div class="metadata-wrapper">
             <div class="metadata">
-              <div class="metadata-title"> Table </div>
+              <div class="metadata-title"> Table: </div>
               <div class="metadata-value"> {{selectedDataset.tablename}} </div>
             </div>
             <div class="metadata">
-              <div class="metadata-title"> Database </div>
+              <div class="metadata-title"> Database: </div>
               <div class="metadata-value"> {{selectedDataset.dbname}} </div>
             </div>
             <div class="metadata">
-              <div class="metadata-title"> Owner </div>
+              <div class="metadata-title"> Owner: </div>
               <div class="metadata-value"> {{selectedDataset.owner}} </div>
             </div>
             <div class="metadata">
-              <div class="metadata-title"> Creation Time </div>
+              <div class="metadata-title"> Creation Time: </div>
               <div class="metadata-value"> {{selectedDataset.creationtime}} </div>
             </div>
           </div>
