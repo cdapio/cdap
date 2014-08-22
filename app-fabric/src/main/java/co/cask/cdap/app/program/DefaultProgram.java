@@ -159,6 +159,11 @@ public final class DefaultProgram implements Program {
   }
 
   @Override
+  public List<Location> getDatasetJarLocation() {
+    return datasetTypeJars;
+  }
+
+  @Override
   public synchronized ClassLoader getClassLoader() {
     if (classLoader == null) {
       expandIfNeeded();
@@ -173,6 +178,7 @@ public final class DefaultProgram implements Program {
     }
     return classLoader;
   }
+
 
   private String getAttribute(Manifest manifest, Attributes.Name name) throws IOException {
     String value = manifest.getMainAttributes().getValue(name);

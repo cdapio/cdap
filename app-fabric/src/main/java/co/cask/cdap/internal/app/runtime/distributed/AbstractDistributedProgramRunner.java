@@ -172,7 +172,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     }, tempJar);
 
     final Location jarLocation = new LocalLocationFactory().create(tempJar.toURI());
-    return Programs.createWithUnpack(jarLocation, programDir);
+
+    return Programs.createWithUnpack(jarLocation, program.getDatasetJarLocation(), programDir);
   }
 
   /**

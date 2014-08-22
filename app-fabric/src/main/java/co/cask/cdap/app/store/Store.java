@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.data2.OperationException;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -46,7 +47,7 @@ public interface Store {
    * @return An instance of {@link co.cask.cdap.app.program.DefaultProgram} if found.
    * @throws IOException
    */
-  Program loadProgram(Id.Program program, ProgramType type) throws IOException;
+  Program loadProgram(Id.Program program, ProgramType type) throws IOException, DatasetManagementException;
 
   /**
    * Logs start of program run.

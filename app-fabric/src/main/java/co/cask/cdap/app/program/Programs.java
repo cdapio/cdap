@@ -46,13 +46,23 @@ public final class Programs {
   }
 
   /**
+   * Creates a {@link co.cask.cdap.app.program.Program} with the supplied list of dataset jar files and
+   * program jar file.
+   */
+  public static Program createWithUnpack(Location location, List<Location> datasetTypeJars,
+                                         File destinationUnpackedJarDir) throws IOException {
+    return new DefaultProgram(location, datasetTypeJars, destinationUnpackedJarDir, getClassLoader());
+  }
+
+  /**
    * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
    * would not function from the program this method returns.
    */
+  //todo : only used by Abstractmapreducecontextbuilder can be removed, once we pass the datasetTypeJars from
+  //todo : mapreduce program runner to mapreducecontextconfig etc
   public static Program create(Location location, ClassLoader classLoader) throws IOException {
     return new DefaultProgram(location, null, classLoader);
   }
-
 
   /**
    * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
@@ -63,9 +73,8 @@ public final class Programs {
     return new DefaultProgram(location, datasetTypeJars, classLoader);
   }
 
-  public static Program create(Location location) throws IOException {
-    List<Location> emptyDatasetJarsList = Lists.newArrayList();
-    return new DefaultProgram(location, emptyDatasetJarsList, getClassLoader());
+  public static Program create(Location location, List<Location> datasetJars) throws IOException {
+    return new DefaultProgram(location, datasetJars, getClassLoader());
   }
 
   /**
@@ -79,7 +88,7 @@ public final class Programs {
    * @throws IOException incase of errors
    */
   public static Location programLocation(LocationFactory factory, String filePath, Id.Program id, ProgramType type)
-                                         throws IOException {
+    throws IOException {
     Location allAppsLocation = factory.create(filePath);
 
     Location accountAppsLocation = allAppsLocation.append(id.getAccountId());
@@ -87,12 +96,12 @@ public final class Programs {
     Location applicationProgramsLocation = accountAppsLocation.append(name);
     if (!applicationProgramsLocation.exists()) {
       throw new FileNotFoundException("Unable to locate the Program,  location doesn't exist: "
-                                   + applicationProgramsLocation.toURI().getPath());
+                                        + applicationProgramsLocation.toURI().getPath());
     }
     Location programLocation = applicationProgramsLocation.append(String.format("%s.jar", id.getId()));
     if (!programLocation.exists()) {
       throw new FileNotFoundException(String.format("Program %s.%s of type %s does not exists.",
-                                               id.getApplication(), id.getId(), type));
+                                                    id.getApplication(), id.getId(), type));
     }
     return programLocation;
   }

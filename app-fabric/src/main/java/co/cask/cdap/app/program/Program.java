@@ -20,6 +20,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.filesystem.Location;
 
+import java.util.List;
+
 /**
  * Abstraction of a executable program.
  */
@@ -75,4 +77,9 @@ public interface Program {
    * Returns the class loader for loading classes inside this program.
    */
   ClassLoader getClassLoader();
+
+  /**
+   *
+   */
+  List<Location> getDatasetJarLocation();
 }
