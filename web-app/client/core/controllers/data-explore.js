@@ -58,11 +58,9 @@ define([], function () {
           response.forEach(function (dataset) {
             var name = dataset.table;
             self.HTTP.rest('data/explore/tables/' + name + '/info', function (response, status) {
-              var result = _.pick(response, "table_name", "db_name", "owner", "creation_time", "from_dataset", "partitioned_keys"),
-                  schema = _.pick(response.storage_info, "schema"),
+              var result = _.pick(response, "table_name", "db_name", "owner", "creation_time", "from_dataset", "partitioned_keys", "schema"),
                   schema_array = [],
                   partition_array = [];
-              _.assign(result,schema);
               result.schema.forEach(function(column) {
                 schema_array.push({
                   columns: [column.name, column.type]
@@ -80,7 +78,7 @@ define([], function () {
                 tablename: result.table_name,
                 dbname: result.db_name,
                 owner: result.owner,
-                creationtime: result.creation_time,
+                creationtime: (new Date(result.creation_time)).toString("MMM-dd-yyyy HH:mm"), // Should be a better way to simplify it.
                 schema: schema_array,
                 partition: partition_array,
                 partition_table_empty: (partition_array.length === 0),
