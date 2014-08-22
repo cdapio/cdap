@@ -1418,7 +1418,7 @@ input[type="text"] {
 
 .app-list-name > .app-list-status {
 	color: #9698A5;
-	font-size: 12px;
+	/* font-size: 12px; */
 	height: 14px;
 	/*display: block; */
 	overflow: hidden;
@@ -3579,21 +3579,95 @@ div.tooltip-inner {
 	overflow: auto;
 }
 
+#query-display .table td.app-list-name.dataset-name {
+  max-width: 350px;
+  border-bottom: 0;
+  padding: 14px;
+}
+
+
+
 #query-tables {
 	width: 350px;
 	background: white;
 }
 
 #query-schema {
-	margin-left: 350px;
+	/*margin-left: 350px;*/
 	color: white;
 	overflow: auto;
 }
+
+.query-partition {
+  /*margin-left: 350px;*/
+  color: white;
+  overflow: auto;
+}
+
+.table-info .query-partition .table-title,
+.table-info #query-schema .table-title,
+.table-info .metadata-title.table-title{
+  background: #EEE;
+  color: #696E7E;
+  padding: 10px;
+  border-bottom: 1px solid #666666;
+  cursor: pointer;
+}
+
+.table-info .query-partition .table-title:hover,
+.table-info #query-schema .table-title:hover,
+.table-info .metadata-title.table-title:hover {
+  background: #1751A3;
+}
+
+.table-info .query-partition .table-empty,
+.table-info #query-schema .table-empty {
+  padding: 10px;
+  color: white;
+  background: transparent;
+  text-align: center;
+}
+
+.table-info .metadata-wrapper {
+  padding: 5px 0;
+  font-weight: 100;
+}
+.table-info .metadata-wrapper .metadata {
+  padding: 10px;
+  border-bottom: 1px solid black;
+}
+.table-info .metadata-wrapper .metadata:last-child {
+  border: 0;
+}
+.table-info .metadata-wrapper .metadata .metadata-title{
+  width: 49%;
+  text-align: right;
+  padding-right: 7px;
+  display: inline-block;
+}
+.table-info .metadata-wrapper .metadata .metadata-value{
+  width: 50%;
+  display: inline-block;
+  color: white;
+}
+
+.partition-table th {
+	background: #EEE;
+	color: white;
+}
+
+.partition-table th, .partition-table td {
+	border-color: #515151;
+	max-width: 400px;
+	word-wrap: break-word;
+}
+
 
 #schema-table th {
 	background: #535353;
 	color: white;
 }
+
 
 #schema-table th, #schema-table td {
 	border-color: #515151;
@@ -3609,6 +3683,7 @@ div.tooltip-inner {
 .table-name:hover .app-list-name a {
 	color: white;
 }
+
 
 .table-name.selected {
 	color: white;
@@ -3626,7 +3701,6 @@ div.tooltip-inner {
 	border-bottom: 8px solid transparent;
 	border-left: 8px solid white;
 	float: right;
-	margin-top: -20px;
 }
 
 #query-list-table {

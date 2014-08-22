@@ -58,18 +58,33 @@ define([], function () {
           response.forEach(function (dataset) {
             var name = dataset.table;
             self.HTTP.rest('data/explore/tables/' + name + '/info', function (response, status) {
-              var results = [];
-              var tableInfo = response["schema"];
-              for(var key in tableInfo) {
-                if(tableInfo.hasOwnProperty(key)){
-                  results.push({
-                    columns:[key, tableInfo[key]]
+              var result = _.pick(response, "table_name", "db_name", "owner", "creation_time", "from_dataset", "partitioned_keys"),
+                  schema = _.pick(response.storage_info, "schema"),
+                  schema_array = [],
+                  partition_array = [];
+              _.assign(result,schema);
+              result.schema.forEach(function(column) {
+                schema_array.push({
+                  columns: [column.name, column.type]
+                });
+              });
+              for(var key in result.partition) {
+                if(result.partition.hasOwnProperty(key)){
+                  partition_array.push({
+                    columns:[key, result.partition[key]]
                   });
                 }
               }
+
               datasets.pushObject(Ember.Object.create({
-                name:name,
-                results:results,
+                tablename: result.table_name,
+                dbname: result.db_name,
+                owner: result.owner,
+                creationtime: result.creation_time,
+                schema: schema_array,
+                partition: partition_array,
+                partition_table_empty: (partition_array.length === 0),
+                schema_table_empty: (schema_array.length === 0),
                 dataset_backup: response["from_dataset"]
               }));
               if(datasets.length == 1) {
@@ -337,6 +352,20 @@ define([], function () {
       }
       return false;
     },
+
+    showPartitionKeys: function () {
+      $("table.table.partition-table").toggleClass("hide");
+      $(".query-partition .table-empty").toggleClass("hide");
+    },
+
+    showTableSchema: function () {
+      $("#schema-table").toggleClass("hide");
+      $("#schema-table .table-empty").toggleClass("hide");
+    },
+
+    showTableProperties: function () {
+      $(".table-info .metadata-wrapper").toggleClass("hide");
+    }
 
   });
 

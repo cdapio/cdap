@@ -29,6 +29,7 @@
   <script type="text/javascript" src="/core/lib/jquery.cookie.js"></script>
   <script type="text/javascript" src="/core/lib/jquery.color-2.1.2.min.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
+  <script type="text/javascript" src="/core/lib/lodash.js"></script>
 
   <script src="/core/lib/rickshaw.js"></script>
   <script src="/third_party/select2/select2.min.js"></script>
@@ -442,13 +443,12 @@
           <table class="table">
             {{#each datasets}}
             <tr {{action selectDataset this}} {{ bindAttr class=":cursor-pointer :table-name this.isSelected:selected:notselected" }} >
-              <td style="max-width: 350px; border-bottom: 0" class="app-list-name service-col">
-                <a class="none-text-decoration">{{shortName}}</a>
-                <br />
+              <td class="app-list-name service-col dataset-name">
+                <!-- <a class="none-text-decoration">{{tablename}}</a> -->
                 {{#if dataset_backup}}
                   <img src="/assets/img/v2/store_icon_data_explore1.png" style="height:20px;"/>
                 {{/if}}
-                <span class="app-list-status">{{name}}</span>
+                <span class="app-list-status">{{tablename}}</span>
                 {{#if this.isSelected}}
                   <div class="arrow-right"></div>
                 {{/if}}
@@ -457,14 +457,38 @@
             {{/each}}
           </table>
         </div>
-        <div id="query-schema">
-          <table class="table" id="schema-table">
-              <thead>
+        <div class="table-info" style="margin-left: 350px;">
+          <div class="metadata-title table-title" {{action 'showTableProperties' on="click"}}> Table Properties </div>
+          <div class="metadata-wrapper">
+            <div class="metadata">
+              <div class="metadata-title"> Table </div>
+              <div class="metadata-value"> {{selectedDataset.tablename}} </div>
+            </div>
+            <div class="metadata">
+              <div class="metadata-title"> Database </div>
+              <div class="metadata-value"> {{selectedDataset.dbname}} </div>
+            </div>
+            <div class="metadata">
+              <div class="metadata-title"> Owner </div>
+              <div class="metadata-value"> {{selectedDataset.owner}} </div>
+            </div>
+            <div class="metadata">
+              <div class="metadata-title"> Creation Time </div>
+              <div class="metadata-value"> {{selectedDataset.creationtime}} </div>
+            </div>
+          </div>
+          <div class="query-partition">
+            <div class="table-title" {{action 'showPartitionKeys' on="click"}}> Partition Keys </div>
+            {{#if selectedDataset.partition_table_empty}}
+            <div class="table-empty hide"> No Partition Keys </div>
+            {{ else }}
+            <table class="table partition-table hide">
+             <thead>
                   <th>col_name</th>
                   <th>data_type</th>
               </thead>
               <tbody>
-              {{#each selectedDataset.results}}
+              {{#each selectedDataset.partition}}
                 <tr>
                 {{#each columns}}
                   <td>{{this}}</td>
@@ -473,6 +497,30 @@
               {{/each}}
               </tbody>
             </table>
+            {{/if}}
+          </div>
+          <div id="query-schema">
+            <div class="table-title" {{action 'showTableSchema' on="click"}}> Table Schema </div>
+            {{#if selectedDataset.schema_table_empty }}
+              <div class="table-empty"> No Schema (A Table with No Schema??) </div>
+            {{ else }}
+            <table class="table hide" id="schema-table">
+              <thead>
+                  <th>col_name</th>
+                  <th>data_type</th>
+              </thead>
+              <tbody>
+              {{#each selectedDataset.schema}}
+                <tr>
+                {{#each columns}}
+                  <td>{{this}}</td>
+                {{/each}}
+                </tr>
+              {{/each}}
+              </tbody>
+            </table>
+            {{/if}}
+          </div>
         </div>
         <div style="clear:both"></div>
       </div>
