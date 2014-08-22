@@ -22,7 +22,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -32,17 +31,14 @@ import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,16 +62,14 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   private final DatasetServiceClient client;
   private final DatasetDefinitionRegistryFactory registryFactory;
-  private final LocationFactory locationFactory;
+
 
   @Inject
   public RemoteDatasetFramework(DiscoveryServiceClient discoveryClient,
-                                DatasetDefinitionRegistryFactory registryFactory,
-                                LocationFactory locationFactory) {
+                                DatasetDefinitionRegistryFactory registryFactory) {
 
     this.client = new DatasetServiceClient(discoveryClient);
     this.registryFactory = registryFactory;
-    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -265,31 +259,9 @@ public class RemoteDatasetFramework implements DatasetFramework {
                                                   ClassLoader classLoader)
     throws DatasetManagementException {
 
-    boolean firstLoad = false;
-    if (classLoader == null) {
-      classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader());
-      firstLoad = true;
-    }
 
     DatasetDefinitionRegistry registry = registryFactory.create();
     List<DatasetModuleMeta> modulesToLoad = implementationInfo.getModules();
-    if (firstLoad) {
-      List<Location> datasetTypeJars = Lists.newArrayList();
-      for (DatasetModuleMeta moduleMeta : modulesToLoad) {
-
-        if (moduleMeta.getJarLocation() != null) {
-          datasetTypeJars.add(locationFactory.create(moduleMeta.getJarLocation()));
-        }
-      }
-      try {
-        classLoader = ClassLoaders.newDatasetClassLoader(datasetTypeJars,
-                                                         ApiResourceListHolder.getResourceList(), classLoader);
-      } catch (IOException e) {
-        LOG.error("Was not able to init Dataset classloader while trying to load type {} due to exception {}",
-                  implementationInfo, e);
-        throw Throwables.propagate(e);
-      }
-    }
 
     for (DatasetModuleMeta moduleMeta : modulesToLoad) {
       Class<?> moduleClass;

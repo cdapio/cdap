@@ -61,6 +61,7 @@ import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -122,9 +123,11 @@ public class DefaultStore implements Store {
           @Override
           public AppMds get() {
             try {
+              ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                    getClass().getClassLoader());
               Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, APP_META_TABLE, "table",
                                                                DatasetProperties.EMPTY,
-                                                               DatasetDefinition.NO_ARGUMENTS, null);
+                                                               DatasetDefinition.NO_ARGUMENTS, cl);
               return new AppMds(mdsTable);
             } catch (Exception e) {
               LOG.error("Failed to access app.meta table", e);

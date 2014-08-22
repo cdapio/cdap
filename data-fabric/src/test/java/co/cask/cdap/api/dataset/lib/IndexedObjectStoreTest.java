@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.tephra.TransactionExecutor;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
@@ -31,10 +32,12 @@ import java.util.List;
  * Test for {@link co.cask.cdap.api.dataset.lib.IndexedObjectStore}.
  */
 public class IndexedObjectStoreTest extends AbstractDatasetTest {
+  private final ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                               getClass().getClassLoader());
   @Test
   public void testLookupByIndex() throws Exception {
     createIndexedObjectStoreInstance("index", Feed.class);
-    final IndexedObjectStore<Feed> indexedFeed = getInstance("index");
+    final IndexedObjectStore<Feed> indexedFeed = getInstance("index", classLoader);
     TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
@@ -69,7 +72,7 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
   @Test
   public void testIndexRewrites() throws Exception {
     createIndexedObjectStoreInstance("index", Feed.class);
-    final IndexedObjectStore<Feed> indexedFeed = getInstance("index");
+    final IndexedObjectStore<Feed> indexedFeed = getInstance("index", classLoader);
     TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
@@ -109,7 +112,7 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
   @Test
   public void testIndexPruning() throws Exception {
     createIndexedObjectStoreInstance("index", Feed.class);
-    final IndexedObjectStore<Feed> indexedFeed = getInstance("index");
+    final IndexedObjectStore<Feed> indexedFeed = getInstance("index", classLoader);
     TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
@@ -136,7 +139,7 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
   @Test
   public void testIndexNoSecondaryKeyChanges() throws Exception {
     createIndexedObjectStoreInstance("index", Feed.class);
-    IndexedObjectStore<Feed> indexedFeed = getInstance("index");
+    IndexedObjectStore<Feed> indexedFeed = getInstance("index", classLoader);
 
     List<String> categories = ImmutableList.of("C++", "C#");
 
@@ -168,7 +171,7 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
   @Test
   public void testIndexUpdates() throws Exception {
     createIndexedObjectStoreInstance("index", Feed.class);
-    final IndexedObjectStore<Feed> indexedFeed = getInstance("index");
+    final IndexedObjectStore<Feed> indexedFeed = getInstance("index", classLoader);
     TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {

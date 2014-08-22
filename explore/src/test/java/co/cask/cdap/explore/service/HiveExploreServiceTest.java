@@ -24,6 +24,7 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
@@ -31,6 +32,7 @@ import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.test.SlowTests;
 import com.continuuity.tephra.Transaction;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -61,6 +63,8 @@ import static co.cask.cdap.explore.service.KeyStructValueTableDefinition.KeyValu
  */
 @Category(SlowTests.class)
 public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
+
+  private static ClassLoader cl;
   @BeforeClass
   public static void start() throws Exception {
     startServices(CConfiguration.create());
@@ -70,9 +74,14 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
 
+    cl = Thread.currentThread().getContextClassLoader();
+    DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
+    cl = BaseHiveExploreServiceTest.createDatasetClassLoader(cl, typeMeta);
+
+
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, cl);
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);
@@ -118,7 +127,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
   @Test
   public void testTable() throws Exception {
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, cl);
     Assert.assertNotNull(table);
     Transaction tx = transactionManager.startShort(100);
     table.startTx(tx);
@@ -398,9 +407,15 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     try {
       Transaction tx1 = transactionManager.startShort(100);
 
+      ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                            getClass().getClassLoader());
+      DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
+      cl = BaseHiveExploreServiceTest.createDatasetClassLoader(cl, typeMeta);
+
+
       // Accessing dataset instance to perform data operations
       KeyStructValueTableDefinition.KeyStructValueTable table =
-        datasetFramework.getDataset("my_table_1", DatasetDefinition.NO_ARGUMENTS, null);
+        datasetFramework.getDataset("my_table_1", DatasetDefinition.NO_ARGUMENTS, cl);
       Assert.assertNotNull(table);
       table.startTx(tx1);
 

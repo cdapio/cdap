@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.TransactionFailureException;
+import com.google.common.base.Objects;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -37,8 +38,9 @@ public class TimeseriesTableTest extends AbstractDatasetTest {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     createInstance("timeseriesTable", "metricsTable", DatasetProperties.EMPTY);
-    table = getInstance("metricsTable");
+    table = getInstance("metricsTable", classLoader);
   }
 
   @AfterClass

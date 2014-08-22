@@ -20,25 +20,36 @@ import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.ApiResourceListHolder;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import co.cask.cdap.hive.objectinspector.ReflectionStructObjectInspector;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
+import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.List;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -53,11 +64,14 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   private final ExploreService exploreService;
   private final DatasetFramework datasetFramework;
+  private final LocationFactory locationFactory;
 
   @Inject
-  public ExploreExecutorHttpHandler(ExploreService exploreService, DatasetFramework datasetFramework) {
+  public ExploreExecutorHttpHandler(ExploreService exploreService, DatasetFramework datasetFramework,
+                                    LocationFactory locationFactory) {
     this.exploreService = exploreService;
     this.datasetFramework = datasetFramework;
+    this.locationFactory = locationFactory;
   }
 
   /**
@@ -70,7 +84,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       Dataset dataset;
       try {
-        dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
+        ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                              getClass().getClassLoader());
+        DatasetTypeMeta typeMeta = datasetFramework.getType(datasetFramework.getDatasetSpec(datasetName).getType());
+        cl = createDatasetClassLoader(cl, typeMeta);
+        dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, cl);
       } catch (Exception e) {
         String className = isClassNotFoundException(e);
         if (className == null) {
@@ -144,8 +162,12 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                              @PathParam("dataset") final String datasetName) {
     try {
       LOG.debug("Disabling explore for dataset instance {}", datasetName);
+      ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                            getClass().getClassLoader());
+      DatasetTypeMeta typeMeta = datasetFramework.getType(datasetFramework.getDatasetSpec(datasetName).getType());
+      cl = createDatasetClassLoader(cl, typeMeta);
+      Dataset dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, cl);
 
-      Dataset dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
       if (dataset == null) {
         responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
         return;
@@ -183,8 +205,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                                @PathParam("dataset") final String datasetName) {
     try {
       LOG.trace("Retrieving Explore schema for dataset {}", datasetName);
-
-      Dataset dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
+      ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                            getClass().getClassLoader());
+      DatasetTypeMeta typeMeta = datasetFramework.getType(datasetFramework.getDatasetSpec(datasetName).getType());
+      cl = createDatasetClassLoader(cl, typeMeta);
+      Dataset dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, cl);
       if (dataset == null) {
         responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot find dataset " + datasetName);
         return;
@@ -221,4 +246,25 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
+
+  private ClassLoader createDatasetClassLoader(ClassLoader cl, DatasetTypeMeta typeMeta) {
+    try {
+      List<DatasetModuleMeta> modulesToLoad = typeMeta.getModules();
+      List<Location> datasetJars = Lists.newArrayList();
+      for (DatasetModuleMeta module : modulesToLoad) {
+        if (module.getJarLocation() != null) {
+          datasetJars.add(locationFactory.create(module.getJarLocation()));
+        }
+      }
+      if (!datasetJars.isEmpty()) {
+        return ClassLoaders.newDatasetClassLoader(datasetJars, ApiResourceListHolder.getResourceList(), cl);
+      } else {
+        return cl;
+      }
+    } catch (IOException e) {
+      LOG.error("Exception while creating DatasetClassLoader");
+      throw Throwables.propagate(e);
+    }
+  }
+
 }

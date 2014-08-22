@@ -20,10 +20,12 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.TransactionFailureException;
+import com.google.common.base.Objects;
 import com.google.common.collect.Sets;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -47,11 +49,12 @@ public class KeyValueTableTest extends AbstractDatasetTest {
   static final byte[] VAL3 = Bytes.toBytes("VAL3");
 
   private static KeyValueTable kvTable;
+  private static final ClassLoader cl = Thread.currentThread().getContextClassLoader();
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     createInstance("keyValueTable", "test", DatasetProperties.EMPTY);
-    kvTable = getInstance("test");
+    kvTable = getInstance("test", cl);
   }
 
   @AfterClass
@@ -181,9 +184,10 @@ public class KeyValueTableTest extends AbstractDatasetTest {
   public void testTransactionAcrossTables() throws Exception {
     createInstance("keyValueTable", "t1", DatasetProperties.EMPTY);
     createInstance("keyValueTable", "t2", DatasetProperties.EMPTY);
-
-    final KeyValueTable table1 = getInstance("t1");
-    final KeyValueTable table2 = getInstance("t2");
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
+    final KeyValueTable table1 = getInstance("t1", cl);
+    final KeyValueTable table2 = getInstance("t2", cl);
     TransactionExecutor txnl = newTransactionExecutor(table1, table2);
 
     // write a value to table1 and verify it
@@ -226,8 +230,8 @@ public class KeyValueTableTest extends AbstractDatasetTest {
     });
 
     // verify synchronously that old value are still there
-    final KeyValueTable table1v2 = getInstance("t1");
-    final KeyValueTable table2v2 = getInstance("t2");
+    final KeyValueTable table1v2 = getInstance("t1", cl);
+    final KeyValueTable table2v2 = getInstance("t2", cl);
     TransactionExecutor txnlv2 = newTransactionExecutor(table1v2, table2v2);
     txnlv2.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -245,7 +249,7 @@ public class KeyValueTableTest extends AbstractDatasetTest {
   public void testBatchReads() throws Exception {
     createInstance("keyValueTable", "tBatch", DatasetProperties.EMPTY);
 
-    final KeyValueTable t = getInstance("tBatch");
+    final KeyValueTable t = getInstance("tBatch", cl);
     TransactionExecutor txnl = newTransactionExecutor(t);
 
     final SortedSet<Long> keysWritten = Sets.newTreeSet();

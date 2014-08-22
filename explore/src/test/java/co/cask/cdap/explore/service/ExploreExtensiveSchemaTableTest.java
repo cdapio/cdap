@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.test.SlowTests;
 import com.continuuity.tephra.Transaction;
@@ -47,9 +48,14 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("ExtensiveSchemaTable", "my_table", DatasetProperties.EMPTY);
 
+    ClassLoader cl = Thread.currentThread().getContextClassLoader();
+    DatasetTypeMeta typeMeta = datasetFramework.getType("ExtensiveSchemaTable");
+    cl = BaseHiveExploreServiceTest.createDatasetClassLoader(cl, typeMeta);
+
+
     // Accessing dataset instance to perform data operations
     ExtensiveSchemaTableDefinition.ExtensiveSchemaTable table =
-      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, cl);
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);

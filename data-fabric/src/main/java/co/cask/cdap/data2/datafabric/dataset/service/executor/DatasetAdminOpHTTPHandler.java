@@ -21,23 +21,32 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.HandlerException;
+import co.cask.cdap.common.lang.ApiResourceListHolder;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.commons.lang.StringUtils;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -53,11 +62,14 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   private static final Gson GSON = new Gson();
 
   private final RemoteDatasetFramework dsFramework;
+  private final LocationFactory locationFactory;
 
   @Inject
-  public DatasetAdminOpHTTPHandler(Authenticator authenticator, RemoteDatasetFramework dsFramework) {
+  public DatasetAdminOpHTTPHandler(Authenticator authenticator, RemoteDatasetFramework dsFramework,
+                                   LocationFactory locationFactory) {
     super(authenticator);
     this.dsFramework = dsFramework;
+    this.locationFactory = locationFactory;
   }
 
   @POST
@@ -89,8 +101,10 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
     DatasetProperties props = GSON.fromJson(propsHeader, DatasetProperties.class);
     DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
-
-    DatasetType type = dsFramework.getDatasetType(typeMeta, null);
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
+    cl = createDatasetClassLoader(cl, typeMeta);
+    DatasetType type = dsFramework.getDatasetType(typeMeta, cl);
 
     if (type == null) {
       String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
@@ -103,6 +117,26 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     DatasetAdmin admin = type.getAdmin(spec);
     admin.create();
     responder.sendJson(HttpResponseStatus.OK, spec);
+  }
+
+  private ClassLoader createDatasetClassLoader(ClassLoader cl, DatasetTypeMeta typeMeta) {
+    try {
+      List<DatasetModuleMeta> modulesToLoad = typeMeta.getModules();
+      List<Location> datasetJars = Lists.newArrayList();
+      for (DatasetModuleMeta module : modulesToLoad) {
+        if (module.getJarLocation() != null) {
+          datasetJars.add(locationFactory.create(module.getJarLocation()));
+        }
+      }
+      if (!datasetJars.isEmpty()) {
+        return ClassLoaders.newDatasetClassLoader(datasetJars, ApiResourceListHolder.getResourceList(), cl);
+      } else {
+        return cl;
+      }
+    } catch (IOException e) {
+      LOG.error("Exception while creating DatasetClassLoader");
+      throw Throwables.propagate(e);
+    }
   }
 
   @POST
@@ -119,8 +153,10 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
     DatasetSpecification spec = GSON.fromJson(specHeader, DatasetSpecification.class);
     DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
-
-    DatasetType type = dsFramework.getDatasetType(typeMeta, null);
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
+    cl = createDatasetClassLoader(cl, typeMeta);
+    DatasetType type = dsFramework.getDatasetType(typeMeta, cl);
 
     if (type == null) {
       String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);

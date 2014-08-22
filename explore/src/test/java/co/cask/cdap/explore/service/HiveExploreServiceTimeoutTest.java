@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.test.XSlowTests;
@@ -70,9 +71,13 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
 
+    ClassLoader cl = Thread.currentThread().getContextClassLoader();
+    DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
+    cl = BaseHiveExploreServiceTest.createDatasetClassLoader(cl, typeMeta);
+
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, cl);
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);

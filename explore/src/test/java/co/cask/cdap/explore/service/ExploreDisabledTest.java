@@ -36,8 +36,10 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionManager;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -48,6 +50,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.util.List;
@@ -56,11 +59,15 @@ import java.util.List;
  * Test deployment behavior when explore module is disabled.
  */
 public class ExploreDisabledTest {
+  private static final Logger LOG = org.slf4j.LoggerFactory.getLogger(ExploreDisabledTest.class);
+
   private static TransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
   private static DatasetOpExecutor dsOpExecutor;
   private static DatasetService datasetService;
   private static ExploreClient exploreClient;
+
+
 
   @BeforeClass
   public static void start() throws Exception {
@@ -78,6 +85,7 @@ public class ExploreDisabledTest {
     Assert.assertFalse(exploreClient.isServiceAvailable());
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
+
   }
 
   @AfterClass
@@ -94,14 +102,21 @@ public class ExploreDisabledTest {
     // This should be processed with no exception being thrown
     datasetFramework.addModule("module1", new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
+
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "table1", DatasetProperties.EMPTY);
+
+
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
+    DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
+    cl = BaseHiveExploreServiceTest.createDatasetClassLoader(cl, typeMeta);
 
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("table1", DatasetDefinition.NO_ARGUMENTS, null);
+      datasetFramework.getDataset("table1", DatasetDefinition.NO_ARGUMENTS, cl);
     Assert.assertNotNull(table);
     table.startTx(tx1);
 
@@ -138,11 +153,17 @@ public class ExploreDisabledTest {
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("NotRecordScannableTableDef", "table2", DatasetProperties.EMPTY);
 
+
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
+    DatasetTypeMeta typeMeta = datasetFramework.getType("NotRecordScannableTableDef");
+    cl = BaseHiveExploreServiceTest.createDatasetClassLoader(cl, typeMeta);
+
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
     NotRecordScannableTableDefinition.KeyValueTable table =
-      datasetFramework.getDataset("table2", DatasetDefinition.NO_ARGUMENTS, null);
+      datasetFramework.getDataset("table2", DatasetDefinition.NO_ARGUMENTS, cl);
     Assert.assertNotNull(table);
     table.startTx(tx1);
 

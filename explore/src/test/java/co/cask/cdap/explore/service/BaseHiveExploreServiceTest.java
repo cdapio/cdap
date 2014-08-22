@@ -25,6 +25,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.lang.ApiResourceListHolder;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -39,10 +41,13 @@ import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import com.continuuity.tephra.TransactionManager;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -51,10 +56,13 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
@@ -77,6 +85,8 @@ public class BaseHiveExploreServiceTest {
   protected static ExploreService exploreService;
 
   protected static ExploreClient exploreClient;
+
+  protected static LocationFactory locationFactory;
 
   protected static Injector injector;
   protected static void startServices(CConfiguration cConf) throws Exception {
@@ -106,6 +116,8 @@ public class BaseHiveExploreServiceTest {
     exploreClient = injector.getInstance(ExploreClient.class);
     exploreService = injector.getInstance(ExploreService.class);
     Assert.assertTrue(exploreClient.isServiceAvailable());
+
+    locationFactory = injector.getInstance(LocationFactory.class);
   }
 
   @AfterClass
@@ -213,5 +225,24 @@ public class BaseHiveExploreServiceTest {
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule()
     );
+  }
+
+  static ClassLoader createDatasetClassLoader(ClassLoader cl, DatasetTypeMeta typeMeta) {
+    try {
+      List<DatasetModuleMeta> modulesToLoad = typeMeta.getModules();
+      List<Location> datasetJars = Lists.newArrayList();
+      for (DatasetModuleMeta module : modulesToLoad) {
+        if (module.getJarLocation() != null) {
+          datasetJars.add(locationFactory.create(module.getJarLocation()));
+        }
+      }
+      if (!datasetJars.isEmpty()) {
+        return ClassLoaders.newDatasetClassLoader(datasetJars, ApiResourceListHolder.getResourceList(), cl);
+      } else {
+        return cl;
+      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 }

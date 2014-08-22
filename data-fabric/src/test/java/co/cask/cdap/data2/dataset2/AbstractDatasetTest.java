@@ -26,6 +26,7 @@ import com.continuuity.tephra.DefaultTransactionExecutor;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.inmemory.MinimalTxSystemClient;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -71,15 +72,15 @@ public class AbstractDatasetTest {
     framework.deleteInstance(instanceName);
   }
 
-  protected static <T extends Dataset> T getInstance(String datasetName)
+  protected static <T extends Dataset> T getInstance(String datasetName, ClassLoader cl)
     throws DatasetManagementException, IOException {
 
-    return getInstance(datasetName, null);
+    return getInstance(datasetName, null, cl);
   }
 
-  protected static <T extends Dataset> T getInstance(String datasetName, Map<String, String> arguments)
+  protected static <T extends Dataset> T getInstance(String datasetName, Map<String, String> arguments, ClassLoader cl)
     throws DatasetManagementException, IOException {
-    return framework.getDataset(datasetName, arguments, null);
+    return framework.getDataset(datasetName, arguments, cl);
   }
 
   protected static TransactionExecutor newTransactionExecutor(TransactionAware...tables) {

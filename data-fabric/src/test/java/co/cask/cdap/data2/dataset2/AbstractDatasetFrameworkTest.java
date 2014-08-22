@@ -29,6 +29,7 @@ import com.continuuity.tephra.DefaultTransactionExecutor;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.inmemory.MinimalTxSystemClient;
+import com.google.common.base.Objects;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -57,7 +58,9 @@ public abstract class AbstractDatasetFrameworkTest {
     // Doing some admin and data ops
     DatasetAdmin admin = framework.getAdmin("my_table", null);
     Assert.assertNotNull(admin);
-    final OrderedTable table = framework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
+    final OrderedTable table = framework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, cl);
     Assert.assertNotNull(table);
 
     TransactionExecutor txnl = new DefaultTransactionExecutor(new MinimalTxSystemClient(), (TransactionAware) table);
@@ -144,7 +147,9 @@ public abstract class AbstractDatasetFrameworkTest {
     // Doing some admin and data ops
     DatasetAdmin admin = framework.getAdmin("my_table", null);
     Assert.assertNotNull(admin);
-    final KeyValueTable table = framework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
+    final KeyValueTable table = framework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, cl);
     Assert.assertNotNull(table);
 
     TransactionExecutor txnl = new DefaultTransactionExecutor(new MinimalTxSystemClient(), (TransactionAware) table);

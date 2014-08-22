@@ -26,6 +26,7 @@ import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import com.google.common.base.Objects;
 
 /**
  * Common utility for managing system metadata tables needed by various services.
@@ -40,8 +41,10 @@ public abstract class MetaTableUtil {
   }
 
   public OrderedTable getMetaTable() throws Exception {
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
     return DatasetsUtil.getOrCreateDataset(dsFramework, getMetaTableName(), OrderedTable.class.getName(),
-                                           DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
+                                           DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, cl);
   }
 
   public void upgrade() throws Exception {

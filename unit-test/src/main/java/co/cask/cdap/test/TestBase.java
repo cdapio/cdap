@@ -34,6 +34,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.lang.ApiResourceListHolder;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
@@ -71,6 +73,8 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
@@ -85,6 +89,7 @@ import com.continuuity.tephra.TransactionContext;
 import com.continuuity.tephra.TransactionFailureException;
 import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -115,6 +120,7 @@ import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link Application}.
@@ -138,6 +144,7 @@ public class TestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionManager txService;
+  private static LocationFactory locationFactory;
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
@@ -271,7 +278,7 @@ public class TestBase {
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
     AppFabricHttpHandler httpHandler = injector.getInstance(AppFabricHttpHandler.class);
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+    locationFactory = injector.getInstance(LocationFactory.class);
     appFabricClient = new AppFabricClient(httpHandler, locationFactory);
     DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
     datasetFramework =
@@ -400,10 +407,14 @@ public class TestBase {
    * @throws Exception
    */
   @Beta
-  protected final <T> DataSetManager<T> getDataset(String datasetInstanceName)
+  protected final <T> DataSetManager<T> getDataset(String datasetTypeName, String datasetInstanceName)
     throws Exception {
     @SuppressWarnings("unchecked")
-    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, new HashMap<String, String>(), null);
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
+    DatasetTypeMeta typeMeta = datasetFramework.getType(datasetTypeName);
+    cl = createDatasetClassLoader(cl, typeMeta);
+    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, new HashMap<String, String>(), cl);
     try {
       TransactionAware txAwareDataset = (TransactionAware) dataSet;
       final TransactionContext txContext =
@@ -453,5 +464,24 @@ public class TestBase {
     String connectString = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, host, port);
 
     return DriverManager.getConnection(connectString);
+  }
+
+  protected ClassLoader createDatasetClassLoader(ClassLoader cl, DatasetTypeMeta typeMeta) {
+    try {
+      List<DatasetModuleMeta> modulesToLoad = typeMeta.getModules();
+      List<Location> datasetJars = Lists.newArrayList();
+      for (DatasetModuleMeta module : modulesToLoad) {
+        if (module.getJarLocation() != null) {
+          datasetJars.add(locationFactory.create(module.getJarLocation()));
+        }
+      }
+      if (!datasetJars.isEmpty()) {
+        return ClassLoaders.newDatasetClassLoader(datasetJars, ApiResourceListHolder.getResourceList(), cl);
+      } else {
+        return cl;
+      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 }

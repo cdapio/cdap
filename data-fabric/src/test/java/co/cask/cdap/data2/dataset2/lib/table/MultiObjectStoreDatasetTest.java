@@ -29,6 +29,7 @@ import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.TypeRepresentation;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.TransactionFailureException;
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
@@ -53,12 +54,13 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
 
   private static final byte[] a = { 'a' };
   private static final byte[] DEFAULT_OBJECT_STORE_COLUMN = { 'c' };
-
+  private final ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                      getClass().getClassLoader());
   @Test
   public void testStringStore() throws Exception {
     create("strings", String.class);
 
-    MultiObjectStoreDataset<String> stringStore = getInstance("strings");
+    MultiObjectStoreDataset<String> stringStore = getInstance("strings", cl);
     String string = "this is a string";
     stringStore.write(a, string);
     String result = stringStore.read(a);
@@ -72,7 +74,7 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
     create("pairs", new TypeToken<ImmutablePair<Integer, String>>() {
     }.getType());
 
-    MultiObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = getInstance("pairs");
+    MultiObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = getInstance("pairs", cl);
     ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
     pairStore.write(a, pair);
     ImmutablePair<Integer, String> result = pairStore.read(a);
@@ -85,7 +87,7 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
   public void testMultiValueStore() throws Exception {
     create("multiString", String.class);
 
-    MultiObjectStoreDataset<String> multiStringStore = getInstance("multiString");
+    MultiObjectStoreDataset<String> multiStringStore = getInstance("multiString", cl);
     String string1 = "String1";
     String string2 = "String2";
     String string3 = "String3";
@@ -111,7 +113,7 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
   public void testCustomStore() throws Exception {
     create("customs", Custom.class);
 
-    MultiObjectStoreDataset<Custom> customStore = getInstance("customs");
+    MultiObjectStoreDataset<Custom> customStore = getInstance("customs", cl);
     Custom custom = new Custom(42, Lists.newArrayList("one", "two"));
     customStore.write(a, custom);
     Custom result = customStore.read(a);
@@ -129,7 +131,7 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
     create("inners", new TypeToken<CustomWithInner.Inner<Integer>>() {
     }.getType());
 
-    MultiObjectStoreDataset<CustomWithInner.Inner<Integer>> innerStore = getInstance("inners");
+    MultiObjectStoreDataset<CustomWithInner.Inner<Integer>> innerStore = getInstance("inners", cl);
     CustomWithInner.Inner<Integer> inner = new CustomWithInner.Inner<Integer>(42, new Integer(99));
     innerStore.write(a, inner);
     CustomWithInner.Inner<Integer> result = innerStore.read(a);
@@ -144,8 +146,8 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
     }.getType());
 
     // note: due to type erasure, this succeeds
-    final MultiObjectStoreDataset<Custom> store = getInstance("pairs");
-    final MultiObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = getInstance("pairs");
+    final MultiObjectStoreDataset<Custom> store = getInstance("pairs", cl);
+    final MultiObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = getInstance("pairs", cl);
 
     TransactionExecutor storeTxnl = newTransactionExecutor(store);
     TransactionExecutor pairStoreTxnl = newTransactionExecutor(pairStore);
@@ -202,7 +204,7 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
     // create an instance that uses the dummy class loader
     createInstance("table", "table", DatasetProperties.EMPTY);
 
-    Table table = getInstance("table");
+    Table table = getInstance("table", cl);
     Type type = Custom.class;
     TypeRepresentation typeRep = new TypeRepresentation(type);
     Schema schema = new ReflectionSchemaGenerator().generate(type);
@@ -220,7 +222,7 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
   public void testBatchReads() throws Exception {
     create("batch", String.class);
 
-    final MultiObjectStoreDataset<String> t = getInstance("batch");
+    final MultiObjectStoreDataset<String> t = getInstance("batch", cl);
     TransactionExecutor txnl = newTransactionExecutor(t);
     final SortedSet<Long> keysWritten = Sets.newTreeSet();
 
@@ -296,7 +298,7 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
   public void testBatchReadMultipleColumns() throws Exception {
     create("batchTestsMultiCol", String.class);
 
-    final MultiObjectStoreDataset<String> t = getInstance("batchTestsMultiCol");
+    final MultiObjectStoreDataset<String> t = getInstance("batchTestsMultiCol", cl);
     TransactionExecutor txnl = newTransactionExecutor(t);
     final byte [] col1 = Bytes.toBytes("c1");
     final byte [] col2 = Bytes.toBytes("c2");

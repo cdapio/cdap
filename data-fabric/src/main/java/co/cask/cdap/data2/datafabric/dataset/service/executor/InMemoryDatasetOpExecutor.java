@@ -19,25 +19,40 @@ package co.cask.cdap.data2.datafabric.dataset.service.executor;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.common.lang.ApiResourceListHolder;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * In-memory implementation of {@link DatasetOpExecutor}.
  */
 public class InMemoryDatasetOpExecutor extends AbstractIdleService implements DatasetOpExecutor {
 
+  private static final Logger LOG = LoggerFactory.getLogger(InMemoryDatasetOpExecutor.class);
+
   private final RemoteDatasetFramework client;
+  private final LocationFactory locationFactory;
 
   @Inject
-  public InMemoryDatasetOpExecutor(RemoteDatasetFramework client) {
+  public InMemoryDatasetOpExecutor(RemoteDatasetFramework client, LocationFactory locationFactory) {
     this.client = client;
+    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -49,7 +64,10 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
   public DatasetSpecification create(String instanceName, DatasetTypeMeta typeMeta, DatasetProperties props)
     throws Exception {
 
-    DatasetType type = client.getDatasetType(typeMeta, null);
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
+    createDatasetClassLoader(cl, typeMeta);
+    DatasetType type = client.getDatasetType(typeMeta, cl);
 
     if (type == null) {
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
@@ -64,7 +82,11 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
   @Override
   public void drop(DatasetSpecification spec, DatasetTypeMeta typeMeta) throws Exception {
-    DatasetType type = client.getDatasetType(typeMeta, null);
+
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
+    createDatasetClassLoader(cl, typeMeta);
+    DatasetType type = client.getDatasetType(typeMeta, cl);
 
     if (type == null) {
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
@@ -96,5 +118,25 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
   private DatasetAdmin getAdmin(String instanceName) throws IOException, DatasetManagementException {
     return client.getAdmin(instanceName, null);
+  }
+
+  private ClassLoader createDatasetClassLoader(ClassLoader cl, DatasetTypeMeta typeMeta) {
+    try {
+      List<DatasetModuleMeta> modulesToLoad = typeMeta.getModules();
+      List<Location> datasetJars = Lists.newArrayList();
+      for (DatasetModuleMeta module : modulesToLoad) {
+        if (module.getJarLocation() != null) {
+          datasetJars.add(locationFactory.create(module.getJarLocation()));
+        }
+      }
+      if (!datasetJars.isEmpty()) {
+        return ClassLoaders.newDatasetClassLoader(datasetJars, ApiResourceListHolder.getResourceList(), cl);
+      } else {
+        return cl;
+      }
+    } catch (IOException e) {
+      LOG.error("Exception while creating DatasetClassLoader");
+      throw Throwables.propagate(e);
+    }
   }
 }

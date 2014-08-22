@@ -33,6 +33,7 @@ import com.continuuity.tephra.DefaultTransactionExecutor;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -161,10 +162,11 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable1", "table", DatasetProperties.EMPTY));
     Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable2", "table", DatasetProperties.EMPTY));
     Assert.assertEquals(2, getInstances().getResponseObject().size());
-
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
     // we want to verify that data is also gone, so we write smth to tables first
-    final Table table1 = dsFramework.getDataset("myTable1", DatasetDefinition.NO_ARGUMENTS, null);
-    final Table table2 = dsFramework.getDataset("myTable2", DatasetDefinition.NO_ARGUMENTS, null);
+    final Table table1 = dsFramework.getDataset("myTable1", DatasetDefinition.NO_ARGUMENTS, cl);
+    final Table table2 = dsFramework.getDataset("myTable2", DatasetDefinition.NO_ARGUMENTS, cl);
     TransactionExecutor txExecutor =
       new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
                                      ImmutableList.of((TransactionAware) table1, (TransactionAware) table2));
