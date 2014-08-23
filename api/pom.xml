@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>api</artifactId>
-  <name>Cask Data Application Platform (CDAP)</name>
+  <name>Cask Data Application Platform (CDAP) API</name>
   <packaging>jar</packaging>
 
   <dependencies>

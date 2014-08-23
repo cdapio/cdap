@@ -1355,6 +1355,7 @@
                 <links>
                   <link>http://download.oracle.com/javase/6/docs/api/</link>
                 </links>
+                <doctitle>${project.name} ${project.version}</doctitle>
                 <bottom>
                   <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
                 </bottom>
@@ -1959,6 +1960,7 @@
           <links>
             <link>http://download.oracle.com/javase/6/docs/api/</link>
           </links>
+          <doctitle>${project.name} ${project.version}</doctitle>
           <bottom>
             <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
           </bottom>
