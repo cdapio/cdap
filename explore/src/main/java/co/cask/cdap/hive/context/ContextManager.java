@@ -48,6 +48,12 @@ public class ContextManager {
   }
 
   public static Context getContext(Configuration conf) throws IOException {
+    // When called by the initialize method in the serde, when writing to a dataset
+    // conf is null. The context should already have been saved before
+    if (conf == null) {
+      return savedContext;
+    }
+
     if (savedContext == null) {
       return createContext(conf);
     }
@@ -72,7 +78,7 @@ public class ContextManager {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);;
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
         }
       }
     );

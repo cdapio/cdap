@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
 import java.util.Properties;
 
@@ -43,9 +44,15 @@ public class DatasetSerDe implements SerDe {
   @Override
   public void initialize(Configuration entries, Properties properties) throws SerDeException {
     String datasetName = properties.getProperty(Constants.Explore.DATASET_NAME);
-    entries.set(Constants.Explore.DATASET_NAME, datasetName);
+
+    // When initialize is called to write to a table, entries is null
     try {
-      recordType = DatasetAccessor.getRecordScannableType(entries);
+      if (entries != null) {
+        entries.set(Constants.Explore.DATASET_NAME, datasetName);
+        recordType = DatasetAccessor.getRecordScannableType(entries);
+      } else {
+        recordType = DatasetAccessor.getRecordWritableType(null, datasetName);
+      }
     } catch (IOException e) {
       LOG.error("Got exception while trying to instantiate dataset {}", datasetName, e);
       throw new SerDeException(e);
@@ -54,13 +61,34 @@ public class DatasetSerDe implements SerDe {
 
   @Override
   public Class<? extends Writable> getSerializedClass() {
-    // Writing to Datasets not supported.
-    return Writable.class;
+    // TODO make sure of that
+    return ObjectWritable.class;
   }
 
   @Override
   public Writable serialize(Object o, ObjectInspector objectInspector) throws SerDeException {
-    throw new UnsupportedOperationException("Cannot write to Datasets yet");
+    // NOTE: the object inspector here is not one that we build. It's a default one that Hive built,
+    // that contains generic names for columns. The object is a list of objects, each element
+    // representing one attribute of the Record type.
+    // The object and the objectInspector represent one row of a query result to write into a dataset.
+    // Therefore, it is not guaranteed that the object exactly matches the schema of the dataset
+    // we want to write into.
+    // TODO make sure o is a list of objects, even when the output of the query only has one column
+    Object [] objects = (Object []) o;
+    Class<?> [] classes = new Class[objects.length];
+    for (int i = 0; i < objects.length; i++) {
+      classes[i] = objects[i].getClass();
+    }
+    if (!(recordType instanceof Class)) {
+      throw new RuntimeException(ObjectInspectorFactory.class.getName() + " internal error:" + recordType);
+    }
+    Class<?> recordClass = (Class<?>) recordType;
+    try {
+      Constructor<?> constructor = recordClass.getConstructor(classes);
+      return new ObjectWritable(constructor.newInstance(objects));
+    } catch (Throwable e) {
+      throw new SerDeException(e);
+    }
   }
 
   @Override

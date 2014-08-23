@@ -878,6 +878,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
       // Transaction doesn't involve any changes. We still commit it to take care of any side effect changes that
       // SplitReader may have.
+      // TODO get the list of changes made to the table(s) we wrote to
+      // Need to list all the tables involved in a query...
       if (!(txClient.canCommit(tx, ImmutableList.<byte[]>of()) && txClient.commit(tx))) {
         txClient.abort(tx);
         LOG.info("Aborting transaction: {}", tx);

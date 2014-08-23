@@ -17,6 +17,7 @@
 package co.cask.cdap.hive.datasets;
 
 import co.cask.cdap.api.data.batch.RecordScannable;
+import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
@@ -50,7 +51,7 @@ public class DatasetAccessor {
    * @throws IOException
    */
   public static RecordScannable getRecordScannable(Configuration conf) throws IOException {
-    RecordScannable recordScannable = instantiate(conf);
+    RecordScannable recordScannable = instantiateScannable(conf);
 
     if (recordScannable instanceof TransactionAware) {
       Transaction tx = ConfigurationUtil.get(conf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE);
@@ -58,6 +59,18 @@ public class DatasetAccessor {
     }
 
     return recordScannable;
+  }
+
+  public static RecordWritable getRecordWritable(Configuration conf) throws IOException {
+    // TODO make it consistent with getRecordScannable
+    RecordWritable recordWritable = instantiateWritable(conf, null);
+
+    // TODO do extra work on transactions
+    if (recordWritable instanceof TransactionAware) {
+      Transaction tx = ConfigurationUtil.get(conf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE);
+      ((TransactionAware) recordWritable).startTx(tx);
+    }
+    return recordWritable;
   }
 
   /**
@@ -68,7 +81,7 @@ public class DatasetAccessor {
    * @throws IOException
    */
   public static Type getRecordScannableType(Configuration conf) throws IOException {
-    RecordScannable<?> recordScannable = instantiate(conf);
+    RecordScannable<?> recordScannable = instantiateScannable(conf);
     try {
       return recordScannable.getRecordType();
     } finally {
@@ -76,10 +89,48 @@ public class DatasetAccessor {
     }
   }
 
-  private static RecordScannable instantiate(Configuration conf) throws IOException {
-    String datasetName = conf.get(Constants.Explore.DATASET_NAME);
+  public static Type getRecordWritableType(Configuration conf, String datasetName) throws IOException {
+    // conf can be null
+
+    RecordWritable<?> recordWritable = instantiateWritable(conf, datasetName);
+    try {
+      return recordWritable.getRecordType();
+    } finally {
+      recordWritable.close();
+    }
+  }
+
+  private static RecordWritable instantiateWritable(Configuration conf, String datasetName) throws IOException {
+    // conf can be null
+
+    Dataset dataset = instantiate(conf, datasetName);
+
+    if (!(dataset instanceof RecordWritable)) {
+      throw new IOException(
+        String.format("Dataset %s does not implement RecordWritable, and hence cannot be written to in Hive.",
+                      conf.get(Constants.Explore.DATASET_NAME)));
+    }
+    return (RecordWritable) dataset;
+  }
+
+  private static RecordScannable instantiateScannable(Configuration conf) throws IOException {
+    Dataset dataset = instantiate(conf, null);
+
+    if (!(dataset instanceof RecordScannable)) {
+      throw new IOException(
+        String.format("Dataset %s does not implement RecordScannable, and hence cannot be queried in Hive.",
+                      conf.get(Constants.Explore.DATASET_NAME)));
+    }
+    return (RecordScannable) dataset;
+  }
+
+  private static Dataset instantiate(Configuration conf, String dsName) throws IOException {
+    String datasetName = dsName;
     if (datasetName == null) {
-      throw new IOException(String.format("Dataset name property %s not defined.", Constants.Explore.DATASET_NAME));
+      datasetName = conf.get(Constants.Explore.DATASET_NAME);
+      if (datasetName == null) {
+        throw new IOException(String.format("Dataset name property %s not defined.", Constants.Explore.DATASET_NAME));
+      }
     }
 
     ContextManager.Context context = ContextManager.getContext(conf);
@@ -95,14 +146,7 @@ public class DatasetAccessor {
       } else {
         dataset = framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, classLoader);
       }
-
-      if (!(dataset instanceof RecordScannable)) {
-        throw new IOException(
-          String.format("Dataset %s does not implement RecordScannable, and hence cannot be queried in Hive.",
-                        datasetName));
-      }
-
-      return (RecordScannable) dataset;
+      return dataset;
     } catch (DatasetManagementException e) {
       throw new IOException(e);
     } finally {

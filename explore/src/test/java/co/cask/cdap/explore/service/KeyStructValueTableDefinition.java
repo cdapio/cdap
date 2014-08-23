@@ -18,6 +18,7 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordScanner;
+import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.data.batch.Scannables;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.DatasetAdmin;
@@ -76,7 +77,8 @@ public class KeyStructValueTableDefinition
   /**
    * KeyStructValueTable
    */
-  public static class KeyStructValueTable extends AbstractDataset implements RecordScannable<KeyValue> {
+  public static class KeyStructValueTable extends AbstractDataset
+    implements RecordScannable<KeyValue>, RecordWritable<KeyValue> {
     static final byte[] COL = new byte[] {'c', 'o', 'l', '1'};
 
     private final Table table;
@@ -107,6 +109,11 @@ public class KeyStructValueTableDefinition
     @Override
     public RecordScanner<KeyValue> createSplitRecordScanner(Split split) {
       return Scannables.splitRecordScanner(table.createSplitReader(split), KEY_VALUE_ROW_MAKER);
+    }
+
+    @Override
+    public void write(KeyValue keyValue) {
+      table.put(Bytes.toBytes(keyValue.getKey()), COL, Bytes.toBytes(GSON.toJson(keyValue.getValue())));
     }
   }
 
