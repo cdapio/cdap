@@ -153,9 +153,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.metricsCollectionService = metricsCollectionService;
     this.serviceDiscovery = serviceDiscovery;
     this.configuration = configuration;
-    this.dsFramework =
-      new NamespacedDatasetFramework(dsFramework,
-                                     new DefaultDatasetNamespace(configuration, Namespace.USER));
+    this.dsFramework = dsFramework;
   }
 
   @SuppressWarnings("unused")

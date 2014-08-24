@@ -92,34 +92,18 @@ public class DataSetInstantiator implements DataSetContext {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
     throws DataSetInstantiationException {
-    return (T) getDataSet(name, arguments, this.datasetFramework);
-  }
-
-  /**
-   *  The main value of this class: Creates a new instance of a data set, as
-   *  specified by the matching data set spec, and injects the data fabric
-   *  runtime into the new data set.
-   *  @param dataSetName the name of the data set to instantiate
-   *  @param arguments the arguments for this dataset instance
-   *  @throws co.cask.cdap.api.data.DataSetInstantiationException If failed to create the DataSet.
-   */
-  @SuppressWarnings("unchecked")
-  public <T extends Closeable> T getDataSet(String dataSetName, Map<String, String> arguments,
-                                            @Nullable DatasetFramework datasetFramework)
-    throws DataSetInstantiationException {
-
-    T dataSet = (T) getDataset(dataSetName, arguments, datasetFramework);
+    T dataSet = (T) getDataset(name, arguments);
     if (dataSet == null) {
-      throw logAndException(null, "No data set named %s can be instantiated.", dataSetName);
+      throw logAndException(null, "No data set named %s can be instantiated.", name);
     }
 
     return dataSet;
   }
 
-  private <T extends Dataset> T getDataset(String datasetName, Map<String, String> arguments,
-                                          DatasetFramework datasetFramework)
+  private <T extends Dataset> T getDataset(String datasetName, Map<String, String> arguments)
     throws DataSetInstantiationException {
 
     T dataset;
