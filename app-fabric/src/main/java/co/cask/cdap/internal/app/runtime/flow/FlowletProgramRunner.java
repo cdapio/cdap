@@ -22,7 +22,6 @@ import co.cask.cdap.api.annotation.HashPartition;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.RoundRobin;
 import co.cask.cdap.api.annotation.Tick;
-import co.cask.cdap.api.data.DataSetContext;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
@@ -44,6 +43,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.async.ExecutorUtils;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
@@ -51,9 +51,12 @@ import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.dataset.DataSetInstantiator;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamPropertyListener;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.queue.QueueClientFactory;
@@ -67,7 +70,6 @@ import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
-import co.cask.cdap.internal.app.runtime.DataSets;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
@@ -131,6 +133,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final QueueReaderFactory queueReaderFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final ProgramServiceDiscovery serviceDiscovery;
+  private final DatasetFramework dsFramework;
+  private final CConfiguration configuration;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator,
@@ -138,7 +142,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               DataFabricFacadeFactory dataFabricFacadeFactory, StreamCoordinator streamCoordinator,
                               QueueReaderFactory queueReaderFactory,
                               MetricsCollectionService metricsCollectionService,
-                              ProgramServiceDiscovery serviceDiscovery) {
+                              ProgramServiceDiscovery serviceDiscovery,
+                              DatasetFramework dsFramework,
+                              CConfiguration configuration) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
@@ -146,6 +152,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.queueReaderFactory = queueReaderFactory;
     this.metricsCollectionService = metricsCollectionService;
     this.serviceDiscovery = serviceDiscovery;
+    this.configuration = configuration;
+    this.dsFramework =
+      new NamespacedDatasetFramework(dsFramework,
+                                     new DefaultDatasetNamespace(configuration, Namespace.USER));
   }
 
   @SuppressWarnings("unused")
@@ -198,23 +208,18 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>) clz;
 
-      // Creates tx related objects
-      DataFabricFacade dataFabricFacade = disableTransaction ? dataFabricFacadeFactory.createNoTransaction(program)
-                                                             : dataFabricFacadeFactory.create(program);
-      DataSetContext dataSetContext = dataFabricFacade.getDataSetContext();
-
       // Creates flowlet context
       flowletContext = new BasicFlowletContext(program, flowletName, instanceId,
                                                runId, instanceCount,
-                                               DataSets.createDataSets(dataSetContext, flowletDef.getDatasets()),
+                                               flowletDef.getDatasets(),
                                                options.getUserArguments(), flowletDef.getFlowletSpec(),
-                                               metricsCollectionService, serviceDiscovery);
+                                               metricsCollectionService, serviceDiscovery,
+                                               dsFramework, configuration);
 
-      // hack for propagating metrics collector to datasets
-      if (dataSetContext instanceof DataSetInstantiator) {
-        ((DataSetInstantiator) dataSetContext).setMetricsCollector(flowletContext.getDatasetMetrics(),
-                                                                   flowletContext.getSystemMetrics());
-      }
+      // Creates tx related objects
+      DataFabricFacade dataFabricFacade = disableTransaction ?
+        dataFabricFacadeFactory.createNoTransaction(program, flowletContext.getDatasetInstantiator())
+        : dataFabricFacadeFactory.create(program, flowletContext.getDatasetInstantiator());
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =
@@ -461,7 +466,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
               QueueProducer producer = queueClientFactory.createProducer(queueSpec.getQueueName(), new QueueMetrics() {
                 @Override
                 public void emitEnqueue(int count) {
-                  flowletContext.getSystemMetrics().gauge(queueMetricsName, count, queueMetricsTag);
+                  flowletContext.getProgramMetrics().gauge(queueMetricsName, count, queueMetricsTag);
                 }
 
                 @Override
@@ -591,8 +596,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
     return new Function<S, T>() {
       @Override
       public T apply(S source) {
-        context.getSystemMetrics().gauge(eventsMetricsName, 1, eventsMetricsTag);
-        context.getSystemMetrics().gauge("process.tuples.read", 1, eventsMetricsTag);
+        context.getProgramMetrics().gauge(eventsMetricsName, 1, eventsMetricsTag);
+        context.getProgramMetrics().gauge("process.tuples.read", 1, eventsMetricsTag);
         return inputDecoder.apply(source);
       }
     };
