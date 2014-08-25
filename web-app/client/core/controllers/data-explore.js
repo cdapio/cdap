@@ -61,8 +61,8 @@ define([], function () {
               var result = _.pick(response, "table_name", "db_name", "owner", "creation_time", "from_dataset", "partitioned_keys", "schema"),
                   schema_array = [],
                   partition_array = [];
-              schema_array = self.extractColumns(result.schema);
-              partition_array = self.extractColumns(result.partitioned_keys);
+              schema_array = self.extractColumns(result.schema, true);
+              partition_array = self.extractColumns(result.partitioned_keys, false);
 
               datasets.pushObject(Ember.Object.create({
                 tablename: result.table_name,
@@ -84,11 +84,17 @@ define([], function () {
         });
     },
 
-    extractColumns: function (table) {
+    extractColumns: function (table, iscomments) {
       var columns_array = [];
       table.forEach(function(column) {
+        var columns = [];
+        if (iscomments) {
+          columns = [column.name, column.type, column.comment || ""];
+        } else {
+          columns = [column.name, column.type];
+        }
         columns_array.push({
-          columns: [column.name, column.type]
+          columns: columns
         });
       });
       return columns_array;
@@ -352,13 +358,13 @@ define([], function () {
     },
 
     showPartitionKeys: function () {
-      $("table.table.partition-table").toggleClass("hide");
+      $(".query-partition .table-view").toggleClass("hide");
       $(".query-partition .table-empty").toggleClass("hide");
     },
 
     showTableSchema: function () {
-      $("#schema-table").toggleClass("hide");
-      $("#schema-table .table-empty").toggleClass("hide");
+      $(".query-schema .table-view").toggleClass("hide");
+      $(".query-schema .table-empty").toggleClass("hide");
     },
 
     showTableProperties: function () {

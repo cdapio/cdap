@@ -3621,8 +3621,7 @@ div.tooltip-inner {
   height: 50vh;
 }
 
-#query-schema {
-	/*margin-left: 350px;*/
+.query-schema {
 	color: white;
 	overflow: auto;
 }
@@ -3641,7 +3640,7 @@ div.tooltip-inner {
 }
 
 .table-info .query-partition .table-title,
-.table-info #query-schema .table-title,
+.table-info .query-schema .table-title,
 .table-info .metadata-title.table-title{
   background: #EEE;
   color: #696E7E;
@@ -3651,17 +3650,58 @@ div.tooltip-inner {
 }
 
 .table-info .query-partition .table-title:hover,
-.table-info #query-schema .table-title:hover,
+.table-info .query-schema .table-title:hover,
 .table-info .metadata-title.table-title:hover {
   background: #1751A3;
 }
 
 .table-info .query-partition .table-empty,
-.table-info #query-schema .table-empty {
+.table-info .query-schema .table-empty {
   padding: 10px;
   color: white;
   background: transparent;
   text-align: center;
+}
+
+#query-display .table-info .table-view {
+  width: 100%;
+}
+
+#query-display .table-info .table-view .table-header {
+  width: 100%;
+  display: flex;
+}
+#query-display .table-info .table-view .table-header .table-column-title.three-column {
+  width: 33%;
+}
+
+#query-display .table-info .table-view .table-header .table-column-title {
+  background: #535353;
+  width: 50%;
+  display: inline-flex;
+  color: white;
+  padding: 10px;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+#query-display .table-info .table-view .table-header .table-column-title:last-child {
+  padding-left: 0;
+}
+
+#query-display .table-info .table-view .table-row {
+  width: 100%;
+  padding: 10px;
+  display: flex;
+  border-bottom: 1px solid #515151;
+}
+
+#query-display .table-info .table-view .table-row span {
+  width: 50%;
+  word-break: break-all;
+  display: inline-flex;
+  font-weight: 100;
+  color: white;
+  text-align: left;
 }
 
 .table-info .metadata-wrapper {
@@ -3701,36 +3741,6 @@ div.tooltip-inner {
 	max-width: 400px;
 	word-wrap: break-word;
 }
-
-
-#schema-table th {
-	background: #535353;
-	color: white;
-}
-
-
-#schema-table th, #schema-table td {
-	border-color: #515151;
-	max-width: 400px;
-	word-wrap: break-word;
-	color: white;
-}
-
-
-.schema-table {
-  width: 100%;
-}
-
-.schema-table tr {
-  border-bottom: 1px solid #515151;
-}
-.schema-table.table-meta-info th, .schema-table.table-meta-info td {
-  border: 0;
-	max-width: 400px;
-	word-wrap: break-word;
-	color: white;
-}
-
 
 .table-name:hover {
 	color: white;

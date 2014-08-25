@@ -454,72 +454,67 @@
           </table>
         </div><!-- This is needed as two elements placed side-by-side using display:inline-block technique will have whitespace between actual elements.
       --><div class="table-info">
-          <div id="query-schema">
+          <div class="query-schema">
             <div class="table-title" {{action 'showTableSchema' on="click"}}> Table Schema </div>
             {{#if selectedDataset.schema_table_empty }}
               <div class="table-empty"> No Schema (A Table with No Schema??) </div>
             {{ else }}
-            <table class="table" id="schema-table">
-              <thead>
-                  <th>Column Name</th>
-                  <th>Column Type</th>
-              </thead>
-              <tbody>
+            <div class="table-view">
+              <div class="table-header">
+                <span class="table-column-title three-column"> Column Name </span>
+                <span class="table-column-title three-column "> Column Type </span>
+                <span class="table-column-title three-column"> Comments </span>
+              </div>
               {{#each selectedDataset.schema}}
-                <tr>
+              <div class="table-row">
                 {{#each columns}}
-                  <td>{{this}}</td>
+                <span {{bindAttr value="this"}}> {{this}} </span>
                 {{/each}}
-                </tr>
+              </div>
               {{/each}}
-              </tbody>
-            </table>
+            </div>
             {{/if}}
           </div>
           <div class="query-partition">
             <div class="table-title" {{action 'showPartitionKeys' on="click"}}> Partition Keys </div>
             {{#if selectedDataset.partition_table_empty}}
-            <div class="table-empty hide"> No Partition Keys </div>
+              <div class="table-empty hide"> No Partition Keys </div>
             {{ else }}
-            <table class="table partition-table partition-keys-info hide">
-             <thead>
-                  <th>Column Name</th>
-                  <th>Column Type</th>
-              </thead>
-              <tbody>
+            <div class="table-view hide">
+              <div class="table-header">
+                <span class="table-column-title"> Column Name </span>
+                <span class="table-column-title"> Column Type </span>
+              </div>
               {{#each selectedDataset.partition}}
-                <tr>
+              <div class="table-row">
                 {{#each columns}}
-                  <td>{{this}}</td>
+                <span {{bindAttr value="this"}}> {{this}} </span>
                 {{/each}}
-                </tr>
+              </div>
               {{/each}}
-              </tbody>
-            </table>
+             </div>
             {{/if}}
           </div>
           <div class="metadata-title table-title" {{action 'showTableProperties' on="click"}}> Table Properties </div>
           <div class="metadata-wrapper hide">
-             <table class="schema-table table-meta-info">
-              <tbody>
-                <tr>
-                  <td>Table</td>
-                  <td> {{selectedDataset.tablename}} </td>
-                </tr>
-                <tr>
-                  <td>Database</td>
-                  <td> {{selectedDataset.dbname}} </td>
-                </tr>
-                <tr>
-                  <td>Owner</td>
-                  <td> {{selectedDataset.owner}} </td>
-                </tr>
-                <tr>
-                  <td>Creation Time</td>
-                  <td> {{selectedDataset.creationtime}} </td>
-                </tr>
-              </tbody>
-            </table>
+             <div class="table-view">
+              <div class="table-row">
+                <span> Table </span>
+                <span> {{selectedDataset.tablename}} </span>
+              </div>
+              <div class="table-row">
+                <span> Database </span>
+                <span> {{selectedDataset.dbname}} </span>
+              </div>
+              <div class="table-row">
+                <span> Owner </span>
+                <span> {{selectedDataset.owner}} </span>
+              </div>
+              <div class="table-row">
+                <span> Creation Time </span>
+                <span> {{selectedDataset.creationtime}} </span>
+              </div>
+             </div>
           </div>
         </div>
         <div style="clear:both"></div>
