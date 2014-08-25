@@ -25,6 +25,7 @@ import java.util.Map;
  * Extend this class to add workers to a custom Service.
  */
 public abstract class AbstractServiceWorker implements ServiceWorker {
+  private ServiceWorkerContext context;
 
   @Override
   public ServiceWorkerSpecification configure() {
@@ -57,6 +58,11 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
 
   @Override
   public void initialize(ServiceWorkerContext context) throws Exception {
+    this.context = context;
+  }
 
+  @Override
+  public ServiceWorkerContext getContext() {
+    return context;
   }
 }

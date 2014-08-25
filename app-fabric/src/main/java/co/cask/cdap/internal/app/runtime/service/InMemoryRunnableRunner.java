@@ -29,6 +29,7 @@ import co.cask.cdap.common.election.InMemoryElectionRegistry;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
@@ -37,6 +38,7 @@ import co.cask.cdap.internal.app.services.ServiceWorkerTwillRunnable;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.proto.ProgramType;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
@@ -69,16 +71,21 @@ public class InMemoryRunnableRunner implements ProgramRunner {
   private final DiscoveryService dsService;
   private final InMemoryElectionRegistry electionRegistry;
   private final ConcurrentLinkedQueue<Discoverable> discoverables;
+  private final TransactionSystemClient transactionSystemClient;
+  private final DatasetFramework datasetFramework;
 
   @Inject
   public InMemoryRunnableRunner(MetricsCollectionService metricsCollectionService,
                                 ProgramServiceDiscovery serviceDiscovery,
-                                DiscoveryService dsService, InMemoryElectionRegistry electionRegistry) {
+                                DiscoveryService dsService, InMemoryElectionRegistry electionRegistry,
+                                TransactionSystemClient transactionSystemClient, DatasetFramework datasetFramework) {
     this.metricsCollectionService = metricsCollectionService;
     this.serviceDiscovery = serviceDiscovery;
     this.dsService = dsService;
     this.electionRegistry = electionRegistry;
     this.discoverables = new ConcurrentLinkedQueue<Discoverable>();
+    this.transactionSystemClient = transactionSystemClient;
+    this.datasetFramework = datasetFramework;
   }
 
   @SuppressWarnings("unchecked")
@@ -174,7 +181,7 @@ public class InMemoryRunnableRunner implements ProgramRunner {
         // Special case for running HTTP services
         runnable = new HttpServiceTwillRunnable(program.getClassLoader());
       } else if (runnableClass.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
-        runnable = new ServiceWorkerTwillRunnable(program.getClassLoader());
+        runnable = new ServiceWorkerTwillRunnable(program.getClassLoader(), transactionSystemClient, datasetFramework);
       } else {
         runnable = new InstantiatorFactory(false).get(runnableType).create();
       }

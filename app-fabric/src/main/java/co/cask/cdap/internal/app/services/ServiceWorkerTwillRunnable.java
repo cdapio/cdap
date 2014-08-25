@@ -17,13 +17,15 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.service.DefaultServiceWorkerContext;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
+import co.cask.cdap.internal.app.runtime.service.DefaultServiceWorkerContext;
 import co.cask.cdap.internal.lang.Reflections;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -43,6 +45,8 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(ServiceWorkerTwillRunnable.class);
   private ServiceWorker worker;
   private ClassLoader programClassLoader;
+  private TransactionSystemClient transactionSystemClient;
+  private DatasetFramework datasetFramework;
   private Metrics metrics;
 
   /**
@@ -57,8 +61,11 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
    * Create a {@link TwillRunnable} for a {@link ServiceWorker} from a classloader.
    * @param classLoader to create runnable with.
    */
-  public ServiceWorkerTwillRunnable(ClassLoader classLoader) {
+  public ServiceWorkerTwillRunnable(ClassLoader classLoader, TransactionSystemClient transactionSystemClient,
+                                    DatasetFramework datasetFramework) {
     this.programClassLoader = classLoader;
+    this.transactionSystemClient = transactionSystemClient;
+    this.datasetFramework = datasetFramework;
   }
 
   @Override
@@ -82,7 +89,8 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
       worker = (ServiceWorker) factory.get(type).create();
       Reflections.visit(worker, type, new MetricsFieldSetter(metrics),
                                       new PropertyFieldSetter(runnableArgs));
-      worker.initialize(new DefaultServiceWorkerContext(context.getSpecification().getConfigs()));
+      worker.initialize(new DefaultServiceWorkerContext(context.getSpecification().getConfigs(),
+                                                        transactionSystemClient, datasetFramework));
     } catch (Exception e) {
       LOG.error("Could not instantiate service " + serviceClassName);
       Throwables.propagate(e);

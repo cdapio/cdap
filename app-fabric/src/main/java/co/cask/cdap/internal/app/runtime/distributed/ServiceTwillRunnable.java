@@ -200,7 +200,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
         // using the program classloader.
         delegate = new HttpServiceTwillRunnable(program.getClassLoader());
       } else if (clz.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
-        delegate = new ServiceWorkerTwillRunnable(program.getClassLoader());
+        delegate = new ServiceWorkerTwillRunnable(program.getClassLoader(), null, null);
       } else {
         delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
       }

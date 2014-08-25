@@ -16,24 +16,13 @@
 
 package co.cask.cdap.api.service;
 
-import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.data.DataSetContext;
 
 /**
- * Workers for user services must implement this interface.
+ *
  */
-public interface ServiceWorker extends Runnable, ProgramLifecycle<ServiceWorkerContext> {
+public interface TxRunnable {
 
-  /**
-   * Configure a ServiceWorker.
-   * @return a {@link ServiceWorkerSpecification}.
-   */
-  ServiceWorkerSpecification configure();
+  void run(DataSetContext context);
 
-  /**
-   * Request to stop the running worker.
-   * This method will be invoked from a different thread than the one calling the {@link #run()} ) method.
-   */
-  void stop();
-
-  ServiceWorkerContext getContext();
 }

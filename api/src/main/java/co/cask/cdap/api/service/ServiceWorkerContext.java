@@ -23,4 +23,6 @@ import co.cask.cdap.api.RuntimeContext;
  */
 public interface ServiceWorkerContext extends RuntimeContext {
 
+
+  void execute(TxRunnable runnable);
 }
