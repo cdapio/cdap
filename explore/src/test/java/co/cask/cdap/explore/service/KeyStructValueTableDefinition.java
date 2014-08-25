@@ -113,7 +113,7 @@ public class KeyStructValueTableDefinition
 
     @Override
     public void write(KeyValue keyValue) {
-      table.put(Bytes.toBytes(keyValue.getKey()), COL, Bytes.toBytes(GSON.toJson(keyValue.getValue())));
+      table.put(Bytes.toBytes(keyValue.getKey() + "_2"), COL, Bytes.toBytes(GSON.toJson(keyValue.getValue())));
     }
   }
 

@@ -80,13 +80,14 @@ public class DatasetSerDe implements SerDe {
       classes[i] = objects[i].getClass();
     }
     if (!(recordType instanceof Class)) {
-      throw new RuntimeException(ObjectInspectorFactory.class.getName() + " internal error:" + recordType);
+      throw new RuntimeException(recordType + " should be a class");
     }
     Class<?> recordClass = (Class<?>) recordType;
     try {
       Constructor<?> constructor = recordClass.getConstructor(classes);
       return new ObjectWritable(constructor.newInstance(objects));
     } catch (Throwable e) {
+      // TODO log the right exception message, saying the constructor should exist
       throw new SerDeException(e);
     }
   }

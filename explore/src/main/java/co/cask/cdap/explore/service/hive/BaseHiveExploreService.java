@@ -30,6 +30,7 @@ import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
+import co.cask.cdap.hive.datasets.DatasetOutputFormat;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
@@ -79,6 +80,7 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -93,6 +95,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private static final Gson GSON = new Gson();
   private static final int PREVIEW_COUNT = 5;
 
+  private final DatasetFramework datasetFramework;
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final HiveConf hiveConf;
@@ -115,6 +118,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf, File previewsDir) {
+    this.datasetFramework = datasetFramework;
     this.cConf = cConf;
     this.hConf = hConf;
     this.hiveConf = hiveConf;
@@ -792,6 +796,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
     ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
     ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE, hConf);
+
+    // To associate with the datasetes involved in a query
+    sessionConf.put(Constants.Explore.QUERY_ID, UUID.randomUUID().toString());
+
     return sessionConf;
   }
 
@@ -880,7 +888,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // SplitReader may have.
       // TODO get the list of changes made to the table(s) we wrote to
       // Need to list all the tables involved in a query...
-      if (!(txClient.canCommit(tx, ImmutableList.<byte[]>of()) && txClient.commit(tx))) {
+      String queryId = opInfo.getSessionConf().get(Constants.Explore.QUERY_ID);
+      List<byte[]> changes = DatasetOutputFormat.QUERY_TO_CHANGES.get(queryId);
+      if (!(txClient.canCommit(tx, changes) || !txClient.commit(tx))) {
         txClient.abort(tx);
         LOG.info("Aborting transaction: {}", tx);
       }

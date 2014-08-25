@@ -75,7 +75,16 @@ public class WritableDatasetTest extends BaseHiveExploreServiceTest {
   public void writeTest() throws Exception {
     ListenableFuture<ExploreExecutionResult> future =
       exploreClient.submit("insert into table my_table select * from my_table");
-    future.get();
-    ExploreExecutionResult result = exploreClient.submit("select * from my_table").get();
+    ExploreExecutionResult result = future.get();
+    result.close();
+
+    KeyStructValueTableDefinition.KeyStructValueTable table =
+      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+    Assert.assertNotNull(table);
+
+    // TODO why doesn't work???
+//    Assert.assertNotNull(table.get("1"));
+
+    result = exploreClient.submit("select * from my_table").get();
   }
 }

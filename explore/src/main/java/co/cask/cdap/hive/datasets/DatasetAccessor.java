@@ -55,7 +55,7 @@ public class DatasetAccessor {
 
     if (recordScannable instanceof TransactionAware) {
       Transaction tx = ConfigurationUtil.get(conf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE);
-        ((TransactionAware) recordScannable).startTx(tx);
+      ((TransactionAware) recordScannable).startTx(tx);
     }
 
     return recordScannable;
