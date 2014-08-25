@@ -35,16 +35,6 @@ import java.util.Locale;
  */
 public final class Programs {
 
-  public static Program createWithUnpack(Location location, File destinationUnpackedJarDir,
-                                         ClassLoader parentClassLoader) throws IOException {
-    List<Location> emptyDatasetJarsList = Lists.newArrayList();
-    return new DefaultProgram(location, emptyDatasetJarsList, destinationUnpackedJarDir, parentClassLoader);
-  }
-
-  public static Program createWithUnpack(Location location, File destinationUnpackedJarDir) throws IOException {
-    return Programs.createWithUnpack(location, destinationUnpackedJarDir, getClassLoader());
-  }
-
   /**
    * Creates a {@link co.cask.cdap.app.program.Program} with the supplied list of dataset jar files and
    * program jar file.
@@ -52,16 +42,6 @@ public final class Programs {
   public static Program createWithUnpack(Location location, List<Location> datasetTypeJars,
                                          File destinationUnpackedJarDir) throws IOException {
     return new DefaultProgram(location, datasetTypeJars, destinationUnpackedJarDir, getClassLoader());
-  }
-
-  /**
-   * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
-   * would not function from the program this method returns.
-   */
-  //todo : only used by Abstractmapreducecontextbuilder can be removed, once we pass the datasetTypeJars from
-  //todo : mapreduce program runner to mapreducecontextconfig etc
-  public static Program create(Location location, ClassLoader classLoader) throws IOException {
-    return new DefaultProgram(location, null, classLoader);
   }
 
   /**

@@ -195,7 +195,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       controller = new MapReduceProgramController(context);
 
       LOG.info("Starting MapReduce Job: {}", context.toString());
-      submit(job, spec, program.getJarLocation(), context, dataSetInstantiator);
+      submit(job, spec, program.getJarLocation(), context, dataSetInstantiator, program.getDatasetJarLocation());
 
     } catch (Throwable e) {
       // failed before job even started - release all resources of the context
@@ -224,7 +224,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   private void submit(final MapReduce job, MapReduceSpecification mapredSpec, Location jobJarLocation,
                       final BasicMapReduceContext context,
-                      final DataSetInstantiator dataSetInstantiator) throws Exception {
+                      final DataSetInstantiator dataSetInstantiator,
+                      final List<Location> datasetsJarLocation) throws Exception {
     jobConf = Job.getInstance(new Configuration(hConf));
     Configuration mapredConf = jobConf.getConfiguration();
 
@@ -294,11 +295,17 @@ public class MapReduceProgramRunner implements ProgramRunner {
     jobConf.setJar(jobJar.toURI().toString());
     jobConf.addFileToClassPath(new Path(programJarCopy.toURI()));
 
+    List<String> datasetsJarPath = Lists.newArrayList();
+    for (Location datasetJarLocation : datasetsJarLocation) {
+      //todo verify if its getName or toURI
+      datasetsJarPath.add(datasetJarLocation.getName());
+    }
+
     MapReduceContextConfig contextConfig = new MapReduceContextConfig(jobConf);
     // We start long-running tx to be used by mapreduce job tasks.
     final Transaction tx = txSystemClient.startLong();
     // We remember tx, so that we can re-use it in mapreduce tasks
-    contextConfig.set(context, cConf, tx, programJarCopy.getName());
+    contextConfig.set(context, cConf, tx, programJarCopy.getName(), datasetsJarPath);
 
     new Thread() {
       @Override

@@ -27,8 +27,10 @@ import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import org.apache.commons.io.FileUtils;
@@ -53,6 +55,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -61,6 +65,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class AbstractDistributedProgramRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDistributedProgramRunner.class);
+  private static final Gson GSON = new Gson();
 
   private final TwillRunner twillRunner;
   private final Configuration hConf;
@@ -104,7 +109,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       throw Throwables.propagate(e);
     }
 
-    final String runtimeArgs = new Gson().toJson(options.getUserArguments());
+    final String runtimeArgs = GSON.toJson(options.getUserArguments());
 
     // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
     // Twill would also ignore it if it is not running in secure mode.
@@ -118,13 +123,21 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           LOG.info("Starting {} with debugging enabled.", program.getId());
           twillPreparer.enableDebugging();
         }
+        LOG.info("Setting DatasetJars in TwillContext at AbstractDistributedProgramRunner");
+        List<String> datasetJars = Lists.newArrayList();
+        for (Location dsJar : copiedProgram.getDatasetJarLocation()) {
+          LOG.info("Dataset Jar Path is  : ", dsJar.getName());
+          datasetJars.add(dsJar.getName());
+        }
         TwillController twillController = twillPreparer
           .withDependencies(new HBaseTableUtilFactory().get().getClass())
           .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
           .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
           .withApplicationArguments(
             String.format("--%s", RunnableOptions.JAR), copiedProgram.getJarLocation().getName(),
-            String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs
+            String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs,
+            String.format("--%s", RunnableOptions.DATASET_JARS),
+            GSON.toJson(datasetJars, new TypeToken<List<String>>() { }.getType())
           ).start();
         return addCleanupListener(twillController, hConfFile, cConfFile, copiedProgram, programDir);
       }
@@ -171,9 +184,22 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       }
     }, tempJar);
 
+    List<Location> datasetJars = program.getDatasetJarLocation();
+    List<Location> datasetTempJars = Lists.newArrayList();
+    for (final Location datasetJar : datasetJars) {
+      File tempDsJar = File.createTempFile(datasetJar.getName(), ".jar");
+      Files.copy(new InputSupplier<InputStream>() {
+        @Override
+        public InputStream getInput() throws IOException {
+          return datasetJar.getInputStream();
+        }
+      }, tempDsJar);
+      datasetTempJars.add(new LocalLocationFactory().create(tempDsJar.toURI()));
+    }
+
     final Location jarLocation = new LocalLocationFactory().create(tempJar.toURI());
 
-    return Programs.createWithUnpack(jarLocation, program.getDatasetJarLocation(), programDir);
+    return Programs.createWithUnpack(jarLocation, datasetTempJars, programDir);
   }
 
   /**
@@ -211,6 +237,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           cConfFile.delete();
           try {
             program.getJarLocation().delete();
+            //todo : delete dataset jars that were copied to temp location
           } catch (IOException e) {
             LOG.warn("Failed to delete program jar {}", program.getJarLocation().toURI(), e);
           }

@@ -17,51 +17,31 @@
 package co.cask.cdap.common.lang.jar;
 
 import co.cask.cdap.api.annotation.ExposeDataset;
-import co.cask.cdap.common.utils.DirUtils;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
-import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Classloader that loads the given class, checks if it has {@link co.cask.cdap.api.annotation.ExposeDataset} annotation
- * if it does not have the annotation , it throws {@link java.lang.ClassNotFoundException}
+ * if it does not have the annotation , it throws {@link ClassNotFoundException}
  */
-public class DatasetFilterClassLoader extends ClassLoader {
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetFilterClassLoader.class);
+public class DatasetFilterClassLoaderWithFile extends ClassLoader {
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetFilterClassLoaderWithFile.class);
   private final URL[] datasetUrls;
   private URLClassLoader datasetClassLoader;
 
 
-  public DatasetFilterClassLoader(Location datasetTypeJars, ClassLoader parentClassLoader) {
+  public DatasetFilterClassLoaderWithFile(File datasetTypeJars, ClassLoader parentClassLoader) {
     super(parentClassLoader);
     this.datasetUrls = getDatasetTypeUrls(datasetTypeJars);
     this.datasetClassLoader = new URLClassLoader(datasetUrls, parentClassLoader);
   }
 
-  private URL[] getDatasetTypeUrls(Location datasetTypeJar) {
-    File unpackedLocation = Files.createTempDir();
-    try {
-      BundleJarUtil.unpackProgramJar(datasetTypeJar, unpackedLocation);
-      return ProgramClassLoader.getClassPathUrls(unpackedLocation);
-    } catch (IOException e) {
-      LOG.warn("Exception while unpacking dataset jar");
-      try {
-        DirUtils.deleteDirectoryContents(unpackedLocation);
-      } catch (IOException e1) {
-        throw Throwables.propagate(e1);
-      }
-      throw  Throwables.propagate(e);
-    }
+  private URL[] getDatasetTypeUrls(File datasetTypeJar) {
+    return ProgramClassLoader.getClassPathUrls(datasetTypeJar);
   }
 
   @Override

@@ -22,12 +22,16 @@ import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Table;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Counts the number of unique entries seen given any number of entries.
  */
 @ExposeDataset
 public class UniqueCountTable extends AbstractDataset {
+
+  private static final Logger LOG = LoggerFactory.getLogger(UniqueCountTable.class);
 
   /**
    * Row and column names used for storing the unique count.
@@ -70,6 +74,7 @@ public class UniqueCountTable extends AbstractDataset {
    * @param entry entry to add
    */
   public void updateUniqueCount(String entry) {
+    LOG.info("Update Unique Count : APP JAR");
     long newCount = this.entryCountTable.increment(Bytes.toBytes(entry), ENTRY_COUNT, 1L);
     if (newCount == 1L) {
       this.uniqueCountTable.increment(UNIQUE_COUNT, UNIQUE_COUNT, 1L);

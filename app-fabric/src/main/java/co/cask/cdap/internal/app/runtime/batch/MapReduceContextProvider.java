@@ -67,6 +67,7 @@ public final class MapReduceContextProvider {
                contextConfig.getTx(),
                taskContext.getConfiguration().getClassLoader(),
                contextConfig.getProgramLocation(),
+               contextConfig.getDatasetsJarPath(),
                contextConfig.getInputDataSet(),
                contextConfig.getInputSelection(),
                contextConfig.getOutputDataSet());

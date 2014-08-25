@@ -17,20 +17,25 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * {@link TwillApplication} to run {@link MapReduceTwillRunnable}
  */
 public final class MapReduceTwillApplication implements TwillApplication {
 
+  private static final Logger LOG = LoggerFactory.getLogger(MapReduceTwillApplication.class);
   private final MapReduceSpecification spec;
   private final Program program;
   private final File hConfig;
@@ -58,8 +63,9 @@ public final class MapReduceTwillApplication implements TwillApplication {
       .build();
 
     Location programLocation = program.getJarLocation();
+    List<Location> datasetJars = program.getDatasetJarLocation();
 
-    return TwillSpecification.Builder.with()
+    TwillSpecification.Builder.MoreFile moreFile = TwillSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",
                              ProgramType.MAPREDUCE.name().toLowerCase(),
                              program.getAccountId(), program.getApplicationId(), spec.getName()))
@@ -70,7 +76,12 @@ public final class MapReduceTwillApplication implements TwillApplication {
         .withLocalFiles()
           .add(programLocation.getName(), programLocation.toURI())
           .add("hConf.xml", hConfig.toURI())
-          .add("cConf.xml", cConfig.toURI()).apply()
+          .add("cConf.xml", cConfig.toURI());
+    LOG.info("Mapreduce Twill Application , Dataset jars are {}", datasetJars);
+    for (Location datasetJar : datasetJars) {
+      moreFile.add(datasetJar.getName(), datasetJar.toURI());
+    }
+    return moreFile.apply()
       .anyOrder().withEventHandler(eventHandler).build();
   }
 }

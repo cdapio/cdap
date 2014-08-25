@@ -15,12 +15,15 @@
  */
 package co.cask.cdap.examples.purchase;
 
+import co.cask.cdap.api.annotation.ExposeDataset;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * This class represents the purchase history for one customer.
  */
+@ExposeDataset
 public class PurchaseHistory {
 
   private final String customer;

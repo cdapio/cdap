@@ -34,7 +34,9 @@ import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.inject.Injector;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
@@ -79,6 +81,7 @@ public abstract class AbstractMapReduceContextBuilder {
                                      Transaction tx,
                                      ClassLoader classLoader,
                                      URI programLocation,
+                                     List<String> datasetsJarPath,
                                      @Nullable String inputDataSetName,
                                      @Nullable List<Split> inputSplits,
                                      @Nullable String outputDataSetName) {
@@ -87,8 +90,12 @@ public abstract class AbstractMapReduceContextBuilder {
     // Initializing Program
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Program program;
+    List<Location> datasetsJarLocation = Lists.newArrayList();
+    for (String datasetJarPath : datasetsJarPath) {
+      datasetsJarLocation.add(locationFactory.create(datasetJarPath));
+    }
     try {
-      program = Programs.create(locationFactory.create(programLocation), classLoader);
+      program = Programs.create(locationFactory.create(programLocation), datasetsJarLocation, classLoader);
       // See if it is launched from Workflow, if it is, change the Program.
       if (workflowBatch != null) {
         MapReduceSpecification mapReduceSpec = program.getSpecification().getMapReduce().get(workflowBatch);

@@ -21,6 +21,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 final class RunnableOptions {
   static final String JAR = "jar";
   static final String RUNTIME_ARGS = "rargs";
+  static final String DATASET_JARS = "dsjar";
 
   private RunnableOptions() {
   }

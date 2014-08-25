@@ -19,6 +19,7 @@ package co.cask.cdap.common.lang;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.common.internal.guava.ClassPath;
 import co.cask.cdap.common.lang.jar.DatasetFilterClassLoader;
+import co.cask.cdap.common.lang.jar.DatasetFilterClassLoaderWithFile;
 import co.cask.cdap.common.lang.jar.ProgramClassLoader;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
@@ -27,6 +28,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
@@ -73,15 +75,39 @@ public final class ClassLoaders {
                                                                          ImmutableList.of(parentClassLoader)));
   }
 
-  public static DatasetFilterClassLoader newDatasetClassLoader(List<Location> datasetJars,
+  public static CombineClassLoader newDatasetClassLoader(List<Location> datasetJars,
                                                                Iterable<String> apiResourceList,
                                                                ClassLoader parentClassLoader) throws IOException {
     Predicate<String> predicate = Predicates.in(Sets.newHashSet(apiResourceList));
     ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                     ClassLoaders.class.getClassLoader());
-    return new DatasetFilterClassLoader(datasetJars,
-                                        new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
-                                                                         ImmutableList.of(parentClassLoader)));
+
+    List<ClassLoader> datasetClassLoaders = Lists.newArrayList();
+    for (Location datasetJar : datasetJars) {
+      datasetClassLoaders.add(new DatasetFilterClassLoader(datasetJar,
+                               new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
+                                                      ImmutableList.of(parentClassLoader))));
+    }
+    return new CombineClassLoader(new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
+                                                         ImmutableList.of(parentClassLoader)), datasetClassLoaders);
+  }
+
+
+  public static CombineClassLoader newDatasetClassLoaderWithPath(List<File> datasetJars,
+                                                         Iterable<String> apiResourceList,
+                                                         ClassLoader parentClassLoader) throws IOException {
+    Predicate<String> predicate = Predicates.in(Sets.newHashSet(apiResourceList));
+    ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                    ClassLoaders.class.getClassLoader());
+
+    List<ClassLoader> datasetClassLoaders = Lists.newArrayList();
+    for (File datasetJar : datasetJars) {
+      datasetClassLoaders.add(new DatasetFilterClassLoaderWithFile(datasetJar,
+                                    new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
+                                                                                 ImmutableList.of(parentClassLoader))));
+    }
+    return new CombineClassLoader(new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
+                                                         ImmutableList.of(parentClassLoader)), datasetClassLoaders);
   }
 
   public static Iterable<String> getAPIResources(ClassLoader classLoader) throws IOException {

@@ -20,13 +20,9 @@ import co.cask.cdap.api.annotation.ExposeDataset;
 import co.cask.cdap.common.lang.jar.DatasetFilterClassLoader;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
 import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Test;
-
-import java.util.List;
 
 /**
  *
@@ -38,20 +34,16 @@ public class DatasetFilterClassLoaderTest {
     String jarPath = JarFinder.getJar(ExposedDataset.class);
     ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                     ClassLoaders.class.getClassLoader());
-    List<Location> datasetJars = Lists.newArrayList();
     LocationFactory lf = new LocalLocationFactory();
-    datasetJars.add(lf.create(jarPath));
-    ClassLoader dsClassLoader = new DatasetFilterClassLoader(datasetJars, filterParent);
+    ClassLoader dsClassLoader = new DatasetFilterClassLoader(lf.create(jarPath), filterParent);
     dsClassLoader.loadClass(ExposedDataset.class.getName());
   }
 
   @Test(expected = ClassNotFoundException.class)
   public void testUnExposedDataset() throws ClassNotFoundException {
     String jarPath = JarFinder.getJar(UnExposedDataset.class);
-    List<Location> datasetJars = Lists.newArrayList();
     LocationFactory lf = new LocalLocationFactory();
-    datasetJars.add(lf.create(jarPath));
-    ClassLoader dsClassLoader = new DatasetFilterClassLoader(datasetJars, null);
+    ClassLoader dsClassLoader = new DatasetFilterClassLoader(lf.create(jarPath), null);
     dsClassLoader.loadClass(UnExposedDataset.class.getName());
   }
 
