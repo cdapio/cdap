@@ -17,6 +17,7 @@
 package co.cask.cdap.api.data.batch;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.lang.reflect.Type;
 
 /**
@@ -25,7 +26,7 @@ import java.lang.reflect.Type;
  */
 // TODO should it be closeable?
 public interface RecordWritable<RECORD> extends Closeable {
-  public void write(RECORD record);
+  public void write(RECORD record) throws IOException;
 
   Type getRecordType();
 }

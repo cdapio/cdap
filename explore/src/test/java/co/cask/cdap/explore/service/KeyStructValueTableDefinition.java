@@ -112,8 +112,12 @@ public class KeyStructValueTableDefinition
     }
 
     @Override
-    public void write(KeyValue keyValue) {
-      table.put(Bytes.toBytes(keyValue.getKey() + "_2"), COL, Bytes.toBytes(GSON.toJson(keyValue.getValue())));
+    public void write(KeyValue keyValue) throws IOException {
+      try {
+        put(keyValue.getKey() + "_2", keyValue.getValue());
+      } catch (Exception e) {
+        throw new IOException(e);
+      }
     }
   }
 

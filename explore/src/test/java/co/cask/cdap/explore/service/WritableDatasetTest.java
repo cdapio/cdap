@@ -40,10 +40,10 @@ public class WritableDatasetTest extends BaseHiveExploreServiceTest {
 
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
-
+    ClassLoader cl  = Thread.currentThread().getContextClassLoader();
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, cl);
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);
@@ -78,13 +78,12 @@ public class WritableDatasetTest extends BaseHiveExploreServiceTest {
     ExploreExecutionResult result = future.get();
     result.close();
 
-    KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
-    Assert.assertNotNull(table);
-
-    // TODO why doesn't work???
-//    Assert.assertNotNull(table.get("1"));
-
     result = exploreClient.submit("select * from my_table").get();
+    Assert.assertEquals("1", result.next().getColumns().get(0).toString());
+    Assert.assertEquals("1_2", result.next().getColumns().get(0).toString());
+    Assert.assertEquals("2", result.next().getColumns().get(0).toString());
+    Assert.assertEquals("2_2", result.next().getColumns().get(0).toString());
+    Assert.assertFalse(result.hasNext());
+    result.close();
   }
 }

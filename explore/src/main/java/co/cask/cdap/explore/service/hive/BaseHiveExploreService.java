@@ -30,7 +30,6 @@ import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
-import co.cask.cdap.hive.datasets.DatasetOutputFormat;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
@@ -877,6 +876,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     return tx;
   }
 
+  // TODO this close transaction logic should not be in the Close() method of a query,
+  // but in a afterQuery method, that should be called once getStatus turns to isDone,
+  // or fetchNext is called. Store the state of "isDone" somewhere
   private void closeTransaction(QueryHandle handle, OperationInfo opInfo) {
     try {
       Transaction tx = ConfigurationUtil.get(opInfo.getSessionConf(),
@@ -884,13 +886,18 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                                              TxnCodec.INSTANCE);
       LOG.trace("Closing transaction {} for handle {}", tx, handle);
 
-      // Transaction doesn't involve any changes. We still commit it to take care of any side effect changes that
-      // SplitReader may have.
       // TODO get the list of changes made to the table(s) we wrote to
       // Need to list all the tables involved in a query...
-      String queryId = opInfo.getSessionConf().get(Constants.Explore.QUERY_ID);
-      List<byte[]> changes = DatasetOutputFormat.QUERY_TO_CHANGES.get(queryId);
-      if (!(txClient.canCommit(tx, changes) || !txClient.commit(tx))) {
+//      String queryId = opInfo.getSessionConf().get(Constants.Explore.QUERY_ID);
+//      List<byte[]> changes = Objects.firstNonNull(DatasetOutputFormat.QUERY_TO_CHANGES.get(queryId),
+//        ImmutableList.<byte[]>of());
+
+      // TODO find a way to do table.postCommit for all tables involved in the tx.
+      // Is it even possible here, with the dataset being a different instance?
+
+      // In case changes are empty, we still commit the tx to take care of any side effect changes that
+      // SplitReader may have.
+      if (!(/*txClient.canCommit(tx, changes) && */txClient.commit(tx))) {
         txClient.abort(tx);
         LOG.info("Aborting transaction: {}", tx);
       }

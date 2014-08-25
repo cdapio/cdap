@@ -65,7 +65,6 @@ public class DatasetAccessor {
     // TODO make it consistent with getRecordScannable
     RecordWritable recordWritable = instantiateWritable(conf, null);
 
-    // TODO do extra work on transactions
     if (recordWritable instanceof TransactionAware) {
       Transaction tx = ConfigurationUtil.get(conf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE);
       ((TransactionAware) recordWritable).startTx(tx);
@@ -108,7 +107,7 @@ public class DatasetAccessor {
     if (!(dataset instanceof RecordWritable)) {
       throw new IOException(
         String.format("Dataset %s does not implement RecordWritable, and hence cannot be written to in Hive.",
-                      conf.get(Constants.Explore.DATASET_NAME)));
+                      datasetName != null ? datasetName : conf.get(Constants.Explore.DATASET_NAME)));
     }
     return (RecordWritable) dataset;
   }
