@@ -126,7 +126,10 @@ public class TestFrameworkTest extends TestBase {
     Assert.assertNotNull(scheduleId);
     Assert.assertFalse(scheduleId.isEmpty());
 
-    TimeUnit.SECONDS.sleep(5);
+    String notExpected = "RUNNING";
+
+    workFlowStatusCheckExpected(notExpected, 10, wfmanager, scheduleId);
+    workFlowStatusCheck(notExpected, 5, wfmanager, scheduleId);
 
     List<RunRecord> history = wfmanager.getHistory();
     int workflowRuns = history.size();
@@ -149,6 +152,10 @@ public class TestFrameworkTest extends TestBase {
 
     wfmanager.getSchedule(scheduleId).resume();
     TimeUnit.SECONDS.sleep(3);
+
+    notExpected = "SUSPENDED";
+    workFlowStatusCheck(notExpected, 5, wfmanager, scheduleId);
+
     int workflowRunsAfterResume = wfmanager.getHistory().size();
 
     //Verify there is atleast one run after the pause
@@ -167,6 +174,34 @@ public class TestFrameworkTest extends TestBase {
     TimeUnit.SECONDS.sleep(2);
     applicationManager.stopAll();
 
+  }
+
+  private void workFlowStatusCheck(String notExpected, int timeOut, WorkflowManager wfManager,
+                                   String scheduleId) throws InterruptedException {
+    String wfStatus = null;
+    int trial = 0;
+    while (trial++ < timeOut) {
+      wfStatus = wfManager.getSchedule(scheduleId).status();
+      if (notExpected != wfStatus) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertNotEquals(notExpected, wfStatus);
+  }
+
+  private void workFlowStatusCheckExpected(String expected, int timeOut, WorkflowManager wfManager,
+                                   String scheduleId) throws InterruptedException {
+    String wfStatus = null;
+    int trial = 0;
+    while (trial++ < timeOut) {
+      wfStatus = wfManager.getSchedule(scheduleId).status();
+      if (expected == wfStatus) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertEquals(expected, wfStatus);
   }
 
   @Category(XSlowTests.class)
