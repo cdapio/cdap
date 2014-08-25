@@ -24,25 +24,25 @@ import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.explore.service.TableNotFoundException;
-import co.cask.cdap.explore.service.UnexpectedQueryStatusException;
 import co.cask.cdap.hive.context.CConfCodec;
 import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
+import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
+import co.cask.cdap.proto.TableNameInfo;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
@@ -51,6 +51,10 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.IMetaStoreClient;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
 import org.apache.hive.service.cli.FetchOrientation;
@@ -63,6 +67,7 @@ import org.apache.hive.service.cli.TableSchema;
 import org.apache.hive.service.cli.thrift.TColumnValue;
 import org.apache.hive.service.cli.thrift.TRow;
 import org.apache.hive.service.cli.thrift.TRowSet;
+import org.apache.thrift.TException;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +78,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
@@ -108,6 +114,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final long cleanupJobSchedule;
   private final File previewsDir;
 
+  private IMetaStoreClient metastoreClient;
+
   protected abstract QueryStatus fetchStatus(OperationHandle handle) throws HiveSQLException, ExploreException,
     HandleNotFoundException;
   protected abstract OperationHandle doExecute(SessionHandle sessionHandle, String statement)
@@ -119,6 +127,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.hConf = hConf;
     this.hiveConf = hiveConf;
     this.previewsDir = previewsDir;
+    this.metastoreClient = null;
 
     this.scheduledExecutorService =
       Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("explore-handle-timeout"));
@@ -160,6 +169,18 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     LOG.info("Starting {}...", BaseHiveExploreService.class.getSimpleName());
     cliService.init(getHiveConf());
     cliService.start();
+
+    Field[] fields = CLIService.class.getDeclaredFields();
+    for (Field field : fields) {
+      if (field.getGenericType().equals(IMetaStoreClient.class)) {
+        field.setAccessible(true);
+        metastoreClient = (IMetaStoreClient) field.get(cliService);
+        break;
+      }
+    }
+    if (metastoreClient == null) {
+      throw new ExploreException("Could not find MetastoreClient field in Hive CLI Service");
+    }
 
     // Schedule the cache cleanup
     scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
@@ -343,123 +364,64 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public List<TableInfo> getTables(@Nullable final String database) throws ExploreException {
-    // TODO check the database user is allowed to access if security is enabled and
+  public List<TableNameInfo> getTables(@Nullable final String database) throws ExploreException {
+    // TODO check if the database user is allowed to access if security is enabled and
     // namespacing is in place.
 
     try {
-      OperationResultInfo fullResults = runInternalQuery(new HandleProducer() {
-        @Override
-        public OperationHandle getHandle(SessionHandle sessionHandle) throws ExploreException, SQLException {
-          return cliService.getTables(sessionHandle, null, database, "%", null);
-        }
-      });
-      int iTableDB = -1;
-      int iTableName = -1;
-      List<ColumnDesc> schema = fullResults.getSchema();
-      for (ColumnDesc col : schema) {
-        if (col.getName().equals("TABLE_SCHEM")) {
-          iTableDB = col.getPosition() - 1;
-        } else if (col.getName().equals("TABLE_NAME")) {
-          iTableName = col.getPosition() - 1;
-        }
+      List<String> databases;
+      if (database == null) {
+        databases = metastoreClient.getAllDatabases();
+      } else {
+        databases = ImmutableList.of(database);
       }
-      if (iTableDB == -1 || iTableName == -1) {
-        throw new ExploreException("Could not parse get tables results");
-      }
-      ImmutableList.Builder<TableInfo> builder = ImmutableList.builder();
-      for (QueryResult result : fullResults.getResults()) {
-        builder.add(new TableInfo(result.getColumns().get(iTableDB).toString(),
-                                  result.getColumns().get(iTableName).toString()));
+      ImmutableList.Builder<TableNameInfo> builder = ImmutableList.builder();
+      for (String db : databases) {
+        List<String> tables = metastoreClient.getAllTables(db);
+        for (String table : tables) {
+          builder.add(new TableNameInfo(db, table));
+        }
       }
       return builder.build();
-    } catch (SQLException e) {
-      LOG.error("Error in query show tables", e);
-      throw new ExploreException(e);
-    } catch (UnexpectedQueryStatusException e) {
-      LOG.error("Error in query show tables", e);
-      throw new ExploreException(e);
+    } catch (TException e) {
+      throw new ExploreException("Error connecting to Hive metastore", e);
     }
   }
 
   @Override
-  public Map<String, String> getTableSchema(@Nullable String database, String table)
+  public TableInfo getTableInfo(@Nullable String database, String table)
     throws ExploreException, TableNotFoundException {
-    // TODO check the database user is allowed to access if security is enabled and
+    // TODO check if the database user is allowed to access if security is enabled and
     // namespacing is in place.
 
-    String tablePrefix = (database == null) ? "" : database + ".";
-    final String query = String.format("describe %s%s", tablePrefix, table);
     try {
-      OperationResultInfo fullResults = runInternalQuery(new HandleProducer() {
-        @Override
-        public OperationHandle getHandle(SessionHandle sessionHandle) throws ExploreException, SQLException {
-          return doExecute(sessionHandle, query);
-        }
-      });
-
-      int colNameIdx = -1;
-      int colTypeIdx = -1;
-      List<ColumnDesc> schema = fullResults.getSchema();
-      for (ColumnDesc col : schema) {
-        if (col.getName().equals("col_name")) {
-          colNameIdx = col.getPosition() - 1;
-        } else if (col.getName().equals("data_type")) {
-          colTypeIdx = col.getPosition() - 1;
-        }
+      String db = database == null ? "default" : database;
+      Table tableInfo = metastoreClient.getTable(db, table);
+      ImmutableList.Builder<TableInfo.ColumnInfo> schemaBuilder = ImmutableList.builder();
+      ImmutableList.Builder<TableInfo.ColumnInfo> partitionKeysBuilder = ImmutableList.builder();
+      for (FieldSchema column : tableInfo.getSd().getCols()) {
+        schemaBuilder.add(new TableInfo.ColumnInfo(column.getName(), column.getType(), column.getComment()));
       }
-      if (colNameIdx == -1 || colTypeIdx == -1) {
-        throw new ExploreException("Could not parse query describe table results");
+      for (FieldSchema column : tableInfo.getPartitionKeys()) {
+        partitionKeysBuilder.add(new TableInfo.ColumnInfo(column.getName(), column.getType(),
+                                                                     column.getComment()));
       }
-      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-      for (QueryResult result : fullResults.getResults()) {
-        builder.put(result.getColumns().get(colNameIdx).toString(),
-                    result.getColumns().get(colTypeIdx).toString());
-      }
-      return builder.build();
+      String storageHandler = tableInfo.getParameters().get("storage_handler");
+      boolean isDatasetTable = storageHandler != null &&
+        storageHandler.equals(DatasetStorageHandler.class.getName());
 
-    } catch (SQLException e) {
-      throw new TableNotFoundException("Error on running query '" + query + "'", e);
-    } catch (UnexpectedQueryStatusException e) {
-      throw new TableNotFoundException("Error on running query '" + query + "'", e);
-    }
-  }
-
-  /**
-   * Run queries internally, without going through the logic of storing the operation info, timing out etc.
-   * This is designed for fast queries that wouldn't block the explore service too long.
-   */
-  private OperationResultInfo runInternalQuery(HandleProducer handleProducer)
-    throws ExploreException, SQLException, UnexpectedQueryStatusException {
-    SessionHandle sessionHandle = cliService.openSession("", "", Maps.<String, String>newHashMap());
-    try {
-      OperationHandle operationHandle = handleProducer.getHandle(sessionHandle);
-      QueryStatus status;
-      do {
-        TimeUnit.MILLISECONDS.sleep(50);
-        status = fetchStatus(operationHandle);
-      } while (!status.getStatus().isDone());
-
-      if (!status.getStatus().equals(QueryStatus.OpStatus.FINISHED)) {
-        throw new UnexpectedQueryStatusException("Query ended with status " + status.getStatus(),
-                                                 status.getStatus());
-      }
-
-      ImmutableList.Builder<QueryResult> resultBuilder = ImmutableList.builder();
-      List<QueryResult> tmpResults;
-      do {
-        tmpResults = fetchNextResults(operationHandle, 1000);
-        resultBuilder.addAll(tmpResults);
-      } while (!tmpResults.isEmpty());
-
-      return new OperationResultInfo(resultBuilder.build(), getResultSchemaInternal(operationHandle));
-    } catch (InterruptedException e) {
-      LOG.error("Could not wait for operation execution", e);
-      throw Throwables.propagate(e);
-    } catch (HandleNotFoundException e) {
-      throw new ExploreException("Handle not found for internal operation", e);
-    } finally {
-      closeSession(sessionHandle);
+      return new TableInfo(tableInfo.getTableName(), tableInfo.getDbName(), tableInfo.getOwner(),
+                           (long) tableInfo.getCreateTime() * 1000, (long) tableInfo.getLastAccessTime() * 1000,
+                           tableInfo.getRetention(), partitionKeysBuilder.build(), tableInfo.getParameters(),
+                           tableInfo.getTableType(), schemaBuilder.build(), tableInfo.getSd().getLocation(),
+                           tableInfo.getSd().getInputFormat(), tableInfo.getSd().getOutputFormat(),
+                           tableInfo.getSd().isCompressed(), tableInfo.getSd().getNumBuckets(),
+                           tableInfo.getSd().getSerdeInfo().getSerializationLib(),
+                           tableInfo.getSd().getSerdeInfo().getParameters(), isDatasetTable);
+    } catch (NoSuchObjectException e) {
+      throw new TableNotFoundException(e);
+    } catch (TException e) {
+      throw new ExploreException(e);
     }
   }
 

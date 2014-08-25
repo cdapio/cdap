@@ -83,9 +83,9 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("data/explore/tables/{table}/schema")
+  @Path("data/explore/tables/{table}/info")
   public void getTableSchema(HttpRequest request, HttpResponder responder, @PathParam("table") final String table) {
-    LOG.trace("Received get table schema for table {}", table);
+    LOG.trace("Received get table info for table {}", table);
     try {
       int dbSepIdx = table.indexOf('.');
       String dbName = null;
@@ -94,7 +94,7 @@ public class ExploreMetadataHttpHandler extends AbstractHttpHandler {
         dbName = table.substring(0, dbSepIdx);
         tableName = table.substring(dbSepIdx + 1);
       }
-      responder.sendJson(HttpResponseStatus.OK, exploreService.getTableSchema(dbName, tableName));
+      responder.sendJson(HttpResponseStatus.OK, exploreService.getTableInfo(dbName, tableName));
     } catch (TableNotFoundException e) {
       LOG.error("Could not find table {}", table, e);
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
