@@ -3573,6 +3573,30 @@ div.tooltip-inner {
 	text-decoration: none;
 }
 
+.dataexplore-hivetable-title,
+.dataexplore-information-title {
+  font-size: 12px;
+  color: #696E7E;
+  letter-spacing: 0.1em;
+  background-color: #F1F2F3;
+  border: 1px solid #EEE;
+  display: inline-block;
+  padding: 14px;
+  font-family: inherit;
+  font-size: 100%;
+  font-style: inherit;
+  font-weight: inherit;
+}
+
+.dataexplore-hivetable-title {
+  width: 30%;
+}
+
+.dataexplore-information-title {
+  width: 70%;
+}
+
+
 #query-display {
 	background: #666666;
 	max-height: 50vh;
@@ -3668,9 +3692,12 @@ div.tooltip-inner {
 	background: #535353;
 	color: white;
 }
+.query-partition .partition-table tr {
+  border: 1px solid #515151;
+}
 
-.query-partition .partition-table th, .partition-table td {
-	border-color: #515151;
+.query-partition .partition-table.partition-keys-info th, .partition-table.partition-keys-info td {
+  border: 0;
 	max-width: 400px;
 	word-wrap: break-word;
 }
@@ -3686,7 +3713,24 @@ div.tooltip-inner {
 	border-color: #515151;
 	max-width: 400px;
 	word-wrap: break-word;
+	color: white;
 }
+
+
+.schema-table {
+  width: 100%;
+}
+
+.schema-table tr {
+  border-bottom: 1px solid #515151;
+}
+.schema-table.table-meta-info th, .schema-table.table-meta-info td {
+  border: 0;
+	max-width: 400px;
+	word-wrap: break-word;
+	color: white;
+}
+
 
 .table-name:hover {
 	color: white;
@@ -3696,7 +3740,6 @@ div.tooltip-inner {
 .table-name:hover .app-list-name a {
 	color: white;
 }
-
 
 .table-name.selected {
 	color: white;
