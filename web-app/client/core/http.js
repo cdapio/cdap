@@ -46,10 +46,10 @@ define([], function () {
 		getJSON: function (path, callback, cacheData) {
       var self = this;
 
-			$.ajax({
-			  dataType: "json",
-			  url: path,
-			  // allow self-signed SSL certificates on router
+	  $.ajax({
+		dataType: "json",
+		url: path,
+	    // allow self-signed SSL certificates on router
         rejectUnauthorized: false,
         requestCert: true,
         agent: false,
@@ -59,21 +59,19 @@ define([], function () {
             C.SSAdapter.save(path, result);
           }
           callback(result, jqXhr.status);
-
-        }).fail(function (xhr, status, error) {
-          var error = xhr.responseText || '';
-          if (self.isWarn(path)) {
-            if (error) {
-              C.Util.showWarning(error);
-            } else {
-              C.Util.showWarning('Encountered a connection problem.');
-            }
-          }
-          callback(error, xhr.status);
-
         }
-      });
-		},
+      }).fail(function (xhr, status, error) {
+        var error = xhr.responseText || '';
+        if (self.isWarn(path)) {
+          if (error) {
+            C.Util.showWarning(error);
+          } else {
+            C.Util.showWarning('Encountered a connection problem.');
+          }
+        }
+        callback(error, xhr.status);
+       });
+      },
 
 		rest: function () {
       var self = this;
