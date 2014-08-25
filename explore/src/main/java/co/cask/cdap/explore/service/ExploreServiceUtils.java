@@ -393,6 +393,7 @@ public class ExploreServiceUtils {
     } finally {
       Closeables.closeQuietly(fos);
     }
+
     return newHiveConfFile;
   }
 }
