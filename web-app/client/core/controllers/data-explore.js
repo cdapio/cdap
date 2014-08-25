@@ -59,21 +59,21 @@ define([], function () {
             var name = dataset.table;
             self.HTTP.rest('data/explore/tables/' + name + '/info', function (response, status) {
               var result = _.pick(response, "table_name", "db_name", "owner", "creation_time", "from_dataset", "partitioned_keys", "schema"),
-                  schema_array = [],
-                  partition_array = [];
-              schema_array = self.extractColumns(result.schema, true);
-              partition_array = self.extractColumns(result.partitioned_keys, false);
+                  schemaArray = [],
+                  partitionArray = [];
+              schemaArray = self.extractColumns(result.schema, true);
+              partitionArray = self.extractColumns(result.partitioned_keys, false);
 
               datasets.pushObject(Ember.Object.create({
                 tablename: result.table_name,
                 dbname: result.db_name,
                 owner: result.owner,
                 creationtime: (new Date(result.creation_time)).toString("MMM-dd-yyyy HH:mm"), // Should be a better way to simplify it.
-                schema: schema_array,
-                partition: partition_array,
-                partition_table_empty: (partition_array.length === 0),
-                schema_table_empty: (schema_array.length === 0),
-                dataset_backup: response["from_dataset"]
+                schema: schemaArray,
+                partition: partitionArray,
+                partitionTableEmpty: (partitionArray.length === 0),
+                schemaTableEmpty: (schemaArray.length === 0),
+                from_dataset: response["from_dataset"]
               }));
               if(datasets.length == 1) {
                 self.selectDataset(datasets[0]);

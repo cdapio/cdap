@@ -443,10 +443,10 @@
             <tr {{action selectDataset this}} {{ bindAttr class=":cursor-pointer :table-name this.isSelected:selected:notselected" }} >
               <td class="app-list-name service-col dataset-name">
                 <!-- <a class="none-text-decoration">{{tablename}}</a> -->
-                {{#if dataset_backup}}
+                {{#if from_dataset}}
                   <img src="/assets/img/v2/store_icon_data_explore1.png" style="height:20px;"/>
                 {{/if}}
-                <span class="app-list-status">{{tablename}}</span>
+                <span class="app-list-status data-explore-table-name">{{tablename}}</span>
                 {{#if this.isSelected}}
                   <div class="arrow-right"></div>
                 {{/if}}
@@ -458,7 +458,7 @@
         <div class="table-info">
           <div class="query-schema">
             <div class="table-title" {{action 'showTableSchema' on="click"}}> Table Schema </div>
-            {{#if selectedDataset.schema_table_empty }}
+            {{#if selectedDataset.schemaTableEmpty }}
               <div class="table-empty"> No Schema (A Table with No Schema??) </div>
             {{ else }}
             <div class="table-view">
@@ -479,7 +479,7 @@
           </div>
           <div class="query-partition">
             <div class="table-title" {{action 'showPartitionKeys' on="click"}}> Partition Keys </div>
-            {{#if selectedDataset.partition_table_empty}}
+            {{#if selectedDataset.partitionTableEmpty}}
               <div class="table-empty hide"> No Partition Keys </div>
             {{ else }}
             <div class="table-view hide">
@@ -490,7 +490,7 @@
               {{#each selectedDataset.partition}}
               <div class="table-row">
                 {{#each columns}}
-                <span {{bindAttr value="this"}}> {{this}} </span>
+                <span> {{this}} </span>
                 {{/each}}
               </div>
               {{/each}}

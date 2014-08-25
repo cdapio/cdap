@@ -1418,9 +1418,9 @@ input[type="text"] {
 
 .app-list-name > .app-list-status {
 	color: #9698A5;
-	/* font-size: 12px; */
+	font-size: 12px;
 	height: 14px;
-	/*display: block; */
+  display: block;
 	overflow: hidden;
 	white-space: nowrap;
 }
@@ -3623,6 +3623,10 @@ div.tooltip-inner {
   vertical-align: top;
   overflow: auto;
   height: 50vh;
+}
+#query-tables .app-list-status.data-explore-table-name {
+  font-size: 16px;
+  display: inline-block;
 }
 
 .query-schema {
