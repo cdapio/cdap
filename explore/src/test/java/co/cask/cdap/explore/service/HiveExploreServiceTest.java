@@ -346,7 +346,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                           tableInfo.getLocation(), DatasetInputFormat.class.getName(),
                           "org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat", false, -1,
                           DatasetSerDe.class.getName(),
-                          ImmutableMap.of("serialization.format", "1", "reactor.dataset.name", "my_table"),
+                          ImmutableMap.of("serialization.format", "1", "explore.dataset.name", "my_table"),
                           true
                         ),
                         tableInfo);
@@ -364,7 +364,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                           tableInfo.getLocation(), DatasetInputFormat.class.getName(),
                           "org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat", false, -1,
                           DatasetSerDe.class.getName(),
-                          ImmutableMap.of("serialization.format", "1", "reactor.dataset.name", "my_table"),
+                          ImmutableMap.of("serialization.format", "1", "explore.dataset.name", "my_table"),
                           true
                         ),
                         tableInfo);
