@@ -297,7 +297,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     List<String> datasetsJarPath = Lists.newArrayList();
     for (Location datasetJarLocation : datasetsJarLocation) {
-      //todo verify if its getName or toURI
       datasetsJarPath.add(datasetJarLocation.getName());
     }
 

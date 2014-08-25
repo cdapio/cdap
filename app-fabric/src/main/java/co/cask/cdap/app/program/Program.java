@@ -79,7 +79,7 @@ public interface Program {
   ClassLoader getClassLoader();
 
   /**
-   * Returns the list of Location of Dataset jar
+   * Returns the list of Location of Dataset jar's
    */
   List<Location> getDatasetJarLocation();
 }

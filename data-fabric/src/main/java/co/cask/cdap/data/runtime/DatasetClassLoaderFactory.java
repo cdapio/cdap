@@ -29,10 +29,19 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- *
+ * Helps to share a functionality to create ClassLoader with Dataset Types,  provided {@link java.lang.ClassLoader} ,
+ * {@link co.cask.cdap.proto.DatasetTypeMeta} and {@link org.apache.twill.filesystem.LocationFactory}
  */
 public class DatasetClassLoaderFactory {
 
+  /**
+   * Returns {@link java.lang.ClassLoader }provided a parent {@link java.lang.ClassLoader} ,
+   * {@link co.cask.cdap.proto.DatasetTypeMeta} and {@link org.apache.twill.filesystem.LocationFactory}
+   * @param cl
+   * @param typeMeta
+   * @param locationFactory
+   * @return {@link java.lang.ClassLoader}
+   */
   public static ClassLoader createDatasetClassLoaderFromType(ClassLoader cl, DatasetTypeMeta typeMeta,
                                                              LocationFactory locationFactory) {
     try {

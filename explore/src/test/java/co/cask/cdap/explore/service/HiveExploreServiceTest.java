@@ -66,6 +66,7 @@ import static co.cask.cdap.explore.service.KeyStructValueTableDefinition.KeyValu
 public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
   private static ClassLoader cl;
+
   @BeforeClass
   public static void start() throws Exception {
     startServices(CConfiguration.create());
@@ -78,7 +79,6 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     cl = Thread.currentThread().getContextClassLoader();
     DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
     cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
-
 
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
@@ -412,7 +412,6 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                                             getClass().getClassLoader());
       DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
       cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
-
 
       // Accessing dataset instance to perform data operations
       KeyStructValueTableDefinition.KeyStructValueTable table =

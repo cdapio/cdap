@@ -180,6 +180,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
         return program.getJarLocation().getInputStream();
       }
     }, tempJar);
+    final Location jarLocation = new LocalLocationFactory().create(tempJar.toURI());
 
     List<Location> datasetJars = program.getDatasetJarLocation();
     List<Location> datasetTempJars = Lists.newArrayList();
@@ -193,9 +194,6 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       }, tempDsJar);
       datasetTempJars.add(new LocalLocationFactory().create(tempDsJar.toURI()));
     }
-
-    final Location jarLocation = new LocalLocationFactory().create(tempJar.toURI());
-
     return Programs.createWithUnpack(jarLocation, datasetTempJars, programDir);
   }
 

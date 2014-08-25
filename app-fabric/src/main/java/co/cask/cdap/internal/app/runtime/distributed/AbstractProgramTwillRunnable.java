@@ -381,8 +381,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       Location location = locationFactory.create(path);
       List<Location> datasetsJarLocation = Lists.newArrayList();
       for (String datasetJar : datasetJars) {
-        Location location2 = locationFactory.create(datasetJar);
-        datasetsJarLocation.add(location2);
+        Location datasetLocation = locationFactory.create(datasetJar);
+        datasetsJarLocation.add(datasetLocation);
       }
       return Programs.createWithUnpack(location, datasetsJarLocation, Files.createTempDir());
     }

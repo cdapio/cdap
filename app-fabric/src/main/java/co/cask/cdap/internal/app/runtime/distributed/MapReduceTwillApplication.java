@@ -23,8 +23,6 @@ import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.List;
@@ -34,7 +32,6 @@ import java.util.List;
  */
 public final class MapReduceTwillApplication implements TwillApplication {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MapReduceTwillApplication.class);
   private final MapReduceSpecification spec;
   private final Program program;
   private final File hConfig;

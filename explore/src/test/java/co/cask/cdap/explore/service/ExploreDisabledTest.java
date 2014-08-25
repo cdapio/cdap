@@ -70,8 +70,6 @@ public class ExploreDisabledTest {
   private static ExploreClient exploreClient;
   private static LocationFactory locationFactory;
 
-
-
   @BeforeClass
   public static void start() throws Exception {
     Injector injector = Guice.createInjector(createInMemoryModules(CConfiguration.create(), new Configuration()));
@@ -88,7 +86,6 @@ public class ExploreDisabledTest {
     Assert.assertFalse(exploreClient.isServiceAvailable());
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
-
     locationFactory = injector.getInstance(LocationFactory.class);
   }
 
@@ -105,7 +102,6 @@ public class ExploreDisabledTest {
     // Try to deploy a dataset that is not record scannable, when explore is enabled.
     // This should be processed with no exception being thrown
     datasetFramework.addModule("module1", new KeyStructValueTableDefinition.KeyStructValueTableModule());
-
 
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "table1", DatasetProperties.EMPTY);

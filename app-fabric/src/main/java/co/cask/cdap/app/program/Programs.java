@@ -45,11 +45,15 @@ public final class Programs {
    * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
    * would not function from the program this method returns.
    */
-  public static Program create(Location location, List<Location> datasetTypeJars,
+  public static Program create(Location location, List<Location> datasetJars,
                                ClassLoader classLoader) throws IOException {
-    return new DefaultProgram(location, datasetTypeJars, classLoader);
+    return new DefaultProgram(location, datasetJars, classLoader);
   }
 
+  /**
+   * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
+   * is used as the Classloader
+   */
   public static Program create(Location location, List<Location> datasetJars) throws IOException {
     return new DefaultProgram(location, datasetJars, getClassLoader());
   }
