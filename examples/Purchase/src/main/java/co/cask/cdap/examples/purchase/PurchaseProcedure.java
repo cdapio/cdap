@@ -18,9 +18,15 @@ package co.cask.cdap.examples.purchase;
 import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.procedure.AbstractProcedure;
+import co.cask.cdap.api.procedure.ProcedureContext;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
+import com.google.common.base.Charsets;
+import com.google.common.io.ByteStreams;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * A Procedure for querying the history DataSet for a customer's purchase history.
@@ -29,6 +35,51 @@ public class PurchaseProcedure extends AbstractProcedure {
 
   @UseDataSet("history")
   private PurchaseHistoryStore store;
+  private URL serviceURL;
+
+  @Override
+  public void initialize(ProcedureContext context) {
+    //Discover the CatalogLookup service via discovery service
+    // the service name is the same as the one provided in the Application configure method
+    serviceURL = context.getServiceURL("PurchaseHistory", PurchaseApp.SERVICE_NAME);
+  }
+
+  /**
+   *
+   * @param request The request, which must contain the "product" argument.
+   *        Example: Looking up the product-id of a comb: queryCatalogLookup({"product":"comb"}).
+   *
+   */
+  @Handle("catalogLookup")
+  @SuppressWarnings("unused")
+  public void catalogLookup(ProcedureRequest request, ProcedureResponder responder) throws Exception {
+    String productId = null;
+    String product = request.getArgument("product");
+    if (product == null) {
+      responder.error(ProcedureResponse.Code.CLIENT_ERROR, "Product must be given as argument");
+    }
+    if (serviceURL == null) {
+      responder.error(ProcedureResponse.Code.NOT_FOUND, "serviceURL is null");
+    }
+    try {
+      URL url = new URL(serviceURL, String.format("v1/product/%s/catalog", product));
+      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+      if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
+        try {
+          productId = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
+        } finally {
+          conn.disconnect();
+        }
+      }
+    } catch (Throwable th) {
+    }
+
+    if (productId == null) {
+      responder.error(ProcedureResponse.Code.NOT_FOUND, "No product-id found for " + product);
+    } else {
+      responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), productId);
+    }
+  }
 
   /**
    * Return the specified customer's purchases as a JSON history object.

@@ -22,6 +22,9 @@ import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.app.metrics.ProcedureMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.EndpointStrategy;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
@@ -31,10 +34,12 @@ import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.ProcedureLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.io.Closeable;
+import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -137,12 +142,33 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
   }
 
   @Override
-  public ServiceDiscovered discoverService(String applicationId, String serviceId) {
-    return discoveryServiceClient.discover(String.format("service.%s.%s.%s", accountId, applicationId, serviceId));
+  public URL getServiceURL(String applicationId, String serviceId) {
+    ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(String.format("service.%s.%s.%s", accountId,
+                                                                                        applicationId, serviceId));
+
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
+    Discoverable discoverable = endpointStrategy.pick();
+
+    if (discoverable == null) {
+      return null;
+    }
+
+    String hostName = discoverable.getSocketAddress().getHostName();
+    int port = discoverable.getSocketAddress().getPort();
+
+    String path = String.format("http://%s:%d%s/apps/%s/services/%s/methods/", hostName, port,
+                                Constants.Gateway.GATEWAY_VERSION, applicationId, serviceId);
+
+    URL url = null;
+    try {
+      url = new URL(path);
+    } catch (Throwable th) {
+    }
+    return url;
   }
 
   @Override
-  public ServiceDiscovered discoverService(String serviceId) {
-    return discoveryServiceClient.discover(String.format("service.%s.%s.%s", accountId, getApplicationId(), serviceId));
+  public URL getServiceURL(String serviceId) {
+    return getServiceURL(getApplicationId(), serviceId);
   }
 }

@@ -18,6 +18,7 @@ package co.cask.cdap.api;
 
 import org.apache.twill.discovery.ServiceDiscovered;
 
+import java.net.URL;
 import java.util.Map;
 
 /**
@@ -44,14 +45,14 @@ public interface RuntimeContext {
    * Used to discover services inside a given application.
    * @param applicationId Application name
    * @param serviceId Service name
-   * @return ServiceDiscovered
+   * @return URL
    */
-  ServiceDiscovered discoverService(String applicationId, String serviceId);
+  URL getServiceURL(String applicationId, String serviceId);
 
   /**
    * Omitting an applicationId assumes that the program wants to discover a service within its own application.
    * @param serviceId Service Name
-   * @return ServiceDiscovered
+   * @return URL
    */
-  ServiceDiscovered discoverService(String serviceId);
+  URL getServiceURL(String serviceId);
 }

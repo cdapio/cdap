@@ -19,6 +19,7 @@ package co.cask.cdap.api.service;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.discovery.ServiceDiscovered;
 
+import java.net.URL;
 import java.util.Map;
 
 /**
@@ -46,12 +47,12 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
   }
 
   @Override
-  public ServiceDiscovered discoverService(String applicationId, String serviceId) {
+  public URL getServiceURL(String applicationId, String serviceId) {
     throw new UnsupportedOperationException("Service discovery not yet supported.");
   }
 
   @Override
-  public ServiceDiscovered discoverService(String serviceId) {
+  public URL getServiceURL(String serviceId) {
     throw new UnsupportedOperationException("Service discovery not yet supported.");
   }
 }
