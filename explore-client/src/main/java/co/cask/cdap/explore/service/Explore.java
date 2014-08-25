@@ -22,10 +22,10 @@ import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
+import co.cask.cdap.proto.TableNameInfo;
 
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -226,17 +226,17 @@ public interface Explore {
    * @return list of table names present in the database.
    * @throws ExploreException on any error getting the tables.
    */
-  public List<TableInfo> getTables(@Nullable String database) throws ExploreException;
+  public List<TableNameInfo> getTables(@Nullable String database) throws ExploreException;
 
   /**
-   * Get the schema of a table, as a map of names to types.
+   * Get information about a Hive table.
    *
    * @param database name of the database the table belongs to.
    * @param table table name for which to get the schema.
-   * @return map of names of columns to their types.
+   * @return information about a table.
    * @throws ExploreException on any error getting the tables.
    */
-  public Map<String, String> getTableSchema(@Nullable String database, String table)
+  public TableInfo getTableInfo(@Nullable String database, String table)
     throws ExploreException, TableNotFoundException;
 
   /**
