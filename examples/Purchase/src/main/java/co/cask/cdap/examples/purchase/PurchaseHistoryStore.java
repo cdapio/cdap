@@ -28,11 +28,9 @@ import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
-import org.apache.log4j.spi.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * This stores purchase histories in an embedded object store. Embedding the object store into this dataset
@@ -47,7 +45,6 @@ import java.util.logging.Logger;
 public class PurchaseHistoryStore
   extends AbstractDataset
   implements RecordScannable<PurchaseHistory>, BatchWritable<String, PurchaseHistory> {
-  private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(PurchaseHistoryStore.class);
 
   // the embedded object store
   private final ObjectStore<PurchaseHistory> store;
@@ -97,7 +94,6 @@ public class PurchaseHistoryStore
 
   @Override // BatchWritable
   public void write(String key, PurchaseHistory history) {
-    LOG.info("PurchaseHistoryStoreWrite from Dataset Jar");
     store.write(key, history);
   }
 
@@ -107,7 +103,6 @@ public class PurchaseHistoryStore
    * @param history The purchase history to store.
    */
   public void write(PurchaseHistory history) {
-    LOG.info("PurchaseHistoryStoreWrite from Dataset Jar");
     store.write(history.getCustomer(), history);
   }
 
@@ -116,7 +111,6 @@ public class PurchaseHistoryStore
    * @return the purchase history of the given customer
    */
   public PurchaseHistory read(String customer) {
-    LOG.info("PurchaseHistoryStoreRead from Dataset Jar");
     return store.read(customer);
   }
 }

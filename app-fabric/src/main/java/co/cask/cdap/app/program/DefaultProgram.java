@@ -182,7 +182,6 @@ public final class DefaultProgram implements Program {
     return classLoader;
   }
 
-
   private String getAttribute(Manifest manifest, Attributes.Name name) throws IOException {
     String value = manifest.getMainAttributes().getValue(name);
     check(value != null, "Fail to get %s attribute from jar", name);
@@ -199,7 +198,9 @@ public final class DefaultProgram implements Program {
     if (expanded) {
       return;
     }
+
     Preconditions.checkState(expandFolder != null, "Directory for jar expansion is not defined.");
+
     try {
       BundleJarUtil.unpackProgramJar(programJarLocation, expandFolder);
       expanded = true;
