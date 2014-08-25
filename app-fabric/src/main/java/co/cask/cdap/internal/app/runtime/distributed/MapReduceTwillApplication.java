@@ -17,7 +17,6 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.ResourceSpecification;
@@ -77,7 +76,6 @@ public final class MapReduceTwillApplication implements TwillApplication {
           .add(programLocation.getName(), programLocation.toURI())
           .add("hConf.xml", hConfig.toURI())
           .add("cConf.xml", cConfig.toURI());
-    LOG.info("Mapreduce Twill Application , Dataset jars are {}", datasetJars);
     for (Location datasetJar : datasetJars) {
       moreFile.add(datasetJar.getName(), datasetJar.toURI());
     }

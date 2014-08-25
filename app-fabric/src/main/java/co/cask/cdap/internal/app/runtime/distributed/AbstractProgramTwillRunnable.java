@@ -121,7 +121,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private ProgramResourceReporter resourceReporter;
   private LogAppenderInitializer logAppenderInitializer;
   private CountDownLatch runlatch;
-  private LocationFactory locationFactory;
 
   protected AbstractProgramTwillRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
@@ -177,15 +176,13 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       zkClientService = injector.getInstance(ZKClientService.class);
       kafkaClientService = injector.getInstance(KafkaClientService.class);
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-      locationFactory = injector.getInstance(LocationFactory.class);
 
       // Initialize log appender
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
-      Type datasetsJarLocationType = new TypeToken<List<String>>() { }.getType();
-      LOG.info("Parsing the DatasetJar Type");
+      Type datasetJarsType = new TypeToken<List<String>>() { }.getType();
       List<String> datasetJars =
-        new Gson().fromJson(cmdLine.getOptionValue(RunnableOptions.DATASET_JARS), datasetsJarLocationType);
+        new Gson().fromJson(cmdLine.getOptionValue(RunnableOptions.DATASET_JARS), datasetJarsType);
 
       try {
         program = injector.getInstance(ProgramFactory.class)
@@ -382,14 +379,11 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     public Program create(String path, List<String> datasetJars) throws IOException {
       Location location = locationFactory.create(path);
-      LOG.info("ProgramFactory:Program Jar Location {}", location.toURI().toString());
       List<Location> datasetsJarLocation = Lists.newArrayList();
-      for (String datsetJar : datasetJars) {
-        Location location2 = locationFactory.create(datsetJar);
+      for (String datasetJar : datasetJars) {
+        Location location2 = locationFactory.create(datasetJar);
         datasetsJarLocation.add(location2);
-        LOG.info("ProgramFactory:Location DatasetJar Type Path is {}", location2.toURI().toString());
       }
-      LOG.info("Parsed the DatasetJar Type {}", datasetJars);
       return Programs.createWithUnpack(location, datasetsJarLocation, Files.createTempDir());
     }
   }

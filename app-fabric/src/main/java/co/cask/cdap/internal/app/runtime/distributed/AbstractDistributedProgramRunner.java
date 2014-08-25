@@ -56,7 +56,6 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -123,10 +122,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           LOG.info("Starting {} with debugging enabled.", program.getId());
           twillPreparer.enableDebugging();
         }
-        LOG.info("Setting DatasetJars in TwillContext at AbstractDistributedProgramRunner");
         List<String> datasetJars = Lists.newArrayList();
         for (Location dsJar : copiedProgram.getDatasetJarLocation()) {
-          LOG.info("Dataset Jar Path is  : ", dsJar.getName());
           datasetJars.add(dsJar.getName());
         }
         TwillController twillController = twillPreparer
@@ -237,9 +234,17 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           cConfFile.delete();
           try {
             program.getJarLocation().delete();
-            //todo : delete dataset jars that were copied to temp location
           } catch (IOException e) {
             LOG.warn("Failed to delete program jar {}", program.getJarLocation().toURI(), e);
+          }
+          try {
+            // deleting temp dataset jars that were copied
+            List<Location> datasetTempJars = program.getDatasetJarLocation();
+            for (Location datasetJar : datasetTempJars) {
+              datasetJar.delete();
+            }
+          } catch (IOException e) {
+            LOG.warn("Failed to delete dataset Jars {}", e);
           }
           try {
             FileUtils.deleteDirectory(programDir);

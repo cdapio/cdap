@@ -18,15 +18,12 @@ package co.cask.cdap.app.program;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Objects;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Lists;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URI;
 import java.util.List;
 import java.util.Locale;
 
@@ -36,7 +33,7 @@ import java.util.Locale;
 public final class Programs {
 
   /**
-   * Creates a {@link co.cask.cdap.app.program.Program} with the supplied list of dataset jar files and
+   * Creates a {@link co.cask.cdap.app.program.Program} with the supplied list of Dataset jar files and
    * program jar file.
    */
   public static Program createWithUnpack(Location location, List<Location> datasetTypeJars,
