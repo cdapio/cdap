@@ -3573,8 +3573,11 @@ div.tooltip-inner {
 	text-decoration: none;
 }
 
-.dataexplore-hivetable-title,
-.dataexplore-information-title {
+.dataexplore-titleholder {
+  display: flex;
+}
+.dataexplore-titleholder .dataexplore-hivetable-title,
+.dataexplore-titleholder .dataexplore-information-title {
   font-size: 12px;
   color: #696E7E;
   letter-spacing: 0.1em;
@@ -3588,11 +3591,11 @@ div.tooltip-inner {
   font-weight: inherit;
 }
 
-.dataexplore-hivetable-title {
+.dataexplore-titleholder .dataexplore-hivetable-title {
   width: 30%;
 }
 
-.dataexplore-information-title {
+.dataexplore-titleholder .dataexplore-information-title {
   width: 70%;
 }
 
@@ -3600,6 +3603,7 @@ div.tooltip-inner {
 #query-display {
 	background: #666666;
 	max-height: 50vh;
+	display: flex;
 }
 
 #query-display .table td.app-list-name.dataset-name {
@@ -3614,7 +3618,7 @@ div.tooltip-inner {
 
 #query-tables {
   width: 30%;
-  display: inline-block;
+  display: inline-flex;
   background: white;
   vertical-align: top;
   overflow: auto;

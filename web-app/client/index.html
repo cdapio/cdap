@@ -432,8 +432,10 @@
   <script type="text/x-handlebars" data-template-name="DataExploreQuery">
     <div style="clear:both"></div>
     {{#if datasets}}
-      <div class="dataexplore-hivetable-title"> Hive Tables </div><!--
-    --><div class="dataexplore-information-title"> Information {{selectedDataset.name}} </div>
+      <div class="dataexplore-titleholder">
+        <div class="dataexplore-hivetable-title"> Hive Tables </div>
+        <div class="dataexplore-information-title"> Information {{selectedDataset.name}} </div>
+      </div>
       <div id="query-display">        
         <div id="query-tables">
           <table class="table">
@@ -452,8 +454,8 @@
             </tr>
             {{/each}}
           </table>
-        </div><!-- This is needed as two elements placed side-by-side using display:inline-block technique will have whitespace between actual elements.
-      --><div class="table-info">
+        </div>
+        <div class="table-info">
           <div class="query-schema">
             <div class="table-title" {{action 'showTableSchema' on="click"}}> Table Schema </div>
             {{#if selectedDataset.schema_table_empty }}
