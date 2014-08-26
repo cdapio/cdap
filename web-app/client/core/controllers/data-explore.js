@@ -6,6 +6,9 @@ define([], function () {
   var url = 'data/explore/queries';
 	var Controller = Em.Controller.extend({
 
+    showSchema: true,
+    showPartitions: false,
+    showProperties: false,
     bindTooltips: function () {
       setTimeout(function () {
         $("[data-toggle='tooltip']").tooltip();
@@ -358,17 +361,15 @@ define([], function () {
     },
 
     showPartitionKeys: function () {
-      $(".query-partition .table-view").toggleClass("hide");
-      $(".query-partition .table-empty").toggleClass("hide");
+      this.set('showPartitions', !this.get("showPartitions"));
     },
 
     showTableSchema: function () {
-      $(".query-schema .table-view").toggleClass("hide");
-      $(".query-schema .table-empty").toggleClass("hide");
+      this.set('showSchema', !this.get("showSchema"));
     },
 
     showTableProperties: function () {
-      $(".table-info .metadata-wrapper").toggleClass("hide");
+      this.set('showProperties', !this.get("showProperties"));
     }
 
   });

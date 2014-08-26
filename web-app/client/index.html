@@ -458,66 +458,72 @@
         <div class="table-info">
           <div class="query-schema">
             <div class="table-title" {{action 'showTableSchema' on="click"}}> Table Schema </div>
-            {{#if selectedDataset.schemaTableEmpty }}
-              <div class="table-empty"> No Schema (A Table with No Schema??) </div>
-            {{ else }}
-            <div class="table-view">
-              <div class="table-header">
-                <span class="table-column-title three-column"> Column Name </span>
-                <span class="table-column-title three-column "> Column Type </span>
-                <span class="table-column-title three-column"> Comments </span>
-              </div>
-              {{#each selectedDataset.schema}}
-              <div class="table-row">
-                {{#each columns}}
-                <span {{bindAttr value="this"}}> {{this}} </span>
-                {{/each}}
-              </div>
-              {{/each}}
-            </div>
+            {{#if showSchema}}
+                {{#if selectedDataset.schemaTableEmpty }}
+                  <div class="table-empty"> No Schema (A Table with No Schema??) </div>
+                {{ else }}
+                <div class="table-view">
+                  <div class="table-header">
+                    <span class="table-column-title three-column"> Column Name </span>
+                    <span class="table-column-title three-column "> Column Type </span>
+                    <span class="table-column-title three-column"> Comments </span>
+                  </div>
+                  {{#each selectedDataset.schema}}
+                  <div class="table-row">
+                    {{#each columns}}
+                    <span {{bindAttr value="this"}}> {{this}} </span>
+                    {{/each}}
+                  </div>
+                  {{/each}}
+                </div>
+                {{/if}}
             {{/if}}
           </div>
           <div class="query-partition">
             <div class="table-title" {{action 'showPartitionKeys' on="click"}}> Partition Keys </div>
-            {{#if selectedDataset.partitionTableEmpty}}
-              <div class="table-empty hide"> No Partition Keys </div>
-            {{ else }}
-            <div class="table-view hide">
-              <div class="table-header">
-                <span class="table-column-title"> Column Name </span>
-                <span class="table-column-title"> Column Type </span>
-              </div>
-              {{#each selectedDataset.partition}}
-              <div class="table-row">
-                {{#each columns}}
-                <span> {{this}} </span>
-                {{/each}}
-              </div>
-              {{/each}}
-             </div>
+            {{#if showPartitions}}
+                {{#if selectedDataset.partitionTableEmpty}}
+                  <div class="table-empty"> No Partition Keys </div>
+                {{ else }}
+                <div class="table-view">
+                  <div class="table-header">
+                    <span class="table-column-title"> Column Name </span>
+                    <span class="table-column-title"> Column Type </span>
+                  </div>
+                  {{#each selectedDataset.partition}}
+                  <div class="table-row">
+                    {{#each columns}}
+                    <span> {{this}} </span>
+                    {{/each}}
+                  </div>
+                  {{/each}}
+                 </div>
+                {{/if}}
             {{/if}}
           </div>
           <div class="metadata-title table-title" {{action 'showTableProperties' on="click"}}> Table Properties </div>
-          <div class="metadata-wrapper hide">
-             <div class="table-view">
-              <div class="table-row">
-                <span> Table </span>
-                <span> {{selectedDataset.tablename}} </span>
+          {{#if showProperties}}
+              <div class="metadata-wrapper">
+                 <div class="table-view">
+                  <div class="table-row">
+                    <span> Table </span>
+                    <span> {{selectedDataset.tablename}} </span>
+                  </div>
+                  <div class="table-row">
+                    <span> Database </span>
+                    <span> {{selectedDataset.dbname}} </span>
+                  </div>
+                  <div class="table-row">
+                    <span> Owner </span>
+                    <span> {{selectedDataset.owner}} </span>
+                  </div>
+                  <div class="table-row">
+                    <span> Creation Time </span>
+                    <span> {{selectedDataset.creationtime}} </span>
+                  </div>
+                 </div>
               </div>
-              <div class="table-row">
-                <span> Database </span>
-                <span> {{selectedDataset.dbname}} </span>
-              </div>
-              <div class="table-row">
-                <span> Owner </span>
-                <span> {{selectedDataset.owner}} </span>
-              </div>
-              <div class="table-row">
-                <span> Creation Time </span>
-                <span> {{selectedDataset.creationtime}} </span>
-              </div>
-             </div>
-          </div>
+          {{/if}}
         </div>
         <div style="clear:both"></div>
       </div>
