@@ -88,7 +88,7 @@ define(['core/lib/lodash'], function (lodash) {
     },
 
     extractColumns: function (table, iscomments) {
-      var columns_array = [];
+      var columnsArray = [];
       table.forEach(function(column) {
         var columns = [];
         if (iscomments) {
@@ -96,11 +96,11 @@ define(['core/lib/lodash'], function (lodash) {
         } else {
           columns = [column.name, column.type];
         }
-        columns_array.push({
+        columnsArray.push({
           columns: columns
         });
       });
-      return columns_array;
+      return columnsArray;
     },
 
     tableClicked: function (obj) {
