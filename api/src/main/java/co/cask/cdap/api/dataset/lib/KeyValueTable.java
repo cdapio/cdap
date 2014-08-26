@@ -33,7 +33,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * A key/value map implementation on top of {@link Table} supporting read and write operations.
+ * A key/value map implementation on top of {@link Table} supporting read, write and delete operations.
  */
 public class KeyValueTable extends AbstractDataset implements
   BatchReadable<byte[], byte[]>, BatchWritable<byte[], byte[]>,
@@ -51,6 +51,7 @@ public class KeyValueTable extends AbstractDataset implements
 
   /**
    * Read the value for a given key.
+   *
    * @param key the key to read for
    * @return the value for that key, or null if no value was found
    */
@@ -61,6 +62,7 @@ public class KeyValueTable extends AbstractDataset implements
 
   /**
    * Read the value for a given key.
+   *
    * @param key the key to read for
    * @return the value for that key, or null if no value was found
    */
@@ -71,6 +73,7 @@ public class KeyValueTable extends AbstractDataset implements
 
   /**
    * Increment the value for a given key and return the resulting value.
+   *
    * @param key the key to increment
    * @return the incremented value of that key
    */
@@ -109,8 +112,9 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   /**
-   * Increment the value tof a key. The key must either not exist yet, or its
+   * Increment the value of a key; the key must either not exist yet, or its
    * current value must be 8 bytes long to be interpretable as a long.
+   *
    * @param key the key
    * @param value the new value
    */
@@ -120,6 +124,7 @@ public class KeyValueTable extends AbstractDataset implements
 
   /**
    * Delete a key.
+   *
    * @param key the key to delete
    */
   public void delete(byte[] key) {
