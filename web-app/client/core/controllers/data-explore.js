@@ -2,7 +2,7 @@
  * Dataexplore Controller
  */
 
-define([], function () {
+define(['core/lib/lodash'], function (lodash) {
   var url = 'data/explore/queries';
 	var Controller = Em.Controller.extend({
 
@@ -61,7 +61,7 @@ define([], function () {
           response.forEach(function (dataset) {
             var name = dataset.table;
             self.HTTP.rest('data/explore/tables/' + name + '/info', function (response, status) {
-              var result = _.pick(response, "table_name", "db_name", "owner", "creation_time", "from_dataset", "partitioned_keys", "schema"),
+              var result = lodash.pick(response, "table_name", "db_name", "owner", "creation_time", "from_dataset", "partitioned_keys", "schema"),
                   schemaArray = [],
                   partitionArray = [];
               schemaArray = self.extractColumns(result.schema, true);
