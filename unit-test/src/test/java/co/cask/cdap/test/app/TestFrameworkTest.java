@@ -235,7 +235,6 @@ public class TestFrameworkTest extends TestBase {
     Assert.assertNotNull(discoverable);
     Assert.assertTrue(discoverables.isEmpty());
 
-
     URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/ping2",
                                     discoverable.getSocketAddress().getHostName(),
                                     discoverable.getSocketAddress().getPort(), AppWithServices.SERVICE_NAME));

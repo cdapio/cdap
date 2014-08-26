@@ -227,7 +227,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
           return runtimeSpec.getRunnableSpecification();
         }
 
-
         @Override
         public Cancellable announce(String runnable, int port) {
           String serviceContextPath = String.format("%s.%s.%s.%s", ProgramType.SERVICE.name().toLowerCase(),
