@@ -24,10 +24,14 @@ process.env.NODE_ENV = 'development';
  * Log level.
  */
 var logLevel = 'INFO';
+var devServer;
 
 var DevServer = function() {
   this.getConfig()
-      .then(this.setAttrs.bind(this));
+      .then(function(version) {
+        this.setAttrs(version);
+        this.start();
+      }.bind(this))
 };
 util.inherits(DevServer, WebAppServer);
 
@@ -38,6 +42,7 @@ DevServer.prototype.setAttrs = function(version) {
     DevServer.super_.call(this, __dirname, logLevel, false);
   }
   this.cookieName = 'continuuity-local-edition';
+  this.version = version;
   this.secret = 'local-edition-secret';
   this.logger = this.getLogger();
   this.setCookieSession(this.cookieName, this.secret);
@@ -49,67 +54,47 @@ DevServer.prototype.setAttrs = function(version) {
  * @param {Function} opt_callback Callback function to start sever start process.
  */
 DevServer.prototype.getConfig = function() {
-  var deferredObj = promise.defer();
-//      promises = [],
-//      readfile;
+  var deferredObj = promise.defer(),
+      promises = [],
+      version,
+      readfile;
 
-//  readfile = function (path, format) {
-//    var deferred = promise.defer();
-//    if (format) {
-//      fs.readFile(path, format, function(err, result) {
-//        deferred.resolve(result);
-//      });
-//    } else {
-//      fs.readFile(path, function(err, result) {
-//        deferred.resolve(result);
-//      });
-//    }
-//    return deferred.promise;
-//  };
-//  //There should definitely be better way to do this.
-//  readfile(__dirname + '/continuuity-local.xml')
-//    .then( function(result, error) {
-//      var parser = new xml2js.Parser();
-//      parser.parseString(result, function(err, result) {
-//        result = result.configuration.property;
-//        for (var item in result) {
-//          item = result[item];
-//          this.config[item.name] = item.value[0];
-//        }
-//      }.bind(this));
-//      return readfile(__dirname + '/../../../VERSION', 'utf-8');
-//    }.bind(this))
-//    .then( function(version) {
-//      return readfile(__dirname + '/.credential', 'utf-8');
-//    })
-//    .then( function(error, apiKey) {
-//      this.Api.configure(this.config, apiKey || null);
-//      this.configSet = true;
-//      deferredObj.resolve(version);
-//    }.bind(this));
-
-    var self = this;
-    fs.readFile(__dirname + '/continuuity-local.xml', function(error, result) {
+  readfile = function (path, format) {
+    var deferred = promise.defer();
+    if (format) {
+      fs.readFile(path, format, function(err, result) {
+        deferred.resolve(result);
+      });
+    } else {
+      fs.readFile(path, function(err, result) {
+        deferred.resolve(result);
+      });
+    }
+    return deferred.promise;
+  };
+  //There should definitely be better way to do this.
+  readfile(__dirname + '/continuuity-local.xml')
+    .then( function(result, error) {
       var parser = new xml2js.Parser();
       parser.parseString(result, function(err, result) {
         result = result.configuration.property;
-        var localhost = self.getLocalHost();
         for (var item in result) {
           item = result[item];
-          self.config[item.name] = item.value[0];
+          this.config[item.name] = item.value[0];
         }
-      });
+      }.bind(this));
+      return  readfile(__dirname + '/../../../VERSION', 'utf-8');
 
-      fs.readFile(__dirname + '/../../../VERSION', "utf-8", function(error, version) {
-
-        fs.readFile(__dirname + '/.credential', "utf-8", function(error, apiKey) {
-          self.Api.configure(self.config, apiKey || null);
-          self.configSet = true;
-          deferredObj.resolve(version);
-        });
-      });
-    });
-
+    }.bind(this))
+    .then( function(v) {
+      version = v;
+      return readfile(__dirname + '/.credential', 'utf-8');
+    })
+    .then( function(error, apiKey) {
+      this.Api.configure(this.config, apiKey || null);
+      this.configSet = true;
+      deferredObj.resolve(version);
+    }.bind(this));
   return deferredObj.promise;
 };
 
@@ -117,17 +102,16 @@ DevServer.prototype.getConfig = function() {
  * Starts the server after getting config, sets up socket io, configures route handlers.
  */
 DevServer.prototype.start = function() {
-  this.getConfig()
-      .then(this.launchServer.bind(this));
+  this.launchServer();
 };
 
-DevServer.prototype.launchServer = function(version) {
+DevServer.prototype.launchServer = function() {
    var key,
        cert,
        options = {};
    options = this.configureSSL();
    this.server = this.getServerInstance(options, this.app);
-   this.setEnvironment('local', 'Development Kit', version, this.startServer.bind(this));
+   this.setEnvironment('local', 'Development Kit', this.version, this.startServer.bind(this));
 }
 
 DevServer.prototype.configureSSL = function () {
@@ -177,10 +161,7 @@ process.on('uncaughtException', function (err) {
   devServer.logger.info('Uncaught Exception', err);
 });
 
-var devServer = new DevServer();
-devServer.start();
-
-
+devServer = new DevServer();
 /**
  * Export app.
  */
