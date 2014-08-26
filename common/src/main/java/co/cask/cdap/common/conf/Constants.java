@@ -432,6 +432,14 @@ public final class Constants {
     public static final String SSL_KEYSTORE_PASSWORD = "security.server.ssl.keystore.password";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
+
+    /**
+     * Headers for security.
+     */
+    public static final class Headers {
+      /** User ID passed from Router to downstream services */
+      public static final String USER_ID = "CDAP-UserId";
+    }
   }
 
   /**

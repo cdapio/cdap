@@ -20,6 +20,7 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
+import co.cask.cdap.common.http.BaseNettyHttpServiceTemplate;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -54,6 +55,7 @@ public final class AppFabricServer extends AbstractIdleService {
   private final InetAddress hostname;
   private final SchedulerService schedulerService;
   private final ProgramRuntimeService programRuntimeService;
+  private final BaseNettyHttpServiceTemplate baseNettyHttpServiceTemplate;
 
   private NettyHttpService httpService;
   private Set<HttpHandler> handlers;
@@ -69,6 +71,7 @@ public final class AppFabricServer extends AbstractIdleService {
                          @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                          @Named("appfabric.http.handler") Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
+                         BaseNettyHttpServiceTemplate baseNettyHttpServiceTemplate,
                          ProgramRuntimeService programRuntimeService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
@@ -77,6 +80,7 @@ public final class AppFabricServer extends AbstractIdleService {
     this.configuration = configuration;
     this.metricsCollectionService = metricsCollectionService;
     this.programRuntimeService = programRuntimeService;
+    this.baseNettyHttpServiceTemplate = baseNettyHttpServiceTemplate;
   }
 
   /**
@@ -91,7 +95,7 @@ public final class AppFabricServer extends AbstractIdleService {
     programRuntimeService.start();
 
     // Run http service on random port
-    httpService = NettyHttpService.builder()
+    httpService = baseNettyHttpServiceTemplate.get()
       .setHost(hostname.getCanonicalHostName())
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Service.APP_FABRIC_HTTP)))

@@ -22,6 +22,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.BaseNettyHttpServiceTemplate;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.proto.ProgramType;
@@ -43,16 +44,19 @@ public class WorkflowProgramRunner implements ProgramRunner {
   private final ServiceAnnouncer serviceAnnouncer;
   private final InetAddress hostname;
   private final MetricsCollectionService metricsCollectionService;
+  private final BaseNettyHttpServiceTemplate baseNettyHttpServiceTemplate;
 
   @Inject
   public WorkflowProgramRunner(MapReduceProgramRunner mapReduceProgramRunner,
                                ServiceAnnouncer serviceAnnouncer,
                                @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
+                               BaseNettyHttpServiceTemplate baseNettyHttpServiceTemplate,
                                MetricsCollectionService metricsCollectionService) {
     this.mapReduceProgramRunner = mapReduceProgramRunner;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
     this.metricsCollectionService = metricsCollectionService;
+    this.baseNettyHttpServiceTemplate = baseNettyHttpServiceTemplate;
   }
 
   @Override
@@ -69,7 +73,8 @@ public class WorkflowProgramRunner implements ProgramRunner {
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
     RunId runId = RunIds.generate();
-    WorkflowDriver driver = new WorkflowDriver(program, runId, options, hostname, workflowSpec, mapReduceProgramRunner);
+    WorkflowDriver driver = new WorkflowDriver(program, runId, options, hostname, baseNettyHttpServiceTemplate,
+                                               workflowSpec, mapReduceProgramRunner);
 
     // Controller needs to be created before starting the driver so that the state change of the driver
     // service can be fully captured by the controller.

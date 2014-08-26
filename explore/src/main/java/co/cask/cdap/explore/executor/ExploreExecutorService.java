@@ -19,6 +19,7 @@ package co.cask.cdap.explore.executor;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
+import co.cask.cdap.common.http.BaseNettyHttpServiceTemplate;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -56,6 +57,7 @@ public class ExploreExecutorService extends AbstractIdleService {
   public ExploreExecutorService(CConfiguration cConf, DiscoveryService discoveryService,
                                 MetricsCollectionService metricsCollectionService,
                                 ExploreService exploreService,
+                                BaseNettyHttpServiceTemplate baseNettyHttpServiceTemplate,
                                 @Named(Constants.Service.EXPLORE_HTTP_USER_SERVICE) Set<HttpHandler> handlers) {
     this.exploreService = exploreService;
     this.discoveryService = discoveryService;
@@ -63,7 +65,7 @@ public class ExploreExecutorService extends AbstractIdleService {
     int workerThreads = cConf.getInt(Constants.Explore.WORKER_THREADS, 10);
     int execThreads = cConf.getInt(Constants.Explore.EXEC_THREADS, 10);
 
-    this.httpService = NettyHttpService.builder()
+    this.httpService = baseNettyHttpServiceTemplate.get()
         .addHttpHandlers(handlers)
         .setHost(cConf.get(Constants.Explore.SERVER_ADDRESS))
         .setHandlerHooks(ImmutableList.of(

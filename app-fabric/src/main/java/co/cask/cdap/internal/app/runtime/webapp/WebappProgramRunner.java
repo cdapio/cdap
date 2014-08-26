@@ -21,6 +21,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.BaseNettyHttpServiceTemplate;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.NettyHttpService;
@@ -60,15 +61,18 @@ public class WebappProgramRunner implements ProgramRunner {
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
   private final WebappHttpHandlerFactory webappHttpHandlerFactory;
+  private final BaseNettyHttpServiceTemplate baseNettyHttpServiceTemplate;
 
   @Inject
   public WebappProgramRunner(ServiceAnnouncer serviceAnnouncer, DiscoveryService discoveryService,
+                             BaseNettyHttpServiceTemplate baseNettyHttpServiceTemplate,
                              @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                              WebappHttpHandlerFactory webappHttpHandlerFactory) {
     this.serviceAnnouncer = serviceAnnouncer;
     this.discoveryService = discoveryService;
     this.hostname = hostname;
     this.webappHttpHandlerFactory = webappHttpHandlerFactory;
+    this.baseNettyHttpServiceTemplate = baseNettyHttpServiceTemplate;
   }
 
   @Override
@@ -89,7 +93,7 @@ public class WebappProgramRunner implements ProgramRunner {
       // Start netty server
       // TODO: add metrics reporting
       JarHttpHandler jarHttpHandler = webappHttpHandlerFactory.createHandler(program.getJarLocation());
-      NettyHttpService.Builder builder = NettyHttpService.builder();
+      NettyHttpService.Builder builder = baseNettyHttpServiceTemplate.get();
       builder.addHttpHandlers(ImmutableSet.of(jarHttpHandler));
       builder.setUrlRewriter(new WebappURLRewriter(jarHttpHandler));
       builder.setHost(hostname.getCanonicalHostName());
