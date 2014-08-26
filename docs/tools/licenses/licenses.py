@@ -31,8 +31,6 @@ import tempfile
 
 VERSION = "0.0.3"
 
-DEFAULT_VERSION = "2.5.0-SNAPSHOT"
-
 MASTER_CSV = "cdap-dependencies-master.csv"
 
 ENTERPRISE = "cdap-enterprise-dependencies"
