@@ -235,8 +235,8 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   public void addService(co.cask.cdap.api.service.Service service) {
-    // We need to know the name of the application when we create the service's TwillApplication, so we defer the creation
-    // of the service's TwillApplication until createApplicationSpec is called, where we know for sure that the
+    // We need to know the name of the application when we create the service's TwillApplication, so we defer the
+    // creation of the service's TwillApplication until createApplicationSpec is called, where we know for sure that the
     // application's name will not change after that point.
     servicesToCreate.add(service);
   }

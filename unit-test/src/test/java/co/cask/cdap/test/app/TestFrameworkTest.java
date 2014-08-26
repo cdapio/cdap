@@ -220,7 +220,8 @@ public class TestFrameworkTest extends TestBase {
     LOG.info("Service Started");
 
     // Look for service endpoint
-    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices", AppWithServices.SERVICE_NAME);
+    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices",
+                                                                        AppWithServices.SERVICE_NAME);
     final BlockingQueue<Discoverable> discoverables = new LinkedBlockingQueue<Discoverable>();
     serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
       @Override
