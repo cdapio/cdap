@@ -1421,6 +1421,8 @@ input[type="text"] {
 	height: 14px;
 	overflow: hidden;
 	white-space: nowrap;
+	display: block;
+	font-size: 12px;
 }
 
 .app-list-name > .app-status {
@@ -1752,7 +1754,7 @@ a.brand {
 	margin: 0;
 }
 
-.nacondensed td {
+.table-condensed td {
 	line-height: 14px !important;
 }
 
@@ -3772,14 +3774,12 @@ div.tooltip-inner {
   background-image: url("../../img/v2/dataset_store_icon_blue.png");
   background-repeat: no-repeat;
   width: 20px;
-  display: inline-block;
   height: 20px;
-  vertical-align: top;
-  margin-right: 4px;
+  display: inline-block;
 }
 
 #query-display .table .table-name:hover .dataset-icon {
-    background-image: url("../../img/v2/dataset_store_icon_white.png");
+  background-image: url("../../img/v2/dataset_store_icon_white.png");
 }
 
 .table-name.selected {
