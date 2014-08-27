@@ -35,6 +35,6 @@ public class InMemoryProgramServiceDiscovery implements ProgramServiceDiscovery 
 
   @Override
   public ServiceDiscovered discover(String accountId, String appId, String serviceId, String serviceName) {
-    return dsClient.discover(String.format("service.%s.%s.%s.%s", accountId, appId, serviceId, serviceName));
+    return dsClient.discover(String.format("service.%s.%s.%s", accountId, appId, serviceId));
   }
 }

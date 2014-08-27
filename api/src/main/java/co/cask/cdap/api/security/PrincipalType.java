@@ -14,21 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.shell.command.describe;
-
-import co.cask.cdap.shell.command.CommandSet;
-
-import javax.inject.Inject;
+package co.cask.cdap.api.security;
 
 /**
- * Contains commands for describe stuff.
+ * Represents a type of principal.
  */
-public class DescribeCommandSet extends CommandSet {
+public enum PrincipalType {
 
-  @Inject
-  public DescribeCommandSet(DescribeAppCommand describeAppCommand,
-                            DescribeDatasetCommandSet describeDatasetCommandSet,
-                            DescribeStreamCommand describeStreamCommand) {
-    super("describe", describeAppCommand, describeDatasetCommandSet, describeStreamCommand);
+  USER("u"), GROUP("g");
+
+  private final String prefix;
+
+  PrincipalType(String prefix) {
+    this.prefix = prefix;
+  }
+
+  public String getPrefix() {
+    return prefix;
   }
 }

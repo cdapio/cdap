@@ -14,21 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.shell.command.describe;
+package co.cask.cdap.api.security;
 
-import co.cask.cdap.shell.command.CommandSet;
+import com.google.common.collect.Lists;
 
-import javax.inject.Inject;
+import java.util.List;
 
 /**
- * Contains commands for describe stuff.
+ * Utility functions for {@link Principals}.
  */
-public class DescribeCommandSet extends CommandSet {
+public final class Principals {
 
-  @Inject
-  public DescribeCommandSet(DescribeAppCommand describeAppCommand,
-                            DescribeDatasetCommandSet describeDatasetCommandSet,
-                            DescribeStreamCommand describeStreamCommand) {
-    super("describe", describeAppCommand, describeDatasetCommandSet, describeStreamCommand);
+  private Principals() { }
+
+  public static List<Principal> fromIds(PrincipalType type, List<String> ids) {
+    List<Principal> result = Lists.newArrayList();
+    for (String id : ids) {
+      result.add(new Principal(type, id));
+    }
+    return result;
   }
 }

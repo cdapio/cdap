@@ -14,21 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.shell.command.describe;
-
-import co.cask.cdap.shell.command.CommandSet;
-
-import javax.inject.Inject;
+package co.cask.cdap.api.security;
 
 /**
- * Contains commands for describe stuff.
+ * Identifies an entity.
  */
-public class DescribeCommandSet extends CommandSet {
+public class EntityId {
 
-  @Inject
-  public DescribeCommandSet(DescribeAppCommand describeAppCommand,
-                            DescribeDatasetCommandSet describeDatasetCommandSet,
-                            DescribeStreamCommand describeStreamCommand) {
-    super("describe", describeAppCommand, describeDatasetCommandSet, describeStreamCommand);
+  private final EntityType type;
+  private final String id;
+
+  public EntityId(EntityType type, String id) {
+    this.type = type;
+    this.id = id;
+  }
+
+  public EntityType getType() {
+    return type;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public String getQualifiedId() {
+    return type.getPluralForm() + ":" + id;
   }
 }

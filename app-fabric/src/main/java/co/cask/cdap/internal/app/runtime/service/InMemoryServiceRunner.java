@@ -76,7 +76,7 @@ public class InMemoryServiceRunner implements ProgramRunner {
     ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
     Preconditions.checkNotNull(serviceSpec, "Missing ServiceSpecification for %s", program.getName());
 
-    //RuIid for the service
+    //RunId for the service
     RunId runId = RunIds.generate();
     programOptions.put(runId, options);
     final Table<String, Integer, ProgramController> serviceRunnables = createRunnables(program, runId, serviceSpec);
