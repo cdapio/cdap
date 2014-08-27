@@ -61,16 +61,22 @@ public class HttpHandlerGeneratorTest {
     public void echo(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("name") String name) {
       responder.sendString(Charsets.UTF_8.decode(request.getContent()).toString() + " " + name);
     }
+  }
 
-    @Override
-    public void configure() {
+  // Omit class-level PATH annotation, to verify that prefix is still prepended to handled path.
+  public static final class HandlerWithoutAnnotation extends AbstractHttpServiceHandler {
 
+    @Path("/ping")
+    @GET
+    public void echo(HttpServiceRequest request, HttpServiceResponder responder) {
+      responder.sendString("OK");
     }
   }
 
+
   @Test
   public void testHttpHandlerGenerator() throws Exception {
-    HttpHandlerFactory factory = new HttpHandlerFactory();
+    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix");
     HttpHandler httpHandler = factory.createHttpHandler(new MyHttpHandler(), new HttpServiceContext() {
       @Override
       public HttpServiceSpecification getSpecification() {
@@ -83,20 +89,35 @@ public class HttpHandlerGeneratorTest {
       }
     });
 
-    NettyHttpService service = NettyHttpService.builder().addHttpHandlers(ImmutableList.of(httpHandler)).build();
+    HttpHandler httpHandlerWithoutAnnotation = factory.createHttpHandler(new HandlerWithoutAnnotation(),
+                                                                         new HttpServiceContext() {
+      @Override
+      public HttpServiceSpecification getSpecification() {
+        return null;
+      }
+
+      @Override
+      public Map<String, String> getRuntimeArguments() {
+        return null;
+      }
+    });
+
+    NettyHttpService service = NettyHttpService.builder()
+      .addHttpHandlers(ImmutableList.of(httpHandler, httpHandlerWithoutAnnotation)).build();
+    
     service.startAndWait();
     try {
       InetSocketAddress bindAddress = service.getBindAddress();
 
       // Make a GET call
-      URLConnection urlConn = new URL(String.format("http://%s:%d/v2/handle",
+      URLConnection urlConn = new URL(String.format("http://%s:%d/prefix/v2/handle",
                                                     bindAddress.getHostName(), bindAddress.getPort())).openConnection();
       urlConn.setReadTimeout(2000);
 
       Assert.assertEquals("Hello World", new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));
 
       // Make a POST call
-      urlConn = new URL(String.format("http://%s:%d/v2/echo/test",
+      urlConn = new URL(String.format("http://%s:%d/prefix/v2/echo/test",
                                       bindAddress.getHostName(), bindAddress.getPort())).openConnection();
       urlConn.setReadTimeout(2000);
       urlConn.setDoOutput(true);
@@ -105,6 +126,14 @@ public class HttpHandlerGeneratorTest {
 
       Assert.assertEquals("Hello test",
                           new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));
+
+      // Ensure that even though the handler did not have a class-level annotation, we still prefix the path that it
+      // handles by "/prefix"
+      urlConn = new URL(String.format("http://%s:%d/prefix/ping", bindAddress.getHostName(), bindAddress.getPort()))
+        .openConnection();
+      urlConn.setReadTimeout(2000);
+
+      Assert.assertEquals("OK", new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));
     } finally {
       service.stopAndWait();
     }

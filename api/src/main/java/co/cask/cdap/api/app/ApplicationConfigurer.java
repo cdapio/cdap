@@ -146,7 +146,7 @@ public interface ApplicationConfigurer {
    *
    * @param handlers The handlers to include in the Application
    */
-  void addService(String name, Iterable<HttpServiceHandler> handlers);
+  void addService(String name, Iterable<? extends HttpServiceHandler> handlers);
 
   /**
    * Adds a {@link HttpServiceHandler} as a Custom Service to the Application.

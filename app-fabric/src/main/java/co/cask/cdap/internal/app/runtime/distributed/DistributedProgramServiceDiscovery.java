@@ -57,6 +57,7 @@ public class DistributedProgramServiceDiscovery implements ProgramServiceDiscove
 
   @Override
   public ServiceDiscovered discover(String accountId, String appId, String serviceId, String serviceName) {
-    return discoveredCache.getUnchecked(Id.Program.from(accountId, appId, serviceId)).discover(serviceName);
+    return discoveredCache.getUnchecked(Id.Program.from(accountId, appId, serviceId))
+      .discover(String.format("service.%s.%s.%s", accountId, appId, serviceId));
   }
 }
