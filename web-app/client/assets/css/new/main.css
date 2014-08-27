@@ -3653,6 +3653,49 @@ div.tooltip-inner {
   height: 50vh;
 }
 
+.table-info .query-partition .table-title .arrow-right-no-floats,
+.table-info .query-schema .table-title .arrow-right-no-floats,
+.table-info .metadata-title.table-title .arrow-right-no-floats {
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 8px solid #696E7E;
+  display: inline-block;
+  vertical-align: top;
+  padding: 0 2px;
+}
+
+.table-info .query-partition .table-title:hover .arrow-right-no-floats,
+.table-info .query-schema .table-title:hover .arrow-right-no-floats,
+.table-info .metadata-title.table-title:hover .arrow-right-no-floats{
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 8px solid white;
+}
+
+.table-info .query-partition .table-title .arrow-down,
+.table-info .query-schema .table-title .arrow-down,
+.table-info .metadata-title.table-title .arrow-down {
+  width: 0;
+  height: 0;
+  border-top: 8px solid #696E7E;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  display: inline-block;
+  vertical-align: middle;
+  padding: 2px 0;
+}
+
+.table-info .query-partition .table-title:hover .arrow-down,
+.table-info .query-schema .table-title:hover .arrow-down,
+.table-info .metadata-title.table-title:hover .arrow-down {
+  border-top: 8px solid white;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+}
+
+
 .table-info .query-partition .table-title,
 .table-info .query-schema .table-title,
 .table-info .metadata-title.table-title{
@@ -3778,6 +3821,9 @@ div.tooltip-inner {
   display: inline-block;
 }
 
+#query-display .table .table-name.selected .dataset-icon {
+  background-image: url("../../img/v2/dataset_store_icon_white.png");
+}
 #query-display .table .table-name:hover .dataset-icon {
   background-image: url("../../img/v2/dataset_store_icon_white.png");
 }

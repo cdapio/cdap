@@ -9,6 +9,10 @@ define(['core/lib/lodash'], function (lodash) {
     showSchema: true,
     showPartitions: false,
     showProperties: false,
+    partitionArrowRight: false,
+    schemaArrowRight: true,
+    tablePropertiesArrowRight: false,
+
     bindTooltips: function () {
       setTimeout(function () {
         $("[data-toggle='tooltip']").tooltip();
@@ -361,15 +365,18 @@ define(['core/lib/lodash'], function (lodash) {
     },
 
     showPartitionKeys: function () {
-      this.set('showPartitions', !this.get("showPartitions"));
+      this.set('showPartitions', !this.get('showPartitions'));
+      this.set('partitionArrowRight', !this.get('partitionArrowRight'));
     },
 
     showTableSchema: function () {
-      this.set('showSchema', !this.get("showSchema"));
+      this.set('showSchema', !this.get('showSchema'));
+      this.set('schemaArrowRight', !this.get('schemaArrowRight'));
     },
 
     showTableProperties: function () {
-      this.set('showProperties', !this.get("showProperties"));
+      this.set('tablePropertiesArrowRight', !this.get('tablePropertiesArrowRight'));
+      this.set('showProperties', !this.get('showProperties'));
     }
 
   });

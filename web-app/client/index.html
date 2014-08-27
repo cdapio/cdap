@@ -456,7 +456,14 @@
         </div>
         <div class="table-info">
           <div class="query-schema">
-            <div class="table-title" {{action 'showTableSchema' on="click"}}> Table Schema </div>
+            <div class="table-title" {{action 'showTableSchema' on="click"}}>
+             {{#if schemaArrowRight}}
+                <div class="arrow-down"></div>
+             {{ else }}
+                <div class="arrow-right-no-floats"></div>
+             {{/if}}
+             <span>Table Schema </span>
+            </div>
             {{#if showSchema}}
                 {{#if selectedDataset.schemaTableEmpty }}
                   <div class="table-empty"> No Schema (A Table with No Schema??) </div>
@@ -479,7 +486,14 @@
             {{/if}}
           </div>
           <div class="query-partition">
-            <div class="table-title" {{action 'showPartitionKeys' on="click"}}> Partition Keys </div>
+            <div class="table-title" {{action 'showPartitionKeys' on="click"}}>
+              {{#if partitionArrowRight}}
+                <div class="arrow-down"></div>
+              {{ else }}
+                <div class="arrow-right-no-floats"></div>
+              {{/if}}
+              <span>Partition Keys</span>
+            </div>
             {{#if showPartitions}}
                 {{#if selectedDataset.partitionTableEmpty}}
                   <div class="table-empty"> No Partition Keys </div>
@@ -500,7 +514,14 @@
                 {{/if}}
             {{/if}}
           </div>
-          <div class="metadata-title table-title" {{action 'showTableProperties' on="click"}}> Table Properties </div>
+          <div class="metadata-title table-title" {{action 'showTableProperties' on="click"}}>
+            {{#if tablePropertiesArrowRight}}
+              <div class="arrow-down"></div>
+            {{ else }}
+              <div class="arrow-right-no-floats"></div>
+            {{/if}}
+            <span>Table Properties</span>
+          </div>
           {{#if showProperties}}
               <div class="metadata-wrapper">
                  <div class="table-view">
