@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.Service;
 
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   private String name;
   private Map<String, String> properties;
   private List<ServiceWorker> workers;
+  private List<Service> guavaWorkers;
   private List<HttpServiceHandler> handlers;
 
   /**
@@ -42,6 +44,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
    */
   public DefaultServiceConfigurer() {
     this.workers = Lists.newArrayList();
+    this.guavaWorkers = Lists.newArrayList();
     this.properties = Maps.newHashMap();
     this.handlers = Lists.newArrayList();
   }
@@ -59,6 +62,11 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   @Override
   public <T extends ServiceWorker> void addWorker(T worker) {
     workers.add(worker);
+  }
+
+
+  public void addWorker(Service worker) {
+    guavaWorkers.add(worker);
   }
 
   @Override
@@ -89,6 +97,11 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   @Override
   public List<ServiceWorker> getWorkers() {
     return workers;
+  }
+
+  @Override
+  public List<Service> getGuavaWorkers() {
+    return guavaWorkers;
   }
 
   @Override

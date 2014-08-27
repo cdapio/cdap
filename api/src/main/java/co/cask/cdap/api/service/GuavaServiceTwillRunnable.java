@@ -83,8 +83,6 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
       Throwables.propagate(e);
     }
 
-    service.startAndWait();
-    LOG.info("Instantiated service " + name);
   }
 
   @Override
@@ -100,11 +98,20 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void destroy() {
-    // no-op
+    LOG.info("Destroyed service " + name);
+    service.stopAndWait();
   }
 
   @Override
   public void run() {
-    // no-op
+    service.startAndWait();
+    LOG.info("Instantiated service " + name);
+    while (service.isRunning()) {
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
   }
 }

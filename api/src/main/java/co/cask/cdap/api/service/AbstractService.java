@@ -18,8 +18,6 @@ package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 
-import java.util.List;
-
 /**
  * An abstract implementation of {@link Service}. Users may extend this to write a {@link Service}.
  *
@@ -82,6 +80,9 @@ public abstract class AbstractService implements Service {
     configurer.addWorkers(workers);
   }
 
+  protected void addWorker(com.google.common.util.concurrent.Service worker) {
+    configurer.addWorker(worker);
+  }
   /**
    * Implement this method and use a {@link ServiceConfigurer} to add a request handler
    * and workers.
