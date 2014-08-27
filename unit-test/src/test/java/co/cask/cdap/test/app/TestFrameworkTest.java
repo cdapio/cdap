@@ -126,20 +126,17 @@ public class TestFrameworkTest extends TestBase {
     Assert.assertNotNull(scheduleId);
     Assert.assertFalse(scheduleId.isEmpty());
 
-    String notExpected = "RUNNING";
-
-    workFlowStatusCheckExpected(notExpected, 10, wfmanager, scheduleId);
-    workFlowStatusCheck(notExpected, 5, wfmanager, scheduleId);
-
-    List<RunRecord> history = wfmanager.getHistory();
-    int workflowRuns = history.size();
-    Assert.assertTrue(workflowRuns >= 1);
+    List<RunRecord> history;
+    int workflowRuns = 0;
+    // the workflow stop method from the listener is called long after the run method completes,
+    // its handled by Guava service, so we are giving a long wait time to avoid failing
+    workFlowHistoryCheck(30, wfmanager, 0);
 
     String status = wfmanager.getSchedule(scheduleId).status();
-    Assert.assertEquals("SCHEDULED", status);
+    Assert.assertNotEquals("SUSPENDED", status);
 
     wfmanager.getSchedule(scheduleId).suspend();
-    Assert.assertEquals("SUSPENDED", wfmanager.getSchedule(scheduleId).status());
+    workFlowStatusCheck(5, scheduleId, wfmanager, "SUSPENDED");
 
     TimeUnit.SECONDS.sleep(3);
     history = wfmanager.getHistory();
@@ -151,15 +148,11 @@ public class TestFrameworkTest extends TestBase {
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
     wfmanager.getSchedule(scheduleId).resume();
-    TimeUnit.SECONDS.sleep(3);
 
-    notExpected = "SUSPENDED";
-    workFlowStatusCheck(notExpected, 5, wfmanager, scheduleId);
+    //Check that after resume it goes to "SCHEDULED" state
+    workFlowStatusCheck(5, scheduleId, wfmanager, "SCHEDULED");
 
-    int workflowRunsAfterResume = wfmanager.getHistory().size();
-
-    //Verify there is atleast one run after the pause
-    Assert.assertTrue(workflowRunsAfterResume > workflowRunsAfterSuspend + 1);
+    workFlowHistoryCheck(30, wfmanager, workflowRunsAfterSuspend);
 
     //check scheduled state
     Assert.assertEquals("SCHEDULED", wfmanager.getSchedule(scheduleId).status());
@@ -169,40 +162,44 @@ public class TestFrameworkTest extends TestBase {
 
     //suspend the schedule
     wfmanager.getSchedule(scheduleId).suspend();
-    Assert.assertEquals("SUSPENDED", wfmanager.getSchedule(scheduleId).status());
 
-    TimeUnit.SECONDS.sleep(2);
+    //Check that after resume it goes to "SUSPENDED" state
+    workFlowStatusCheck(5, scheduleId, wfmanager, "SUSPENDED");
+
+    TimeUnit.SECONDS.sleep(10);
     applicationManager.stopAll();
-
   }
 
-  private void workFlowStatusCheck(String notExpected, int timeOut, WorkflowManager wfManager,
-                                   String scheduleId) throws InterruptedException {
-    String wfStatus = null;
+  private void workFlowHistoryCheck(int timeOut, WorkflowManager wfmanager, int expected) throws InterruptedException {
     int trial = 0;
+    List<RunRecord> history;
+    int workflowRuns = 0;
     while (trial++ < timeOut) {
-      wfStatus = wfManager.getSchedule(scheduleId).status();
-      if (notExpected != wfStatus) {
+      history = wfmanager.getHistory();
+      workflowRuns= history.size();
+      if (workflowRuns > expected) {
         return;
       }
       TimeUnit.SECONDS.sleep(1);
     }
-    Assert.assertNotEquals(notExpected, wfStatus);
+    Assert.assertTrue(workflowRuns > expected);
   }
 
-  private void workFlowStatusCheckExpected(String expected, int timeOut, WorkflowManager wfManager,
-                                   String scheduleId) throws InterruptedException {
-    String wfStatus = null;
+
+  private void workFlowStatusCheck(int timeOut, String scheduleId, WorkflowManager wfmanager,
+                                   String expected) throws InterruptedException {
     int trial = 0;
+    String status = null;
     while (trial++ < timeOut) {
-      wfStatus = wfManager.getSchedule(scheduleId).status();
-      if (expected == wfStatus) {
+      status = wfmanager.getSchedule(scheduleId).status();
+      if (status.equals(expected)) {
         return;
       }
       TimeUnit.SECONDS.sleep(1);
     }
-    Assert.assertEquals(expected, wfStatus);
+    Assert.assertEquals(status, expected);
   }
+
 
   @Category(XSlowTests.class)
   @Test(timeout = 240000)
