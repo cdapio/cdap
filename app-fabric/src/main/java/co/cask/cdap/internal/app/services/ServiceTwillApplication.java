@@ -31,13 +31,15 @@ import java.util.List;
  */
 public class ServiceTwillApplication implements TwillApplication {
   private final Service service;
+  private final String appName;
 
   /**
    * Create a TwillApplication from a {@link Service}.
    * @param service
    */
-  public ServiceTwillApplication(Service service) {
+  public ServiceTwillApplication(Service service, String appName) {
     this.service = service;
+    this.appName = appName;
   }
 
   @Override
@@ -51,7 +53,7 @@ public class ServiceTwillApplication implements TwillApplication {
     TwillSpecification.Builder.RunnableSetter runnableSetter = TwillSpecification.Builder.with()
                                      .setName(configurer.getName())
                                      .withRunnable()
-                                     .add(new HttpServiceTwillRunnable(configurer.getName(),
+                                     .add(new HttpServiceTwillRunnable(appName, configurer.getName(),
                                                                        serviceHandlers))
                                      .noLocalFiles();
     for (ServiceWorker worker : configurer.getWorkers()) {

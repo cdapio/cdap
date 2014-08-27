@@ -43,12 +43,16 @@ public final class HttpHandlerFactory {
 
   private final LoadingCache<TypeToken<?>, Class<?>> handlerClasses;
 
-  public HttpHandlerFactory() {
+  /**
+   * Creates an instance that could generate {@link HttpHandler} that always binds to service Path that starts with
+   * the given prefix.
+   */
+  public HttpHandlerFactory(final String pathPrefix) {
     handlerClasses = CacheBuilder.newBuilder().build(new CacheLoader<TypeToken<?>, Class<?>>() {
       @Override
       public Class<?> load(TypeToken<?> key) throws Exception {
         // Generate the new class if it hasn't before and load it through a ByteCodeClassLoader.
-        ClassDefinition classDefinition = new HttpHandlerGenerator().generate(key);
+        ClassDefinition classDefinition = new HttpHandlerGenerator().generate(key, pathPrefix);
 
         ClassLoader typeClassLoader = ClassLoaders.getClassLoader(key);
         ByteCodeClassLoader classLoader = new ByteCodeClassLoader(typeClassLoader);

@@ -44,8 +44,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -58,7 +56,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.URL;
 import java.sql.Connection;
@@ -223,8 +220,8 @@ public class TestFrameworkTest extends TestBase {
     LOG.info("Service Started");
 
     // Look for service endpoint
-    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices", AppWithServices.SERVICE_NAME,
-                                                                         AppWithServices.SERVICE_NAME);
+    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices",
+                                                                        AppWithServices.SERVICE_NAME);
     final BlockingQueue<Discoverable> discoverables = new LinkedBlockingQueue<Discoverable>();
     serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
       @Override
@@ -238,9 +235,9 @@ public class TestFrameworkTest extends TestBase {
     Assert.assertNotNull(discoverable);
     Assert.assertTrue(discoverables.isEmpty());
 
-
-    URL url = new URL(String.format("http://%s:%d/ping2", discoverable.getSocketAddress().getHostName(),
-                                                          discoverable.getSocketAddress().getPort()));
+    URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/ping2",
+                                    discoverable.getSocketAddress().getHostName(),
+                                    discoverable.getSocketAddress().getPort(), AppWithServices.SERVICE_NAME));
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(response.getResponseCode(), 200);

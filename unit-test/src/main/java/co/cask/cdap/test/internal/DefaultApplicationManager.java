@@ -334,8 +334,8 @@ public class DefaultApplicationManager implements ApplicationManager {
         }
 
         @Override
-        public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
-          String discoveryName = String.format("service.%s.%s.%s.%s", accountId, applicationId, serviceId, serviceName);
+        public ServiceDiscovered discover(String applicationId, String serviceId) {
+          String discoveryName = String.format("service.%s.%s.%s", accountId, applicationId, serviceId);
           return discoveryServiceClient.discover(discoveryName);
         }
       };
