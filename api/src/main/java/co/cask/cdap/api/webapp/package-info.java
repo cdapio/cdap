@@ -15,9 +15,6 @@
  */
 
 /**
- * This package contains internal classes for supporting the CDAP API.
- * <p>
- * These should not be used directly by users of the CDAP API, as they may change in a later release without warning.
- * </p>
+ * For web application.
  */
-package co.cask.cdap.internal.schedule;
+package co.cask.cdap.api.webapp;
