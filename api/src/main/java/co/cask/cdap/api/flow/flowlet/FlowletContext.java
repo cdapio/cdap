@@ -17,11 +17,12 @@
 package co.cask.cdap.api.flow.flowlet;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.data.DataSetContext;
 
 /**
  * This interface represents the Flowlet context.
  */
-public interface FlowletContext extends RuntimeContext {
+public interface FlowletContext extends RuntimeContext, DataSetContext {
   /**
    * @return Number of instances of this flowlet.
    */

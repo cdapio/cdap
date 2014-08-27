@@ -19,6 +19,6 @@
  *
  * All data access is performed via system or user defined (custom) {@link co.cask.cdap.api.data.DataSet DataSets}.
  *
- * @deprecated As of Reactor 2.3.0, replaced by {@link co.cask.cdap.api.dataset}
+ * @deprecated As of CDAP 2.3.0, replaced by {@link co.cask.cdap.api.dataset}
  */
 package co.cask.cdap.api.data;

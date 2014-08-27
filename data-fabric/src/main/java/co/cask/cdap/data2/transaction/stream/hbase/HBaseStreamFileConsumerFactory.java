@@ -109,23 +109,6 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
     }
   }
 
-  @Override
-  protected void getFileOffsets(Location partitionLocation,
-                                Collection<? super StreamFileOffset> fileOffsets,
-                                int generation) throws IOException {
-    // TODO: Support dynamic writer instances discovery
-    // Current assume it won't change and is based on cConf
-    int instances = cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 0);
-    String filePrefix = cConf.get(Constants.Stream.FILE_PREFIX);
-    for (int i = 0; i < instances; i++) {
-      // The actual file prefix in distributed mode is formed by file prefix in cConf + writer instance id
-      String streamFilePrefix = filePrefix + '.' + i;
-      Location eventLocation = StreamUtils.createStreamLocation(partitionLocation, streamFilePrefix,
-                                                                0, StreamFileType.EVENT);
-      fileOffsets.add(new StreamFileOffset(eventLocation, 0, generation));
-    }
-  }
-
   private synchronized HBaseAdmin getAdmin() throws IOException {
     if (admin == null) {
       admin = new HBaseAdmin(hConf);

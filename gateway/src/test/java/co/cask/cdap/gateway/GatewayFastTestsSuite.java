@@ -24,8 +24,6 @@ import co.cask.cdap.gateway.handlers.ProcedureHandlerTest;
 import co.cask.cdap.gateway.handlers.RuntimeArgumentTest;
 import co.cask.cdap.gateway.handlers.StreamHandlerTest;
 import co.cask.cdap.gateway.handlers.hooks.MetricsReporterHookTest;
-import co.cask.cdap.gateway.tools.DataSetClientTest;
-import co.cask.cdap.gateway.tools.StreamClientTest;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ObjectArrays;
@@ -65,8 +63,6 @@ import javax.annotation.Nullable;
 @Suite.SuiteClasses(value = {
   PingHandlerTest.class,
   ProcedureHandlerTest.class,
-  DataSetClientTest.class,
-  StreamClientTest.class,
   NettyFlumeCollectorTest.class,
   MetricsReporterHookTest.class,
   StreamHandlerTest.class,

@@ -77,8 +77,8 @@ public class MapReduceMetricsWriter {
     for (TaskReport tr : jobConf.getTaskReports(TaskType.REDUCE)) {
       runningReducers += tr.getRunningTaskAttemptIds().size();
     }
-    int memoryPerMapper = context.getSpecification().getMapperMemoryMB();
-    int memoryPerReducer = context.getSpecification().getReducerMemoryMB();
+    int memoryPerMapper = jobConf.getConfiguration().getInt(Job.MAP_MEMORY_MB, Job.DEFAULT_MAP_MEMORY_MB);
+    int memoryPerReducer = jobConf.getConfiguration().getInt(Job.REDUCE_MEMORY_MB, Job.DEFAULT_REDUCE_MEMORY_MB);
 
     // mapred counters are running counters whereas our metrics timeseries and aggregates make more
     // sense as incremental numbers.  So we want to subtract the current counter value from the previous before

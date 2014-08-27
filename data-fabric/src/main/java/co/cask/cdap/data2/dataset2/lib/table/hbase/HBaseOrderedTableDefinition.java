@@ -63,7 +63,9 @@ public class HBaseOrderedTableDefinition
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     // NOTE: ttl property is applied on server-side in CPs
-    return new HBaseOrderedTable(spec.getName(), conflictDetection, hConf);
+    // check if read-less increment operations are supported
+    boolean supportsIncrements = HBaseOrderedTableAdmin.supportsReadlessIncrements(spec);
+    return new HBaseOrderedTable(spec.getName(), conflictDetection, hConf, supportsIncrements);
   }
 
   @Override

@@ -58,7 +58,7 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
                         Map<String, Closeable> datasets, Arguments runtimeArguments,
                         ProcedureSpecification procedureSpec, MetricsCollectionService collectionService,
                         ProgramServiceDiscovery serviceDiscovery) {
-    super(program, runId, datasets);
+    super(program, runId, datasets, collectionService);
     this.accountId = program.getAccountId();
     this.procedureId = program.getName();
     this.instanceId = instanceId;

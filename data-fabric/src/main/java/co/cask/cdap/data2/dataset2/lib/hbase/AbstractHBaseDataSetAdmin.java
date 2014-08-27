@@ -215,6 +215,11 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
     public CoprocessorJar(Iterable<? extends Class<? extends Coprocessor>> coprocessors, Location jarLocation) {
       this.coprocessors = ImmutableList.copyOf(coprocessors);
+      // set coprocessor loading order to match iteration order
+      int priority = Coprocessor.PRIORITY_USER;
+      for (Class<? extends Coprocessor> cpClass : coprocessors) {
+        priorities.put(cpClass, priority++);
+      }
       this.jarLocation = jarLocation;
     }
 

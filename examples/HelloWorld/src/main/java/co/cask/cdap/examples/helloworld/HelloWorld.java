@@ -47,7 +47,7 @@ public class HelloWorld extends AbstractApplication {
   @Override
   public void configure() {
     setName("HelloWorld");
-    setDescription("A Hello World program for the Continuuity Reactor");
+    setDescription("A Hello World program for the Cask Data Application Platform");
     addStream(new Stream("who"));
     createDataset("whom", KeyValueTable.class);
     addFlow(new WhoFlow());

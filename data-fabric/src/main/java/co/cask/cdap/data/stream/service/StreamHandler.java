@@ -15,43 +15,24 @@
  */
 package co.cask.cdap.data.stream.service;
 
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
-import co.cask.cdap.data.stream.StreamPropertyListener;
-import co.cask.cdap.data2.queue.ConsumerConfig;
-import co.cask.cdap.data2.queue.DequeueResult;
-import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.data2.transaction.stream.StreamConsumer;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.cdap.proto.StreamProperties;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import com.continuuity.tephra.TransactionAware;
-import com.continuuity.tephra.TransactionExecutor;
-import com.continuuity.tephra.TransactionExecutorFactory;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Charsets;
-import com.google.common.base.Objects;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.hash.Hashing;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -60,17 +41,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
-import org.apache.twill.common.Cancellable;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -90,7 +66,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     .registerTypeAdapter(StreamConfig.class, new StreamConfigAdapter())
     .create();
 
-  private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
   private final ConcurrentStreamWriter streamWriter;
@@ -99,19 +74,15 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   // Currently is here to align with the existing Reactor organization that dataset admin is not aware of MDS
   private final StreamMetaStore streamMetaStore;
 
-  // A timed cache from consumer id (group id) to stream consumer.
-  private final LoadingCache<ConsumerCacheKey, StreamDequeuer> dequeuerCache;
-
   @Inject
   public StreamHandler(CConfiguration cConf, Authenticator authenticator,
                        StreamCoordinator streamCoordinator, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
-                       StreamConsumerFactory streamConsumerFactory, StreamFileWriterFactory writerFactory,
-                       TransactionExecutorFactory executorFactory, MetricsCollectionService metricsCollectionService) {
+                       StreamFileWriterFactory writerFactory,
+                       MetricsCollectionService metricsCollectionService) {
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
-    this.dequeuerCache = createDequeuerCache(cConf, streamConsumerFactory, executorFactory, streamCoordinator);
 
     MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.REACTOR, getMetricsContext(), "0");
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
@@ -130,8 +101,9 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountID = getAuthenticatedAccountId(request);
 
     if (streamMetaStore.streamExists(accountID, stream)) {
-      StreamConfig config = streamAdmin.getConfig(stream);
-      responder.sendJson(HttpResponseStatus.OK, config, StreamConfig.class, GSON);
+      StreamConfig streamConfig = streamAdmin.getConfig(stream);
+      StreamProperties streamProperties = new StreamProperties(streamConfig.getName(), streamConfig.getTTL());
+      responder.sendJson(HttpResponseStatus.OK, streamProperties, StreamProperties.class, GSON);
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
@@ -175,74 +147,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
     }
-  }
-
-  @POST
-  @Path("/{stream}/dequeue")
-  public void dequeue(HttpRequest request, HttpResponder responder,
-                      @PathParam("stream") String stream) throws Exception {
-    String accountId = getAuthenticatedAccountId(request);
-
-    // Get the consumer Id
-    String consumerId = request.getHeader(Constants.Stream.Headers.CONSUMER_ID);
-    long groupId;
-    try {
-      groupId = Long.parseLong(consumerId);
-    } catch (Exception e) {
-      LOG.trace("Invalid consumerId: {}", consumerId, e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Invalid or missing consumer id");
-      return;
-    }
-
-    // See if the consumer id is valid
-    StreamDequeuer dequeuer;
-    try {
-      dequeuer = dequeuerCache.get(new ConsumerCacheKey(accountId, stream, groupId));
-    } catch (Exception e) {
-      LOG.trace("Failed to get consumer", e);
-      responder.sendError(HttpResponseStatus.NOT_FOUND, "Stream or consumer does not exists.");
-      return;
-    }
-
-    // Dequeue event
-    StreamEvent event = dequeuer.fetch();
-    if (event == null) {
-      responder.sendStatus(HttpResponseStatus.NO_CONTENT);
-      return;
-    }
-
-    // Construct response headers
-    ImmutableMultimap.Builder<String, String> builder = ImmutableMultimap.builder();
-    for (Map.Entry<String, String> entry : event.getHeaders().entrySet()) {
-      builder.put(stream + "." + entry.getKey(), entry.getValue());
-    }
-
-    responder.sendBytes(HttpResponseStatus.OK, event.getBody(), builder.build());
-  }
-
-  @POST
-  @Path("/{stream}/consumer-id")
-  public void newConsumer(HttpRequest request, HttpResponder responder,
-                          @PathParam("stream") String stream) throws Exception {
-    String accountId = getAuthenticatedAccountId(request);
-
-    if (!streamMetaStore.streamExists(accountId, stream)) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
-      return;
-    }
-
-    long groupId = Hashing.md5().newHasher()
-      .putString(stream)
-      .putString(accountId)
-      .putLong(System.nanoTime())
-      .hash().asLong();
-
-    streamAdmin.configureInstances(QueueName.fromStream(stream), groupId,
-                                   cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 1));
-
-    String consumerId = Long.toString(groupId);
-    responder.sendByteArray(HttpResponseStatus.OK, consumerId.getBytes(Charsets.UTF_8),
-                            ImmutableMultimap.of(Constants.Stream.Headers.CONSUMER_ID, consumerId));
   }
 
   @POST
@@ -317,78 +221,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     return config;
   }
 
-  /**
-   * Creates a loading cache for stream consumers. Used by the dequeue REST API.
-   */
-  private LoadingCache<ConsumerCacheKey, StreamDequeuer> createDequeuerCache(
-    final CConfiguration cConf, final StreamConsumerFactory consumerFactory,
-    final TransactionExecutorFactory executorFactory, final StreamCoordinator streamCoordinator) {
-
-    return CacheBuilder
-      .newBuilder()
-      .expireAfterAccess(Constants.Stream.CONSUMER_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-      .removalListener(new RemovalListener<ConsumerCacheKey, StreamDequeuer>() {
-        @Override
-        public void onRemoval(RemovalNotification<ConsumerCacheKey, StreamDequeuer> notification) {
-          try {
-            StreamDequeuer dequeuer = notification.getValue();
-            if (dequeuer != null) {
-              dequeuer.close();
-            }
-          } catch (IOException e) {
-            LOG.error("Failed to close stream consumer for {}", notification.getKey(), e);
-          }
-        }
-      }).build(new CacheLoader<ConsumerCacheKey, StreamDequeuer>() {
-        @Override
-        public StreamDequeuer load(ConsumerCacheKey key) throws Exception {
-          if (!streamMetaStore.streamExists(key.getAccountId(), key.getStreamName())) {
-            throw new IllegalStateException("Stream does not exists");
-          }
-
-          // TODO: Deal with dynamic resize of stream handler instances
-          int groupSize = cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 1);
-          ConsumerConfig config = new ConsumerConfig(key.getGroupId(),
-                                                     cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0),
-                                                     groupSize, DequeueStrategy.FIFO, null);
-
-          StreamConsumer consumer = consumerFactory.create(QueueName.fromStream(key.getStreamName()),
-                                                           Constants.Stream.HANDLER_CONSUMER_NS, config);
-          Cancellable cancellable = streamCoordinator.addListener(key.getStreamName(),
-                                                                  createStreamPropertyListener(key));
-          return new StreamDequeuer(consumer, executorFactory, cancellable);
-        }
-      });
-  }
-
-  /**
-   * Creates a {@link StreamPropertyListener} that would reload cached consumer if any stream properties changed.
-   */
-  private StreamPropertyListener createStreamPropertyListener(final ConsumerCacheKey key) throws IOException {
-
-    return new StreamPropertyListener() {
-      @Override
-      public void generationChanged(String streamName, int generation) {
-        dequeuerCache.refresh(key);
-      }
-
-      @Override
-      public void generationDeleted(String streamName) {
-        dequeuerCache.refresh(key);
-      }
-
-      @Override
-      public void ttlChanged(String streamName, long ttl) {
-        dequeuerCache.refresh(key);
-      }
-
-      @Override
-      public void ttlDeleted(String streamName) {
-        dequeuerCache.refresh(key);
-      }
-    };
-  }
-
   private boolean isValidName(String streamName) {
     // TODO: This is copied from StreamVerification in app-fabric as this handler is in data-fabric module.
     return CharMatcher.inRange('A', 'Z')
@@ -401,9 +233,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private Map<String, String> getHeaders(HttpRequest request, String stream) {
     // build a new event from the request, start with the headers
     ImmutableMap.Builder<String, String> headers = ImmutableMap.builder();
-    // set some built-in headers
-    headers.put(Constants.Gateway.HEADER_FROM_COLLECTOR, Constants.Gateway.STREAM_HANDLER_NAME);
-    headers.put(Constants.Gateway.HEADER_DESTINATION_STREAM, stream);
     // and transfer all other headers that are to be preserved
     String prefix = stream + ".";
     for (Map.Entry<String, String> header : request.getHeaders()) {
@@ -412,98 +241,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       }
     }
     return headers.build();
-  }
-
-  private static final class ConsumerCacheKey {
-    private final String accountId;
-    private final String streamName;
-    private final long groupId;
-
-    private ConsumerCacheKey(String accountId, String streamName, long groupId) {
-      this.accountId = accountId;
-      this.streamName = streamName;
-      this.groupId = groupId;
-    }
-
-    public String getAccountId() {
-      return accountId;
-    }
-
-    public String getStreamName() {
-      return streamName;
-    }
-
-    public long getGroupId() {
-      return groupId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      ConsumerCacheKey that = (ConsumerCacheKey) o;
-      return Objects.equal(streamName, that.streamName) && groupId == that.groupId;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(streamName, groupId);
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("stream", streamName)
-        .add("groupId", groupId)
-        .toString();
-    }
-  }
-
-  /**
-   * A Stream consumer that will commit automatically right after dequeue.
-   */
-  private static final class StreamDequeuer implements Closeable {
-
-    private final StreamConsumer consumer;
-    private final TransactionExecutor txExecutor;
-    private final Cancellable cancellable;
-
-    private StreamDequeuer(StreamConsumer consumer,
-                           TransactionExecutorFactory executorFactory, Cancellable cancellable) {
-      this.consumer = consumer;
-      this.txExecutor = executorFactory.createExecutor(ImmutableList.<TransactionAware>of(consumer));
-      this.cancellable = cancellable;
-    }
-
-    /**
-     * @return an event fetched from the stream or {@code null} if no event.
-     */
-    StreamEvent fetch() throws Exception {
-      return txExecutor.execute(new Callable<StreamEvent>() {
-
-        @Override
-        public StreamEvent call() throws Exception {
-          synchronized (StreamDequeuer.this) {
-            DequeueResult<StreamEvent> poll = consumer.poll(1, 0, TimeUnit.SECONDS);
-            return poll.isEmpty() ? null : poll.iterator().next();
-          }
-        }
-      });
-    }
-
-    @Override
-    public void close() throws IOException {
-      try {
-        consumer.close();
-      } finally {
-        cancellable.cancel();
-      }
-    }
   }
 
   /**

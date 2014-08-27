@@ -15,7 +15,6 @@
  */
 
 /**
- * Collection of {@link co.cask.cdap.api.dataset.Dataset} implementations available out-of-the-box in Continuity
- * Reactor.
+ * Collection of {@link co.cask.cdap.api.dataset.Dataset} implementations available out-of-the-box in CDAP.
  */
 package co.cask.cdap.api.dataset.lib;

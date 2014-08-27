@@ -21,6 +21,7 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -51,6 +52,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     jsonObj.add("flows", serializeMap(src.getFlows(), context, FlowSpecification.class));
     jsonObj.add("procedures", serializeMap(src.getProcedures(), context, ProcedureSpecification.class));
     jsonObj.add("mapReduces", serializeMap(src.getMapReduce(), context, MapReduceSpecification.class));
+    jsonObj.add("sparks", serializeMap(src.getSpark(), context, SparkSpecification.class));
     jsonObj.add("workflows", serializeMap(src.getWorkflows(), context, WorkflowSpecification.class));
     jsonObj.add("services", serializeMap(src.getServices(), context, ServiceSpecification.class));
 
@@ -77,6 +79,8 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
                                                                     context, ProcedureSpecification.class);
     Map<String, MapReduceSpecification> mapReduces = deserializeMap(jsonObj.get("mapReduces"),
                                                                     context, MapReduceSpecification.class);
+    Map<String, SparkSpecification> sparks = deserializeMap(jsonObj.get("sparks"),
+                                                                    context, SparkSpecification.class);
     Map<String, WorkflowSpecification> workflows = deserializeMap(jsonObj.get("workflows"),
                                                                   context, WorkflowSpecification.class);
 
@@ -85,7 +89,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
 
     return new DefaultApplicationSpecification(name, description, streams,
                                                datasetModules, datasetInstances,
-                                               flows, procedures, mapReduces,
+                                               flows, procedures, mapReduces, sparks,
                                                workflows, services);
   }
 }

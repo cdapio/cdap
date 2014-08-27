@@ -242,12 +242,6 @@ public final class Constants {
       public static final String CONSUMER_ID = "X-Continuuity-ConsumerId";
     }
 
-    // Time for a stream consumer to timeout in StreamHandler for REST API dequeue.
-    public static final long CONSUMER_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(60);
-
-    // The consumer state table namespace for consumers created from stream handler for REST API dequeue.
-    public static final String HANDLER_CONSUMER_NS = "http.stream.consumer";
-
     //max instances of stream handler service
     public static final String MAX_INSTANCES = "stream.container.instances";
 
@@ -293,11 +287,9 @@ public final class Constants {
      * Others.
      */
     public static final String GATEWAY_VERSION = "/v2";
-    public static final String CONTINUUITY_PREFIX = "X-Continuuity-";
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
-    public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";
     public static final String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
     public static final String CFG_PASSPORT_SERVER_URI = "passport.server.uri";
   }
@@ -451,11 +443,11 @@ public final class Constants {
    * Explore module configuration.
    */
   public static final class Explore {
-    public static final String CCONF_KEY = "reactor.cconfiguration";
-    public static final String HCONF_KEY = "reactor.hconfiguration";
-    public static final String TX_QUERY_KEY = "reactor.hive.query.tx.id";
+    public static final String CCONF_KEY = "explore.cconfiguration";
+    public static final String HCONF_KEY = "explore.hconfiguration";
+    public static final String TX_QUERY_KEY = "explore.hive.query.tx.id";
 
-    public static final String DATASET_NAME = "reactor.dataset.name";
+    public static final String DATASET_NAME = "explore.dataset.name";
     public static final String DATASET_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.datasets.DatasetStorageHandler";
     public static final String EXPLORE_CLASSPATH = "explore.classpath";
     public static final String EXPLORE_CONF_FILES = "explore.conf.files";

@@ -22,9 +22,13 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.schedule.DataSetBasedScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
@@ -68,6 +72,8 @@ public class SchedulerTest {
   private static TransactionExecutorFactory factory;
   private static DatasetFramework dsFramework;
   private static TransactionManager txService;
+  private static DatasetOpExecutor dsOpsService;
+  private static DatasetService dsService;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -78,17 +84,25 @@ public class SchedulerTest {
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new MetricsClientRuntimeModule().getInMemoryModules(),
                                     new DataFabricModules().getInMemoryModules(),
-                                    new DataSetsModules().getInMemoryModule(),
+                                    new DataSetsModules().getLocalModule(),
+                                    new DataSetServiceModules().getInMemoryModule(),
+                                    new AuthModule(),
                                     new ExploreClientModule());
     txService = injector.getInstance(TransactionManager.class);
+    txService.startAndWait();
+    dsOpsService = injector.getInstance(DatasetOpExecutor.class);
+    dsOpsService.startAndWait();
+    dsService = injector.getInstance(DatasetService.class);
+    dsService.startAndWait();
     dsFramework = injector.getInstance(DatasetFramework.class);
     factory = injector.getInstance(TransactionExecutorFactory.class);
-    txService.startAndWait();
   }
 
   @AfterClass
   public static void afterClass() {
-    txService.stop();
+    dsService.stopAndWait();
+    dsOpsService.stopAndWait();
+    txService.stopAndWait();
   }
 
   public static void schedulerSetup(boolean enablePersistence, String schedulerName)

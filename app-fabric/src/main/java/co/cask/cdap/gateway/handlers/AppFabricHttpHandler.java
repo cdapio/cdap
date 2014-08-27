@@ -26,6 +26,7 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.Manager;
@@ -185,6 +186,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static final Map<String, ProgramType> RUNNABLE_TYPE_MAP = new ImmutableMap.Builder<String, ProgramType>()
     .put("mapreduce", ProgramType.MAPREDUCE)
+    .put("spark", ProgramType.SPARK)
     .put("flows", ProgramType.FLOW)
     .put("procedures", ProgramType.PROCEDURE)
     .put("workflows", ProgramType.WORKFLOW)
@@ -411,7 +413,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns status of a runnable specified by the type{flows,workflows,mapreduce,procedures,services}.
+   * Returns status of a runnable specified by the type{flows,workflows,mapreduce,spark,procedures,services}.
    */
   @GET
   @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/status")
@@ -490,7 +492,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         );
         // wait for status to come back in case we are polling mapreduce status in workflow
         // status map contains either a status or an error
-        while (statusMap.getStatus().isEmpty() && statusMap.getError().isEmpty()) {
+        while (statusMap.getStatus() == null ||
+               (statusMap.getStatus().isEmpty() && statusMap.getError().isEmpty())) {
           Thread.sleep(1);
         }
       } else {
@@ -1636,6 +1639,17 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Returns specification of spark program.
+   */
+  @GET
+  @Path("/apps/{app-id}/spark/{spark-id}")
+  public void sparkSpecification(HttpRequest request, HttpResponder responder,
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("spark-id")final String sparkId) {
+    runnableSpecification(request, responder, appId, ProgramType.SPARK, sparkId);
+  }
+
+  /**
    * Returns specification of workflow.
    */
   @GET
@@ -2457,6 +2471,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return GSON.toJson(appSpec.getProcedures().get(id.getId()));
       } else if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(runnableId)) {
         return GSON.toJson(appSpec.getMapReduce().get(id.getId()));
+      } else if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getSpark().get(id.getId()));
       } else if (type == ProgramType.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
         return GSON.toJson(appSpec.getWorkflows().get(id.getId()));
       } else if (type == ProgramType.SERVICE && appSpec.getServices().containsKey(runnableId)) {
@@ -2544,6 +2560,15 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Returns a list of spark jobs associated with account.
+   */
+  @GET
+  @Path("/spark")
+  public void getAllSpark(HttpRequest request, HttpResponder responder) {
+    programList(request, responder, ProgramType.SPARK, null);
+  }
+
+  /**
    * Returns a list of workflows associated with account.
    */
   @GET
@@ -2599,6 +2624,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getMapreduceByApp(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") final String appId) {
     programList(request, responder, ProgramType.MAPREDUCE, appId);
+  }
+
+  /**
+   * Returns a list of spark jobs associated with account & application.
+   */
+  @GET
+  @Path("/apps/{app-id}/spark")
+  public void getSparkByApp(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId) {
+    programList(request, responder, ProgramType.SPARK, appId);
   }
 
   /**
@@ -2731,6 +2766,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       } else if (type == ProgramType.MAPREDUCE) {
         for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
           result.add(makeProgramRecord(appSpec.getName(), mrSpec, ProgramType.MAPREDUCE));
+        }
+      } else if (type == ProgramType.SPARK) {
+        for (SparkSpecification sparkSpec : appSpec.getSpark().values()) {
+            result.add(makeProgramRecord(appSpec.getName(), sparkSpec, ProgramType.SPARK));
         }
       } else if (type == ProgramType.WORKFLOW) {
         for (WorkflowSpecification wfSpec : appSpec.getWorkflows().values()) {

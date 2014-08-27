@@ -2,10 +2,12 @@
  Java Client API
 =================
 
+.. highlight:: console
+
 Introduction
 ============
 
-The Java Client API provides methods for interacting with Reactor from Java applications.
+The CDAP Java Client API provides methods for interacting with CDAP from Java applications.
 
 Maven Dependency
 ================
@@ -21,7 +23,7 @@ To use the Java Client API in your project, add this Maven dependency::
 Components
 ==========
 
-The Java Client API allows you to interact with these Reactor components:
+The Java Client API allows you to interact with these CDAP components:
 
 - **ApplicationClient:** interacting with applications
 - **DatasetClient:** interacting with Datasets
@@ -30,7 +32,7 @@ The Java Client API allows you to interact with these Reactor components:
 - **MetricsClient:** interacting with Metrics
 - **MonitorClient:** monitoring System Services
 - **ProcedureClient:** interacting with Procedures
-- **ProgramClient:** interacting with Flows, Procedures, MapReduce jobs, User Services, and Workflows
+- **ProgramClient:** interacting with Flows, Procedures, MapReduce Jobs, User Services, and Workflows
 - **QueryClient:** querying Datasets
 - **ServiceClient:** interacting with User Services
 - **StreamClient:** interacting with Streams
@@ -43,10 +45,10 @@ ApplicationClient
 
 ::
 
-  // Interact with the CDAP server located at example.com, port 10000
+  // Interact with the DAP instance located at example.com, port 10000
   ClientConfig clientConfig = new ClientConfig("example.com", 10000);
 
-  // Construct the client used to interact with the CDAP server
+  // Construct the client used to interact with CDAP
   ApplicationClient appClient = new ApplicationClient(clientConfig);
 
   // Fetch the list of applications
@@ -67,13 +69,13 @@ DatasetClient
 
 ::
 
-  // Interact with the CDAP server located at example.com, port 10000
+  // Interact with the DAP instance located at example.com, port 10000
   ClientConfig clientConfig = new ClientConfig("example.com", 10000);
 
-  // Construct the client used to interact with the CDAP server
+  // Construct the client used to interact with CDAP
   DatasetClient datasetClient = new DatasetClient(clientConfig);
 
-  // Fetch list of Datasets
+  // Fetch the list of Datasets
   List<DatasetSpecification> datasets = datasetClient.list();
 
   // Create a Dataset
@@ -81,3 +83,5 @@ DatasetClient
 
   // Delete a Dataset
   datasetClient.delete("someDataset");
+  
+  .. highlight:: java

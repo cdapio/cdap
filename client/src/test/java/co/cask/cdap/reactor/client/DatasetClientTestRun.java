@@ -110,5 +110,9 @@ public class DatasetClientTestRun extends ClientTestBase {
     moduleClient.add("testModule1", StandaloneDatasetModule.class.getName(), moduleJarFile);
     Assert.assertEquals(numBaseModules + 1, moduleClient.list().size());
     Assert.assertEquals(numBaseTypes + 2, typeClient.list().size());
+
+    moduleClient.deleteAll();
+    Assert.assertEquals(numBaseModules, moduleClient.list().size());
+    Assert.assertEquals(numBaseTypes, typeClient.list().size());
   }
 }

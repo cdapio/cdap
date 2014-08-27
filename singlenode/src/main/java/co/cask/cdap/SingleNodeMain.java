@@ -16,7 +16,6 @@
 
 package co.cask.cdap;
 
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
@@ -62,9 +61,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provider;
-import com.google.inject.TypeLiteral;
-import com.google.inject.name.Names;
-import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
 import org.slf4j.Logger;
@@ -74,7 +70,6 @@ import java.io.File;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Singlenode Main.
@@ -247,9 +242,9 @@ public class SingleNodeMain {
     out.println("");
     out.println("Usage: ");
     if (OSDetector.isWindows()) {
-      out.println("  reactor.bat [options]");
+      out.println("  cdap.bat [options]");
     } else {
-      out.println("  ./reactor.sh [options]");
+      out.println("  ./cdap.sh [options]");
     }
     out.println("");
     out.println("Additional options:");
@@ -361,17 +356,8 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new GatewayModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new DataSetsModules().getInMemoryModule(),
-      // NOTE: we want real service, but we don't need persistence
-      Modules.override(new DataSetServiceModules().getLocalModule()).with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() {
-          })
-            .annotatedWith(Names.named("defaultDatasetModules"))
-            .toInstance(DataSetServiceModules.INMEMORY_DATASET_MODULES);
-        }
-      }),
+      new DataSetsModules().getLocalModule(),
+      new DataSetServiceModules().getInMemoryModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),

@@ -15,7 +15,7 @@
  */
 
 /**
- * Local Reactor - Singlenode.
+ * Cask Local DAP - Singlenode.
  */
 package co.cask.cdap;
 

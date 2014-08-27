@@ -84,7 +84,8 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
       appSpec.getFlows().values(),
       appSpec.getProcedures().values(),
       appSpec.getWorkflows().values(),
-      appSpec.getServices().values()
+      appSpec.getServices().values(),
+      appSpec.getSpark().values()
     );
 
     // Generate webapp program if required

@@ -24,15 +24,13 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.procedure.Procedure;
+import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
+import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.Workflow;
-import com.google.common.util.concurrent.Service;
-import org.apache.twill.api.ResourceSpecification;
-import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillRunnable;
 
 /**
- * Configures a Reactor Application.
+ * Configures a CDAP Application.
  */
 public interface ApplicationConfigurer {
   /**
@@ -57,7 +55,7 @@ public interface ApplicationConfigurer {
   void addStream(Stream stream);
 
   /**
-   * Adds a {@link DatasetModule} to be deployed automatically (if absent in the Reactor) during application 
+   * Adds a {@link DatasetModule} to be deployed automatically (if absent in the CDAP instance) during application
    * deployment.
    *
    * @param moduleName Name of the module to deploy
@@ -67,7 +65,7 @@ public interface ApplicationConfigurer {
   void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass);
 
   /**
-   * Adds a {@link DatasetModule} to be deployed automatically (if absent in the Reactor) during application
+   * Adds a {@link DatasetModule} to be deployed automatically (if absent in the CDAP instance) during application
    * deployment, using {@link Dataset} as a base for the {@link DatasetModule}.
    * The module will have a single dataset type identical to the name of the class in the datasetClass parameter.
    *
@@ -77,7 +75,7 @@ public interface ApplicationConfigurer {
   void addDatasetType(Class<? extends Dataset> datasetClass);
 
   /**
-   * Adds a Dataset instance, created automatically if absent in the Reactor.
+   * Adds a Dataset instance, created automatically if absent in the CDAP instance.
    * See {@link co.cask.cdap.api.dataset.DatasetDefinition} for details.
    *
    * @param datasetName Name of the dataset instance
@@ -88,7 +86,7 @@ public interface ApplicationConfigurer {
   void createDataset(String datasetName, String typeName, DatasetProperties properties);
 
   /**
-   * Adds a Dataset instance, created automatically (if absent in the Reactor), deploying a Dataset type
+   * Adds a Dataset instance, created automatically (if absent in the CDAP instance), deploying a Dataset type
    * using the datasetClass parameter as the dataset class and the given properties.
    *
    * @param datasetName dataset instance name
@@ -130,6 +128,13 @@ public interface ApplicationConfigurer {
   void addMapReduce(MapReduce mapReduce);
 
   /**
+   * Adds a {@link Spark} job to the Application.
+   *
+   * @param spark The {@link Spark} job to include in the Application
+   */
+  void addSpark(Spark spark);
+
+  /**
    * Adds a {@link Workflow} to the Application.
    *
    * @param workflow The {@link Workflow} to include in the Application
@@ -147,4 +152,10 @@ public interface ApplicationConfigurer {
    * @param handler
    */
   void addService(String name, HttpServiceHandler handler);
+
+  /**
+   * Adds a custom {@link Service} to the Application.
+   * @param service
+   */
+  void addService(Service service);
 }
