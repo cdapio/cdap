@@ -51,7 +51,6 @@ public class RouterMain extends DaemonMain {
   private ZKClientService zkClientService;
   private NettyRouter router;
   private DiscoveryService discoveryService;
-  private File tmpDir;
 
   public static void main(String[] args) {
     try {
@@ -68,8 +67,8 @@ public class RouterMain extends DaemonMain {
       // Load configuration
       CConfiguration cConf = CConfiguration.create();
 
-      tmpDir = Files.createTempDir();
-      SecurityUtil.enable(tmpDir, new File(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH)), cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL));
+      SecurityUtil.enableKerberos(new File(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH)),
+                                  cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL));
 
       // Initialize ZK client
       String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
@@ -105,13 +104,6 @@ public class RouterMain extends DaemonMain {
   public void stop() {
     LOG.info("Stopping Router...");
     Futures.getUnchecked(Services.chainStop(router, zkClientService));
-    if (tmpDir != null) {
-      try {
-        DirUtils.deleteDirectoryContents(tmpDir);
-      } catch (IOException e) {
-        LOG.warn("Couldn't delete temporary directory '{}'", tmpDir.getAbsolutePath());
-      }
-    }
     LOG.info("Router stopped.");
   }
 
