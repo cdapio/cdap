@@ -50,6 +50,7 @@ import javax.annotation.Nullable;
  */
 public class BasicMapReduceContext extends AbstractContext implements MapReduceContext {
 
+  // todo:  REACTOR-853: "InstanceId is not supported in MR jobs"
   public static final String INSTANCE_ID = "0";
   private final String accountId;
   private final MapReduceSpecification spec;
