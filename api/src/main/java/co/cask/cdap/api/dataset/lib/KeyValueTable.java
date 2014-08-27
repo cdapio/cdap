@@ -133,7 +133,7 @@ public class KeyValueTable extends AbstractDataset implements
 
   /**
    * Compares-and-swaps (atomically) the value of the specified row and column
-   * by looking for the specified expected value and if found, replacing with
+   * by looking for the specified expected value and, if found, replacing with
    * the specified new value.
    *
    * @param key key to modify
@@ -160,6 +160,15 @@ public class KeyValueTable extends AbstractDataset implements
     return Scannables.splitRecordScanner(createSplitReader(split), new KeyValueRecordMaker());
   }
 
+  /**
+  * Returns splits for a range of keys in the table.
+  * 
+  * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
+  *                  If less than or equal to zero, any number of splits can be returned.
+  * @param start if non-null, the returned splits will only cover keys that are greater or equal
+  * @param stop if non-null, the returned splits will only cover keys that are less
+  * @return list of {@link Split}
+  */
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
     return table.getSplits(numSplits, start, stop);
   }
