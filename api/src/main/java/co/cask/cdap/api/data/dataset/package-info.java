@@ -15,7 +15,7 @@
  */
 
 /**
- * Implements DataSets for object stores and indexed, key/value, and time series tables.
+ * Defines Dataset exceptions.
  *
  */
 package co.cask.cdap.api.data.dataset;

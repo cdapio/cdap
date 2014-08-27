@@ -144,21 +144,21 @@ public interface ApplicationConfigurer {
   /**
    * Adds a list of {@link HttpServiceHandler} as a Custom Service to the Application.
    *
-   * @param handlers The handlers to be included
+   * @param handlers The handlers to include in the Application
    */
   void addService(String name, Iterable<HttpServiceHandler> handlers);
 
   /**
    * Adds a {@link HttpServiceHandler} as a Custom Service to the Application.
    *
-   * @param handler The handler to be included
+   * @param handler The handler to include in the Application
    */
   void addService(String name, HttpServiceHandler handler);
 
   /**
    * Adds a custom {@link Service} to the Application.
    *
-   * @param service The service to be included
+   * @param service The service to include in the Application
    */
   void addService(Service service);
 }

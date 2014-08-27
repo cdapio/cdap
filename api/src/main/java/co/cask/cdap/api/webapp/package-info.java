@@ -15,6 +15,6 @@
  */
 
 /**
- * For constructing webapp.
+ * For web application.
  */
 package co.cask.cdap.api.webapp;
