@@ -974,7 +974,7 @@ define([], function () {
      * @return false if the number requested is valid, an error message (string) otherwise.
      */
     isInvalidNumInstances: function (numRequested, currRequested, min, max) {
-//      default values of [1,100] for [min,max].
+      //  default values of [1,100] for [min,max].
       if (typeof(min)==='undefined') min = 1;
       if (typeof(max)==='undefined') max = 100;
 

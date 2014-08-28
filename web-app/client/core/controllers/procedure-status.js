@@ -121,10 +121,10 @@ define([], function () {
         return;
       }
 
-      this.setInstances(input, "Change Instances to " + input + " for ");
+      this.setInstances(input);
     },
 
-		setInstances: function (instances, message) {
+		setInstances: function (instances) {
 
 			var self = this;
 			var appId = this.get('model.app');
@@ -132,7 +132,7 @@ define([], function () {
 
 			C.Modal.show(
 				"Procedure Instances",
-				message + ' "' + procedureName + '" procedure?',
+				"Change Instances to " + instances + " for " + ' "' + procedureName + '" procedure?',
 				function () {
 //
 					self.HTTP.put('rest', 'apps', appId, 'procedures', procedureName, 'instances', {
@@ -143,28 +143,6 @@ define([], function () {
 
 					});
 				});
-
-		},
-
-		addOneInstance: function () {
-
-			var instances = this.get('model.instances');
-			instances ++;
-
-			if (instances >= 1 && instances <= 64) {
-				this.setInstances(instances, 'Add an instance to');
-			}
-
-		},
-
-		removeOneInstance: function () {
-
-			var instances = this.get('model.instances');
-			instances --;
-
-			if (instances >= 1 && instances <= 64) {
-				this.setInstances(instances, 'Remove an instance from');
-			}
 
 		},
 
