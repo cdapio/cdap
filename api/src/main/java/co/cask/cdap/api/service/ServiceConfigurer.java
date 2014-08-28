@@ -20,6 +20,7 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Interface for configurers used to create custom Services.
@@ -97,4 +98,8 @@ public interface ServiceConfigurer {
    * @return properties of the Service.
    */
   Map<String, String> getProperties();
+
+  void useDataset(String dataset);
+
+  Set<String> getDatasets();
 }

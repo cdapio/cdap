@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -28,7 +29,9 @@ import co.cask.cdap.internal.lang.Reflections;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
@@ -37,35 +40,42 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * {@link TwillRunnable} to run a {@link ServiceWorker}.
  */
 public class ServiceWorkerTwillRunnable implements TwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(ServiceWorkerTwillRunnable.class);
+  private static final Gson GSON = new Gson();
   private ServiceWorker worker;
   private ClassLoader programClassLoader;
   private TransactionSystemClient transactionSystemClient;
   private DatasetFramework datasetFramework;
+  private CConfiguration cConfiguration;
+  private Set<String> datasets;
   private Metrics metrics;
 
   /**
    * Create a {@link TwillRunnable} for a {@link ServiceWorker}.
    * @param worker to run as runnable.
    */
-  public ServiceWorkerTwillRunnable(ServiceWorker worker) {
+  public ServiceWorkerTwillRunnable(ServiceWorker worker, Set<String> datasets) {
     this.worker = worker;
+    this.datasets = datasets;
   }
 
   /**
    * Create a {@link TwillRunnable} for a {@link ServiceWorker} from a classloader.
    * @param classLoader to create runnable with.
    */
-  public ServiceWorkerTwillRunnable(ClassLoader classLoader, TransactionSystemClient transactionSystemClient,
-                                    DatasetFramework datasetFramework) {
+  public ServiceWorkerTwillRunnable(ClassLoader classLoader, CConfiguration cConfiguration,
+                                    DatasetFramework datasetFramework,
+                                    TransactionSystemClient transactionSystemClient) {
     this.programClassLoader = classLoader;
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = datasetFramework;
+    this.cConfiguration = cConfiguration;
   }
 
   @Override
@@ -73,6 +83,10 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
     ServiceWorkerSpecification workerSpecification = worker.configure();
     Map<String, String> runnableArgs = Maps.newHashMap(workerSpecification.getProperties());
     runnableArgs.put("service.class.name", workerSpecification.getClassName());
+
+    // Serialize and store the datasets that have explicitly been granted access to.
+    String serializedDatasets = GSON.toJson(datasets, new TypeToken<Set<String>>() { }.getType());
+    runnableArgs.put("service.datasets", serializedDatasets);
     return TwillRunnableSpecification.Builder.with()
                                              .setName(worker.getClass().getSimpleName())
                                              .withConfigs(runnableArgs)
@@ -83,14 +97,16 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
   public void initialize(TwillContext context) {
     Map<String, String> runnableArgs = context.getSpecification().getConfigs();
     String serviceClassName = runnableArgs.get("service.class.name");
+    datasets = GSON.fromJson(runnableArgs.get("service.datasets"), new TypeToken<Set<String>>() { }.getType());
+
     InstantiatorFactory factory = new InstantiatorFactory(false);
     try {
       TypeToken<?> type = TypeToken.of(programClassLoader.loadClass(serviceClassName));
       worker = (ServiceWorker) factory.get(type).create();
       Reflections.visit(worker, type, new MetricsFieldSetter(metrics),
                                       new PropertyFieldSetter(runnableArgs));
-      worker.initialize(new DefaultServiceWorkerContext(context.getSpecification().getConfigs(),
-                                                        transactionSystemClient, datasetFramework));
+      worker.initialize(new DefaultServiceWorkerContext(cConfiguration, context.getSpecification().getConfigs(),
+                                                        datasets, datasetFramework, transactionSystemClient));
     } catch (Exception e) {
       LOG.error("Could not instantiate service " + serviceClassName);
       Throwables.propagate(e);

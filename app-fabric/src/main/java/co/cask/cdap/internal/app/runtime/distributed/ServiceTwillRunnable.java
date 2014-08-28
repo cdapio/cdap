@@ -39,6 +39,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
@@ -51,6 +52,7 @@ import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
@@ -117,6 +119,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
   private MetricsCollectionService metricsCollectionService;
   private ProgramResourceReporter resourceReporter;
   private LogAppenderInitializer logAppenderInitializer;
+  private TransactionSystemClient transactionSystemClient;
+  private DatasetFramework datasetFramework;
   private TwillRunnable delegate;
   private String runnableName;
 
@@ -167,6 +171,9 @@ public class ServiceTwillRunnable implements TwillRunnable {
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
 
+      transactionSystemClient = injector.getInstance(TransactionSystemClient.class);
+      datasetFramework = injector.getInstance(DatasetFramework.class);
+
       try {
         program = injector.getInstance(ProgramFactory.class)
           .create(cmdLine.getOptionValue(RunnableOptions.JAR));
@@ -200,7 +207,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
         // using the program classloader.
         delegate = new HttpServiceTwillRunnable(program.getClassLoader());
       } else if (clz.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
-        delegate = new ServiceWorkerTwillRunnable(program.getClassLoader(), null, null);
+        delegate = new ServiceWorkerTwillRunnable(program.getClassLoader(), cConf,
+                                                  datasetFramework, transactionSystemClient);
       } else {
         delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
       }

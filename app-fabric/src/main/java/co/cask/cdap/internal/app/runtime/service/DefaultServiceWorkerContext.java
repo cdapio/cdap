@@ -18,23 +18,30 @@ package co.cask.cdap.internal.app.runtime.service;
 
 import co.cask.cdap.api.data.DataSetContext;
 import co.cask.cdap.api.data.DataSetInstantiationException;
-import co.cask.cdap.api.dataset.lib.AbstractDataset;
-import co.cask.cdap.api.service.ServiceWorker;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.service.ServiceWorkerContext;
 import co.cask.cdap.api.service.TxRunnable;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data.Namespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionContext;
 import com.continuuity.tephra.TransactionFailureException;
 import com.continuuity.tephra.TransactionSystemClient;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
+import com.google.common.collect.ImmutableSet;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.util.HashMap;
+import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Default implementation of {@link ServiceWorkerContext}.
@@ -42,6 +49,7 @@ import java.util.Map;
 public class DefaultServiceWorkerContext implements ServiceWorkerContext {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceWorkerContext.class);
   private final Map<String, String> runtimeArgs;
+  private final Set<String> datasets;
   private final TransactionSystemClient transactionSystemClient;
   private final DatasetFramework datasetFramework;
 
@@ -49,12 +57,14 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
    * Create a ServiceWorkerContext with runtime arguments.
    * @param runtimeArgs for the worker.
    */
-  public DefaultServiceWorkerContext(Map<String, String> runtimeArgs,
-                                     TransactionSystemClient transactionSystemClient,
-                                     DatasetFramework datasetFramework) {
+  public DefaultServiceWorkerContext(CConfiguration cConfiguration, Map<String, String> runtimeArgs,
+                                     Set<String> datasets, DatasetFramework datasetFramework,
+                                     TransactionSystemClient transactionSystemClient) {
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
+    this.datasets = ImmutableSet.copyOf(datasets);
     this.transactionSystemClient = transactionSystemClient;
-    this.datasetFramework = datasetFramework;
+    this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
+                                                           new DefaultDatasetNamespace(cConfiguration, Namespace.USER));
   }
 
   @Override
@@ -75,31 +85,42 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
       runnable.run(new DataSetContext() {
         @Override
         public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
-          try {
-            AbstractDataset dataset = datasetFramework.getDataset("cdap.user." + name,
-                                                                  ImmutableMap.<String, String>of(),
-                                                                  getClass().getClassLoader());
-            context.addTransactionAware(dataset);
-            return (T) dataset;
-          } catch (Exception e) {
-            try {
-              context.abort();
-            } catch (TransactionFailureException e1) {
-
-            }
-          }
-          return null;
+          return getDataSet(name, ImmutableMap.<String, String>of());
         }
 
         @Override
         public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
           throws DataSetInstantiationException {
-          return null;
+          if (!datasets.contains(name)) {
+            LOG.error("Access to dataset not explicitly allowed. Add datasets used in the Service's configure.");
+            return null;
+          }
+
+          Dataset dataset = null;
+          try {
+            dataset = datasetFramework.getDataset(name, ImmutableMap.<String, String>of(),
+                                                  Thread.currentThread().getContextClassLoader());
+            context.addTransactionAware((TransactionAware) dataset);
+          } catch (DatasetManagementException e) {
+            LOG.error("Could not get dataset metainfo.");
+            Throwables.propagate(e);
+          } catch (IOException e) {
+            LOG.error("Could not instantiate dataset.");
+            Throwables.propagate(e);
+          }
+          return (T) dataset;
         }
       });
       context.finish();
-    } catch (Exception e) {
-
+    } catch (TransactionFailureException e) {
+      try {
+        LOG.error("Failed to commit. Aborting transaction.");
+        context.abort();
+        Throwables.propagate(e);
+      } catch (TransactionFailureException e1) {
+        LOG.error("Failed to abort transaction.");
+        Throwables.propagate(e1);
+      }
     }
   }
 }

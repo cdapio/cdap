@@ -88,4 +88,8 @@ public abstract class AbstractService implements Service {
    */
   protected abstract void configure();
 
+  protected void useDataset(String dataset) {
+    configurer.useDataset(dataset);
+  }
+
 }

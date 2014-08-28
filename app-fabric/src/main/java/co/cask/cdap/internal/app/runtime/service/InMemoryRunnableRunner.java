@@ -25,6 +25,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.election.InMemoryElectionRegistry;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
@@ -73,11 +74,12 @@ public class InMemoryRunnableRunner implements ProgramRunner {
   private final ConcurrentLinkedQueue<Discoverable> discoverables;
   private final TransactionSystemClient transactionSystemClient;
   private final DatasetFramework datasetFramework;
+  private final CConfiguration cConfiguration;
 
   @Inject
-  public InMemoryRunnableRunner(MetricsCollectionService metricsCollectionService,
-                                ProgramServiceDiscovery serviceDiscovery,
+  public InMemoryRunnableRunner(CConfiguration cConfiguration, ProgramServiceDiscovery serviceDiscovery,
                                 DiscoveryService dsService, InMemoryElectionRegistry electionRegistry,
+                                MetricsCollectionService metricsCollectionService,
                                 TransactionSystemClient transactionSystemClient, DatasetFramework datasetFramework) {
     this.metricsCollectionService = metricsCollectionService;
     this.serviceDiscovery = serviceDiscovery;
@@ -86,6 +88,7 @@ public class InMemoryRunnableRunner implements ProgramRunner {
     this.discoverables = new ConcurrentLinkedQueue<Discoverable>();
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = datasetFramework;
+    this.cConfiguration = cConfiguration;
   }
 
   @SuppressWarnings("unchecked")
@@ -181,7 +184,8 @@ public class InMemoryRunnableRunner implements ProgramRunner {
         // Special case for running HTTP services
         runnable = new HttpServiceTwillRunnable(program.getClassLoader());
       } else if (runnableClass.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
-        runnable = new ServiceWorkerTwillRunnable(program.getClassLoader(), transactionSystemClient, datasetFramework);
+        runnable = new ServiceWorkerTwillRunnable(program.getClassLoader(), cConfiguration,
+                                                  datasetFramework, transactionSystemClient);
       } else {
         runnable = new InstantiatorFactory(false).get(runnableType).create();
       }
