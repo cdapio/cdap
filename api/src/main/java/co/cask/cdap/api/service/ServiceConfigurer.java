@@ -106,7 +106,7 @@ public interface ServiceConfigurer {
   void useDataset(String dataset);
 
   /**
-   * Get a set of datasets used bt the Service.
+   * Get a set of datasets used by the Service.
    * @return set of datasets.
    */
   Set<String> getDatasets();

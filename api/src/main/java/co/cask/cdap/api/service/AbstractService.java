@@ -83,7 +83,7 @@ public abstract class AbstractService implements Service {
   }
 
   /**
-   * Add a dataset that will by the Service.
+   * Add a dataset that will be used by the Service.
    * @param dataset name of dataset.
    */
   protected void useDataset(String dataset) {
