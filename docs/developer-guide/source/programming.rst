@@ -77,7 +77,7 @@ following command::
     -DarchetypeCatalog=https://repository.cask.co/content/groups/releases/archetype-catalog.xml \
     -DarchetypeGroupId=co.cask.cdap \
     -DarchetypeArtifactId=cdap-app-archetype \
-    -DarchetypeVersion=2.4.0
+    -DarchetypeVersion=2.5.0
 
 In the interactive shell that appears, specify basic properties for the
 new project. For example, to create a new project called
