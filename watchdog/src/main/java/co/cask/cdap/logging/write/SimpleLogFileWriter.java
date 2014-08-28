@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * LogFileWriter to write avro log files.
@@ -32,6 +33,7 @@ public class SimpleLogFileWriter implements LogFileWriter<LogWriteEvent> {
   private final long flushIntervalMs;
 
   private long lastCheckpointTime = System.currentTimeMillis();
+  private final AtomicBoolean closed = new AtomicBoolean(false);
 
   public SimpleLogFileWriter(AvroFileWriter avroFileWriter, long flushIntervalMs) {
     this.avroFileWriter = avroFileWriter;
@@ -46,6 +48,10 @@ public class SimpleLogFileWriter implements LogFileWriter<LogWriteEvent> {
 
   @Override
   public void close() throws IOException {
+    if (!closed.compareAndSet(false, true)) {
+      return;
+    }
+
     flush();
     avroFileWriter.close();
   }

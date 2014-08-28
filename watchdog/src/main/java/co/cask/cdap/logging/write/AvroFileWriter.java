@@ -35,6 +35,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Helper class that manages writing of KafkaLogEvent to Avro files. The events are written into appropriate files
@@ -50,6 +51,8 @@ public final class AvroFileWriter implements Closeable, Flushable {
   private final Map<String, AvroFile> fileMap;
   private final long maxFileSize;
   private final long inactiveIntervalMs;
+
+  private final AtomicBoolean closed = new AtomicBoolean(false);
 
   /**
    * Constructs an AvroFileWriter object.
@@ -103,6 +106,10 @@ public final class AvroFileWriter implements Closeable, Flushable {
 
   @Override
   public void close() throws IOException {
+    if (!closed.compareAndSet(false, true)) {
+      return;
+    }
+
     // First checkpoint state
     try {
       flush();

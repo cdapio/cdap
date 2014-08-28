@@ -72,7 +72,7 @@ final class HttpHandlerGenerator {
   private Type classType;
   private TypeToken<?> delegateType;
 
-  ClassDefinition generate(TypeToken<?> delegateType) throws IOException {
+  ClassDefinition generate(TypeToken<?> delegateType, String pathPrefix) throws IOException {
     Class<?> rawType = delegateType.getRawType();
 
     this.classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
@@ -91,7 +91,7 @@ final class HttpHandlerGenerator {
     boolean firstVisit = true;
     for (TypeToken<?> type : delegateType.getTypes().classes()) {
       if (!Object.class.equals(type.getRawType())) {
-        inspectHandler(type, firstVisit);
+        inspectHandler(type, firstVisit, pathPrefix);
         firstVisit = false;
       }
     }
@@ -113,7 +113,7 @@ final class HttpHandlerGenerator {
   /**
    * Inspects the given type and copy/rewrite handler methods from it into the newly generated class.
    */
-  private void inspectHandler(TypeToken<?> type, final boolean firstVisit) throws IOException {
+  private void inspectHandler(TypeToken<?> type, final boolean firstVisit, final String pathPrefix) throws IOException {
     Class<?> rawType = type.getRawType();
 
     // Visit the delegate class, copy and rewrite handler method, with method body just do delegation
@@ -121,6 +121,8 @@ final class HttpHandlerGenerator {
     try {
       ClassReader classReader = new ClassReader(sourceBytes);
       classReader.accept(new ClassVisitor(Opcodes.ASM4) {
+
+        private boolean visitedPath = !firstVisit;
 
         @Override
         public void visit(int version, int access, String name, String signature,
@@ -133,7 +135,20 @@ final class HttpHandlerGenerator {
           // Copy the class annotation if it is @Path. Only do it for one time
           Type type = Type.getType(desc);
           if (firstVisit && type.equals(Type.getType(Path.class))) {
-            return classWriter.visitAnnotation(desc, visible);
+            visitedPath = true;
+            AnnotationVisitor annotationVisitor = classWriter.visitAnnotation(desc, visible);
+            return new AnnotationVisitor(Opcodes.ASM4, annotationVisitor) {
+              @Override
+              public void visit(String name, Object value) {
+                // "value" is the key for the Path annotation string.
+                if (name.equals("value")) {
+                  super.visit(name, pathPrefix + value.toString());
+                } else {
+                  super.visit(name, value);
+                }
+              }
+            };
+
           } else {
             return super.visitAnnotation(desc, visible);
           }
@@ -141,6 +156,16 @@ final class HttpHandlerGenerator {
 
         @Override
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+          // Create a class-level annotation with the prefix, if the user has not specified any class-level
+          // annotation.
+          if (!visitedPath) {
+            String pathDesc = Type.getType(Path.class).getDescriptor();
+            AnnotationVisitor annotationVisitor = classWriter.visitAnnotation(pathDesc, true);
+            annotationVisitor.visit("value", pathPrefix);
+            annotationVisitor.visitEnd();
+            visitedPath = true;
+          }
+
           // Copy the method if it is public and annotated with one of the HTTP request method
           MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
           if (!Modifier.isPublic(access)) {
