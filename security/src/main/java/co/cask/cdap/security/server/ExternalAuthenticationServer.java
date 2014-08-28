@@ -17,7 +17,6 @@
 package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -152,11 +151,10 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       if (configuration.getBoolean(Constants.Security.AuthenticationServer.SSL_ENABLED, false)) {
         SslContextFactory sslContextFactory = new SslContextFactory();
-        Configuration sslConfiguration = new Configuration();
-        String keyStorePath = sslConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH);
-        String keyStorePassword = sslConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);
-        String keyStoreType = sslConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_TYPE);
-        String keyPassword = sslConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYPASSWORD);
+        String keyStorePath = configuration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH);
+        String keyStorePassword = configuration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);
+        String keyStoreType = configuration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_TYPE);
+        String keyPassword = configuration.get(Constants.Security.AuthenticationServer.SSL_KEYPASSWORD);
 
         Preconditions.checkArgument(keyStorePath != null, "Key Store Path Not Configured");
         Preconditions.checkArgument(keyStorePassword != null, "KeyStore Password Not Configured");
@@ -171,8 +169,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         int sslPort = configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT);
         sslConnector.setHost(address.getCanonicalHostName());
         sslConnector.setPort(sslPort);
-        connector.setConfidentialPort(sslPort);
-        server.setConnectors(new Connector[]{connector, sslConnector});
+        server.setConnectors(new Connector[]{sslConnector});
       } else {
         server.setConnectors(new Connector[]{connector});
       }
