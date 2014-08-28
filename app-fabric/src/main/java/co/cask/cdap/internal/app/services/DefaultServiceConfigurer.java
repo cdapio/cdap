@@ -24,6 +24,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Service;
+import org.apache.twill.api.ResourceSpecification;
 
 import java.util.List;
 import java.util.Map;
@@ -64,9 +65,14 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
     workers.add(worker);
   }
 
-
+  @Override
   public void addWorker(Service worker) {
-    guavaWorkers.add(worker);
+    addWorker(worker, ResourceSpecification.BASIC);
+  }
+
+  @Override
+  public void addWorker(Service worker, ResourceSpecification resourceSpecification) {
+    workers.add(new GuavaServiceWorker(worker, resourceSpecification));
   }
 
   @Override

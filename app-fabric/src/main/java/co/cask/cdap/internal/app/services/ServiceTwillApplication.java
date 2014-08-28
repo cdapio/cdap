@@ -22,6 +22,7 @@ import co.cask.cdap.api.service.ServiceConfigurer;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillSpecification;
 
 import java.security.InvalidParameterException;
@@ -56,12 +57,14 @@ public class ServiceTwillApplication implements TwillApplication {
                                                                        serviceHandlers))
                                      .noLocalFiles();
     for (ServiceWorker worker : configurer.getWorkers()) {
-      ServiceWorkerTwillRunnable runnable = new ServiceWorkerTwillRunnable(worker);
-      runnableSetter = runnableSetter.add(runnable).noLocalFiles();
-    }
-    for (com.google.common.util.concurrent.Service worker : configurer.getGuavaWorkers()) {
-      GuavaServiceTwillRunnable runnable = new GuavaServiceTwillRunnable(worker.getClass().getSimpleName(), worker);
-      runnableSetter = runnableSetter.add(runnable).noLocalFiles();
+      TwillRunnable runnable;
+      if (worker instanceof GuavaServiceWorker) {
+        runnable = new GuavaServiceTwillRunnable(worker.getClass().getSimpleName(),
+                                                 ((GuavaServiceWorker) worker).getService());
+      } else {
+        runnable = new ServiceWorkerTwillRunnable(worker);
+      }
+      runnableSetter = runnableSetter.add(runnable, worker.configure().getResourceSpecification()).noLocalFiles();
     }
     return runnableSetter.anyOrder().build();
   }

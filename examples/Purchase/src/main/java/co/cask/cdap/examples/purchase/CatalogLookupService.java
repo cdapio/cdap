@@ -17,6 +17,7 @@
 package co.cask.cdap.examples.purchase;
 
 import co.cask.cdap.api.service.AbstractService;
+import co.cask.cdap.api.service.AbstractServiceWorker;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
@@ -37,16 +38,16 @@ public class CatalogLookupService extends AbstractService {
 
 
   /**
-   * Example Worker which simply writes to LOG once every 3 seconds.
+   * Example Guava Service which simply writes to LOG once every 3 seconds.
    */
-  public static final class NoOpWorker extends AbstractScheduledService {
-    private static final Logger LOG = LoggerFactory.getLogger(NoOpWorker.class);
+  public static final class NoOpGuavaWorker extends AbstractScheduledService {
+    private static final Logger LOG = LoggerFactory.getLogger(NoOpGuavaWorker.class);
     private int numIterations;
 
     @Override
     protected void runOneIteration() throws Exception {
       numIterations++;
-      LOG.info("Completed iteration #{}", numIterations);
+      LOG.info("{} completed iteration #{}", this.getClass().getSimpleName(), numIterations);
     }
 
     @Override
@@ -55,12 +56,44 @@ public class CatalogLookupService extends AbstractService {
     }
   }
 
+  /**
+   * Example ServiceWorker which simply writes to LOG once every 3 seconds.
+   */
+  public static final class NoOpServiceWorker extends AbstractServiceWorker {
+    private static final Logger LOG = LoggerFactory.getLogger(NoOpServiceWorker.class);
+    private int numIterations;
+
+    @Override
+    public void stop() {
+      //no-op
+    }
+
+    @Override
+    public void destroy() {
+      //no-op
+    }
+
+    @Override
+    public void run() {
+      while (true) {
+        numIterations++;
+        LOG.info("{} completed iteration #{}", this.getClass().getSimpleName(), numIterations);
+        try {
+          Thread.sleep(3000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+  }
+
   @Override
   protected void configure() {
     setName(PurchaseApp.SERVICE_NAME);
     setDescription("Service to lookup product ids.");
     addHandler(new ProductCatalogLookup());
-    addWorker(new NoOpWorker());
+    addWorker(new NoOpGuavaWorker());
+    addWorker(new NoOpServiceWorker());
   }
 
   /**
