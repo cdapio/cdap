@@ -17,13 +17,11 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.spark.SparkContextFactory;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.spark.SparkContext;
 import org.apache.spark.rdd.NewHadoopRDD;
 import org.apache.spark.rdd.PairRDDFunctions;
@@ -31,6 +29,8 @@ import org.apache.spark.rdd.RDD;
 import scala.Tuple2;
 import scala.reflect.ClassTag;
 import scala.reflect.ClassTag$;
+
+import java.net.URL;
 
 /**
  * A concrete implementation of {@link AbstractSparkContext} which is used if the user's spark job is written in Scala.
@@ -93,5 +93,15 @@ class ScalaSparkContext extends AbstractSparkContext {
   @Override
   public <T> T getApacheSparkContext() {
     return (T) apacheContext;
+  }
+
+  @Override
+  public URL getServiceURL(String applicationId, String serviceId) {
+    throw new UnsupportedOperationException("Does not support service discovery");
+  }
+
+  @Override
+  public URL getServiceURL(String serviceId) {
+    throw new UnsupportedOperationException("Does not support service discovery");
   }
 }

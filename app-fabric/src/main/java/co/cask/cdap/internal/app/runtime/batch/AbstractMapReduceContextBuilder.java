@@ -115,21 +115,9 @@ public abstract class AbstractMapReduceContextBuilder {
     MapReduceSpecification spec = program.getSpecification().getMapReduce().get(program.getName());
     BasicMapReduceContext context =
       new BasicMapReduceContext(program, type, RunIds.fromString(runId),
-<<<<<<< HEAD
-                                runtimeArguments, dataSets, spec,
-                                dataSetContext.getTransactionAware(), logicalStartTime,
-                                workflowBatch, serviceDiscovery, discoveryServiceClient, metricsCollectionService);
-
-    if (type == MapReduceMetrics.TaskType.Mapper) {
-      dataSetContext.setMetricsCollector(context.getDatasetMetrics(), context.getSystemMapperMetrics());
-    } else if (type == MapReduceMetrics.TaskType.Reducer) {
-      dataSetContext.setMetricsCollector(context.getDatasetMetrics(), context.getSystemReducerMetrics());
-    }
-=======
-                                runtimeArguments, programSpec.getDatasets().keySet(), spec,
-                                logicalStartTime, workflowBatch, serviceDiscovery, metricsCollectionService,
+                                runtimeArguments, programSpec.getDatasets().keySet(), spec, logicalStartTime,
+                                workflowBatch, serviceDiscovery, discoveryServiceClient, metricsCollectionService,
                                 datasetFramework, configuration);
->>>>>>> develop
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code
