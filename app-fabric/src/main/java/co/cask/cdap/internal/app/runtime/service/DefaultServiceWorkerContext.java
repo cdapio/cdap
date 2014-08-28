@@ -54,8 +54,12 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
   private final DatasetFramework datasetFramework;
 
   /**
-   * Create a ServiceWorkerContext with runtime arguments.
-   * @param runtimeArgs for the worker.
+   * Create a ServiceWorkerContext with runtime arguments and access to Datasets.
+   * @param cConfiguration configuration used by the datasetFramework.
+   * @param runtimeArgs of the worker.
+   * @param datasets the worker is allowed to access.
+   * @param datasetFramework used to get datasets.
+   * @param transactionSystemClient used to transactionalize operations.
    */
   public DefaultServiceWorkerContext(CConfiguration cConfiguration, Map<String, String> runtimeArgs,
                                      Set<String> datasets, DatasetFramework datasetFramework,

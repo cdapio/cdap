@@ -19,7 +19,8 @@ package co.cask.cdap.api.service;
 import co.cask.cdap.api.data.DataSetContext;
 
 /**
- *
+ * A runnable that provides a {@link DataSetContext} to {@link ServiceWorker}s which may be used to get
+ * access to and use datasets.
  */
 public interface TxRunnable {
 

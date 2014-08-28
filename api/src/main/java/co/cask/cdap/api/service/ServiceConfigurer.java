@@ -99,7 +99,15 @@ public interface ServiceConfigurer {
    */
   Map<String, String> getProperties();
 
+  /**
+   * Add a dataset to be used by the Service.
+   * @param dataset name of dataset used.
+   */
   void useDataset(String dataset);
 
+  /**
+   * Get a set of datasets used bt the Service.
+   * @return set of datasets.
+   */
   Set<String> getDatasets();
 }

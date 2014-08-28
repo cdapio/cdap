@@ -83,13 +83,17 @@ public abstract class AbstractService implements Service {
   }
 
   /**
+   * Add a dataset that will by the Service.
+   * @param dataset name of dataset.
+   */
+  protected void useDataset(String dataset) {
+    configurer.useDataset(dataset);
+  }
+
+  /**
    * Implement this method and use a {@link ServiceConfigurer} to add a request handler
    * and workers.
    */
   protected abstract void configure();
-
-  protected void useDataset(String dataset) {
-    configurer.useDataset(dataset);
-  }
 
 }
