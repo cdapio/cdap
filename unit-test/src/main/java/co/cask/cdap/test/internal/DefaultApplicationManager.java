@@ -102,7 +102,9 @@ public class DefaultApplicationManager implements ApplicationManager {
       ProgramClassLoader classLoader = ClassLoaders.newProgramClassLoader
         (tempDir, ApiResourceListHolder.getResourceList(), this.getClass().getClassLoader());
       this.dataSetInstantiator = new DataSetInstantiator(datasetFramework, configuration,
-                                                         new DataSetClassLoader(classLoader));
+                                                         new DataSetClassLoader(classLoader),
+                                                         // todo: collect metrics for datasets outside programs too
+                                                         null, null);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
