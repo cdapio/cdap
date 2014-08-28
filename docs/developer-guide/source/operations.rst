@@ -1,9 +1,9 @@
-.. :author: Cask, Inc.
+.. :author: Cask Data, Inc.
    :description: Operating Cask Data Application Platform and its Console
 
-=====================
-CDAP Operations Guide
-=====================
+===============================================
+Cask Data Application Platform Operations Guide
+===============================================
 
 **Introduction to Running Applications and Operating the Cask Data Application Platform (CDAP)**
 
@@ -11,32 +11,32 @@ Putting CDAP into Production
 ===========================================
 
 The Cask Data Application Platform (CDAP) can be run in different modes: in-memory mode for unit testing, 
-Local DAP (Data Application Platform) for testing on a developer's laptop, and Distributed DAP for staging and production.
+Standalone CDAP for testing on a developer's laptop, and Distributed CDAP for staging and production.
 
-Regardless of the runtime edition, the DAP is fully functional and the code you develop never changes. 
-However, performance and scale are limited when using in-memory or local DAPs.
+Regardless of the runtime edition, CDAP is fully functional and the code you develop never changes. 
+However, performance and scale are limited when using in-memory or standalone CDAPs.
 
-In-memory Data Application Platform
+In-memory CDAP
 -----------------------------------
-The in-memory DAP allows you to easily run CDAP for use in unit tests. In this mode, the underlying Big Data infrastructure is emulated using in-memory data structures and there is no persistence. The CDAP Console is not available in this mode.
+The in-memory CDAP allows you to easily run CDAP for use in unit tests. In this mode, the underlying Big Data infrastructure is emulated using in-memory data structures and there is no persistence. The CDAP Console is not available in this mode.
 
-Local Data Application Platform
+Standalone CDAP
 -------------------------------
 
-The Local DAP allows you to run the entire CDAP stack in a single Java Virtual Machine on your local machine and includes a local version of the CDAP Console. The underlying Big Data infrastructure is emulated on top of your local file system. All data is persisted.
+The Standalone CDAP allows you to run the entire CDAP stack in a single Java Virtual Machine on your local machine and includes a local version of the CDAP Console. The underlying Big Data infrastructure is emulated on top of your local file system. All data is persisted.
 
-The Local DAP by default binds to the localhost address, and is not available for remote access by any outside process or application outside of the local machine.
+The Standalone CDAP by default binds to the localhost address, and is not available for remote access by any outside process or application outside of the local machine.
 
 See the `Cask Data Application Platform Quick Start <quickstart.html>`__ and
-the *Cask Data Application Platform SDK* for information on how to start and manage your Local DAP.
+the *Cask Data Application Platform SDK* for information on how to start and manage your Standalone CDAP.
 
 
 Distributed Data Application Platform
 ------------------------------------------
 
-The Distributed DAP runs in fully distributed mode. In addition to the system components of the CDAP, distributed and highly available deployments of the underlying Hadoop infrastructure are included. Production applications should always be run on a Distributed DAP.
+The Distributed CDAP runs in fully distributed mode. In addition to the system components of the CDAP, distributed and highly available deployments of the underlying Hadoop infrastructure are included. Production applications should always be run on a Distributed CDAP.
 
-To learn more about getting your own Distributed DAP, see `Cask Products <http://cask.co/products>`__.
+To learn more about getting your own Distributed CDAP, see `Cask Products <http://cask.co/products>`__.
 
 
 .. _console:
@@ -48,14 +48,14 @@ Overview
 --------
 
 The **CDAP Console** is available for deploying, querying and managing the Cask Data Application Platform in all modes of CDAP except an 
-`In-memory DAP <#in-memory-data-application-platform>`__.
+`In-memory CDAP <#in-memory-data-application-platform>`__.
 
 .. image:: _images/console/console_01_overview.png
    :width: 600px
 
-Here is a screen-capture of the CDAP Console running on a Distributed DAP.
+Here is a screen-capture of the CDAP Console running on a Distributed CDAP.
 
-Down the left sidebar, underneath the **Cask** logo, is the DAP mode identifier (in this case, *Distributed DAP*), followed by four buttons:
+Down the left sidebar, underneath the **Cask** logo, is the CDAP mode identifier (in this case, *Distributed CDAP*), followed by four buttons:
 *Application*, `Process`_, `Store`_ and `Query`_. These buttons gives you access to CDAP Console facilities for managing each of these CDAP elements.
 
 In the far upper-right are two buttons: the `Metrics <#metrics-explorer>`__ and
@@ -63,7 +63,7 @@ In the far upper-right are two buttons: the `Metrics <#metrics-explorer>`__ and
 
 .. _sampling-menu:
 
-In the upper right portion of the display are two buttons (*DAP* and *Resources*) and a menu.
+In the upper right portion of the display are two buttons (*CDAP* and *Resources*) and a menu.
 The menu is the **Sampling Menu**, which appears on almost every pane of the
 CDAP Console. 
 
@@ -75,9 +75,9 @@ realtime:
 
 By default, the sampling menu is set at "Last 1 Minute", indicating that the graphs are showing
 the last one minute of activity. Be aware that changing the menu to a longer period (such as "Last 
-1 Hour") can adversely affect the performance of the DAP Instance and should only be used for short sessions before returning the setting to the default "Last 1 Minute".
+1 Hour") can adversely affect the performance of the CDAP Instance and should only be used for short sessions before returning the setting to the default "Last 1 Minute".
 
-The **DAP** button gives you this starting overview, showing which Applications (*Apps*) are currently
+The **CDAP** button gives you this starting overview, showing which Applications (*Apps*) are currently
 installed, and realtime graphs of *Collect*, *Process*, *Store*, and *Query*.
 Each statistic is per unit of time—events per second, bytes (or larger) per second, queries per second—and
 are sampled and reported based on the sampling menu in the upper right.
@@ -103,7 +103,7 @@ Clicking on the name of an Application will take you to the `App's pane <#applic
 :Note: Because of the interconnections in the CDAP Console, you can arrive at the same pane by different paths.
        Remember that the left pane buttons will always take you back to the initial summary panes.
 
-The **Resources** button gives a look at what is being used by the DAP:
+The **Resources** button gives a look at what is being used by the CDAP:
 
 .. image:: _images/console/console_02_overview_resources.png
    :width: 600px
@@ -120,21 +120,21 @@ Statistics and graphs are sampled based on the setting of the sampling menu in t
 
 The lower half shows the list of deployed applications, their descriptions, along with each app's container, core and memory use in realtime.
 
-The triangles to the left of each application turn to reveal the hierarchy of resources being used by each application's Flows and Flowlets. You can use this tree to drill down into any part of the DAP.
+The triangles to the left of each application turn to reveal the hierarchy of resources being used by each application's Flows and Flowlets. You can use this tree to drill down into any part of the CDAP.
 
 The footer of each pane gives—below the *Cask, Inc.* copyright—five buttons
-and the version of the DAP that you are using.
+and the version of the CDAP that you are using.
 
 .. _reset:
 
 The five buttons provide access to the `terms of use <http://cask.co/terms>`__,
 the `privacy policy <http://cask.co/privacy>`__,
 contacting `Cask <http://cask.co/contact-us>`__,
-contacting Cask support, and *Reset*, for resetting the DAP.
+contacting Cask support, and *Reset*, for resetting the CDAP.
 
 *Reset* deletes all data and applications from the
-DAP, is irreversible, and returns the DAP to an original state. The button is only visible and
-available if the DAP has been started with the system property ``enable.unrecoverable.reset`` as ``true``. 
+CDAP, is irreversible, and returns the CDAP to an original state. The button is only visible and
+available if the CDAP has been started with the system property ``enable.unrecoverable.reset`` as ``true``. 
 
 Metrics Explorer
 ----------------
@@ -144,7 +144,7 @@ In the top portion of the `Overview image <#console>`__ you can see the **Metric
 .. image:: _images/console/console_18_metrics_explorer1.png
    :width: 600px
 
-Here you can monitor a variety of different statistics for elements of the DAP.
+Here you can monitor a variety of different statistics for elements of the CDAP.
 You add a metric by clicking the *Add* button; it will give you a dialog
 where you can specify an element and then pick from a list of appropriate metrics.
 
@@ -152,7 +152,7 @@ where you can specify an element and then pick from a list of appropriate metric
    :width: 200px
 
 As with other CDAP Console realtime graphs, you specify the sampling rate through a pop-down menu in the
-upper-right. You can *Pause* the sampling to prevent excessive load on the DAP.
+upper-right. You can *Pause* the sampling to prevent excessive load on the CDAP.
 
 If you move your mouse over the graph, you will get detailed information about the statistics presented:
 
@@ -168,7 +168,7 @@ In the top portion of the `Overview image <#console>`__, to the right of the **M
 .. image:: _images/console/console_31_services_explorer.png
    :width: 600px
 
-Here you can monitor a variety of different System Services of the DAP. For each service name, status
+Here you can monitor a variety of different System Services of the CDAP. For each service name, status
 is given, if logs are available (and link to them if so), the number of instances requested and
 provisioned.
 
@@ -183,7 +183,7 @@ Process
 The **Process** pane shows all the
 `Flows <#flow>`__,
 `MapReduce <#mapreduce>`__ and
-`Workflows <#workflow>`__ in the DAP
+`Workflows <#workflow>`__ in the CDAP
 with their name and status (either *Running* or *Stopped*).
 Each name links to the individual elements detail pane.
 Graphs show statistics based on the sampling rate menu setting.
@@ -199,7 +199,7 @@ Store
 .. image:: _images/console/console_05_store.png
    :width: 600px
 
-The **Store** pane shows all the Datasets currently specified in the DAP, along with their name
+The **Store** pane shows all the Datasets currently specified in the CDAP, along with their name
 (a link to the detail pane for the Dataset), type (the Java class), storage in use,
 a realtime write-rate graph and the current write rate (bytes per second).
 
@@ -210,7 +210,7 @@ Query
 .. image:: _images/console/console_06_query.png
    :width: 600px
 
-The **Query** pane shows all the Procedures currently specified in the DAP, along with their name
+The **Query** pane shows all the Procedures currently specified in the CDAP, along with their name
 (a link to the detail pane for the Procedure), status and realtime graphs
 of their request and error rates.
 
@@ -223,7 +223,7 @@ Application
 .. image:: _images/console/console_14_app_crawler.png
    :width: 600px
 
-The Application pane shows details for an individual application deployed in the DAP:
+The Application pane shows details for an individual application deployed in the CDAP:
 
 - **Summary graphs:** across the top, left to right, a summary of events per second processed,
   `busyness`_ and storage;
@@ -253,7 +253,7 @@ An error message will be given if you attempt to delete an Application with runn
 Note that Streams and Datasets, even though they are specified and created at the time of deployment of the Application,
 are persistent and are not deleted when an Application is deleted.
 
-To delete these, the DAP needs to be reset using the `Reset button <#reset>`__ located at the bottom of each pane.
+To delete these, the CDAP needs to be reset using the `Reset button <#reset>`__ located at the bottom of each pane.
 
 
 .. _Stream:
@@ -470,13 +470,13 @@ The log messages emitted by your Application code can be viewed in two different
   This launches the `Log Explorer <#log-explorer>`__.
 
 See the `Flow Log Explorer <#log-explorer>`__ in the `CDAP Console <#console>`__
-for details of using it to examine logs in the DAP.
+for details of using it to examine logs in the CDAP.
 In a similar fashion, `Procedure Logs <#procedure>`__ can be examined from within the CDAP Console.
 
 Metrics
 =======
 
-As applications process data, the CDAP collects metrics about the application’s behavior and performance. Some of these metrics are the same for every application—how many events are processed, how many data operations are performed—and are thus called system or DAP metrics.
+As applications process data, the CDAP collects metrics about the application’s behavior and performance. Some of these metrics are the same for every application—how many events are processed, how many data operations are performed—and are thus called system or CDAP metrics.
 
 Other metrics are user-defined or "custom" and differ from application to application.
 To add user-defined metrics to your application, read this section in conjunction with the
@@ -520,7 +520,7 @@ in the `CDAP HTTP REST API Guide <rest.html>`__.
 Using Metrics Explorer
 ----------------------
 See the `Metrics Explorer`_ in the `CDAP Console <#console>`__
-for details of using it to examine and set metrics in the DAP.
+for details of using it to examine and set metrics in the CDAP.
 
 Runtime Arguments
 =================
@@ -671,7 +671,7 @@ There are two ways to interact with a different CDAP server:
 - To change the current CDAP server, run the command ``connect example.com``.
 
 For example, with ``CDAP_HOST`` set to ``example.com``, the Shell Client would be interacting with
-a Cask DAP instance at ``example.com``, port ``10000``::
+a CDAP instance at ``example.com``, port ``10000``::
 
   cdap (example.com:10000)>
 
@@ -683,7 +683,7 @@ Non-Interactive Mode
 --------------------
 
 To run the CLI in non-interactive mode, run the ``cdap-cli`` executable, passing the command you want executed
-as the argument. For example, to list all applications currently deployed to the Cask DAP, execute::
+as the argument. For example, to list all applications currently deployed to CDAP, execute::
 
   cdap list apps
 

@@ -1,4 +1,4 @@
-.. :author: Cask, Inc.
+.. :author: Cask Data, Inc.
    :description: Introduction to the Cask Data Application Platform
 
 ==================================================
@@ -116,9 +116,9 @@ Full Development Lifecycle Support
 CDAP supports developers through the entire application development lifecycle: 
 development, debugging, testing, continuous integration and production. Using familiar 
 development tools such as *IntelliJ* and *Eclipse*, you can build, test and debug your 
-application right on your laptop with a *Local DAP*. Utilize the application unit 
+application right on your laptop with a *Standalone CDAP*. Utilize the application unit 
 test framework for continuous integration. Deploy it to a development cloud or production
-cloud (*Distributed DAP*) with a push of a button.
+cloud (*Distributed CDAP*) with a push of a button.
 
 Easy Application Operations
 ---------------------------
@@ -130,8 +130,7 @@ application.
 
 CDAP Components
 ===============
-Now, let’s talk about the components within CDAP. Cask DAP provides four 
-basic abstractions:
+Now, let’s talk about the components within CDAP. There are four basic abstractions:
 
 - `Streams <programming.html#streams>`__ for real-time data collection from any external system;
 - `Flows <programming.html#flows>`__ for performing elastically scalable, real-time stream
@@ -182,8 +181,8 @@ These services and features include:
 
 - **Management Console:** available for deploying, querying and managing the Server;
 
-- **Different Runtimes:** single-node (useful for learning, prototyping and testing),
-  hosted in the Cloud, and Distributed versions;
+- **Different Runtimes:** standalone (useful for learning, prototyping and testing) and
+  Distributed versions;
 
 - **YARN containers:** services are run in YARN containers in Hadoop, providing access to
   HBase and HDFS, giving the scalability and performance of Hadoop without the complexity. 
