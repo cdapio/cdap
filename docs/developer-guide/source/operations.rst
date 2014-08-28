@@ -122,7 +122,7 @@ The lower half shows the list of deployed applications, their descriptions, alon
 
 The triangles to the left of each application turn to reveal the hierarchy of resources being used by each application's Flows and Flowlets. You can use this tree to drill down into any part of the CDAP.
 
-The footer of each pane gives—below the *Cask, Inc.* copyright—five buttons
+The footer of each pane gives—below the *Cask Data, Inc.* copyright—five buttons
 and the version of the CDAP that you are using.
 
 .. _reset:
