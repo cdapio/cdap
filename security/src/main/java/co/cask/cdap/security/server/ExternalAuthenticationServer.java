@@ -156,12 +156,14 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         String keyStorePath = sslConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH);
         String keyStorePassword = sslConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);
         String keyStoreType = sslConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_TYPE);
+        String keyPassword = sslConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYPASSWORD);
 
         Preconditions.checkArgument(keyStorePath != null, "Key Store Path Not Configured");
         Preconditions.checkArgument(keyStorePassword != null, "KeyStore Password Not Configured");
 
         sslContextFactory.setKeyStorePath(keyStorePath);
         sslContextFactory.setKeyStorePassword(keyStorePassword);
+        sslContextFactory.setKeyManagerPassword(keyPassword);
         sslContextFactory.setKeyStoreType(keyStoreType);
         // TODO Figure out how to pick a certificate from key store
 

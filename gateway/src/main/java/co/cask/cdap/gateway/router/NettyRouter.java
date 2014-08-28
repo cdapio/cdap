@@ -136,7 +136,7 @@ public class NettyRouter extends AbstractIdleService {
       File keystore;
       try {
         keystore = new File(cConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
-      } catch (Exception e) {
+      } catch (Throwable e) {
         throw new RuntimeException("Cannot read keystore file : "
                                      + cConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
       }

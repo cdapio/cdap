@@ -79,7 +79,7 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
     @Override
     protected void startUp() {
       CConfiguration cConf = CConfiguration.create();
-      Injector injector = Guice.createInjector(new ConfigModule(), new IOModule(),
+      Injector injector = Guice.createInjector(new ConfigModule(cConf), new IOModule(),
                                                new SecurityModules().getInMemoryModules(),
                                                new DiscoveryRuntimeModule().getInMemoryModules());
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);

@@ -455,6 +455,8 @@ public final class Constants {
       public static final String SSL_KEYSTORE_PATH = "security.authserver.ssl.keystore.path";
       /** SSL keystore type */
       public static final String SSL_KEYSTORE_TYPE = "security.authserver.ssl.keystore.type";
+      /** SSL keystore key password */
+      public static final String SSL_KEYPASSWORD = "security.authserver.ssl.keystore.keypassword";
       /** SSL keystore password */
       public static final String SSL_KEYSTORE_PASSWORD = "security.authserver.ssl.keystore.password";
     }

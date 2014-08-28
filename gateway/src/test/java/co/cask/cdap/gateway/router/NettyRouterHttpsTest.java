@@ -120,7 +120,7 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       URL certUrl = getClass().getClassLoader().getResource("cert.jks");
       Assert.assertNotNull(certUrl);
 
-      Injector injector = Guice.createInjector(new ConfigModule(), new IOModule(),
+      Injector injector = Guice.createInjector(new ConfigModule(cConf), new IOModule(),
                                                new SecurityModules().getInMemoryModules(),
                                                new DiscoveryRuntimeModule().getInMemoryModules());
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
