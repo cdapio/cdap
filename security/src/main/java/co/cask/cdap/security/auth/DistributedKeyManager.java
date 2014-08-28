@@ -19,6 +19,7 @@ package co.cask.cdap.security.auth;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Codec;
+import co.cask.cdap.common.zookeeper.ZKACLs;
 import co.cask.cdap.security.zookeeper.ResourceListener;
 import co.cask.cdap.security.zookeeper.SharedResourceCache;
 import com.google.common.base.Throwables;
@@ -51,12 +52,14 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
    */
   private static final long KEY_UPDATE_FREQUENCY = 60 * 1000;
   private static final Logger LOG = LoggerFactory.getLogger(DistributedKeyManager.class);
-  private SharedResourceCache<KeyIdentifier> keyCache;
+
+  private final SharedResourceCache<KeyIdentifier> keyCache;
+  private final String parentZNode;
+
   private Timer timer;
   private long lastKeyUpdate;
   protected final AtomicBoolean leader = new AtomicBoolean();
   private LeaderElection leaderElection;
-  private String parentZNode;
   private ZKClient zookeeper;
   private final long maxTokenExpiration;
 
@@ -68,7 +71,9 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
       conf.getLong(Constants.Security.EXTENDED_TOKEN_EXPIRATION),
       conf.getLong(Constants.Security.TOKEN_EXPIRATION));
     this.zookeeper = ZKClients.namespace(zookeeper, parentZNode);
-    this.keyCache = new SharedResourceCache<KeyIdentifier>(zookeeper, codec, "/keys");
+    this.keyCache = new SharedResourceCache<KeyIdentifier>(
+      zookeeper, codec, "/keys", ZKACLs.fromSaslPrincipalsAllowAll(
+      conf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL)));
   }
 
   @Override
