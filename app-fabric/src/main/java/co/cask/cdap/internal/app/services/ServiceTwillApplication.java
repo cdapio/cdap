@@ -60,7 +60,7 @@ public class ServiceTwillApplication implements TwillApplication {
       runnableSetter = runnableSetter.add(runnable).noLocalFiles();
     }
     for (com.google.common.util.concurrent.Service worker : configurer.getGuavaWorkers()) {
-      GuavaServiceTwillRunnable runnable = new GuavaServiceTwillRunnable(worker.getClass().getName(), worker);
+      GuavaServiceTwillRunnable runnable = new GuavaServiceTwillRunnable(worker.getClass().getSimpleName(), worker);
       runnableSetter = runnableSetter.add(runnable).noLocalFiles();
     }
     return runnableSetter.anyOrder().build();

@@ -22,6 +22,8 @@ import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 import com.google.common.util.concurrent.AbstractScheduledService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
@@ -38,13 +40,13 @@ public class CatalogLookupService extends AbstractService {
    * Example Worker which simply writes to LOG once every 3 seconds.
    */
   public static final class NoOpWorker extends AbstractScheduledService {
-//    private static final Logger LOG = LoggerFactory.getLogger(NoOpWorker.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NoOpWorker.class);
     private int numIterations;
 
     @Override
     protected void runOneIteration() throws Exception {
       numIterations++;
-//      LOG.info("Completed iteration #{}", numIterations);
+      LOG.info("Completed iteration #{}", numIterations);
     }
 
     @Override
