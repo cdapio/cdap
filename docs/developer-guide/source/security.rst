@@ -52,7 +52,7 @@ security.authserver.ssl.enabled                  true
 security.authserver.ssl.keystore.path            <path>
 security.authserver.ssl.keystore.password        <password>
 security.authserver.ssl.keystore.keypassword     <password>
-security.authserver.ssl.keystore.type            <keystore file type>
+security.authserver.ssl.keystore.type            <keystore-file-type>
 =============================================  ==============
 
 Configuring SSL for the Router
@@ -66,7 +66,7 @@ security.router.ssl.enabled                   true
 security.router.ssl.keystore.path             <path>
 security.router.ssl.keystore.password         <password>
 security.router.ssl.keystore.keypassword      <password>
-security.router.ssl.keystore.type             <keystore file type>
+security.router.ssl.keystore.type             <keystore-file-type>
 ==========================================  ==============
 
 Enabling Access Logging
