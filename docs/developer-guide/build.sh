@@ -87,7 +87,7 @@ function build_javadocs_full() {
 
 function build_javadocs_sdk() {
   cd $PROJECT_PATH
-  mvn clean javadoc:javadoc -pl api -am -DskipTests -P release
+  mvn clean package javadoc:javadoc -pl api -am -DskipTests -P release
 }
 
 function copy_javadocs_sdk() {
