@@ -226,9 +226,7 @@
                     </form>
                     </div>
                     <div>
-                      <button class="btn btn-transparent" {{action changeInstances service on="click"}}>
-                        <i class="icon-arrow-right"></i>
-                      </button>
+                      <button class="btn btn-transparent" {{action changeInstances service on="click"}}>SET</button>
                     </div>
                   </div>
                 </td>
@@ -309,9 +307,7 @@
                     </form>
                   </div>
                   <div>
-                    <button class="btn btn-transparent" {{action runnableChangeInstances model runnable on="click"}}>
-                      <i class="icon-arrow-right"></i>
-                    </button>
+                    <button class="btn btn-transparent" {{action runnableChangeInstances model runnable on="click"}}>SET</button>
                   </div>
                 </div>
               </td>
@@ -1217,9 +1213,7 @@
             <div style="display: inline-block; width: 50%">
               <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
               {{input keyUp=keyPressed action="changeInstances" id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
-              <button class="btn btn-transparent" {{action "changeInstances" on="click"}}>
-                <i class="icon-arrow-right"></i>
-              </button>
+              <button class="btn btn-transparent" {{action "changeInstances" on="click"}}>SET</button>
             </div>
           </div>
           <br />
@@ -1484,9 +1478,7 @@
               <button style="border:0;padding-right:120px;" disabled="disabled" class="btn btn-blank">Instances Provisioned: {{actualInstances}}</button>
               <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
               {{input keyUp=keyPressed action="changeInstances" id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
-              <button class="btn btn-transparent" {{action "changeInstances" on="click"}}>
-                <i class="icon-arrow-right"></i>
-              </button>
+              <button class="btn btn-transparent" {{action "changeInstances" on="click"}}>SET</button>
             </div>
           </div>
         </div>

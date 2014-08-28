@@ -110,7 +110,6 @@ define([], function () {
     },
 
     keyPressed: function (evt) {
-      console.log('cakked');
       var btn = this.$().parent().parent().next();
       var inp = this.value;
       if (inp.length > 0 && parseInt(inp) != this.placeholder){
@@ -130,6 +129,11 @@ define([], function () {
       setTimeout(function () {
         $('.services-instances-input').keyup();
       },500);
+
+      if(service.requested === input){
+        C.Modal.show('Incorrect Input', 'Please select a number different than that already requested.');
+        return;
+      }
 
       if(!inputStr || inputStr.length === 0){
         C.Modal.show('Change Instances','Enter a valid number of instances.');

@@ -109,10 +109,16 @@ define([], function () {
     changeInstances: function () {
       var inputStr = this.get('instancesInput');
       var input = parseInt(inputStr);
+
       this.set('instancesInput', '');
       setTimeout(function () {
         $('#instancesInput').keyup();
       },500);
+
+      if(input === this.get('model').instances){
+        C.Modal.show('Incorrect Input', 'Please select a number different than that already requested.');
+        return;
+      }
 
       if(!inputStr || inputStr.length === 0){
         C.Modal.show('Change Instances','Enter a valid number of instances.');

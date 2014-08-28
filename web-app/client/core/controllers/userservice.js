@@ -54,6 +54,11 @@ define(['core/controllers/services'], function (servicesController) {
         $('.services-instances-input').keyup();
       },500);
 
+      if(input === runnable.requested){
+        C.Modal.show('Incorrect Input', 'Please select a number different than that already requested.');
+        return;
+      }
+
       if(!inputStr || inputStr.length === 0){
         C.Modal.show('Change Instances','Enter a valid number of instances.');
         return;
