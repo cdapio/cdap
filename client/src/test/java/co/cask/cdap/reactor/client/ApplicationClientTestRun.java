@@ -16,15 +16,12 @@
 
 package co.cask.cdap.reactor.client;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.DatasetModuleClient;
-import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.DatasetModuleNotFoundException;
 import co.cask.cdap.client.exception.DatasetNotFoundException;
-import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.reactor.client.app.FakeApp;

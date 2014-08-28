@@ -35,10 +35,12 @@ public final class DefaultSparkSpecification implements SparkSpecification {
   private final String className;
   private final String name;
   private final String description;
+  private final String mainClassName;
   private final Map<String, String> properties;
 
-  public DefaultSparkSpecification(String name, String description, Map<String, String> properties) {
-    this(null, name, description, properties);
+  public DefaultSparkSpecification(String name, String description, String mainClassName,
+                                   Map<String, String> properties) {
+    this(null, name, description, mainClassName, properties);
   }
 
   public DefaultSparkSpecification(Spark spark) {
@@ -52,14 +54,16 @@ public final class DefaultSparkSpecification implements SparkSpecification {
     this.className = spark.getClass().getName();
     this.name = configureSpec.getName();
     this.description = configureSpec.getDescription();
+    this.mainClassName = configureSpec.getMainClassName();
     this.properties = ImmutableMap.copyOf(properties);
   }
 
-  public DefaultSparkSpecification(String className, String name, String description,
+  public DefaultSparkSpecification(String className, String name, String description, String mainClassName,
                                    @Nullable Map<String, String> properties) {
     this.className = className;
     this.name = name;
     this.description = description;
+    this.mainClassName = mainClassName;
     this.properties = properties == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(properties);
   }
 
@@ -76,6 +80,11 @@ public final class DefaultSparkSpecification implements SparkSpecification {
   @Override
   public String getDescription() {
     return description;
+  }
+
+  @Override
+  public String getMainClassName() {
+    return mainClassName;
   }
 
   @Override

@@ -34,7 +34,8 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
 
   /**
    * Get the name of the worker. Defaults to the class name.
-   * @return name of the worker.
+   *
+   * @return the name of this worker
    */
   protected String getName() {
     return getClass().getSimpleName();
@@ -42,7 +43,8 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
 
   /**
    * Get the description of the worker. Defaults to an empty string.
-   * @return
+   *
+   * @return the description of this worker, or an empty string if none
    */
   protected String getDescription() {
     return "";
@@ -50,7 +52,8 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
 
   /**
    * Get the runtime arguments for the worker. Defaults to an empty map.
-   * @return
+   *
+   * @return the runtime arguments of this worker, or an empty map if none
    */
   protected Map<String, String> getRuntimeArguments() {
     return ImmutableMap.of();
