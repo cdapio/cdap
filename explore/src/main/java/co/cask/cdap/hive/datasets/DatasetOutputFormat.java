@@ -17,18 +17,7 @@
 package co.cask.cdap.hive.datasets;
 
 import co.cask.cdap.api.data.batch.RecordWritable;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.hive.context.ConfigurationUtil;
-import co.cask.cdap.hive.context.TxnCodec;
-import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionAware;
-import com.continuuity.tephra.TransactionSystemClient;
-import com.continuuity.tephra.TxConstants;
-import com.continuuity.tephra.distributed.PooledClientProvider;
-import com.continuuity.tephra.distributed.ThreadLocalClientProvider;
-import com.continuuity.tephra.distributed.ThriftClientProvider;
-import com.continuuity.tephra.distributed.TransactionServiceClient;
-import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.ObjectWritable;
 import org.apache.hadoop.mapred.JobConf;
@@ -36,78 +25,76 @@ import org.apache.hadoop.mapred.OutputFormat;
 import org.apache.hadoop.mapred.RecordWriter;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.util.Progressable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collection;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;
 
 /**
- *
+ * Map reduce output format to write to datasets that implement {@link RecordWritable}.
  */
 public class DatasetOutputFormat implements OutputFormat<Void, ObjectWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetOutputFormat.class);
 
-  public static final Map<String, List<byte[]>> QUERY_TO_CHANGES = Maps.newHashMap();
-
-  // Should store a map of JobConf to transactionClient
-  private static TransactionSystemClient txClient = null;
-
   @Override
   public RecordWriter<Void, ObjectWritable> getRecordWriter(FileSystem ignored, final JobConf jobConf, String name,
                                                             Progressable progress) throws IOException {
-    // TODO the same transaction is started everytime we call this, is that a problem?
     final RecordWritable recordWritable = DatasetAccessor.getRecordWritable(jobConf);
+    final Type recordType = recordWritable.getRecordType();
 
     return new RecordWriter<Void, ObjectWritable>() {
       @Override
       public void write(Void key, ObjectWritable value) throws IOException {
-        recordWritable.write(value.get());
+        // Here we try to build a record object using the array of objects present in the writable.
+        // We assume that a constructor with as many params as the number of attributes in the record
+        // type exists for that type.
+
+        Object [] objects = ((List<Object>) value.get()).toArray();
+        Class<?> [] classes = new Class[objects.length];
+        for (int i = 0; i < objects.length; i++) {
+          classes[i] = objects[i].getClass();
+        }
+        if (!(recordType instanceof Class)) {
+          throw new RuntimeException(recordType + " should be a class");
+        }
+        Class<?> recordClass = (Class<?>) recordType;
+        try {
+          // Here we assume that the record type has a constructor that accepts the same types of parameters
+          // as the list of objects contained in the writable.
+          // TODO modify this, as the types can vary significantly. For example, in this query:
+          // insert into table T1 select word from T2 - let's assume T1's schema is only one String column
+          // Depending on the SerDe of the T2 table, the type that we get here can be String/LazyString/Text
+          // So T1 record type would have to have at least 3 constructors accepting those types to handle
+          // all possible cases.
+          Constructor<?> constructor = recordClass.getConstructor(classes);
+          recordWritable.write(constructor.newInstance(objects));
+        } catch (NoSuchMethodException e) {
+          throw new IOException("Could not find appropriate constructor to build record object for type " + recordType,
+                                e);
+        } catch (Throwable e) {
+          throw new IOException("Could not build record object for type " + recordType, e);
+        }
       }
 
       @Override
       public void close(Reporter reporter) throws IOException {
-        // TODO save the tx changes here. How to get them from the MR job to the CLI service though?...
-        // If we add them to the jobconf, is it gonna be send back? Don't think so
-        // TODO check jobconf contains this query ID
-        if (recordWritable instanceof TransactionAware) {
-          TransactionAware txAware = (TransactionAware) recordWritable;
-          Transaction tx = ConfigurationUtil.get(jobConf, Constants.Explore.TX_QUERY_KEY,
-                                                 TxnCodec.INSTANCE);
-          Collection<byte[]> changes = txAware.getTxChanges();
-          try {
-            if (!getTransactionClient(jobConf).canCommit(tx, changes)) {
-              txAware.rollbackTx();
-              // TODO do we really want to abord here?
-              getTransactionClient(jobConf).abort(tx);
-            } else {
-              txAware.commitTx();
+        try {
+          if (recordWritable instanceof TransactionAware) {
+            try {
+              // Commit changes made to the dataset being written
+              // NOTE: because the transaction wrapping a Hive query is a long running one,
+              // we don't track changes and don't check conflicts - we can just commit the changes.
+              ((TransactionAware) recordWritable).commitTx();
+            } catch (Exception e) {
+              LOG.error("Could not commit changes for table {}", recordWritable);
+              throw new IOException(e);
             }
-          } catch (Throwable t) {
-            throw new IOException("Problem when committing changes for dataset " + recordWritable, t);
           }
-
-//          String queryId = jobConf.get(Constants.Explore.QUERY_ID);
-//          List<byte[]> changes = QUERY_TO_CHANGES.get(queryId);
-//          if (changes == null) {
-//            changes = Lists.newArrayList();
-//          }
-//          changes.addAll(((TransactionAware) recordWritable).getTxChanges());
-//
-//          QUERY_TO_CHANGES.put(queryId, changes);
-//
-//          try {
-//            // Commit changes at the table level
-//            // TODO is it relevent to do that here?
-//            ((TransactionAware) recordWritable).commitTx();
-//          } catch (Exception e) {
-//            LOG.error("Could not commit changes for table {}", recordWritable);
-//            throw new IOException(e);
-//          }
+        } finally {
+          recordWritable.close();
         }
       }
     };
@@ -116,32 +103,7 @@ public class DatasetOutputFormat implements OutputFormat<Void, ObjectWritable> {
   @Override
   public void checkOutputSpecs(FileSystem ignored, JobConf job) throws IOException {
     // This is called prior to returning a RecordWriter. We make sure here that the
-    // dataset we want to write to is RecordWritable. This call will throw an exception
-    // if it is not the case
-    // TODO is this going to restart the transaction. We don't want that, just do the checkings
-    DatasetAccessor.getRecordWritable(job);
-  }
-
-  private TransactionSystemClient getTransactionClient(JobConf jobConf) {
-    if (txClient != null) {
-      return txClient;
-    }
-
-    DiscoveryServiceClient discoveryServiceClient = new InMemoryDiscoveryService();
-
-    // configure the client provider
-    ThriftClientProvider thriftClientProvider;
-    String provider = jobConf.get(TxConstants.Service.CFG_DATA_TX_CLIENT_PROVIDER,
-                                  TxConstants.Service.DEFAULT_DATA_TX_CLIENT_PROVIDER);
-    if ("pool".equals(provider)) {
-      thriftClientProvider = new PooledClientProvider(jobConf, discoveryServiceClient);
-    } else if ("thread-local".equals(provider)) {
-      thriftClientProvider = new ThreadLocalClientProvider(jobConf, discoveryServiceClient);
-    } else {
-      String message = "Unknown Transaction Service Client Provider '" + provider + "'.";
-      throw new IllegalArgumentException(message);
-    }
-    txClient = new TransactionServiceClient(jobConf, thriftClientProvider);
-    return txClient;
+    // dataset we want to write to is RecordWritable.
+    DatasetAccessor.checkRecordWritable(job);
   }
 }

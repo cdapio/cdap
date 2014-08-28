@@ -36,6 +36,7 @@ import org.apache.twill.zookeeper.ZKClientService;
 
 import java.io.Closeable;
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * Stores/creates context for Hive queries to run in MapReduce jobs.
@@ -47,17 +48,24 @@ public class ContextManager {
     savedContext = new Context(datasetFramework);
   }
 
-  public static Context getContext(Configuration conf) throws IOException {
-    // When called by the initialize method in the serde, when writing to a dataset
-    // conf is null. The context should already have been saved before
-    if (conf == null) {
-      return savedContext;
+  /**
+   * Get the context of this JVM. If it has already been saved, return it, otherwise create one
+   * using the {@code conf} param, which contains serialized {@link co.cask.cdap.common.conf.CConfiguration} and
+   * {@link org.apache.hadoop.conf.Configuration} objects, as well as transaction information.
+   *
+   * @param conf configuration used to create a context, if necessary. If it is null, return the saved context, which
+   *             can also be null.
+   * @return Context of a query execution.
+   * @throws IOException
+   */
+  public static Context getContext(@Nullable Configuration conf) throws IOException {
+    if (conf != null && savedContext == null) {
+      // Saving the context here is important. This code will be executed in a MR job launched by Hive, and accessed
+      // by the DatasetSerDe.initialize method, which needs to access the context when it wants to write to a
+      // dataset, so it can cache its name. In that case, conf will be null, and it won't be possible to create a
+      // context.
+      savedContext = createContext(conf);
     }
-
-    if (savedContext == null) {
-      return createContext(conf);
-    }
-
     return savedContext;
   }
 
@@ -97,17 +105,30 @@ public class ContextManager {
     private final DatasetFramework datasetFramework;
     private final ZKClientService zkClientService;
 
+    // TODO investigate multiple "insert into" in one query and make sure this doesn't make it break
+    private String recordWritableName;
+
     public Context(DatasetFramework datasetFramework, ZKClientService zkClientService) {
+      // This constructor is called from the MR job Hive launches.
       this.datasetFramework = datasetFramework;
       this.zkClientService = zkClientService;
     }
 
     public Context(DatasetFramework datasetFramework) {
+      // This constructor is called from Hive server, that is the Explore module.
       this(datasetFramework, null);
     }
 
     public DatasetFramework getDatasetFramework() {
       return datasetFramework;
+    }
+
+    public String getRecordWritableName() {
+      return recordWritableName;
+    }
+
+    public void setRecordWritableName(String recordWritableName) {
+      this.recordWritableName = recordWritableName;
     }
 
     @Override

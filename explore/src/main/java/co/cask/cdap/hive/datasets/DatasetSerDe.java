@@ -17,19 +17,21 @@
 package co.cask.cdap.hive.datasets;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.hive.context.NullJobConfException;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.io.ObjectWritable;
 import org.apache.hadoop.io.Writable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
 import java.util.Properties;
 
@@ -44,14 +46,20 @@ public class DatasetSerDe implements SerDe {
   @Override
   public void initialize(Configuration entries, Properties properties) throws SerDeException {
     String datasetName = properties.getProperty(Constants.Explore.DATASET_NAME);
-
-    // When initialize is called to write to a table, entries is null
     try {
       if (entries != null) {
         entries.set(Constants.Explore.DATASET_NAME, datasetName);
         recordType = DatasetAccessor.getRecordScannableType(entries);
       } else {
-        recordType = DatasetAccessor.getRecordWritableType(null, datasetName);
+        // When initialize is called to write to a table, entries is null
+        try {
+          recordType = DatasetAccessor.getRecordWritableType(datasetName);
+        } catch (NullJobConfException e) {
+          // This is the case when this serDe is used by Hive only for its serialize method. In that case,
+          // We don't need to initialize a context since serialize does not need any dataset information.
+          LOG.warn("Could not initialize record writable dataset. Carrying on.");
+          recordType = null;
+        }
       }
     } catch (IOException e) {
       LOG.error("Got exception while trying to instantiate dataset {}", datasetName, e);
@@ -61,7 +69,6 @@ public class DatasetSerDe implements SerDe {
 
   @Override
   public Class<? extends Writable> getSerializedClass() {
-    // TODO make sure of that
     return ObjectWritable.class;
   }
 
@@ -73,23 +80,12 @@ public class DatasetSerDe implements SerDe {
     // The object and the objectInspector represent one row of a query result to write into a dataset.
     // Therefore, it is not guaranteed that the object exactly matches the schema of the dataset
     // we want to write into.
-    // TODO make sure o is a list of objects, even when the output of the query only has one column
-    Object [] objects = (Object []) o;
-    Class<?> [] classes = new Class[objects.length];
-    for (int i = 0; i < objects.length; i++) {
-      classes[i] = objects[i].getClass();
+    if (!(objectInspector instanceof StructObjectInspector)) {
+      throw new SerDeException("Trying to serialize with unknown object inspector type " +
+                                 objectInspector.getClass().getName() + ". Expected StructObjectInspector.");
     }
-    if (!(recordType instanceof Class)) {
-      throw new RuntimeException(recordType + " should be a class");
-    }
-    Class<?> recordClass = (Class<?>) recordType;
-    try {
-      Constructor<?> constructor = recordClass.getConstructor(classes);
-      return new ObjectWritable(constructor.newInstance(objects));
-    } catch (Throwable e) {
-      // TODO log the right exception message, saying the constructor should exist
-      throw new SerDeException(e);
-    }
+    StructObjectInspector soi = (StructObjectInspector) objectInspector;
+    return new ObjectWritable(soi.getStructFieldsDataAsList(o));
   }
 
   @Override
@@ -106,6 +102,7 @@ public class DatasetSerDe implements SerDe {
 
   @Override
   public ObjectInspector getObjectInspector() throws SerDeException {
+    Preconditions.checkNotNull(recordType, "Record type should not be null.");
     return ObjectInspectorFactory.getReflectionObjectInspector(recordType);
   }
 }
