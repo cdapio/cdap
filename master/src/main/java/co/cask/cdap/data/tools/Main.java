@@ -43,6 +43,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
+import com.google.common.base.Objects;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -178,7 +179,9 @@ public class Main {
     // Upgrade all datasets
     for (DatasetSpecification spec : framework.getInstances()) {
       System.out.println(String.format("Upgrading dataset: %s, spec: %s", spec.getName(), spec.toString()));
-      DatasetAdmin admin = framework.getAdmin(spec.getName(), null);
+      ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                            getClass().getClassLoader());
+      DatasetAdmin admin = framework.getAdmin(spec.getName(), cl);
       // we know admin is not null, since we are looping over existing datasets
       admin.upgrade();
       System.out.println(String.format("Upgraded dataset: %s", spec.getName()));

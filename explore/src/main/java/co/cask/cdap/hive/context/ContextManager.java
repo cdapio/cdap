@@ -32,6 +32,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.zookeeper.ZKClientService;
 
 import java.io.Closeable;
@@ -43,8 +44,8 @@ import java.io.IOException;
 public class ContextManager {
   private static Context savedContext;
 
-  public static void saveContext(DatasetFramework datasetFramework) {
-    savedContext = new Context(datasetFramework);
+  public static void saveContext(DatasetFramework datasetFramework, LocationFactory locationFactory) {
+    savedContext = new Context(datasetFramework, locationFactory);
   }
 
   public static Context getContext(Configuration conf) throws IOException {
@@ -81,7 +82,8 @@ public class ContextManager {
     zkClientService.startAndWait();
 
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    return new Context(datasetFramework, zkClientService);
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+    return new Context(datasetFramework, zkClientService, locationFactory);
   }
 
   /**
@@ -90,18 +92,25 @@ public class ContextManager {
   public static class Context implements Closeable {
     private final DatasetFramework datasetFramework;
     private final ZKClientService zkClientService;
+    private final LocationFactory locationFactory;
 
-    public Context(DatasetFramework datasetFramework, ZKClientService zkClientService) {
+    public Context(DatasetFramework datasetFramework, ZKClientService zkClientService,
+                   LocationFactory locationFactory) {
       this.datasetFramework = datasetFramework;
       this.zkClientService = zkClientService;
+      this.locationFactory = locationFactory;
     }
 
-    public Context(DatasetFramework datasetFramework) {
-      this(datasetFramework, null);
+    public Context(DatasetFramework datasetFramework, LocationFactory locationFactory) {
+      this(datasetFramework, null, locationFactory);
     }
 
     public DatasetFramework getDatasetFramework() {
       return datasetFramework;
+    }
+
+    public LocationFactory getLocationFactory() {
+      return locationFactory;
     }
 
     @Override

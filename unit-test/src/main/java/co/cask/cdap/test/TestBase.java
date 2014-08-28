@@ -41,7 +41,8 @@ import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.DatasetClassLoaderFactory;
+import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
+import co.cask.cdap.data.runtime.DatasetClassLoaders;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
@@ -393,8 +394,15 @@ public class TestBase {
                                                        String datasetInstanceName,
                                                        DatasetProperties props) throws Exception {
 
+    DatasetTypeMeta typeMeta = datasetFramework.getType(datasetTypeName);
+    ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                   getClass().getClassLoader());
+    // todo : not sure how to clean this up here, should we return an
+    // interface similar to DatasetManager and handle cleanup inside that?
+    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(classLoader, typeMeta,
+                                                                                         locationFactory);
     datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
-    return datasetFramework.getAdmin(datasetInstanceName, null);
+    return datasetFramework.getAdmin(datasetInstanceName, dsUtil.getClassLoader());
   }
 
   /**
@@ -407,11 +415,14 @@ public class TestBase {
   protected final <T> DataSetManager<T> getDataset(String datasetTypeName, String datasetInstanceName)
     throws Exception {
     @SuppressWarnings("unchecked")
-    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                          getClass().getClassLoader());
+
     DatasetTypeMeta typeMeta = datasetFramework.getType(datasetTypeName);
-    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
-    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, new HashMap<String, String>(), cl);
+    ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                   getClass().getClassLoader());
+    final DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(classLoader, typeMeta,
+                                                                       locationFactory);
+
+    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, new HashMap<String, String>(), classLoader);
     try {
       TransactionAware txAwareDataset = (TransactionAware) dataSet;
       final TransactionContext txContext =
@@ -431,6 +442,10 @@ public class TestBase {
           } catch (TransactionFailureException e) {
             throw Throwables.propagate(e);
           }
+        }
+        @Override
+      public void finish() throws IOException {
+          dsUtil.cleanup();
         }
       };
     } catch (Exception e) {

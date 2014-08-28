@@ -374,6 +374,10 @@ public class DefaultApplicationManager implements ApplicationManager {
             throw Throwables.propagate(e);
           }
         }
+        @Override
+        public void finish() {
+          //no-op
+        }
       };
     } catch (Exception e) {
       throw Throwables.propagate(e);

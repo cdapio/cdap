@@ -56,10 +56,10 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertTrue(framework.hasInstance("my_table"));
 
     // Doing some admin and data ops
-    DatasetAdmin admin = framework.getAdmin("my_table", null);
-    Assert.assertNotNull(admin);
     ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
+    DatasetAdmin admin = framework.getAdmin("my_table", cl);
+    Assert.assertNotNull(admin);
     final OrderedTable table = framework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, cl);
     Assert.assertNotNull(table);
 
@@ -145,10 +145,11 @@ public abstract class AbstractDatasetFrameworkTest {
   private void testCompositeDataset(DatasetFramework framework) throws Exception {
 
     // Doing some admin and data ops
-    DatasetAdmin admin = framework.getAdmin("my_table", null);
-    Assert.assertNotNull(admin);
+
     ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
+    DatasetAdmin admin = framework.getAdmin("my_table", cl);
+    Assert.assertNotNull(admin);
     final KeyValueTable table = framework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, cl);
     Assert.assertNotNull(table);
 

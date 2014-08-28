@@ -34,6 +34,7 @@ import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationState;
 import org.apache.hive.service.cli.SessionHandle;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,9 +61,10 @@ public class HiveCDH4ExploreService extends BaseHiveExploreService {
 
   @Inject
   protected HiveCDH4ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
+                                   LocationFactory locationFactory,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
                                    @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir) {
-    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir);
+    super(txClient, datasetFramework, locationFactory, cConf, hConf, hiveConf, previewsDir);
     System.setProperty("hive.server2.blocking.query", "false");
   }
 

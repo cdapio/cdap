@@ -19,7 +19,8 @@ package co.cask.cdap.data2.datafabric.dataset.service.executor;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.data.runtime.DatasetClassLoaderFactory;
+import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
+import co.cask.cdap.data.runtime.DatasetClassLoaders;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -38,8 +39,6 @@ import java.io.IOException;
  */
 public class InMemoryDatasetOpExecutor extends AbstractIdleService implements DatasetOpExecutor {
 
-  private static final Logger LOG = LoggerFactory.getLogger(InMemoryDatasetOpExecutor.class);
-
   private final RemoteDatasetFramework client;
   private final LocationFactory locationFactory;
 
@@ -51,53 +50,92 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
   @Override
   public boolean exists(String instanceName) throws Exception {
-    return getAdmin(instanceName).exists();
+    DatasetClassLoaderUtil dsUtil = null;
+    try {
+      ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                     getClass().getClassLoader());
+      dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
+        (classLoader, client.getType(client.getDatasetSpec(instanceName).getType()), locationFactory);
+      boolean exists = getAdmin(instanceName, dsUtil.getClassLoader()).exists();
+      return exists;
+    } finally {
+      if (dsUtil != null) {
+        dsUtil.cleanup();
+      }
+    }
   }
 
   @Override
   public DatasetSpecification create(String instanceName, DatasetTypeMeta typeMeta, DatasetProperties props)
     throws Exception {
+    DatasetClassLoaderUtil dsUtil = null;
+    try {
+      ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                            getClass().getClassLoader());
+      dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
+      DatasetType type = client.getDatasetType(typeMeta, dsUtil.getClassLoader());
 
-    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                          getClass().getClassLoader());
-    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
-    DatasetType type = client.getDatasetType(typeMeta, cl);
-
-    if (type == null) {
-      throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
+      if (type == null) {
+        throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
+      }
+      DatasetSpecification spec = type.configure(instanceName, props);
+      DatasetAdmin admin = type.getAdmin(spec);
+      admin.create();
+      return spec;
+    } finally {
+      //todo: will this affect the spec used by the caller ? , if so, where should we cleanup
+      if (dsUtil != null) {
+        dsUtil.cleanup();
+      }
     }
-
-    DatasetSpecification spec = type.configure(instanceName, props);
-    DatasetAdmin admin = type.getAdmin(spec);
-    admin.create();
-
-    return spec;
   }
 
   @Override
   public void drop(DatasetSpecification spec, DatasetTypeMeta typeMeta) throws Exception {
+    DatasetClassLoaderUtil dsUtil = null;
+    try {
+      ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                            getClass().getClassLoader());
+      dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
+      DatasetType type = client.getDatasetType(typeMeta, dsUtil.getClassLoader());
 
-    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                          getClass().getClassLoader());
-    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
-    DatasetType type = client.getDatasetType(typeMeta, cl);
+      if (type == null) {
+        throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
+      }
 
-    if (type == null) {
-      throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
+      DatasetAdmin admin = type.getAdmin(spec);
+      admin.drop();
+    } finally {
+      if (dsUtil != null) {
+        dsUtil.cleanup();
+      }
     }
-
-    DatasetAdmin admin = type.getAdmin(spec);
-    admin.drop();
   }
 
   @Override
   public void truncate(String instanceName) throws Exception {
-    getAdmin(instanceName).truncate();
+    DatasetClassLoaderUtil dsUtil = null;
+    try {
+      ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                     getClass().getClassLoader());
+      dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
+        (classLoader, client.getType(client.getDatasetSpec(instanceName).getType()), locationFactory);
+      getAdmin(instanceName, dsUtil.getClassLoader()).truncate();
+    } finally {
+      if (dsUtil != null) {
+        dsUtil.cleanup();
+      }
+    }
   }
 
   @Override
   public void upgrade(String instanceName) throws Exception {
-    getAdmin(instanceName).upgrade();
+    ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                   getClass().getClassLoader());
+    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
+      (classLoader, client.getType(client.getDatasetSpec(instanceName).getType()), locationFactory);
+    getAdmin(instanceName, dsUtil.getClassLoader()).upgrade();
+    dsUtil.cleanup();
   }
 
   @Override
@@ -110,8 +148,9 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
   }
 
-  private DatasetAdmin getAdmin(String instanceName) throws IOException, DatasetManagementException {
-    return client.getAdmin(instanceName, null);
+  private DatasetAdmin getAdmin(String instanceName, ClassLoader classLoader) throws
+    IOException, DatasetManagementException {
+    return client.getAdmin(instanceName, classLoader);
   }
 
 }

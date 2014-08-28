@@ -20,7 +20,8 @@ import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.runtime.DatasetClassLoaderFactory;
+import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
+import co.cask.cdap.data.runtime.DatasetClassLoaders;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.explore.client.DatasetExploreFacade;
@@ -33,6 +34,7 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -76,10 +78,13 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @Path("data/explore/datasets/{dataset}/enable")
   public void enableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("dataset") final String datasetName) {
+    DatasetClassLoaderUtil dsUtil = null;
     try {
       Dataset dataset;
       try {
-        dataset = getDataset(datasetName);
+        dsUtil = getDatasetClassLoaderUtil(datasetName);
+        dataset = datasetFramework.getDataset(datasetName,
+                                                      DatasetDefinition.NO_ARGUMENTS, dsUtil.getClassLoader());
       } catch (Exception e) {
         String className = isClassNotFoundException(e);
         if (className == null) {
@@ -131,6 +136,14 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } finally {
+      try {
+        if (dsUtil != null) {
+          dsUtil.cleanup();
+        }
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
     }
   }
 
@@ -151,10 +164,12 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @Path("data/explore/datasets/{dataset}/disable")
   public void disableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                              @PathParam("dataset") final String datasetName) {
+    DatasetClassLoaderUtil dsUtil = null;
     try {
       LOG.debug("Disabling explore for dataset instance {}", datasetName);
-      Dataset dataset = getDataset(datasetName);
-
+      dsUtil = getDatasetClassLoaderUtil(datasetName);
+      Dataset dataset = datasetFramework.getDataset(datasetName,
+                                                    DatasetDefinition.NO_ARGUMENTS, dsUtil.getClassLoader());
       if (dataset == null) {
         responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
         return;
@@ -180,6 +195,14 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } finally {
+      try {
+        if (dsUtil != null) {
+          dsUtil.cleanup();
+        }
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
     }
   }
 
@@ -190,9 +213,13 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @Path("/data/explore/datasets/{dataset}/schema")
   public void getDatasetSchema(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                                @PathParam("dataset") final String datasetName) {
+    DatasetClassLoaderUtil dsUtil = null;
     try {
       LOG.trace("Retrieving Explore schema for dataset {}", datasetName);
-      Dataset dataset = getDataset(datasetName);
+      dsUtil = getDatasetClassLoaderUtil(datasetName);
+      Dataset dataset = datasetFramework.getDataset(datasetName,
+                                                    DatasetDefinition.NO_ARGUMENTS, dsUtil.getClassLoader());
+
       if (dataset == null) {
         responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot find dataset " + datasetName);
         return;
@@ -227,14 +254,24 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } finally {
+      try {
+        if (dsUtil != null) {
+          dsUtil.cleanup();
+        }
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
     }
   }
 
-  private Dataset getDataset(String datasetName) throws DatasetManagementException, IOException {
+  private DatasetClassLoaderUtil getDatasetClassLoaderUtil(String datasetName) throws
+    DatasetManagementException, IOException {
     ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
     DatasetTypeMeta typeMeta = datasetFramework.getType(datasetFramework.getDatasetSpec(datasetName).getType());
-    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
-    return datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, cl);
+    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
+      (cl, typeMeta, locationFactory);
+    return dsUtil;
   }
 }

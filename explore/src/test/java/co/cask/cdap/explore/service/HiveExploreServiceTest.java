@@ -21,7 +21,8 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.data.runtime.DatasetClassLoaderFactory;
+import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
+import co.cask.cdap.data.runtime.DatasetClassLoaders;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.proto.ColumnDesc;
@@ -33,7 +34,6 @@ import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.test.SlowTests;
 import com.continuuity.tephra.Transaction;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -47,6 +47,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -66,6 +67,7 @@ import static co.cask.cdap.explore.service.KeyStructValueTableDefinition.KeyValu
 public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
   private static ClassLoader cl;
+  private static DatasetClassLoaderUtil dsUtil = null;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -78,7 +80,8 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
     cl = Thread.currentThread().getContextClassLoader();
     DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
-    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
+    dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
+    cl = dsUtil.getClassLoader();
 
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
@@ -111,6 +114,9 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
   public static void stop() throws Exception {
     datasetFramework.deleteInstance("my_table");
     datasetFramework.deleteModule("keyStructValue");
+    if (dsUtil != null) {
+      dsUtil.cleanup();
+    }
   }
 
   @Test
@@ -407,11 +413,6 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
     try {
       Transaction tx1 = transactionManager.startShort(100);
-
-      ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                            getClass().getClassLoader());
-      DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
-      cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
 
       // Accessing dataset instance to perform data operations
       KeyStructValueTableDefinition.KeyStructValueTable table =

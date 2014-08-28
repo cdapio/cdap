@@ -64,6 +64,7 @@ import org.apache.hive.service.cli.thrift.TColumnValue;
 import org.apache.hive.service.cli.thrift.TRow;
 import org.apache.hive.service.cli.thrift.TRowSet;
 import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,13 +109,15 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final long cleanupJobSchedule;
   private final File previewsDir;
 
+
   protected abstract QueryStatus fetchStatus(OperationHandle handle) throws HiveSQLException, ExploreException,
     HandleNotFoundException;
   protected abstract OperationHandle doExecute(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf, File previewsDir) {
+                                   LocationFactory locationFactory, CConfiguration cConf, Configuration hConf,
+                                   HiveConf hiveConf, File previewsDir) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.hiveConf = hiveConf;
@@ -136,7 +139,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.cliService = new CLIService();
 
     this.txClient = txClient;
-    ContextManager.saveContext(datasetFramework);
+    ContextManager.saveContext(datasetFramework, locationFactory);
 
     cleanupJobSchedule = cConf.getLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS);
 

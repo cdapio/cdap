@@ -48,7 +48,9 @@ public abstract class MetaTableUtil {
   }
 
   public void upgrade() throws Exception {
-    DatasetAdmin admin = dsFramework.getAdmin(getMetaTableName(), null);
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
+    DatasetAdmin admin = dsFramework.getAdmin(getMetaTableName(), cl);
     if (admin != null) {
       admin.upgrade();
     }

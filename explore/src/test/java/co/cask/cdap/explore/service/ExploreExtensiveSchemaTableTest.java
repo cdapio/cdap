@@ -19,7 +19,8 @@ package co.cask.cdap.explore.service;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.runtime.DatasetClassLoaderFactory;
+import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
+import co.cask.cdap.data.runtime.DatasetClassLoaders;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.QueryResult;
@@ -34,12 +35,15 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.File;
+import java.util.List;
+
 /**
  * Painfully test a wide combination of types in a schema of a record scannable.
  */
 @Category(SlowTests.class)
 public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest {
-
+  private static DatasetClassLoaderUtil dsUtil = null;
   @BeforeClass
   public static void start() throws Exception {
     startServices(CConfiguration.create());
@@ -51,8 +55,8 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
 
     ClassLoader cl = Thread.currentThread().getContextClassLoader();
     DatasetTypeMeta typeMeta = datasetFramework.getType("ExtensiveSchemaTable");
-    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
-
+    dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
+    cl = dsUtil.getClassLoader();
 
     // Accessing dataset instance to perform data operations
     ExtensiveSchemaTableDefinition.ExtensiveSchemaTable table =
@@ -94,6 +98,9 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
   public static void stop() throws Exception {
     datasetFramework.deleteInstance("my_table");
     datasetFramework.deleteModule("extensiveSchema");
+    if (dsUtil != null) {
+      dsUtil.cleanup();
+    }
   }
 
   @Test

@@ -54,48 +54,8 @@ public class ProgramClassLoader extends URLClassLoader {
    * @param parentDelegate Parent classloader.
    */
   public ProgramClassLoader(File unpackedJarDir, ClassLoader parentDelegate) {
-    super(getClassPathUrls(unpackedJarDir), parentDelegate);
+    super(ClassPathUrlsUtil.getClassPathUrls(unpackedJarDir), parentDelegate);
   }
 
-   static URL[] getClassPathUrls(File unpackedJarDir) {
-    List<URL> classPathUrls = new LinkedList<URL>();
 
-    try {
-      classPathUrls.add(unpackedJarDir.toURI().toURL());
-    } catch (MalformedURLException e) {
-      LOG.error("Error in adding unpackedJarDir to classPathUrls", e);
-    }
-
-    try {
-      classPathUrls.addAll(getJarURLs(unpackedJarDir));
-    } catch (MalformedURLException e) {
-      LOG.error("Error in adding jar URLs to classPathUrls", e);
-    }
-
-    try {
-      classPathUrls.addAll(getJarURLs(new File(unpackedJarDir, "lib")));
-    } catch (MalformedURLException e) {
-      LOG.error("Error in adding jar URLs to classPathUrls", e);
-    }
-
-    return classPathUrls.toArray(new URL[classPathUrls.size()]);
-  }
-
-   static List<URL> getJarURLs(File dir) throws MalformedURLException {
-    File[] files = dir.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return name.endsWith(".jar");
-      }
-    });
-    List<URL> urls = new LinkedList<URL>();
-
-    if (files != null) {
-      for (File file : files) {
-        urls.add(file.toURI().toURL());
-      }
-    }
-
-    return urls;
-  }
 }

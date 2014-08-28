@@ -28,6 +28,7 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.Location;
@@ -57,6 +58,7 @@ public final class DefaultProgram implements Program {
   private final ClassLoader parentClassLoader;
   private final File specFile;
   private final List<Location> datasetTypeJars;
+  private final List<File> datasetsJarPath;
   private boolean expanded;
   private ClassLoader classLoader;
   private ApplicationSpecification specification;
@@ -75,6 +77,7 @@ public final class DefaultProgram implements Program {
     this.datasetTypeJars = datasetTypeJars;
     this.expandFolder = expandFolder;
     this.parentClassLoader = parentClassLoader;
+    this.datasetsJarPath = Lists.newArrayList();
 
     Manifest manifest = BundleJarUtil.getManifest(programJarLocation);
     if (manifest == null) {
@@ -166,13 +169,14 @@ public final class DefaultProgram implements Program {
     return datasetTypeJars;
   }
 
+
   @Override
   public synchronized ClassLoader getClassLoader() {
     if (classLoader == null) {
       expandIfNeeded();
       try {
         CombineClassLoader datasetFilterClassLoader =
-          ClassLoaders.newDatasetClassLoader(datasetTypeJars,
+          ClassLoaders.newDatasetClassLoader(datasetsJarPath,
                                                      ApiResourceListHolder.getResourceList(), parentClassLoader);
         classLoader = new ProgramClassLoader(expandFolder, datasetFilterClassLoader);
       } catch (IOException e) {
@@ -198,11 +202,18 @@ public final class DefaultProgram implements Program {
     if (expanded) {
       return;
     }
-
     Preconditions.checkState(expandFolder != null, "Directory for jar expansion is not defined.");
-
     try {
       BundleJarUtil.unpackProgramJar(programJarLocation, expandFolder);
+      int index = 0;
+      for (Location location : getDatasetJarLocation()) {
+        if (location != null) {
+          File temp = new File(expandFolder, String.valueOf(index++));
+          temp.mkdir();
+          BundleJarUtil.unpackProgramJar(location, temp);
+          datasetsJarPath.add(temp);
+        }
+      }
       expanded = true;
     } catch (IOException e) {
       throw Throwables.propagate(e);

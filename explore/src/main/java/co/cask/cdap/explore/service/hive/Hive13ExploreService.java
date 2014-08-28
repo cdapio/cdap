@@ -37,6 +37,7 @@ import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationStatus;
 import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.SessionHandle;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.util.Collections;
@@ -48,10 +49,11 @@ import java.util.List;
 public class Hive13ExploreService extends BaseHiveExploreService {
 
   @Inject
-  public Hive13ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
+  public Hive13ExploreService(TransactionSystemClient txClient,
+                              DatasetFramework datasetFramework, LocationFactory locationFactory,
                               CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
                               @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir) {
-    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir);
+    super(txClient, datasetFramework, locationFactory, cConf, hConf, hiveConf, previewsDir);
     // This config sets the time Hive CLI getOperationStatus method will wait for the status of
     // a running query.
     System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_LONG_POLLING_TIMEOUT.toString(), "50");

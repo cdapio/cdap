@@ -73,7 +73,7 @@ public final class ClassLoaders {
                                                                          ImmutableList.of(parentClassLoader)));
   }
 
-  public static CombineClassLoader newDatasetClassLoader(List<Location> datasetJars,
+  public static CombineClassLoader newDatasetClassLoader(List<File> datasetJars,
                                                                Iterable<String> apiResourceList,
                                                                ClassLoader parentClassLoader) throws IOException {
     Predicate<String> predicate = Predicates.in(Sets.newHashSet(apiResourceList));
@@ -81,7 +81,7 @@ public final class ClassLoaders {
                                                     ClassLoaders.class.getClassLoader());
 
     List<ClassLoader> datasetClassLoaders = Lists.newArrayList();
-    for (Location datasetJar : datasetJars) {
+    for (File datasetJar : datasetJars) {
       datasetClassLoaders.add(new DatasetFilterClassLoader(datasetJar,
                                new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
                                                       ImmutableList.of(parentClassLoader))));

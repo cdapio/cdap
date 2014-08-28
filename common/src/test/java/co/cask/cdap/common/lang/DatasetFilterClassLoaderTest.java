@@ -17,34 +17,58 @@
 package co.cask.cdap.common.lang;
 
 import co.cask.cdap.api.annotation.ExposeDataset;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.lang.jar.DatasetFilterClassLoader;
 import co.cask.cdap.common.lang.jar.JarFinder;
+import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
+import com.google.common.io.Files;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
+
 /**
- *
+ * Testing the exposed and unexposed annotations for Dataset Filtered Class loading
  */
 public class DatasetFilterClassLoaderTest {
 
   @Test
-  public void testExposedDataset() throws ClassNotFoundException {
+  public void testExposedDataset() throws ClassNotFoundException, IOException {
     String jarPath = JarFinder.getJar(ExposedDataset.class);
     ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                     ClassLoaders.class.getClassLoader());
-    LocationFactory lf = new LocalLocationFactory();
-    ClassLoader dsClassLoader = new DatasetFilterClassLoader(lf.create(jarPath), filterParent);
-    dsClassLoader.loadClass(ExposedDataset.class.getName());
+    File dsFile = Files.createTempDir();
+    try {
+      LocationFactory lf = new LocalLocationFactory();
+      BundleJarUtil.unpackProgramJar(lf.create(jarPath), dsFile);
+      ClassLoader dsClassLoader = new DatasetFilterClassLoader(dsFile, filterParent);
+      dsClassLoader.loadClass(ExposedDataset.class.getName());
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    } finally {
+      DirUtils.deleteDirectoryContents(dsFile);
+    }
   }
 
   @Test(expected = ClassNotFoundException.class)
-  public void testUnExposedDataset() throws ClassNotFoundException {
+  public void testUnExposedDataset() throws ClassNotFoundException, IOException {
     String jarPath = JarFinder.getJar(UnExposedDataset.class);
     LocationFactory lf = new LocalLocationFactory();
-    ClassLoader dsClassLoader = new DatasetFilterClassLoader(lf.create(jarPath), null);
-    dsClassLoader.loadClass(UnExposedDataset.class.getName());
+    File dsFile = Files.createTempDir();
+    try {
+      BundleJarUtil.unpackProgramJar(lf.create(jarPath), dsFile);
+      ClassLoader dsClassLoader = new DatasetFilterClassLoader(dsFile, null);
+      dsClassLoader.loadClass(UnExposedDataset.class.getName());
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    } finally {
+      DirUtils.deleteDirectoryContents(dsFile);
+    }
+
   }
 
   @ExposeDataset

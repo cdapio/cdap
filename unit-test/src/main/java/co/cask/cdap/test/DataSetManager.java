@@ -16,6 +16,8 @@
 
 package co.cask.cdap.test;
 
+import java.io.IOException;
+
 /**
  * Instance of this class is for managing {@link co.cask.cdap.api.data.DataSet}.
  *
@@ -52,4 +54,6 @@ public interface DataSetManager<T> {
    * Can be called multiple times on same instance of the dataset.
    */
   void flush();
+
+  void finish() throws IOException;
 }

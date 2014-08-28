@@ -27,7 +27,8 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.DatasetClassLoaderFactory;
+import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
+import co.cask.cdap.data.runtime.DatasetClassLoaders;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -52,7 +53,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
 
 import java.io.File;
 import java.util.List;
@@ -61,8 +61,6 @@ import java.util.List;
  * Test deployment behavior when explore module is disabled.
  */
 public class ExploreDisabledTest {
-  private static final Logger LOG = org.slf4j.LoggerFactory.getLogger(ExploreDisabledTest.class);
-
   private static TransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
   private static DatasetOpExecutor dsOpExecutor;
@@ -110,8 +108,8 @@ public class ExploreDisabledTest {
     ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
     DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
-    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
-
+    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
+    cl = dsUtil.getClassLoader();
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
@@ -142,6 +140,7 @@ public class ExploreDisabledTest {
 
     datasetFramework.deleteInstance("table1");
     datasetFramework.deleteModule("module1");
+    dsUtil.cleanup();
   }
 
   @Test
@@ -157,8 +156,8 @@ public class ExploreDisabledTest {
     ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
     DatasetTypeMeta typeMeta = datasetFramework.getType("NotRecordScannableTableDef");
-    cl = DatasetClassLoaderFactory.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
-
+    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
+    cl = dsUtil.getClassLoader();
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
@@ -185,6 +184,7 @@ public class ExploreDisabledTest {
 
     datasetFramework.deleteInstance("table2");
     datasetFramework.deleteModule("module2");
+    dsUtil.cleanup();
   }
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {

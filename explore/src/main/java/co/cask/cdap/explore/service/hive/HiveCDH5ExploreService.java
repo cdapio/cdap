@@ -32,6 +32,7 @@ import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationStatus;
 import org.apache.hive.service.cli.SessionHandle;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 
@@ -46,10 +47,11 @@ import java.io.File;
 public class HiveCDH5ExploreService extends BaseHiveExploreService {
 
   @Inject
-  protected HiveCDH5ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
+  protected HiveCDH5ExploreService(TransactionSystemClient txClient, LocationFactory locationFactory,
+                                   DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
                                    @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir) {
-    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir);
+    super(txClient, datasetFramework, locationFactory, cConf, hConf, hiveConf, previewsDir);
   }
 
   @Override
