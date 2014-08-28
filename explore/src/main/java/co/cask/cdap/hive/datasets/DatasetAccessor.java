@@ -30,7 +30,6 @@ import co.cask.cdap.hive.context.TxnCodec;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionAware;
 import com.google.common.collect.Maps;
-import com.sun.istack.internal.NotNull;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
@@ -179,7 +178,7 @@ public class DatasetAccessor {
     return (RecordScannable) dataset;
   }
 
-  private static Dataset instantiate(@NotNull Configuration conf, String dsName, boolean isRecordWritable)
+  private static Dataset instantiate(@Nullable Configuration conf, String dsName, boolean isRecordWritable)
     throws IOException {
     ContextManager.Context context = ContextManager.getContext(conf);
     String datasetName = dsName;
