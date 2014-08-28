@@ -4,8 +4,6 @@
 
 define(['core/controllers/services'], function (servicesController) {
 
-  var ERROR_TXT = 'Requested Instance count out of bounds.';
-  
   var Controller = servicesController.extend({
     needs: ['Userservice'],
 
@@ -54,40 +52,20 @@ define(['core/controllers/services'], function (servicesController) {
         $('.services-instances-input').keyup();
       },500);
 
-      if(input === runnable.requested){
-        C.Modal.show('Incorrect Input', 'Please select a number different than that already requested.');
+      var isInvalid = C.Util.isInvalidNumInstances(input, runnable.requested);
+      if(isInvalid){
+        C.Modal.show('Error', isInvalid);
         return;
       }
 
-      if(!inputStr || inputStr.length === 0){
-        C.Modal.show('Change Instances','Enter a valid number of instances.');
-        return;
-      }
-
-      if(isNaN(input) || isNaN(inputStr)){
-        C.Modal.show('Incorrect Input', 'Instance count can only be set to numbers (between 1 and 100).');
-        return;
-      }
-
-      this.runnableVerifyInstanceBounds(service, runnable.id, input, "Request " + input);
+      this.setInstances(service, runnable.id, input);
     },
 
-    runnableIncreaseInstance: function (service, runnableID, instanceCount) {
-      this.runnableVerifyInstanceBounds(service, runnableID, ++instanceCount, "Increase");
-    },
-    runnableDecreaseInstance: function (service, runnableID, instanceCount) {
-      this.runnableVerifyInstanceBounds(service, runnableID, --instanceCount, "Decrease");
-    },
-
-    runnableVerifyInstanceBounds: function (service, runnableID, numRequested, direction) {
+    setInstances: function (service, runnableID, numRequested) {
       var self = this;
-      if (numRequested <= 0) {
-        C.Modal.show("Instances Error", ERROR_TXT);
-        return;
-      }
       C.Modal.show(
-        direction + " instances",
-        direction + " instances for runnable: " + runnableID + "?",
+        "Request " + numRequested + " instances",
+        "Request " + numRequested + " instances for runnable: " + runnableID + "?",
         function () {
           var url = 'rest/apps/' + service.app + '/services/' + service.name 
               + '/runnables/' + runnableID + '/instances';

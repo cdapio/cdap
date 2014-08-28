@@ -4,8 +4,6 @@
 
 define([], function () {
 
-  var ERROR_TXT = 'Requested Instance count out of bounds.';
-
   var Controller = Em.Controller.extend({
 
     load: function () {
@@ -130,41 +128,20 @@ define([], function () {
         $('.services-instances-input').keyup();
       },500);
 
-      if(service.requested === input){
-        C.Modal.show('Incorrect Input', 'Please select a number different than that already requested.');
+      var isInvalid = C.Util.isInvalidNumInstances(input, service.requested, service.min, service.max);
+      if(isInvalid){
+        C.Modal.show('Error', isInvalid);
         return;
       }
 
-      if(!inputStr || inputStr.length === 0){
-        C.Modal.show('Change Instances','Enter a valid number of instances.');
-        return;
-      }
-
-      if(isNaN(input) || isNaN(inputStr)){
-        C.Modal.show('Incorrect Input', 'Instance count can only be set to numbers (between 1 and 100).');
-        return;
-      }
-
-      this.verifyInstanceBounds(service, input, "Request " + input);
+      this.setInstances(service, input);
     },
 
-    increaseInstance: function (service, instanceCount) {
-      this.verifyInstanceBounds(service, ++instanceCount, "Increase");
-    },
-
-    decreaseInstance: function (service, instanceCount) {
-      this.verifyInstanceBounds(service, --instanceCount, "Decrease");
-    },
-
-    verifyInstanceBounds: function(service, numRequested, direction) {
+    setInstances: function(service, numRequested) {
       var self = this;
-      if (numRequested > service.max || numRequested < service.min) {
-        C.Modal.show("Instances Error", ERROR_TXT);
-        return;
-      }
       C.Modal.show(
-        direction + " instances",
-        direction + " instances for " + service.name + "?",
+        "Request " + numRequested + " instances",
+        "Request " + numRequested + " instances for " + service.name + "?",
         function () {
           var callback = function(){ self.updateServices() };
           self.executeInstanceCall('rest/system/services/' + service.name + '/instances', numRequested, callback);

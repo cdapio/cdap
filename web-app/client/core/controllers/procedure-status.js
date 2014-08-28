@@ -115,23 +115,9 @@ define([], function () {
         $('#instancesInput').keyup();
       },500);
 
-      if(input === this.get('model').instances){
-        C.Modal.show('Incorrect Input', 'Please select a number different than that already requested.');
-        return;
-      }
-
-      if(!inputStr || inputStr.length === 0){
-        C.Modal.show('Change Instances','Enter a valid number of instances.');
-        return;
-      }
-
-      if(isNaN(input) || isNaN(inputStr)){
-        C.Modal.show('Incorrect Input', 'Instance count can only be set to numbers (between 1 and 100).');
-        return;
-      }
-
-      if(input < 1 || input > 100) {
-        C.Modal.show('Instances Requested out of bounds', 'Please select an instance count (between 1 and 100)');
+      var isInvalid = C.Util.isInvalidNumInstances(input, this.get('model').instances);
+      if(isInvalid){
+        C.Modal.show('Error', isInvalid);
         return;
       }
 

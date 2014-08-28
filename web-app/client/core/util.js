@@ -965,6 +965,42 @@ define([], function () {
     },
 
     /**
+     * Because the number of a runnable's instances is changed from multiple controllers, the logic to check validity
+     * is delegated to this function, to avoid duplicate code within each of those controllers.
+     * @param {numRequested} the number of instances which a user is now requesting for the runnable.
+     * @param {curRequested} the number of instances already requested for the runnable.
+     * @param {min} the minimum number of instances the runnable allows.
+     * @param {max} the max number of instances the runnable allows.
+     * @return false if the number requested is valid, an error message (string) otherwise.
+     */
+    isInvalidNumInstances: function (numRequested, currRequested, min, max) {
+//      default values of [1,100] for [min,max].
+      if (typeof(min)==='undefined') min = 1;
+      if (typeof(max)==='undefined') max = 100;
+
+      if (min==max) {
+        return 'You can not change the number of instances for this runnable. Its minimum and maximum instances '
+                + 'allowed are both set to ' + min;
+      }
+      if (numRequested === currRequested) {
+        return 'Please select a number different than that already requested.';
+      }
+      if (isNaN(numRequested)) {
+        return 'Please select a valid number (between 1 and 100).';
+      }
+      if (numRequested < 1 || numRequested > 100) {
+        return 'Please select an instance count (between 1 and 100)';
+      }
+      if (numRequested < min) {
+        return 'The minimum number of instances this runnable allows is ' + min;
+      }
+      if (numRequested > max) {
+        return 'The maximum number of instances this runnable allows is ' + max;
+      }
+      return false;
+    },
+
+    /**
      * Gets the function name by calling toString.
      */
     getFnName: function(fn) {
