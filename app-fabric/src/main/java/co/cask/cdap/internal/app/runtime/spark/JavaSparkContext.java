@@ -16,13 +16,22 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.data.batch.BatchReadable;
+import co.cask.cdap.api.data.batch.RecordScannable;
+import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
-import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
+import co.cask.cdap.internal.app.runtime.spark.dataset.DataSetInputFormat;
+import co.cask.cdap.internal.app.runtime.spark.dataset.DataSetOutputFormat;
+import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.MRJobConfig;
+import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
+
+import java.util.List;
 
 /**
  * A concrete implementation of {@link AbstractSparkContext} which is used if the user's spark job is written in Java.
@@ -49,7 +58,20 @@ class JavaSparkContext extends AbstractSparkContext {
   @Override
   public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass) {
     Configuration hConf = new Configuration(getHConf());
+    Dataset dataset = basicSparkContext.getDataSet(datasetName);
+    List<Split> inputSplits;
+    if (dataset instanceof BatchReadable) {
+      BatchReadable curDataset = (BatchReadable) basicSparkContext.getDataSet(datasetName);
+      inputSplits = curDataset.getSplits();
+    } else {
+      RecordScannable curDataset = (RecordScannable) basicSparkContext.getDataSet(datasetName);
+      inputSplits = curDataset.getSplits();
+    }
+    hConf.setClass(MRJobConfig.INPUT_FORMAT_CLASS_ATTR, DataSetInputFormat.class, InputFormat.class);
     hConf.set(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET, datasetName);
+    hConf.set(SparkContextConfig.HCONF_ATTR_INPUT_SPLIT_CLASS, inputSplits.get(0).getClass().getName());
+    hConf.set(SparkContextConfig.HCONF_ATTR_INPUT_SPLITS, new Gson().toJson(inputSplits));
+
     return (T) apacheContext.newAPIHadoopFile(datasetName, DataSetInputFormat.class, kClass, vClass, hConf);
   }
 
@@ -66,6 +88,7 @@ class JavaSparkContext extends AbstractSparkContext {
   public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass) {
     Configuration hConf = new Configuration(getHConf());
     hConf.set(DataSetOutputFormat.HCONF_ATTR_OUTPUT_DATASET, datasetName);
+    hConf.setClass(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, DataSetOutputFormat.class, OutputFormat.class);
     ((JavaPairRDD) rdd).saveAsNewAPIHadoopFile(datasetName, kClass, vClass, DataSetOutputFormat.class, hConf);
   }
 
@@ -76,7 +99,7 @@ class JavaSparkContext extends AbstractSparkContext {
    * @return the {@link org.apache.spark.api.java.JavaSparkContext}
    */
   @Override
-  public <T> T getApacheSparkContext() {
+  public <T> T getBaseSparkContext() {
     return (T) apacheContext;
   }
 }
