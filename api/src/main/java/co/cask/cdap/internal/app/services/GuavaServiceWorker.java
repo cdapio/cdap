@@ -24,8 +24,8 @@ import org.apache.twill.api.ResourceSpecification;
  * Wrapper around a Guava-Service, to allow adding guava services as workers to a user-defined service.
  */
 public class GuavaServiceWorker extends AbstractServiceWorker {
-  Service service;
-  ResourceSpecification resourceSpecification;
+  private Service service;
+  private ResourceSpecification resourceSpecification;
 
   protected GuavaServiceWorker(Service service, ResourceSpecification resourceSpecification) {
     this.service = service;

@@ -57,7 +57,7 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
   }
 
   /**
-   *
+   * Currently defaults to ResourceSpecification.BASIC, until we specifying
    * @return The resourceSpecification to be used for this serviceWorker
    */
   protected ResourceSpecification getResourceSpecification() {
