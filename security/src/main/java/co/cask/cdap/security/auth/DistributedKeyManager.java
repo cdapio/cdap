@@ -52,12 +52,14 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
    */
   private static final long KEY_UPDATE_FREQUENCY = 60 * 1000;
   private static final Logger LOG = LoggerFactory.getLogger(DistributedKeyManager.class);
-  private SharedResourceCache<KeyIdentifier> keyCache;
+
+  private final SharedResourceCache<KeyIdentifier> keyCache;
+  private final String parentZNode;
+
   private Timer timer;
   private long lastKeyUpdate;
   protected final AtomicBoolean leader = new AtomicBoolean();
   private LeaderElection leaderElection;
-  private String parentZNode;
   private ZKClient zookeeper;
   private final long maxTokenExpiration;
 
