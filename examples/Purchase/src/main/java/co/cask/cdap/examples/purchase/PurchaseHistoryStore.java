@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.examples.purchase;
 
-import co.cask.cdap.api.annotation.ExposeDataset;
+import co.cask.cdap.api.annotation.ExposeClass;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordScanner;
@@ -41,7 +41,7 @@ import java.util.List;
  * This class implements BatchWritable in order to be able to write to it from Map/Reduce, and RecordScannable
  * in order to run ad-hoc queries against it.
  */
-@ExposeDataset
+@ExposeClass
 public class PurchaseHistoryStore
   extends AbstractDataset
   implements RecordScannable<PurchaseHistory>, BatchWritable<String, PurchaseHistory> {

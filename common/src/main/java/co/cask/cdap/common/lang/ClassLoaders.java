@@ -18,7 +18,7 @@ package co.cask.cdap.common.lang;
 
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.common.internal.guava.ClassPath;
-import co.cask.cdap.common.lang.jar.DatasetFilterClassLoader;
+import co.cask.cdap.common.lang.jar.ExposeFilterClassLoader;
 import co.cask.cdap.common.lang.jar.ProgramClassLoader;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
@@ -30,7 +30,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.utils.Dependencies;
 
 import java.io.File;
@@ -82,7 +81,7 @@ public final class ClassLoaders {
 
     List<ClassLoader> datasetClassLoaders = Lists.newArrayList();
     for (File datasetJar : datasetJars) {
-      datasetClassLoaders.add(new DatasetFilterClassLoader(datasetJar,
+      datasetClassLoaders.add(new ExposeFilterClassLoader(datasetJar,
                                new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
                                                       ImmutableList.of(parentClassLoader))));
     }

@@ -15,13 +15,13 @@
  */
 package co.cask.cdap.examples.purchase;
 
-import co.cask.cdap.api.annotation.ExposeDataset;
+import co.cask.cdap.api.annotation.ExposeClass;
 
 /**
  * This class represents a purchase made by a customer. It is a very simple class and only contains
  * the name of the customer, the name of the product, product quantity, price paid, and the purchase time.
  */
-@ExposeDataset
+@ExposeClass
 public class Purchase {
 
   private final String customer, product;

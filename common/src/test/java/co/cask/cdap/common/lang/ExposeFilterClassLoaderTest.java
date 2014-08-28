@@ -16,9 +16,9 @@
 
 package co.cask.cdap.common.lang;
 
-import co.cask.cdap.api.annotation.ExposeDataset;
+import co.cask.cdap.api.annotation.ExposeClass;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.lang.jar.DatasetFilterClassLoader;
+import co.cask.cdap.common.lang.jar.ExposeFilterClassLoader;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Objects;
@@ -34,7 +34,7 @@ import java.io.IOException;
 /**
  * Testing the exposed and unexposed annotations for Dataset Filtered Class loading
  */
-public class DatasetFilterClassLoaderTest {
+public class ExposeFilterClassLoaderTest {
 
   @Test
   public void testExposedDataset() throws ClassNotFoundException, IOException {
@@ -45,7 +45,7 @@ public class DatasetFilterClassLoaderTest {
     try {
       LocationFactory lf = new LocalLocationFactory();
       BundleJarUtil.unpackProgramJar(lf.create(jarPath), dsFile);
-      ClassLoader dsClassLoader = new DatasetFilterClassLoader(dsFile, filterParent);
+      ClassLoader dsClassLoader = new ExposeFilterClassLoader(dsFile, filterParent);
       dsClassLoader.loadClass(ExposedDataset.class.getName());
     } catch (IOException e) {
       throw Throwables.propagate(e);
@@ -61,7 +61,7 @@ public class DatasetFilterClassLoaderTest {
     File dsFile = Files.createTempDir();
     try {
       BundleJarUtil.unpackProgramJar(lf.create(jarPath), dsFile);
-      ClassLoader dsClassLoader = new DatasetFilterClassLoader(dsFile, null);
+      ClassLoader dsClassLoader = new ExposeFilterClassLoader(dsFile, null);
       dsClassLoader.loadClass(UnExposedDataset.class.getName());
     } catch (IOException e) {
       throw Throwables.propagate(e);
@@ -71,7 +71,7 @@ public class DatasetFilterClassLoaderTest {
 
   }
 
-  @ExposeDataset
+  @ExposeClass
   class ExposedDataset {
 
   }

@@ -16,24 +16,22 @@
 
 package co.cask.cdap.common.lang.jar;
 
-import co.cask.cdap.api.annotation.ExposeDataset;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import co.cask.cdap.api.annotation.ExposeClass;
 
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 
 /**
- * Classloader that loads the given class, checks if it has {@link co.cask.cdap.api.annotation.ExposeDataset} annotation
+ * Classloader that loads the given class, checks if it has {@link co.cask.cdap.api.annotation.ExposeClass} annotation
  * if it does not have the annotation , it throws {@link java.lang.ClassNotFoundException}
  */
-public class DatasetFilterClassLoader extends ClassLoader {
+public class ExposeFilterClassLoader extends ClassLoader {
   private final URL[] datasetUrls;
   private URLClassLoader datasetClassLoader;
 
 
-  public DatasetFilterClassLoader(File datasetTypeJar, ClassLoader parentClassLoader) {
+  public ExposeFilterClassLoader(File datasetTypeJar, ClassLoader parentClassLoader) {
     super(parentClassLoader);
     this.datasetUrls = ClassPathUrlsUtil.getClassPathUrls(datasetTypeJar);
     this.datasetClassLoader = new URLClassLoader(datasetUrls, parentClassLoader);
@@ -42,11 +40,11 @@ public class DatasetFilterClassLoader extends ClassLoader {
   @Override
   public Class<?> findClass(String name) throws ClassNotFoundException {
     Class<?> dataset = datasetClassLoader.loadClass(name);
-    ExposeDataset dsExpose = dataset.getAnnotation(ExposeDataset.class);
+    ExposeClass dsExpose = dataset.getAnnotation(ExposeClass.class);
     if (dsExpose != null) {
       return dataset;
     } else {
-      throw new ClassNotFoundException("Trying to load an unExposed dataset class");
+      throw new ClassNotFoundException(String.format("Unable to find class %s", name));
     }
   }
 }
