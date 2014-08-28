@@ -21,6 +21,7 @@ import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.BadRequestException;
 import co.cask.cdap.client.exception.StreamNotFoundException;
+import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
@@ -63,6 +64,9 @@ public class StreamClientTestRun extends ClientTestBase {
     streamClient.create(testStreamId);
     LOG.info("Checking stream list");
     Assert.assertEquals(baseStreamCount + 1, streamClient.list().size());
+    StreamProperties config = streamClient.getConfig(testStreamId);
+    Assert.assertNotNull(config);
+    Assert.assertEquals(testStreamId, config.getName());
     // TODO: getting and setting config for stream is not supported with in-memory
 //    streamClient.setTTL(testStreamId, 123);
 //    streamClient.sendEvent(testStreamId, testStreamEvent);

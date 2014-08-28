@@ -71,9 +71,11 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
   public HandlerMethod create() {
     try {
       boolean disableTransaction = program.getMainClass().isAnnotationPresent(DisableTransaction.class);
-      DataFabricFacade dataFabricFacade = disableTransaction ? dataFabricFacadeFactory.createNoTransaction(program)
-                                                             : dataFabricFacadeFactory.create(program);
-      ProcedureHandlerMethod handlerMethod = new ProcedureHandlerMethod(program, dataFabricFacade, contextFactory);
+      BasicProcedureContext context = contextFactory.create();
+      DataFabricFacade dataFabricFacade = disableTransaction ?
+        dataFabricFacadeFactory.createNoTransaction(program, context.getDatasetInstantiator()) :
+        dataFabricFacadeFactory.create(program, context.getDatasetInstantiator());
+      ProcedureHandlerMethod handlerMethod = new ProcedureHandlerMethod(program, dataFabricFacade, context);
       handlerMethod.init();
 
       procedures.put(new WeakReference<HandlerMethod>(handlerMethod, refQueue),

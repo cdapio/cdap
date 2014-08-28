@@ -21,6 +21,7 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.webapp.WebappSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import com.google.common.collect.ImmutableMap;
@@ -37,6 +38,7 @@ public class ProgramTypes {
     .put(FlowSpecification.class, ProgramType.FLOW)
     .put(ProcedureSpecification.class, ProgramType.PROCEDURE)
     .put(MapReduceSpecification.class, ProgramType.MAPREDUCE)
+    .put(SparkSpecification.class, ProgramType.SPARK)
     .put(WorkflowSpecification.class, ProgramType.WORKFLOW)
     .put(WebappSpecification.class, ProgramType.WEBAPP)
     .put(ServiceSpecification.class, ProgramType.SERVICE)

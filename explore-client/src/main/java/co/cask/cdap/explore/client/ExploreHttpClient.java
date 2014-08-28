@@ -36,6 +36,7 @@ import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
+import co.cask.cdap.proto.TableNameInfo;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
@@ -67,7 +68,7 @@ abstract class ExploreHttpClient implements Explore {
   private static final Gson GSON = new Gson();
 
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
-  private static final Type TABLES_TYPE = new TypeToken<List<TableInfo>>() { }.getType();
+  private static final Type TABLES_TYPE = new TypeToken<List<TableNameInfo>>() { }.getType();
   private static final Type COL_DESC_LIST_TYPE = new TypeToken<List<ColumnDesc>>() { }.getType();
   private static final Type QUERY_INFO_LIST_TYPE = new TypeToken<List<QueryInfo>>() { }.getType();
   private static final Type ROW_LIST_TYPE = new TypeToken<List<QueryResult>>() { }.getType();
@@ -243,7 +244,7 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   @Override
-  public List<TableInfo> getTables(@Nullable String database) throws ExploreException {
+  public List<TableNameInfo> getTables(@Nullable String database) throws ExploreException {
     HttpResponse response = doGet(String.format("data/explore/tables%s", (database != null) ? "?db=" + database : ""));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return parseJson(response, TABLES_TYPE);
@@ -252,12 +253,12 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   @Override
-  public Map<String, String> getTableSchema(@Nullable String database, String table)
+  public TableInfo getTableInfo(@Nullable String database, String table)
     throws ExploreException, TableNotFoundException {
     String tableNamePrefix = (database != null) ? database + "." : "";
-    HttpResponse response = doGet(String.format("data/explore/tables/%s/schema", tableNamePrefix + table));
+    HttpResponse response = doGet(String.format("data/explore/tables/%s/info", tableNamePrefix + table));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return parseJson(response, MAP_TYPE_TOKEN);
+      return parseJson(response, TableInfo.class);
     } else if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
       throw new TableNotFoundException("Table " + tableNamePrefix + table + " not found.");
     }

@@ -20,6 +20,7 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.service.http.DefaultHttpServiceHandlerConfigurer;
@@ -110,7 +111,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     LOG.info("Announced HTTP Service");
     try {
       completion.get();
-      // once the service has been stopped, don't announe it anymore.
+      // once the service has been stopped, don't announce it anymore.
       contextCancellable.cancel();
     } catch (InterruptedException e) {
       LOG.error("Caught exception in HTTP Service run", e);
@@ -184,7 +185,8 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
         Throwables.propagate(e);
       }
     }
-    String pathPrefix = String.format("/v2/apps/%s/services/%s/methods", appName, serviceName);
+    String pathPrefix = String.format("%s/apps/%s/services/%s/methods", Constants.Gateway.GATEWAY_VERSION, appName,
+                                      serviceName);
     service = createNettyHttpService(context.getHost().getCanonicalHostName(), handlerContextPairs, pathPrefix);
   }
 

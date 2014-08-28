@@ -21,16 +21,15 @@ import co.cask.cdap.api.procedure.ProcedureContext;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.internal.app.runtime.DataSets;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-
-import java.io.Closeable;
-import java.util.Map;
 
 /**
  * Private interface to help creating {@link ProcedureContext}.
@@ -46,11 +45,14 @@ final class BasicProcedureContextFactory {
   private final MetricsCollectionService collectionService;
   private final ProgramServiceDiscovery serviceDiscovery;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final DatasetFramework dsFramework;
+  private final CConfiguration conf;
 
   BasicProcedureContextFactory(Program program, RunId runId, int instanceId, int instanceCount,
                                Arguments userArguments, ProcedureSpecification procedureSpec,
                                MetricsCollectionService collectionService, ProgramServiceDiscovery serviceDiscovery,
-                               DiscoveryServiceClient discoveryServiceClient) {
+                               DiscoveryServiceClient discoveryServiceClient,
+                               DatasetFramework dsFramework, CConfiguration conf) {
     this.program = program;
     this.runId = runId;
     this.instanceId = instanceId;
@@ -60,22 +62,13 @@ final class BasicProcedureContextFactory {
     this.collectionService = collectionService;
     this.serviceDiscovery = serviceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.dsFramework = dsFramework;
+    this.conf = conf;
   }
 
-  BasicProcedureContext create(DataFabricFacade dataFabricFacade) {
-    DataSetContext dataSetContext = dataFabricFacade.getDataSetContext();
-    Map<String, Closeable> dataSets = DataSets.createDataSets(dataSetContext,
-                                                            procedureSpec.getDataSets());
-    BasicProcedureContext context = new BasicProcedureContext(program, runId, instanceId, instanceCount,
-                                                              dataSets, userArguments, procedureSpec,
-                                                              collectionService, serviceDiscovery,
-                                                              discoveryServiceClient);
-
-    // hack for propagating metrics collector to datasets
-    if (dataSetContext instanceof DataSetInstantiator) {
-      ((DataSetInstantiator) dataSetContext).setMetricsCollector(context.getDatasetMetrics(),
-                                                                 context.getSystemMetrics());
-    }
-    return context;
+  BasicProcedureContext create() {
+    return new BasicProcedureContext(program, runId, instanceId, instanceCount,
+                                     procedureSpec.getDataSets(), userArguments, procedureSpec,
+                                     collectionService, serviceDiscovery, discoveryServiceClient, dsFramework, conf);
   }
 }
