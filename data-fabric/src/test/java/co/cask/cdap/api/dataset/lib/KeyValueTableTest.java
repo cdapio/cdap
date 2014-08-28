@@ -52,7 +52,7 @@ public class KeyValueTableTest extends AbstractDatasetTest {
   @BeforeClass
   public static void beforeClass() throws Exception {
     createInstance("keyValueTable", "test", DatasetProperties.EMPTY);
-    kvTable = getInstance("test", cl);
+    kvTable = getInstance("test");
   }
 
   @AfterClass
@@ -184,8 +184,8 @@ public class KeyValueTableTest extends AbstractDatasetTest {
     createInstance("keyValueTable", "t2", DatasetProperties.EMPTY);
     ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
-    final KeyValueTable table1 = getInstance("t1", cl);
-    final KeyValueTable table2 = getInstance("t2", cl);
+    final KeyValueTable table1 = getInstance("t1");
+    final KeyValueTable table2 = getInstance("t2");
     TransactionExecutor txnl = newTransactionExecutor(table1, table2);
 
     // write a value to table1 and verify it
@@ -228,8 +228,8 @@ public class KeyValueTableTest extends AbstractDatasetTest {
     });
 
     // verify synchronously that old value are still there
-    final KeyValueTable table1v2 = getInstance("t1", cl);
-    final KeyValueTable table2v2 = getInstance("t2", cl);
+    final KeyValueTable table1v2 = getInstance("t1");
+    final KeyValueTable table2v2 = getInstance("t2");
     TransactionExecutor txnlv2 = newTransactionExecutor(table1v2, table2v2);
     txnlv2.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -247,7 +247,7 @@ public class KeyValueTableTest extends AbstractDatasetTest {
   public void testBatchReads() throws Exception {
     createInstance("keyValueTable", "tBatch", DatasetProperties.EMPTY);
 
-    final KeyValueTable t = getInstance("tBatch", cl);
+    final KeyValueTable t = getInstance("tBatch");
     TransactionExecutor txnl = newTransactionExecutor(t);
 
     final SortedSet<Long> keysWritten = Sets.newTreeSet();

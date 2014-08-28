@@ -381,7 +381,7 @@ public class TestBase {
 
 
   /**
-   * Adds instance of data set.
+   * Adds an instance of a dataset.
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param props properties
@@ -403,6 +403,22 @@ public class TestBase {
                                                                                          locationFactory);
     datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
     return datasetFramework.getAdmin(datasetInstanceName, dsUtil.getClassLoader());
+  }
+
+  /**
+   * Adds an instance of dataset.
+   * @param datasetTypeName dataset type name
+   * @param datasetInstanceName instance name
+   * @param <T> type of the dataset admin
+   * @return
+   * @throws Exception
+   */
+  @Beta
+  protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
+                                                                String datasetInstanceName) throws Exception {
+
+    datasetFramework.addInstance(datasetTypeName, datasetInstanceName, DatasetProperties.EMPTY);
+    return datasetFramework.getAdmin(datasetInstanceName, null);
   }
 
   /**

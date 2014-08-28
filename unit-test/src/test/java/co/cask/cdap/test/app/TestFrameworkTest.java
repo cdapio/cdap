@@ -220,8 +220,8 @@ public class TestFrameworkTest extends TestBase {
     LOG.info("Service Started");
 
     // Look for service endpoint
-    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices", AppWithServices.SERVICE_NAME,
-                                                                         AppWithServices.SERVICE_NAME);
+    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices",
+                                                                        AppWithServices.SERVICE_NAME);
     final BlockingQueue<Discoverable> discoverables = new LinkedBlockingQueue<Discoverable>();
     serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
       @Override
@@ -235,9 +235,9 @@ public class TestFrameworkTest extends TestBase {
     Assert.assertNotNull(discoverable);
     Assert.assertTrue(discoverables.isEmpty());
 
-
-    URL url = new URL(String.format("http://%s:%d/ping2", discoverable.getSocketAddress().getHostName(),
-                                                          discoverable.getSocketAddress().getPort()));
+    URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/ping2",
+                                    discoverable.getSocketAddress().getHostName(),
+                                    discoverable.getSocketAddress().getPort(), AppWithServices.SERVICE_NAME));
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(response.getResponseCode(), 200);

@@ -62,7 +62,7 @@ public class IndexedTableTest extends AbstractDatasetTest {
     createInstance("indexedTable", "tab", DatasetProperties.builder()
       .add("columnToIndex", idxColString)
       .build());
-    table = getInstance("tab", Thread.currentThread().getContextClassLoader());
+    table = getInstance("tab");
   }
 
   @AfterClass
