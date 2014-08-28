@@ -55,7 +55,6 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
 
   private static final byte[] a = { 'a' };
 
-
   @BeforeClass
   public static void beforeClass() throws Exception {
     addModule("integerStore", new IntegerStoreModule());

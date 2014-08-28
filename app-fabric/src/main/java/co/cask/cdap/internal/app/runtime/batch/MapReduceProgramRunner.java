@@ -195,7 +195,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       controller = new MapReduceProgramController(context);
 
       LOG.info("Starting MapReduce Job: {}", context.toString());
-      submit(job, spec, program.getJarLocation(), context, dataSetInstantiator, program.getDatasetJarLocation());
+      submit(job, spec, program.getJarLocation(), context, dataSetInstantiator, program.getDatasetsJarLocation());
 
     } catch (Throwable e) {
       // failed before job even started - release all resources of the context

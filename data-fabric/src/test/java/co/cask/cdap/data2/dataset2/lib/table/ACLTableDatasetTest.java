@@ -40,7 +40,6 @@ public class ACLTableDatasetTest extends AbstractDatasetTest {
     addModule("aclTableModule", new ACLTableModule());
 
     createInstance(ACLTable.class.getName(), "myAclTable", DatasetProperties.EMPTY);
-
     ACLTable myAclTable = getInstance("myAclTable");
 
     final Principal bobUser = new Principal(PrincipalType.USER, "bob");

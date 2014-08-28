@@ -76,9 +76,7 @@ public class BaseHiveExploreServiceTest {
   protected static ExploreExecutorService exploreExecutorService;
   protected static EndpointStrategy datasetManagerEndpointStrategy;
   protected static ExploreService exploreService;
-
   protected static ExploreClient exploreClient;
-
   protected static LocationFactory locationFactory;
 
   protected static Injector injector;
@@ -101,6 +99,7 @@ public class BaseHiveExploreServiceTest {
     exploreExecutorService.startAndWait();
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
+    locationFactory = injector.getInstance(LocationFactory.class);
 
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     datasetManagerEndpointStrategy = new TimeLimitEndpointStrategy(
@@ -109,8 +108,6 @@ public class BaseHiveExploreServiceTest {
     exploreClient = injector.getInstance(ExploreClient.class);
     exploreService = injector.getInstance(ExploreService.class);
     Assert.assertTrue(exploreClient.isServiceAvailable());
-
-    locationFactory = injector.getInstance(LocationFactory.class);
   }
 
   @AfterClass

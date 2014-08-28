@@ -126,7 +126,7 @@ public class AppFabricTestHelper {
             @Override
             public Program apply(Program program) {
               try {
-                return Programs.createWithUnpack(program.getJarLocation(), program.getDatasetJarLocation(),
+                return Programs.createWithUnpack(program.getJarLocation(), program.getDatasetsJarLocation(),
                                                  folderSupplier.get());
               } catch (IOException e) {
                 throw Throwables.propagate(e);

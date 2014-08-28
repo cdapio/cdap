@@ -165,7 +165,7 @@ public final class DefaultProgram implements Program {
   }
 
   @Override
-  public List<Location> getDatasetJarLocation() {
+  public List<Location> getDatasetsJarLocation() {
     return datasetTypeJars;
   }
 
@@ -205,10 +205,9 @@ public final class DefaultProgram implements Program {
     Preconditions.checkState(expandFolder != null, "Directory for jar expansion is not defined.");
     try {
       BundleJarUtil.unpackProgramJar(programJarLocation, expandFolder);
-      int index = 0;
-      for (Location location : getDatasetJarLocation()) {
+      for (Location location : getDatasetsJarLocation()) {
         if (location != null) {
-          File temp = new File(expandFolder, String.valueOf(index++));
+          File temp = new File(expandFolder, location.getName());
           temp.mkdir();
           BundleJarUtil.unpackProgramJar(location, temp);
           datasetsJarPath.add(temp);

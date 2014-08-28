@@ -31,6 +31,7 @@ import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
@@ -259,7 +260,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
                                                   ClassLoader classLoader)
     throws DatasetManagementException {
 
-
+    Preconditions.checkNotNull(classLoader);
     DatasetDefinitionRegistry registry = registryFactory.create();
     List<DatasetModuleMeta> modulesToLoad = implementationInfo.getModules();
 

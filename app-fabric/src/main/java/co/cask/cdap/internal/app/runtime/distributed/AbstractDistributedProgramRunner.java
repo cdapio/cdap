@@ -123,7 +123,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           twillPreparer.enableDebugging();
         }
         List<String> datasetJars = Lists.newArrayList();
-        for (Location dsJar : copiedProgram.getDatasetJarLocation()) {
+        for (Location dsJar : copiedProgram.getDatasetsJarLocation()) {
           datasetJars.add(dsJar.getName());
         }
         TwillController twillController = twillPreparer
@@ -182,7 +182,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     }, tempJar);
     final Location jarLocation = new LocalLocationFactory().create(tempJar.toURI());
 
-    List<Location> datasetJars = program.getDatasetJarLocation();
+    List<Location> datasetJars = program.getDatasetsJarLocation();
     List<Location> datasetTempJars = Lists.newArrayList();
     for (final Location datasetJar : datasetJars) {
       File tempDsJar = File.createTempFile(datasetJar.getName(), ".jar");
@@ -237,7 +237,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           }
           try {
             // deleting temp dataset jars that were copied
-            List<Location> datasetTempJars = program.getDatasetJarLocation();
+            List<Location> datasetTempJars = program.getDatasetsJarLocation();
             for (Location datasetJar : datasetTempJars) {
               datasetJar.delete();
             }
