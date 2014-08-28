@@ -1023,7 +1023,7 @@
 
   <property>
     <name>security.authserver.ssl.keystore.type</name>
-    <value>jks</value>
+    <value>JKS</value>
   </property>
 
   <!-- Security configuration for the router -->
@@ -1050,7 +1050,7 @@
 
   <property>
     <name>security.router.ssl.keystore.type</name>
-    <value>jks</value>
+    <value>JKS</value>
   </property>
 
 </configuration>

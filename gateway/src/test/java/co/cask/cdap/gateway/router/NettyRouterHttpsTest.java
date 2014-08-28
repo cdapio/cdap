@@ -130,7 +130,7 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
 
       cConf.set(Constants.Security.Router.SSL_KEYPASSWORD, "secret");
       cConf.set(Constants.Security.Router.SSL_KEYSTORE_PASSWORD, "secret");
-      cConf.set(Constants.Security.Router.SSL_KEYSTORE_TYPE, "jks");
+      cConf.set(Constants.Security.Router.SSL_KEYSTORE_TYPE, "JKS");
       cConf.set(Constants.Security.Router.SSL_KEYSTORE_PATH, certUrl.getPath());
 
       router =

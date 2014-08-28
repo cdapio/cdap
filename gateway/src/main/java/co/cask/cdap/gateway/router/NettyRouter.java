@@ -141,7 +141,8 @@ public class NettyRouter extends AbstractIdleService {
                                      + cConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
       }
       this.sslHandlerFactory = new SSLHandlerFactory(
-        keystore, cConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD),
+        keystore, cConf.get(Constants.Security.Router.SSL_KEYSTORE_TYPE),
+        cConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD),
         cConf.get(Constants.Security.Router.SSL_KEYPASSWORD));
     } else {
       this.sslHandlerFactory = null;

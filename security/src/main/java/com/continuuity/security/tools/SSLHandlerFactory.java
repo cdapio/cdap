@@ -34,7 +34,7 @@ public class SSLHandlerFactory {
   private static final String protocol = "TLS";
   private final SSLContext serverContext;
 
-  public SSLHandlerFactory(File keyStore, String keyStorePassword, String certificatePassword) {
+  public SSLHandlerFactory(File keyStore, String keyStoreType, String keyStorePassword, String certificatePassword) {
     if (keyStore == null) {
       throw new IllegalArgumentException("Key Store Path Not Configured");
     }
@@ -48,7 +48,7 @@ public class SSLHandlerFactory {
     }
 
     try {
-      KeyStore ks = KeyStore.getInstance("JKS");
+      KeyStore ks = KeyStore.getInstance(keyStoreType);
       InputStream inputStream = new FileInputStream(keyStore);
       try {
         ks.load(inputStream, keyStorePassword.toCharArray());
