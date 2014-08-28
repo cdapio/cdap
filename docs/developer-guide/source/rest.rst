@@ -128,11 +128,9 @@ For CDAP-issued access tokens, the authentication scheme must always be ``Bearer
 
 Stream HTTP API
 ===============
-This interface supports creating Streams, sending events to a Stream, and reading single events from a Stream.
+This interface supports creating Streams, sending events to a Stream, and reading events from a Stream.
 
 Streams may have multiple consumers (for example, multiple Flows), each of which may be a group of different agents (for example, multiple instances of a Flowlet).
-
-In order to read events from a Stream, a client application must first obtain a consumer (group) id, which is then passed to subsequent read requests.
 
 
 Creating a Stream
