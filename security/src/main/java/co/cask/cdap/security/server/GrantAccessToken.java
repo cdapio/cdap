@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -152,8 +151,7 @@ public class GrantAccessToken {
                      new String(encodedIdentifier, Charsets.UTF_8));
     json.addProperty(ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE,
                      ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE_BODY);
-    json.addProperty(ExternalAuthenticationServer.ResponseFields.EXPIRES_IN,
-                     TimeUnit.MILLISECONDS.convert(tokenValidity, TimeUnit.SECONDS));
+    json.addProperty(ExternalAuthenticationServer.ResponseFields.EXPIRES_IN, tokenValidity / 1000);
 
     response.getOutputStream().print(json.toString());
     response.setStatus(HttpServletResponse.SC_OK);
