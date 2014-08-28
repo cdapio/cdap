@@ -703,7 +703,8 @@ You can create a Dataset in CDAP using either
 
 You can also specify to create a Dataset by Application components if one doesn't
 exist. For that you must declare its details in the Application specification.
-For example, to create a DataSet named *myCounters* of type `KeyValueTable`, write::
+For example, to create a DataSet named *myCounters* of type 
+`KeyValueTable <javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable.html>`__, write::
 
   public void configure() {
       createDataset("myCounters", "KeyValueTable");
@@ -718,7 +719,7 @@ annotation::
     private KeyValueTable counters;
     ...
     void process(String key) {
-      counters.increment(key.getBytes());
+      counters.increment(key.getBytes(), 1L);
     }
 
 The runtime system reads the Dataset specification for the key/value
