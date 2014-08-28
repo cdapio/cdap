@@ -193,7 +193,7 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @see ApplicationConfigurer#addService(String, Iterable) ApplicationConfigurer.addService(String, Iterable&lt;HttpServiceHandler&gt;)
+   * @see ApplicationConfigurer#addService(String, Iterable)
    */
   protected void addService(String name, Iterable<HttpServiceHandler> handlers) {
     configurer.addService(name, handlers);
