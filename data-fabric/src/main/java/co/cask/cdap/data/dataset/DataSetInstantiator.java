@@ -22,10 +22,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -60,11 +57,12 @@ public class DataSetInstantiator implements DataSetContext {
   private final DatasetFramework datasetFramework;
   // the class loader to use for data set classes
   private final ClassLoader classLoader;
-  // the known data set specifications
-  private final Map<String, DatasetCreationSpec> datasetsV2 = Maps.newHashMap();
   private final Set<TransactionAware> txAware = Sets.newIdentityHashSet();
   // in this collection we have only datasets initialized with getDataSet() which is OK for now...
   private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
+
+  private final MetricsCollector dsMetricsCollector;
+  private final MetricsCollector programMetricsCollector;
 
   /**
    * Constructor from data fabric.
@@ -72,8 +70,16 @@ public class DataSetInstantiator implements DataSetContext {
    *                    If null, then the default class loader is used
    */
   public DataSetInstantiator(DatasetFramework datasetFramework,
-                             CConfiguration configuration, ClassLoader classLoader) {
+                             CConfiguration configuration,
+                             ClassLoader classLoader,
+                             @Nullable
+                             MetricsCollector dsMetricsCollector,
+                             @Nullable
+                             MetricsCollector programMetricsCollector) {
     this.classLoader = classLoader;
+    this.dsMetricsCollector = dsMetricsCollector;
+    this.programMetricsCollector = programMetricsCollector;
+    // todo: should be passed in already namespaced. Refactor
     this.datasetFramework =
       new NamespacedDatasetFramework(datasetFramework,
                                      new DefaultDatasetNamespace(configuration, Namespace.USER));
@@ -86,44 +92,18 @@ public class DataSetInstantiator implements DataSetContext {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
     throws DataSetInstantiationException {
-    return (T) getDataSet(name, arguments, this.datasetFramework);
-  }
-
-  public void setDataSets(Iterable<DatasetCreationSpec> creationSpec) {
-    for (DatasetCreationSpec spec : creationSpec) {
-      if (spec != null) {
-        this.datasetsV2.put(spec.getInstanceName(), spec);
-      }
-    }
-  }
-
-  /**
-   *  The main value of this class: Creates a new instance of a data set, as
-   *  specified by the matching data set spec, and injects the data fabric
-   *  runtime into the new data set.
-   *  @param dataSetName the name of the data set to instantiate
-   *  @param arguments the arguments for this dataset instance
-   *  @throws co.cask.cdap.api.data.DataSetInstantiationException If failed to create the DataSet.
-   */
-  @SuppressWarnings("unchecked")
-  public <T extends Closeable> T getDataSet(String dataSetName, Map<String, String> arguments,
-                                            @Nullable DatasetFramework datasetFramework)
-    throws DataSetInstantiationException {
-
-    if (datasetFramework != null) {
-      T dataSet = (T) getDataset(dataSetName, arguments, datasetFramework);
-      if (dataSet != null) {
-        return dataSet;
-      }
+    T dataSet = (T) getDataset(name, arguments);
+    if (dataSet == null) {
+      throw logAndException(null, "No data set named %s can be instantiated.", name);
     }
 
-    throw logAndException(null, "No data set named %s can be instantiated.", dataSetName);
+    return dataSet;
   }
 
-  private <T extends Dataset> T getDataset(String datasetName, Map<String, String> arguments,
-                                          DatasetFramework datasetFramework)
+  private <T extends Dataset> T getDataset(String datasetName, Map<String, String> arguments)
     throws DataSetInstantiationException {
 
     T dataset;
@@ -144,6 +124,12 @@ public class DataSetInstantiator implements DataSetContext {
     if (dataset instanceof TransactionAware) {
       txAware.add((TransactionAware) dataset);
       txAwareToMetricNames.put((TransactionAware) dataset, datasetName);
+    }
+
+    if (dataset instanceof MeteredDataset) {
+      ((MeteredDataset) dataset).setMetricsCollector(new MetricsCollectorImpl(datasetName,
+                                                                              dsMetricsCollector,
+                                                                              programMetricsCollector));
     }
 
     return dataset;
@@ -189,49 +175,48 @@ public class DataSetInstantiator implements DataSetContext {
     return exn;
   }
 
-  public void setMetricsCollector(final MetricsCollectionService metricsCollectionService,
-                                  final MetricsCollector programContextMetrics) {
+  private static final class MetricsCollectorImpl implements MeteredDataset.MetricsCollector {
+    private final String datasetName;
+    private final MetricsCollector dataSetMetrics;
+    private final MetricsCollector programContextMetrics;
 
-    final MetricsCollector dataSetMetrics =
-      metricsCollectionService.getCollector(MetricsScope.REACTOR, Constants.Metrics.DATASET_CONTEXT, "0");
+    private MetricsCollectorImpl(String datasetName,
+                                 @Nullable
+                                 MetricsCollector dataSetMetrics,
+                                 @Nullable
+                                 MetricsCollector programContextMetrics) {
+      this.datasetName = datasetName;
+      this.dataSetMetrics = dataSetMetrics;
+      this.programContextMetrics = programContextMetrics;
+    }
 
-    for (Map.Entry<TransactionAware, String> txAware : this.txAwareToMetricNames.entrySet()) {
-      if (txAware.getKey() instanceof MeteredDataset) {
-        // TODO: fix namespacing: we want to capture metrics of namespaced dataset name - see REACTOR-217
-        final String dataSetName = txAware.getValue();
-        MeteredDataset.MetricsCollector metricsCollector = new MeteredDataset.MetricsCollector() {
-          @Override
-          public void recordRead(int opsCount, int dataSize) {
-            if (programContextMetrics != null) {
-              programContextMetrics.gauge("store.reads", 1, dataSetName);
-              programContextMetrics.gauge("store.ops", 1, dataSetName);
-            }
-            // these metrics are outside the context of any application and will stay unless explicitly
-            // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.
-            if (dataSetMetrics != null) {
-              dataSetMetrics.gauge("dataset.store.reads", 1, dataSetName);
-              dataSetMetrics.gauge("dataset.store.ops", 1, dataSetName);
-            }
-          }
+    @Override
+    public void recordRead(int opsCount, int dataSize) {
+      if (programContextMetrics != null) {
+        programContextMetrics.gauge("store.reads", 1, datasetName);
+        programContextMetrics.gauge("store.ops", 1, datasetName);
+      }
+      // these metrics are outside the context of any application and will stay unless explicitly
+      // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.
+      if (dataSetMetrics != null) {
+        dataSetMetrics.gauge("dataset.store.reads", 1, datasetName);
+        dataSetMetrics.gauge("dataset.store.ops", 1, datasetName);
+      }
+    }
 
-          @Override
-          public void recordWrite(int opsCount, int dataSize) {
-            if (programContextMetrics != null) {
-              programContextMetrics.gauge("store.writes", 1, dataSetName);
-              programContextMetrics.gauge("store.bytes", dataSize, dataSetName);
-              programContextMetrics.gauge("store.ops", 1, dataSetName);
-            }
-            // these metrics are outside the context of any application and will stay unless explicitly
-            // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.
-            if (dataSetMetrics != null) {
-              dataSetMetrics.gauge("dataset.store.writes", 1, dataSetName);
-              dataSetMetrics.gauge("dataset.store.bytes", dataSize, dataSetName);
-              dataSetMetrics.gauge("dataset.store.ops", 1, dataSetName);
-            }
-          }
-        };
-
-        ((MeteredDataset) txAware.getKey()).setMetricsCollector(metricsCollector);
+    @Override
+    public void recordWrite(int opsCount, int dataSize) {
+      if (programContextMetrics != null) {
+        programContextMetrics.gauge("store.writes", 1, datasetName);
+        programContextMetrics.gauge("store.bytes", dataSize, datasetName);
+        programContextMetrics.gauge("store.ops", 1, datasetName);
+      }
+      // these metrics are outside the context of any application and will stay unless explicitly
+      // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.
+      if (dataSetMetrics != null) {
+        dataSetMetrics.gauge("dataset.store.writes", 1, datasetName);
+        dataSetMetrics.gauge("dataset.store.bytes", dataSize, datasetName);
+        dataSetMetrics.gauge("dataset.store.ops", 1, datasetName);
       }
     }
   }

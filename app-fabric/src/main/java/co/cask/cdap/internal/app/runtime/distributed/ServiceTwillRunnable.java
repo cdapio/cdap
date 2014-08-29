@@ -34,6 +34,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.lang.InstantiatorFactory;
+import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -44,11 +45,13 @@ import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.services.HttpServiceTwillRunnable;
+import co.cask.cdap.internal.app.services.ServiceWorkerTwillRunnable;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
@@ -81,6 +84,7 @@ import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Services;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -197,6 +201,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
         // Special case for running http services since we need to instantiate the http service
         // using the program classloader.
         delegate = new HttpServiceTwillRunnable(program.getClassLoader());
+      } else if (clz.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
+        delegate = new ServiceWorkerTwillRunnable(program.getClassLoader());
       } else {
         delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
       }
@@ -204,7 +210,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
       Reflections.visit(delegate, TypeToken.of(delegate.getClass()),
                         new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
                                                                           program.getApplicationId(),
-                                                                          program.getName(), runnableName)));
+                                                                          program.getName(), runnableName)),
+                        new PropertyFieldSetter(runtimeSpec.getRunnableSpecification().getConfigs()));
 
       final String[] argArray = RuntimeArguments.toPosixArray(programOpts.getUserArguments());
       LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(
@@ -218,6 +225,16 @@ public class ServiceTwillRunnable implements TwillRunnable {
         @Override
         public TwillRunnableSpecification getSpecification() {
           return runtimeSpec.getRunnableSpecification();
+        }
+
+        @Override
+        public Cancellable announce(String runnable, int port) {
+          String serviceContextPath = String.format("%s.%s.%s.%s", ProgramType.SERVICE.name().toLowerCase(),
+                                               program.getAccountId(), program.getApplicationId(), program.getName());
+          // Currently ignoring the runnable's name (the param passed into announce), and simply announcing by the name
+          // of the service it belongs to (reasoning: the primary runnable of a service will be identified by the
+          // service's name, and the other runnables within the service are not discoverable externally).
+          return super.announce(serviceContextPath, port);
         }
       });
 

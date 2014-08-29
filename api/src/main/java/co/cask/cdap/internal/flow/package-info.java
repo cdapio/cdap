@@ -15,7 +15,9 @@
  */
 
 /**
- * This package contains internal classes for supporting CDAP API.
- * This is not supposed to be used by users of the CDAP API, as it may change in a later release without warning.
+ * This package contains internal classes for supporting the CDAP API.
+ * <p>
+ * These should not be used directly by users of the CDAP API, as they may change in a later release without warning.
+ * </p>
  */
 package co.cask.cdap.internal.flow;

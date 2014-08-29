@@ -18,10 +18,8 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.data.DataSetContext;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
@@ -36,8 +34,6 @@ import com.continuuity.tephra.TransactionContext;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.TransactionExecutorFactory;
 import com.continuuity.tephra.TransactionSystemClient;
-import com.google.common.base.Throwables;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 
@@ -54,16 +50,13 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
   private final Id.Program programId;
 
   public AbstractDataFabricFacade(TransactionSystemClient txSystemClient, TransactionExecutorFactory txExecutorFactory,
-                                  DatasetFramework datasetFramework,
                                   QueueClientFactory queueClientFactory, StreamConsumerFactory streamConsumerFactory,
-                                  LocationFactory locationFactory, Program program,
-                                  CConfiguration configuration) {
+                                  Program program, DataSetInstantiator dataSetContext) {
     this.txSystemClient = txSystemClient;
     this.queueClientFactory = queueClientFactory;
     this.streamConsumerFactory = streamConsumerFactory;
     this.txExecutorFactory = txExecutorFactory;
-    this.dataSetContext = createDataSetContext(program, locationFactory,
-                                               datasetFramework, configuration);
+    this.dataSetContext = dataSetContext;
     this.programId = program.getId();
   }
 
@@ -120,19 +113,5 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
         dataSetContext.removeTransactionAware(consumer);
       }
     };
-  }
-
-  private DataSetInstantiator createDataSetContext(Program program,
-                                                   LocationFactory locationFactory,
-                                                   DatasetFramework datasetFramework,
-                                                   CConfiguration configuration) {
-    try {
-      DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(datasetFramework, configuration,
-                                                                        program.getClassLoader());
-      dataSetInstantiator.setDataSets(program.getSpecification().getDatasets().values());
-      return dataSetInstantiator;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
   }
 }

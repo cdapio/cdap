@@ -1058,11 +1058,4 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
     // JDK 1.7
     throw new SQLFeatureNotSupportedException();
   }
-
-  /**
-   * Produces an explore handle.
-   */
-  private interface HandleProducer {
-    QueryHandle getHandle() throws ExploreException, SQLException;
-  }
 }

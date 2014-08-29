@@ -97,46 +97,4 @@
         <value>1</value>
         <description>Number of stream writer instance. In local mode, it's always one</description>
     </property>
-
-
-  <property>
-    <name>security.authserver.ssl.enabled</name>
-    <value>true</value>
-  </property>
-
-  <property>
-    <name>security.authserver.ssl.keystore.path</name>
-    <value>/Users/alvin/Work/workspace/caskco/cdap/gateway/src/test/resources/cert.jks</value>
-  </property>
-
-  <property>
-    <name>security.authserver.ssl.keystore.password</name>
-    <value>secret</value>
-  </property>
-
-  <property>
-    <name>security.authserver.ssl.keystore.keypassword</name>
-    <value>secret</value>
-  </property>
-
-  <property>
-    <name>security.router.ssl.enabled</name>
-    <value>true</value>
-  </property>
-
-  <property>
-    <name>security.router.ssl.keystore.path</name>
-    <value>/Users/alvin/Work/workspace/caskco/cdap/gateway/src/test/resources/cert.jks</value>
-  </property>
-
-  <property>
-    <name>security.router.ssl.keystore.password</name>
-    <value>secret</value>
-  </property>
-
-  <property>
-    <name>security.router.ssl.keystore.keypassword</name>
-    <value>secret</value>
-  </property>
-
 </configuration>

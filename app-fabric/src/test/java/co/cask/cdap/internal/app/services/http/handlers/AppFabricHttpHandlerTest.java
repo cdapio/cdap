@@ -28,8 +28,6 @@ import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
-import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
@@ -48,43 +46,27 @@ import com.continuuity.tephra.TransactionSystemClient;
 import com.continuuity.tephra.persist.TransactionSnapshot;
 import com.continuuity.tephra.snapshot.SnapshotCodec;
 import com.continuuity.tephra.snapshot.SnapshotCodecProvider;
-import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.util.EntityUtils;
-import org.apache.twill.internal.utils.Dependencies;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
-import javax.annotation.Nullable;
 
 
 /**
@@ -162,6 +144,47 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       } finally {
       Assert.assertEquals(200, doDelete("/v2/apps/" + appId).getStatusLine().getStatusCode());
     }
+  }
+
+  private void scheduleHistoryCheck(int retries, String url, int expected) throws Exception {
+    int trial = 0;
+    int workflowRuns = 0;
+    List<Map<String, String>> history;
+    String json;
+    HttpResponse response;
+    while (trial++ < retries) {
+      response = doGet(url);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      json = EntityUtils.toString(response.getEntity());
+      history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+      workflowRuns = history.size();
+      if (workflowRuns > expected) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertTrue(workflowRuns > expected);
+  }
+
+  private void scheduleStatusCheck(int retires, String url,
+                                   String expected) throws Exception {
+    int trial = 0;
+    String status = null;
+    String json = null;
+    Map<String, String> output;
+    HttpResponse response;
+    while (trial++ < retires) {
+      response = doGet(url);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      json = EntityUtils.toString(response.getEntity());
+      output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
+      status = output.get("status");
+      if (status.equals(expected)) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertEquals(status, expected);
   }
 
   private void historyStatusWithRetry(String url, int size) throws Exception {
@@ -305,9 +328,28 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
     waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
 
-    // Get instances for a non-existent flowlet
+    // Get instances for a non-existent flowlet, flow, and app.
     HttpResponse response = doGet("/v2/apps/WordCountApp/flows/WordCountFlow/flowlets/XXXX/instances");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    response = doGet("/v2/apps/WordCountApp/flows/XXXX/flowlets/StreamSource/instances");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    response = doGet("/v2/apps/XXXX/flows/WordCountFlow/flowlets/StreamSource/instances");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+
+    // PUT instances for non-existent flowlet, flow, and app.
+    String payload = "{instances: 1}";
+    response = doPut("/v2/apps/WordCountApp/flows/WordCountFlow/flowlets/XXXX/instances", payload);
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    response = doPut("/v2/apps/WordCountApp/flows/XXXX/flowlets/StreamSource/instances", payload);
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    response = doPut("/v2/apps/XXXX/flows/WordCountFlow/flowlets/StreamSource/instances", payload);
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
 
     //Get Flowlet Instances
     Assert.assertEquals(1, getFlowletInstances("WordCountApp", "WordCountFlow", "StreamSource"));
@@ -690,6 +732,23 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, result.size());
     Assert.assertEquals(10, Integer.parseInt(result.get("instances")));
 
+
+    // Get instances for a non-existent procedure and app.
+    response = doGet("/v2/apps/WordCountApp/procedures/XXXX/instances");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    response = doGet("/v2/apps/XXXX/procedures/WordFrequency/instances");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    // PUT instances for non-existent procedure and app.
+    String payload = "{instances: 1}";
+    response = doPut("/v2/apps/WordCountApp/procedures/XXXX/instances", payload);
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    response = doPut("/v2/apps/XXXX/procedures/WordFrequency/instances", payload);
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+
     Assert.assertEquals(200, doDelete("/v2/apps/WordCountApp").getStatusLine().getStatusCode());
   }
 
@@ -753,70 +812,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testMapreduceRuntimeArgs() throws Exception {
     testRuntimeArgs(DummyAppWithTrackingTable.class, "dummy", "mapreduce", "dummy-batch");
-  }
-
-  /**
-   * Deploys and application.
-   */
-  public static HttpResponse deploy(Class<?> application) throws Exception {
-    return deploy(application, null);
-  }
-  /**
-   * Deploys and application with (optionally) defined app name
-   */
-  public static HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
-    Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
-
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    final JarOutputStream jarOut = new JarOutputStream(bos, manifest);
-    final String pkgName = application.getPackage().getName();
-
-    // Grab every classes under the application class package.
-    try {
-      ClassLoader classLoader = application.getClassLoader();
-      if (classLoader == null) {
-        classLoader = ClassLoader.getSystemClassLoader();
-      }
-      Dependencies.findClassDependencies(classLoader, new Dependencies.ClassAcceptor() {
-        @Override
-        public boolean accept(String className, URL classUrl, URL classPathUrl) {
-          try {
-            if (className.startsWith(pkgName)) {
-              jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
-              InputStream in = classUrl.openStream();
-              try {
-                ByteStreams.copy(in, jarOut);
-              } finally {
-                in.close();
-              }
-              return true;
-            }
-            return false;
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-        }
-      }, application.getName());
-
-      // Add webapp
-      jarOut.putNextEntry(new ZipEntry("webapp/default/netlens/src/1.txt"));
-      ByteStreams.copy(new ByteArrayInputStream("dummy data".getBytes(Charsets.UTF_8)), jarOut);
-    } finally {
-      jarOut.close();
-    }
-
-    HttpEntityEnclosingRequestBase request;
-    if (appName == null) {
-      request = getPost("/v2/apps");
-    } else {
-      request = getPut("/v2/apps/" + appName);
-    }
-    request.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, "api-key-example");
-    request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
-    request.setEntity(new ByteArrayEntity(bos.toByteArray()));
-    return execute(request);
   }
 
   /**
@@ -998,23 +993,12 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertNotNull(scheduleId);
     Assert.assertFalse(scheduleId.isEmpty());
 
-    TimeUnit.SECONDS.sleep(5);
-    response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
-
-    int workflowRuns = history.size();
-    Assert.assertTrue(workflowRuns >= 1);
+    scheduleHistoryCheck(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history", 0);
 
     //Check suspend status
     String scheduleStatus = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status",
                                           scheduleId);
-    response = doGet(scheduleStatus);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    Map<String, String> output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
-    Assert.assertEquals("SCHEDULED", output.get("status"));
+    scheduleStatusCheck(5, scheduleStatus, "SCHEDULED");
 
     String scheduleSuspend = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/suspend",
                                            scheduleId);
@@ -1023,20 +1007,15 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     //check paused state
-    scheduleStatus = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status", scheduleId);
-    response = doGet(scheduleStatus);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
-    Assert.assertEquals("SUSPENDED", output.get("status"));
+    scheduleStatusCheck(5, scheduleStatus, "SUSPENDED");
 
     TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
 
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history");
     json = EntityUtils.toString(response.getEntity());
-    history = new Gson().fromJson(json,
+    List<Map<String, String>> history = new Gson().fromJson(json,
                                   LIST_MAP_STRING_STRING_TYPE);
-    workflowRuns = history.size();
+    int workflowRuns = history.size();
 
     //Sleep for some time and verify there are no more scheduled jobs after the suspend.
     TimeUnit.SECONDS.sleep(10);
@@ -1054,46 +1033,22 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     response = doPost(scheduleResume);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    //Sleep for some time and verify there are no more scheduled jobs after the pause.
-    TimeUnit.SECONDS.sleep(3);
-    response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    json = EntityUtils.toString(response.getEntity());
-    history = new Gson().fromJson(json,
-                                  LIST_MAP_STRING_STRING_TYPE);
-
-    int workflowRunsAfterResume = history.size();
-    //Verify there is atleast one run after the pause
-    Assert.assertTrue(workflowRunsAfterResume > workflowRunsAfterSuspend + 1);
+    scheduleHistoryCheck(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history", workflowRunsAfterSuspend);
 
     //check scheduled state
-    scheduleStatus = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status", scheduleId);
-    response = doGet(scheduleStatus);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
-    Assert.assertEquals("SCHEDULED", output.get("status"));
+    scheduleStatusCheck(5, scheduleStatus, "SCHEDULED");
 
     //Check status of a non existing schedule
     String notFoundSchedule = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status",
                                             "invalidId");
 
-    response = doGet(notFoundSchedule);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
-    Assert.assertEquals("NOT_FOUND", output.get("status"));
+    scheduleStatusCheck(5, notFoundSchedule, "NOT_FOUND");
 
     response = doPost(scheduleSuspend);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     //check paused state
-    response = doGet(scheduleStatus);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
-    Assert.assertEquals("SUSPENDED", output.get("status"));
+    scheduleStatusCheck(5, scheduleStatus, "SUSPENDED");
 
     TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
 
@@ -1394,12 +1349,4 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
   }
 
-  private String readResponse(HttpResponse response) throws IOException {
-    HttpEntity entity = response.getEntity();
-    return EntityUtils.toString(entity, "UTF-8");
-  }
-
-  private <T> T readResponse(HttpResponse response, Type type) throws IOException {
-    return GSON.fromJson(readResponse(response), type);
-  }
 }

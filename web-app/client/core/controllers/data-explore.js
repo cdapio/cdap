@@ -2,35 +2,36 @@
  * Dataexplore Controller
  */
 
-define([], function () {
+define(['core/lib/lodash'], function (lodash) {
   var url = 'data/explore/queries';
 	var Controller = Em.Controller.extend({
 
-    bindTooltips: function() {
+    showSchema: true,
+    showPartitions: false,
+    showProperties: false,
+    partitionArrowRight: false,
+    schemaArrowRight: true,
+    tablePropertiesArrowRight: false,
+
+    bindTooltips: function () {
       setTimeout(function () {
         $("[data-toggle='tooltip']").tooltip();
         $("[data-toggle='popover']").popover();
       }, 500)
     },
 
-    contentDidChange: function() {
+    contentDidChange: function () {
       this.clearAllTooltips();
       this.bindTooltips();
     }.observes('page'),
 
-    renderExecuteBtn: function() {
-      return true;
-      return this.get('page') == 'query';
-    }.property('page'),
-
-		load: function () {
-		  var self = this;
-
+    load: function () {
+      var self = this;
       //largestEver is the largest timestamp of a query that the controller has seen.
       //largest is the largest timestamp of a query on the current page.
       //smallestEver is the smallest timestamp of a query that the controller has seen.
       //smallest is the largest timestamp of a query on the current page.
-		  self.pageMgr = {
+      self.pageMgr = {
         limit: 3,
         largestEver: 0,
         smallestEver: Infinity,
@@ -38,62 +39,89 @@ define([], function () {
           this.offset = null;
           this.cursor = null;
         }
-		  };
+      };
       self.pageMgr.firstPage();
-
-		  this.set('objArr', []);
-		  this.fetchQueries();
-		  this.interval = setInterval(function () {
+      this.set('objArr', []);
+      this.fetchQueries();
+      this.interval = setInterval(function () {
         self.fetchQueries();
-		  }, 5000);
-		  this.set('datasets', []);
-		  this.loadDiscoverableDatasets();
-		},
+      }, 5000);
+      this.set('datasets', []);
+      this.loadDiscoverableDatasets();
+    },
 
     clearAllTooltips: function () {
       $("[data-toggle='tooltip']").tooltip('hide');
       $("[data-toggle='popover']").popover('hide');
     },
 
-		loadDiscoverableDatasets: function () {
-		  var self = this;
-      var datasets = self.get('datasets');
-		  self.HTTP.rest('data/datasets?meta=true&explorable=true', function (response) {
-		    response.forEach(function (dataset) {
-		      var name = dataset.hive_table;
-          var shortName = dataset.spec.name.replace(/.*\./,'');
-          self.HTTP.rest('data/explore/datasets/' + shortName + '/schema', function (response, status) {
-            var results = [];
-            for(var key in response) {
-              if(response.hasOwnProperty(key)){
-                results.push({columns:[key, response[key]]});
-              }
-            }
-            datasets.pushObject(Ember.Object.create({name:name, shortName:shortName, results:results}));
+    loadDiscoverableDatasets: function () {
+      var self = this;
+        var datasets = self.get('datasets');
+        // If jquery's ajax is used properly then the nesting could be avoided.
+        // http.js getJSON does not return $.get which internally calls $.ajax
+        $(".loading-icon.hide").removeClass("hide");
+        self.HTTP.rest('data/explore/tables', function(response) {
+          response.forEach(function (dataset) {
+            var name = dataset.table;
+            self.HTTP.rest('data/explore/tables/' + name + '/info', function (response, status) {
+              var result = lodash.pick(response, "table_name", "db_name", "owner", "creation_time", "from_dataset", "partitioned_keys", "schema"),
+                  schemaArray = [],
+                  partitionArray = [];
+              schemaArray = self.extractColumns(result.schema, true);
+              partitionArray = self.extractColumns(result.partitioned_keys, false);
 
-            if(datasets.length == 1){
-              self.selectDataset(datasets[0]);
-            }
+              datasets.pushObject(Ember.Object.create({
+                tablename: result.table_name,
+                dbname: result.db_name,
+                owner: result.owner,
+                creationtime: (new Date(result.creation_time)).toString("MMM-dd-yyyy HH:mm"), // Should be a better way to simplify it.
+                schema: schemaArray,
+                partition: partitionArray,
+                partitionTableEmpty: (partitionArray.length === 0),
+                schemaTableEmpty: (schemaArray.length === 0),
+                from_dataset: response["from_dataset"]
+              }));
+              if(datasets.length == 1) {
+                self.selectDataset(datasets[0]);
+              }
+              $(".loading-icon").addClass("hide");
+            });
           });
-		    });
-		  });
-		},
+        });
+    },
+
+    extractColumns: function (table, iscomments) {
+      var columnsArray = [];
+      table.forEach(function(column) {
+        var columns = [];
+        if (iscomments) {
+          columns = [column.name, column.type, column.comment || ""];
+        } else {
+          columns = [column.name, column.type];
+        }
+        columnsArray.push({
+          columns: columns
+        });
+      });
+      return columnsArray;
+    },
 
     tableClicked: function (obj) {
       this.injectorTextArea.set('value', obj.statement);
       this.toggleTable(obj);
     },
 
-		toggleTable: function (obj, hideAllFirst /* = true */, callback) {
+    toggleTable: function (obj, hideAllFirst /* = true */, callback) {
       var self = this;
       hideAllFirst = typeof hideAllFirst !== 'undefined' ? hideAllFirst : true;
-      if(hideAllFirst){
+      if(hideAllFirst) {
         self.hideAllTables(obj);
       }
       if(!obj.get('preview_cached') || !obj.get('has_results') || !obj.get('is_active')) {
-        setTimeout(function(){
+        setTimeout(function (){
           $("[id='#" + obj.get('query_handle') + "']").tooltip('show');
-          setTimeout(function(){
+          setTimeout(function (){
             $("[id='#" + obj.get('query_handle') + "']").tooltip('hide');
           }, 1000);
         }, 200)
@@ -120,7 +148,7 @@ define([], function () {
         if(query === dontHide){
           continue;
         }
-        if(query.get('isSelected')){
+        if(query.get('isSelected')) {
           this.toggleTable(query, false);
           query.set('isSelected', false);
         }
@@ -137,7 +165,7 @@ define([], function () {
 
     selectDataset: function (dataset) {
       this.set('selectedDataset', dataset);
-      this.injectorTextArea.set('value', 'SELECT * FROM ' + dataset.name + ' LIMIT 5');
+      this.injectorTextArea.set('value', 'SELECT * FROM ' + dataset.tablename + ' LIMIT 5');
       var datasets = this.get('datasets');
       datasets.forEach(function (entry) {
         entry.set('isSelected', false);
@@ -145,7 +173,7 @@ define([], function () {
       dataset.set('isSelected', true);
     },
 
-		unload: function () {},
+    unload: function () {},
 
     nextPage: function () {
       this.pageMgr.offset = this.smallest;
@@ -167,30 +195,29 @@ define([], function () {
       }, 2000);
     },
 
-		fetchQueries: function (userAction) {
-		  var self = this;
-
-      if(self.largest == self.pageMgr.largestEver){
+    fetchQueries: function (userAction) {
+      var self = this;
+      if(self.largest == self.pageMgr.largestEver) {
         //If the user is trying to go to a previous page when already viewing the most recent query:
-        if(self.pageMgr.cursor === "prev" && userAction){
+        if(self.pageMgr.cursor === "prev" && userAction) {
           self.pageNavTooltip();
         }
-        if(!userAction){
+        if(!userAction) {
           self.pageMgr.firstPage();
         }
       }
 
-		  var url = 'data/explore/queries';
+      var url = 'data/explore/queries';
       url += '?limit=' + self.pageMgr.limit;
-		  if(self.pageMgr.offset){
-		    url += '&offset=' + self.pageMgr.offset;
-		  }
-		  if(self.pageMgr.cursor){
+      if(self.pageMgr.offset) {
+        url += '&offset=' + self.pageMgr.offset;
+      }
+      if(self.pageMgr.cursor) {
         url += '&cursor=' + self.pageMgr.cursor;
       }
       this.HTTP.rest(url, function (queries, status) {
         if(queries.length == 0){
-          if(userAction){
+          if(userAction) {
             //When trying to go to next page, and there are no results there:
             self.pageNavTooltip();
           }
@@ -198,11 +225,10 @@ define([], function () {
         }
 
         //Clear the local memory of the queries if the list of queries in the response is different than the local version (and our local version isn't empty)
-        if(userAction || (  self.get('objArr').length && (self.get('objArr')[0].get('query_handle') != queries[0].query_handle)  )){
+        if(userAction || (  self.get('objArr').length && (self.get('objArr')[0].get('query_handle') != queries[0].query_handle)  )) {
           self.set('objArr', []);
         }
-		    var objArr = self.get('objArr');
-
+        var objArr = self.get('objArr');
         queries.forEach(function (query) {
           var existingObj = self.find(query.query_handle);
           if (!existingObj) {
@@ -234,7 +260,7 @@ define([], function () {
         });
 
 
-        if(objArr.length){
+        if(objArr.length) {
           //keep track of largest and smallest timestamps for the purposes of page navigation.
           self.largest = objArr[0].timestamp;
           self.smallest = objArr[objArr.length - 1].timestamp;
@@ -247,14 +273,14 @@ define([], function () {
         }
         self.bindTooltips();
       });
-		},
+    },
 
     getPreview: function (query) {
       var self = this;
       var handle = query.get('query_handle');
       this.HTTP.post('rest/data/explore/queries/' + handle + '/preview', function (response) {
         response = jQuery.parseJSON(response);
-        if(response.length == 0){
+        if(response.length == 0) {
           query.set('is_active', false);
         }
         query.set('preview_cached', response);
@@ -303,11 +329,20 @@ define([], function () {
       var self = this;
       var controller = this.get('controllers');
       var sqlString = controller.get("SQLQueryString") || this.injectorTextArea.get('value');
-      this.HTTP.post('rest/data/explore/queries', {data: { "query": sqlString }},
+      this.HTTP.post('rest/data/explore/queries', {
+        data: {
+          "query": sqlString
+        }
+      },
         function (response, status) {
           if(status != 200) {
             $(".text-area-container").attr('data-content', response.message).popover('show')
-            .click(function(){},function(){$(".text-area-container").popover('hide')});
+            .click(
+              // Not sure if we require two function handlers here.
+              function () {},
+              function (){
+                $(".text-area-container").popover('hide')
+              });
             return;
           }
           self.transitionToRoute('DataExplore.Results');
@@ -321,7 +356,7 @@ define([], function () {
 
     find: function (query_handle) {
       var objArr = this.get('objArr');
-      for (var i=0; i<objArr.length; i++){
+      for (var i=0; i<objArr.length; i++) {
         if (query_handle === objArr[i].query_handle) {
           return objArr[i];
         }
@@ -329,13 +364,28 @@ define([], function () {
       return false;
     },
 
-	});
+    showPartitionKeys: function () {
+      this.set('showPartitions', !this.get('showPartitions'));
+      this.set('partitionArrowRight', !this.get('partitionArrowRight'));
+    },
 
-	Controller.reopenClass({
-		type: 'DataExplore',
-		kind: 'Controller'
-	});
+    showTableSchema: function () {
+      this.set('showSchema', !this.get('showSchema'));
+      this.set('schemaArrowRight', !this.get('schemaArrowRight'));
+    },
 
-	return Controller;
+    showTableProperties: function () {
+      this.set('tablePropertiesArrowRight', !this.get('tablePropertiesArrowRight'));
+      this.set('showProperties', !this.get('showProperties'));
+    }
+
+  });
+
+  Controller.reopenClass({
+    type: 'DataExplore',
+    kind: 'Controller'
+  });
+
+  return Controller;
 
 });

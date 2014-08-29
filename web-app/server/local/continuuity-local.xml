@@ -7,19 +7,6 @@
 		<name>dashboard.bind.port</name>
 		<value>9999</value>
 	</property>
-  <property>
-    <name>dashboard.https.enabled</name>
-    <value>true</value>
-  </property>
-  <!--TODO: fix these defaults when possible-->
-  <property>
-    <name>dashboard.ssl.key</name>
-    <value>/Users/alvin/Work/workspace/caskco/ssl/server.key</value>
-  </property>
-  <property>
-    <name>dashboard.ssl.cert</name>
-    <value>/Users/alvin/Work/workspace/caskco/ssl/server.crt</value>
-  </property>
 
 	<property>
 		<name>accounts.server.address</name>
