@@ -88,6 +88,8 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.Nullable;
 
 /**
@@ -114,7 +116,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final long cleanupJobSchedule;
   private final File previewsDir;
 
+  // This metastore client does not seem to be thread safe
   private IMetaStoreClient metastoreClient;
+  private final Lock metastoreLock = new ReentrantLock();
 
   protected abstract QueryStatus fetchStatus(OperationHandle handle) throws HiveSQLException, ExploreException,
     HandleNotFoundException;
@@ -371,20 +375,31 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       List<String> databases;
       if (database == null) {
-        databases = metastoreClient.getAllDatabases();
+        metastoreLock.lock();
+        try {
+          databases = metastoreClient.getAllDatabases();
+        } finally {
+          metastoreLock.unlock();
+        }
       } else {
         databases = ImmutableList.of(database);
       }
       ImmutableList.Builder<TableNameInfo> builder = ImmutableList.builder();
       for (String db : databases) {
-        List<String> tables = metastoreClient.getAllTables(db);
+        List<String> tables;
+        metastoreLock.lock();
+        try {
+          tables = metastoreClient.getAllTables(db);
+        } finally {
+          metastoreLock.unlock();
+        }
         for (String table : tables) {
           builder.add(new TableNameInfo(db, table));
         }
       }
       return builder.build();
     } catch (TException e) {
-      throw new ExploreException("Error connecting to Hive metastore", e);
+      throw new ExploreException("Error connecting to Hive Metastore", e);
     }
   }
 
@@ -396,7 +411,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     try {
       String db = database == null ? "default" : database;
-      Table tableInfo = metastoreClient.getTable(db, table);
+      Table tableInfo;
+      metastoreLock.lock();
+      try {
+        tableInfo = metastoreClient.getTable(db, table);
+      } finally {
+        metastoreLock.unlock();
+      }
       ImmutableList.Builder<TableInfo.ColumnInfo> schemaBuilder = ImmutableList.builder();
       ImmutableList.Builder<TableInfo.ColumnInfo> partitionKeysBuilder = ImmutableList.builder();
       for (FieldSchema column : tableInfo.getSd().getCols()) {
@@ -421,7 +442,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     } catch (NoSuchObjectException e) {
       throw new TableNotFoundException(e);
     } catch (TException e) {
-      throw new ExploreException(e);
+      throw new ExploreException("Error connecting to Hive Metastore", e);
     }
   }
 
