@@ -29,6 +29,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.Location;
@@ -37,7 +38,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
@@ -57,8 +60,8 @@ public final class DefaultProgram implements Program {
   private final File expandFolder;
   private final ClassLoader parentClassLoader;
   private final File specFile;
-  private final List<Location> datasetTypeJars;
-  private final List<File> datasetsJarPath;
+  private final Set<Location> datasetTypeJars;
+  private final Set<File> datasetsJarPath;
   private boolean expanded;
   private ClassLoader classLoader;
   private ApplicationSpecification specification;
@@ -71,13 +74,13 @@ public final class DefaultProgram implements Program {
    *                     the {@link #getClassLoader()} methods would throw exception.
    * @param parentClassLoader Parent classloader for the program class.
    */
-  DefaultProgram(Location programJarLocation, List<Location> datasetTypeJars,
+  DefaultProgram(Location programJarLocation, Set<Location> datasetTypeJars,
                  @Nullable File expandFolder, ClassLoader parentClassLoader) throws IOException {
     this.programJarLocation = programJarLocation;
     this.datasetTypeJars = datasetTypeJars;
     this.expandFolder = expandFolder;
     this.parentClassLoader = parentClassLoader;
-    this.datasetsJarPath = Lists.newArrayList();
+    this.datasetsJarPath = Sets.newHashSet();
 
     Manifest manifest = BundleJarUtil.getManifest(programJarLocation);
     if (manifest == null) {
@@ -103,7 +106,7 @@ public final class DefaultProgram implements Program {
     }
   }
 
-  public DefaultProgram(Location programJarLocation, List<Location> datasetTypeJars,
+  public DefaultProgram(Location programJarLocation, Set<Location> datasetTypeJars,
                         ClassLoader classLoader) throws IOException {
     this(programJarLocation, datasetTypeJars, null, null);
     this.classLoader = classLoader;
@@ -165,10 +168,9 @@ public final class DefaultProgram implements Program {
   }
 
   @Override
-  public List<Location> getDatasetJarLocations() {
+  public Set<Location> getDatasetJarLocations() {
     return datasetTypeJars;
   }
-
 
   @Override
   public synchronized ClassLoader getClassLoader() {
@@ -179,6 +181,8 @@ public final class DefaultProgram implements Program {
           ClassLoaders.newDatasetClassLoader(datasetsJarPath,
                                                      ApiResourceListHolder.getResourceList(), parentClassLoader);
         classLoader = new ProgramClassLoader(expandFolder, datasetFilterClassLoader);
+      } catch (MalformedURLException e) {
+        throw Throwables.propagate(e);
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }

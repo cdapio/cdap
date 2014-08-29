@@ -395,11 +395,11 @@ public class TestBase {
                                                        DatasetProperties props) throws Exception {
 
     DatasetTypeMeta typeMeta = datasetFramework.getType(datasetTypeName);
-    ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                    getClass().getClassLoader());
     // todo : not sure how to clean this up here, should we return an
     // interface similar to DatasetManager and handle cleanup inside that?
-    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(classLoader, typeMeta,
+    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(parentClassLoader, typeMeta,
                                                                                          locationFactory);
     datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
     return datasetFramework.getAdmin(datasetInstanceName, dsUtil.getClassLoader());
@@ -433,12 +433,13 @@ public class TestBase {
     @SuppressWarnings("unchecked")
 
     DatasetTypeMeta typeMeta = datasetFramework.getType(datasetTypeName);
-    ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                    getClass().getClassLoader());
-    final DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(classLoader, typeMeta,
-                                                                       locationFactory);
+    final DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.
+      createDatasetClassLoaderFromType(parentClassLoader, typeMeta, locationFactory);
 
-    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, new HashMap<String, String>(), classLoader);
+    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName,
+                                                      new HashMap<String, String>(), parentClassLoader);
     try {
       TransactionAware txAwareDataset = (TransactionAware) dataSet;
       final TransactionContext txContext =

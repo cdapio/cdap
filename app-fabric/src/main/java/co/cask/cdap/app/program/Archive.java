@@ -23,6 +23,7 @@ import com.google.common.base.Objects;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 
 /**
  * Represents the archive that is uploaded by the user using the deployment

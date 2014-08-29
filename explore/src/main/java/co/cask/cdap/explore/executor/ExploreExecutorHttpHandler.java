@@ -267,11 +267,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   private DatasetClassLoaderUtil getDatasetClassLoaderUtil(String datasetName) throws
     DatasetManagementException, IOException {
-    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
     DatasetTypeMeta typeMeta = datasetFramework.getType(datasetFramework.getDatasetSpec(datasetName).getType());
     DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
-      (cl, typeMeta, locationFactory);
+      (parentClassLoader, typeMeta, locationFactory);
     return dsUtil;
   }
 }

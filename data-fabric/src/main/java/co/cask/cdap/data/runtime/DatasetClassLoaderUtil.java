@@ -21,6 +21,7 @@ import co.cask.cdap.common.utils.DirUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Utility class to store the {@link java.lang.ClassLoader} and the expanded jar files. It provides functions to get
@@ -28,9 +29,9 @@ import java.util.List;
  */
 public class DatasetClassLoaderUtil {
   ClassLoader classLoader;
-  List<File> datasetTempFiles;
+  Set<File> datasetTempFiles;
 
-  public DatasetClassLoaderUtil(ClassLoader classLoader, List<File> datasetTempFiles) {
+  public DatasetClassLoaderUtil(ClassLoader classLoader, Set<File> datasetTempFiles) {
     this.classLoader = classLoader;
     this.datasetTempFiles = datasetTempFiles;
   }

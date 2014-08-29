@@ -20,7 +20,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.filesystem.Location;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * Abstraction of a executable program.
@@ -81,5 +81,5 @@ public interface Program {
   /**
    * Returns the list of {@link Location Locations} of {@link co.cask.cdap.api.dataset.Dataset} jar's
    */
-  List<Location> getDatasetJarLocations();
+  Set<Location> getDatasetJarLocations();
 }

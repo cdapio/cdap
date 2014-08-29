@@ -25,7 +25,7 @@ import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.filesystem.Location;
 
 import java.io.File;
-import java.util.List;
+import java.util.Set;
 
 /**
  * {@link TwillApplication} to run {@link MapReduceTwillRunnable}
@@ -59,7 +59,7 @@ public final class MapReduceTwillApplication implements TwillApplication {
       .build();
 
     Location programLocation = program.getJarLocation();
-    List<Location> datasetJars = program.getDatasetJarLocations();
+    Set<Location> datasetJars = program.getDatasetJarLocations();
 
     TwillSpecification.Builder.MoreFile moreFile = TwillSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",

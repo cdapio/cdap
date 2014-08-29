@@ -19,6 +19,7 @@ package co.cask.cdap.common.lang.jar;
 import co.cask.cdap.api.annotation.ExposeClass;
 
 import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
@@ -31,7 +32,7 @@ public class ExposeFilterClassLoader extends ClassLoader {
   private URLClassLoader datasetClassLoader;
 
 
-  public ExposeFilterClassLoader(File datasetTypeJar, ClassLoader parentClassLoader) {
+  public ExposeFilterClassLoader(File datasetTypeJar, ClassLoader parentClassLoader) throws MalformedURLException {
     super(parentClassLoader);
     this.datasetUrls = ClassPathUrlsUtil.getClassPathUrls(datasetTypeJar);
     this.datasetClassLoader = new URLClassLoader(datasetUrls, parentClassLoader);

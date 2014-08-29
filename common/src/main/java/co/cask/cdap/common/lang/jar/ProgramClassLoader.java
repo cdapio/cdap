@@ -16,16 +16,9 @@
 
 package co.cask.cdap.common.lang.jar;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
-import java.io.FilenameFilter;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * ClassLoader that implements bundle jar feature, in which the application jar contains
@@ -44,8 +37,6 @@ import java.util.List;
  */
 public class ProgramClassLoader extends URLClassLoader {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ProgramClassLoader.class);
-
   /**
    * Convenience class to construct a classloader for a program from an unpacked jar directory.
    * Adds <unpackedJarDir>/{.,*.jar,lib/*.jar} to the {@link URLClassLoader}.
@@ -53,7 +44,7 @@ public class ProgramClassLoader extends URLClassLoader {
    * @param unpackedJarDir Directory of the unpacked jar to be used in the classpath.
    * @param parentDelegate Parent classloader.
    */
-  public ProgramClassLoader(File unpackedJarDir, ClassLoader parentDelegate) {
+  public ProgramClassLoader(File unpackedJarDir, ClassLoader parentDelegate) throws MalformedURLException {
     super(ClassPathUrlsUtil.getClassPathUrls(unpackedJarDir), parentDelegate);
   }
 }

@@ -57,8 +57,8 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
@@ -98,8 +98,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Wrapper TwillRunnable around User Twill Runnable.
@@ -175,10 +175,10 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
       locationFactory = injector.getInstance(LocationFactory.class);
 
-      Type datasetsJarLocationType = new TypeToken<List<String>>() { }.getType();
-      List<String> datasetJars =
+      Type datasetsJarLocationType = new TypeToken<Set<String>>() { }.getType();
+      Set<String> datasetJars =
         new Gson().fromJson(cmdLine.getOptionValue(RunnableOptions.DATASET_JARS), datasetsJarLocationType);
-      List<Location> datasetsJarLocation = Lists.newArrayList();
+      Set<Location> datasetsJarLocation = Sets.newHashSet();
       for (String datsetJar : datasetJars) {
         datasetsJarLocation.add(locationFactory.create(datsetJar));
       }
@@ -390,7 +390,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
       this.locationFactory = locationFactory;
     }
 
-    public Program create(String path, List<Location> datasetJars) throws IOException {
+    public Program create(String path, Set<Location> datasetJars) throws IOException {
       Location location = locationFactory.create(path);
       return Programs.createWithUnpack(location, datasetJars, Files.createTempDir());
     }

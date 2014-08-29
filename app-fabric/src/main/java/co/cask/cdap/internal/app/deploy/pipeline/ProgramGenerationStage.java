@@ -36,6 +36,7 @@ import co.cask.cdap.proto.ProgramTypes;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -126,7 +127,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
         });
         futures.add(future);
       }
-      List<Location> datasetTypeJars = Lists.newArrayList();
+      Set<Location> datasetTypeJars = Sets.newHashSet();
       for (Map.Entry<String, DatasetCreationSpec> entry : appSpec.getDatasets().entrySet()) {
         DatasetTypeMeta typeMeta = datasetFramework.getType(entry.getValue().getTypeName());
         if (typeMeta != null) {

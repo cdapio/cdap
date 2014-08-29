@@ -27,7 +27,7 @@ import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.reflect.TypeToken;
@@ -55,7 +55,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -122,7 +122,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           LOG.info("Starting {} with debugging enabled.", program.getId());
           twillPreparer.enableDebugging();
         }
-        List<String> datasetJars = Lists.newArrayList();
+        Set<String> datasetJars = Sets.newHashSet();
         for (Location dsJar : copiedProgram.getDatasetJarLocations()) {
           datasetJars.add(dsJar.getName());
         }
@@ -134,7 +134,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             String.format("--%s", RunnableOptions.JAR), copiedProgram.getJarLocation().getName(),
             String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs,
             String.format("--%s", RunnableOptions.DATASET_JARS),
-            GSON.toJson(datasetJars, new TypeToken<List<String>>() { }.getType())
+            GSON.toJson(datasetJars, new TypeToken<Set<String>>() { }.getType())
           ).start();
         return addCleanupListener(twillController, hConfFile, cConfFile, copiedProgram, programDir);
       }
@@ -182,8 +182,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     }, tempJar);
     final Location jarLocation = new LocalLocationFactory().create(tempJar.toURI());
 
-    List<Location> datasetJars = program.getDatasetJarLocations();
-    List<Location> datasetTempJars = Lists.newArrayList();
+    Set<Location> datasetJars = program.getDatasetJarLocations();
+    Set<Location> datasetTempJars = Sets.newHashSet();
     for (final Location datasetJar : datasetJars) {
       File tempDsJar = File.createTempFile(datasetJar.getName(), ".jar");
       Files.copy(new InputSupplier<InputStream>() {
@@ -237,7 +237,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           }
           try {
             // deleting temp dataset jars that were copied
-            List<Location> datasetTempJars = program.getDatasetJarLocations();
+            Set<Location> datasetTempJars = program.getDatasetJarLocations();
             for (Location datasetJar : datasetTempJars) {
               datasetJar.delete();
             }

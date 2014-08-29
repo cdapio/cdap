@@ -214,7 +214,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   private void submit(final MapReduce job, MapReduceSpecification mapredSpec, Location jobJarLocation,
                       final BasicMapReduceContext context,
-                      final List<Location> datasetsJarLocation) throws Exception {
+                      final Set<Location> datasetJarLocations) throws Exception {
     jobConf = Job.getInstance(new Configuration(hConf));
     Configuration mapredConf = jobConf.getConfiguration();
 
@@ -284,8 +284,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
     jobConf.setJar(jobJar.toURI().toString());
     jobConf.addFileToClassPath(new Path(programJarCopy.toURI()));
 
-    List<String> datasetsJarPath = Lists.newArrayList();
-    for (Location datasetJarLocation : datasetsJarLocation) {
+    Set<String> datasetsJarPath = Sets.newHashSet();
+    for (Location datasetJarLocation : datasetJarLocations) {
       datasetsJarPath.add(datasetJarLocation.getName());
     }
 

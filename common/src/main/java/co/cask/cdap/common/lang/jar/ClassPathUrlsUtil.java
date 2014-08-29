@@ -32,30 +32,11 @@ import java.util.List;
  */
 public class ClassPathUrlsUtil {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ClassPathUrlsUtil.class);
-
-  public static URL[] getClassPathUrls(File unpackedJarDir) {
+  public static URL[] getClassPathUrls(File unpackedJarDir) throws MalformedURLException {
     List<URL> classPathUrls = new LinkedList<URL>();
-
-    try {
-      classPathUrls.add(unpackedJarDir.toURI().toURL());
-    } catch (MalformedURLException e) {
-      //todo: should throw the exception and handle outside
-      LOG.error("Error in adding unpackedJarDir to classPathUrls", e);
-    }
-
-    try {
-      classPathUrls.addAll(getJarURLs(unpackedJarDir));
-    } catch (MalformedURLException e) {
-      LOG.error("Error in adding jar URLs to classPathUrls", e);
-    }
-
-    try {
-      classPathUrls.addAll(getJarURLs(new File(unpackedJarDir, "lib")));
-    } catch (MalformedURLException e) {
-      LOG.error("Error in adding jar URLs to classPathUrls", e);
-    }
-
+    classPathUrls.add(unpackedJarDir.toURI().toURL());
+    classPathUrls.addAll(getJarURLs(unpackedJarDir));
+    classPathUrls.addAll(getJarURLs(new File(unpackedJarDir, "lib")));
     return classPathUrls.toArray(new URL[classPathUrls.size()]);
   }
 

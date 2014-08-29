@@ -105,16 +105,17 @@ public class ExploreDisabledTest {
     datasetFramework.addInstance("keyStructValueTable", "table1", DatasetProperties.EMPTY);
 
 
-    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
     DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
-    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
-    cl = dsUtil.getClassLoader();
+    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(parentClassLoader,
+                                                                                         typeMeta, locationFactory);
+    parentClassLoader = dsUtil.getClassLoader();
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("table1", DatasetDefinition.NO_ARGUMENTS, cl);
+      datasetFramework.getDataset("table1", DatasetDefinition.NO_ARGUMENTS, parentClassLoader);
     Assert.assertNotNull(table);
     table.startTx(tx1);
 
@@ -153,16 +154,17 @@ public class ExploreDisabledTest {
     datasetFramework.addInstance("NotRecordScannableTableDef", "table2", DatasetProperties.EMPTY);
 
 
-    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                           getClass().getClassLoader());
     DatasetTypeMeta typeMeta = datasetFramework.getType("NotRecordScannableTableDef");
-    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
-    cl = dsUtil.getClassLoader();
+    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(parentClassLoader,
+                                                                                         typeMeta, locationFactory);
+    parentClassLoader = dsUtil.getClassLoader();
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
     NotRecordScannableTableDefinition.KeyValueTable table =
-      datasetFramework.getDataset("table2", DatasetDefinition.NO_ARGUMENTS, cl);
+      datasetFramework.getDataset("table2", DatasetDefinition.NO_ARGUMENTS, parentClassLoader);
     Assert.assertNotNull(table);
     table.startTx(tx1);
 

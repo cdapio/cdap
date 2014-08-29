@@ -24,8 +24,8 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Factory helper to create {@link Program}.
@@ -36,7 +36,7 @@ public final class Programs {
    * Creates a {@link co.cask.cdap.app.program.Program} with the supplied list of Dataset jar files and
    * program jar file.
    */
-  public static Program createWithUnpack(Location location, List<Location> datasetTypeJars,
+  public static Program createWithUnpack(Location location, Set<Location> datasetTypeJars,
                                          File destinationUnpackedJarDir) throws IOException {
     return new DefaultProgram(location, datasetTypeJars, destinationUnpackedJarDir, getClassLoader());
   }
@@ -45,7 +45,7 @@ public final class Programs {
    * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
    * would not function from the program this method returns.
    */
-  public static Program create(Location location, List<Location> datasetJars,
+  public static Program create(Location location, Set<Location> datasetJars,
                                ClassLoader classLoader) throws IOException {
     return new DefaultProgram(location, datasetJars, classLoader);
   }
@@ -54,7 +54,7 @@ public final class Programs {
    * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
    * is used as the Classloader
    */
-  public static Program create(Location location, List<Location> datasetJars) throws IOException {
+  public static Program create(Location location, Set<Location> datasetJars) throws IOException {
     return new DefaultProgram(location, datasetJars, getClassLoader());
   }
 

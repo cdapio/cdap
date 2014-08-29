@@ -28,8 +28,8 @@ import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.filesystem.Location;
 
 import java.io.File;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * TwillApplication for service. Used to localize program jar location before running the TwillApplication.
@@ -59,7 +59,7 @@ public class ServiceTwillApplication implements TwillApplication {
       .withRunnable();
 
     Location programLocation = program.getJarLocation();
-    List<Location> datasetJars = program.getDatasetJarLocations();
+    Set<Location> datasetJars = program.getDatasetJarLocations();
 
     String programName = programLocation.getName();
     TwillSpecification.Builder.RunnableSetter runnableSetter = null;

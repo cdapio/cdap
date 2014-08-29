@@ -48,8 +48,8 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
@@ -92,8 +92,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -180,8 +180,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       // Initialize log appender
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
-      Type datasetJarsType = new TypeToken<List<String>>() { }.getType();
-      List<String> datasetJars =
+      Type datasetJarsType = new TypeToken<Set<String>>() { }.getType();
+      Set<String> datasetJars =
         new Gson().fromJson(cmdLine.getOptionValue(RunnableOptions.DATASET_JARS), datasetJarsType);
 
       try {
@@ -377,9 +377,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       this.locationFactory = locationFactory;
     }
 
-    public Program create(String path, List<String> datasetJars) throws IOException {
+    public Program create(String path, Set<String> datasetJars) throws IOException {
       Location location = locationFactory.create(path);
-      List<Location> datasetsJarLocation = Lists.newArrayList();
+      Set<Location> datasetsJarLocation = Sets.newHashSet();
       for (String datasetJar : datasetJars) {
         Location datasetLocation = locationFactory.create(datasetJar);
         datasetsJarLocation.add(datasetLocation);

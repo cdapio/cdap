@@ -75,6 +75,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RuntimeSpecification;
@@ -91,6 +92,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -172,8 +174,8 @@ public class DefaultStore implements Store {
     return Programs.create(programLocation, getDatasetJarsFromAppSpec(appMeta.getSpec()));
   }
 
-  private List<Location> getDatasetJarsFromAppSpec(ApplicationSpecification appSpec) throws DatasetManagementException {
-    List<Location> datasetTypeJars = Lists.newArrayList();
+  private Set<Location> getDatasetJarsFromAppSpec(ApplicationSpecification appSpec) throws DatasetManagementException {
+    Set<Location> datasetTypeJars = Sets.newHashSet();
     for (Map.Entry<String, DatasetCreationSpec> entry : appSpec.getDatasets().entrySet()) {
       DatasetTypeMeta typeMeta = dsFramework.getType(entry.getValue().getTypeName());
       if (typeMeta != null) {

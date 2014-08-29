@@ -32,7 +32,7 @@ import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -77,7 +78,7 @@ public abstract class AbstractMapReduceContextBuilder {
                                      Transaction tx,
                                      ClassLoader classLoader,
                                      URI programLocation,
-                                     List<String> datasetsJarPath,
+                                     Set<String> datasetsJarPath,
                                      @Nullable String inputDataSetName,
                                      @Nullable List<Split> inputSplits,
                                      @Nullable String outputDataSetName) {
@@ -86,7 +87,7 @@ public abstract class AbstractMapReduceContextBuilder {
     // Initializing Program
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Program program;
-    List<Location> datasetsJarLocation = Lists.newArrayList();
+    Set<Location> datasetsJarLocation = Sets.newHashSet();
     for (String datasetJarPath : datasetsJarPath) {
       datasetsJarLocation.add(locationFactory.create(datasetJarPath));
     }

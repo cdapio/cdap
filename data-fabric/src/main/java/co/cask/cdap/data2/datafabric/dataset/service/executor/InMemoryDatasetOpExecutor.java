@@ -64,9 +64,9 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
     throws Exception {
     DatasetClassLoaderUtil dsUtil = null;
     try {
-      ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+      ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                             getClass().getClassLoader());
-      dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
+      dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(parentClassLoader, typeMeta, locationFactory);
       DatasetType type = client.getDatasetType(typeMeta, dsUtil.getClassLoader());
 
       if (type == null) {
@@ -88,9 +88,9 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
   public void drop(DatasetSpecification spec, DatasetTypeMeta typeMeta) throws Exception {
     DatasetClassLoaderUtil dsUtil = null;
     try {
-      ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+      ClassLoader parentClasssLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                             getClass().getClassLoader());
-      dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
+      dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(parentClasssLoader, typeMeta, locationFactory);
       DatasetType type = client.getDatasetType(typeMeta, dsUtil.getClassLoader());
 
       if (type == null) {
@@ -121,8 +121,6 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
   @Override
   public void upgrade(String instanceName) throws Exception {
-    ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                                   getClass().getClassLoader());
     DatasetAdminWrapper datasetAdminWrapper = null;
     try {
       datasetAdminWrapper = getAdmin(instanceName);
@@ -146,12 +144,12 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
   private DatasetAdminWrapper getAdmin(String instanceName) throws
     IOException, DatasetManagementException {
-    ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                    getClass().getClassLoader());
     DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
-      (classLoader, client.getType(client.getDatasetSpec(instanceName).getType()), locationFactory);
+      (parentClassLoader, client.getType(client.getDatasetSpec(instanceName).getType()), locationFactory);
 
-    return new DatasetAdminWrapper(dsUtil, client.getAdmin(instanceName, classLoader));
+    return new DatasetAdminWrapper(dsUtil, client.getAdmin(instanceName, parentClassLoader));
   }
 
   /**

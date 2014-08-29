@@ -63,7 +63,7 @@ public final class ClassLoaders {
   private ClassLoaders() { }
 
   public static ProgramClassLoader newProgramClassLoader(File unpackedJarDir, Iterable<String> apiResourceList,
-                                                         ClassLoader parentClassLoader) throws IOException {
+                                                         ClassLoader parentClassLoader) throws MalformedURLException {
     // TODO: Unify the creation of FilterClassLoader REACTOR-760
     Predicate<String> predicate = Predicates.in(Sets.newHashSet(apiResourceList));
     ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
@@ -72,9 +72,8 @@ public final class ClassLoaders {
                                                                          ImmutableList.of(parentClassLoader)));
   }
 
-  public static CombineClassLoader newDatasetClassLoader(List<File> datasetJars,
-                                                               Iterable<String> apiResourceList,
-                                                               ClassLoader parentClassLoader) throws IOException {
+  public static CombineClassLoader newDatasetClassLoader(Set<File> datasetJars, Iterable<String> apiResourceList,
+                                                         ClassLoader parentClassLoader) throws MalformedURLException  {
     Predicate<String> predicate = Predicates.in(Sets.newHashSet(apiResourceList));
     ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                     ClassLoaders.class.getClassLoader());

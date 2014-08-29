@@ -75,14 +75,14 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
 
-    ClassLoader cl = Thread.currentThread().getContextClassLoader();
+    ClassLoader parentClassLoader = Thread.currentThread().getContextClassLoader();
     DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
-    dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(cl, typeMeta, locationFactory);
-    cl = dsUtil.getClassLoader();
+    dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(parentClassLoader, typeMeta, locationFactory);
+    parentClassLoader = dsUtil.getClassLoader();
 
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, cl);
+      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, parentClassLoader);
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);

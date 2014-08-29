@@ -29,6 +29,7 @@ import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.TxnCodec;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionAware;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocationFactory;
@@ -127,8 +128,12 @@ public class DatasetAccessor {
       // Some other call in parallel may have already loaded it, so use the same classlaoder
       return framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, dsUtil.getClassLoader());
     }
+
+    Preconditions.checkNotNull(framework.getDatasetSpec(datasetName),
+                               String.format("dataset instance : %s does not exist", datasetName));
     dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
       (classLoader, framework.getType(framework.getDatasetSpec(datasetName).getType()), locationFactory);
+
     // No classloader for dataset exists, load the dataset and save the classloader.
     Dataset dataset = framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, dsUtil.getClassLoader());
     if (dataset != null) {

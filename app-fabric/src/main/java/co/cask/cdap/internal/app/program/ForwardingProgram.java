@@ -21,7 +21,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.filesystem.Location;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * A delegation of {@link Program} interface.
@@ -85,7 +85,7 @@ public abstract class ForwardingProgram implements Program {
   }
 
   @Override
-  public List<Location> getDatasetJarLocations() {
+  public Set<Location> getDatasetJarLocations() {
     return delegate.getDatasetJarLocations();
   }
 

@@ -28,8 +28,8 @@ import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.filesystem.Location;
 
 import java.io.File;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -61,7 +61,7 @@ public final class FlowTwillApplication implements TwillApplication {
 
     Location programLocation = program.getJarLocation();
     String programName = programLocation.getName();
-    List<Location> datasetJars = program.getDatasetJarLocations();
+    Set<Location> datasetJars = program.getDatasetJarLocations();
 
     TwillSpecification.Builder.RunnableSetter runnableSetter = null;
     for (Map.Entry<String, FlowletDefinition> entry  : spec.getFlowlets().entrySet()) {

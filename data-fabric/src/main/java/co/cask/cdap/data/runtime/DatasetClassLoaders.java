@@ -22,13 +22,16 @@ import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Helps to share a functionality to create ClassLoader with Dataset Types,  provided {@link java.lang.ClassLoader} ,
@@ -49,9 +52,10 @@ public class DatasetClassLoaders {
                                                                         LocationFactory locationFactory) {
     try {
       List<DatasetModuleMeta> modulesToLoad = typeMeta.getModules();
-      List<File> datasetFiles = Lists.newArrayList();
+      Set<File> datasetFiles = Sets.newHashSet();
+      Set<URI> newModuleLocation = Sets.newHashSet();
       for (DatasetModuleMeta module : modulesToLoad) {
-        if (module.getJarLocation() != null) {
+        if ((module.getJarLocation() != null) && (newModuleLocation.add(module.getJarLocation()) != false)) {
           File tempDir = Files.createTempDir();
           BundleJarUtil.unpackProgramJar(locationFactory.create(module.getJarLocation()), tempDir);
           datasetFiles.add(tempDir);
@@ -63,6 +67,8 @@ public class DatasetClassLoaders {
       } else {
         return new DatasetClassLoaderUtil(parentClassLoader, datasetFiles);
       }
+    } catch (MalformedURLException e) {
+      throw Throwables.propagate(e);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

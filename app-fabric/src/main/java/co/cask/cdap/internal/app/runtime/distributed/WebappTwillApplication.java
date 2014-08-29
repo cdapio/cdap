@@ -26,7 +26,7 @@ import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.filesystem.Location;
 
 import java.io.File;
-import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -58,7 +58,7 @@ public final class WebappTwillApplication implements TwillApplication {
 
     try {
       String serviceName = WebappProgramRunner.getServiceName(ProgramType.WEBAPP, program);
-      List<Location> datasetJars = program.getDatasetJarLocations();
+      Set<Location> datasetJars = program.getDatasetJarLocations();
 
       TwillSpecification.Builder.MoreFile moreFile = TwillSpecification.Builder.with()
         .setName(serviceName)
