@@ -32,7 +32,7 @@ define(['core/controllers/services'], function (servicesController) {
     },
 
     keyPressed: function (evt) {
-      var btn = this.$().parent().parent().next();
+      var btn = this.$().parent().parent().next().children();
       var inp = this.value;
       if (inp.length > 0 && parseInt(inp) != this.placeholder){
           btn.attr("disabled", false);
