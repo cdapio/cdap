@@ -809,6 +809,10 @@ h1 span:first-child {
 	border-bottom: 1px solid #DEDEDE;
 }
 
+.panel .table.streams-table thead {
+	border-top: 0;
+}
+
 .panel-title, h2 {
 	font-size: 22px;
 	font-weight: 100;
