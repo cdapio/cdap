@@ -74,7 +74,7 @@ public class AppWithSchedule extends AbstractApplication {
     public void run() {
       LOG.info("Ran dummy action");
       try {
-        Thread.sleep(500);
+        TimeUnit.MILLISECONDS.sleep(500);
       } catch (InterruptedException e) {
         LOG.info("Interrupted");
       }

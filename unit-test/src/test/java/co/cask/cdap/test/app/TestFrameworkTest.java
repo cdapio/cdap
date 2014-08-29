@@ -125,8 +125,6 @@ public class TestFrameworkTest extends TestBase {
 
     List<RunRecord> history;
     int workflowRuns = 0;
-    // the workflow stop method from the listener is called long after the run method completes,
-    // its handled by Guava service, so we are giving a long wait time to avoid failing
     workFlowHistoryCheck(5, wfmanager, 0);
 
     String status = wfmanager.getSchedule(scheduleId).status();
@@ -167,7 +165,6 @@ public class TestFrameworkTest extends TestBase {
     applicationManager.stopAll();
   }
 
-
   private void workFlowHistoryCheck(int retries, WorkflowManager wfmanager, int expected) throws InterruptedException {
     int trial = 0;
     List<RunRecord> history;
@@ -182,7 +179,6 @@ public class TestFrameworkTest extends TestBase {
     }
     Assert.assertTrue(workflowRuns > expected);
   }
-
 
   private void workFlowStatusCheck(int timeOut, String scheduleId, WorkflowManager wfmanager,
                                    String expected) throws InterruptedException {
