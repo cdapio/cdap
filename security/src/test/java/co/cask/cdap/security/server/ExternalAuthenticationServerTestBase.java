@@ -46,7 +46,6 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
@@ -85,7 +84,7 @@ public abstract class ExternalAuthenticationServerTestBase {
   protected static CConfiguration configuration;
 
   protected abstract String getProtocol();
-  protected abstract DefaultHttpClient getHTTPClient() throws Exception;
+  protected abstract HttpClient getHTTPClient() throws Exception;
 
   protected static void setup() {
     Assert.assertNotNull("CConfiguration needs to be set by derived classes", configuration);

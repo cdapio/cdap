@@ -18,13 +18,14 @@ package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.BeforeClass;
 
 /**
- * Test External Auth Server
+ * Test External Authentication Server
  */
-public class TestExternalAuthenticationServer extends ExternalAuthenticationServerTestBase {
+public class ExternalAuthenticationServerTest extends ExternalAuthenticationServerTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -42,7 +43,7 @@ public class TestExternalAuthenticationServer extends ExternalAuthenticationServ
   }
 
   @Override
-  protected DefaultHttpClient getHTTPClient() throws Exception {
+  protected HttpClient getHTTPClient() throws Exception {
     return new DefaultHttpClient();
   }
 }

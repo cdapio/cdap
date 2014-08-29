@@ -18,6 +18,7 @@ package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
@@ -35,13 +36,13 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 /**
- * Test SSL External Auth Server
+ * Test SSL External Authentication Server
  */
-public class TestExternalAuthenticationServerSSL extends ExternalAuthenticationServerTestBase {
+public class ExternalAuthenticationServerSSLTest extends ExternalAuthenticationServerTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    URL certUrl = TestExternalAuthenticationServerSSL.class.getClassLoader().getResource("cert.jks");
+    URL certUrl = ExternalAuthenticationServerSSLTest.class.getClassLoader().getResource("cert.jks");
     Assert.assertNotNull(certUrl);
 
     CConfiguration cConf = CConfiguration.create();
@@ -60,7 +61,7 @@ public class TestExternalAuthenticationServerSSL extends ExternalAuthenticationS
   }
 
   @Override
-  protected DefaultHttpClient getHTTPClient() throws Exception {
+  protected HttpClient getHTTPClient() throws Exception {
     SSLContext sslContext = SSLContext.getInstance("SSL");
 
     // set up a TrustManager that trusts everything
