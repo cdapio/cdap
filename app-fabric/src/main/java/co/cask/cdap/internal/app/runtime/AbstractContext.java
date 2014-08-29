@@ -19,23 +19,25 @@ package co.cask.cdap.internal.app.runtime;
 import co.cask.cdap.api.data.DataSetContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.data.dataset.DataSetInstantiator;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Base class for program runtime context
- * TODO: ENG-2702 opened to fix the deprecated AbstractContext and cleanup related to context overall.
  */
-@Deprecated
 public abstract class AbstractContext implements DataSetContext {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
 
@@ -43,10 +45,36 @@ public abstract class AbstractContext implements DataSetContext {
   private final RunId runId;
   private final Map<String, Closeable> datasets;
 
-  public AbstractContext(Program program, RunId runId, Map<String, Closeable> datasets) {
+  private final MetricsCollector programMetrics;
+
+  private final DataSetInstantiator dsInstantiator;
+
+  public AbstractContext(Program program, RunId runId,
+                         Set<String> datasets,
+                         String metricsContext,
+                         MetricsCollectionService metricsCollectionService,
+                         DatasetFramework dsFramework,
+                         CConfiguration conf) {
     this.program = program;
     this.runId = runId;
-    this.datasets = ImmutableMap.copyOf(datasets);
+
+    MetricsCollector datasetMetrics;
+    if (metricsCollectionService != null) {
+      // NOTE: RunId metric is not supported now. Need UI refactoring to enable it.
+      this.programMetrics = metricsCollectionService.getCollector(MetricsScope.REACTOR, metricsContext, "0");
+      datasetMetrics = metricsCollectionService.getCollector(MetricsScope.REACTOR,
+                                                             Constants.Metrics.DATASET_CONTEXT, "0");
+    } else {
+      this.programMetrics = null;
+      datasetMetrics = null;
+    }
+
+    this.dsInstantiator = new DataSetInstantiator(dsFramework, conf, program.getClassLoader(),
+                                                  datasetMetrics, programMetrics);
+
+    // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
+    // todo: initialized datasets should be managed by DatasetContext (ie. DatasetInstantiator): refactor further
+    this.datasets = DataSets.createDataSets(dsInstantiator, datasets);
   }
 
   public abstract Metrics getMetrics();
@@ -57,9 +85,19 @@ public abstract class AbstractContext implements DataSetContext {
                          getAccountId(), getApplicationId(), getProgramName(), runId);
   }
 
+  public MetricsCollector getProgramMetrics() {
+    return programMetrics;
+  }
+
+  // todo: this may be refactored further: avoid leaking dataset instantiator from context
+  public DataSetInstantiator getDatasetInstantiator() {
+    return dsInstantiator;
+  }
+
   @SuppressWarnings("unchecked")
   @Override
   public <T extends Closeable> T getDataSet(String name) {
+    // TODO this should allow to get a dataset that was not declared with @UseDataSet. Then we can support arguments.
     T dataSet = (T) datasets.get(name);
     Preconditions.checkArgument(dataSet != null, "%s is not a known DataSet.", name);
     return dataSet;
@@ -92,12 +130,6 @@ public abstract class AbstractContext implements DataSetContext {
 
   public RunId getRunId() {
     return runId;
-  }
-
-  protected final MetricsCollector getMetricsCollector(MetricsScope scope,
-                                                       MetricsCollectionService collectionService, String context) {
-    // NOTE: RunId metric is not supported now. Need UI refactoring to enable it.
-    return collectionService.getCollector(scope, context, "0");
   }
 
   /**

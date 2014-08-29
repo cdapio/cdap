@@ -96,7 +96,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     runnerThread = Thread.currentThread();
-    flowletContext.getSystemMetrics().gauge("process.instance", 1);
+    flowletContext.getProgramMetrics().gauge("process.instance", 1);
     processExecutor = Executors.newSingleThreadExecutor(
       Threads.createDaemonThreadFactory(getServiceName() + "-executor"));
   }
@@ -253,7 +253,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
     ProcessMethod<T> processMethod = entry.getProcessSpec().getProcessMethod();
     if (processMethod.needsInput()) {
-      flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
+      flowletContext.getProgramMetrics().gauge("process.tuples.attempt.read", 1);
     }
 
     // Begin transaction and dequeue
@@ -432,7 +432,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         LOG.warn("Process failure: {}, {}, input: {}", flowletContext, reason.getMessage(), input, reason.getCause());
         FailurePolicy failurePolicy;
         try {
-          flowletContext.getSystemMetrics().gauge("process.errors", 1);
+          flowletContext.getProgramMetrics().gauge("process.errors", 1);
           failurePolicy = txCallback.onFailure(inputObject, inputContext, reason);
           if (failurePolicy == null) {
             failurePolicy = FailurePolicy.RETRY;
@@ -476,12 +476,12 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
       private void gaugeEventProcessed(QueueName inputQueueName) {
         if (processEntry.isTick()) {
-          flowletContext.getSystemMetrics().gauge("process.ticks.processed", processedCount);
+          flowletContext.getProgramMetrics().gauge("process.ticks.processed", processedCount);
         } else if (inputQueueName == null) {
-          flowletContext.getSystemMetrics().gauge("process.events.processed", processedCount);
+          flowletContext.getProgramMetrics().gauge("process.events.processed", processedCount);
         } else {
           String tag = "input." + inputQueueName.toString();
-          flowletContext.getSystemMetrics().gauge("process.events.processed", processedCount, tag);
+          flowletContext.getProgramMetrics().gauge("process.events.processed", processedCount, tag);
         }
       }
     };

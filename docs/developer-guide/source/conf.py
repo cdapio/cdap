@@ -17,7 +17,7 @@ import subprocess
 
 def get_sdk_version():
     # Sets the CDAP Build Version via maven
-    mvn_version_cmd = "mvn help:evaluate -o -Dexpression=project.version -f ../../../ | grep -v '^\['"
+    mvn_version_cmd = "mvn help:evaluate -o -Dexpression=project.version -f ../../../pom.xml | grep -v '^\['"
     version = None
     try:
         version = subprocess.check_output(mvn_version_cmd, shell=True).strip().replace("-SNAPSHOT", "")

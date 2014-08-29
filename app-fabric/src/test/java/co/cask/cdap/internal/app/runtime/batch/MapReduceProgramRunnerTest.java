@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.TimeseriesTable;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
@@ -33,7 +32,6 @@ import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
-import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
@@ -111,7 +109,7 @@ public class MapReduceProgramRunnerTest {
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     dataSetInstantiator =
       new DataSetInstantiator(datasetFramework, injector.getInstance(CConfiguration.class),
-                              MapReduceProgramRunnerTest.class.getClassLoader());
+                              MapReduceProgramRunnerTest.class.getClassLoader(), null, null);
 
     txService.startAndWait();
   }
@@ -134,8 +132,6 @@ public class MapReduceProgramRunnerTest {
     final ApplicationWithPrograms app =
       AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduceUsingObjectStore.class, TEMP_FOLDER_SUPPLIER);
 
-    ApplicationSpecification spec = Specifications.from(new AppWithMapReduceUsingObjectStore());
-    dataSetInstantiator.setDataSets(spec.getDatasets().values());
     final ObjectStore<String> input = dataSetInstantiator.getDataSet("keys");
 
     //Populate some input
@@ -176,8 +172,6 @@ public class MapReduceProgramRunnerTest {
     final String inputPath = createInput();
     final File outputDir = new File(tmpFolder.newFolder(), "output");
 
-    ApplicationSpecification spec = Specifications.from(new AppWithMapReduce());
-    dataSetInstantiator.setDataSets(spec.getDatasets().values());
     final KeyValueTable jobConfigTable = dataSetInstantiator.getDataSet("jobConfig");
 
     // write config into dataset
@@ -229,8 +223,6 @@ public class MapReduceProgramRunnerTest {
   private void testSuccess(boolean frequentFlushing) throws Exception {
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
-    ApplicationSpecification spec = Specifications.from(new AppWithMapReduce());
-    dataSetInstantiator.setDataSets(spec.getDatasets().values());
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
     final TimeseriesTable table = (TimeseriesTable) dataSetInstantiator.getDataSet("timeSeries");
@@ -300,8 +292,6 @@ public class MapReduceProgramRunnerTest {
 
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
-    ApplicationSpecification spec = Specifications.from(new AppWithMapReduce());
-    dataSetInstantiator.setDataSets(spec.getDatasets().values());
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
     final TimeseriesTable table = (TimeseriesTable) dataSetInstantiator.getDataSet("timeSeries");

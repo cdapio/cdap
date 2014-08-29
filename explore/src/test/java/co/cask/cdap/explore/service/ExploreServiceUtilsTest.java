@@ -58,8 +58,15 @@ public class ExploreServiceUtilsTest {
 
     conf = new Configuration(false);
     conf.addResource(newConfFile.toURI().toURL());
-    Assert.assertEquals(3, conf.size());
-    Assert.assertEquals("true", conf.get("mapreduce.user.classpath.first"));
+
+    // If Hadoop config methods in ConfigUtil.java loaded the deprecated configurations, then
+    // mapreduce.user.classpath.first, which is the old hadoop configuration, will not be persisted
+    if (Configuration.isDeprecated("mapreduce.user.classpath.first")) {
+      Assert.assertEquals(2, conf.size());
+    } else {
+      Assert.assertEquals(3, conf.size());
+      Assert.assertEquals("true", conf.get("mapreduce.user.classpath.first"));
+    }
     Assert.assertEquals("true", conf.get(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST));
     Assert.assertEquals("bar", conf.get("foo"));
 

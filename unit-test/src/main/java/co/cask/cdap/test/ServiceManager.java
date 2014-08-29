@@ -36,8 +36,7 @@ public interface ServiceManager {
    * Used to discover services inside a given application and twill-service.
    * @param applicationId Application Name.
    * @param serviceId Service Name.
-   * @param serviceName Announced Name.
    * @return ServiceDiscovered
    */
-  ServiceDiscovered discover(String applicationId, String serviceId, String serviceName);
+  ServiceDiscovered discover(String applicationId, String serviceId);
 }

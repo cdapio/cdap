@@ -64,12 +64,6 @@ define(['core/controllers/services'], function (servicesController) {
         return;
       }
 
-      if(service.status !== "RUNNING"){
-        //This is because the server would return a 404, if modifying instances while service is off.
-        C.Modal.show('Service Stopped', "You can not change the component's instances while its service is stopped.")
-        return;
-      }
-
       this.runnableVerifyInstanceBounds(service, runnable.id, input, "Request " + input);
     },
 
