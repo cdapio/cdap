@@ -24,11 +24,12 @@ import org.jboss.netty.channel.ChannelPipeline;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * Provides a {@link NettyHttpService.Builder} that has common configuration built-in.
  */
-public class BaseNettyHttpService implements Supplier<NettyHttpService.Builder> {
+public class BaseNettyHttpService implements Provider<NettyHttpService.Builder> {
 
   private final CConfiguration configuration;
   private final AuthenticationChannelHandler authenticationChannelHandler;
