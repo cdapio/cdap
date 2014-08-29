@@ -57,7 +57,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.net.InetAddress;
 import java.net.SocketAddress;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -80,7 +79,7 @@ public abstract class ExternalAuthenticationServerTestBase {
   private static InMemoryDirectoryServer ldapServer;
   private static int ldapPort = Networks.getRandomPort();
 
-  private static Logger testAuditLogger;
+  private static final Logger TEST_AUDIT_LOGGER = mock(Logger.class);
 
   // Needs to be set by derived classes.
   protected static CConfiguration configuration;
@@ -98,11 +97,10 @@ public abstract class ExternalAuthenticationServerTestBase {
           bind(AuditLogHandler.class)
             .annotatedWith(Names.named(
               ExternalAuthenticationServer.NAMED_EXTERNAL_AUTH))
-            .toInstance(new AuditLogHandler(testAuditLogger));
+            .toInstance(new AuditLogHandler(TEST_AUDIT_LOGGER));
         }
       }
     );
-    testAuditLogger = mock(Logger.class);
     Injector injector = Guice.createInjector(new IOModule(), securityModule,
                                              new ConfigModule(getConfiguration(configuration)),
                                              new DiscoveryRuntimeModule().getInMemoryModules());
@@ -199,7 +197,7 @@ public abstract class ExternalAuthenticationServerTestBase {
     HttpResponse response = client.execute(request);
 
     assertEquals(response.getStatusLine().getStatusCode(), 200);
-    verify(testAuditLogger, atLeastOnce()).trace(contains("admin"));
+    verify(TEST_AUDIT_LOGGER, atLeastOnce()).trace(contains("admin"));
 
     // Test correct headers being returned
     String cacheControlHeader = response.getFirstHeader("Cache-Control").getValue();
@@ -255,7 +253,7 @@ public abstract class ExternalAuthenticationServerTestBase {
 
     // Request is Unauthorized
     assertEquals(response.getStatusLine().getStatusCode(), 401);
-    verify(testAuditLogger, atLeastOnce()).trace(contains("401"));
+    verify(TEST_AUDIT_LOGGER, atLeastOnce()).trace(contains("401"));
 
     server.stopAndWait();
     ldapServer.shutDown(true);
@@ -328,7 +326,6 @@ public abstract class ExternalAuthenticationServerTestBase {
   public void testServiceRegistration() throws Exception {
     server.startAndWait();
     Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
-    Iterator<Discoverable> discoverableIterator = discoverables.iterator();
 
     Set<SocketAddress> addresses = Sets.newHashSet();
     for (Discoverable discoverable : discoverables) {
