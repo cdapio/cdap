@@ -161,8 +161,10 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
         sslContextFactory.setKeyStorePath(keyStorePath);
         sslContextFactory.setKeyStorePassword(keyStorePassword);
-        sslContextFactory.setKeyManagerPassword(keyPassword);
         sslContextFactory.setKeyStoreType(keyStoreType);
+        if (keyPassword != null && keyPassword.length() != 0) {
+          sslContextFactory.setKeyManagerPassword(keyPassword);
+        }
         // TODO Figure out how to pick a certificate from key store
 
         SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
