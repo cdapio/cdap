@@ -50,11 +50,13 @@ if node['hadoop'].key?('core_site') && node['hadoop']['core_site'].key?('hadoop.
     include_recipe 'yum-epel' if node['platform_family'] == 'rhel'
 
     package 'kstart'
+
     group 'hadoop' do
       append true
       members ['cdap']
       action :modify
     end
+
     include_recipe 'krb5_utils'
     # We need to be hbase to run our shell
     execute 'kinit-as-hbase-user' do

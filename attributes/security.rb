@@ -20,3 +20,17 @@
 default['cdap']['cdap_site']['security.server.ssl.keystore.password'] = 'defaultpassword'
 default['cdap']['cdap_site']['security.server.ssl.keystore.path'] = '/opt/cdap/security/conf/keystore.jks'
 default['cdap']['cdap_site']['security.auth.server.address'] = node['fqdn']
+
+if node['cdap']['cdap_site'].key?('security.enabled') && node['cdap']['cdap_site']['security.enabled'].to_s == 'true'
+  include_attribute 'krb5_utils'
+
+  default_realm = node['krb5']['krb5_conf']['realms']['default_realm'].upcase
+
+  # For cdap-master init script
+  default['cdap']['security']['cdap_keytab'] = "#{node['krb5_utils']['keytabs_dir']}/yarn.service.keytab"
+  default['cdap']['security']['cdap_principal'] = "yarn/`hostname -f`@#{default_realm}"
+
+  # For cdap-auth-server and cdap-router
+  default['cdap']['cdap_site']['cdap.master.kerberos.keytab'] = "#{node['krb5_utils']['keytabs_dir']}/cdap.service.keytab"
+  default['cdap']['cdap_site']['cdap.master.kerberos.principal'] = "cdap/_HOST@#{default_realm}"
+end
