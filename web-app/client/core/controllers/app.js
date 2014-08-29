@@ -24,6 +24,7 @@ define([], function () {
 			this.set('elements.Procedure', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Dataset', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Userservice', Em.ArrayProxy.create({content: []}));
+			this.set('elements.Spark', Em.ArrayProxy.create({content: []}));
 			this.clearTriggers(true);
 
 			var self = this;
@@ -131,6 +132,19 @@ define([], function () {
 				self.__loaded();
 			});
 
+			/*
+       * Load Spark
+       */
+      this.HTTP.rest('apps', model.id, 'spark', function (objects) {
+
+      	var i = objects.length;
+      		while (i--) {
+      			objects[i] = C.Userservice.create(objects[i]);
+      		}
+      		self.get('elements.Spark').pushObjects(objects);
+      		self.__loaded();
+      });
+
 		},
 
 		__loaded: function () {
@@ -175,7 +189,7 @@ define([], function () {
 				return;
 			}
 
-			var self = this, types = ['Flow', 'Mapreduce', 'Workflow', 'Stream', 'Procedure', 'Dataset', 'Userservice'];
+			var self = this, types = ['Flow', 'Mapreduce', 'Workflow', 'Stream', 'Procedure', 'Dataset', 'Userservice', 'Spark'];
 
 			if (this.get('model')) {
 
@@ -212,19 +226,22 @@ define([], function () {
 			var flow = this.get('elements.Flow.content');
 			var mapreduce = this.get('elements.Mapreduce.content');
 			var procedure = this.get('elements.Procedure.content');
+			var spark = this.get('elements.Spark.content');
 
-			if (!flow.length && !mapreduce.length && !procedure.length) {
+			if (!flow.length && !mapreduce.length && !procedure.length && !spark.length) {
 				return false;
 			}
 			return true;
 
-		}.property('elements.Flow', 'elements.Mapreduce', 'elements.Procedure'),
+		}.property('elements.Flow', 'elements.Mapreduce', 'elements.Procedure', 'elements.Spark'),
 
 		transition: function (elements, action, transition, endState, done) {
 			var i = elements.length, model, appId = this.get('model.id');
 			var remaining = i;
 
 			var HTTP = this.HTTP;
+
+      console.log( '-----------------', elements )
 
 			while (i--) {
 
@@ -235,8 +252,19 @@ define([], function () {
 				}
 
 				var model = elements[i];
-				var entityType = model.get('type').toLowerCase() + 's';
+				console.log( '-----------', model );
+				var entityType = (model.get('type').toLowerCase() || '') + 's';
 				model.set('currentState', transition);
+
+				console.log(
+				  '--------------',
+				  '/rest/apps/',
+				  appId + '/',
+				  entityType + '/',
+				  model.get('name') + '/',
+				  action
+				)
+
 				HTTP.post('rest', 'apps', appId, entityType, model.get('name'), action,
 					function (response) {
 
