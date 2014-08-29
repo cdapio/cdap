@@ -1806,6 +1806,12 @@ a strong {
 	color: #969CB4;
 }
 
+.btn.btn-set.btn-blank[disabled] {
+ /* color: grey; */
+ background: #eee;
+ cursor: not-allowed;
+ }
+
 .btn.btn-blue {
 	border: 1px solid transparent;
 	background: #2C56A0;
