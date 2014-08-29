@@ -39,13 +39,14 @@ public class DatasetClassLoaders {
   /**
    * Returns {@link java.lang.ClassLoader }provided a parent {@link java.lang.ClassLoader} ,
    * {@link co.cask.cdap.proto.DatasetTypeMeta} and {@link org.apache.twill.filesystem.LocationFactory}
-   * @param cl
+   * @param parentClassLoader
    * @param typeMeta
    * @param locationFactory
    * @return {@link java.lang.ClassLoader}
    */
-  public static DatasetClassLoaderUtil createDatasetClassLoaderFromType(ClassLoader cl, DatasetTypeMeta typeMeta,
-                                                             LocationFactory locationFactory) {
+  public static DatasetClassLoaderUtil createDatasetClassLoaderFromType(ClassLoader parentClassLoader,
+                                                                        DatasetTypeMeta typeMeta,
+                                                                        LocationFactory locationFactory) {
     try {
       List<DatasetModuleMeta> modulesToLoad = typeMeta.getModules();
       List<File> datasetFiles = Lists.newArrayList();
@@ -58,9 +59,9 @@ public class DatasetClassLoaders {
       }
       if (!datasetFiles.isEmpty()) {
         return new DatasetClassLoaderUtil(ClassLoaders.newDatasetClassLoader
-          (datasetFiles, ApiResourceListHolder.getResourceList(), cl), datasetFiles);
+          (datasetFiles, ApiResourceListHolder.getResourceList(), parentClassLoader), datasetFiles);
       } else {
-        return new DatasetClassLoaderUtil(cl, datasetFiles);
+        return new DatasetClassLoaderUtil(parentClassLoader, datasetFiles);
       }
     } catch (IOException e) {
       throw Throwables.propagate(e);

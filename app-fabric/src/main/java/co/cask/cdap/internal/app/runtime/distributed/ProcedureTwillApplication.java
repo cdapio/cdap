@@ -56,7 +56,7 @@ public final class ProcedureTwillApplication implements TwillApplication {
       .build();
 
     Location programLocation = program.getJarLocation();
-    List<Location> datasetJars = program.getDatasetsJarLocation();
+    List<Location> datasetJars = program.getDatasetJarLocations();
 
     TwillSpecification.Builder.MoreFile moreFile =  TwillSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",

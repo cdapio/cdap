@@ -85,8 +85,8 @@ public abstract class ForwardingProgram implements Program {
   }
 
   @Override
-  public List<Location> getDatasetsJarLocation() {
-    return delegate.getDatasetsJarLocation();
+  public List<Location> getDatasetJarLocations() {
+    return delegate.getDatasetJarLocations();
   }
 
 }

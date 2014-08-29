@@ -81,5 +81,5 @@ public interface Program {
   /**
    * Returns the list of {@link Location Locations} of {@link co.cask.cdap.api.dataset.Dataset} jar's
    */
-  List<Location> getDatasetsJarLocation();
+  List<Location> getDatasetJarLocations();
 }

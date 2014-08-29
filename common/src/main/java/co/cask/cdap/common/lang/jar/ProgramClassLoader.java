@@ -56,6 +56,4 @@ public class ProgramClassLoader extends URLClassLoader {
   public ProgramClassLoader(File unpackedJarDir, ClassLoader parentDelegate) {
     super(ClassPathUrlsUtil.getClassPathUrls(unpackedJarDir), parentDelegate);
   }
-
-
 }

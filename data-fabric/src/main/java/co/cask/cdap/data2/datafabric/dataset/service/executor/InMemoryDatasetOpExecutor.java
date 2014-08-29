@@ -29,8 +29,6 @@ import com.google.common.base.Objects;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -50,17 +48,13 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
   @Override
   public boolean exists(String instanceName) throws Exception {
-    DatasetClassLoaderUtil dsUtil = null;
+    DatasetAdminWrapper datasetAdminWrapper = null;
     try {
-      ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                                     getClass().getClassLoader());
-      dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
-        (classLoader, client.getType(client.getDatasetSpec(instanceName).getType()), locationFactory);
-      boolean exists = getAdmin(instanceName, dsUtil.getClassLoader()).exists();
-      return exists;
+      datasetAdminWrapper = getAdmin(instanceName);
+      return datasetAdminWrapper.getDatasetAdmin().exists();
     } finally {
-      if (dsUtil != null) {
-        dsUtil.cleanup();
+      if (datasetAdminWrapper != null) {
+        datasetAdminWrapper.cleanup();
       }
     }
   }
@@ -114,16 +108,13 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
   @Override
   public void truncate(String instanceName) throws Exception {
-    DatasetClassLoaderUtil dsUtil = null;
+    DatasetAdminWrapper datasetAdminWrapper = null;
     try {
-      ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                                     getClass().getClassLoader());
-      dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
-        (classLoader, client.getType(client.getDatasetSpec(instanceName).getType()), locationFactory);
-      getAdmin(instanceName, dsUtil.getClassLoader()).truncate();
+      datasetAdminWrapper = getAdmin(instanceName);
+      datasetAdminWrapper.getDatasetAdmin().truncate();
     } finally {
-      if (dsUtil != null) {
-        dsUtil.cleanup();
+      if (datasetAdminWrapper != null) {
+        datasetAdminWrapper.cleanup();
       }
     }
   }
@@ -132,10 +123,15 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
   public void upgrade(String instanceName) throws Exception {
     ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                    getClass().getClassLoader());
-    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
-      (classLoader, client.getType(client.getDatasetSpec(instanceName).getType()), locationFactory);
-    getAdmin(instanceName, dsUtil.getClassLoader()).upgrade();
-    dsUtil.cleanup();
+    DatasetAdminWrapper datasetAdminWrapper = null;
+    try {
+      datasetAdminWrapper = getAdmin(instanceName);
+      datasetAdminWrapper.getDatasetAdmin().upgrade();
+    } finally {
+      if (datasetAdminWrapper != null) {
+        datasetAdminWrapper.cleanup();
+      }
+    }
   }
 
   @Override
@@ -148,9 +144,35 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
   }
 
-  private DatasetAdmin getAdmin(String instanceName, ClassLoader classLoader) throws
+  private DatasetAdminWrapper getAdmin(String instanceName) throws
     IOException, DatasetManagementException {
-    return client.getAdmin(instanceName, classLoader);
+    ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                   getClass().getClassLoader());
+    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
+      (classLoader, client.getType(client.getDatasetSpec(instanceName).getType()), locationFactory);
+
+    return new DatasetAdminWrapper(dsUtil, client.getAdmin(instanceName, classLoader));
+  }
+
+  /**
+   * Wrapper class to hold {@link co.cask.cdap.data.runtime.DatasetClassLoaderUtil} and
+   * {@link co.cask.cdap.api.dataset.DatasetAdmin}
+   */
+  class DatasetAdminWrapper {
+    DatasetClassLoaderUtil datasetClassLoaderUtil;
+    DatasetAdmin datasetAdmin;
+    public DatasetAdminWrapper(DatasetClassLoaderUtil datasetClassLoaderUtil, DatasetAdmin datasetAdmin) {
+      this.datasetClassLoaderUtil = datasetClassLoaderUtil;
+      this.datasetAdmin = datasetAdmin;
+    }
+    public DatasetAdmin getDatasetAdmin() {
+      return datasetAdmin;
+    }
+    public void cleanup() throws IOException {
+      if (datasetClassLoaderUtil != null) {
+        datasetClassLoaderUtil.cleanup();
+      }
+    }
   }
 
 }

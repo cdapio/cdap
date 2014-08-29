@@ -59,7 +59,7 @@ public class ServiceTwillApplication implements TwillApplication {
       .withRunnable();
 
     Location programLocation = program.getJarLocation();
-    List<Location> datasetJars = program.getDatasetsJarLocation();
+    List<Location> datasetJars = program.getDatasetJarLocations();
 
     String programName = programLocation.getName();
     TwillSpecification.Builder.RunnableSetter runnableSetter = null;

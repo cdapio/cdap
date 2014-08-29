@@ -58,7 +58,7 @@ public final class WebappTwillApplication implements TwillApplication {
 
     try {
       String serviceName = WebappProgramRunner.getServiceName(ProgramType.WEBAPP, program);
-      List<Location> datasetJars = program.getDatasetsJarLocation();
+      List<Location> datasetJars = program.getDatasetJarLocations();
 
       TwillSpecification.Builder.MoreFile moreFile = TwillSpecification.Builder.with()
         .setName(serviceName)

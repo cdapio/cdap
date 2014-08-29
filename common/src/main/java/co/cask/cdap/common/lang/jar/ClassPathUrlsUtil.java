@@ -27,7 +27,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- *
+ * Utility class that can be used to get array of {@link java.net.URL} given the unpacked jar location,
+ * used to create {@link java.net.URLClassLoader}
  */
 public class ClassPathUrlsUtil {
 
@@ -39,6 +40,7 @@ public class ClassPathUrlsUtil {
     try {
       classPathUrls.add(unpackedJarDir.toURI().toURL());
     } catch (MalformedURLException e) {
+      //todo: should throw the exception and handle outside
       LOG.error("Error in adding unpackedJarDir to classPathUrls", e);
     }
 
