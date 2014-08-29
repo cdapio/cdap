@@ -78,7 +78,7 @@ public final class AsyncLogAppender extends LogAppender {
   @Override
   public void stop() {
     asyncAppender.stop();
-    logAppender.stop();
+    // No need to stop logAppender here since asyncAppender stops it.
   }
 
   @Override
