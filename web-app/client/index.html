@@ -48,16 +48,11 @@
       <span class="warning-text">Experiencing connection issues.</span>
     </div>
   </div>
-  <div class="loading-icon hide">
-      <div class="overlay-background">
-          <img src="/assets/img/loading_new.gif" />
-      </div>
-  </div>
+
   <script type="text/x-handlebars" data-template-name="application">
     <div id="header">
-      <div class="logo-holder left-float">
-        <a href="#" id="logo"></a>
-        <a href="#" id="product-name"></a>
+      <div class="left-float">
+        <h2>Cask Data Application Platform</h2>
       </div>
       <div id="global">
       {{#if C.Env.security_enabled}}
@@ -80,9 +75,6 @@
                 <div class="text-span">  <img id="loading-time-select-img" src="/assets/img/start-all-load.gif" />My account</div>
               </div>
                 <ul class="dropdown-menu top-dropdown-listholder" style="text-align: left; margin-top: -5px;">
-                {{#unless C.isEnterprise}}
-                  <li><a href="https://accounts.continuuity.com/profile" target="_blank">Go to Sandbox</a></li>
-                {{/unless}}
                   <li><a href="/#/accesstoken">Access token</a></li>
                 </ul>
             </div>
@@ -100,25 +92,28 @@
     </div>
     <div id="nav">
       <ul>
+        <li class="logo-holder">
+          <div class="left-nav-icon" id="logo"></div>
+        </li>
         <li class="overview"><a class="nav-link nav-dash" id="nav-overview" href="#">
-          <img class="left-nav-icon" src="/assets/img/v2/app_icon.png" />
-          <br />
+          <span class="left-nav-icon"></span>
+
           Application
         </a></li>
         <li><a class="nav-link nav-streams" id="nav-collect" href="#/streams">
           <span class="left-nav-icon"></span>
           Collect</a></li>
         <li><a class="nav-link nav-flows" id="nav-process" href="#/flows">
-          <img class="left-nav-icon" src="/assets/img/v2/process_icon.png" />
-          <br />
+          <span class="left-nav-icon"></span>
+
           Process</a></li>
         <li><a class="nav-link nav-datasets" id="nav-store" href="#/datasets">
-          <img class="left-nav-icon" src="/assets/img/v2/store_icon.png" />
-          <br />
+          <span class="left-nav-icon"></span>
+
           Store</a></li>
         <li><a class="nav-link nav-queries" id="nav-queries" href="#/procedures">
-          <img class="left-nav-icon" src="/assets/img/v2/query_icon.png" />
-          <br />
+          <span class="left-nav-icon"></span>
+
           Query</a></li>
       </ul>
     </div>
@@ -131,7 +126,7 @@
       {{outlet}}
 
     </div>
-    <div id="footer" style="clear: both;"><span id="copyright">COPYRIGHT &copy; 2014 CONTINUUITY INC. ALL RIGHTS RESERVED.</span><br />
+    <div id="footer" style="clear: both;"><span id="copyright">COPYRIGHT &copy; 2014 CASK DATA INC. ALL RIGHTS RESERVED.</span><br />
 
     <a href="http://www.continuuity.com/terms" id="footer-terms" target="blank">Terms</a>
     <span>&nbsp;·&nbsp;</span>
@@ -194,46 +189,45 @@
           <table class="table">
             <thead>
               <th style="padding-left: 14px; min-width: 350px" class="service-col">Name</th>
-              <th style="min-width: 100px;" class="status-col center-align">Status</th>
+              <th style="min-width: 100px;" class="status-col center-align">Status
+              </th>
               <th style="min-width: 100px;" class="logs-col center-align">Logs</th>
               <th style="min-width: 200px;" class="instance-col center-align">Instances Requested</th>
               <th style="min-width: 200px;" class="instance-col center-align">Provisioned</th>
             </thead>
             <tbody>
-            {{#each service in systemServices}}
+            {{#each systemServices}}
               <tr>
                 <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">
-                  {{service.name}}
+                  {{this.name}}
                   </a>
                   <br />
-                  <span class="app-list-status">{{service.description}}</span>
+                  <span class="app-list-status">{{this.description}}</span>
                 </td>
                 <td style="max-width: 100px;" class="status-col center-align">
-                  <span {{ bindAttr class=":service-icon service.imgClass" }} ></span>
+                  <span {{ bindAttr class=":service-icon this.imgClass" }} ></span>
                 </td>
                 <td style="max-width: 100px;" class="status-col center-align">
-                  {{#if service.logsStatusOk}}
-                    {{#linkTo 'Service.Log' service}}<span {{ bindAttr class=":log-icon service.logClass" }} ></span>{{/linkTo}}
+                  {{#if this.logsStatusOk}}
+                    {{#linkTo 'Service.Log' this}}<span {{ bindAttr class=":log-icon this.logClass" }} ></span>{{/linkTo}}
                   {{ else }}
-                    <span data-toggle="tooltip" data-placement="right" title="Please contact your system administrator for logs.">NA</span>
+                    <span data-toggle="tooltip" data-placement="right" title="Please contact your system admistrator for logs.">NA</span>
                   {{/if}}
                 </td>
                 <td style="max-width: 200px;" class="instance-col">
                   <div class="instance-wrapper">
+                    <div class="instance-num"><span>{{this.requested}}</span></div>
                     <div>
-                    <form {{action "changeInstances" service on="submit"}}>
-                      {{input keyUp=keyPressed placeholder=service.requested maxlength="3" value=service.instancesInput class="services-instances-input" }}
-                    </form>
-                    </div>
-                    <div>
-                      <button class="btn btn-transparent" {{action changeInstances service on="click"}}>
-                        <i class="icon-arrow-right"></i>
-                      </button>
+                      <a class="cursor-pointer" {{action decreaseInstance this this.requested }}>
+                        <span class="minus-icon"></span>
+                      </a>
+                      <a class="cursor-pointer" {{action increaseInstance this this.requested }}>
+                        <span class="plus-icon"></span>
+                      </a>
                     </div>
                   </div>
-                </td>
                 <td style="max-width: 350px;" class="instance-provisioned service-col">
-                    <div class="instance-num auto-margin"><span>{{service.provisioned}}</span></div>
+                    <div class="instance-num auto-margin"><span>{{this.provisioned}}</span></div>
                 </td>
               </tr>
             {{/each}}
@@ -272,8 +266,11 @@
       </div>
       <div class="info-box" style="float: right; border: 0;">
           <div id="action-buttons" class="btn-group pull-right">
-            <button class="btn btn-blank start-stop" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+
             <button class="btn btn-blank btn-icon" {{action "config"}}><span class="btn-config"></span></button>
+            <div class="start-stop-wrapper">
+              <button class="btn btn-blank start-stop" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+            </div>
           </div>
           <div class="flow-state"><strong>{{model.currentState}}</strong></div>
       </div>
@@ -293,8 +290,8 @@
           </thead>
           <tbody>
             {{!--  RUNNABLES ROWS --}}
-            {{#each runnable in model.runnablesList}}
-            <tr>
+              {{#each runnable in model.runnablesList}}
+              <tr>
               <td class="app-list-name service-col"><a class="none-text-decoration">
                 {{runnable.id}}
                 </a>
@@ -303,18 +300,18 @@
               </td>
               <td style="max-width: 200px;" class="instance-col">
                 <div class="instance-wrapper">
+                  <div class="instance-num left-float"><span>{{runnable.requested}}</span></div>
+                  {{#if model.isRunning}}
                   <div>
-                    <form {{action "runnableChangeInstances" model runnable on="submit"}}>
-                      {{input keyUp=keyPressed placeholder=runnable.requested maxlength="3" value=runnable.instancesInput class="services-instances-input" }}
-                    </form>
+                    <a class="cursor-pointer" {{action runnableDecreaseInstance model runnable.id runnable.requested }}>
+                      <span class="minus-icon"></span>
+                    </a>
+                    <a class="cursor-pointer" {{action runnableIncreaseInstance model runnable.id runnable.requested }}>
+                      <span class="plus-icon"></span>
+                    </a>
                   </div>
-                  <div>
-                    <button class="btn btn-transparent" {{action runnableChangeInstances model runnable on="click"}}>
-                      <i class="icon-arrow-right"></i>
-                    </button>
-                  </div>
+                  {{/if}}
                 </div>
-              </td>
               <td class="instance-provisioned service-col">
                   <div class="instance-num auto-margin"><span>{{runnable.provisioned}}</span></div>
               </td>
@@ -334,9 +331,9 @@
   <script type="text/x-handlebars" data-template-name="Userservice">
 
     <div id="title">
-      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;"> 
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
         <li>{{#linkTo UserserviceStatus model}}Status{{/linkTo }}</li>
-        <li>{{#linkTo Userservice.History model}}History{{/linkTo}}</li>        
+        <li>{{#linkTo Userservice.History model}}History{{/linkTo}}</li>
         <li>{{#linkTo Userservice.Log model}}Log{{/linkTo}}</li>
       </ul>
       <h1><span>Service</span> <a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}</h1>
@@ -347,53 +344,39 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="DataExploreResults">
-
-  <div>
-     <hr style="margin-top: 0px"/>
-
-
-{{#if objArr}}
     <table class="table" id="query-list-table">
       <thead>
-        <th style="width: 12%">Time Started</th>
-        <th style="width: 8%">Status</th>
-        <th style="width: 10%" class="center">Results</th>
-        <th style="width: 35%">Query</th>
-        <th style="width: 43%">{{!-- Panel can potentially be here--}}</th>
+        <th style="width: 25%">Query Handle</th>
+        <th style="width: 45%">Query</th>
+        <th style="width: 15%">Status</th>
+        <th style="width: 15%">Result</th>
       </thead>
     </table>
     {{#each objArr}}
-    <table {{bindAttr id="query_handle_hashed"}} data-toggle="tooltip" data-placement="top" title="No results" data-trigger="manual" {{bindAttr class=":table :cursor-pointer :query-table-entry this.isSelected:selected:notselected" }} {{ action tableClicked this }}>
+    {{#unless deleted}}
+    <table {{bindAttr class=":table :cursor-pointer :query-table-entry this.isSelected:selected:notselected" }} {{ action showTable this }}>
       <tbody>
-        <tr>
-          <td style="width: 12%">
-            <span class="lighter-color">{{time_started}}</span>
+        <tr {{bindAttr data-target="query_handle_hashed"}}>
+          <td style="width: 25%">
+            <span class="lighter-color">{{query_handle}}</span>
           </td>
-          <td style="width: 10%">
-            <span {{bindAttr class=":query-status status"}}>
-              {{status}}
-            </span>
-          </td>
-          <td style="width: 8%">
-              {{#if has_results}}
-                {{#if is_active}}
-                  <a data-toggle="tooltip" data-placement="right" title="Download" trigger="hover" {{action download this bubbles=false}} class="download-query-results-btn"></a>
-                {{ else }}
-                  <a data-toggle="tooltip" data-placement="right" title="Results Not Available" trigger="hover" class="download-query-results-disabled-btn"></a>
-                {{/if}}
-              {{ else }}
-                <a data-toggle="tooltip" data-placement="right" title="No results" trigger="hover" class="download-query-results-disabled-btn"></a>
-              {{/if}}
-          </td>
-          <td style="min-width: 35%"><span class="bolder-font">{{statement}}</span></td>
-{{!-- panel can go here
-          <td style="width: 43%" class="center-align">
---}}
-          </td>
+          <td style="width: 45%"><span class="bolder-font">{{statement}}</span></td>
+          <td style="width: 15%"><span {{bindAttr class=":query-status status"}}>{{status}}</span></td>
+          {{#if has_results}}
+            <td style="width: 15%">
+                <a {{bindAttr download=downloadName}} {{bindAttr href="downloadableResults"}}>
+                  Download Results
+                </a>
+            </td>
+          {{ else }}
+            <td>[No results]</td>
+          {{/if}}
         </tr>
       </tbody>
     </table>
+      {{#if has_results}}
         <div {{bindAttr id="query_handle"}} style="display:none">
+
           <table class="table query-results-table-entry">
             <thead>
               {{#each schema}}
@@ -401,51 +384,53 @@
               {{/each}}
             </thead>
             <tbody>
-            {{#each preview_cached}}
+            {{#each results}}
               <tr>
-              {{#each col in columns}}
-                <td>{{col}}</td>
+              {{#each columns}}
+                <td>{{this}}</td>
               {{/each}}
               </tr>
             {{/each}}
             </tbody>
           </table>
+
         </div>
+      {{ else }}
+        <div {{bindAttr id="query_handle"}}>
+          <a>This query does not have results.</a>
+        </div>
+      {{/if}}
+    {{/unless}}
     {{/each}}
-    <div style="max-width:100%">
-            <button data-toggle="tooltip" title="No more results." data-trigger="manual" data-placement="bottom" style="min-width:40px;" class="btn btn-blank btn-default nextBtn" id="execute-explore-query" {{action 'nextPage' on="click"}}>></button>
-            <button data-toggle="tooltip" title="No more results." data-trigger="manual" data-placement="left" style="min-width:40px;" class="btn btn-blank btn-default prevBtn" id="execute-explore-query" {{action 'prevPage' on="click"}}><</button>
-    </div>
-  </div>
-    {{ else }}
-    <div class="object-list-empty" style="height:500px;padding-top:20px;">
-        <div class="object-list-empty-content">
-          <div>No Queries.</div>
-          <span>Please submit a query before using this feature.</span>
-        </div>
+{{!--
+    <div>
+      <div style="width:50%;">
+      <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'nextPage' on="click"}}>></button>
+      <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'prevPage' on="click"}}><</button>
       </div>
-  {{/if}}
+    </div>
+    --}}
   </script>
 
 
   <script type="text/x-handlebars" data-template-name="DataExploreQuery">
     <div style="clear:both"></div>
     {{#if datasets}}
-      <div class="dataexplore-titleholder">
-        <div class="dataexplore-hivetable-title"> Hive Tables </div>
-        <div class="dataexplore-information-title"> Information {{selectedDataset.name}} </div>
-      </div>
-      <div id="query-display">        
-        <div id="query-tables">
+      <table class="table bordered-dataset-table">
+        <thead>
+          <th style="width: 350px">Dataset</th>
+          <th>Table: {{selectedDataset.name}}</th>
+        </thead>
+      </table>
+      <div id="query-display">
+        <div class="left-float" id="query-tables">
           <table class="table">
             {{#each datasets}}
             <tr {{action selectDataset this}} {{ bindAttr class=":cursor-pointer :table-name this.isSelected:selected:notselected" }} >
-              <td class="app-list-name service-col dataset-name">
-                <!-- <a class="none-text-decoration">{{tablename}}</a> -->
-                {{#if from_dataset}}
-                  <div class="dataset-icon"> </div>
-                {{/if}}
-                <span class="app-list-status data-explore-table-name">{{tablename}}</span>
+              <td style="max-width: 350px; border-bottom: 0" class="app-list-name service-col">
+                <a class="none-text-decoration">{{shortName}}</a>
+                <br />
+                <span class="app-list-status">{{name}}</span>
                 {{#if this.isSelected}}
                   <div class="arrow-right"></div>
                 {{/if}}
@@ -454,96 +439,23 @@
             {{/each}}
           </table>
         </div>
-        <div class="table-info">
-          <div class="query-schema">
-            <div class="table-title" {{action 'showTableSchema' on="click"}}>
-             {{#if schemaArrowRight}}
-                <div class="arrow-down"></div>
-             {{ else }}
-                <div class="arrow-right-no-floats"></div>
-             {{/if}}
-             <span>Table Schema </span>
-            </div>
-            {{#if showSchema}}
-                {{#if selectedDataset.schemaTableEmpty }}
-                  <div class="table-empty"> No Schema (A Table with No Schema??) </div>
-                {{ else }}
-                <div class="table-view">
-                  <div class="table-header">
-                    <span class="table-column-title three-column"> Column Name </span>
-                    <span class="table-column-title three-column "> Column Type </span>
-                    <span class="table-column-title three-column"> Comments </span>
-                  </div>
-                  {{#each selectedDataset.schema}}
-                  <div class="table-row">
-                    {{#each columns}}
-                    <span {{bindAttr value="this"}}> {{this}} </span>
-                    {{/each}}
-                  </div>
-                  {{/each}}
-                </div>
-                {{/if}}
-            {{/if}}
-          </div>
-          <div class="query-partition">
-            <div class="table-title" {{action 'showPartitionKeys' on="click"}}>
-              {{#if partitionArrowRight}}
-                <div class="arrow-down"></div>
-              {{ else }}
-                <div class="arrow-right-no-floats"></div>
-              {{/if}}
-              <span>Partition Keys</span>
-            </div>
-            {{#if showPartitions}}
-                {{#if selectedDataset.partitionTableEmpty}}
-                  <div class="table-empty"> No Partition Keys </div>
-                {{ else }}
-                <div class="table-view">
-                  <div class="table-header">
-                    <span class="table-column-title"> Column Name </span>
-                    <span class="table-column-title"> Column Type </span>
-                  </div>
-                  {{#each selectedDataset.partition}}
-                  <div class="table-row">
-                    {{#each columns}}
-                    <span> {{this}} </span>
-                    {{/each}}
-                  </div>
-                  {{/each}}
-                 </div>
-                {{/if}}
-            {{/if}}
-          </div>
-          <div class="metadata-title table-title" {{action 'showTableProperties' on="click"}}>
-            {{#if tablePropertiesArrowRight}}
-              <div class="arrow-down"></div>
-            {{ else }}
-              <div class="arrow-right-no-floats"></div>
-            {{/if}}
-            <span>Table Properties</span>
-          </div>
-          {{#if showProperties}}
-              <div class="metadata-wrapper">
-                 <div class="table-view">
-                  <div class="table-row">
-                    <span> Table </span>
-                    <span> {{selectedDataset.tablename}} </span>
-                  </div>
-                  <div class="table-row">
-                    <span> Database </span>
-                    <span> {{selectedDataset.dbname}} </span>
-                  </div>
-                  <div class="table-row">
-                    <span> Owner </span>
-                    <span> {{selectedDataset.owner}} </span>
-                  </div>
-                  <div class="table-row">
-                    <span> Creation Time </span>
-                    <span> {{selectedDataset.creationtime}} </span>
-                  </div>
-                 </div>
-              </div>
-          {{/if}}
+        <div id="query-schema">
+          <table class="table" id="schema-table">
+              <thead>
+                {{#each selectedDataset.schema}}
+                  <th>{{name}}</th>
+                {{/each}}
+              </thead>
+              <tbody>
+              {{#each selectedDataset.results}}
+                <tr>
+                {{#each columns}}
+                  <td>{{this}}</td>
+                {{/each}}
+                </tr>
+              {{/each}}
+              </tbody>
+            </table>
         </div>
         <div style="clear:both"></div>
       </div>
@@ -564,16 +476,12 @@
     </div>
     <div id="panels">
       <div class="panel">
-         <ul class="nav nav-pills pull-left" id="explore-sub-menu">
+         <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
            <li>{{#linkTo DataExplore.Query}}Query{{/linkTo }}</li>
-           <li>{{#linkTo DataExplore.Results}}Results{{/linkTo}}</li>
+           <li>{{#linkTo DataExplore.Results}}Reults{{/linkTo}}</li>
          </ul>
-         <div style="clear:both"></div>
-         <hr style="margin-top: 0px"/>
         <td>
-          <div data-toggle="popover"  title="Error" data-trigger="manual" data-placement="top" class="text-area-container">
           {{view C.Embed.Injector elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
-          </div>
           <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
         </td>
 
@@ -757,28 +665,28 @@
       <div class="quarter" id="quarter1">
         <div class="panel">
           <div class="quarter-title">Collect</div>
-          <div class="quarter-value"><strong><span class="value-number">{{value.collect}}</span></strong><span class="value-measure"> EPS</span></div>
+          <div class="quarter-value"><strong><span class="value-number">{{value.collect}}</span><span class="value-measure"> EPS</span></strong></div>
           {{view C.Embed.DashChart kind="collect"}}
         </div>
       </div>
       <div class="quarter" id="quarter2">
         <div class="panel">
           <div class="quarter-title">Process</div>
-          <div class="quarter-value"><strong><span class="value-number">{{value.process}}</span></strong><span class="value-measure">%</span></div>
+          <div class="quarter-value"><strong><span class="value-number">{{value.process}}</span><span class="value-measure">%</span></strong></div>
           {{view C.Embed.DashChart kind="process"}}
         </div>
       </div>
       <div class="quarter" id="quarter3">
         <div class="panel">
           <div class="quarter-title">Store</div>
-          <div class="quarter-value"><strong><span class="value-number">{{value.store.label}}</span></strong> <span class="value-measure">{{value.store.unit}}/s</span></div>
+          <div class="quarter-value"><strong><span class="value-number">{{value.store.label}}</span><span class="value-measure">{{value.store.unit}}/s</span></strong></div>
           {{view C.Embed.DashChart kind="store"}}
         </div>
       </div>
       <div class="quarter" id="quarter4">
         <div class="panel" style="margin-right: 0;">
           <div class="quarter-title">Query</div>
-          <div class="quarter-value"><strong><span class="value-number">{{value.query}}</span></strong><span class="value-measure"> QPS</span></div>
+          <div class="quarter-value"><strong><span class="value-number">{{value.query}}</span><span class="value-measure"> QPS</span></strong></div>
           {{view C.Embed.DashChart kind="query"}}
         </div>
       </div>
@@ -848,9 +756,6 @@
     <div id="info">
       <div class="info-box" style="float: right; border: 0;padding: 0px 14px 0px 0px;">
         <div class="app-level-buttons">
-          {{#if C.isLocal}}
-            <button class="btn btn-blue force-margin-right-20" {{action "promotePrompt"}}><img class="inbtn-img" src="/assets/img/v2/push_icon.png" />Push</button>
-          {{/if}}
           <button class="btn btn-blank" {{action "delete" on="click"}}><img class="inbtn-img" src="/assets/img/v2/delete_icon.png" />Delete</button>
         </div>
       </div>
@@ -872,10 +777,14 @@
       <div class="panel" id="process-panel">
         <div class="panel-head">
           {{#if elements.Flow.length}}
-            <div class="btn-group pull-right start-stop-btns" style="margin-top:2px;text-align:center;">
-              <button {{action startAll "Flow" on="click"}} class="btn start"><img src="/assets/img/v2/play_icon.png" /></button>
+            <div class="start-stop-wrapper panel-controls">
+              <div class="btn-group pull-right start-stop-btns" style="margin-top:2px;text-align:center;">
+              <button {{action stopAll "Flow" on="click"}} class="btn-stop"><img src="/assets/img/v2/stop_active_icon.png" /></button>
+                <button {{action startAll "Flow" on="click"}} class="btn-start"><img src="/assets/img/v2/play_active_icon.png" /></button>
+
+              </div>
               <img style="display: none;margin-top: 3px;" src="/assets/img/start-all-load-white.gif" />
-              <button {{action stopAll "Flow" on="click"}} class="btn stop"><img src="/assets/img/v2/stop_active_icon.png" /></button>
+
             </div>
           {{/if}}
           <div class="panel-title">Process</div>
@@ -1100,7 +1009,7 @@
         <li>{{#linkTo Mapreduce.History model}}History{{/linkTo}}</li>
       </ul>
       <h1>
-        <span>Mapreduce</span> 
+        <span>Mapreduce</span>
         <span class="breadcrumb-app-name"><a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}
         </span>
       </h1>
@@ -1234,8 +1143,9 @@
               {{/each}}
             </li>
           </ul>
-
-          <button class="btn btn-blank start-stop" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+          <div class="start-stop-wrapper">
+            <button class="btn btn-blank start-stop" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+          </div>
           <button class="btn btn-blank btn-icon" style="border-right:0;" {{bindAttr disabled="model.startStopDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
         </div>
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
@@ -1281,24 +1191,18 @@
         <div class="popup-body">
           <div class="popup-close" {{action close on="click"}}>×</div>
 
-          <div class="popup-icon"></div>
+            <div class="btn-group pull-right" style="margin-top: 4px;">
+              <button class="btn btn-blank" {{action "addOneInstance" on="click"}}>+</button>
+              <button class="btn btn-blank" {{action "removeOneInstance" on="click"}}>-</button>
+              {{#if C.isLocal}}
+                <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
+              {{else}}
+                <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{model.containersLabel}} instance{{model.pluralInstances}} ({{model.instances}} Requested)</button>
+              {{/if}}
+            </div>
+
 
           <h1 class="popup-title"> {{model.name}}</h1>
-          <div class="btn-group" style="margin-top: 4px; width: 100%">
-            <div style="display: inline-block; width: 50%">
-              <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Provisioned: {{model.actualInstances}}</button>
-            </div>
-            <div style="display: inline-block; width: 50%">
-              <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
-              {{input keyUp=keyPressed action="changeInstances" id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
-              <button class="btn btn-transparent" {{action "changeInstances" on="click"}}>
-                <i class="icon-arrow-right"></i>
-              </button>
-            </div>
-          </div>
-          <br />
-          <br />
-
           <div id="flowlet-popup-tabs">
             <div id="flowlet-popup-inputs-tab" class="flowlet-popup-tab tab-selected"><a href="#" {{action select "inputs"}}>Inputs</a></div>
             <div id="flowlet-popup-processed-tab" class="flowlet-popup-tab"><a href="#" {{action select "processed"}}>Processed</a></div>
@@ -1316,7 +1220,7 @@
                       <tbody>
                       {{#each model.inputs}}
                       <tr>
-                        <td>
+                        <td class="flowlet-parser">
                           {{#each contrib}}
                             <div {{action navigate name on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
                           {{/each}}
@@ -1413,7 +1317,7 @@
         <div class="popup-body">
           <div class="popup-close" {{action close on="click"}}>×</div>
 
-          <div class="popup-icon-stream"></div>
+         
           <h1 class="popup-title"><a {{bindAttr href="controller.model.href"}}>{{model.name}}</a></h1>
 
           <table class="table" class="popup-stream-table">
@@ -1525,7 +1429,6 @@
       <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
         <li>{{#linkTo ProcedureStatus model}}Status{{/linkTo}}</li>
         <li>{{#linkTo Procedure.Log model}}Log{{/linkTo}}</li>
-        <li>{{#linkTo Procedure.History model}}History{{/linkTo}}</li>
       </ul>
       <h1><span>Procedure</span> <a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}</h1>
     </div>
@@ -1552,19 +1455,20 @@
 
       <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">Make a Request
-          <div class="btn-group" style="float: right">
-            <div>
-              <button style="border:0;padding-right:120px;" disabled="disabled" class="btn btn-blank">Instances Provisioned: {{actualInstances}}</button>
-              <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
-              {{input keyUp=keyPressed action="changeInstances" id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
-              <button class="btn btn-transparent" {{action "changeInstances" on="click"}}>
-                <i class="icon-arrow-right"></i>
-              </button>
-            </div>
+
+          <div class="btn-group pull-right">
+            <button class="btn btn-blank" {{action "addOneInstance" on="click"}}>+</button>
+            <button class="btn btn-blank" {{action "removeOneInstance" on="click"}}>-</button>
+
+            {{#if C.isLocal}}
+              <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
+            {{else}}
+              <button disabled="disabled" class="btn btn-blank" style="text-align:left;">{{actualInstances}} ({{model.instances}} Requested)</button>
+            {{/if}}
+
           </div>
-        </div>
-      </div>
+
+        <div class="panel-title">Make a Request</div></div>
 
         <table style="width: 100%" class="top-aligned">
           <thead>
@@ -1607,42 +1511,6 @@
 
   </script>
 
-  <script type="text/x-handlebars" data-template-name="Procedure/History">
-    <div id="panels">
-      <div id="informer"></div>
-      <div class="panel">
-        <div id="object-list">
-          {{#if runs.length}}
-            <table class="table table-condensed">
-            <thead>
-              <tr><th style="width: 300px;">Started</th>
-              <th>Ended</th>
-              <th style="width:250px;">Result</th>
-              </tr>
-            </thead>
-            <tbody>
-            {{#each runs}}
-              <tr class="run-list">
-                <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
-                <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
-                <td>{{detail}}</td>
-              </tr>
-            {{/each}}
-            </tbody>
-            </table>
-          {{else}}
-            <div class="object-list-empty">
-            <div class="object-list-empty-content">
-            <div>No History.</div>
-            <span>This Procedure job has not completed a run yet.</span>
-            </div>
-            </div>
-          {{/if}}
-        </div>
-      </div>
-    </div>
-  </script>
-
   <script type="text/x-handlebars" data-template-name="ColorPicker">
     <input type="text" class="color-picker" {{action setMetricRequestColor controller.metricsRequest.color}} {{ bindAttr value="controller.metricsRequest.color"}} />
   </script>
@@ -1681,7 +1549,7 @@
             <div id="analyze-configurator">
               <input type="hidden" id="elementSelector" />
               <input type="hidden" id="metricSelector" disabled="disabled" />
-              <button {{bindAttr disabled="configuring.noSelection"}} class="analyze-blue-btn" {{action addToChart}}>Add</button>
+              <button {{bindAttr disabled="configuring.noSelection"}} class="analyze-gray-btn btn-add" {{action addToChart}}>Add</button>
               <button class="analyze-gray-btn" {{action hideConfigure}}>Cancel</button>
             </div>
 
@@ -2105,77 +1973,6 @@
     </div>
     </div>
     {{/if}}
-  </script>
-
-  <script type="text/x-handlebars" data-template-name="promote">
-    <div class="popup-container" style="min-height: 246px;width: 430px;">
-      <div class="popup-body" style="min-height: 240px;">
-
-      {{#if promoteSucceeded}}
-        <h2>Push {{finished}}</h2>
-      {{else}}
-        <h2>Push to Cloud</h2>
-      {{/if}}
-      <div class="modal-loading"></div>
-        <div class="modal-push">
-
-          {{#if pushing}}
-          <div style="text-align: center; padding: 26px;height:182px;">
-            <img style="width:116px;height:116px;" src="/assets/img/pushing.gif" />
-          </div>
-          {{else}}
-
-            <div id="promote-status" class="popup-description" style="padding: 0">{{finishedMessage}}</div>
-            {{#if promoteSucceeded}}
-              <div class="popup-description" style="padding:0;">
-                {{#if finishedLink}}
-                  <br /><a target="_blank" {{bindAttr href="finishedLink"}}>{{finishedLink}}</a>
-                {{/if}}
-              </div>
-            {{else}}
-              <div class="sparkline-box-title" style="padding-left:0;">API Key</div>
-              <div>{{view C.Embed.TextField valueBinding="C.Env.credential" }}</div>
-              {{#if C.Env.credential}}
-                {{#if destinations.length}}
-                  <div class="sparkline-box-title" style="padding-left:0;margin-top:8px;">Destination</div>
-                  <div>{{view Ember.Select valueBinding="destination" contentBinding="destinations" optionLabelPath="content.name" optionValuePath="content.id"}}</div>
-                {{else}}
-                  {{#if loading}}
-                    <div style="text-align: center; padding: 24px 0px 16px;">
-                      <img src="/assets/img/chart-loading.gif" />
-                    </div>
-                  {{else}}
-                    <div class="popup-description">
-                    {{#if network}}
-                      There was a problem connecting to Continuuity. Please check your internet connection.
-                    {{else}}
-                      There are no destinations available. Make sure your API Key is correct. If you have not configured any clouds, you can do so on your <a target="_blank" href="https://accounts.continuuity.com/">Account Home page</a>.
-                    {{/if}}
-                    </div>
-                  {{/if}}
-                {{/if}}
-              {{else}}
-                <div class="popup-description">Your API Key can be found on your <a target="_blank" href="http://accounts.continuuity.com/profile">Profile Page</a>.</div>
-              {{/if}}
-            {{/if}}
-          {{/if}}
-        </div>
-      </div>
-      {{#if promoteSucceeded}}
-        <div class="modal-footer">
-          <button {{action "destroy" target="view"}} class="btn btn-blank">Done</button>
-        </div>
-      {{else}}
-        {{#unless pushing}}
-          <div class="modal-footer">
-            <button {{action "destroy" target="view"}} class="btn btn-blank">Cancel</button>
-            {{#if destinations.length}}
-              <button {{action "promoteSubmit"}} class="btn btn-blank">Push</button>
-            {{/if}}
-          </div>
-        {{/unless}}
-      {{/if}}
-    </div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="Loading">
