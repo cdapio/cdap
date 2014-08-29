@@ -38,10 +38,8 @@ import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.http.HttpResponder;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
@@ -177,7 +175,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       json = EntityUtils.toString(response.getEntity());
       history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
-      workflowRuns= history.size();
+      workflowRuns = history.size();
       if (workflowRuns > expected) {
         return;
       }
