@@ -35,10 +35,9 @@ define(['core/controllers/services'], function (servicesController) {
       var btn = this.$().parent().parent().next();
       var inp = this.value;
       if (inp.length > 0 && parseInt(inp) != this.placeholder){
-          btn.children().css("opacity",'1')
-
+          btn.attr("disabled", false);
       } else {
-          btn.children().css("opacity",'')
+          btn.attr("disabled", true);
       }
       return true;
     },
@@ -52,7 +51,10 @@ define(['core/controllers/services'], function (servicesController) {
         $('.services-instances-input').keyup();
       },500);
 
-      var isInvalid = C.Util.isInvalidNumInstances(input, runnable.requested);
+      if (input === runnable.requested) {
+        return; //no-op
+      }
+      var isInvalid = C.Util.isInvalidNumInstances(input);
       if(isInvalid){
         C.Modal.show('Error', isInvalid);
         return;

@@ -1592,7 +1592,6 @@ span.log-icon.complete {
 
 #reactor-services .instance-wrapper div {
 	width: 65px;
-	float: left;
 }
 
 .instance-wrapper {
@@ -1827,10 +1826,6 @@ a strong {
 
 .btn-success, .btn-danger {
 	color: #fff;
-}
-
-.btn-transparent {
-  opacity: 0.2;
 }
 
 .btn:focus {

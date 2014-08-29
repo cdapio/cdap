@@ -98,10 +98,10 @@ define([], function () {
       var btn = this.$().next();
       var inp = this.value;
       if (inp.length > 0 && parseInt(inp) != this.placeholder){
-          btn.css("opacity",'1')
-
+          btn.attr("disabled", false);
       } else {
-          btn.css("opacity",'')
+          btn.attr("disabled", true);
+
       }
       return true;
     },
@@ -115,7 +115,10 @@ define([], function () {
         $('#instancesInput').keyup();
       },500);
 
-      var isInvalid = C.Util.isInvalidNumInstances(input, this.get('model').instances);
+      if (input === this.get('model').instances) {
+        return; //no-op
+      }
+      var isInvalid = C.Util.isInvalidNumInstances(input);
       if(isInvalid){
         C.Modal.show('Error', isInvalid);
         return;

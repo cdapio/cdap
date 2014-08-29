@@ -111,10 +111,9 @@ define([], function () {
       var btn = this.$().parent().parent().next();
       var inp = this.value;
       if (inp.length > 0 && parseInt(inp) != this.placeholder){
-          btn.children().css("opacity",'1')
-
+          btn.attr("disabled", false);
       } else {
-          btn.children().css("opacity",'')
+          btn.attr("disabled", true);
       }
       return true;
     },
@@ -128,7 +127,10 @@ define([], function () {
         $('.services-instances-input').keyup();
       },500);
 
-      var isInvalid = C.Util.isInvalidNumInstances(input, service.requested, service.min, service.max);
+      if (input === service.requested) {
+        return; //no-op
+      }
+      var isInvalid = C.Util.isInvalidNumInstances(input, service.min, service.max);
       if(isInvalid){
         C.Modal.show('Error', isInvalid);
         return;

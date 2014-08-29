@@ -973,7 +973,7 @@ define([], function () {
      * @param {max} the max number of instances the runnable allows.
      * @return false if the number requested is valid, an error message (string) otherwise.
      */
-    isInvalidNumInstances: function (numRequested, currRequested, min, max) {
+    isInvalidNumInstances: function (numRequested, min, max) {
       //  default values of [1,100] for [min,max].
       if (typeof(min)==='undefined') min = 1;
       if (typeof(max)==='undefined') max = 100;
@@ -981,9 +981,6 @@ define([], function () {
       if (min==max) {
         return 'You can not change the number of instances for this runnable. Its minimum and maximum instances '
                 + 'allowed are both set to ' + min;
-      }
-      if (numRequested === currRequested) {
-        return 'Please select a number different than that already requested.';
       }
       if (isNaN(numRequested)) {
         return 'Please select a valid number (between 1 and 100).';
