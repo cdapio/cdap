@@ -298,7 +298,7 @@ Debugging with IntelliJ
 
 #. Create a debug configuration by entering a name, for example, ``Cask``.
 #. Enter the host name, for example, ``localhost`` or ``node-1003.my.cluster.net``
-   in the Port field.
+   in the Host field.
 #. Enter the debugging port, for example, ``5005`` in the Port field:
 
    .. image:: _images/IntelliJ_2.png

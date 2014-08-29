@@ -62,7 +62,6 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.contains;
-import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -129,7 +128,7 @@ public class TestExternalAuthenticationServer {
     cConf.set(configBase.concat("userBaseDn"), "dc=example,dc=com");
     cConf.set(configBase.concat("userRdnAttribute"), "cn");
     cConf.set(configBase.concat("userObjectClass"), "inetorgperson");
-    cConf.set(Constants.Security.SSL_ENABLED, "false");
+    cConf.set(Constants.Security.AuthenticationServer.SSL_ENABLED, "false");
     return cConf;
   }
 

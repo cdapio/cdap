@@ -27,7 +27,8 @@ public class DescribeCommandSet extends CommandSet {
 
   @Inject
   public DescribeCommandSet(DescribeAppCommand describeAppCommand,
-                            DescribeDatasetCommandSet describeDatasetCommandSet) {
-    super("describe", describeAppCommand, describeDatasetCommandSet);
+                            DescribeDatasetCommandSet describeDatasetCommandSet,
+                            DescribeStreamCommand describeStreamCommand) {
+    super("describe", describeAppCommand, describeDatasetCommandSet, describeStreamCommand);
   }
 }

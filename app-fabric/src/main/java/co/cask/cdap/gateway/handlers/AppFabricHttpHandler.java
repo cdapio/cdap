@@ -908,7 +908,14 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("procedure-id") final String procedureId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      int count = getProgramInstances(Id.Program.from(accountId, appId, procedureId));
+      Id.Program programId = Id.Program.from(accountId, appId, procedureId);
+
+      if (!store.programExists(programId, ProgramType.PROCEDURE)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
+
+      int count = getProgramInstances(programId);
       responder.sendJson(HttpResponseStatus.OK, new Instances(count));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -930,6 +937,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, appId, procedureId);
+
+      if (!store.programExists(programId, ProgramType.PROCEDURE)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
+
       int instances = getInstances(request);
       if (instances < 1) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");

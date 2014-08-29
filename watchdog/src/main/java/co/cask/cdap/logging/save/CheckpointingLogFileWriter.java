@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * LogFileWriter that checkpoints kafka offsets for each partition.
@@ -39,6 +40,8 @@ public class CheckpointingLogFileWriter implements LogFileWriter<KafkaLogEvent> 
 
   private long lastCheckpointTime = System.currentTimeMillis();
   private Map<Integer, Long> partitionOffsetMap = Maps.newHashMap();
+
+  private final AtomicBoolean closed = new AtomicBoolean(false);
 
   public CheckpointingLogFileWriter(AvroFileWriter avroFileWriter, CheckpointManager checkpointManager,
                                     long flushIntervalMs) {
@@ -72,6 +75,10 @@ public class CheckpointingLogFileWriter implements LogFileWriter<KafkaLogEvent> 
 
   @Override
   public void close() throws IOException {
+    if (!closed.compareAndSet(false, true)) {
+      return;
+    }
+
     flush();
     avroFileWriter.close();
   }

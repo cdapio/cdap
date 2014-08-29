@@ -422,14 +422,6 @@ public final class Constants {
     public static final String AUTH_HANDLER_CONFIG_BASE = "security.authentication.handler.";
     /** Authentication Login Module class name */
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
-    /** Configuration for enabling SSL */
-    public static final String SSL_ENABLED = "security.server.ssl.enabled";
-    /** SSL secured port for ExternalAuthentication */
-    public static final String AUTH_SERVER_SSL_PORT = "security.server.ssl.port";
-    /** SSL keystore path */
-    public static final String SSL_KEYSTORE_PATH = "security.server.ssl.keystore.path";
-    /** SSL keystore password */
-    public static final String SSL_KEYSTORE_PASSWORD = "security.server.ssl.keystore.password";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
 
@@ -439,6 +431,42 @@ public final class Constants {
     public static final class Headers {
       /** User ID passed from Router to downstream services */
       public static final String USER_ID = "CDAP-UserId";
+    }
+
+    /**
+     * Security configuration for Router.
+     */
+    public static final class Router {
+      /** Enables SSL */
+      public static final String SSL_ENABLED = "security.router.ssl.enabled";
+      /** SSL port */
+      public static final String SSL_PORT = "security.router.ssl.port";
+      /** SSL keystore location */
+      public static final String SSL_KEYSTORE_PATH = "security.router.ssl.keystore.path";
+      /** SSL keystore type */
+      public static final String SSL_KEYSTORE_TYPE = "security.router.ssl.keystore.type";
+      /** SSL keystore key password */
+      public static final String SSL_KEYPASSWORD = "security.router.ssl.keystore.keypassword";
+      /** SSL keystore password */
+      public static final String SSL_KEYSTORE_PASSWORD = "security.router.ssl.keystore.password";
+    }
+
+    /**
+     * Security configuration for ExternalAuthenticationServer.
+     */
+    public static final class AuthenticationServer {
+      /** Enables SSL */
+      public static final String SSL_ENABLED = "security.authserver.ssl.enabled";
+      /** SSL port */
+      public static final String SSL_PORT = "security.authserver.ssl.port";
+      /** SSL keystore location */
+      public static final String SSL_KEYSTORE_PATH = "security.authserver.ssl.keystore.path";
+      /** SSL keystore type */
+      public static final String SSL_KEYSTORE_TYPE = "security.authserver.ssl.keystore.type";
+      /** SSL keystore key password */
+      public static final String SSL_KEYPASSWORD = "security.authserver.ssl.keystore.keypassword";
+      /** SSL keystore password */
+      public static final String SSL_KEYSTORE_PASSWORD = "security.authserver.ssl.keystore.password";
     }
   }
 
