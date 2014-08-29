@@ -45,29 +45,29 @@ Configuring SSL for the Authentication Server
 ==============================================
 To configure the granting of ``AccessToken``\s via SSL, add these properties to ``cdap-site.xml``:
 
-=============================================  ==============
+=============================================  =======================
    Property                                      Value
-=============================================  ==============
+=============================================  =======================
 security.auth.server.ssl.enabled                  true
 security.auth.server.ssl.keystore.path            <path>
 security.auth.server.ssl.keystore.password        <password>
 security.auth.server.ssl.keystore.keypassword     <password>
 security.auth.server.ssl.keystore.type            <keystore-file-type>
-=============================================  ==============
+=============================================  =======================
 
 Configuring SSL for the Router
 ==============================================
 To configure SSL for the Router, add these properties to ``cdap-site.xml``:
 
-==========================================  ==============
-   Property                                   Value
-==========================================  ==============
-router.ssl.enabled                   true
-router.ssl.keystore.path             <path>
-router.ssl.keystore.password         <password>
-router.ssl.keystore.keypassword      <password>
-router.ssl.keystore.type             <keystore-file-type>
-==========================================  ==============
+================================    =======================
+   Property                           Value
+================================    =======================
+router.ssl.enabled                    true
+router.ssl.keystore.path              <path>
+router.ssl.keystore.password          <password>
+router.ssl.keystore.keypassword       <password>
+router.ssl.keystore.type              <keystore-file-type>
+================================    =======================
 
 Enabling Access Logging
 ========================
