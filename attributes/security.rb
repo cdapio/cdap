@@ -25,7 +25,7 @@ if node['cdap']['cdap_site'].key?('security.enabled') && node['cdap']['cdap_site
   include_attribute 'krb5_utils'
 
   # For keytab creation
-  default['krb5_utils']['krb5_service_keytabs']['cdap'] = { 'owner' => 'hdfs', 'group' => 'hadoop', 'mode' => '0640' }
+  default['krb5_utils']['krb5_service_keytabs']['cdap'] = { 'owner' => 'cdap', 'group' => 'cdap', 'mode' => '0640' }
 
   default_realm = node['krb5']['krb5_conf']['realms']['default_realm'].upcase
 
