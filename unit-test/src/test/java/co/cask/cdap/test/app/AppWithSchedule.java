@@ -73,6 +73,11 @@ public class AppWithSchedule extends AbstractApplication {
     @Override
     public void run() {
       LOG.info("Ran dummy action");
+      try {
+        Thread.sleep(500);
+      } catch (InterruptedException e) {
+        LOG.info("Interrupted");
+      }
     }
   }
 }

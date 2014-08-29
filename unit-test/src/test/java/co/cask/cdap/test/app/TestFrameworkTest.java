@@ -21,9 +21,12 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpRequests;
 import co.cask.cdap.common.http.HttpResponse;
+import co.cask.cdap.internal.app.runtime.AbstractListener;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -43,9 +46,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.gson.Gson;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -67,6 +72,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -130,7 +137,7 @@ public class TestFrameworkTest extends TestBase {
     int workflowRuns = 0;
     // the workflow stop method from the listener is called long after the run method completes,
     // its handled by Guava service, so we are giving a long wait time to avoid failing
-    workFlowHistoryCheck(30, wfmanager, 0);
+    workFlowHistoryCheck(5, wfmanager, 0);
 
     String status = wfmanager.getSchedule(scheduleId).status();
     Assert.assertNotEquals("SUSPENDED", status);
@@ -152,7 +159,7 @@ public class TestFrameworkTest extends TestBase {
     //Check that after resume it goes to "SCHEDULED" state
     workFlowStatusCheck(5, scheduleId, wfmanager, "SCHEDULED");
 
-    workFlowHistoryCheck(30, wfmanager, workflowRunsAfterSuspend);
+    workFlowHistoryCheck(5, wfmanager, workflowRunsAfterSuspend);
 
     //check scheduled state
     Assert.assertEquals("SCHEDULED", wfmanager.getSchedule(scheduleId).status());
@@ -170,11 +177,12 @@ public class TestFrameworkTest extends TestBase {
     applicationManager.stopAll();
   }
 
-  private void workFlowHistoryCheck(int timeOut, WorkflowManager wfmanager, int expected) throws InterruptedException {
+
+  private void workFlowHistoryCheck(int retries, WorkflowManager wfmanager, int expected) throws InterruptedException {
     int trial = 0;
     List<RunRecord> history;
     int workflowRuns = 0;
-    while (trial++ < timeOut) {
+    while (trial++ < retries) {
       history = wfmanager.getHistory();
       workflowRuns= history.size();
       if (workflowRuns > expected) {
