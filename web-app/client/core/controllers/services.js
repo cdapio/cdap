@@ -110,12 +110,7 @@ define([], function () {
     keyPressed: function (evt) {
       var btn = this.$().parent().parent().next().children();
       var inp = this.value;
-      if (inp.length > 0 && parseInt(inp) != this.placeholder){
-          btn.attr("disabled", false);
-      } else {
-          btn.attr("disabled", true);
-      }
-      return true;
+      return C.Util.handleInstancesKeyPress(btn, inp, this.placeholder);
     },
 
     changeInstances: function (service) {
@@ -130,7 +125,7 @@ define([], function () {
       if (input === service.requested) {
         return; //no-op
       }
-      var isInvalid = C.Util.isInvalidNumInstances(input, service.min, service.max);
+      var isInvalid = C.Util.isInvalidNumInstances(inputStr, service.min, service.max);
       if(isInvalid){
         C.Modal.show('Error', isInvalid);
         return;
