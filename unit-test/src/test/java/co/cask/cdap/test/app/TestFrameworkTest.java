@@ -180,11 +180,11 @@ public class TestFrameworkTest extends TestBase {
     Assert.assertTrue(workflowRuns > expected);
   }
 
-  private void workFlowStatusCheck(int timeOut, String scheduleId, WorkflowManager wfmanager,
+  private void workFlowStatusCheck(int retries, String scheduleId, WorkflowManager wfmanager,
                                    String expected) throws InterruptedException {
     int trial = 0;
     String status = null;
-    while (trial++ < timeOut) {
+    while (trial++ < retries) {
       status = wfmanager.getSchedule(scheduleId).status();
       if (status.equals(expected)) {
         return;
