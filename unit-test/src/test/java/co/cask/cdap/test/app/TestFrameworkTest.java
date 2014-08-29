@@ -128,7 +128,7 @@ public class TestFrameworkTest extends TestBase {
     workFlowHistoryCheck(5, wfmanager, 0);
 
     String status = wfmanager.getSchedule(scheduleId).status();
-    Assert.assertNotEquals("SUSPENDED", status);
+    Assert.assertEquals("SCHEDULED", status);
 
     wfmanager.getSchedule(scheduleId).suspend();
     workFlowStatusCheck(5, scheduleId, wfmanager, "SUSPENDED");
@@ -158,7 +158,7 @@ public class TestFrameworkTest extends TestBase {
     //suspend the schedule
     wfmanager.getSchedule(scheduleId).suspend();
 
-    //Check that after resume it goes to "SUSPENDED" state
+    //Check that after suspend it goes to "SUSPENDED" state
     workFlowStatusCheck(5, scheduleId, wfmanager, "SUSPENDED");
 
     TimeUnit.SECONDS.sleep(10);
