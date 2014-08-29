@@ -77,12 +77,14 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       }
 
       @Override
-      public void checkClientTrusted(java.security.cert.X509Certificate[] x509Certificates, String s) throws CertificateException {
+      public void checkClientTrusted(java.security.cert.X509Certificate[] x509Certificates, String s)
+        throws CertificateException {
         //
       }
 
       @Override
-      public void checkServerTrusted(java.security.cert.X509Certificate[] x509Certificates, String s) throws CertificateException {
+      public void checkServerTrusted(java.security.cert.X509Certificate[] x509Certificates, String s)
+        throws CertificateException {
         //
       }
 

@@ -160,7 +160,7 @@ public abstract class NettyRouterTestBase {
   }
 
   @Before
-  public void startUp() throws Exception{
+  public void startUp() throws Exception {
     routerService.startAndWait();
     for (ServerService server : allServers) {
       server.startAndWait();
@@ -410,7 +410,7 @@ public abstract class NettyRouterTestBase {
   /**
    * A server for the router.
    */
-  public static abstract class RouterService extends AbstractIdleService {
+  public abstract static class RouterService extends AbstractIdleService {
     public abstract int lookupService(String serviceName);
   }
 
