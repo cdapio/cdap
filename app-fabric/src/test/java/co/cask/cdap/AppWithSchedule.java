@@ -27,6 +27,8 @@ import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Application with workflow scheduling.
  */
@@ -57,7 +59,7 @@ public class AppWithSchedule extends AbstractApplication {
         .setDescription("SampleWorkflow description")
         .startWith(new DummyAction())
         .last(new DummyAction())
-        .addSchedule(new Schedule("Schedule", "Run every 2 seconds", "0/2 * * * * ?",
+        .addSchedule(new Schedule("Schedule", "Run every 2 seconds", "0/1 * * * * ?",
                                   Schedule.Action.START))
         .build();
     }
@@ -71,6 +73,11 @@ public class AppWithSchedule extends AbstractApplication {
     @Override
     public void run() {
       LOG.info("Ran dummy action");
+      try {
+        TimeUnit.MILLISECONDS.sleep(500);
+      } catch (InterruptedException e) {
+        LOG.info("Interrupted");
+      }
     }
   }
 }
