@@ -965,8 +965,9 @@ define([], function () {
     },
 
     /**
-     * Returns true if the inputString represents an integer value.
-     * Decimal is allowed, for instance '1.0' or '2.0'.
+     * Returns true if the inputString represents a integer (mathematical definition) value.
+     * Decimal is allowed, for instance '1.0' or '2.0' both return true.
+     * '2.1' would return false, because it does not represent an integer value.
      *
      **/
     isInteger: function (inputString) {
