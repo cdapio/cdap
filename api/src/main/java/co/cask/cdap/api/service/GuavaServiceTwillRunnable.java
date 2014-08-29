@@ -24,10 +24,13 @@ import org.apache.twill.api.Command;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
+import org.apache.twill.common.Services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * {@link org.apache.twill.api.TwillRunnable} that accepts a {@link com.google.common.util.concurrent.Service} and
@@ -106,12 +109,15 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
   public void run() {
     LOG.info("Instantiating service " + name);
     service.startAndWait();
+    Future<Service.State> completion = Services.getCompletionFuture(service);
     try {
-      while (service.isRunning()) {
-        Thread.sleep(1000);
-      }
+      // Block until the guava service is done running, so that this run() method does not return. Otherwise, the
+      // container running this runnable() would call destroy().
+      completion.get();
     } catch (InterruptedException e) {
-      LOG.error("Got exception: ", e);
+      LOG.error("Caught exception while running guava service: ", e);
+    } catch (ExecutionException e) {
+      LOG.error("Caught exception while running guava service: ", e);
     }
   }
 }
