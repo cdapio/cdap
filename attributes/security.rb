@@ -24,6 +24,9 @@ default['cdap']['cdap_site']['security.auth.server.address'] = node['fqdn']
 if node['cdap']['cdap_site'].key?('security.enabled') && node['cdap']['cdap_site']['security.enabled'].to_s == 'true'
   include_attribute 'krb5_utils'
 
+  # For keytab creation
+  default['krb5_utils']['krb5_service_keytabs']['cdap'] = { 'owner' => 'hdfs', 'group' => 'hadoop', 'mode' => '0640' }
+
   default_realm = node['krb5']['krb5_conf']['realms']['default_realm'].upcase
 
   # For cdap-master init script
@@ -33,4 +36,5 @@ if node['cdap']['cdap_site'].key?('security.enabled') && node['cdap']['cdap_site
   # For cdap-auth-server and cdap-router
   default['cdap']['cdap_site']['cdap.master.kerberos.keytab'] = "#{node['krb5_utils']['keytabs_dir']}/cdap.service.keytab"
   default['cdap']['cdap_site']['cdap.master.kerberos.principal'] = "cdap/_HOST@#{default_realm}"
+
 end
