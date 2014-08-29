@@ -2256,7 +2256,7 @@ a strong {
     height: 32px;
     background-image: url(../../img/flow-controls.png);
     background-position: 0 -113px;
-    background-position: no-repeat;
+    background-repeat: no-repeat;
     margin: 4px 10px 0 12px;
 }
 
@@ -3976,7 +3976,6 @@ div.tooltip-inner {
     border-bottom: 8px solid transparent;
     border-left: 8px solid white;
     float: right;
-    margin-top: -20px;
 }
 
 #query-list-table {
