@@ -23,7 +23,7 @@
   <artifactId>examples</artifactId>
   <version>@project.version@</version>
   <packaging>pom</packaging>
-  <name>Cask DAP Examples</name>
+  <name>Cask Data Application Platform (CDAP) Examples</name>
 
   <modules>
     <module>CountAndFilterWords</module>
