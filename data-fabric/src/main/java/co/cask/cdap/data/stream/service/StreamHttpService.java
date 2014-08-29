@@ -18,7 +18,7 @@ package co.cask.cdap.data.stream.service;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
-import co.cask.cdap.common.http.BaseNettyHttpServiceTemplate;
+import co.cask.cdap.common.http.BaseNettyHttpService;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -53,7 +53,7 @@ public final class StreamHttpService extends AbstractIdleService {
   public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService,
                            StreamCoordinator streamCoordinator,
                            StreamFileJanitorService janitorService,
-                           BaseNettyHttpServiceTemplate baseNettyHttpServiceTemplate,
+                           BaseNettyHttpService baseNettyHttpService,
                            @Named(Constants.Stream.STREAM_HANDLER) Set<HttpHandler> handlers,
                            @Nullable MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
@@ -61,7 +61,7 @@ public final class StreamHttpService extends AbstractIdleService {
     this.janitorService = janitorService;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
-    this.httpService = baseNettyHttpServiceTemplate.get()
+    this.httpService = baseNettyHttpService.get()
       .addHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Stream.STREAM_HANDLER)))

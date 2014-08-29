@@ -26,21 +26,21 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 /**
- * Provides a
+ * Provides a {@link NettyHttpService.Builder} that has common configuration built-in.
  */
-public class BaseNettyHttpServiceTemplate implements Supplier<NettyHttpService.Builder> {
+public class BaseNettyHttpService implements Supplier<NettyHttpService.Builder> {
 
   private final CConfiguration configuration;
   private final AuthenticationChannelHandler authenticationChannelHandler;
 
   @Inject
-  public BaseNettyHttpServiceTemplate(CConfiguration configuration,
-                                      AuthenticationChannelHandler authenticationChannelHandler) {
+  public BaseNettyHttpService(CConfiguration configuration,
+                              AuthenticationChannelHandler authenticationChannelHandler) {
     this.configuration = configuration;
     this.authenticationChannelHandler = authenticationChannelHandler;
   }
 
-  public BaseNettyHttpServiceTemplate() {
+  public BaseNettyHttpService() {
     this.configuration = CConfiguration.create();
     this.authenticationChannelHandler = new AuthenticationChannelHandler();
   }
