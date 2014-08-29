@@ -23,9 +23,6 @@ import co.cask.cdap.app.metrics.FlowletMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -34,11 +31,9 @@ import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 
-import java.net.URL;
 import java.util.Map;
 import java.util.Set;
 
@@ -57,8 +52,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   private volatile int instanceCount;
   private final FlowletMetrics flowletMetrics;
   private final Arguments runtimeArguments;
-  private final ProgramServiceDiscovery serviceDiscovery;
-  private final DiscoveryServiceClient discoveryServiceClient;
 
   BasicFlowletContext(Program program, String flowletId,
                       int instanceId, RunId runId,
@@ -72,7 +65,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     super(program, runId, datasets,
           getMetricContext(program, flowletId, instanceId),
           metricsCollectionService,
-          dsFramework, conf);
+          dsFramework, conf, serviceDiscovery, discoveryServiceClient);
     this.accountId = program.getAccountId();
     this.flowId = program.getName();
     this.flowletId = flowletId;
@@ -82,8 +75,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.runtimeArguments = runtimeArguments;
     this.flowletSpec = flowletSpec;
     this.flowletMetrics = new FlowletMetrics(metricsCollectionService, getApplicationId(), flowId, flowletId);
-    this.serviceDiscovery = serviceDiscovery;
-    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @Override
@@ -117,42 +108,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
       builder.put(entry);
     }
     return builder.build();
-  }
-
-  @Override
-  public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
-    return serviceDiscovery.discover(accountId, appId, serviceId, serviceName);
-  }
-
-  @Override
-  public URL getServiceURL(String applicationId, String serviceId) {
-    ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(String.format("service.%s.%s.%s", accountId,
-                                                                                        applicationId, serviceId));
-
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
-    Discoverable discoverable = endpointStrategy.pick();
-
-    if (discoverable == null) {
-      return null;
-    }
-
-    String hostName = discoverable.getSocketAddress().getHostName();
-    int port = discoverable.getSocketAddress().getPort();
-
-    String path = String.format("http://%s:%d%s/apps/%s/services/%s/methods/", hostName, port,
-                               Constants.Gateway.GATEWAY_VERSION, applicationId, serviceId);
-
-    URL url = null;
-    try {
-      url = new URL(path);
-    } catch (Throwable th) {
-    }
-    return url;
-  }
-
-  @Override
-  public URL getServiceURL(String serviceId) {
-    return getServiceURL(getApplicationId(), serviceId);
   }
 
   public void setInstanceCount(int count) {

@@ -16,11 +16,14 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.data.DataSetContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.EndpointStrategy;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
@@ -28,17 +31,21 @@ import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import com.google.common.base.Preconditions;
 import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.net.URL;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Base class for program runtime context
  */
-public abstract class AbstractContext implements DataSetContext {
+public abstract class AbstractContext implements DataSetContext, RuntimeContext {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
 
   private final Program program;
@@ -49,14 +56,22 @@ public abstract class AbstractContext implements DataSetContext {
 
   private final DataSetInstantiator dsInstantiator;
 
+  private final ProgramServiceDiscovery serviceDiscovery;
+  private final DiscoveryServiceClient discoveryServiceClient;
+
+
   public AbstractContext(Program program, RunId runId,
                          Set<String> datasets,
                          String metricsContext,
                          MetricsCollectionService metricsCollectionService,
                          DatasetFramework dsFramework,
-                         CConfiguration conf) {
+                         CConfiguration conf,
+                         ProgramServiceDiscovery serviceDiscovery,
+                         DiscoveryServiceClient discoveryServiceClient) {
     this.program = program;
     this.runId = runId;
+    this.serviceDiscovery = serviceDiscovery;
+    this.discoveryServiceClient = discoveryServiceClient;
 
     MetricsCollector datasetMetrics;
     if (metricsCollectionService != null) {
@@ -130,6 +145,44 @@ public abstract class AbstractContext implements DataSetContext {
 
   public RunId getRunId() {
     return runId;
+  }
+
+  @Override
+  public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
+    return serviceDiscovery.discover(getAccountId(), appId, serviceId, serviceName);
+  }
+
+  @Override
+  public URL getServiceURL(String applicationId, String serviceId) {
+    ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(String.format("service.%s.%s.%s",
+                                                                                        getAccountId(),
+                                                                                        applicationId,
+                                                                                        serviceId));
+
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
+    Discoverable discoverable = endpointStrategy.pick();
+
+    if (discoverable == null) {
+      return null;
+    }
+
+    String hostName = discoverable.getSocketAddress().getHostName();
+    int port = discoverable.getSocketAddress().getPort();
+
+    String path = String.format("http://%s:%d%s/apps/%s/services/%s/methods/", hostName, port,
+                                Constants.Gateway.GATEWAY_VERSION, applicationId, serviceId);
+
+    URL url = null;
+    try {
+      url = new URL(path);
+    } catch (Throwable th) {
+    }
+    return url;
+  }
+
+  @Override
+  public URL getServiceURL(String serviceId) {
+    return getServiceURL(getApplicationId(), serviceId);
   }
 
   /**

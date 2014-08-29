@@ -23,9 +23,6 @@ import co.cask.cdap.app.metrics.ProcedureMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -34,12 +31,8 @@ import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.ProcedureLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 
-import java.io.Closeable;
-import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -58,8 +51,6 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
   private final ProcedureMetrics procedureMetrics;
   private final ProcedureLoggingContext procedureLoggingContext;
   private final Arguments runtimeArguments;
-  private final ProgramServiceDiscovery serviceDiscovery;
-  private final DiscoveryServiceClient discoveryServiceClient;
 
   BasicProcedureContext(Program program, RunId runId, int instanceId, int instanceCount,
                         Set<String> datasets, Arguments runtimeArguments,
@@ -68,7 +59,7 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
                         DatasetFramework dsFramework, CConfiguration conf) {
     super(program, runId, datasets,
           getMetricsContext(program, instanceId), collectionService,
-          dsFramework, conf);
+          dsFramework, conf, serviceDiscovery, discoveryServiceClient);
     this.accountId = program.getAccountId();
     this.procedureId = program.getName();
     this.instanceId = instanceId;
@@ -77,8 +68,6 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
     this.procedureMetrics = new ProcedureMetrics(collectionService, getApplicationId(), getProcedureId());
     this.runtimeArguments = runtimeArguments;
     this.procedureLoggingContext = new ProcedureLoggingContext(getAccountId(), getApplicationId(), getProcedureId());
-    this.serviceDiscovery = serviceDiscovery;
-    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @Override
@@ -136,41 +125,5 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
       arguments.put(it.next());
     }
     return arguments.build();
-  }
-
-  @Override
-  public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
-    return serviceDiscovery.discover(accountId, appId, serviceId, serviceName);
-  }
-
-  @Override
-  public URL getServiceURL(String applicationId, String serviceId) {
-    ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(String.format("service.%s.%s.%s", accountId,
-                                                                                        applicationId, serviceId));
-
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
-    Discoverable discoverable = endpointStrategy.pick();
-
-    if (discoverable == null) {
-      return null;
-    }
-
-    String hostName = discoverable.getSocketAddress().getHostName();
-    int port = discoverable.getSocketAddress().getPort();
-
-    String path = String.format("http://%s:%d%s/apps/%s/services/%s/methods/", hostName, port,
-                                Constants.Gateway.GATEWAY_VERSION, applicationId, serviceId);
-
-    URL url = null;
-    try {
-      url = new URL(path);
-    } catch (Throwable th) {
-    }
-    return url;
-  }
-
-  @Override
-  public URL getServiceURL(String serviceId) {
-    return getServiceURL(getApplicationId(), serviceId);
   }
 }
