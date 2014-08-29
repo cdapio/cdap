@@ -98,20 +98,20 @@ public class GuavaServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void destroy() {
-    LOG.info("Destroyed service " + name);
+    LOG.info("Destroying service " + name);
     service.stopAndWait();
   }
 
   @Override
   public void run() {
+    LOG.info("Instantiating service " + name);
     service.startAndWait();
-    LOG.info("Instantiated service " + name);
-    while (service.isRunning()) {
-      try {
+    try {
+      while (service.isRunning()) {
         Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
       }
+    } catch (InterruptedException e) {
+      LOG.error("Got exception: ", e);
     }
   }
 }
