@@ -143,6 +143,7 @@ public final class Constants {
   public static final class Dataset {
 
     public static final String TABLE_PREFIX = "dataset.table.prefix";
+    public static final String HBASE_TABLE_NAMESPACE = "dataset.hbase.table.namespace";
 
     /**
      * DatasetManager service configuration.

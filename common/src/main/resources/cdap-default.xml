@@ -571,6 +571,12 @@
     </property>
 
     <property>
+        <name>dataset.hbase.table.namespace</name>
+        <value>default</value>
+        <description>HBase table dataset namespace</description>
+    </property>
+
+    <property>
         <name>dataset.service.output.dir</name>
         <value>/datasets</value>
         <description>Directory where all dataset modules archives are stored</description>
