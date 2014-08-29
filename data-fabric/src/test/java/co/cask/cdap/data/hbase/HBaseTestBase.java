@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.hbase;
 
+import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
@@ -102,10 +103,14 @@ public abstract class HBaseTestBase {
 
   @BeforeClass
   public void startHBase() throws Exception {
+    startHBase(true);
+  }
+
+  public void startHBase(boolean disableUIs) throws Exception {
     conf = new Configuration();
     // Set any necessary configurations (disable UIs to prevent port conflicts)
-    conf.setInt("hbase.regionserver.info.port", -1);
-    conf.setInt("hbase.master.info.port", -1);
+    conf.setInt("hbase.regionserver.info.port", disableUIs ? -1 : Networks.getRandomPort());
+    conf.setInt("hbase.master.info.port", disableUIs ? -1 : Networks.getRandomPort());
     // Disable compression since it may not be available in environment where we run unit-test
     conf.set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION, "NONE");
 
