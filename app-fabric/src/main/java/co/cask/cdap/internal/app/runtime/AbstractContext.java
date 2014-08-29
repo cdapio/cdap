@@ -24,6 +24,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
@@ -41,6 +42,7 @@ import java.io.Closeable;
 import java.net.URL;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Base class for program runtime context
@@ -160,6 +162,9 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
                                                                                         serviceId));
 
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
+    if (new TimeLimitEndpointStrategy(endpointStrategy, 300L, TimeUnit.MILLISECONDS).pick() == null) {
+      LOG.debug("Discoverable endpoint not found for appID: {}, serviceID: {}.", applicationId, serviceId);
+    }
     Discoverable discoverable = endpointStrategy.pick();
 
     if (discoverable == null) {
