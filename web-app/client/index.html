@@ -93,7 +93,9 @@
     <div id="nav">
       <ul>
         <li class="logo-holder">
-          <div class="left-nav-icon" id="logo"></div>
+          <a href="http://cask.co/">
+            <div class="left-nav-icon" id="logo"></div>
+          </a>
         </li>
         <li class="overview"><a class="nav-link nav-dash" id="nav-overview" href="#">
           <span class="left-nav-icon"></span>
@@ -128,11 +130,11 @@
     </div>
     <div id="footer" style="clear: both;"><span id="copyright">COPYRIGHT &copy; 2014 CASK DATA INC. ALL RIGHTS RESERVED.</span><br />
 
-    <a href="http://www.continuuity.com/terms" id="footer-terms" target="blank">Terms</a>
+    <a href="http://cask.co/terms" id="footer-terms" target="blank">Terms</a>
     <span>&nbsp;·&nbsp;</span>
-    <a href="http://www.continuuity.com/privacy" id="footer-terms" target="blank">Privacy</a>
+    <a href="http://cask.co/privacy" id="footer-terms" target="blank">Privacy</a>
     <span>&nbsp;·&nbsp;</span>
-    <a href="http://www.continuuity.com/contact-us" id="footer-contact" target="blank">Contact</a>
+    <a href="http://cask.co/contact-us" id="footer-contact" target="blank">Contact</a>
     {{#unless C.isEnterprise}}
     <span>&nbsp;·&nbsp;</span>
     <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" id="footer-support">Support</a>
@@ -1317,7 +1319,7 @@
         <div class="popup-body">
           <div class="popup-close" {{action close on="click"}}>×</div>
 
-         
+
           <h1 class="popup-title"><a {{bindAttr href="controller.model.href"}}>{{model.name}}</a></h1>
 
           <table class="table" class="popup-stream-table">
@@ -1790,7 +1792,7 @@
   <script type="text/x-handlebars" data-template-name="_streams-list">
 
     {{#if elements.Stream.length}}
-      <table class="table">
+      <table class="table streams-table">
       <thead>
         <th style="padding-left: 14px;">Streams</th>
         <th style="width: 100px;text-align: center;">Storage</th>
