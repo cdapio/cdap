@@ -63,6 +63,9 @@ public final class HBaseDatasetMetricsCollector {
     HBaseAdmin admin = new HBaseAdmin(hConf);
     Map<String, Integer> datasetSize = Maps.newHashMap();
     ClusterStatus clusterStatus = admin.getClusterStatus();
+
+    // todo: break down this big chunk of code, handle edge cases
+
     for (ServerName serverName : clusterStatus.getServers()) {
       HttpResponse response = HttpRequests.execute(
         HttpRequest.builder(HttpMethod.GET,
