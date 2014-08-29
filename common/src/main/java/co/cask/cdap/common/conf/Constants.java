@@ -430,17 +430,17 @@ public final class Constants {
      */
     public static final class Router {
       /** Enables SSL */
-      public static final String SSL_ENABLED = "security.router.ssl.enabled";
+      public static final String SSL_ENABLED = "router.ssl.enabled";
       /** SSL port */
-      public static final String SSL_PORT = "security.router.ssl.port";
+      public static final String SSL_PORT = "router.ssl.port";
       /** SSL keystore location */
-      public static final String SSL_KEYSTORE_PATH = "security.router.ssl.keystore.path";
+      public static final String SSL_KEYSTORE_PATH = "router.ssl.keystore.path";
       /** SSL keystore type */
-      public static final String SSL_KEYSTORE_TYPE = "security.router.ssl.keystore.type";
+      public static final String SSL_KEYSTORE_TYPE = "router.ssl.keystore.type";
       /** SSL keystore key password */
-      public static final String SSL_KEYPASSWORD = "security.router.ssl.keystore.keypassword";
+      public static final String SSL_KEYPASSWORD = "router.ssl.keystore.keypassword";
       /** SSL keystore password */
-      public static final String SSL_KEYSTORE_PASSWORD = "security.router.ssl.keystore.password";
+      public static final String SSL_KEYSTORE_PASSWORD = "router.ssl.keystore.password";
     }
 
     /**
@@ -448,17 +448,17 @@ public final class Constants {
      */
     public static final class AuthenticationServer {
       /** Enables SSL */
-      public static final String SSL_ENABLED = "security.authserver.ssl.enabled";
+      public static final String SSL_ENABLED = "security.auth.server.ssl.enabled";
       /** SSL port */
-      public static final String SSL_PORT = "security.authserver.ssl.port";
+      public static final String SSL_PORT = "security.auth.server.ssl.port";
       /** SSL keystore location */
-      public static final String SSL_KEYSTORE_PATH = "security.authserver.ssl.keystore.path";
+      public static final String SSL_KEYSTORE_PATH = "security.auth.server.ssl.keystore.path";
       /** SSL keystore type */
-      public static final String SSL_KEYSTORE_TYPE = "security.authserver.ssl.keystore.type";
+      public static final String SSL_KEYSTORE_TYPE = "security.auth.server.ssl.keystore.type";
       /** SSL keystore key password */
-      public static final String SSL_KEYPASSWORD = "security.authserver.ssl.keystore.keypassword";
+      public static final String SSL_KEYPASSWORD = "security.auth.server.ssl.keystore.keypassword";
       /** SSL keystore password */
-      public static final String SSL_KEYSTORE_PASSWORD = "security.authserver.ssl.keystore.password";
+      public static final String SSL_KEYSTORE_PASSWORD = "security.auth.server.ssl.keystore.password";
     }
   }
 
