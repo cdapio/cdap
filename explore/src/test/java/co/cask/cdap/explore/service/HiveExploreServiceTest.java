@@ -16,20 +16,17 @@
 
 package co.cask.cdap.explore.service;
 
-import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
-import co.cask.cdap.data.runtime.DatasetClassLoaders;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapper;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.hive.datasets.DatasetInputFormat;
 import co.cask.cdap.hive.datasets.DatasetSerDe;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
@@ -68,8 +65,7 @@ import static co.cask.cdap.explore.service.KeyStructValueTableDefinition.KeyValu
 @Category(SlowTests.class)
 public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
-  private static ClassLoader parentClassLoader;
-  private static DatasetClassLoaderUtil dsUtil = null;
+  private static DatasetWrapper datasetWrapper = null;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -80,14 +76,10 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
 
-    parentClassLoader = Thread.currentThread().getContextClassLoader();
-    DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
-    dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(parentClassLoader, typeMeta, locationFactory);
-    parentClassLoader = dsUtil.getClassLoader();
-
+    datasetWrapper = getDatasetWrapper("my_table", "keyStructValueTable");
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, parentClassLoader);
+      (KeyStructValueTableDefinition.KeyStructValueTable) datasetWrapper.getDataset();
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);
@@ -110,14 +102,15 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     table.startTx(tx2);
 
     Assert.assertEquals(value1, table.get("1"));
+    datasetWrapper.cleanup();
   }
 
   @AfterClass
   public static void stop() throws Exception {
     datasetFramework.deleteInstance("my_table");
     datasetFramework.deleteModule("keyStructValue");
-    if (dsUtil != null) {
-      dsUtil.cleanup();
+    if (datasetWrapper != null) {
+      datasetWrapper.cleanup();
     }
   }
 
@@ -135,13 +128,16 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testTable() throws Exception {
+
+    datasetWrapper = getDatasetWrapper("my_table", "keyStructValueTable");
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, parentClassLoader);
+      (KeyStructValueTableDefinition.KeyStructValueTable) datasetWrapper.getDataset();
     Assert.assertNotNull(table);
     Transaction tx = transactionManager.startShort(100);
     table.startTx(tx);
     Assert.assertEquals(new KeyValue.Value("first", Lists.newArrayList(1, 2, 3, 4, 5)), table.get("1"));
     transactionManager.abort(tx);
+    datasetWrapper.cleanup();
   }
 
   @Test
@@ -493,11 +489,13 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     datasetFramework.addInstance("keyStructValueTable", "my_table_1", DatasetProperties.EMPTY);
 
     try {
+      datasetWrapper = getDatasetWrapper("my_table_1", "keyStructValueTable");
       Transaction tx1 = transactionManager.startShort(100);
 
       // Accessing dataset instance to perform data operations
       KeyStructValueTableDefinition.KeyStructValueTable table =
-        datasetFramework.getDataset("my_table_1", DatasetDefinition.NO_ARGUMENTS, parentClassLoader);
+        (KeyStructValueTableDefinition.KeyStructValueTable) datasetWrapper.getDataset();
+
       Assert.assertNotNull(table);
       table.startTx(tx1);
 
@@ -577,6 +575,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
       );
     } finally {
       datasetFramework.deleteInstance("my_table_1");
+      datasetWrapper.cleanup();
     }
   }
 

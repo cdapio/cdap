@@ -16,6 +16,7 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.annotation.ExposeClass;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.schedule.Schedule;
@@ -32,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Application with workflow scheduling.
  */
+@ExposeClass
 public class AppWithSchedule extends AbstractApplication {
 
   @Override

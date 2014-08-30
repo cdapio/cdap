@@ -68,7 +68,7 @@ public final class MapReduceContextConfig {
   }
 
   public void set(BasicMapReduceContext context, CConfiguration conf,
-                  Transaction tx, String programJarName, Set<String> datasetsJarPath) {
+                  Transaction tx, String programJarName, List<String> datasetsJarPath) {
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
     setWorkflowBatch(context.getWorkflowBatch());
@@ -139,12 +139,12 @@ public final class MapReduceContextConfig {
     return jobContext.getConfiguration().get(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET);
   }
 
-  public void setDatasetsJarPath(Set<String> datasetsJarLocation) {
+  public void setDatasetsJarPath(List<String> datasetsJarLocation) {
     jobContext.getConfiguration().set(HCONF_DS_PROGRAM_JAR_LOC, GSON.toJson(datasetsJarLocation));
   }
 
-  public Set<String> getDatasetsJarPath() {
-    Type datasetsJarLocationType = new TypeToken<Set<String>>() { }.getType();
+  public List<String> getDatasetsJarPath() {
+    Type datasetsJarLocationType = new TypeToken<List<String>>() { }.getType();
     return GSON.fromJson(jobContext.getConfiguration().get(HCONF_DS_PROGRAM_JAR_LOC), datasetsJarLocationType);
   }
 

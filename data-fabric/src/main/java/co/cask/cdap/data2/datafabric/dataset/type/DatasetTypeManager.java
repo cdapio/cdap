@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.datafabric.dataset.type;
 
+import co.cask.cdap.api.annotation.ExposeClass;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
@@ -33,6 +34,8 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import com.continuuity.tephra.TransactionFailureException;
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -121,9 +124,15 @@ public class DatasetTypeManager extends AbstractIdleService {
               BundleJarUtil.unpackProgramJar(jarLocation, unpackedLocation);
               datasetJars.add(unpackedLocation);
             }
+
+            // expose class annotation predicate
+            Set<String> annotations = Sets.newHashSet();
+            annotations.add(ExposeClass.class.getName());
+            Predicate<String> annotationPredicate = Predicates.in(annotations);
+
             cl = jarLocation == null ? this.getClass().getClassLoader() :
               ClassLoaders.newDatasetClassLoader(datasetJars, ApiResourceListHolder.getResourceList(),
-                                                 this.getClass().getClassLoader());
+                                                 this.getClass().getClassLoader(), annotationPredicate);
             @SuppressWarnings("unchecked")
             Class clazz = ClassLoaders.loadClass(className, cl, this);
             module = DatasetModules.getDatasetModule(clazz);

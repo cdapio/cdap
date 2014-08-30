@@ -17,8 +17,10 @@
 package co.cask.cdap.common.lang.jar;
 
 import co.cask.cdap.api.annotation.ExposeClass;
+import com.google.common.base.Predicate;
 
 import java.io.File;
+import java.lang.annotation.Annotation;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -30,22 +32,26 @@ import java.net.URLClassLoader;
 public class ExposeFilterClassLoader extends ClassLoader {
   private final URL[] datasetUrls;
   private URLClassLoader datasetClassLoader;
+  private Predicate<String> exposeAnnotations;
 
 
-  public ExposeFilterClassLoader(File datasetTypeJar, ClassLoader parentClassLoader) throws MalformedURLException {
+  public ExposeFilterClassLoader(File datasetTypeJar, ClassLoader parentClassLoader,
+                                 Predicate<String> exposeAnnotations) throws MalformedURLException {
     super(parentClassLoader);
     this.datasetUrls = ClassPathUrlsUtil.getClassPathUrls(datasetTypeJar);
     this.datasetClassLoader = new URLClassLoader(datasetUrls, parentClassLoader);
+    this.exposeAnnotations = exposeAnnotations;
   }
 
   @Override
   public Class<?> findClass(String name) throws ClassNotFoundException {
     Class<?> dataset = datasetClassLoader.loadClass(name);
-    ExposeClass dsExpose = dataset.getAnnotation(ExposeClass.class);
-    if (dsExpose != null) {
-      return dataset;
-    } else {
-      throw new ClassNotFoundException(String.format("Unable to find class %s", name));
+
+    for (Annotation classAnnotation : dataset.getAnnotations()) {
+      if (exposeAnnotations.apply(classAnnotation.annotationType().getName())) {
+        return dataset;
+      }
     }
+    throw new ClassNotFoundException(String.format("Unable to find class %s", name));
   }
 }

@@ -98,6 +98,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -175,17 +176,17 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
       locationFactory = injector.getInstance(LocationFactory.class);
 
-      Type datasetsJarLocationType = new TypeToken<Set<String>>() { }.getType();
-      Set<String> datasetJars =
+      Type datasetsJarLocationType = new TypeToken<List<String>>() { }.getType();
+      List<String> datasetJars =
         new Gson().fromJson(cmdLine.getOptionValue(RunnableOptions.DATASET_JARS), datasetsJarLocationType);
-      Set<Location> datasetsJarLocation = Sets.newHashSet();
+      Set<Location> datasetJarLocations = Sets.newHashSet();
       for (String datsetJar : datasetJars) {
-        datasetsJarLocation.add(locationFactory.create(datsetJar));
+        datasetJarLocations.add(locationFactory.create(datsetJar));
       }
 
       try {
         program = injector.getInstance(ProgramFactory.class)
-          .create(cmdLine.getOptionValue(RunnableOptions.JAR), datasetsJarLocation);
+          .create(cmdLine.getOptionValue(RunnableOptions.JAR), datasetJarLocations);
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }

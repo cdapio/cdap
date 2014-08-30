@@ -14,12 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang;
+package net.fake.test.app;
 
 import co.cask.cdap.api.annotation.ExposeClass;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.lang.jar.ExposeFilterClassLoader;
-import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
@@ -32,27 +31,37 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Set;
 
 /**
- * Testing the exposed and unexposed annotations for Dataset Filtered Class loading
+ * Testing the {@link co.cask.cdap.common.lang.jar.ExposeFilterClassLoader}
+ * we are using the Purchase app for testing, if purchase app is updated, update the resources directory with
+ * the new version.
+ *
+ * we are doing this, because if we get a JarFinder.getJar of a class, it already exists in the classpath and the
+ * bootstrap classloader which is the parent of the ExposeFilterClassLoader will be able to it,
+ * thereby we are not testing the {@link co.cask.cdap.common.lang.jar.ExposeFilterClassLoader}
+ *
+ * If we pass in "null" for the parent classloader for the {@link ExposeFilterClassLoader} , though we are able to load
+ * the class, we are not able to load the annotations. so we had to take this approach.
  */
 public class ExposeFilterClassLoaderTest {
 
-  // todo - the test needs to be fixed, maybe we can take bundle jar approach and have a jar file in resources
   @Test
-  public void testExposedDataset() throws ClassNotFoundException, IOException {
-    String jarPath = JarFinder.getJar(ExposedDataset.class);
+  public void testExposedClass() throws ClassNotFoundException, IOException, URISyntaxException {
+
+    Set<String> annotations = Sets.newHashSet();
+    annotations.add(ExposeClass.class.getName());
+    Predicate<String> annotationPredicate = Predicates.in(annotations);
+    String jarPath = TestBundleJarApp.class.getClassLoader().getResource("purchase.jar").toURI().getPath();
+    LocationFactory lf = new LocalLocationFactory();
     File dsFile = Files.createTempDir();
     try {
-      Set<String> annotations = Sets.newHashSet();
-      annotations.add(ExposeClass.class.getName());
-      Predicate<String> annotationPredicate = Predicates.in(annotations);
-      LocationFactory lf = new LocalLocationFactory();
       BundleJarUtil.unpackProgramJar(lf.create(jarPath), dsFile);
-      ClassLoader dsClassLoader = new ExposeFilterClassLoader(dsFile, null,
+      ClassLoader dsClassLoader = new ExposeFilterClassLoader(dsFile, Thread.currentThread().getContextClassLoader(),
                                                               annotationPredicate);
-      dsClassLoader.loadClass(ExposedDataset.class.getName());
+      dsClassLoader.loadClass("co.cask.cdap.examples.purchase.PurchaseHistory");
     } catch (IOException e) {
       throw Throwables.propagate(e);
     } finally {
@@ -61,38 +70,24 @@ public class ExposeFilterClassLoaderTest {
   }
 
   @Test(expected = ClassNotFoundException.class)
-  public void testUnExposedDataset() throws ClassNotFoundException, IOException {
+  public void testUnExposedClass() throws ClassNotFoundException, IOException, URISyntaxException {
 
     Set<String> annotations = Sets.newHashSet();
     annotations.add(ExposeClass.class.getName());
     Predicate<String> annotationPredicate = Predicates.in(annotations);
-
-//    String jarPath = JarFinder.getJar(UnExposedDataset.class);
-    String jarPath = "/Users/shankar/project/cdap/examples/Purchase/target/Purchase-2.5.0-SNAPSHOT.jar";
+    String jarPath = TestBundleJarApp.class.getClassLoader().getResource("purchase.jar").toURI().getPath();
     LocationFactory lf = new LocalLocationFactory();
     File dsFile = Files.createTempDir();
     try {
       BundleJarUtil.unpackProgramJar(lf.create(jarPath), dsFile);
-      ClassLoader dsClassLoader = new ExposeFilterClassLoader(dsFile, null, annotationPredicate);
-      dsClassLoader.loadClass("co.cask.cdap.examples.purchase.PurchaseHistory");
+      ClassLoader dsClassLoader = new ExposeFilterClassLoader(dsFile, Thread.currentThread().getContextClassLoader(),
+                                                              annotationPredicate);
+      dsClassLoader.loadClass("co.cask.cdap.examples.purchase.PurchaseFlow");
     } catch (IOException e) {
       throw Throwables.propagate(e);
     } finally {
       DirUtils.deleteDirectoryContents(dsFile);
     }
-
   }
 
-  @ExposeClass
-  class ExposedDataset {
-    public void test() {
-
-    }
-  }
-
-  class UnExposedDataset {
-    public void test() {
-
-    }
-  }
 }

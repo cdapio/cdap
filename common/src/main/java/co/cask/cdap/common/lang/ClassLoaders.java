@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.lang;
 
+import co.cask.cdap.api.annotation.ExposeClass;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.common.internal.guava.ClassPath;
 import co.cask.cdap.common.lang.jar.ExposeFilterClassLoader;
@@ -34,6 +35,7 @@ import org.apache.twill.internal.utils.Dependencies;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.MalformedURLException;
@@ -73,7 +75,9 @@ public final class ClassLoaders {
   }
 
   public static CombineClassLoader newDatasetClassLoader(Set<File> datasetJars, Iterable<String> apiResourceList,
-                                                         ClassLoader parentClassLoader) throws MalformedURLException  {
+                                                         ClassLoader parentClassLoader,
+                                                         Predicate<String> annotationPredicates)
+    throws MalformedURLException  {
     Predicate<String> predicate = Predicates.in(Sets.newHashSet(apiResourceList));
     ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                     ClassLoaders.class.getClassLoader());
@@ -82,7 +86,7 @@ public final class ClassLoaders {
     for (File datasetJar : datasetJars) {
       datasetClassLoaders.add(new ExposeFilterClassLoader(datasetJar,
                                new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
-                                                      ImmutableList.of(parentClassLoader))));
+                                                      ImmutableList.of(parentClassLoader)), annotationPredicates));
     }
     return new CombineClassLoader(new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
                                                          ImmutableList.of(parentClassLoader)), datasetClassLoaders);

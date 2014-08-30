@@ -29,9 +29,11 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
 import co.cask.cdap.data.runtime.DatasetClassLoaders;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapper;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -41,7 +43,6 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionManager;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -55,6 +56,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -104,18 +106,12 @@ public class ExploreDisabledTest {
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "table1", DatasetProperties.EMPTY);
 
-
-    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                          getClass().getClassLoader());
-    DatasetTypeMeta typeMeta = datasetFramework.getType("keyStructValueTable");
-    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(parentClassLoader,
-                                                                                         typeMeta, locationFactory);
-    parentClassLoader = dsUtil.getClassLoader();
+    DatasetWrapper datasetWrapper = getDatasetWrapper("table1", "keyStructValueTable");
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("table1", DatasetDefinition.NO_ARGUMENTS, parentClassLoader);
+      (KeyStructValueTableDefinition.KeyStructValueTable) datasetWrapper.getDataset();
     Assert.assertNotNull(table);
     table.startTx(tx1);
 
@@ -141,7 +137,7 @@ public class ExploreDisabledTest {
 
     datasetFramework.deleteInstance("table1");
     datasetFramework.deleteModule("module1");
-    dsUtil.cleanup();
+    datasetWrapper.cleanup();
   }
 
   @Test
@@ -153,18 +149,12 @@ public class ExploreDisabledTest {
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("NotRecordScannableTableDef", "table2", DatasetProperties.EMPTY);
 
-
-    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                          getClass().getClassLoader());
-    DatasetTypeMeta typeMeta = datasetFramework.getType("NotRecordScannableTableDef");
-    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(parentClassLoader,
-                                                                                         typeMeta, locationFactory);
-    parentClassLoader = dsUtil.getClassLoader();
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
+    DatasetWrapper datasetWrapper = getDatasetWrapper("table2", "NotRecordScannableTableDef");
     NotRecordScannableTableDefinition.KeyValueTable table =
-      datasetFramework.getDataset("table2", DatasetDefinition.NO_ARGUMENTS, parentClassLoader);
+      (NotRecordScannableTableDefinition.KeyValueTable) datasetWrapper.getDataset();
     Assert.assertNotNull(table);
     table.startTx(tx1);
 
@@ -186,7 +176,7 @@ public class ExploreDisabledTest {
 
     datasetFramework.deleteInstance("table2");
     datasetFramework.deleteModule("module2");
-    dsUtil.cleanup();
+    datasetWrapper.cleanup();
   }
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
@@ -208,5 +198,16 @@ public class ExploreDisabledTest {
         new ExploreRuntimeModule().getInMemoryModules(),
         new ExploreClientModule()
     );
+  }
+
+  private DatasetWrapper getDatasetWrapper(String instanceName, String typeName)
+    throws DatasetManagementException, IOException {
+    ClassLoader parentClassLoader = Thread.currentThread().getContextClassLoader();
+    DatasetTypeMeta typeMeta = datasetFramework.getType(typeName);
+    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(parentClassLoader,
+                                                                                         typeMeta, locationFactory);
+    parentClassLoader = dsUtil.getClassLoader();
+    return new DatasetWrapper(dsUtil, datasetFramework.getDataset(instanceName, DatasetDefinition.NO_ARGUMENTS,
+                                                                  parentClassLoader));
   }
 }

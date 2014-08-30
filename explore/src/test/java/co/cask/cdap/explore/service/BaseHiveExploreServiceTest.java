@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
@@ -28,9 +29,13 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
+import co.cask.cdap.data.runtime.DatasetClassLoaders;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapper;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
@@ -39,6 +44,7 @@ import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
@@ -56,6 +62,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
@@ -215,6 +222,18 @@ public class BaseHiveExploreServiceTest {
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule()
     );
+  }
+
+  protected static DatasetWrapper getDatasetWrapper(String instanceName, String typeName)
+    throws DatasetManagementException, IOException {
+    ClassLoader parentClassLoader = Thread.currentThread().getContextClassLoader();
+
+    DatasetTypeMeta typeMeta = datasetFramework.getType(typeName);
+    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(parentClassLoader,
+                                                                                         typeMeta, locationFactory);
+    parentClassLoader = dsUtil.getClassLoader();
+    return new DatasetWrapper(dsUtil, datasetFramework.getDataset(instanceName, DatasetDefinition.NO_ARGUMENTS,
+                                                                  parentClassLoader));
   }
 
 }

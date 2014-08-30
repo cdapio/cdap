@@ -58,7 +58,6 @@ public class WorkflowTwillApplication implements TwillApplication {
       .build();
 
     Location programLocation = program.getJarLocation();
-    Set<Location> datasetJars = program.getDatasetJarLocations();
 
     TwillSpecification.Builder.MoreFile moreFile = TwillSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",
@@ -72,7 +71,7 @@ public class WorkflowTwillApplication implements TwillApplication {
       .add(programLocation.getName(), programLocation.toURI())
       .add("hConf.xml", hConfig.toURI())
       .add("cConf.xml", cConfig.toURI());
-    for (Location datasetJar : datasetJars) {
+    for (Location datasetJar : program.getDatasetJarLocations()) {
       moreFile.add(datasetJar.getName(), datasetJar.toURI());
     }
     return moreFile.apply().anyOrder().withEventHandler(eventHandler).build();

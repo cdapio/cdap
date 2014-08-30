@@ -79,7 +79,7 @@ public interface Program {
   ClassLoader getClassLoader();
 
   /**
-   * Returns the list of {@link Location Locations} of {@link co.cask.cdap.api.dataset.Dataset} jar's
+   * Returns the set of {@link Location Locations} of {@link co.cask.cdap.api.dataset.Dataset} jar's
    */
-  Set<Location> getDatasetJarLocations();
+  Iterable<Location> getDatasetJarLocations();
 }

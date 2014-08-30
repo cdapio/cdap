@@ -16,11 +16,14 @@
 
 package co.cask.cdap.data.runtime;
 
+import co.cask.cdap.api.annotation.ExposeClass;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
@@ -54,6 +57,11 @@ public class DatasetClassLoaders {
       List<DatasetModuleMeta> modulesToLoad = typeMeta.getModules();
       Set<File> datasetFiles = Sets.newHashSet();
       Set<URI> newModuleLocation = Sets.newHashSet();
+
+      Set<String> annotations = Sets.newHashSet();
+      annotations.add(ExposeClass.class.getName());
+      Predicate<String> annotationPredicate = Predicates.in(annotations);
+
       for (DatasetModuleMeta module : modulesToLoad) {
         if ((module.getJarLocation() != null) && (newModuleLocation.add(module.getJarLocation()) != false)) {
           File tempDir = Files.createTempDir();
@@ -63,7 +71,8 @@ public class DatasetClassLoaders {
       }
       if (!datasetFiles.isEmpty()) {
         return new DatasetClassLoaderUtil(ClassLoaders.newDatasetClassLoader
-          (datasetFiles, ApiResourceListHolder.getResourceList(), parentClassLoader), datasetFiles);
+          (datasetFiles, ApiResourceListHolder.getResourceList(),
+           parentClassLoader, annotationPredicate), datasetFiles);
       } else {
         return new DatasetClassLoaderUtil(parentClassLoader, datasetFiles);
       }

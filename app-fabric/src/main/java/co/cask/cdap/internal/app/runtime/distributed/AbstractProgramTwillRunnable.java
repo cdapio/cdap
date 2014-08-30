@@ -92,6 +92,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -180,8 +181,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       // Initialize log appender
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
-      Type datasetJarsType = new TypeToken<Set<String>>() { }.getType();
-      Set<String> datasetJars =
+      Type datasetJarsType = new TypeToken<List<String>>() { }.getType();
+      List<String> datasetJars =
         new Gson().fromJson(cmdLine.getOptionValue(RunnableOptions.DATASET_JARS), datasetJarsType);
 
       try {
@@ -377,7 +378,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       this.locationFactory = locationFactory;
     }
 
-    public Program create(String path, Set<String> datasetJars) throws IOException {
+    public Program create(String path, Iterable<String> datasetJars) throws IOException {
       Location location = locationFactory.create(path);
       Set<Location> datasetsJarLocation = Sets.newHashSet();
       for (String datasetJar : datasetJars) {

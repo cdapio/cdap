@@ -47,6 +47,7 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -127,13 +128,15 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
         });
         futures.add(future);
       }
-      Set<Location> datasetTypeJars = Sets.newHashSet();
+      List<Location> datasetTypeJars = Lists.newArrayList();
+      Set<URI> alreadyExisting = Sets.newHashSet();
+
       for (Map.Entry<String, DatasetCreationSpec> entry : appSpec.getDatasets().entrySet()) {
         DatasetTypeMeta typeMeta = datasetFramework.getType(entry.getValue().getTypeName());
         if (typeMeta != null) {
           for (DatasetModuleMeta moduleMeta : typeMeta.getModules()) {
-            if (moduleMeta.getJarLocation() != null) {
-              datasetTypeJars.add(locationFactory.create(moduleMeta.getJarLocation()));
+            if ((moduleMeta.getJarLocation() != null) &&  alreadyExisting.add(moduleMeta.getJarLocation())) {
+                datasetTypeJars.add(locationFactory.create(moduleMeta.getJarLocation()));
             }
           }
         }

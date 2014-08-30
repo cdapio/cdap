@@ -61,7 +61,6 @@ public final class FlowTwillApplication implements TwillApplication {
 
     Location programLocation = program.getJarLocation();
     String programName = programLocation.getName();
-    Set<Location> datasetJars = program.getDatasetJarLocations();
 
     TwillSpecification.Builder.RunnableSetter runnableSetter = null;
     for (Map.Entry<String, FlowletDefinition> entry  : spec.getFlowlets().entrySet()) {
@@ -80,7 +79,7 @@ public final class FlowTwillApplication implements TwillApplication {
         .withLocalFiles().add(programName, programLocation.toURI())
                          .add("hConf.xml", hConfig.toURI())
                          .add("cConf.xml", cConfig.toURI());
-      for (Location datasetJar : datasetJars) {
+      for (Location datasetJar : program.getDatasetJarLocations()) {
         moreFile.add(datasetJar.getName(), datasetJar.toURI());
       }
       runnableSetter = moreFile.apply();

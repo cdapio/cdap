@@ -43,5 +43,6 @@ public class DatasetClassLoaderUtil {
     for (File file : datasetTempFiles) {
       DirUtils.deleteDirectoryContents(file);
     }
+    datasetTempFiles.clear();
   }
 }

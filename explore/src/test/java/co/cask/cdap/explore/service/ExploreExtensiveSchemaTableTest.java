@@ -16,13 +16,10 @@
 
 package co.cask.cdap.explore.service;
 
-import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
-import co.cask.cdap.data.runtime.DatasetClassLoaders;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapper;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.test.SlowTests;
 import com.continuuity.tephra.Transaction;
@@ -35,15 +32,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.io.File;
-import java.util.List;
-
 /**
  * Painfully test a wide combination of types in a schema of a record scannable.
  */
 @Category(SlowTests.class)
 public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest {
-  private static DatasetClassLoaderUtil dsUtil = null;
+  private static DatasetWrapper datasetWrapper;
   @BeforeClass
   public static void start() throws Exception {
     startServices(CConfiguration.create());
@@ -53,14 +47,11 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("ExtensiveSchemaTable", "my_table", DatasetProperties.EMPTY);
 
-    ClassLoader parentClassLoader = Thread.currentThread().getContextClassLoader();
-    DatasetTypeMeta typeMeta = datasetFramework.getType("ExtensiveSchemaTable");
-    dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(parentClassLoader, typeMeta, locationFactory);
-    parentClassLoader = dsUtil.getClassLoader();
 
     // Accessing dataset instance to perform data operations
+    datasetWrapper = getDatasetWrapper("my_table", "ExtensiveSchemaTable");
     ExtensiveSchemaTableDefinition.ExtensiveSchemaTable table =
-      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, parentClassLoader);
+      (ExtensiveSchemaTableDefinition.ExtensiveSchemaTable) datasetWrapper.getDataset();
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);
@@ -98,8 +89,8 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
   public static void stop() throws Exception {
     datasetFramework.deleteInstance("my_table");
     datasetFramework.deleteModule("extensiveSchema");
-    if (dsUtil != null) {
-      dsUtil.cleanup();
+    if (datasetWrapper != null) {
+      datasetWrapper.cleanup();
     }
   }
 

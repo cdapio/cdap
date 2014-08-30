@@ -59,7 +59,6 @@ public class ServiceTwillApplication implements TwillApplication {
       .withRunnable();
 
     Location programLocation = program.getJarLocation();
-    Set<Location> datasetJars = program.getDatasetJarLocations();
 
     String programName = programLocation.getName();
     TwillSpecification.Builder.RunnableSetter runnableSetter = null;
@@ -73,7 +72,7 @@ public class ServiceTwillApplication implements TwillApplication {
         .withLocalFiles().add(programName, programLocation.toURI())
                          .add("hConf.xml", hConfig.toURI())
                          .add("cConf.xml", cConfig.toURI());
-      for (Location datasetJar : datasetJars) {
+      for (Location datasetJar : program.getDatasetJarLocations()) {
         moreFile.add(datasetJar.getName(), datasetJar.toURI());
       }
       runnableSetter = moreFile.apply();

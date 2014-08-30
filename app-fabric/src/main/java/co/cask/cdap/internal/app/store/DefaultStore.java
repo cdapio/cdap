@@ -174,13 +174,14 @@ public class DefaultStore implements Store {
     return Programs.create(programLocation, getDatasetJarsFromAppSpec(appMeta.getSpec()));
   }
 
-  private Set<Location> getDatasetJarsFromAppSpec(ApplicationSpecification appSpec) throws DatasetManagementException {
-    Set<Location> datasetTypeJars = Sets.newHashSet();
+  private List<Location> getDatasetJarsFromAppSpec(ApplicationSpecification appSpec) throws DatasetManagementException {
+    List<Location> datasetTypeJars = Lists.newArrayList();
+    Set<URI> existingTypes = Sets.newHashSet();
     for (Map.Entry<String, DatasetCreationSpec> entry : appSpec.getDatasets().entrySet()) {
       DatasetTypeMeta typeMeta = dsFramework.getType(entry.getValue().getTypeName());
       if (typeMeta != null) {
         for (DatasetModuleMeta moduleMeta : typeMeta.getModules()) {
-          if (moduleMeta.getJarLocation() != null) {
+          if ((moduleMeta.getJarLocation() != null) &&  existingTypes.add(moduleMeta.getJarLocation())) {
             datasetTypeJars.add(locationFactory.create(moduleMeta.getJarLocation()));
           }
         }

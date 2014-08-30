@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.program;
 
+import co.cask.cdap.api.annotation.ExposeClass;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
@@ -27,8 +28,9 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
@@ -39,7 +41,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.List;
 import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -60,7 +61,7 @@ public final class DefaultProgram implements Program {
   private final File expandFolder;
   private final ClassLoader parentClassLoader;
   private final File specFile;
-  private final Set<Location> datasetTypeJars;
+  private final Iterable<Location> datasetTypeJars;
   private final Set<File> datasetsJarPath;
   private boolean expanded;
   private ClassLoader classLoader;
@@ -74,7 +75,7 @@ public final class DefaultProgram implements Program {
    *                     the {@link #getClassLoader()} methods would throw exception.
    * @param parentClassLoader Parent classloader for the program class.
    */
-  DefaultProgram(Location programJarLocation, Set<Location> datasetTypeJars,
+  DefaultProgram(Location programJarLocation, Iterable<Location> datasetTypeJars,
                  @Nullable File expandFolder, ClassLoader parentClassLoader) throws IOException {
     this.programJarLocation = programJarLocation;
     this.datasetTypeJars = datasetTypeJars;
@@ -106,7 +107,7 @@ public final class DefaultProgram implements Program {
     }
   }
 
-  public DefaultProgram(Location programJarLocation, Set<Location> datasetTypeJars,
+  public DefaultProgram(Location programJarLocation, Iterable<Location> datasetTypeJars,
                         ClassLoader classLoader) throws IOException {
     this(programJarLocation, datasetTypeJars, null, null);
     this.classLoader = classLoader;
@@ -168,7 +169,7 @@ public final class DefaultProgram implements Program {
   }
 
   @Override
-  public Set<Location> getDatasetJarLocations() {
+  public Iterable<Location> getDatasetJarLocations() {
     return datasetTypeJars;
   }
 
@@ -177,9 +178,13 @@ public final class DefaultProgram implements Program {
     if (classLoader == null) {
       expandIfNeeded();
       try {
+        Set<String> annotations = Sets.newHashSet();
+        annotations.add(ExposeClass.class.getName());
+        Predicate<String> annotationPredicate = Predicates.in(annotations);
         CombineClassLoader datasetFilterClassLoader =
           ClassLoaders.newDatasetClassLoader(datasetsJarPath,
-                                                     ApiResourceListHolder.getResourceList(), parentClassLoader);
+                                             ApiResourceListHolder.getResourceList(), parentClassLoader,
+                                             annotationPredicate);
         classLoader = new ProgramClassLoader(expandFolder, datasetFilterClassLoader);
       } catch (MalformedURLException e) {
         throw Throwables.propagate(e);
