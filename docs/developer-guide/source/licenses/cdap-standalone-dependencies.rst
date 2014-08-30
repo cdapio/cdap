@@ -1,11 +1,11 @@
-.. :author: Cask, Inc.
+.. :author: Cask Data, Inc.
    :version: 2.4.0
 
 ============================================
 Cask Data Application Platform 2.4.0
 ============================================
 
-Cask Data Application Platform SingleNode Dependencies
+Cask Data Application Platform Standalone Dependencies
 ------------------------------------------------------
 
 .. rst2pdf: PageBreak
@@ -15,7 +15,7 @@ Cask Data Application Platform SingleNode Dependencies
 .. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
 .. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
 
-.. csv-table:: **Cask Data Application Platform SingleNode Dependencies**
+.. csv-table:: **Cask Data Application Platform Standalone Dependencies**
    :header: "Package","Version","Classifier","License","License URL"
    :widths: 20, 10, 10, 20, 30
 
