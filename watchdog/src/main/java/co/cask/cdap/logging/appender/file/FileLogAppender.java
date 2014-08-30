@@ -165,7 +165,7 @@ public class FileLogAppender extends LogAppender {
         logFileWriter.close();
       }
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      LOG.error("Got exception while closing logFileWriter", e);
     }
   }
 
@@ -175,8 +175,8 @@ public class FileLogAppender extends LogAppender {
       return;
     }
 
-    super.stop();
     scheduledExecutor.shutdownNow();
     close();
+    super.stop();
   }
 }
