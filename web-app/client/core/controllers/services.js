@@ -122,7 +122,7 @@ define([], function () {
         $('.services-instances-input').keyup();
       },500);
 
-      if (input === service.requested) {
+      if (service && service.requested === input) {
         return; //no-op
       }
       var isInvalid = C.Util.isInvalidNumInstances(inputStr, service.min, service.max);
