@@ -109,7 +109,7 @@ define([], function () {
         $('#instancesInput').keyup();
       },500);
 
-      if (input === this.get('model').instances) {
+      if (this.get('model') && this.get('model').instances === input) {
         return; //no-op
       }
       var isInvalid = C.Util.isInvalidNumInstances(inputStr);
