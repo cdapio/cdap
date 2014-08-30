@@ -175,8 +175,8 @@ public class FileLogAppender extends LogAppender {
       return;
     }
 
-    super.stop();
     scheduledExecutor.shutdownNow();
     close();
+    super.stop();
   }
 }
