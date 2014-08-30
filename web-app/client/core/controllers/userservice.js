@@ -46,7 +46,7 @@ define(['core/controllers/services'], function (servicesController) {
         $('.services-instances-input').keyup();
       },500);
 
-      if (runnable && runnable.requested === input) {
+      if (input === runnable.requested) {
         return; //no-op
       }
       var isInvalid = C.Util.isInvalidNumInstances(inputStr);
