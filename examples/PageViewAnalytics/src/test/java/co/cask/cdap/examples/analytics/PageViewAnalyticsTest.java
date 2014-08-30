@@ -76,16 +76,16 @@ public class PageViewAnalyticsTest extends TestBase {
     StreamWriter streamWriter = appManager.getStreamWriter("logEventStream");
 
     streamWriter.send("1.202.218.8 - - [12/Apr/2012:02:13:43 -0400] " +
-    "\"GET /product.html HTTP/1.0\" 404 208 \"http://www.continuuity.com\" \"Mozilla/5.0\"");
+    "\"GET /product.html HTTP/1.0\" 404 208 \"http://www.example.org\" \"Mozilla/5.0\"");
     streamWriter.send("124.115.0.140 - - [12/Apr/2012:02:28:49 -0400] " +
-    "\"GET /product.html HTTP/1.1\" 200 392 \"http://www.continuuity.com\" " +
+    "\"GET /product.html HTTP/1.1\" 200 392 \"http://www.example.org\" " +
     "\"Sosospider+(+http://help.soso.com/webspider.htm)\"");
     streamWriter.send("83.160.166.85 - - [12/Apr/2012:22:59:12 -0400] " +
-    "\"GET /career.html HTTP/1.1\" 404 208 \"http://www.continuuity.com\" \"portscout/0.8.1\"");
+    "\"GET /career.html HTTP/1.1\" 404 208 \"http://www.example.org\" \"portscout/0.8.1\"");
     streamWriter.send("1.202.218.8 - - [12/Apr/2012:02:13:43 -0400] " +
-                        "\"GET /career.html HTTP/1.0\" 404 208 \"http://www.continuuity.com\" \"Mozilla/5.0\"");
+                        "\"GET /career.html HTTP/1.0\" 404 208 \"http://www.example.org\" \"Mozilla/5.0\"");
     streamWriter.send("1.202.218.8 - - [12/Apr/2012:02:13:43 -0400] " +
-                        "\"GET /career.html HTTP/1.0\" 404 208 \"http://www.continuuity.com\" \"Mozilla/5.0\"");
+                        "\"GET /career.html HTTP/1.0\" 404 208 \"http://www.example.org\" \"Mozilla/5.0\"");
     // This log is not to be processed for the lack of referred URI. It is counted by the logs.noreferrer Metric.
     streamWriter.send("1.202.218.8 - - [12/Apr/2012:02:13:43 -0400] " +
                         "\"GET /career.html HTTP/1.0\" 404 208 \"-\" \"Mozilla/5.0\"");
@@ -102,8 +102,8 @@ public class PageViewAnalyticsTest extends TestBase {
       // Call the Procedure
       ProcedureClient client = procedureManager.getClient();
 
-      // Verify get-dist by passing the page URI in a runtime argument {"page": "http://www.continuuity.com"}
-      String response = client.query("getDistribution", ImmutableMap.of("page", "http://www.continuuity.com"));
+      // Verify get-dist by passing the page URI in a runtime argument {"page": "http://www.example.org"}
+      String response = client.query("getDistribution", ImmutableMap.of("page", "http://www.example.org"));
       Map<String, Double> results = GSON.fromJson(response, new TypeToken<Map<String, Double>>() { }.getType());
       Assert.assertEquals(0.4, results.get("/product.html"), OFF);
       Assert.assertEquals(0.6, results.get("/career.html"), OFF);

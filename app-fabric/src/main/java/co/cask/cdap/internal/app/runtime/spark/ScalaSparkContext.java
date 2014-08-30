@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.spark.SparkContextFactory;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;

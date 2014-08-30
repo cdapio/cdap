@@ -32,7 +32,7 @@ SETLOCAL ENABLEDELAYEDEXPANSION
 
 REM Process access token
 SET ACCESS_TOKEN=
-SET ACCESS_TOKEN_FILE=%HOMEPATH%\.continuuity.accesstoken
+SET ACCESS_TOKEN_FILE=%HOMEPATH%\.cdap.accesstoken
 if exist %ACCESS_TOKEN_FILE% set /p ACCESS_TOKEN=<%ACCESS_TOKEN_FILE%
 
 echo Sending events to %STREAM%...

@@ -22,7 +22,7 @@ import co.cask.cdap.api.data.batch.RecordScanner;
 import co.cask.cdap.api.data.batch.Scannables;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
-import co.cask.cdap.api.data.dataset.DataSetException;
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.MultiObjectStore;

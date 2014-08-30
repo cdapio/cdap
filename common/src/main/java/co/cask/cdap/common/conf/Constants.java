@@ -422,21 +422,44 @@ public final class Constants {
     public static final String AUTH_HANDLER_CONFIG_BASE = "security.authentication.handler.";
     /** Authentication Login Module class name */
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
-    /** Configuration for enabling SSL */
-    public static final String SSL_ENABLED = "security.server.ssl.enabled";
-    /** SSL secured port for ExternalAuthentication */
-    public static final String AUTH_SERVER_SSL_PORT = "security.server.ssl.port";
-    /** SSL keystore path */
-    public static final String SSL_KEYSTORE_PATH = "security.server.ssl.keystore.path";
-    /** SSL keystore password */
-    public static final String SSL_KEYSTORE_PASSWORD = "security.server.ssl.keystore.password";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
 
-    /** Path to the Kerberos keytab file used by CDAP */
-    public static final String CFG_CDAP_MASTER_KRB_KEYTAB_PATH = "cdap.master.kerberos.keytab";
-    /** Kerberos principal used by CDAP */
-    public static final String CFG_CDAP_MASTER_KRB_PRINCIPAL = "cdap.master.kerberos.principal";
+    /**
+     * Security configuration for Router.
+     */
+    public static final class Router {
+      /** Enables SSL */
+      public static final String SSL_ENABLED = "router.ssl.enabled";
+      /** SSL port */
+      public static final String SSL_PORT = "router.ssl.port";
+      /** SSL keystore location */
+      public static final String SSL_KEYSTORE_PATH = "router.ssl.keystore.path";
+      /** SSL keystore type */
+      public static final String SSL_KEYSTORE_TYPE = "router.ssl.keystore.type";
+      /** SSL keystore key password */
+      public static final String SSL_KEYPASSWORD = "router.ssl.keystore.keypassword";
+      /** SSL keystore password */
+      public static final String SSL_KEYSTORE_PASSWORD = "router.ssl.keystore.password";
+    }
+
+    /**
+     * Security configuration for ExternalAuthenticationServer.
+     */
+    public static final class AuthenticationServer {
+      /** Enables SSL */
+      public static final String SSL_ENABLED = "security.auth.server.ssl.enabled";
+      /** SSL port */
+      public static final String SSL_PORT = "security.auth.server.ssl.port";
+      /** SSL keystore location */
+      public static final String SSL_KEYSTORE_PATH = "security.auth.server.ssl.keystore.path";
+      /** SSL keystore type */
+      public static final String SSL_KEYSTORE_TYPE = "security.auth.server.ssl.keystore.type";
+      /** SSL keystore key password */
+      public static final String SSL_KEYPASSWORD = "security.auth.server.ssl.keystore.keypassword";
+      /** SSL keystore password */
+      public static final String SSL_KEYSTORE_PASSWORD = "security.auth.server.ssl.keystore.password";
+    }
   }
 
   /**
@@ -549,24 +572,4 @@ public final class Constants {
    * NOTE: value should be in sync with the one used by UI.
    */
   public static final String DEVELOPER_ACCOUNT_ID = "developer";
-
-  /**
-   * Constants related to external systems.
-   */
-  public static final class External {
-    /**
-     * Constants used by Java security.
-     */
-    public static final class JavaSecurity {
-      public static final String ENV_AUTH_LOGIN_CONFIG = "java.security.auth.login.config";
-    }
-
-    /**
-     * Constants used by Zookeeper.
-     */
-    public static final class Zookeeper {
-      public static final String ENV_AUTH_PROVIDER_1 = "zookeeper.authProvider.1";
-      public static final String ENV_ALLOW_SASL_FAILED_CLIENTS = "zookeeper.allowSaslFailedClients";
-    }
-  }
 }

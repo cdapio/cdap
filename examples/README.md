@@ -1,6 +1,6 @@
 # Cask Data Application Platform  Examples
 
-This /examples directory contains example apps for the Cask Data Application Platform (CASK or Cask DAP). 
+This /examples directory contains example apps for the Cask Data Application Platform (CDAP). 
 They are not compiled as part of the master build, and they should only depend 
 on the API jars (plus their dependencies). However, they may also be provided 
 in their compiled forms as JAR files in a release.

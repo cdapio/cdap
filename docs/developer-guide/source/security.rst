@@ -34,67 +34,40 @@ Enabling Security
 ==================
 To enable security in CDAP, add these properties to ``cdap-site.xml``:
 
-==========================================  ===========
+==========================================  ==============
    Property                                   Value
-==========================================  ===========
+==========================================  ==============
 security.enabled                              true
 security.auth.server.address                  <hostname>
-==========================================  ===========
+==========================================  ==============
 
-
-Configuring SSL
-================
+Configuring SSL for the Authentication Server
+==============================================
 To configure the granting of ``AccessToken``\s via SSL, add these properties to ``cdap-site.xml``:
 
-==========================================  ===========
-   Property                                   Value
-==========================================  ===========
-security.server.ssl.enabled                   true
-security.server.ssl.keystore.path            <path>
-security.server.ssl.keystore.password        <password>
-==========================================  ===========
+=============================================  =======================
+   Property                                      Value
+=============================================  =======================
+security.auth.server.ssl.enabled                  true
+security.auth.server.ssl.keystore.path            <path>
+security.auth.server.ssl.keystore.password        <password>
+security.auth.server.ssl.keystore.keypassword     <password>
+security.auth.server.ssl.keystore.type            <keystore-file-type>
+=============================================  =======================
 
-Configuring Kerberos (required)
-================================
-To configure which Kerberos keytabs and principals are to be used for various CDAP services, add these properties to
-``cdap-site.xml``:
+Configuring SSL for the Router
+==============================================
+To configure SSL for the Router, add these properties to ``cdap-site.xml``:
 
-==========================================  =============================
-   Property                                   Value
-==========================================  =============================
-cdap.master.kerberos.keytab                  <kerberos-keytab-file-path>
-cdap.master.kerberos.principal               <kerberos-principal>
-==========================================  =============================
-
-Configuring Zookeeper (required)
-=================================
-To configure Zookeeper to enable SASL authentication, add the following to your ``zoo.cfg``::
-
-  authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider
-  jaasLoginRenew=3600000
-  kerberos.removeHostFromPrincipal=true
-  kerberos.removeRealmFromPrincipal=true
-
-This will let Zookeeper use the ``SASLAuthenticationProvider`` as an auth provider, and the ``jaasLoginRenew`` line
-will cause the Zookeeper server to renew its Kerberos ticket once an hour.
-
-Then, create a ``jaas.conf`` file for your Zookeeper server::
-
-  Server {
-       com.sun.security.auth.module.Krb5LoginModule required
-       useKeyTab=true
-       keyTab="/path/to/zookeeper.keytab"
-       storeKey=true
-       useTicketCache=false
-       principal="<your-zookeeper-principal>";
-  };
-
-The keytab file must be readable by the Zookeeper server, and ``<your-zookeeper-principal>`` must correspond
-to the keytab file.
-
-Finally, start Zookeeper server with the following JVM option::
-
-  -Djava.security.auth.login.config=/path/to/jaas.conf
+================================    =======================
+   Property                           Value
+================================    =======================
+router.ssl.enabled                    true
+router.ssl.keystore.path              <path>
+router.ssl.keystore.password          <password>
+router.ssl.keystore.keypassword       <password>
+router.ssl.keystore.type              <keystore-file-type>
+================================    =======================
 
 Enabling Access Logging
 ========================
