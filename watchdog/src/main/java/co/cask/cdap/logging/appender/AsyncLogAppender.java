@@ -82,7 +82,9 @@ public final class AsyncLogAppender extends LogAppender {
     // No need to stop logAppender here since asyncAppender stops it.
     // However, we will need to wait until logAppender has completely stopped, since the wait time in AsyncAppender
     // may not be sufficient for a clean shutdown.
-    while (logAppender.isStarted()) {
+    long startTime = System.currentTimeMillis();
+    while (logAppender.isStarted() &&
+      System.currentTimeMillis() - startTime < TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS)) {
       try {
         TimeUnit.MILLISECONDS.sleep(100);
       } catch (InterruptedException e) {

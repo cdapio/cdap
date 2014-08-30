@@ -171,17 +171,12 @@ public class FileLogAppender extends LogAppender {
 
   @Override
   public void stop() {
-    try {
-      if (!stopped.compareAndSet(false, true)) {
-        return;
-      }
-
-      scheduledExecutor.shutdownNow();
-      close();
-    } finally {
-      // Since we may wait for this appender to set stop status in Async appender, we need to make sure to update the
-      // status even on exceptions being thrown.
-      super.stop();
+    if (!stopped.compareAndSet(false, true)) {
+      return;
     }
+
+    scheduledExecutor.shutdownNow();
+    close();
+    super.stop();
   }
 }
