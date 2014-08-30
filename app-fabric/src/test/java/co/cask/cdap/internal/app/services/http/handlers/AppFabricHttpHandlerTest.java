@@ -146,6 +146,47 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     }
   }
 
+  private void scheduleHistoryCheck(int retries, String url, int expected) throws Exception {
+    int trial = 0;
+    int workflowRuns = 0;
+    List<Map<String, String>> history;
+    String json;
+    HttpResponse response;
+    while (trial++ < retries) {
+      response = doGet(url);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      json = EntityUtils.toString(response.getEntity());
+      history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+      workflowRuns = history.size();
+      if (workflowRuns > expected) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertTrue(workflowRuns > expected);
+  }
+
+  private void scheduleStatusCheck(int retires, String url,
+                                   String expected) throws Exception {
+    int trial = 0;
+    String status = null;
+    String json = null;
+    Map<String, String> output;
+    HttpResponse response;
+    while (trial++ < retires) {
+      response = doGet(url);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      json = EntityUtils.toString(response.getEntity());
+      output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
+      status = output.get("status");
+      if (status.equals(expected)) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertEquals(status, expected);
+  }
+
   private void historyStatusWithRetry(String url, int size) throws Exception {
     int trials = 0;
     while (trials++ < 5) {
@@ -952,23 +993,12 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertNotNull(scheduleId);
     Assert.assertFalse(scheduleId.isEmpty());
 
-    TimeUnit.SECONDS.sleep(5);
-    response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
-
-    int workflowRuns = history.size();
-    Assert.assertTrue(workflowRuns >= 1);
+    scheduleHistoryCheck(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history", 0);
 
     //Check suspend status
     String scheduleStatus = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status",
                                           scheduleId);
-    response = doGet(scheduleStatus);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    Map<String, String> output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
-    Assert.assertEquals("SCHEDULED", output.get("status"));
+    scheduleStatusCheck(5, scheduleStatus, "SCHEDULED");
 
     String scheduleSuspend = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/suspend",
                                            scheduleId);
@@ -977,20 +1007,15 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     //check paused state
-    scheduleStatus = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status", scheduleId);
-    response = doGet(scheduleStatus);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
-    Assert.assertEquals("SUSPENDED", output.get("status"));
+    scheduleStatusCheck(5, scheduleStatus, "SUSPENDED");
 
     TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
 
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history");
     json = EntityUtils.toString(response.getEntity());
-    history = new Gson().fromJson(json,
+    List<Map<String, String>> history = new Gson().fromJson(json,
                                   LIST_MAP_STRING_STRING_TYPE);
-    workflowRuns = history.size();
+    int workflowRuns = history.size();
 
     //Sleep for some time and verify there are no more scheduled jobs after the suspend.
     TimeUnit.SECONDS.sleep(10);
@@ -1008,46 +1033,22 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     response = doPost(scheduleResume);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    //Sleep for some time and verify there are no more scheduled jobs after the pause.
-    TimeUnit.SECONDS.sleep(3);
-    response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    json = EntityUtils.toString(response.getEntity());
-    history = new Gson().fromJson(json,
-                                  LIST_MAP_STRING_STRING_TYPE);
-
-    int workflowRunsAfterResume = history.size();
-    //Verify there is atleast one run after the pause
-    Assert.assertTrue(workflowRunsAfterResume > workflowRunsAfterSuspend + 1);
+    scheduleHistoryCheck(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history", workflowRunsAfterSuspend);
 
     //check scheduled state
-    scheduleStatus = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status", scheduleId);
-    response = doGet(scheduleStatus);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
-    Assert.assertEquals("SCHEDULED", output.get("status"));
+    scheduleStatusCheck(5, scheduleStatus, "SCHEDULED");
 
     //Check status of a non existing schedule
     String notFoundSchedule = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status",
                                             "invalidId");
 
-    response = doGet(notFoundSchedule);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
-    Assert.assertEquals("NOT_FOUND", output.get("status"));
+    scheduleStatusCheck(5, notFoundSchedule, "NOT_FOUND");
 
     response = doPost(scheduleSuspend);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     //check paused state
-    response = doGet(scheduleStatus);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
-    Assert.assertEquals("SUSPENDED", output.get("status"));
+    scheduleStatusCheck(5, scheduleStatus, "SUSPENDED");
 
     TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
 

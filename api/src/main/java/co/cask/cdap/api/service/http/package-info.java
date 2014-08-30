@@ -15,13 +15,7 @@
  */
 
 /**
- * Implements DataSets for object stores and indexed, key/value, and time series tables.
- * <ul>
- * <li>{@link co.cask.cdap.api.data.dataset.IndexedTable} implements a table that can be accessed via a secondary
- * key</li>
- * <li>{@link co.cask.cdap.api.data.dataset.KeyValueTable} implements a simple key/value dataset on top of
- * a table</li>
- * <li>{@link co.cask.cdap.api.data.dataset.SimpleTimeseriesTable} implements a time series dataset</li>
- * </ul>
+ * Defines a service for handling HTTP requests. Refer to {@link co.cask.cdap.api.service.http.HttpServiceHandler}
+ * for details.
  */
-package co.cask.cdap.api.data.dataset;
+package co.cask.cdap.api.service.http;

@@ -1,9 +1,9 @@
-.. :author: Cask, Inc.
+.. :author: Cask Data, Inc.
    :description: Introduction to Testing, Debugging, and Troubleshooting the Cask Data Application Platform
 
-================================
-CDAP Testing and Debugging Guide
-================================
+==========================================================
+Cask Data Application Platform Testing and Debugging Guide
+==========================================================
 
 **Introduction to Testing, Debugging, and Troubleshooting Cask Data Application Platform (CDAP) Applications**
 
@@ -13,7 +13,7 @@ Testing CDAP Applications
 Strategies in Testing Applications
 ----------------------------------
 
-The CDAP comes with a convenient way to unit test your Applications.
+CDAP comes with a convenient way to unit test your Applications.
 The base for these tests is ``AppTestBase``, which is packaged
 separately from the API in its own artifact because it depends on the
 CDAP’s runtime classes. You can include it in your test dependencies
@@ -190,18 +190,18 @@ or prepare statements and execute queries, then iterate over the results set and
 Debugging CDAP Applications
 ==============================
 
-Debugging an Application in Local DAP
------------------------------------------
-Any CDAP Application can be debugged in the Local DAP
-by attaching a remote debugger to the DAP JVM. To enable remote
+Debugging an Application in Standalone CDAP
+-------------------------------------------
+Any CDAP Application can be debugged in the Standalone CDAP
+by attaching a remote debugger to the CDAP JVM. To enable remote
 debugging:
 
-#. Start the Local DAP with the ``--enable-debug`` option specifying ``port 5005``.
+#. Start the Standalone CDAP with the ``--enable-debug`` option specifying ``port 5005``.
 
-   The DAP should confirm that the debugger port is open with a message such as
+   The CDAP should confirm that the debugger port is open with a message such as
    ``Remote debugger agent started on port 5005``.
 
-#. Deploy (for example) the *HelloWorld* Application to the DAP by dragging and dropping the
+#. Deploy (for example) the *HelloWorld* Application to the CDAP by dragging and dropping the
    ``HelloWorld.jar`` file from the ``/examples/HelloWorld`` directory onto the CDAP Console.
 
 #. Open the *HelloWorld* Application in an IDE and connect to the remote debugger.
@@ -210,7 +210,7 @@ For more information, see `Attaching a Debugger`_.
 
 :Note:  Currently, debugging is not supported under Windows.
 
-Debugging an Application in Distributed DAP
+Debugging an Application in Distributed CDAP
 -----------------------------------------------
 
 .. highlight:: console
@@ -234,7 +234,7 @@ runtime arguments in the exact same way as you normally would start a Flow.
 Once the Flow is running, each Flowlet will detect an available port in its container
 and open that port for attaching a debugger.
 To find out the address of a container’s host and the container’s debug port, you can query
-the DAP for a Procedure or Flow’s live info via HTTP::
+the CDAP for a Procedure or Flow’s live info via HTTP::
 
   GET <base-url>/apps/WordCount/flows/WordCounter/live-info
 
@@ -298,7 +298,7 @@ Debugging with IntelliJ
 
 #. Create a debug configuration by entering a name, for example, ``Cask``.
 #. Enter the host name, for example, ``localhost`` or ``node-1003.my.cluster.net``
-   in the Port field.
+   in the Host field.
 #. Enter the debugging port, for example, ``5005`` in the Port field:
 
    .. image:: _images/IntelliJ_2.png
@@ -438,7 +438,7 @@ Dumping the Transaction Manager
 .. highlight:: console
 
 CDAP comes bundled with a script that allows you to dump the state of the internal
-transaction manager into a local file to allow further investigation. If your DAP Instance
+transaction manager into a local file to allow further investigation. If your CDAP Instance
 tends to become slow, you can use this tool to detect the incriminating transactions.
 This script is called ``tx-debugger`` (on Windows, it is ``tx-debugger.bat``).
 
