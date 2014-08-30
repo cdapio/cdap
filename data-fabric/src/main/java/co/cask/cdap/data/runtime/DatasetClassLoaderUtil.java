@@ -29,9 +29,9 @@ import java.util.Set;
  */
 public class DatasetClassLoaderUtil {
   ClassLoader classLoader;
-  Set<File> datasetTempFiles;
+  Iterable<File> datasetTempFiles;
 
-  public DatasetClassLoaderUtil(ClassLoader classLoader, Set<File> datasetTempFiles) {
+  public DatasetClassLoaderUtil(ClassLoader classLoader, Iterable<File> datasetTempFiles) {
     this.classLoader = classLoader;
     this.datasetTempFiles = datasetTempFiles;
   }
@@ -43,6 +43,5 @@ public class DatasetClassLoaderUtil {
     for (File file : datasetTempFiles) {
       DirUtils.deleteDirectoryContents(file);
     }
-    datasetTempFiles.clear();
   }
 }

@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.lang.AnnotationListHolder;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
@@ -125,14 +126,10 @@ public class DatasetTypeManager extends AbstractIdleService {
               datasetJars.add(unpackedLocation);
             }
 
-            // expose class annotation predicate
-            Set<String> annotations = Sets.newHashSet();
-            annotations.add(ExposeClass.class.getName());
-            Predicate<String> annotationPredicate = Predicates.in(annotations);
-
             cl = jarLocation == null ? this.getClass().getClassLoader() :
-              ClassLoaders.newDatasetClassLoader(datasetJars, ApiResourceListHolder.getResourceList(),
-                                                 this.getClass().getClassLoader(), annotationPredicate);
+              ClassLoaders.newAnnotationFilterClassLoader(datasetJars, ApiResourceListHolder.getResourceList(),
+                                                          this.getClass().getClassLoader(),
+                                                          AnnotationListHolder.getAnnotationList());
             @SuppressWarnings("unchecked")
             Class clazz = ClassLoaders.loadClass(className, cl, this);
             module = DatasetModules.getDatasetModule(clazz);

@@ -18,6 +18,7 @@ package co.cask.cdap.app.program;
 
 import co.cask.cdap.api.annotation.ExposeClass;
 import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.common.lang.AnnotationListHolder;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
@@ -178,13 +179,10 @@ public final class DefaultProgram implements Program {
     if (classLoader == null) {
       expandIfNeeded();
       try {
-        Set<String> annotations = Sets.newHashSet();
-        annotations.add(ExposeClass.class.getName());
-        Predicate<String> annotationPredicate = Predicates.in(annotations);
         CombineClassLoader datasetFilterClassLoader =
-          ClassLoaders.newDatasetClassLoader(datasetsJarPath,
-                                             ApiResourceListHolder.getResourceList(), parentClassLoader,
-                                             annotationPredicate);
+          ClassLoaders.newAnnotationFilterClassLoader(datasetsJarPath,
+                                                      ApiResourceListHolder.getResourceList(), parentClassLoader,
+                                                      AnnotationListHolder.getAnnotationList());
         classLoader = new ProgramClassLoader(expandFolder, datasetFilterClassLoader);
       } catch (MalformedURLException e) {
         throw Throwables.propagate(e);

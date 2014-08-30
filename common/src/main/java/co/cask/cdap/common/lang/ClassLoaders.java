@@ -74,11 +74,14 @@ public final class ClassLoaders {
                                                                          ImmutableList.of(parentClassLoader)));
   }
 
-  public static CombineClassLoader newDatasetClassLoader(Set<File> datasetJars, Iterable<String> apiResourceList,
-                                                         ClassLoader parentClassLoader,
-                                                         Predicate<String> annotationPredicates)
+  public static CombineClassLoader newAnnotationFilterClassLoader(Iterable<File> datasetJars,
+                                                                  Iterable<String> apiResourceList,
+                                                                  ClassLoader parentClassLoader,
+                                                                  Iterable<String> annotationList)
     throws MalformedURLException  {
     Predicate<String> predicate = Predicates.in(Sets.newHashSet(apiResourceList));
+    Predicate<String> annotationPredicate = Predicates.in(Sets.newHashSet(annotationList));
+
     ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                     ClassLoaders.class.getClassLoader());
 
@@ -86,7 +89,7 @@ public final class ClassLoaders {
     for (File datasetJar : datasetJars) {
       datasetClassLoaders.add(new ExposeFilterClassLoader(datasetJar,
                                new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
-                                                      ImmutableList.of(parentClassLoader)), annotationPredicates));
+                                                      ImmutableList.of(parentClassLoader)), annotationPredicate));
     }
     return new CombineClassLoader(new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
                                                          ImmutableList.of(parentClassLoader)), datasetClassLoaders);
