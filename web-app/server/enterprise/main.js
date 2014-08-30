@@ -41,7 +41,7 @@ var EntServer = function() {
     self.logger = self.getLogger('console', 'Enterprise UI');
     self.setCookieSession(self.cookieName, self.secret);
     self.configureExpress();
-  }
+  });
 };
 util.inherits(EntServer, WebAppServer);
 
