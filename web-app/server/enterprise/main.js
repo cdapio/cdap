@@ -41,7 +41,7 @@ var EntServer = function() {
     self.logger = self.getLogger('console', 'Enterprise UI');
     self.setCookieSession(self.cookieName, self.secret);
     self.configureExpress();
-  }
+  });
 };
 util.inherits(EntServer, WebAppServer);
 
@@ -87,7 +87,7 @@ EntServer.prototype.start = function() {
   var self = this;
 
   self.getConfig(function(version) {
-    if (this.config['dashboard.https.enabled'] === "true") {
+    if (self.config['dashboard.https.enabled'] === "true") {
       self.server = self.getHttpsServerInstance(self.app, self.config['dashboard.ssl.key'],
                                                 self.config['dashboard.ssl.cert']);
     } else {
