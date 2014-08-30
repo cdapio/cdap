@@ -165,18 +165,23 @@ public class FileLogAppender extends LogAppender {
         logFileWriter.close();
       }
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      LOG.error("Got exception while closing logFileWriter", e);
     }
   }
 
   @Override
   public void stop() {
-    if (!stopped.compareAndSet(false, true)) {
-      return;
-    }
+    try {
+      if (!stopped.compareAndSet(false, true)) {
+        return;
+      }
 
-    scheduledExecutor.shutdownNow();
-    close();
-    super.stop();
+      scheduledExecutor.shutdownNow();
+      close();
+    } finally {
+      // Since we may wait for this appender to set stop status in Async appender, we need to make sure to update the
+      // status even on exceptions being thrown.
+      super.stop();
+    }
   }
 }
