@@ -1700,6 +1700,11 @@ span.log-icon.complete {
   font-weight: bold ! important;
   text-align: center ! important;
 }
+
+#panels .btn-group .change-instances {
+    margin-right: 20px;
+}
+
 /*
  * Bootstrap Overrides
  */
@@ -2254,10 +2259,13 @@ a strong {
     float: left;
     width: 32px;
     height: 32px;
-    background-image: url(../../img/flow-controls.png);
-    background-position: 0 -113px;
     background-repeat: no-repeat;
     margin: 4px 10px 0 12px;
+}
+
+.popup-icon, .popup-icon-cloud {
+    background-image: url(../../img/flow-controls.png);
+    background-position: 0 -113px;
 }
 
 .popup-stream-table {
@@ -2265,7 +2273,7 @@ a strong {
 }
 
 .popup-icon-stream {
-    background-position: 0 -32px;
+    background-image: url(../../img/streamer-icon-blue.png);
 }
 
  .popup-icon-cloud {
@@ -4052,6 +4060,14 @@ div.tooltip-inner {
     color: white;
 }
 
+.query-table-entry .bolder-font {
+    color: #5A5D6E;
+}
+
+.query-table-entry:hover .lighter-color, .query-table-entry:hover .bolder-font {
+    color: white;
+}
+
 .query-results-table-entry {
     color: white !important;
 }
@@ -4144,9 +4160,6 @@ div.tooltip-inner {
 /**
   * Loading icon styles
   */
-
-.loading-icon {
-}
 
 .loading-icon.hide {
   display: none;
