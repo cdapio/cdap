@@ -39,7 +39,7 @@ if %JAR_PATH% == "" (echo "Could not find application jar with name %APP_JAR_PRE
 
 REM Process access token
 SET ACCESS_TOKEN=
-SET ACCESS_TOKEN_FILE=%HOMEPATH%\.continuuity.accesstoken
+SET ACCESS_TOKEN_FILE=%HOMEPATH%\.cdap.accesstoken
 if exist %ACCESS_TOKEN_FILE% set /p ACCESS_TOKEN=<%ACCESS_TOKEN_FILE%
 
 REM Process Command line
