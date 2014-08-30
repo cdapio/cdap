@@ -60,10 +60,10 @@ final class ProcedureHandlerMethod implements HandlerMethod {
   private final BasicProcedureContext context;
 
   ProcedureHandlerMethod(Program program, DataFabricFacade dataFabricFacade,
-                         BasicProcedureContextFactory contextFactory) throws ClassNotFoundException {
+                         BasicProcedureContext context) throws ClassNotFoundException {
 
     this.dataFabricFacade = dataFabricFacade;
-    context = contextFactory.create(dataFabricFacade);
+    this.context = context;
 
     try {
       TypeToken<? extends Procedure> procedureType = TypeToken.of(program.<Procedure>getMainClass());
@@ -118,11 +118,11 @@ final class ProcedureHandlerMethod implements HandlerMethod {
 
   @Override
   public void handle(ProcedureRequest request, ProcedureResponder responder) {
-    context.getSystemMetrics().gauge("query.requests", 1);
+    context.getProgramMetrics().gauge("query.requests", 1);
     HandlerMethod handlerMethod = handlers.get(request.getMethod());
     if (handlerMethod == null) {
       LOG.error("Unsupport procedure method " + request.getMethod() + " on procedure " + procedure.getClass());
-      context.getSystemMetrics().gauge("query.failures", 1);
+      context.getProgramMetrics().gauge("query.failures", 1);
       try {
         responder.stream(new ProcedureResponse(ProcedureResponse.Code.NOT_FOUND));
       } catch (IOException e) {
@@ -136,9 +136,9 @@ final class ProcedureHandlerMethod implements HandlerMethod {
       Thread.currentThread().setContextClassLoader(context.getProgram().getClassLoader());
       handlerMethod.handle(request, responder);
       Thread.currentThread().setContextClassLoader(oldClassLoader);
-      context.getSystemMetrics().gauge("query.processed", 1);
+      context.getProgramMetrics().gauge("query.processed", 1);
     } catch (Throwable t) {
-      context.getSystemMetrics().gauge("query.failures", 1);
+      context.getProgramMetrics().gauge("query.failures", 1);
       throw Throwables.propagate(t);
     }
   }

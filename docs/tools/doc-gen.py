@@ -1,43 +1,49 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#  Copyright 2014 Continuuity, Inc.
 #
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
+# Copyright 2014 Cask Data, Inc.
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+# Used to generate documentation media files from .rst sources.
 #
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# Currently, uses rst2pdf to generate PDFs. 
+# To be enhanced later to include using landslide to generate slides.
+# 
+# PDF Generation
+# --------------
+# Pre-processes the .rst file into a temp file, and then runs the temp file through rst2pdf.
+# The pre-processing allows custom hints to be placed in the .rst file that can specify 
+# and control the PDF output.
+#
+# Current hints are listed below in section marked "Current Hints".
+#
+# Any hints given on the command line take precedence over the internal hints.
+#
+# Note that in the examples below, the output directory is given relative to the location of the input directory,
+# which is given relative to the script location.
+#
+# PDF generation examples:
+# python doc-gen.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-enterprise-dependencies.pdf ../developer-guide/source/licenses/cdap-enterprise-dependencies.rst
+# python doc-gen.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-level-1-dependencies.pdf    ../developer-guide/source/licenses/cdap-level-1-dependencies.rst
+# python doc-gen.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-standalone-dependencies.pdf ../developer-guide/source/licenses/cdap-standalone-dependencies.rst
+#
 
-#
-# Tests
-#
-# PDF generation
-# python docs.py -g pdf -o ../../install-guide/build-pdf/install.pdf ../../install-guide/source/install.rst
-# python docs.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-enterprise-dependencies.pdf ../../developer-guide/source/licenses/cdap-enterprise-dependencies.rst
-# python docs.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-level-1-dependencies.pdf    ../../developer-guide/source/licenses/cdap-level-1-dependencies.rst
-# python docs.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-singlenode-dependencies.pdf ../../developer-guide/source/licenses/cdap-singlenode-dependencies.rst
-#
-
-VERSION = "0.0.1"
+VERSION = "0.0.3"
 DEFAULT_OUTPUT_PDF_FILE = "output.pdf"
 DEFAULT_GENERATE = "pdf"
 TEMP_FILE_SUFFIX = "_temp"
 
 REST_EDITOR             = ".. reST Editor: "
 RST2PDF                 = ".. rst2pdf: "
-RST2PDF_BUILD           = ".. rst2pdf: build "
-RST2PDF_CONFIG          = ".. rst2pdf: config "
-RST2PDF_STYLESHEETS     = ".. rst2pdf: stylesheets "
-RST2PDF_CUT_START       = ".. rst2pdf: CutStart"
-RST2PDF_CUT_STOP        = ".. rst2pdf: CutStop"
-RST2PDF_PAGE_BREAK      = ".. rst2pdf: PageBreak"
+
+# Current Hints
+RST2PDF_BUILD           = ".. rst2pdf: build " # Sets the build output directory
+RST2PDF_CONFIG          = ".. rst2pdf: config " # Sets the config file used
+RST2PDF_NAME            = ".. rst2pdf: name " # Sets the output file name
+RST2PDF_STYLESHEETS     = ".. rst2pdf: stylesheets " # Sets the stylesheet used
+RST2PDF_CUT_START       = ".. rst2pdf: CutStart" # Marks the start of an ignored section
+RST2PDF_CUT_STOP        = ".. rst2pdf: CutStop" # Marks the end of an ignored section 
+RST2PDF_PAGE_BREAK      = ".. rst2pdf: PageBreak" # Marks the insertion of pagebreak
 RST2PDF_PAGE_BREAK_TEXT = """.. raw:: pdf
 
 	PageBreak"""
@@ -56,7 +62,7 @@ def parse_options():
 
     parser = OptionParser(
         usage="%prog [options] input.rst",
-        description="Generates HTML or PDF from an reST-formatted file")
+        description="Generates HTML, PDF or Slides from an reST-formatted file (currently limited to PDF)")
 
     parser.add_option(
         "-v", "--version",
@@ -102,8 +108,10 @@ def log(message, type):
 
 
 def process_pdf(input_file, options):
+    func_name = "process_pdf"
     output = ""
     config = ""
+    name = ""
     stylesheets = ""
     print "input_file: %s" % input_file
     f = open(input_file,'r')
@@ -122,7 +130,13 @@ def process_pdf(input_file, options):
         elif line_starts_with(line, RST2PDF_BUILD):
             print line
             build = line_right_end( line, RST2PDF_BUILD)
-            print "output: %s" % output
+            if build[-1:] != "/":
+                build = build + "/"
+            print "build: %s" % build
+        elif line_starts_with(line, RST2PDF_NAME):
+            print line
+            name = line_right_end( line, RST2PDF_NAME)
+            print "name: %s" % name
         elif line_starts_with(line, RST2PDF_CONFIG):
             print line
             config = line_right_end( line, RST2PDF_CONFIG)
@@ -141,34 +155,24 @@ def process_pdf(input_file, options):
     # Set paths
     source_path = os.path.dirname(os.path.abspath(__file__))
     
-    # def get_absolute_path() Factor out duplicate code in this section
-    
     if not os.path.isabs(input_file):
         input_file = os.path.join(source_path, input_file)
         if not os.path.isfile(input_file):
-            raise Exception('process_pdf', 'input_file not a valid path: %s' % input_file)
+            raise Exception(func_name, '"input_file" not a valid path: %s' % input_file)
             
-    if options.output_file:
-        output = options.output_file       
-    if not os.path.isabs(output):
-        output = os.path.join(os.path.dirname(input_file), output)
-        if not os.path.isdir(os.path.dirname(output)):
-            raise Exception('process_pdf', 'output not a valid path: %s' % output)
-            
-    if not os.path.isabs(config):
-        config = os.path.join(os.path.dirname(input_file), config)
-        if not os.path.isfile(config):
-            raise Exception('process_pdf', 'config not a valid path: %s' % config)
-            
-    if not os.path.isabs(stylesheets):
-        stylesheets = os.path.join(os.path.dirname(input_file), stylesheets)
-        if not os.path.isfile(stylesheets):
-            raise Exception('process_pdf', 'stylesheets not a valid path: %s' % stylesheets)
-            
+    if options.output_file: # If output file specified on command line, use it
+        output = options.output_file
+    elif output and name: # If output file name and build location specified in file, use them
+        output = os.path.join(output, name)
+        
+    output = get_absolute_path(output, "output", input_file, func_name)
+    config = get_absolute_path(config, "config", input_file, func_name)
+    stylesheets = get_absolute_path(stylesheets, "stylesheets", input_file, func_name)
+                
     # Write output to temp file
     temp_file = input_file+TEMP_FILE_SUFFIX
     if not os.path.isabs(temp_file):
-        raise Exception('process_pdf', 'temp_file not a valid path: %s' % temp_file)    
+        raise Exception(func_name, '"temp_file" not a valid path: %s' % temp_file)    
     temp = open(temp_file,'w')    
     for line in lines:
         temp.write(line+'\n')
@@ -177,24 +181,24 @@ def process_pdf(input_file, options):
 
     # Generate PDF
 #     /usr/local/bin/rst2pdf 
-#     --config="/Users/john/Source/cdap_2.3.0_docs/docs/developer-guide/source/_templates/pdf-config" 
-#     --stylesheets="/Users/john/Source/cdap_2.3.0_docs/docs/developer-guide/source/_templates/pdf-stylesheet" 
-#     -o "/Users/john/Source/cdap_2.3.0_docs/docs/developer-guide/build-pdf/rest2.pdf" 
-#     "/Users/john/Source/cdap_2.3.0_docs/docs/developer-guide/source/rest.rst_temp”
+#     --config="/Users/*/*/cdap/docs/developer-guide/source/_templates/pdf-config" 
+#     --stylesheets="/Users/*/*/cdap/docs/developer-guide/source/_templates/pdf-stylesheet" 
+#     -o "/Users/*/*/cdap/docs/developer-guide/build-pdf/rest2.pdf" 
+#     "/Users/*/*/cdap/docs/developer-guide/source/rest.rst_temp”
 
     command = '/usr/local/bin/rst2pdf --config="%s" --stylesheets="%s" -o "%s" %s' % (config, stylesheets, output, temp_file)
     print "command: %s" % command
     try:
         output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT,)
     except:
-        raise Exception('process_pdf', 'output: %s' % output)
+        raise Exception(func_name, 'output: %s' % output)
         
     if len(output)==0:
         os.remove(temp_file)
     else:
         print output
         
-    print "Completed process_pdf"
+    print "Completed %s" % func_name
 
 #
 # Utility functions
@@ -211,7 +215,12 @@ def line_right_end(line, left):
     t = line[len(left):]
     return t.strip('\n')
 
-# def get_absolute_path(
+def get_absolute_path(file_path, name, input_file, func):
+    if not os.path.isabs(file_path):
+        file_path = os.path.join(os.path.dirname(input_file), file_path)
+        if not os.path.isdir(os.path.dirname(file_path)):
+            raise Exception(func, '"%s" not a valid path: %s' % (name, file_path))
+    return file_path
 
 
 #

@@ -28,6 +28,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Delegates all calls to an async log appender.
@@ -78,7 +79,18 @@ public final class AsyncLogAppender extends LogAppender {
   @Override
   public void stop() {
     asyncAppender.stop();
-    logAppender.stop();
+    // No need to stop logAppender here since asyncAppender stops it.
+    // However, we will need to wait until logAppender has completely stopped, since the wait time in AsyncAppender
+    // may not be sufficient for a clean shutdown.
+    long startTime = System.currentTimeMillis();
+    while (logAppender.isStarted() &&
+      System.currentTimeMillis() - startTime < TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS)) {
+      try {
+        TimeUnit.MILLISECONDS.sleep(100);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    }
   }
 
   @Override

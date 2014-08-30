@@ -22,6 +22,7 @@ import co.cask.cdap.gateway.router.handlers.HttpRequestHandler;
 import co.cask.cdap.gateway.router.handlers.SecurityAuthenticationHttpHandler;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.auth.TokenValidator;
+import com.continuuity.security.tools.SSLHandlerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -57,6 +58,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -95,6 +97,9 @@ public class NettyRouter extends AbstractIdleService {
 
   private DiscoveryServiceClient discoveryServiceClient;
 
+  private final boolean sslEnabled;
+  private final SSLHandlerFactory sslHandlerFactory;
+
   @Inject
   public NettyRouter(CConfiguration cConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
                      RouterServiceLookup serviceLookup, TokenValidator tokenValidator,
@@ -125,6 +130,23 @@ public class NettyRouter extends AbstractIdleService {
     this.accessTokenTransformer = accessTokenTransformer;
     this.discoveryServiceClient = discoveryServiceClient;
     this.configuration = cConf;
+
+    this.sslEnabled = cConf.getBoolean(Constants.Security.Router.SSL_ENABLED);
+    if (isSSLEnabled()) {
+      File keystore;
+      try {
+        keystore = new File(cConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
+      } catch (Throwable e) {
+        throw new RuntimeException("Cannot read keystore file : "
+                                     + cConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
+      }
+      this.sslHandlerFactory = new SSLHandlerFactory(
+        keystore, cConf.get(Constants.Security.Router.SSL_KEYSTORE_TYPE),
+        cConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD),
+        cConf.get(Constants.Security.Router.SSL_KEYPASSWORD));
+    } else {
+      this.sslHandlerFactory = null;
+    }
   }
 
   @Override
@@ -191,14 +213,16 @@ public class NettyRouter extends AbstractIdleService {
         @Override
         public ChannelPipeline getPipeline() throws Exception {
           ChannelPipeline pipeline = Channels.pipeline();
+          if (isSSLEnabled()) {
+            // Add SSLHandler is SSL is enabled
+            pipeline.addLast("ssl", sslHandlerFactory.create());
+          }
           pipeline.addLast("tracker", connectionTracker);
           pipeline.addLast("http-response-encoder", new HttpResponseEncoder());
           pipeline.addLast("http-decoder", new HttpRequestDecoder());
           if (securityEnabled) {
-            pipeline.addLast("access-token-authenticator", new SecurityAuthenticationHttpHandler(realm, tokenValidator,
-                                                                                    configuration,
-                                                                                    accessTokenTransformer,
-                                                                                    discoveryServiceClient));
+            pipeline.addLast("access-token-authenticator", new SecurityAuthenticationHttpHandler(
+              realm, tokenValidator, configuration, accessTokenTransformer, discoveryServiceClient));
           }
           // for now there's only one hardcoded rule, but if there will be more, we may want it generic and configurable
           pipeline.addLast("http-request-handler",
@@ -257,18 +281,20 @@ public class NettyRouter extends AbstractIdleService {
         new NioClientBossPool(clientBossExecutor, clientBossThreadPoolSize),
         new ShareableWorkerPool<NioWorker>(new NioWorkerPool(clientWorkerExecutor, clientWorkerThreadPoolSize))));
 
-    clientBootstrap.setPipelineFactory(
-      new ChannelPipelineFactory() {
-        @Override
-        public ChannelPipeline getPipeline() throws Exception {
-          ChannelPipeline pipeline = Channels.pipeline();
-          pipeline.addLast("tracker", connectionTracker);
-          pipeline.addLast("request-encoder", new HttpRequestEncoder());
-          return pipeline;
-        }
+    clientBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+      @Override
+      public ChannelPipeline getPipeline() throws Exception {
+        ChannelPipeline pipeline = Channels.pipeline();
+        pipeline.addLast("tracker", connectionTracker);
+        pipeline.addLast("request-encoder", new HttpRequestEncoder());
+        return pipeline;
       }
-    );
+    });
 
     clientBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
+  }
+
+  private boolean isSSLEnabled() {
+    return sslEnabled;
   }
 }

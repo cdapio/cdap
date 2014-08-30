@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#  Copyright 2014 Continuuity, Inc.
+#  Copyright 2014 Cask Data, Inc.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #
 # Checks that the license dependencies files used match the dependencies in the product.
 # Run this script after building the SDK.
+# Usage: python licenses.py 
 #
 
 
@@ -28,16 +29,13 @@ import subprocess
 import sys
 import tempfile
 
-VERSION = "0.0.2"
+VERSION = "0.0.4"
 
-DEFAULT_VERSION = "2.3.0-SNAPSHOT"
-
-LICENSE_MASTERS = "license_masters"
 MASTER_CSV = "cdap-dependencies-master.csv"
 
 ENTERPRISE = "cdap-enterprise-dependencies"
-LEVEL_1 = "cdap-level-1-dependencies"
-SINGLENODE = "cdap-singlenode-dependencies"
+LEVEL_1    = "cdap-level-1-dependencies"
+STANDALONE = "cdap-standalone-dependencies"
 
 LICENSES_SOURCE = "../../developer-guide/source/licenses"
 
@@ -46,9 +44,11 @@ BACK_DASH = "\-"
 
 SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
+DEBUG = False
+
 def get_sdk_version():
     # Sets the CDAP Build Version via maven
-    mvn_version_cmd = "mvn help:evaluate -o -Dexpression=project.version -f ../../../ | grep -v '^\['"
+    mvn_version_cmd = "mvn help:evaluate -o -Dexpression=project.version -f ../../../pom.xml | grep -v '^\['"
     version = None
     try:
         version = subprocess.check_output(mvn_version_cmd, shell=True).strip().replace("-SNAPSHOT", "")
@@ -72,11 +72,18 @@ def parse_options():
         help="Version of software",
         default=False)
 
+    parser.add_option(
+        "-d", "--debug",
+        action="store_true",
+        dest="debug",
+        help="Print debug messages",
+        default=False)
+
     sdk_version = get_sdk_version()
     parser.add_option(
         "-w", "--build_version",
         dest="build_version",
-        help="The built version of the Continuuity SDK "
+        help="The built version of the CDAP SDK "
              "(default: %s)" % sdk_version,
         default=sdk_version)
 
@@ -95,10 +102,10 @@ def parse_options():
         default=False)
 
     parser.add_option(
-        "-s", "--singlenode",
+        "-s", "--standalone",
         action="store_true",
-        dest="singlenode",
-        help="Process singlenode dependencies",
+        dest="standalone",
+        help="Process standalone dependencies",
         default=False)
 
     parser.add_option(
@@ -116,10 +123,10 @@ def parse_options():
         default=False)
 
     parser.add_option(
-        "-c", "--rst_singlenode",
+        "-c", "--rst_standalone",
         action="store_true",
-        dest="rst_singlenode",
-        help="Print singlenode dependencies to an rst file",
+        dest="rst_standalone",
+        help="Print standalone dependencies to an rst file",
         default=False)
 
     parser.add_option(
@@ -130,7 +137,10 @@ def parse_options():
         default=False)
 
     (options, args) = parser.parse_args()
-
+    
+    global DEBUG
+    DEBUG = options.debug
+    
     if options.version:
         print "Version: %s" % VERSION
         sys.exit(1)
@@ -138,7 +148,7 @@ def parse_options():
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(1)
-
+    
     return options, args
 
 
@@ -153,9 +163,11 @@ def process_master():
     # Keys are the jars, Values are the Library instances
     # Get the current dependencies master csv file
     # "jar","Version","Classifier","License","License URL"
+    # Example:
+    # "bonecp-0.8.0.RELEASE.jar","0.8.0","RELEASE","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
     master_libs_dict = {}
     print "Reading master file"
-    csv_path = os.path.join(SCRIPT_DIR_PATH, LICENSE_MASTERS, MASTER_CSV)
+    csv_path = os.path.join(SCRIPT_DIR_PATH, MASTER_CSV)
     with open(csv_path, 'rb') as csvfile:
         row_count = 0
         csv_reader = csv.reader(csvfile)
@@ -168,11 +180,10 @@ def process_master():
                 if not master_libs_dict.has_key(lib.id):
                     master_libs_dict[lib.id] = lib
                 else:
-                    print "Duplicate key: %s" %lib.id
-                    print "%sCurrent library: %s" % (SPACE, master_libs_dict[lib.id])
-                    print "%sNew library: %s" % (SPACE, lib)
+                    lib.print_duplicate(master_libs_dict)
             else:
                 print "%sError with %s\n%srow: %s" % (SPACE, jar, SPACE, row)
+                
     # Print out the results
     keys = master_libs_dict.keys()
 #     keys.sort()
@@ -195,8 +206,8 @@ def process_enterprise(input_file, options):
     return process_dependencies(ENTERPRISE)
 
 
-def process_singlenode(input_file, options):
-    return process_dependencies(SINGLENODE)
+def process_standalone(input_file, options):
+    return process_dependencies(STANDALONE)
 
     
 def process_level_1(input_file, options):
@@ -297,9 +308,7 @@ def process_dependencies(dependency):
             if not new_libs_dict.has_key(lib.id):
                 new_libs_dict[lib.id] = master_libs_dict[lib.id]
             else:
-                print "Duplicate key: %s" %lib.id
-                print "%sCurrent library: %s" % (SPACE, new_libs_dict[lib.id])
-                print "%sNew library: %s" % (SPACE, lib)
+                lib.print_duplicate(new_libs_dict)
 
     missing_entries = len(missing_libs_dict.keys())
     for lib_dict in [master_libs_dict]:
@@ -309,9 +318,9 @@ def process_dependencies(dependency):
         for k in keys:
             if lib_dict[k].license == "":
                 missing_licenses += 1
-#             Print out the results
-#             lib_dict[k].pretty_print()
-#         print "Records: %s" % len(keys)
+            if DEBUG:
+                lib_dict[k].pretty_print()
+        print_debug("Records: %s" % len(keys))
 
     print "New CSV: Rows: %s" % len(new_libs_dict.keys())
     print "New Master CSV: Rows: %s" % len(master_libs_dict.keys())
@@ -322,7 +331,7 @@ def process_dependencies(dependency):
     if missing_entries or missing_licenses:
         import csv
     
-        csv_path = os.path.join(SCRIPT_DIR_PATH, LICENSE_MASTERS, MASTER_CSV + ".new.csv")
+        csv_path = os.path.join(SCRIPT_DIR_PATH, MASTER_CSV + ".new.csv")
         if os.path.isfile(csv_path):
             print "New master CSV: Master file already exists: %s" % csv_path
         else:
@@ -331,9 +340,9 @@ def process_dependencies(dependency):
                 keys = master_libs_dict.keys()
                 keys.sort()
                 for k in keys:
-#                     l = lib_dict[k]
-#                     r = l.get_row()
-                    csv_writer.writerow(lib_dict[k].get_row())
+                    r = lib_dict[k].get_row()
+                    print_debug(r)
+                    csv_writer.writerow(r)
             print "New master CSV: wrote %s records to:\n%s" % (len(keys), csv_path)
 
     # Return the "Package","Version","Classifier","License","License URL"
@@ -345,7 +354,7 @@ def process_dependencies(dependency):
         row = list(lib.get_row())
         if row[2] == "":
             row[2] = BACK_DASH
-#         print row
+            print_debug(row)
         rst_data.append(row)
     return rst_data
 
@@ -368,18 +377,18 @@ def print_rst_enterprise(input_file, options):
     print_dependencies(title, file_base, header, widths, data_list)
 
 
-def print_rst_singlenode(input_file, options):
-    title = "SingleNode"
-    file_base = SINGLENODE
+def print_rst_standalone(input_file, options):
+    title = "Standalone"
+    file_base = STANDALONE
     header = '"Package","Version","Classifier","License","License URL"'
     widths = "20, 10, 10, 20, 30"
-    data_list = process_singlenode(input_file, options)
+    data_list = process_standalone(input_file, options)
     print_dependencies(title, file_base, header, widths, data_list)
 
    
 def print_dependencies(title, file_base, header, widths, data_list):
 # Example: "Level 1", LEVEL_1, ...
-    RST_HEADER=""".. :author: Cask, Inc.
+    RST_HEADER=""".. :author: Cask Data, Inc.
    :version: %(version)s
 ============================================
 Cask Data Application Platform %(version)s\
@@ -402,9 +411,8 @@ Cask Data Application Platform %(title)s Dependencies
 """
     sdk_version = get_sdk_version()        
     RST_HEADER = RST_HEADER % {'version': sdk_version, 'title': title, 'header': header, 'widths': widths}
-    
-    rst_path = os.path.join(SCRIPT_DIR_PATH, LICENSE_MASTERS, file_base + ".rst")
-#     data_list = process_singlenode(input_file, options)
+    rst_path = os.path.join(SCRIPT_DIR_PATH, file_base + ".rst")
+
     try:
         with open(rst_path,'w') as f:
             f.write(RST_HEADER)
@@ -416,10 +424,15 @@ Cask Data Application Platform %(title)s Dependencies
         raise
     print "Wrote rst file:\n%s" % rst_path
 
+def print_debug(message):
+    if DEBUG:
+        print message
+
 
 class Library:
     MAX_SIZES={}
     PRINT_ORDER = ['id','jar','base','version','classifier','license','license_url']
+    SPACE = " "*3
     
     def __init__(self, jar, license, license_url):
         self.jar = jar # aka "package"
@@ -439,6 +452,7 @@ class Library:
         # Looking for a string of the format "base-version[-classifier].jar"
         # If that fails, tries without the .jar
         # If still no match, uses jar as base instead.
+        # Converts the jar into its component parts: base, version, classifier
         import re
         s_jar = r'(?P<base>.*?)-(?P<version>\d*[0-9.]*\d+)([.-]*(?P<classifier>.*?))\.jar$'
         s_no_jar = r'(?P<base>.*?)-(?P<version>\d*[0-9.]*\d+)([.-]*(?P<classifier>.*?))'
@@ -451,7 +465,7 @@ class Library:
                     c = m.group('classifier')
                 else:
                     c = "<none>"
-    #             print "%s: %s %s %s" % (jar, m.group('base'), m.group('version'), c )
+                    print_debug("%s: %s %s %s" % (self.jar, m.group('base'), m.group('version'), c ))
                 self.base = m.group('base')
                 self.version =  m.group('version')
                 self.classifier = m.group('classifier')
@@ -485,6 +499,10 @@ class Library:
     def get_row(self):
         return (self.jar, self.version, self.classifier, self.license, self.license_url)
 
+    def print_duplicate(self, lib_dict):
+        print "Duplicate key: %s" % self.id
+        print "%sCurrent library: %s" % (self.SPACE, lib_dict[self.id])
+        print "%sNew library:     %s" % (self.SPACE, self)
     
 #
 # Main function
@@ -503,8 +521,8 @@ def main():
         elif options.level_1:
             process_level_1(input_file, options)
             
-        elif options.singlenode:
-            process_singlenode(input_file, options)
+        elif options.standalone:
+            process_standalone(input_file, options)
             
         elif options.rst_enterprise:
             print_rst_enterprise(input_file, options)
@@ -512,8 +530,8 @@ def main():
         elif options.rst_level_1:
             print_rst_level_1(input_file, options)
             
-        elif options.rst_singlenode:
-            print_rst_singlenode(input_file, options)
+        elif options.rst_standalone:
+            print_rst_standalone(input_file, options)
             
         elif options.master_print:
             master_print()
