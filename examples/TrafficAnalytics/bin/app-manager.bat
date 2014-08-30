@@ -2,7 +2,7 @@
 
 REM #################################################################################
 REM ##
-REM ## Copyright 2014 Cask, Inc.
+REM ## Copyright 2014 Cask Data, Inc.
 REM ##
 REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
 REM ## use this file except in compliance with the License. You may obtain a copy of
@@ -40,7 +40,7 @@ if %JAR_PATH% == "" (echo "Could not find application jar with name %APP_JAR_PRE
 
 REM Process access token
 SET ACCESS_TOKEN=
-SET ACCESS_TOKEN_FILE=%HOMEPATH%\.continuuity.accesstoken
+SET ACCESS_TOKEN_FILE=%HOMEPATH%\.cdap.accesstoken
 if exist %ACCESS_TOKEN_FILE% set /p ACCESS_TOKEN=<%ACCESS_TOKEN_FILE%
 
 REM Process Command line

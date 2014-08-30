@@ -1,4 +1,4 @@
-.. :author: Cask, Inc.
+.. :author: Cask Data, Inc.
    :version: 2.4.0
 
 ============================================

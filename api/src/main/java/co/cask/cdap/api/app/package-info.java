@@ -17,7 +17,7 @@
 /**
  * An Application is a logical grouping of
  * {@link co.cask.cdap.api.data.stream.Stream Streams},
- * {@link co.cask.cdap.api.data.DataSet Datasets},
+ * {@link co.cask.cdap.api.dataset.Dataset Datasets},
  * {@link co.cask.cdap.api.flow.Flow Flows},
  * {@link co.cask.cdap.api.procedure.Procedure Procedures},
  * and other deployable elements.
@@ -72,16 +72,16 @@
  * See {@link co.cask.cdap.api.data.stream.Stream} for details.
  * </p>
  *
- * <h1>DataSet</h1>
+ * <h1>Dataset</h1>
  *
  * <p>
- * A {@link co.cask.cdap.api.data.DataSet Dataset} defines the storage and
+ * A {@link co.cask.cdap.api.dataset.Dataset Dataset} defines the storage and
  * retrieval of data. In addition to the several Dataset implementations CDAP
  * provides, you can also implement your own Custom Datasets.
  * </p>
  *
  * <p>
- * See {@link co.cask.cdap.api.data.DataSet} for details.
+ * See {@link co.cask.cdap.api.dataset.Dataset} for details.
  * </p>
  *
  * <h1>Flow</h1>

@@ -20,7 +20,7 @@ package co.cask.cdap.common.metrics;
  * Define scopes of metrics.
  */
 public enum MetricsScope {
-
+  //  todo: should not be called "REACTOR": REACTOR-852
   REACTOR,
   USER
 }

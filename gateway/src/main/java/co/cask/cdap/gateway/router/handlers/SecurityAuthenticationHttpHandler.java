@@ -169,9 +169,9 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     stopwatch.start();
     String protocol;
     int port;
-    if (configuration.getBoolean(Constants.Security.SSL_ENABLED)) {
+    if (configuration.getBoolean(Constants.Security.AuthenticationServer.SSL_ENABLED)) {
       protocol = "https";
-      port = configuration.getInt(Constants.Security.AUTH_SERVER_SSL_PORT);
+      port = configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT);
     } else {
       protocol = "http";
       port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);

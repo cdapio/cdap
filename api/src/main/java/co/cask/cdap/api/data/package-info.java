@@ -15,9 +15,9 @@
  */
 
 /**
- * Specifies and instantiates {@link co.cask.cdap.api.data.DataSet DataSets}.
+ * Defines means of integration between programs and data access.
  *
- * All data access is performed via system or user defined (custom) {@link co.cask.cdap.api.data.DataSet DataSets}.
+ * All data access is performed via system or user defined (custom) Datasets.
  *
  * @deprecated As of CDAP 2.3.0, replaced by {@link co.cask.cdap.api.dataset}
  */

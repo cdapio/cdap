@@ -14,17 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.dataset;
-
 /**
- * Thrown when a data operation fails.
+ * This package contains internal classes for supporting the CDAP API.
+ * <p>
+ * These should not be used directly by users of the CDAP API, as they may change in a later release without warning.
+ * </p>
  */
-public class DataSetException extends RuntimeException {
-  public DataSetException(String message) {
-    super(message);
-  }
-
-  public DataSetException(String message, Throwable cause) {
-    super(message, cause);
-  }
-}
+package co.cask.cdap.internal.specification;
