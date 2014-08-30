@@ -3706,6 +3706,11 @@ div.tooltip-inner {
 }
 
 .dataexplore-titleholder {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flexbox;
+  display: -ms-flexbox;
+  display: -webkit-flex;
   display: flex;
 }
 .dataexplore-titleholder .dataexplore-hivetable-title,
@@ -3735,7 +3740,12 @@ div.tooltip-inner {
 #query-display {
     background: #666666;
     max-height: 50vh;
-    display: flex;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flexbox;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
 }
 
 #query-display .table td.app-list-name.dataset-name {
@@ -3756,8 +3766,13 @@ div.tooltip-inner {
 }
 #query-tables {
   width: 30%;
-  display: inline-flex;
-    background: white;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flexbox;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  background: white;
   vertical-align: top;
   overflow: auto;
   height: 50vh;
@@ -3859,6 +3874,11 @@ div.tooltip-inner {
 
 #query-display .table-info .table-view .table-header {
   width: 100%;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flexbox;
+  display: -ms-flexbox;
+  display: -webkit-flex;
   display: flex;
 }
 #query-display .table-info .table-view .table-header .table-column-title.three-column {
@@ -3868,7 +3888,12 @@ div.tooltip-inner {
 #query-display .table-info .table-view .table-header .table-column-title {
   background: #535353;
   width: 50%;
-  display: inline-flex;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flexbox;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
   color: white;
   padding: 10px;
   text-transform: uppercase;
@@ -3881,6 +3906,11 @@ div.tooltip-inner {
 #query-display .table-info .table-view .table-row {
   width: 100%;
   padding: 10px;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flexbox;
+  display: -ms-flexbox;
+  display: -webkit-flex;
   display: flex;
   border-bottom: 1px solid #515151;
 }
@@ -3888,7 +3918,12 @@ div.tooltip-inner {
 #query-display .table-info .table-view .table-row span {
   width: 50%;
   word-break: break-all;
-  display: inline-flex;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flexbox;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
   font-weight: 100;
   color: white;
   text-align: left;
