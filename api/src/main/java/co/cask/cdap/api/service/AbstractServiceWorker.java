@@ -64,8 +64,7 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
     this.context = context;
   }
 
-  @Override
-  public ServiceWorkerContext getContext() {
+  protected ServiceWorkerContext getContext() {
     return context;
   }
 }

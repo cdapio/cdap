@@ -116,14 +116,20 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
       });
       context.finish();
     } catch (TransactionFailureException e) {
-      try {
-        LOG.error("Failed to commit. Aborting transaction.");
-        context.abort();
-        throw Throwables.propagate(e);
-      } catch (TransactionFailureException e1) {
-        LOG.error("Failed to abort transaction.");
-        throw Throwables.propagate(e1);
-      }
+      abortTransaction(e, "Failed to commit. Aborting transaction.", context);
+    } catch (Exception e) {
+      abortTransaction(e, "Exception occurred running user code. Aborting transaction.", context);
+    }
+  }
+
+  private void abortTransaction(Exception e, String message, TransactionContext context) {
+    try {
+      LOG.error(message);
+      context.abort();
+      throw Throwables.propagate(e);
+    } catch (TransactionFailureException e1) {
+      LOG.error("Failed to abort transaction.");
+      throw Throwables.propagate(e1);
     }
   }
 }

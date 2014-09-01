@@ -17,6 +17,7 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.dataset.Dataset;
 
 /**
  * A runnable that provides a {@link DataSetContext} to {@link ServiceWorker}s which may be used to get
@@ -24,6 +25,18 @@ import co.cask.cdap.api.data.DataSetContext;
  */
 public interface TxRunnable {
 
-  void run(DataSetContext context);
+  /**
+   * Provides a {@link DataSetContext} to get instances of {@link Dataset}s.
+   *
+   * <p>
+   *   Operations executed on a dataset within the execution of this method are committed as a single transaction.
+   *   The transaction is started before {@link #run(DataSetContext)} is invoked and is committed upon successful
+   *   execution. Exceptions thrown while committing the transaction or thrown by user-code result in a rollback of the
+   *   transaction.
+   * </p>
+   * @param context to get datasets from.
+   * @throws Exception
+   */
+  void run(DataSetContext context) throws Exception;
 
 }
