@@ -20,8 +20,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.filesystem.Location;
 
-import java.util.Set;
-
 /**
  * Abstraction of a executable program.
  */

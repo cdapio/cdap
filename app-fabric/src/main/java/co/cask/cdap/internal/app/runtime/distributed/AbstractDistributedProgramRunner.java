@@ -28,7 +28,6 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.reflect.TypeToken;
@@ -57,7 +56,6 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -124,7 +122,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           LOG.info("Starting {} with debugging enabled.", program.getId());
           twillPreparer.enableDebugging();
         }
-        Set<String> datasetJars = Sets.newHashSet();
+        List<String> datasetJars = Lists.newArrayList();
         for (Location dsJar : copiedProgram.getDatasetJarLocations()) {
           datasetJars.add(dsJar.getName());
         }

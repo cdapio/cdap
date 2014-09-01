@@ -20,7 +20,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.tephra.TransactionExecutor;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,7 +31,6 @@ import java.util.List;
  * Test for {@link co.cask.cdap.api.dataset.lib.IndexedObjectStore}.
  */
 public class IndexedObjectStoreTest extends AbstractDatasetTest {
-
   @Test
   public void testLookupByIndex() throws Exception {
     createIndexedObjectStoreInstance("index", Feed.class);

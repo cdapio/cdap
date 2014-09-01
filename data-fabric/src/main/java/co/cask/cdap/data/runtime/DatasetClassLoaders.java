@@ -16,15 +16,12 @@
 
 package co.cask.cdap.data.runtime;
 
-import co.cask.cdap.api.annotation.ExposeClass;
 import co.cask.cdap.common.lang.AnnotationListHolder;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -32,8 +29,6 @@ import com.google.common.io.Files;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.List;
 import java.util.Set;
@@ -61,7 +56,7 @@ public class DatasetClassLoaders {
       Set<URI> newModuleLocation = Sets.newHashSet();
 
       for (DatasetModuleMeta module : modulesToLoad) {
-        if ((module.getJarLocation() != null) && (newModuleLocation.add(module.getJarLocation()) != false)) {
+        if ((module.getJarLocation() != null) && newModuleLocation.add(module.getJarLocation())) {
           File tempDir = Files.createTempDir();
           BundleJarUtil.unpackProgramJar(locationFactory.create(module.getJarLocation()), tempDir);
           datasetFiles.add(tempDir);

@@ -27,7 +27,6 @@ import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.security.ApplicationSecurity;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -49,7 +48,6 @@ import java.io.FilePermission;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Sandbox JVM allows the configuration phase of an application to be executed
@@ -130,7 +128,7 @@ public class SandboxJVM {
         }
 
         //passsing in empty-set for dataset jars
-        Set<Location> datasetJars = Sets.newHashSet();
+        List<Location> datasetJars = Lists.newArrayList();
         Program archive = Programs.createWithUnpack(lf.create(jarFilename), datasetJars, unpackedJarDir);
         Object appMain = archive.getMainClass().newInstance();
         if (!(appMain instanceof Application)) {

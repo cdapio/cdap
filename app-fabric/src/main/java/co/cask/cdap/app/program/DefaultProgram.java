@@ -29,6 +29,7 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
@@ -39,7 +40,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.Set;
+import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
@@ -60,7 +61,7 @@ public final class DefaultProgram implements Program {
   private final ClassLoader parentClassLoader;
   private final File specFile;
   private final Iterable<Location> datasetTypeJars;
-  private final Set<File> datasetsJarPath;
+  private final List<File> datasetsJarPath;
   private boolean expanded;
   private ClassLoader classLoader;
   private ApplicationSpecification specification;
@@ -79,7 +80,7 @@ public final class DefaultProgram implements Program {
     this.datasetTypeJars = datasetTypeJars;
     this.expandFolder = expandFolder;
     this.parentClassLoader = parentClassLoader;
-    this.datasetsJarPath = Sets.newHashSet();
+    this.datasetsJarPath = Lists.newArrayList();
 
     Manifest manifest = BundleJarUtil.getManifest(programJarLocation);
     if (manifest == null) {

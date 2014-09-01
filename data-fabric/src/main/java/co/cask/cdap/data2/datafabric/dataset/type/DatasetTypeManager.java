@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.datafabric.dataset.type;
 
-import co.cask.cdap.api.annotation.ExposeClass;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
@@ -35,8 +34,6 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import com.continuuity.tephra.TransactionFailureException;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -120,7 +117,7 @@ public class DatasetTypeManager extends AbstractIdleService {
           DependencyTrackingRegistry reg;
           try {
             // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
-            Set<File> datasetJars = Sets.newHashSet();
+            List<File> datasetJars = Lists.newArrayList();
             if (jarLocation != null) {
               BundleJarUtil.unpackProgramJar(jarLocation, unpackedLocation);
               datasetJars.add(unpackedLocation);

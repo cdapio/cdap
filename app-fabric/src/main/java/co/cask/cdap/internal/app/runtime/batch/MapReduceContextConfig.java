@@ -40,7 +40,6 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Helper class for getting and setting specific config settings for a job context.

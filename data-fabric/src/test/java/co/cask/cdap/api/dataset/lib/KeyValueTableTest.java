@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.TransactionFailureException;
-import com.google.common.base.Objects;
 import com.google.common.collect.Sets;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -47,7 +46,6 @@ public class KeyValueTableTest extends AbstractDatasetTest {
   static final byte[] VAL3 = Bytes.toBytes("VAL3");
 
   private static KeyValueTable kvTable;
-  private static final ClassLoader cl = Thread.currentThread().getContextClassLoader();
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -182,8 +180,6 @@ public class KeyValueTableTest extends AbstractDatasetTest {
   public void testTransactionAcrossTables() throws Exception {
     createInstance("keyValueTable", "t1", DatasetProperties.EMPTY);
     createInstance("keyValueTable", "t2", DatasetProperties.EMPTY);
-    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                          getClass().getClassLoader());
     final KeyValueTable table1 = getInstance("t1");
     final KeyValueTable table2 = getInstance("t2");
     TransactionExecutor txnl = newTransactionExecutor(table1, table2);

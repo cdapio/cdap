@@ -20,8 +20,6 @@ import co.cask.cdap.common.utils.DirUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Utility class to store the {@link java.lang.ClassLoader} and the expanded jar files. It provides functions to get

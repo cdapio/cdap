@@ -38,11 +38,11 @@ import java.util.Set;
  * Testing the {@link co.cask.cdap.common.lang.jar.ExposeFilterClassLoader}
  * we are using the Purchase app for testing, if purchase app is updated, update the resources directory with
  * the new version.
- *
+ * <p/>
  * we are doing this, because if we get a JarFinder.getJar of a class, it already exists in the classpath and the
  * bootstrap classloader which is the parent of the ExposeFilterClassLoader will be able to it,
  * thereby we are not testing the {@link co.cask.cdap.common.lang.jar.ExposeFilterClassLoader}
- *
+ * <p/>
  * If we pass in "null" for the parent classloader for the {@link ExposeFilterClassLoader} , though we are able to load
  * the class, we are not able to load the annotations. so we had to take this approach.
  */

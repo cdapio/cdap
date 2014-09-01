@@ -29,7 +29,6 @@ import org.apache.twill.filesystem.Location;
 
 import java.io.File;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * TwillApplication for service. Used to localize program jar location before running the TwillApplication.

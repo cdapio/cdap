@@ -48,8 +48,8 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
@@ -94,7 +94,6 @@ import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -380,7 +379,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     public Program create(String path, Iterable<String> datasetJars) throws IOException {
       Location location = locationFactory.create(path);
-      Set<Location> datasetsJarLocation = Sets.newHashSet();
+      List<Location> datasetsJarLocation = Lists.newArrayList();
       for (String datasetJar : datasetJars) {
         Location datasetLocation = locationFactory.create(datasetJar);
         datasetsJarLocation.add(datasetLocation);
