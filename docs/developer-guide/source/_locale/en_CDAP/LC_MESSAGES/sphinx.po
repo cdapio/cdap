@@ -1,5 +1,5 @@
 # Translations template for Sphinx.
-# Copyright (C) 2014 Cask, Inc.
+# Copyright (C) 2014 Cask Data, Inc.
 # This file is distributed under the same license as the Sphinx project.
 # 
 # Translators:

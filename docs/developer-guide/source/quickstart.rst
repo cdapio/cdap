@@ -1,11 +1,11 @@
-.. :author: Cask, Inc.
+.. :author: Cask Data, Inc.
    :description: Introducing new developers to the Cask Data Application Platform
 
 .. highlight:: console
 
-================
-CDAP Quick Start
-================
+==========================================
+Cask Data Application Platform Quick Start
+==========================================
 
 This Quick Start will guide you through installing the Cask Data Application Platform (CDAP),
 running an example that counts HTTP status codes,

@@ -69,7 +69,9 @@ public class SparkJobWrapper {
   public SparkJobWrapper(String[] args) {
     arguments = validateArgs(args);
     try {
-      userJobClass = Class.forName(arguments[0]);
+      // get the Spark job main class with the custom classloader created by spark which has the program and
+      // dependency jar.
+      userJobClass = Class.forName(arguments[0], true, Thread.currentThread().getContextClassLoader());
     } catch (ClassNotFoundException cnfe) {
       LOG.warn("Unable to find the user job class: {}", arguments[0], cnfe);
       throw Throwables.propagate(cnfe);

@@ -112,14 +112,14 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   /**
-   * Increment the value of a key; the key must either not exist yet, or its
-   * current value must be 8 bytes long to be interpretable as a long.
+   * Increment the value of a key by amount; the key must either not exist yet, or the
+   * current value at the key must be 8 bytes long to be interpretable as a long.
    *
    * @param key the key
-   * @param value the new value
+   * @param amount the amount to increment by
    */
-  public void increment(byte[] key, long value) {
-    this.table.increment(key, KEY_COLUMN, value);
+  public void increment(byte[] key, long amount) {
+    this.table.increment(key, KEY_COLUMN, amount);
   }
 
   /**

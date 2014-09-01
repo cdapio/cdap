@@ -51,6 +51,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.passport.http.client.PassportClient;
+import co.cask.cdap.security.authorization.ACLService;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import com.continuuity.tephra.inmemory.InMemoryTransactionService;
@@ -90,8 +91,10 @@ public class SingleNodeMain {
 
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionService txService;
+  private final boolean securityEnabled;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
+  private ACLService aclService;
   private final DatasetService datasetService;
 
   private ExploreExecutorService exploreExecutorService;
@@ -114,9 +117,10 @@ public class SingleNodeMain {
 
     streamHttpService = injector.getInstance(StreamHttpService.class);
 
-    boolean securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
+    securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
     if (securityEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
+      aclService = injector.getInstance(ACLService.class);
     }
 
     boolean exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
@@ -169,7 +173,8 @@ public class SingleNodeMain {
     }
     streamHttpService.startAndWait();
 
-    if (externalAuthenticationServer != null) {
+    if (securityEnabled) {
+      aclService.startAndWait();
       externalAuthenticationServer.startAndWait();
     }
 
@@ -209,9 +214,11 @@ public class SingleNodeMain {
       datasetService.stopAndWait();
       metricsQueryService.stopAndWait();
       txService.stopAndWait();
-      // auth service is on the side anyway
-      if (externalAuthenticationServer != null) {
+
+      if (securityEnabled) {
+        // auth service is on the side anyway
         externalAuthenticationServer.stopAndWait();
+        aclService.stopAndWait();
       }
       logAppenderInitializer.close();
 

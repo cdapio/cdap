@@ -1,4 +1,4 @@
-.. :author: Cask, Inc.
+.. :author: Cask Data, Inc.
    :description: Advanced Cask Data Application Platform Features
 
 ======================
