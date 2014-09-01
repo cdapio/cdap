@@ -103,7 +103,13 @@ public interface ServiceConfigurer {
    * Add a dataset to be used by the Service.
    * @param dataset name of dataset used.
    */
-  void useDataset(String dataset);
+  void addDataset(String dataset);
+
+  /**
+   * Add a list of datasets to be used by the Service.
+   * @param datasets names of datasets used.
+   */
+  void addDatasets(Iterable<String> datasets);
 
   /**
    * Get a set of datasets used by the Service.

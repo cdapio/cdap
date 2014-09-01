@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.service;
 import co.cask.cdap.api.data.DataSetContext;
 import co.cask.cdap.api.data.DataSetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.service.ServiceWorkerContext;
 import co.cask.cdap.api.service.TxRunnable;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -31,6 +32,7 @@ import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionContext;
 import com.continuuity.tephra.TransactionFailureException;
 import com.continuuity.tephra.TransactionSystemClient;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -89,30 +91,27 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
       runnable.run(new DataSetContext() {
         @Override
         public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
-          return getDataSet(name, ImmutableMap.<String, String>of());
+          return getDataSet(name, DatasetDefinition.NO_ARGUMENTS);
         }
 
         @Override
         public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
           throws DataSetInstantiationException {
-          if (!datasets.contains(name)) {
-            LOG.error("Access to dataset not explicitly allowed. Add datasets used in the Service's configure.");
-            return null;
-          }
+          Preconditions.checkArgument(datasets.contains(name), "Access to dataset not explicitly allowed. " +
+                                                                "Add datasets used in the Service's configure.");
 
-          Dataset dataset = null;
           try {
-            dataset = datasetFramework.getDataset(name, ImmutableMap.<String, String>of(),
+            Dataset dataset = datasetFramework.getDataset(name, ImmutableMap.<String, String>of(),
                                                   Thread.currentThread().getContextClassLoader());
             context.addTransactionAware((TransactionAware) dataset);
+            return (T) dataset;
           } catch (DatasetManagementException e) {
             LOG.error("Could not get dataset metainfo.");
-            Throwables.propagate(e);
+            throw Throwables.propagate(e);
           } catch (IOException e) {
             LOG.error("Could not instantiate dataset.");
-            Throwables.propagate(e);
+            throw Throwables.propagate(e);
           }
-          return (T) dataset;
         }
       });
       context.finish();
@@ -120,10 +119,10 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
       try {
         LOG.error("Failed to commit. Aborting transaction.");
         context.abort();
-        Throwables.propagate(e);
+        throw Throwables.propagate(e);
       } catch (TransactionFailureException e1) {
         LOG.error("Failed to abort transaction.");
-        Throwables.propagate(e1);
+        throw Throwables.propagate(e1);
       }
     }
   }

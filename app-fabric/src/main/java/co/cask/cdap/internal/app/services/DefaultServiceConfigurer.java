@@ -111,8 +111,13 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   @Override
-  public void useDataset(String dataset) {
+  public void addDataset(String dataset) {
     datasets.add(dataset);
+  }
+
+  @Override
+  public void addDatasets(Iterable<String> datasets) {
+    Iterables.addAll(this.datasets, datasets);
   }
 
   @Override

@@ -18,8 +18,6 @@ package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 
-import java.util.List;
-
 /**
  * An abstract implementation of {@link Service}. Users may extend this to write a {@link Service}.
  *
@@ -86,8 +84,16 @@ public abstract class AbstractService implements Service {
    * Add a dataset that will be used by the Service.
    * @param dataset name of dataset.
    */
-  protected void useDataset(String dataset) {
-    configurer.useDataset(dataset);
+  protected void addDataset(String dataset) {
+    configurer.addDataset(dataset);
+  }
+
+  /**
+   * Add a list of datasets that will be used by the Service.
+   * @param datasets names of datasets.
+   */
+  protected void addDatasets(Iterable<String> datasets) {
+    configurer.addDatasets(datasets);
   }
 
   /**
