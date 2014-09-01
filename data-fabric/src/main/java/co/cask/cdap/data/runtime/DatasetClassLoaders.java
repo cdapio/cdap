@@ -74,9 +74,7 @@ public class DatasetClassLoaders {
       } else {
         return new DatasetClassLoaderUtil(parentClassLoader, datasetFiles);
       }
-    } catch (MalformedURLException e) {
-      throw Throwables.propagate(e);
-    } catch (IOException e) {
+    } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }

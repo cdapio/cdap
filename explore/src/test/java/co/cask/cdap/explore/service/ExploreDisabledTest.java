@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -43,6 +44,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionManager;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -203,11 +205,15 @@ public class ExploreDisabledTest {
   private DatasetWrapper getDatasetWrapper(String instanceName, String typeName)
     throws DatasetManagementException, IOException {
     ClassLoader parentClassLoader = Thread.currentThread().getContextClassLoader();
+
     DatasetTypeMeta typeMeta = datasetFramework.getType(typeName);
+    Preconditions.checkNotNull(typeMeta);
     DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(parentClassLoader,
                                                                                          typeMeta, locationFactory);
     parentClassLoader = dsUtil.getClassLoader();
-    return new DatasetWrapper(dsUtil, datasetFramework.getDataset(instanceName, DatasetDefinition.NO_ARGUMENTS,
-                                                                  parentClassLoader));
+    Dataset dataset = datasetFramework.getDataset(instanceName, DatasetDefinition.NO_ARGUMENTS,
+                                                  parentClassLoader);
+    Preconditions.checkNotNull(dataset);
+    return new DatasetWrapper(dsUtil, dataset);
   }
 }

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.app.program;
 
-import co.cask.cdap.api.annotation.ExposeClass;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.lang.AnnotationListHolder;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
@@ -29,8 +28,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;

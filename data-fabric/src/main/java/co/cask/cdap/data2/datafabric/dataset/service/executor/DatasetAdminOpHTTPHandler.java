@@ -94,7 +94,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/data/datasets/{name}/admin/create")
   public void create(HttpRequest request, HttpResponder responder, @PathParam("name") String name)
-  throws Exception {
+    throws Exception {
     DatasetTypeWrapper datasetTypeWrapper = null;
     try {
       String propsHeader = request.getHeader("instance-props");
@@ -106,21 +106,16 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
       DatasetProperties props = GSON.fromJson(propsHeader, DatasetProperties.class);
       DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
-
       datasetTypeWrapper = getDatasetTypeWrapper(typeMeta);
       DatasetType type = datasetTypeWrapper.getDatasetType();
-
-      if (type == null) {
-        String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
-        LOG.error(msg);
-        responder.sendError(HttpResponseStatus.BAD_REQUEST, msg);
-        return;
-      }
 
       DatasetSpecification spec = type.configure(name, props);
       DatasetAdmin admin = type.getAdmin(spec);
       admin.create();
       responder.sendJson(HttpResponseStatus.OK, spec);
+    } catch (HandlerException e) {
+      LOG.debug("Got handler exception", e);
+      responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
     } finally {
       if (datasetTypeWrapper != null) {
         datasetTypeWrapper.cleanup();
@@ -146,15 +141,12 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
       datasetTypeWrapper = getDatasetTypeWrapper(typeMeta);
       DatasetType type = datasetTypeWrapper.getDatasetType();
 
-      if (type == null) {
-        String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
-        LOG.error(msg);
-        responder.sendError(HttpResponseStatus.BAD_REQUEST, msg);
-        return;
-      }
       DatasetAdmin admin = type.getAdmin(spec);
       admin.drop();
       responder.sendJson(HttpResponseStatus.OK, spec);
+    } catch (HandlerException e) {
+      LOG.debug("Got handler exception", e);
+      responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
     } finally {
       if (datasetTypeWrapper != null) {
         datasetTypeWrapper.cleanup();
@@ -213,13 +205,18 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   private DatasetAdminWrapper getDatasetAdminWrapper(String instanceName)
     throws IOException, DatasetManagementException {
     ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                                   getClass().getClassLoader());
+                                                         getClass().getClassLoader());
+    String msg = String.format("Dataset instance %s does not exist", instanceName);
+
     if (dsFramework.getDatasetSpec(instanceName) == null) {
-      throw new HandlerException(HttpResponseStatus.NOT_FOUND,
-                                 String.format("Dataset instance %s does not exist", instanceName));
+      throw new HandlerException(HttpResponseStatus.NOT_FOUND, msg);
+    }
+    DatasetTypeMeta typeMeta = dsFramework.getType(dsFramework.getDatasetSpec(instanceName).getType());
+    if (typeMeta == null) {
+      throw new HandlerException(HttpResponseStatus.NOT_FOUND, msg);
     }
     DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
-      (parentClassLoader, dsFramework.getType(dsFramework.getDatasetSpec(instanceName).getType()), locationFactory);
+      (parentClassLoader, typeMeta, locationFactory);
     DatasetAdmin admin = dsFramework.getAdmin(instanceName, dsUtil.getClassLoader());
 
     if (admin == null) {
@@ -232,16 +229,24 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
   private DatasetTypeWrapper getDatasetTypeWrapper(DatasetTypeMeta typeMeta)
     throws IOException, DatasetManagementException {
+    String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
+
     ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                          getClass().getClassLoader());
+    if (typeMeta == null) {
+      LOG.error(msg);
+      throw new HandlerException(HttpResponseStatus.BAD_REQUEST, msg);
+    }
+
     DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
       (parentClassLoader, typeMeta, locationFactory);
     DatasetType datasetType = dsFramework.getDatasetType(typeMeta, dsUtil.getClassLoader());
 
     if (datasetType == null) {
-      throw new HandlerException(HttpResponseStatus.NOT_FOUND,
-                                 "Couldn't obtain DatasetType type: " + typeMeta.getName());
+      LOG.error(msg);
+      throw new HandlerException(HttpResponseStatus.BAD_REQUEST, msg);
     }
+
     return new DatasetTypeWrapper(dsUtil, datasetType);
   }
 

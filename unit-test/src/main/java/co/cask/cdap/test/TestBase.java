@@ -50,6 +50,7 @@ import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamServiceModule;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data2.datafabric.dataset.DatasetAdminWrapper;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -385,24 +386,26 @@ public class TestBase {
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param props properties
-   * @param <T> type of the dataset admin
    * @return
    * @throws Exception
    */
   @Beta
-  protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
+  protected final DatasetAdminWrapper addDatasetInstance(String datasetTypeName,
                                                        String datasetInstanceName,
                                                        DatasetProperties props) throws Exception {
 
     DatasetTypeMeta typeMeta = datasetFramework.getType(datasetTypeName);
     ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                    getClass().getClassLoader());
-    // todo : not sure how to clean this up here, should we return an
-    // interface similar to DatasetManager and handle cleanup inside that?
+    Preconditions.checkNotNull(typeMeta);
     DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(parentClassLoader, typeMeta,
                                                                                          locationFactory);
+
     datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
-    return datasetFramework.getAdmin(datasetInstanceName, dsUtil.getClassLoader());
+
+    DatasetAdmin datasetAdmin = datasetFramework.getAdmin(datasetInstanceName, dsUtil.getClassLoader());
+    DatasetAdminWrapper datasetAdminWrapper = new DatasetAdminWrapper(dsUtil, datasetAdmin);
+    return datasetAdminWrapper;
   }
 
   /**

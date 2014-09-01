@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -49,6 +50,7 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import com.continuuity.tephra.TransactionManager;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -229,11 +231,14 @@ public class BaseHiveExploreServiceTest {
     ClassLoader parentClassLoader = Thread.currentThread().getContextClassLoader();
 
     DatasetTypeMeta typeMeta = datasetFramework.getType(typeName);
+    Preconditions.checkNotNull(typeMeta);
     DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(parentClassLoader,
                                                                                          typeMeta, locationFactory);
     parentClassLoader = dsUtil.getClassLoader();
-    return new DatasetWrapper(dsUtil, datasetFramework.getDataset(instanceName, DatasetDefinition.NO_ARGUMENTS,
-                                                                  parentClassLoader));
+    Dataset dataset = datasetFramework.getDataset(instanceName, DatasetDefinition.NO_ARGUMENTS,
+                                parentClassLoader);
+    Preconditions.checkNotNull(dataset);
+    return new DatasetWrapper(dsUtil, dataset);
   }
 
 }
