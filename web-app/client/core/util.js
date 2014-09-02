@@ -971,7 +971,7 @@ define([], function () {
      *
      **/
     isInteger: function (inputString) {
-      if (parseFloat(inputString, 10) % 1 !== 0) {
+      if (parseFloat(inputString) % 1 !== 0) {
         return false;
       }
       return (/^[0-9\.]+$/i.test(inputString));
@@ -1007,7 +1007,7 @@ define([], function () {
       //  default values of [1,100] for [min,max].
       if (typeof(min)==='undefined') min = 1;
       if (typeof(max)==='undefined') max = 100;
-      var numRequested = parseFloat(numRequestedString, 10);
+      var numRequested = parseFloat(numRequestedString);
 
       if (min == max) {
         return 'You can not change the number of instances for this runnable. Its minimum and maximum instances '
