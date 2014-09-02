@@ -433,7 +433,11 @@ setInterval(function () {
 							host: post_options.host,
 							port: post_options.port,
 							path: post_options.path,
-							data: post_data
+							data: post_data,
+							// allow self-signed SSL certificates on router
+              rejectUnauthorized: false,
+              requestCert: true,
+              agent: false
 						},
 						res: {
 							statusCode: res.statusCode,

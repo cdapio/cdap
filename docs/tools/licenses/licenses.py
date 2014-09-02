@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#  Copyright 2014 Cask, Inc.
+#  Copyright 2014 Cask Data, Inc.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -29,14 +29,13 @@ import subprocess
 import sys
 import tempfile
 
-VERSION = "0.0.3"
+VERSION = "0.0.4"
 
 MASTER_CSV = "cdap-dependencies-master.csv"
 
 ENTERPRISE = "cdap-enterprise-dependencies"
 LEVEL_1    = "cdap-level-1-dependencies"
-# STANDALONE = "cdap-standalone-dependencies"
-STANDALONE = "cdap-singlenode-dependencies"
+STANDALONE = "cdap-standalone-dependencies"
 
 LICENSES_SOURCE = "../../developer-guide/source/licenses"
 
@@ -379,7 +378,7 @@ def print_rst_enterprise(input_file, options):
 
 
 def print_rst_standalone(input_file, options):
-    title = "SingleNode"
+    title = "Standalone"
     file_base = STANDALONE
     header = '"Package","Version","Classifier","License","License URL"'
     widths = "20, 10, 10, 20, 30"
@@ -389,7 +388,7 @@ def print_rst_standalone(input_file, options):
    
 def print_dependencies(title, file_base, header, widths, data_list):
 # Example: "Level 1", LEVEL_1, ...
-    RST_HEADER=""".. :author: Cask, Inc.
+    RST_HEADER=""".. :author: Cask Data, Inc.
    :version: %(version)s
 ============================================
 Cask Data Application Platform %(version)s\

@@ -771,16 +771,16 @@ Rickshaw.Fixtures.Color = function() {
     '#858772',
     '#785f43',
     '#96557e',
-    '#4682b4',
-    '#65b9ac',
-    '#73c03a',
-    '#cb513a'
+    '#3C4355',
+    '#01ABED',
+    '#0AAE33',
+    '#F34F50'
   ].reverse();
 
   this.schemes.cool = [
     '#5e9d2f',
-    '#73c03a',
-    '#4682b4',
+    '#0AAE33',
+    '#3C4355',
     '#7bc3b8',
     '#a9884e',
     '#c1b266',

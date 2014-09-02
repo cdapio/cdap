@@ -1,6 +1,9 @@
-========
-CDAP FAQ
-========
+.. :author: Cask Data, Inc.
+   :description: Frequently Asked Questions about the Cask Data Application Platform
+
+==================================
+Cask Data Application Platform FAQ
+==================================
 
 .. contents::
    :local:
@@ -26,7 +29,7 @@ What is available in the CDAP SDK?
 The CDAP SDK comes with:
 
 - Java and RESTful APIs to build CDAP applications;
-- Local DAP to run the entire CDAP stack in a single Java virtual machine; and
+- Standalone CDAP to run the entire CDAP stack in a single Java virtual machine; and
 - Example CDAP applications.
 
 Why should I use Cask Data Application Platform for developing Big Data Applications?
@@ -51,7 +54,7 @@ advantages of using CDAP include:
 #. **Full Developement Lifecycle Support:**
    CDAP supports developers through the entire application development lifecycle: development, debugging,
    testing, continuous integration and production. Using familiar development tools like Eclipse and
-   IntelliJ, you can build, test and debug your application right on your laptop with a Local DAP. Utilize
+   IntelliJ, you can build, test and debug your application right on your laptop with a Standalone CDAP. Utilize
    the application unit test framework for continuous integration.
 
 #. **Easy Application Operations:**

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.dataset;
+package co.cask.cdap.api.dataset;
 
 /**
  * Thrown when a data operation fails.
