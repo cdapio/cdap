@@ -23,12 +23,18 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.data2.datafabric.dataset.DatasetAdminWrapper;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapper;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapperUtility;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.tephra.DefaultTransactionExecutor;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.inmemory.MinimalTxSystemClient;
+import com.google.common.base.Objects;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -55,9 +61,17 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertTrue(framework.hasInstance("my_table"));
 
     // Doing some admin and data ops
-    DatasetAdmin admin = framework.getAdmin("my_table", null);
+    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                         getClass().getClassLoader());
+    LocationFactory locationFactory = new LocalLocationFactory();
+    DatasetAdminWrapper adminWrapper = DatasetWrapperUtility.getDatasetAdminWrapper
+      (framework, "my_table", locationFactory, parentClassLoader);
+    DatasetAdmin admin = adminWrapper.getDatasetAdmin();
     Assert.assertNotNull(admin);
-    final OrderedTable table = framework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+
+    DatasetWrapper datasetWrapper = DatasetWrapperUtility.getDatasetWrapper
+      (framework, "my_table", DatasetDefinition.NO_ARGUMENTS, locationFactory, parentClassLoader);
+    final OrderedTable table = (OrderedTable) datasetWrapper.getDataset();
     Assert.assertNotNull(table);
 
     TransactionExecutor txnl = new DefaultTransactionExecutor(new MinimalTxSystemClient(), (TransactionAware) table);
@@ -84,6 +98,8 @@ public abstract class AbstractDatasetFrameworkTest {
     // cleanup
     framework.deleteInstance("my_table");
     framework.deleteModule("inMemory");
+    adminWrapper.cleanup();
+    datasetWrapper.cleanup();
   }
 
   @Test
@@ -142,9 +158,18 @@ public abstract class AbstractDatasetFrameworkTest {
   private void testCompositeDataset(DatasetFramework framework) throws Exception {
 
     // Doing some admin and data ops
-    DatasetAdmin admin = framework.getAdmin("my_table", null);
+
+    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                         getClass().getClassLoader());
+    LocationFactory locationFactory = new LocalLocationFactory();
+    DatasetAdminWrapper adminWrapper = DatasetWrapperUtility.getDatasetAdminWrapper
+      (framework, "my_table", locationFactory, parentClassLoader);
+    DatasetAdmin admin = adminWrapper.getDatasetAdmin();
     Assert.assertNotNull(admin);
-    final KeyValueTable table = framework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+
+    DatasetWrapper datasetWrapper = DatasetWrapperUtility.getDatasetWrapper
+      (framework, "my_table", DatasetDefinition.NO_ARGUMENTS, locationFactory, parentClassLoader);
+    final KeyValueTable table = (KeyValueTable) datasetWrapper.getDataset();
     Assert.assertNotNull(table);
 
     TransactionExecutor txnl = new DefaultTransactionExecutor(new MinimalTxSystemClient(), (TransactionAware) table);
@@ -167,6 +192,9 @@ public abstract class AbstractDatasetFrameworkTest {
         Assert.assertEquals(null, table.get("key1"));
       }
     });
+
+    datasetWrapper.cleanup();
+    adminWrapper.cleanup();
   }
 
   @Test
@@ -212,5 +240,7 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertFalse(framework.hasType(OrderedTable.class.getName()));
     Assert.assertFalse(framework.hasType(Table.class.getName()));
   }
+
+
 
 }

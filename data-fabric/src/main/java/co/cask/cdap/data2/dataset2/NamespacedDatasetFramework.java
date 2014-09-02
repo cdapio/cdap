@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
@@ -98,6 +99,11 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   @Override
   public boolean hasType(String typeName) throws DatasetManagementException {
     return delegate.hasType(typeName);
+  }
+
+  @Override
+  public DatasetTypeMeta getType(String typeName) throws DatasetManagementException {
+    return delegate.getType(typeName);
   }
 
   @Override

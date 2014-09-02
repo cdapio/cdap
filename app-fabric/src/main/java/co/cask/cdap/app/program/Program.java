@@ -75,4 +75,9 @@ public interface Program {
    * Returns the class loader for loading classes inside this program.
    */
   ClassLoader getClassLoader();
+
+  /**
+   * Returns the set of {@link Location Locations} of {@link co.cask.cdap.api.dataset.Dataset} jar's
+   */
+  Iterable<Location> getDatasetJarLocations();
 }

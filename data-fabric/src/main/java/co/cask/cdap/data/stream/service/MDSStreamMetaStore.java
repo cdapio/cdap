@@ -32,6 +32,7 @@ import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.TransactionExecutorFactory;
 import com.continuuity.tephra.TransactionSystemClient;
+import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
@@ -60,6 +61,8 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
     final DatasetFramework dsFramework =
       new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf, Namespace.SYSTEM));
 
+    final ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
     txnl = Transactional.of(
         new TransactionExecutorFactory() {
           @Override
@@ -72,7 +75,7 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
             try {
               Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, STREAM_META_TABLE, "table",
                                                                DatasetProperties.EMPTY,
-                                                               DatasetDefinition.NO_ARGUMENTS, null);
+                                                               DatasetDefinition.NO_ARGUMENTS, cl);
 
               return new StreamMds(new MetadataStoreDataset(mdsTable));
             } catch (Exception e) {

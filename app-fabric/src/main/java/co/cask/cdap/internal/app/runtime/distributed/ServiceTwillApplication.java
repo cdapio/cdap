@@ -58,6 +58,7 @@ public class ServiceTwillApplication implements TwillApplication {
       .withRunnable();
 
     Location programLocation = program.getJarLocation();
+
     String programName = programLocation.getName();
     TwillSpecification.Builder.RunnableSetter runnableSetter = null;
     for (Map.Entry<String, RuntimeSpecification> entry : spec.getRunnables().entrySet()) {
@@ -65,11 +66,15 @@ public class ServiceTwillApplication implements TwillApplication {
       ResourceSpecification resourceSpec = runtimeSpec.getResourceSpecification();
 
       String runnableName = entry.getKey();
-      runnableSetter = moreRunnable
+      TwillSpecification.Builder.MoreFile moreFile = moreRunnable
         .add(runnableName, new ServiceTwillRunnable(runnableName, "hConf.xml", "cConf.xml"), resourceSpec)
         .withLocalFiles().add(programName, programLocation.toURI())
                          .add("hConf.xml", hConfig.toURI())
-                         .add("cConf.xml", cConfig.toURI()).apply();
+                         .add("cConf.xml", cConfig.toURI());
+      for (Location datasetJar : program.getDatasetJarLocations()) {
+        moreFile.add(datasetJar.getName(), datasetJar.toURI());
+      }
+      runnableSetter = moreFile.apply();
     }
 
     Preconditions.checkState(runnableSetter != null, "No Runnable for the Service.");

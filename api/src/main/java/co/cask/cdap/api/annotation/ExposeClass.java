@@ -14,17 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.type;
+package co.cask.cdap.api.annotation;
 
-import co.cask.cdap.proto.DatasetModuleMeta;
-
-import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Creates a {@link ClassLoader} for a {@link DatasetModuleMeta}.
+ * Annotation to expose a Dataset or Dataset dependent class.
  */
-public interface DatasetTypeClassLoaderFactory {
-
-  ClassLoader create(DatasetModuleMeta moduleMeta, ClassLoader parentClassLoader) throws IOException;
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface ExposeClass {
 
 }
+

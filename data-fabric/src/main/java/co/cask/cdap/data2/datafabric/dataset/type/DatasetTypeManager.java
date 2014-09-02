@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.lang.AnnotationListHolder;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
@@ -116,12 +117,16 @@ public class DatasetTypeManager extends AbstractIdleService {
           DependencyTrackingRegistry reg;
           try {
             // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
+            List<File> datasetJars = Lists.newArrayList();
             if (jarLocation != null) {
               BundleJarUtil.unpackProgramJar(jarLocation, unpackedLocation);
+              datasetJars.add(unpackedLocation);
             }
+
             cl = jarLocation == null ? this.getClass().getClassLoader() :
-              ClassLoaders.newProgramClassLoader(unpackedLocation, ApiResourceListHolder.getResourceList(),
-                                                 this.getClass().getClassLoader());
+              ClassLoaders.newAnnotationFilterClassLoader(datasetJars, ApiResourceListHolder.getResourceList(),
+                                                          this.getClass().getClassLoader(),
+                                                          AnnotationListHolder.getAnnotationList());
             @SuppressWarnings("unchecked")
             Class clazz = ClassLoaders.loadClass(className, cl, this);
             module = DatasetModules.getDatasetModule(clazz);

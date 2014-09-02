@@ -35,6 +35,9 @@ import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.Namespace;
+import co.cask.cdap.data.dataset.DatasetCreationSpec;
+import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
+import co.cask.cdap.data.runtime.DatasetClassLoaders;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -50,6 +53,8 @@ import co.cask.cdap.internal.app.ForwardingTwillSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
 import co.cask.cdap.internal.service.DefaultServiceSpecification;
+import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -61,6 +66,7 @@ import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -69,6 +75,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RuntimeSpecification;
@@ -85,6 +92,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -122,9 +130,11 @@ public class DefaultStore implements Store {
           @Override
           public AppMds get() {
             try {
+              ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                    getClass().getClassLoader());
               Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, APP_META_TABLE, "table",
                                                                DatasetProperties.EMPTY,
-                                                               DatasetDefinition.NO_ARGUMENTS, null);
+                                                               DatasetDefinition.NO_ARGUMENTS, cl);
               return new AppMds(mdsTable);
             } catch (Exception e) {
               LOG.error("Failed to access app.meta table", e);
@@ -144,7 +154,7 @@ public class DefaultStore implements Store {
 
   @Nullable
   @Override
-  public Program loadProgram(final Id.Program id, ProgramType type) throws IOException {
+  public Program loadProgram(final Id.Program id, ProgramType type) throws IOException, DatasetManagementException {
     ApplicationMeta appMeta = txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, ApplicationMeta>() {
       @Override
       public ApplicationMeta apply(AppMds mds) throws Exception {
@@ -155,14 +165,29 @@ public class DefaultStore implements Store {
     if (appMeta == null) {
       return null;
     }
-
     Location programLocation = getProgramLocation(id, type);
     // I guess this can happen when app is being deployed at the moment... todo: should be prevented by framework
     Preconditions.checkArgument(appMeta.getLastUpdateTs() >= programLocation.lastModified(),
                                 "Newer program update time than the specification update time. " +
                                 "Application must be redeployed");
 
-    return Programs.create(programLocation);
+    return Programs.create(programLocation, getDatasetJarsFromAppSpec(appMeta.getSpec()));
+  }
+
+  private List<Location> getDatasetJarsFromAppSpec(ApplicationSpecification appSpec) throws DatasetManagementException {
+    List<Location> datasetTypeJars = Lists.newArrayList();
+    Set<URI> existingTypes = Sets.newHashSet();
+    for (Map.Entry<String, DatasetCreationSpec> entry : appSpec.getDatasets().entrySet()) {
+      DatasetTypeMeta typeMeta = dsFramework.getType(entry.getValue().getTypeName());
+      if (typeMeta != null) {
+        for (DatasetModuleMeta moduleMeta : typeMeta.getModules()) {
+          if ((moduleMeta.getJarLocation() != null) &&  existingTypes.add(moduleMeta.getJarLocation())) {
+            datasetTypeJars.add(locationFactory.create(moduleMeta.getJarLocation()));
+          }
+        }
+      }
+    }
+    return datasetTypeJars;
   }
 
   @Override
@@ -632,7 +657,10 @@ public class DefaultStore implements Store {
 
   @VisibleForTesting
   void clear() throws Exception {
-    DatasetAdmin admin = dsFramework.getAdmin(APP_META_TABLE, null);
+    ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                   getClass().getClassLoader());
+    //app-meta uses system dataset
+    DatasetAdmin admin = dsFramework.getAdmin(APP_META_TABLE, classLoader);
     if (admin != null) {
       admin.truncate();
     }
@@ -748,7 +776,7 @@ public class DefaultStore implements Store {
       Location programLocation = getProgramLocation(id, type);
       ArchiveBundler bundler = new ArchiveBundler(programLocation);
 
-      Program program = Programs.create(programLocation);
+      Program program = Programs.create(programLocation, getDatasetJarsFromAppSpec(appSpec));
       String className = program.getMainClassName();
 
       Location tmpProgramLocation = programLocation.getTempFile("");
@@ -767,6 +795,8 @@ public class DefaultStore implements Store {
         }
       }
     } catch (IOException e) {
+      throw Throwables.propagate(e);
+    } catch (DatasetManagementException e) {
       throw Throwables.propagate(e);
     }
   }

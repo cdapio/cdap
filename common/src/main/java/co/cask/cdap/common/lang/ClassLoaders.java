@@ -16,8 +16,10 @@
 
 package co.cask.cdap.common.lang;
 
+import co.cask.cdap.api.annotation.ExposeClass;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.common.internal.guava.ClassPath;
+import co.cask.cdap.common.lang.jar.ExposeFilterClassLoader;
 import co.cask.cdap.common.lang.jar.ProgramClassLoader;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
@@ -33,6 +35,7 @@ import org.apache.twill.internal.utils.Dependencies;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.MalformedURLException;
@@ -62,13 +65,34 @@ public final class ClassLoaders {
   private ClassLoaders() { }
 
   public static ProgramClassLoader newProgramClassLoader(File unpackedJarDir, Iterable<String> apiResourceList,
-                                                         ClassLoader parentClassLoader) throws IOException {
+                                                         ClassLoader parentClassLoader) throws MalformedURLException {
     // TODO: Unify the creation of FilterClassLoader REACTOR-760
     Predicate<String> predicate = Predicates.in(Sets.newHashSet(apiResourceList));
     ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                     ClassLoaders.class.getClassLoader());
     return new ProgramClassLoader(unpackedJarDir, new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
                                                                          ImmutableList.of(parentClassLoader)));
+  }
+
+  public static CombineClassLoader newAnnotationFilterClassLoader(Iterable<File> datasetJars,
+                                                                  Iterable<String> apiResourceList,
+                                                                  ClassLoader parentClassLoader,
+                                                                  Iterable<String> annotationList)
+    throws MalformedURLException  {
+    Predicate<String> predicate = Predicates.in(Sets.newHashSet(apiResourceList));
+    Predicate<String> annotationPredicate = Predicates.in(Sets.newHashSet(annotationList));
+
+    ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                    ClassLoaders.class.getClassLoader());
+
+    List<ClassLoader> datasetClassLoaders = Lists.newArrayList();
+    for (File datasetJar : datasetJars) {
+      datasetClassLoaders.add(new ExposeFilterClassLoader(datasetJar,
+                               new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
+                                                      ImmutableList.of(parentClassLoader)), annotationPredicate));
+    }
+    return new CombineClassLoader(new CombineClassLoader(new FilterClassLoader(predicate, filterParent),
+                                                         ImmutableList.of(parentClassLoader)), datasetClassLoaders);
   }
 
   public static Iterable<String> getAPIResources(ClassLoader classLoader) throws IOException {

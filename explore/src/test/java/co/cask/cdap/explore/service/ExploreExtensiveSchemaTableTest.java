@@ -19,6 +19,8 @@ package co.cask.cdap.explore.service;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapper;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapperUtility;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.test.SlowTests;
@@ -37,7 +39,6 @@ import org.junit.experimental.categories.Category;
  */
 @Category(SlowTests.class)
 public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest {
-
   @BeforeClass
   public static void start() throws Exception {
     startServices(CConfiguration.create());
@@ -47,9 +48,13 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("ExtensiveSchemaTable", "my_table", DatasetProperties.EMPTY);
 
+
     // Accessing dataset instance to perform data operations
+    DatasetWrapper datasetWrapper = DatasetWrapperUtility.getDatasetWrapper
+      (datasetFramework, "my_table", DatasetDefinition.NO_ARGUMENTS, locationFactory,
+       Thread.currentThread().getContextClassLoader());
     ExtensiveSchemaTableDefinition.ExtensiveSchemaTable table =
-      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+      (ExtensiveSchemaTableDefinition.ExtensiveSchemaTable) datasetWrapper.getDataset();
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);
@@ -81,6 +86,7 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
 
     Transaction tx2 = transactionManager.startShort(100);
     table.startTx(tx2);
+    datasetWrapper.cleanup();
   }
 
   @AfterClass

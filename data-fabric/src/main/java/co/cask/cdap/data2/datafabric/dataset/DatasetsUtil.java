@@ -51,7 +51,7 @@ public final class DatasetsUtil {
     throws DatasetManagementException, IOException {
 
     createIfNotExists(datasetFramework, instanceName, typeName, props);
-    return (T) datasetFramework.getDataset(instanceName, arguments, null);
+    return (T) datasetFramework.getDataset(instanceName, arguments, cl);
   }
 
   /**

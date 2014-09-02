@@ -58,7 +58,7 @@ public final class WebappTwillApplication implements TwillApplication {
     try {
       String serviceName = WebappProgramRunner.getServiceName(ProgramType.WEBAPP, program);
 
-      return TwillSpecification.Builder.with()
+      TwillSpecification.Builder.MoreFile moreFile = TwillSpecification.Builder.with()
         .setName(serviceName)
         .withRunnable()
           .add(serviceName, new WebappTwillRunnable(serviceName, "hConf.xml", "cConf.xml"),
@@ -66,8 +66,11 @@ public final class WebappTwillApplication implements TwillApplication {
           .withLocalFiles()
             .add(programLocation.getName(), programLocation.toURI())
             .add("hConf.xml", hConfig.toURI())
-            .add("cConf.xml", cConfig.toURI()).apply()
-        .anyOrder().withEventHandler(eventHandler).build();
+            .add("cConf.xml", cConfig.toURI());
+      for (Location datasetJar : program.getDatasetJarLocations()) {
+        moreFile.add(datasetJar.getName(), datasetJar.toURI());
+      }
+      return moreFile.apply().anyOrder().withEventHandler(eventHandler).build();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

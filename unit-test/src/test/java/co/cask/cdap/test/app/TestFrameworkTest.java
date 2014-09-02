@@ -17,6 +17,7 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
@@ -24,6 +25,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpRequests;
 import co.cask.cdap.common.http.HttpResponse;
+import co.cask.cdap.data2.datafabric.dataset.DatasetAdminWrapper;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -354,6 +356,7 @@ public class TestFrameworkTest extends TestBase {
       DataSetManager<MyKeyValueTableDefinition.KeyValueTable> mydatasetManager =
         applicationManager.getDataSet("mydataset");
       Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
+      mydatasetManager.finish();
 
     } finally {
       applicationManager.stopAll();
@@ -399,7 +402,7 @@ public class TestFrameworkTest extends TestBase {
   }
 
   @Test
-  public void testAppRedeployKeepsData() {
+  public void testAppRedeployKeepsData() throws IOException {
     ApplicationManager appManager = deployApplication(AppWithTable.class);
     DataSetManager<Table> myTableManager = appManager.getDataSet("my_table");
     myTableManager.get().put(new Put("key1", "column1", "value1"));
@@ -408,22 +411,25 @@ public class TestFrameworkTest extends TestBase {
     // Changes should be visible to other instances of datasets
     DataSetManager<Table> myTableManager2 = appManager.getDataSet("my_table");
     Assert.assertEquals("value1", myTableManager2.get().get(new Get("key1", "column1")).getString("column1"));
+    myTableManager2.finish();
 
     // Even after redeploy of an app: changes should be visible to other instances of datasets
     appManager = deployApplication(AppWithTable.class);
     DataSetManager<Table> myTableManager3 = appManager.getDataSet("my_table");
     Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
+    myTableManager3.finish();
 
     // Calling commit again (to test we can call it multiple times)
     myTableManager.get().put(new Put("key1", "column1", "value2"));
     myTableManager.flush();
 
     Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
+    myTableManager.finish();
   }
 
 
   @Test (timeout = 30000L)
-  public void testInitDataSetAccess() throws TimeoutException, InterruptedException {
+  public void testInitDataSetAccess() throws TimeoutException, InterruptedException, IOException {
     ApplicationManager appManager = deployApplication(DataSetInitApp.class);
     FlowManager flowManager = appManager.startFlow("DataSetFlow");
 
@@ -439,6 +445,7 @@ public class TestFrameworkTest extends TestBase {
     Assert.assertEquals("generator", confTable.get(new Get("key", "column")).getString("column"));
 
     dataSetManager.flush();
+    dataSetManager.finish();
   }
 
   @Test(timeout = 60000L)
@@ -462,26 +469,34 @@ public class TestFrameworkTest extends TestBase {
   @Test(timeout = 60000L)
   public void testAppWithExistingDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    DatasetAdminWrapper admin = addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY);
+    admin.getDatasetAdmin().create();
+    admin.cleanup();
     testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyProcedure");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    DatasetAdminWrapper admin = addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY);
+    admin.getDatasetAdmin().create();
+    admin.cleanup();
     testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyProcedureWithUseDataSetAnnotation");
   }
 
   @Test(timeout = 60000L)
   public void testDatasetWithoutApp() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
-    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> dataSetManager = getDataset("myTable");
+    DatasetAdminWrapper adminWrapper = addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY);
+    adminWrapper.getDatasetAdmin().create();
+    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> dataSetManager =
+      getDataset("myKeyValueTable", "myTable");
     AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = dataSetManager.get();
     kvTable.put("test", "hello");
     dataSetManager.flush();
     Assert.assertEquals("hello", dataSetManager.get().get("test"));
+    adminWrapper.cleanup();
+    dataSetManager.finish();
   }
 
   @Test(timeout = 60000L)
@@ -545,6 +560,7 @@ public class TestFrameworkTest extends TestBase {
     } finally {
       connection.close();
       appManager.stopAll();
+      myTableManager.finish();
     }
   }
 

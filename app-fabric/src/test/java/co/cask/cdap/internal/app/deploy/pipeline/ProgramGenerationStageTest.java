@@ -21,10 +21,12 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.jar.JarFinder;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.pipeline.StageContext;
+import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -46,7 +48,8 @@ public class ProgramGenerationStageTest {
     ApplicationSpecification appSpec = Specifications.from(new ToyApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
-    ProgramGenerationStage pgmStage = new ProgramGenerationStage(configuration, lf);
+    ProgramGenerationStage pgmStage = new ProgramGenerationStage(
+      configuration, lf, AppFabricTestHelper.getInjector().getInstance(DatasetFramework.class));
     pgmStage.process(new StageContext(Object.class));  // Can do better here - fixed right now to run the test.
     pgmStage.process(new ApplicationSpecLocation(DefaultId.APPLICATION, newSpec, appArchive));
     Assert.assertTrue(true);

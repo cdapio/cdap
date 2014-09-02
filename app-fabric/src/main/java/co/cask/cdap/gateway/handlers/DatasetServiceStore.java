@@ -31,6 +31,7 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.kv.NoTxKeyValueTable;
 import com.continuuity.tephra.TransactionFailureException;
+import com.google.common.base.Objects;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -47,9 +48,10 @@ public final class DatasetServiceStore implements ServiceStore {
       new NamespacedDatasetFramework(new InMemoryDatasetFramework(dsRegistryFactory),
                                      new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
     dsFramework.addModule("basicKVTable", datasetModule);
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader());
     table = DatasetsUtil.getOrCreateDataset(dsFramework, Constants.Service.SERVICE_INSTANCE_TABLE_NAME,
                                             NoTxKeyValueTable.class.getName(),
-                                            DatasetProperties.EMPTY, null, null);
+                                            DatasetProperties.EMPTY, null, cl);
   }
 
   @Override

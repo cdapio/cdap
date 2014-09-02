@@ -30,6 +30,7 @@ import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseMetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
+import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -149,12 +150,15 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
   public void upgrade() throws Exception {
     String metricsPrefix = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
                                      MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX);
+    //we use system namespace, so default class loader should be good for loading system dataset instances
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
     for (DatasetSpecification spec : dsFramework.getInstances()) {
       String dsName = spec.getName();
       // See if it is timeseries or aggregates table
 
       if (dsName.contains(metricsPrefix + ".ts.") || dsName.contains(metricsPrefix + ".agg")) {
-        DatasetAdmin admin = dsFramework.getAdmin(dsName, null);
+        DatasetAdmin admin = dsFramework.getAdmin(dsName, cl);
         if (admin != null) {
           admin.upgrade();
         } else {
@@ -167,8 +171,9 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
 
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props)
     throws DatasetManagementException, IOException {
-
-    return DatasetsUtil.getOrCreateDataset(dsFramework, tableName, MetricsTable.class.getName(), props, null, null);
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
+    return DatasetsUtil.getOrCreateDataset(dsFramework, tableName, MetricsTable.class.getName(), props, null, cl);
   }
 
   private int getRollTime(int resolution) {

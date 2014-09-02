@@ -60,6 +60,7 @@ public final class FlowTwillApplication implements TwillApplication {
 
     Location programLocation = program.getJarLocation();
     String programName = programLocation.getName();
+
     TwillSpecification.Builder.RunnableSetter runnableSetter = null;
     for (Map.Entry<String, FlowletDefinition> entry  : spec.getFlowlets().entrySet()) {
       FlowletDefinition flowletDefinition = entry.getValue();
@@ -71,12 +72,17 @@ public final class FlowTwillApplication implements TwillApplication {
         .build();
 
       String flowletName = entry.getKey();
-      runnableSetter = moreRunnable
+      TwillSpecification.Builder.MoreFile moreFile = moreRunnable
         .add(flowletName,
              new FlowletTwillRunnable(flowletName, "hConf.xml", "cConf.xml"), resourceSpec)
         .withLocalFiles().add(programName, programLocation.toURI())
                          .add("hConf.xml", hConfig.toURI())
-                         .add("cConf.xml", cConfig.toURI()).apply();
+                         .add("cConf.xml", cConfig.toURI());
+      for (Location datasetJar : program.getDatasetJarLocations()) {
+        moreFile.add(datasetJar.getName(), datasetJar.toURI());
+      }
+      runnableSetter = moreFile.apply();
+
     }
 
     Preconditions.checkState(runnableSetter != null, "No flowlet for the flow.");

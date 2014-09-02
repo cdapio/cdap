@@ -20,11 +20,14 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapper;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapperUtility;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.test.XSlowTests;
 import com.continuuity.tephra.Transaction;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -70,9 +73,13 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
 
+    DatasetWrapper datasetWrapper = DatasetWrapperUtility.getDatasetWrapper
+      (datasetFramework, "my_table", DatasetDefinition.NO_ARGUMENTS, locationFactory,
+       Thread.currentThread().getContextClassLoader());
+
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+      (KeyStructValueTableDefinition.KeyStructValueTable) datasetWrapper.getDataset();
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);
@@ -97,6 +104,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
     table.startTx(tx2);
 
     Assert.assertEquals(value1, table.get("1"));
+    datasetWrapper.cleanup();
   }
 
   @AfterClass

@@ -21,7 +21,6 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
-import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.TransactionFailureException;
 import com.google.common.collect.Sets;
@@ -181,7 +180,6 @@ public class KeyValueTableTest extends AbstractDatasetTest {
   public void testTransactionAcrossTables() throws Exception {
     createInstance("keyValueTable", "t1", DatasetProperties.EMPTY);
     createInstance("keyValueTable", "t2", DatasetProperties.EMPTY);
-
     final KeyValueTable table1 = getInstance("t1");
     final KeyValueTable table2 = getInstance("t2");
     TransactionExecutor txnl = newTransactionExecutor(table1, table2);

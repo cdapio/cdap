@@ -19,6 +19,7 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.tephra.TransactionExecutor;
+import com.google.common.base.Objects;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -45,9 +46,11 @@ public class DatasetWithArgumentsTest extends AbstractDatasetTest {
 
   @Test
   public void testPrefixTable() throws Exception {
-    final PrefixedTable table = getInstance("pret", null);
-    final PrefixedTable aTable = getInstance("pret", Collections.singletonMap("prefix", "a"));
-    final PrefixedTable bTable = getInstance("pret", Collections.singletonMap("prefix", "b"));
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
+    final PrefixedTable table = getInstance("pret", null, cl);
+    final PrefixedTable aTable = getInstance("pret", Collections.singletonMap("prefix", "a"), cl);
+    final PrefixedTable bTable = getInstance("pret", Collections.singletonMap("prefix", "b"), cl);
 
     TransactionExecutor txnl = newTransactionExecutor(aTable, bTable, table);
 

@@ -56,7 +56,7 @@ public final class ProcedureTwillApplication implements TwillApplication {
 
     Location programLocation = program.getJarLocation();
 
-    return TwillSpecification.Builder.with()
+    TwillSpecification.Builder.MoreFile moreFile =  TwillSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",
                              ProgramType.PROCEDURE.name().toLowerCase(),
                              program.getAccountId(), program.getApplicationId(), spec.getName()))
@@ -67,7 +67,12 @@ public final class ProcedureTwillApplication implements TwillApplication {
         .withLocalFiles()
           .add(programLocation.getName(), programLocation.toURI())
           .add("hConf.xml", hConfig.toURI())
-          .add("cConf.xml", cConfig.toURI()).apply()
+          .add("cConf.xml", cConfig.toURI());
+
+    for (Location datasetJar : program.getDatasetJarLocations()) {
+      moreFile.add(datasetJar.getName(), datasetJar.toURI());
+    }
+    return moreFile.apply()
       .anyOrder().withEventHandler(eventHandler).build();
   }
 }

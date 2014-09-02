@@ -16,16 +16,9 @@
 
 package co.cask.cdap.common.lang.jar;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
-import java.io.FilenameFilter;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * ClassLoader that implements bundle jar feature, in which the application jar contains
@@ -44,8 +37,6 @@ import java.util.List;
  */
 public class ProgramClassLoader extends URLClassLoader {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ProgramClassLoader.class);
-
   /**
    * Convenience class to construct a classloader for a program from an unpacked jar directory.
    * Adds <unpackedJarDir>/{.,*.jar,lib/*.jar} to the {@link URLClassLoader}.
@@ -53,49 +44,7 @@ public class ProgramClassLoader extends URLClassLoader {
    * @param unpackedJarDir Directory of the unpacked jar to be used in the classpath.
    * @param parentDelegate Parent classloader.
    */
-  public ProgramClassLoader(File unpackedJarDir, ClassLoader parentDelegate) {
-    super(getClassPathUrls(unpackedJarDir), parentDelegate);
-  }
-
-  private static URL[] getClassPathUrls(File unpackedJarDir) {
-    List<URL> classPathUrls = new LinkedList<URL>();
-
-    try {
-      classPathUrls.add(unpackedJarDir.toURI().toURL());
-    } catch (MalformedURLException e) {
-      LOG.error("Error in adding unpackedJarDir to classPathUrls", e);
-    }
-
-    try {
-      classPathUrls.addAll(getJarURLs(unpackedJarDir));
-    } catch (MalformedURLException e) {
-      LOG.error("Error in adding jar URLs to classPathUrls", e);
-    }
-
-    try {
-      classPathUrls.addAll(getJarURLs(new File(unpackedJarDir, "lib")));
-    } catch (MalformedURLException e) {
-      LOG.error("Error in adding jar URLs to classPathUrls", e);
-    }
-
-    return classPathUrls.toArray(new URL[classPathUrls.size()]);
-  }
-
-  private static List<URL> getJarURLs(File dir) throws MalformedURLException {
-    File[] files = dir.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return name.endsWith(".jar");
-      }
-    });
-    List<URL> urls = new LinkedList<URL>();
-
-    if (files != null) {
-      for (File file : files) {
-        urls.add(file.toURI().toURL());
-      }
-    }
-
-    return urls;
+  public ProgramClassLoader(File unpackedJarDir, ClassLoader parentDelegate) throws MalformedURLException {
+    super(ClassPathUrlsUtil.getClassPathUrls(unpackedJarDir), parentDelegate);
   }
 }

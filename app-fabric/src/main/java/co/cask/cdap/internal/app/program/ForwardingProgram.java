@@ -81,4 +81,10 @@ public abstract class ForwardingProgram implements Program {
   public ClassLoader getClassLoader() {
     return delegate.getClassLoader();
   }
+
+  @Override
+  public Iterable<Location> getDatasetJarLocations() {
+    return delegate.getDatasetJarLocations();
+  }
+
 }

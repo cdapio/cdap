@@ -51,6 +51,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 
@@ -75,8 +76,8 @@ public class BaseHiveExploreServiceTest {
   protected static ExploreExecutorService exploreExecutorService;
   protected static EndpointStrategy datasetManagerEndpointStrategy;
   protected static ExploreService exploreService;
-
   protected static ExploreClient exploreClient;
+  protected static LocationFactory locationFactory;
 
   protected static Injector injector;
   protected static void startServices(CConfiguration cConf) throws Exception {
@@ -98,6 +99,7 @@ public class BaseHiveExploreServiceTest {
     exploreExecutorService.startAndWait();
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
+    locationFactory = injector.getInstance(LocationFactory.class);
 
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     datasetManagerEndpointStrategy = new TimeLimitEndpointStrategy(

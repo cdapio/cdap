@@ -20,6 +20,8 @@ import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
+import co.cask.cdap.data.runtime.DatasetClassLoaders;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.hive.context.ConfigurationUtil;
@@ -27,8 +29,10 @@ import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.TxnCodec;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionAware;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -40,7 +44,7 @@ import java.util.Map;
 public class DatasetAccessor {
 
   // TODO: this will go away when dataset manager does not return datasets having classloader conflict - REACTOR-276
-  private static final Map<String, ClassLoader> DATASET_CLASSLOADERS = Maps.newConcurrentMap();
+  private static final Map<String, DatasetClassLoaderUtil> DATASET_CLASSLOADERS = Maps.newConcurrentMap();
 
   /**
    * Returns a RecordScannable. The returned object will have to be closed by the caller.
@@ -86,14 +90,15 @@ public class DatasetAccessor {
 
     try {
       DatasetFramework framework = context.getDatasetFramework();
-
-      ClassLoader classLoader = DATASET_CLASSLOADERS.get(datasetName);
+      LocationFactory locationFactory = context.getLocationFactory();
+      DatasetClassLoaderUtil dsUtil = DATASET_CLASSLOADERS.get(datasetName);
+      ClassLoader classLoader;
       Dataset dataset;
-      if (classLoader == null) {
+      if (dsUtil == null) {
         classLoader = conf.getClassLoader();
-        dataset = firstLoad(framework, datasetName, classLoader);
+        dataset = firstLoad(framework, datasetName, classLoader, locationFactory);
       } else {
-        dataset = framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, classLoader);
+        dataset = framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, dsUtil.getClassLoader());
       }
 
       if (!(dataset instanceof RecordScannable)) {
@@ -110,19 +115,31 @@ public class DatasetAccessor {
     }
   }
 
-  private static synchronized Dataset firstLoad(DatasetFramework framework, String datasetName, ClassLoader classLoader)
+  public static Map<String, DatasetClassLoaderUtil> getDatasetClassLoaderMap() {
+    return DATASET_CLASSLOADERS;
+  }
+
+  private static synchronized Dataset firstLoad(DatasetFramework framework, String datasetName, ClassLoader classLoader,
+                                                LocationFactory locationFactory)
     throws DatasetManagementException, IOException {
-    ClassLoader datasetClassLoader = DATASET_CLASSLOADERS.get(datasetName);
-    if (datasetClassLoader != null) {
+
+    DatasetClassLoaderUtil dsUtil = DATASET_CLASSLOADERS.get(datasetName);
+    if (dsUtil != null) {
       // Some other call in parallel may have already loaded it, so use the same classlaoder
-      return framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, datasetClassLoader);
+      return framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, dsUtil.getClassLoader());
     }
 
+    Preconditions.checkNotNull(framework.getDatasetSpec(datasetName),
+                               String.format("dataset instance : %s does not exist", datasetName));
+    dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
+      (classLoader, framework.getType(framework.getDatasetSpec(datasetName).getType()), locationFactory);
+
     // No classloader for dataset exists, load the dataset and save the classloader.
-    Dataset dataset = framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, classLoader);
+    Dataset dataset = framework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, dsUtil.getClassLoader());
     if (dataset != null) {
-      DATASET_CLASSLOADERS.put(datasetName, dataset.getClass().getClassLoader());
+      DATASET_CLASSLOADERS.put(datasetName, dsUtil);
     }
     return dataset;
   }
+
 }

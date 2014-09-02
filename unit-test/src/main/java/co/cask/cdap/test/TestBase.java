@@ -41,6 +41,8 @@ import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
+import co.cask.cdap.data.runtime.DatasetClassLoaders;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
@@ -48,6 +50,7 @@ import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamServiceModule;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data2.datafabric.dataset.DatasetAdminWrapper;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -71,6 +74,7 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
@@ -85,6 +89,7 @@ import com.continuuity.tephra.TransactionContext;
 import com.continuuity.tephra.TransactionFailureException;
 import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -138,6 +143,7 @@ public class TestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionManager txService;
+  private static LocationFactory locationFactory;
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
@@ -271,7 +277,7 @@ public class TestBase {
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
     AppFabricHttpHandler httpHandler = injector.getInstance(AppFabricHttpHandler.class);
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+    locationFactory = injector.getInstance(LocationFactory.class);
     appFabricClient = new AppFabricClient(httpHandler, locationFactory);
     DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
     datasetFramework =
@@ -380,17 +386,26 @@ public class TestBase {
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param props properties
-   * @param <T> type of the dataset admin
    * @return
    * @throws Exception
    */
   @Beta
-  protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
+  protected final DatasetAdminWrapper addDatasetInstance(String datasetTypeName,
                                                        String datasetInstanceName,
                                                        DatasetProperties props) throws Exception {
 
+    DatasetTypeMeta typeMeta = datasetFramework.getType(datasetTypeName);
+    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                   getClass().getClassLoader());
+    Preconditions.checkNotNull(typeMeta);
+    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType(parentClassLoader, typeMeta,
+                                                                                         locationFactory);
+
     datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
-    return datasetFramework.getAdmin(datasetInstanceName, null);
+
+    DatasetAdmin datasetAdmin = datasetFramework.getAdmin(datasetInstanceName, dsUtil.getClassLoader());
+    DatasetAdminWrapper datasetAdminWrapper = new DatasetAdminWrapper(dsUtil, datasetAdmin);
+    return datasetAdminWrapper;
   }
 
   /**
@@ -416,10 +431,18 @@ public class TestBase {
    * @throws Exception
    */
   @Beta
-  protected final <T> DataSetManager<T> getDataset(String datasetInstanceName)
+  protected final <T> DataSetManager<T> getDataset(String datasetTypeName, String datasetInstanceName)
     throws Exception {
     @SuppressWarnings("unchecked")
-    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, new HashMap<String, String>(), null);
+
+    DatasetTypeMeta typeMeta = datasetFramework.getType(datasetTypeName);
+    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                   getClass().getClassLoader());
+    final DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.
+      createDatasetClassLoaderFromType(parentClassLoader, typeMeta, locationFactory);
+
+    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName,
+                                                      new HashMap<String, String>(), parentClassLoader);
     try {
       TransactionAware txAwareDataset = (TransactionAware) dataSet;
       final TransactionContext txContext =
@@ -439,6 +462,10 @@ public class TestBase {
           } catch (TransactionFailureException e) {
             throw Throwables.propagate(e);
           }
+        }
+        @Override
+      public void finish() throws IOException {
+          dsUtil.cleanup();
         }
       };
     } catch (Exception e) {

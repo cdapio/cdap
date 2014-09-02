@@ -34,7 +34,6 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorS
 import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
-import co.cask.cdap.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
@@ -112,11 +111,10 @@ public abstract class DatasetServiceTestBase {
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
     LocalLocationFactory locationFactory = new LocalLocationFactory();
-    dsFramework = new RemoteDatasetFramework(discoveryService, new InMemoryDefinitionRegistryFactory(),
-                                             new LocalDatasetTypeClassLoaderFactory());
+    dsFramework = new RemoteDatasetFramework(discoveryService, new InMemoryDefinitionRegistryFactory());
 
     ImmutableSet<HttpHandler> handlers =
-      ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(new NoAuthenticator(), dsFramework));
+      ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(new NoAuthenticator(), dsFramework, locationFactory));
     opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
 
     opExecutorService.startAndWait();
@@ -135,7 +133,7 @@ public abstract class DatasetServiceTestBase {
                                                         Collections.<String, DatasetModule>emptyMap()),
                                  new DatasetInstanceManager(mdsDatasetsRegistry),
                                  metricsCollectionService,
-                                 new InMemoryDatasetOpExecutor(dsFramework),
+                                 new InMemoryDatasetOpExecutor(dsFramework, locationFactory),
                                  mdsDatasetsRegistry,
                                  new DatasetExploreFacade(new DiscoveryExploreClient(discoveryService), cConf));
 

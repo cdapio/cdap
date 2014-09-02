@@ -27,6 +27,8 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapper;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapperUtility;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -38,12 +40,14 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionManager;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -61,6 +65,7 @@ public class ExploreDisabledTest {
   private static DatasetOpExecutor dsOpExecutor;
   private static DatasetService datasetService;
   private static ExploreClient exploreClient;
+  private static LocationFactory locationFactory;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -78,6 +83,7 @@ public class ExploreDisabledTest {
     Assert.assertFalse(exploreClient.isServiceAvailable());
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
+    locationFactory = injector.getInstance(LocationFactory.class);
   }
 
   @AfterClass
@@ -97,11 +103,16 @@ public class ExploreDisabledTest {
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "table1", DatasetProperties.EMPTY);
 
+
+    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                         getClass().getClassLoader());
+    DatasetWrapper datasetWrapper = DatasetWrapperUtility.getDatasetWrapper
+      (datasetFramework, "table1", DatasetDefinition.NO_ARGUMENTS, locationFactory, parentClassLoader);
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("table1", DatasetDefinition.NO_ARGUMENTS, null);
+      (KeyStructValueTableDefinition.KeyStructValueTable) datasetWrapper.getDataset();
     Assert.assertNotNull(table);
     table.startTx(tx1);
 
@@ -127,6 +138,7 @@ public class ExploreDisabledTest {
 
     datasetFramework.deleteInstance("table1");
     datasetFramework.deleteModule("module1");
+    datasetWrapper.cleanup();
   }
 
   @Test
@@ -141,8 +153,13 @@ public class ExploreDisabledTest {
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
+
+    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                         getClass().getClassLoader());
+    DatasetWrapper datasetWrapper = DatasetWrapperUtility.getDatasetWrapper
+      (datasetFramework, "table2", DatasetDefinition.NO_ARGUMENTS, locationFactory, parentClassLoader);
     NotRecordScannableTableDefinition.KeyValueTable table =
-      datasetFramework.getDataset("table2", DatasetDefinition.NO_ARGUMENTS, null);
+      (NotRecordScannableTableDefinition.KeyValueTable) datasetWrapper.getDataset();
     Assert.assertNotNull(table);
     table.startTx(tx1);
 
@@ -164,6 +181,7 @@ public class ExploreDisabledTest {
 
     datasetFramework.deleteInstance("table2");
     datasetFramework.deleteModule("module2");
+    datasetWrapper.cleanup();
   }
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {

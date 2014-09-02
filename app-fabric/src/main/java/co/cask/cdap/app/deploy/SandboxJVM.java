@@ -26,6 +26,7 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.security.ApplicationSecurity;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -37,6 +38,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +47,7 @@ import java.io.File;
 import java.io.FilePermission;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.List;
 
 /**
  * Sandbox JVM allows the configuration phase of an application to be executed
@@ -124,7 +127,9 @@ public class SandboxJVM {
           return -1;
         }
 
-        Program archive = Programs.createWithUnpack(lf.create(jarFilename), unpackedJarDir);
+        //passsing in empty-set for dataset jars
+        List<Location> datasetJars = Lists.newArrayList();
+        Program archive = Programs.createWithUnpack(lf.create(jarFilename), datasetJars, unpackedJarDir);
         Object appMain = archive.getMainClass().newInstance();
         if (!(appMain instanceof Application)) {
           LOG.error(String.format("Application main class is of invalid type: %s",

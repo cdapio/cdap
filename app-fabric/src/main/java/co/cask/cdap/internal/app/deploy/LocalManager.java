@@ -94,7 +94,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new CreateDatasetInstancesStage(datasetFramework));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, discoveryServiceClient));
-    pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
+    pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory, datasetFramework));
     pipeline.addLast(new ApplicationRegistrationStage(store));
     return pipeline.execute(input);
   }

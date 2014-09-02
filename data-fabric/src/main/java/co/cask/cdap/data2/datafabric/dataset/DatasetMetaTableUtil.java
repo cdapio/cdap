@@ -22,6 +22,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
+import com.google.common.base.Objects;
 
 import java.io.IOException;
 
@@ -33,9 +34,12 @@ public class DatasetMetaTableUtil {
   public static final String INSTANCE_TABLE_NAME = "datasets.instance";
 
   private final DatasetFramework framework;
+  private final ClassLoader classLoader;
 
   public DatasetMetaTableUtil(DatasetFramework framework) {
     this.framework = framework;
+    this.classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                    getClass().getClassLoader());
   }
 
   public void init() throws DatasetManagementException {
@@ -45,13 +49,13 @@ public class DatasetMetaTableUtil {
   public DatasetTypeMDS getTypeMetaTable() throws DatasetManagementException, IOException {
     return (DatasetTypeMDS) DatasetsUtil.getOrCreateDataset(framework, META_TABLE_NAME,
                                                             DatasetTypeMDS.class.getName(),
-                                                            DatasetProperties.EMPTY, null, null);
+                                                            DatasetProperties.EMPTY, null, classLoader);
   }
 
   public DatasetInstanceMDS getInstanceMetaTable() throws DatasetManagementException, IOException {
     return (DatasetInstanceMDS) DatasetsUtil.getOrCreateDataset(framework, INSTANCE_TABLE_NAME,
                                                                 DatasetInstanceMDS.class.getName(),
-                                                                DatasetProperties.EMPTY, null, null);
+                                                                DatasetProperties.EMPTY, null, classLoader);
   }
 
   /**

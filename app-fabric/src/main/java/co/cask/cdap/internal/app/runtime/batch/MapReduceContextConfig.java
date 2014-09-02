@@ -25,6 +25,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.continuuity.tephra.Transaction;
 import com.google.common.base.Throwables;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -57,6 +58,7 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_INPUT_SPLIT_CLASS = "hconf.program.input.split.class";
   private static final String HCONF_ATTR_INPUT_SPLITS = "hconf.program.input.splits";
   private static final String HCONF_ATTR_NEW_TX = "hconf.program.newtx.tx";
+  private static final String HCONF_DS_PROGRAM_JAR_LOC = "hconf.dataset.jar.location";
 
   private final JobContext jobContext;
 
@@ -65,7 +67,7 @@ public final class MapReduceContextConfig {
   }
 
   public void set(BasicMapReduceContext context, CConfiguration conf,
-                  Transaction tx, String programJarName) {
+                  Transaction tx, String programJarName, List<String> datasetsJarPath) {
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
     setWorkflowBatch(context.getWorkflowBatch());
@@ -73,6 +75,7 @@ public final class MapReduceContextConfig {
     setProgramJarName(programJarName);
     setConf(conf);
     setTx(tx);
+    setDatasetsJarPath(datasetsJarPath);
     if (context.getInputDataSelection() != null) {
       setInputSelection(context.getInputDataSelection());
     }
@@ -133,6 +136,15 @@ public final class MapReduceContextConfig {
 
   public String getInputDataSet() {
     return jobContext.getConfiguration().get(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET);
+  }
+
+  public void setDatasetsJarPath(List<String> datasetsJarLocation) {
+    jobContext.getConfiguration().set(HCONF_DS_PROGRAM_JAR_LOC, GSON.toJson(datasetsJarLocation));
+  }
+
+  public List<String> getDatasetsJarPath() {
+    Type datasetsJarLocationType = new TypeToken<List<String>>() { }.getType();
+    return GSON.fromJson(jobContext.getConfiguration().get(HCONF_DS_PROGRAM_JAR_LOC), datasetsJarLocationType);
   }
 
   private void setInputSelection(List<Split> splits) {

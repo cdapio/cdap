@@ -31,25 +31,30 @@ import java.util.Locale;
  */
 public final class Programs {
 
-  public static Program createWithUnpack(Location location, File destinationUnpackedJarDir,
-                                         ClassLoader parentClassLoader) throws IOException {
-    return new DefaultProgram(location, destinationUnpackedJarDir, parentClassLoader);
-  }
-
-  public static Program createWithUnpack(Location location, File destinationUnpackedJarDir) throws IOException {
-    return Programs.createWithUnpack(location, destinationUnpackedJarDir, getClassLoader());
+  /**
+   * Creates a {@link co.cask.cdap.app.program.Program} with the supplied list of Dataset jar files and
+   * program jar file.
+   */
+  public static Program createWithUnpack(Location location, Iterable<Location> datasetTypeJars,
+                                         File destinationUnpackedJarDir) throws IOException {
+    return new DefaultProgram(location, datasetTypeJars, destinationUnpackedJarDir, getClassLoader());
   }
 
   /**
    * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
    * would not function from the program this method returns.
    */
-  public static Program create(Location location, ClassLoader classLoader) throws IOException {
-    return new DefaultProgram(location, classLoader);
+  public static Program create(Location location, Iterable<Location> datasetJars,
+                               ClassLoader classLoader) throws IOException {
+    return new DefaultProgram(location, datasetJars, classLoader);
   }
 
-  public static Program create(Location location) throws IOException {
-    return new DefaultProgram(location, getClassLoader());
+  /**
+   * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
+   * is used as the Classloader
+   */
+  public static Program create(Location location, Iterable<Location> datasetJars) throws IOException {
+    return new DefaultProgram(location, datasetJars, getClassLoader());
   }
 
   /**
@@ -63,7 +68,7 @@ public final class Programs {
    * @throws IOException incase of errors
    */
   public static Location programLocation(LocationFactory factory, String filePath, Id.Program id, ProgramType type)
-                                         throws IOException {
+    throws IOException {
     Location allAppsLocation = factory.create(filePath);
 
     Location accountAppsLocation = allAppsLocation.append(id.getAccountId());
@@ -71,12 +76,12 @@ public final class Programs {
     Location applicationProgramsLocation = accountAppsLocation.append(name);
     if (!applicationProgramsLocation.exists()) {
       throw new FileNotFoundException("Unable to locate the Program,  location doesn't exist: "
-                                   + applicationProgramsLocation.toURI().getPath());
+                                        + applicationProgramsLocation.toURI().getPath());
     }
     Location programLocation = applicationProgramsLocation.append(String.format("%s.jar", id.getId()));
     if (!programLocation.exists()) {
       throw new FileNotFoundException(String.format("Program %s.%s of type %s does not exists.",
-                                               id.getApplication(), id.getId(), type));
+                                                    id.getApplication(), id.getId(), type));
     }
     return programLocation;
   }

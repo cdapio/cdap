@@ -33,3 +33,4 @@ data/
 
 # Include helloworld.jar resource
 !src/test/resources/helloworld.jar
+!src/test/resources/purchase.jar

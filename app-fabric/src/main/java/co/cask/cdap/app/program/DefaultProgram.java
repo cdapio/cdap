@@ -17,21 +17,30 @@
 package co.cask.cdap.app.program;
 
 import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.common.lang.AnnotationListHolder;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.lang.jar.ProgramClassLoader;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
@@ -41,6 +50,7 @@ import javax.annotation.Nullable;
  */
 public final class DefaultProgram implements Program {
 
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultProgram.class);
   private final String mainClassName;
   private final ProgramType processorType;
 
@@ -50,6 +60,8 @@ public final class DefaultProgram implements Program {
   private final File expandFolder;
   private final ClassLoader parentClassLoader;
   private final File specFile;
+  private final Iterable<Location> datasetTypeJars;
+  private final List<File> datasetsJarPath;
   private boolean expanded;
   private ClassLoader classLoader;
   private ApplicationSpecification specification;
@@ -62,11 +74,13 @@ public final class DefaultProgram implements Program {
    *                     the {@link #getClassLoader()} methods would throw exception.
    * @param parentClassLoader Parent classloader for the program class.
    */
-  DefaultProgram(Location programJarLocation,
+  DefaultProgram(Location programJarLocation, Iterable<Location> datasetTypeJars,
                  @Nullable File expandFolder, ClassLoader parentClassLoader) throws IOException {
     this.programJarLocation = programJarLocation;
+    this.datasetTypeJars = datasetTypeJars;
     this.expandFolder = expandFolder;
     this.parentClassLoader = parentClassLoader;
+    this.datasetsJarPath = Lists.newArrayList();
 
     Manifest manifest = BundleJarUtil.getManifest(programJarLocation);
     if (manifest == null) {
@@ -92,8 +106,9 @@ public final class DefaultProgram implements Program {
     }
   }
 
-  public DefaultProgram(Location programJarLocation, ClassLoader classLoader) throws IOException {
-    this(programJarLocation, null, null);
+  public DefaultProgram(Location programJarLocation, Iterable<Location> datasetTypeJars,
+                        ClassLoader classLoader) throws IOException {
+    this(programJarLocation, datasetTypeJars, null, null);
     this.classLoader = classLoader;
   }
 
@@ -153,12 +168,22 @@ public final class DefaultProgram implements Program {
   }
 
   @Override
+  public Iterable<Location> getDatasetJarLocations() {
+    return datasetTypeJars;
+  }
+
+  @Override
   public synchronized ClassLoader getClassLoader() {
     if (classLoader == null) {
       expandIfNeeded();
       try {
-        classLoader = ClassLoaders.newProgramClassLoader(
-          expandFolder, ApiResourceListHolder.getResourceList(), parentClassLoader);
+        CombineClassLoader datasetFilterClassLoader =
+          ClassLoaders.newAnnotationFilterClassLoader(datasetsJarPath,
+                                                      ApiResourceListHolder.getResourceList(), parentClassLoader,
+                                                      AnnotationListHolder.getAnnotationList());
+        classLoader = new ProgramClassLoader(expandFolder, datasetFilterClassLoader);
+      } catch (MalformedURLException e) {
+        throw Throwables.propagate(e);
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
@@ -182,11 +207,17 @@ public final class DefaultProgram implements Program {
     if (expanded) {
       return;
     }
-
     Preconditions.checkState(expandFolder != null, "Directory for jar expansion is not defined.");
-
     try {
       BundleJarUtil.unpackProgramJar(programJarLocation, expandFolder);
+      for (Location location : getDatasetJarLocations()) {
+        if (location != null) {
+          File temp = new File(expandFolder, location.getName());
+          temp.mkdir();
+          BundleJarUtil.unpackProgramJar(location, temp);
+          datasetsJarPath.add(temp);
+        }
+      }
       expanded = true;
     } catch (IOException e) {
       throw Throwables.propagate(e);

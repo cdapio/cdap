@@ -19,14 +19,16 @@ package co.cask.cdap.data2.datafabric.dataset.service.executor;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.data2.datafabric.dataset.DatasetAdminWrapper;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
+import co.cask.cdap.data2.datafabric.dataset.DatasetTypeWrapper;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapperUtility;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import com.google.common.base.Objects;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
-
-import java.io.IOException;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * In-memory implementation of {@link DatasetOpExecutor}.
@@ -34,54 +36,91 @@ import java.io.IOException;
 public class InMemoryDatasetOpExecutor extends AbstractIdleService implements DatasetOpExecutor {
 
   private final RemoteDatasetFramework client;
+  private final LocationFactory locationFactory;
+  private final ClassLoader parentClassLoader;
 
   @Inject
-  public InMemoryDatasetOpExecutor(RemoteDatasetFramework client) {
+  public InMemoryDatasetOpExecutor(RemoteDatasetFramework client, LocationFactory locationFactory) {
     this.client = client;
+    this.locationFactory = locationFactory;
+    this.parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                  getClass().getClassLoader());
   }
 
   @Override
   public boolean exists(String instanceName) throws Exception {
-    return getAdmin(instanceName).exists();
+    DatasetAdminWrapper datasetAdminWrapper = null;
+    try {
+      datasetAdminWrapper = DatasetWrapperUtility.getDatasetAdminWrapper(client, instanceName,
+                                                                         locationFactory, parentClassLoader);
+      return datasetAdminWrapper.getDatasetAdmin().exists();
+    } finally {
+      if (datasetAdminWrapper != null) {
+        datasetAdminWrapper.cleanup();
+      }
+    }
   }
 
   @Override
   public DatasetSpecification create(String instanceName, DatasetTypeMeta typeMeta, DatasetProperties props)
     throws Exception {
-
-    DatasetType type = client.getDatasetType(typeMeta, null);
-
-    if (type == null) {
-      throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
+    DatasetTypeWrapper datasetTypeWrapper = null;
+    try {
+      datasetTypeWrapper = DatasetWrapperUtility.getDatasetTypeWrapper(client, typeMeta,
+                                                                       locationFactory, parentClassLoader);
+      DatasetType type = datasetTypeWrapper.getDatasetType();
+      DatasetSpecification spec = type.configure(instanceName, props);
+      DatasetAdmin admin = type.getAdmin(spec);
+      admin.create();
+      return spec;
+    } finally {
+      if (datasetTypeWrapper != null) {
+        datasetTypeWrapper.cleanup();
+      }
     }
-
-    DatasetSpecification spec = type.configure(instanceName, props);
-    DatasetAdmin admin = type.getAdmin(spec);
-    admin.create();
-
-    return spec;
   }
 
   @Override
   public void drop(DatasetSpecification spec, DatasetTypeMeta typeMeta) throws Exception {
-    DatasetType type = client.getDatasetType(typeMeta, null);
-
-    if (type == null) {
-      throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
+    DatasetTypeWrapper datasetTypeWrapper = null;
+    try {
+      datasetTypeWrapper = DatasetWrapperUtility.getDatasetTypeWrapper(client, typeMeta,
+                                                                       locationFactory, parentClassLoader);
+      DatasetAdmin admin = datasetTypeWrapper.getDatasetType().getAdmin(spec);
+      admin.drop();
+    } finally {
+      if (datasetTypeWrapper != null) {
+        datasetTypeWrapper.cleanup();
+      }
     }
-
-    DatasetAdmin admin = type.getAdmin(spec);
-    admin.drop();
   }
 
   @Override
   public void truncate(String instanceName) throws Exception {
-    getAdmin(instanceName).truncate();
+    DatasetAdminWrapper datasetAdminWrapper = null;
+    try {
+      datasetAdminWrapper = DatasetWrapperUtility.getDatasetAdminWrapper(client, instanceName,
+                                                                         locationFactory, parentClassLoader);
+      datasetAdminWrapper.getDatasetAdmin().truncate();
+    } finally {
+      if (datasetAdminWrapper != null) {
+        datasetAdminWrapper.cleanup();
+      }
+    }
   }
 
   @Override
   public void upgrade(String instanceName) throws Exception {
-    getAdmin(instanceName).upgrade();
+    DatasetAdminWrapper datasetAdminWrapper = null;
+    try {
+      datasetAdminWrapper = DatasetWrapperUtility.getDatasetAdminWrapper(client, instanceName,
+                                                                         locationFactory, parentClassLoader);
+      datasetAdminWrapper.getDatasetAdmin().upgrade();
+    } finally {
+      if (datasetAdminWrapper != null) {
+        datasetAdminWrapper.cleanup();
+      }
+    }
   }
 
   @Override
@@ -92,9 +131,5 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
   @Override
   protected void shutDown() throws Exception {
 
-  }
-
-  private DatasetAdmin getAdmin(String instanceName) throws IOException, DatasetManagementException {
-    return client.getAdmin(instanceName, null);
   }
 }

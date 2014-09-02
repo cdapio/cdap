@@ -20,25 +20,39 @@ import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.HandlerException;
+import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
+import co.cask.cdap.data.runtime.DatasetClassLoaders;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapper;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapperUtility;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import co.cask.cdap.hive.objectinspector.ReflectionStructObjectInspector;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
+import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -53,11 +67,18 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   private final ExploreService exploreService;
   private final DatasetFramework datasetFramework;
+  private final LocationFactory locationFactory;
+  private final ClassLoader parentClassLoader;
 
   @Inject
-  public ExploreExecutorHttpHandler(ExploreService exploreService, DatasetFramework datasetFramework) {
+  public ExploreExecutorHttpHandler(ExploreService exploreService, DatasetFramework datasetFramework,
+                                    LocationFactory locationFactory) {
     this.exploreService = exploreService;
     this.datasetFramework = datasetFramework;
+    this.locationFactory = locationFactory;
+    this.parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                  getClass().getClassLoader());
+
   }
 
   /**
@@ -67,10 +88,13 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @Path("data/explore/datasets/{dataset}/enable")
   public void enableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("dataset") final String datasetName) {
+    DatasetWrapper datasetWrapper = null;
     try {
       Dataset dataset;
       try {
-        dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
+        datasetWrapper = DatasetWrapperUtility.getDatasetWrapper
+          (datasetFramework, datasetName, DatasetDefinition.NO_ARGUMENTS, locationFactory, parentClassLoader);
+        dataset = datasetWrapper.getDataset();
       } catch (Exception e) {
         String className = isClassNotFoundException(e);
         if (className == null) {
@@ -82,10 +106,6 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         JsonObject json = new JsonObject();
         json.addProperty("handle", QueryHandle.NO_OP.getHandle());
         responder.sendJson(HttpResponseStatus.OK, json);
-        return;
-      }
-      if (dataset == null) {
-        responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
         return;
       }
 
@@ -122,6 +142,14 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } finally {
+      try {
+        if (datasetWrapper != null) {
+          datasetWrapper.cleanup();
+        }
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
     }
   }
 
@@ -142,14 +170,16 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @Path("data/explore/datasets/{dataset}/disable")
   public void disableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                              @PathParam("dataset") final String datasetName) {
+    DatasetWrapper datasetWrapper = null;
     try {
       LOG.debug("Disabling explore for dataset instance {}", datasetName);
-
-      Dataset dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
-      if (dataset == null) {
-        responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
-        return;
+      try {
+        datasetWrapper = DatasetWrapperUtility.getDatasetWrapper
+          (datasetFramework, datasetName, DatasetDefinition.NO_ARGUMENTS, locationFactory, parentClassLoader);
+      } catch (Exception e) {
+        throw new HandlerException(HttpResponseStatus.NOT_FOUND, String.format("Cannot load dataset %s", datasetName));
       }
+      Dataset dataset = datasetWrapper.getDataset();
 
       if (!(dataset instanceof RecordScannable)) {
         // It is not an error to get non-RecordScannable datasets, since the type of dataset may not be known where this
@@ -168,9 +198,20 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (HandlerException e) {
+      LOG.debug("Got handler exception", e);
+      responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } finally {
+      try {
+        if (datasetWrapper != null) {
+          datasetWrapper.cleanup();
+        }
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
     }
   }
 
@@ -181,14 +222,16 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @Path("/data/explore/datasets/{dataset}/schema")
   public void getDatasetSchema(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                                @PathParam("dataset") final String datasetName) {
+    DatasetWrapper datasetWrapper = null;
     try {
       LOG.trace("Retrieving Explore schema for dataset {}", datasetName);
-
-      Dataset dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
-      if (dataset == null) {
-        responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot find dataset " + datasetName);
-        return;
+      try {
+        datasetWrapper = DatasetWrapperUtility.getDatasetWrapper
+          (datasetFramework, datasetName, DatasetDefinition.NO_ARGUMENTS, locationFactory, parentClassLoader);
+      } catch (Exception e) {
+        throw new HandlerException(HttpResponseStatus.NOT_FOUND, String.format("Cannot load dataset %s", datasetName));
       }
+      Dataset dataset = datasetWrapper.getDataset();
 
       if (!(dataset instanceof RecordScannable)) {
         LOG.debug("Dataset {} does not implement {}", datasetName, RecordScannable.class.getName());
@@ -216,9 +259,20 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         builder.put(structField.getFieldName(), tmp.getTypeName());
       }
       responder.sendJson(HttpResponseStatus.OK, builder.build());
+    } catch (HandlerException e) {
+      LOG.debug("Got handler exception", e);
+      responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } finally {
+      try {
+        if (datasetWrapper != null) {
+          datasetWrapper.cleanup();
+        }
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
     }
   }
 }

@@ -35,6 +35,7 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.test.SlowTests;
+import com.google.common.base.Objects;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -55,8 +56,10 @@ public class EntityTableTest {
   private static HBaseTestBase testHBase;
 
   protected MetricsTable getTable(String name) throws Exception {
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
     return DatasetsUtil.getOrCreateDataset(dsFramework, name, MetricsTable.class.getName(),
-                                           DatasetProperties.EMPTY, null, null);
+                                           DatasetProperties.EMPTY, null, cl);
   }
 
   @Test

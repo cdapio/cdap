@@ -24,8 +24,6 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
-import co.cask.cdap.data2.datafabric.dataset.type.DistributedDatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
@@ -85,7 +83,6 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
           install(new FactoryModuleBuilder()
                     .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
-          bind(DatasetTypeClassLoaderFactory.class).to(DistributedDatasetTypeClassLoaderFactory.class);
           bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
 
           // For log publishing

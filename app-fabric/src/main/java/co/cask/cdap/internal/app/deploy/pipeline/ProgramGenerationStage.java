@@ -24,14 +24,19 @@ import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.dataset.DatasetCreationSpec;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
 import co.cask.cdap.pipeline.AbstractStage;
+import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -42,8 +47,10 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
@@ -54,11 +61,14 @@ import java.util.concurrent.Executors;
 public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocation> {
   private final LocationFactory locationFactory;
   private final Configuration configuration;
+  private final DatasetFramework datasetFramework;
 
-  public ProgramGenerationStage(Configuration configuration, LocationFactory locationFactory) {
+  public ProgramGenerationStage(Configuration configuration, LocationFactory locationFactory,
+                                DatasetFramework datasetFramework) {
     super(TypeToken.of(ApplicationSpecLocation.class));
     this.configuration = configuration;
     this.locationFactory = locationFactory;
+    this.datasetFramework = datasetFramework;
   }
 
   @Override
@@ -118,9 +128,22 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
         });
         futures.add(future);
       }
+      List<Location> datasetTypeJars = Lists.newArrayList();
+      Set<URI> alreadyExisting = Sets.newHashSet();
+
+      for (Map.Entry<String, DatasetCreationSpec> entry : appSpec.getDatasets().entrySet()) {
+        DatasetTypeMeta typeMeta = datasetFramework.getType(entry.getValue().getTypeName());
+        if (typeMeta != null) {
+          for (DatasetModuleMeta moduleMeta : typeMeta.getModules()) {
+            if ((moduleMeta.getJarLocation() != null) &&  alreadyExisting.add(moduleMeta.getJarLocation())) {
+                datasetTypeJars.add(locationFactory.create(moduleMeta.getJarLocation()));
+            }
+          }
+        }
+      }
 
       for (Location jarLocation : Futures.allAsList(futures).get()) {
-        programs.add(Programs.create(jarLocation, null));
+        programs.add(Programs.create(jarLocation, datasetTypeJars, null));
       }
     } finally {
       executorService.shutdown();

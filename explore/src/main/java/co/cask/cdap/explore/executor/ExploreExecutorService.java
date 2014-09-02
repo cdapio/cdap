@@ -22,7 +22,9 @@ import co.cask.cdap.common.hooks.MetricsReporterHook;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
 import co.cask.cdap.explore.service.ExploreService;
+import co.cask.cdap.hive.datasets.DatasetAccessor;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -37,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -115,6 +118,13 @@ public class ExploreExecutorService extends AbstractIdleService {
         // Then stop HTTP service so that we don't send anymore requests to explore service.
         httpService.stopAndWait();
       } finally {
+        //clean-up dataset jar files directory used for classloading
+        Map<String, DatasetClassLoaderUtil> datasetClassLoaderUtilMap = DatasetAccessor.getDatasetClassLoaderMap();
+        for (DatasetClassLoaderUtil dsUtil : datasetClassLoaderUtilMap.values()) {
+          dsUtil.cleanup();
+        }
+        datasetClassLoaderUtilMap.clear();
+
         // Finally stop explore service
         exploreService.stopAndWait();
       }

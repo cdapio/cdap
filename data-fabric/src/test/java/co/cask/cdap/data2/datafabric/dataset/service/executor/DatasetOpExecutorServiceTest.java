@@ -39,6 +39,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapper;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -137,6 +138,8 @@ public class DatasetOpExecutorServiceTest {
 
   @Test
   public void testRest() throws Exception {
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
     // check non-existence with 404
     testAdminOp("bob", "exists", 404, null);
 
@@ -147,7 +150,7 @@ public class DatasetOpExecutorServiceTest {
     testAdminOp("joe", "exists", 404, null);
 
     // check truncate
-    final Table table = dsFramework.getDataset("bob", DatasetDefinition.NO_ARGUMENTS, null);
+    final Table table = dsFramework.getDataset("bob", DatasetDefinition.NO_ARGUMENTS, cl);
     TransactionExecutor txExecutor =
       new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
                                      ImmutableList.of((TransactionAware) table));

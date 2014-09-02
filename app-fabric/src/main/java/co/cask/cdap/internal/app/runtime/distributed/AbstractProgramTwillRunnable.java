@@ -48,8 +48,10 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
@@ -88,7 +90,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.InetAddress;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
@@ -176,10 +180,13 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       // Initialize log appender
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
+      Type datasetJarsType = new TypeToken<List<String>>() { }.getType();
+      List<String> datasetJars =
+        new Gson().fromJson(cmdLine.getOptionValue(RunnableOptions.DATASET_JARS), datasetJarsType);
 
       try {
         program = injector.getInstance(ProgramFactory.class)
-          .create(cmdLine.getOptionValue(RunnableOptions.JAR));
+          .create(cmdLine.getOptionValue(RunnableOptions.JAR), datasetJars);
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
@@ -271,7 +278,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private CommandLine parseArgs(String[] args) {
     Options opts = new Options()
       .addOption(createOption(RunnableOptions.JAR, "Program jar location"))
-      .addOption(createOption(RunnableOptions.RUNTIME_ARGS, "Runtime arguments"));
+      .addOption(createOption(RunnableOptions.RUNTIME_ARGS, "Runtime arguments"))
+      .addOption(createOption(RunnableOptions.DATASET_JARS, "Location of Dataset Jars"));
 
     try {
       return new PosixParser().parse(opts, args);
@@ -369,9 +377,14 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       this.locationFactory = locationFactory;
     }
 
-    public Program create(String path) throws IOException {
+    public Program create(String path, Iterable<String> datasetJars) throws IOException {
       Location location = locationFactory.create(path);
-      return Programs.createWithUnpack(location, Files.createTempDir());
+      List<Location> datasetsJarLocation = Lists.newArrayList();
+      for (String datasetJar : datasetJars) {
+        Location datasetLocation = locationFactory.create(datasetJar);
+        datasetsJarLocation.add(datasetLocation);
+      }
+      return Programs.createWithUnpack(location, datasetsJarLocation, Files.createTempDir());
     }
   }
 }

@@ -73,13 +73,12 @@ public class AbstractDatasetTest {
 
   protected static <T extends Dataset> T getInstance(String datasetName)
     throws DatasetManagementException, IOException {
-
-    return getInstance(datasetName, null);
+    return getInstance(datasetName, null, Thread.currentThread().getContextClassLoader());
   }
 
-  protected static <T extends Dataset> T getInstance(String datasetName, Map<String, String> arguments)
+  protected static <T extends Dataset> T getInstance(String datasetName, Map<String, String> arguments, ClassLoader cl)
     throws DatasetManagementException, IOException {
-    return framework.getDataset(datasetName, arguments, null);
+    return framework.getDataset(datasetName, arguments, cl);
   }
 
   protected static TransactionExecutor newTransactionExecutor(TransactionAware...tables) {
