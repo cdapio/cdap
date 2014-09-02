@@ -227,9 +227,7 @@
                     </form>
                     </div>
                     <div>
-                      <button class="btn btn-transparent" {{action changeInstances service on="click"}}>
-                        <i class="icon-arrow-right"></i>
-                      </button>
+                      <button class="btn btn-blank btn-set" disabled="true" {{action changeInstances service on="click"}}>SET</button>
                     </div>
                   </div>
                 </td>
@@ -273,13 +271,13 @@
         </div>
       </div>
       <div class="info-box" style="float: right; border: 0;">
-          <div id="action-buttons" class="btn-group pull-right">
-            <button class="btn btn-blank btn-icon" {{action "config"}}><span class="btn-config"></span></button>
-          </div>
+        <div id="action-buttons" class="btn-group pull-right">
+          <button class="btn btn-blank btn-icon" {{action "config"}}><span class="btn-config"></span></button>
           <div class="start-stop-wrapper">
             <button class="btn btn-blank start-stop" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
           </div>
-          <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+        </div>
+        <div class="flow-state"><strong>{{model.currentState}}</strong></div>
       </div>
     </div>
 
@@ -313,9 +311,7 @@
                     </form>
                   </div>
                   <div>
-                    <button class="btn btn-transparent" {{action runnableChangeInstances model runnable on="click"}}>
-                      <i class="icon-arrow-right"></i>
-                    </button>
+                    <button class="btn btn-blank btn-set" disabled="true" {{action runnableChangeInstances model runnable on="click"}}>SET</button>
                   </div>
                 </div>
               </td>
@@ -1297,9 +1293,7 @@
             <div style="display: inline-block; width: 50%">
               <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
               {{input keyUp=keyPressed action="changeInstances" id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
-              <button class="btn btn-transparent" {{action "changeInstances" on="click"}}>
-                <i class="icon-arrow-right"></i>
-              </button>
+              <button class="btn btn-blank btn-set" disabled="true" {{action "changeInstances" on="click"}}>SET</button>
             </div>
           </div>
           <br />
@@ -1560,14 +1554,12 @@
       <div class="panel">
       <div class="panel-head">
         <div class="panel-title">Make a Request
-          <div class="btn-group" style="float: right">
+          <div class="btn-group" style="float: right;">
             <div>
               <button style="border:0;padding-right:120px;" disabled="disabled" class="btn btn-blank">Instances Provisioned: {{actualInstances}}</button>
               <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
               {{input keyUp=keyPressed action="changeInstances" id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
-              <button class="btn btn-transparent" {{action "changeInstances" on="click"}}>
-                <i class="icon-arrow-right"></i>
-              </button>
+              <button class="btn btn-blank btn-set" style="margin-right: 6px;" disabled="true" {{action "changeInstances" on="click"}}>SET</button>
             </div>
           </div>
         </div>
