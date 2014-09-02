@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,13 +17,11 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.spark.SparkContextFactory;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.spark.SparkContext;
 import org.apache.spark.rdd.NewHadoopRDD;
 import org.apache.spark.rdd.PairRDDFunctions;

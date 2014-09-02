@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,8 @@ import co.cask.cdap.internal.io.UnsupportedTypeException;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Application with workflow scheduling.
@@ -57,7 +59,7 @@ public class AppWithSchedule extends AbstractApplication {
         .setDescription("SampleWorkflow description")
         .startWith(new DummyAction())
         .last(new DummyAction())
-        .addSchedule(new Schedule("Schedule", "Run every 2 seconds", "0/2 * * * * ?",
+        .addSchedule(new Schedule("Schedule", "Run every second", "0/1 * * * * ?",
                                   Schedule.Action.START))
         .build();
     }
@@ -71,6 +73,11 @@ public class AppWithSchedule extends AbstractApplication {
     @Override
     public void run() {
       LOG.info("Ran dummy action");
+      try {
+        TimeUnit.MILLISECONDS.sleep(500);
+      } catch (InterruptedException e) {
+        LOG.info("Interrupted");
+      }
     }
   }
 }

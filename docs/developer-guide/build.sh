@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 
+# Copyright 2014 Cask Data, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+  
 # Build script for docs
 # Builds the docs (all except javadocs and PDFs) from the .rst source files using Sphinx
 # Builds the javadocs and copies them into place
@@ -30,7 +44,7 @@ SOURCE_PATH="$SCRIPT_PATH/$SOURCE"
 BUILD_PATH="$SCRIPT_PATH/$BUILD"
 HTML_PATH="$BUILD_PATH/$HTML"
 
-DOCS_PY="$SCRIPT_PATH/../tools/doc-gen.py"
+DOC_GEN_PY="$SCRIPT_PATH/../tools/doc-gen.py"
 
 REST_SOURCE="$SOURCE_PATH/rest.rst"
 REST_PDF="$SCRIPT_PATH/$BUILD_PDF/rest.pdf"
@@ -59,6 +73,7 @@ function usage() {
   echo "    javadocs      Clean build of javadocs (api module only) for SDK and website"
   echo "    javadocs-full Clean build of javadocs for all modules"
   echo "    rest-pdf      Clean build of REST PDF"
+  echo "    license-pdfs  Clean build of License Dependency PDFs"
   echo "    zip           Zips docs into $ZIP"
   echo ""
   echo "    depends       Build Site listing dependencies"
@@ -97,6 +112,27 @@ function copy_javadocs_sdk() {
   mv -f $APIDOCS $JAVADOCS
 }
 
+function build_license_pdfs() {
+  cd $SCRIPT_PATH
+  rm -rf $SCRIPT_PATH/$LICENSES_PDF
+  mkdir $SCRIPT_PATH/$LICENSES_PDF
+  E_DEP="cdap-enterprise-dependencies"
+  L_DEP="cdap-level-1-dependencies"
+  S_DEP="cdap-standalone-dependencies"
+  # paths are relative to location of $DOC_GEN script
+  LIC_PDF="../../../developer-guide/$LICENSES_PDF"
+  LIC_RST="../developer-guide/source/$LICENSES"
+  echo ""
+  echo "Building $E_DEP"
+  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$E_DEP.pdf $LIC_RST/$E_DEP.rst
+  echo ""
+  echo "Building $L_DEP"
+  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$L_DEP.pdf $LIC_RST/$L_DEP.rst
+  echo ""
+  echo "Building $S_DEP"
+  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$S_DEP.pdf $LIC_RST/$S_DEP.rst
+}
+
 function copy_license_pdfs() {
   cd $BUILD_PATH/$HTML/$LICENSES
   cp $SCRIPT_PATH/$LICENSES_PDF/* .
@@ -120,7 +156,7 @@ function build_rest_pdf() {
 #   version # version is not needed because the renaming is done by the pom.xml file
   rm -rf $SCRIPT_PATH/$BUILD_PDF
   mkdir $SCRIPT_PATH/$BUILD_PDF
-  python $DOCS_PY -g pdf -o $REST_PDF $REST_SOURCE
+  python $DOC_GEN_PY -g pdf -o $REST_PDF $REST_SOURCE
 }
 
 function build_standalone() {
@@ -171,6 +207,7 @@ fi
 case "$1" in
   build )             build; exit 1;;
   docs )              build_docs; exit 1;;
+  license-pdfs )      build_license_pdfs; exit 1;;
   build-standalone )  build_standalone; exit 1;;
   copy-javadocs )     copy_javadocs; exit 1;;
   copy-license-pdfs ) copy_license_pdfs; exit 1;;

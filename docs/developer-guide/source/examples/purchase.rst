@@ -1,4 +1,4 @@
-.. :Author: Cask, Inc.
+.. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform Purchase Application
 
 ============================

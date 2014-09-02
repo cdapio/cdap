@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Continuuity, Inc.
+ * Copyright (c) 2013 Cask Data, Inc.
  */
 
 var util = require("util"),
@@ -25,14 +25,20 @@ process.env.NODE_ENV = 'development';
 var logLevel = 'INFO';
 
 var DevServer = function() {
-  DevServer.super_.call(this, __dirname, logLevel);
+  var self = this;
+  this.getConfig(function(version) {
+    if (self.config['dashboard.https.enabled'] === "true") {
+      DevServer.super_.call(self, __dirname, logLevel, true);
+    } else {
+      DevServer.super_.call(self, __dirname, logLevel, false);
+    }
 
-  this.cookieName = 'continuuity-local-edition';
-  this.secret = 'local-edition-secret';
-  this.logger = this.getLogger();
-  this.setCookieSession(this.cookieName, this.secret);
-  this.configureExpress();
-
+    self.cookieName = 'continuuity-local-edition';
+    self.secret = 'local-edition-secret';
+    self.logger = self.getLogger();
+    self.setCookieSession(self.cookieName, self.secret);
+    self.configureExpress();
+  });
 };
 util.inherits(DevServer, WebAppServer);
 
@@ -73,8 +79,12 @@ DevServer.prototype.getConfig = function(opt_callback) {
 DevServer.prototype.start = function() {
 
   this.getConfig(function(version) {
-
-    this.server = this.getServerInstance(this.app);
+    if (this.config['dashboard.https.enabled'] === "true") {
+      this.server = this.getHttpsServerInstance(this.app, this.config['dashboard.ssl.key'],
+                                                this.config['dashboard.ssl.cert']);
+    } else {
+      this.server = this.getServerInstance(this.app);
+    }
 
     this.setEnvironment('local', 'Development Kit', version, function () {
 

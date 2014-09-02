@@ -1,9 +1,9 @@
-.. :author: Cask, Inc.
+.. :author: Cask Data, Inc.
    :description: Introduction to Programming Applications for the Cask Data Application Platform
 
-======================
-CDAP Programming Guide
-======================
+================================================
+Cask Data Application Platform Programming Guide
+================================================
 
 **Introduction to Programming Applications for the Cask Data Application Platform**
 
@@ -104,7 +104,7 @@ created under the current directory. To build the project::
 This creates ``MyFirstBigDataApp-1.0-SNAPSHOT.jar`` in the target
 directory. This JAR file is a skeleton CDAP application that is ready
 to be edited with the contents of your Application. When finished and
-compiled, deploy it to the Cask DAP by just dragging and
+compiled, deploy it to CDAP by just dragging and
 dropping it anywhere on the CDAP Console and it will be deployed.
 
 The remainder of this document covers what to put in that JAR file.
@@ -143,7 +143,7 @@ classes that implement correspondent interfaces and are referenced by passing
 an object, in addition to being assigned a unique name.
 
 Names used for *Streams* and *Datasets* need to be unique across the
-DAP instance, while names used for *Flows*, *Flowlets* and
+CDAP instance, while names used for *Flows*, *Flowlets* and
 *Procedures* need to be unique only to the application.
 
 .. _streams:
@@ -159,7 +159,7 @@ You specify a Stream in your `Application`__ metadata::
 __ applications_
 
 specifies a new Stream named *myStream*. Names used for Streams need to
-be unique across the DAP instance.
+be unique across the CDAP instance.
 
 You can write to Streams either one operation at a time or in batches,
 using either the `Cask Data Application Platform HTTP RESTful API <rest.html>`__
@@ -198,7 +198,7 @@ assure a unique and core property of the Flow system: it guarantees
 atomic and "exactly-once" processing of each input object by each
 Flowlet in the DAG.
 
-Flows are deployed to the DAP instance and hosted within containers. Each
+Flows are deployed to the CDAP instance and hosted within containers. Each
 Flowlet instance runs in its own container. Each Flowlet in the DAG can
 have multiple concurrent instances, each consuming a partition of the
 Flowlet’s inputs.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,7 @@ import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.table.ACLTableModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
@@ -64,6 +65,7 @@ public class DataSetServiceModules {
     INMEMORY_DATASET_MODULES.put("orderedTable-memory", new InMemoryOrderedTableModule());
     INMEMORY_DATASET_MODULES.put("metricsTable-memory", new InMemoryMetricsTableModule());
     INMEMORY_DATASET_MODULES.put("core", new CoreDatasetsModule());
+    INMEMORY_DATASET_MODULES.put("aclTable", new ACLTableModule());
   }
 
   public Module getInMemoryModule() {
@@ -75,6 +77,7 @@ public class DataSetServiceModules {
         defaultModules.put("orderedTable-memory", new InMemoryOrderedTableModule());
         defaultModules.put("metricsTable-memory", new InMemoryMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
+        defaultModules.put("aclTable", new ACLTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -113,6 +116,7 @@ public class DataSetServiceModules {
         defaultModules.put("orderedTable-leveldb", new LevelDBOrderedTableModule());
         defaultModules.put("metricsTable-leveldb", new LevelDBMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
+        defaultModules.put("aclTable", new ACLTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -151,6 +155,7 @@ public class DataSetServiceModules {
         defaultModules.put("orderedTable-hbase", new HBaseOrderedTableModule());
         defaultModules.put("metricsTable-hbase", new HBaseMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
+        defaultModules.put("aclTable", new ACLTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
