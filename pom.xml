@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2014 Cask, Inc.
+  Copyright 2014 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -1358,7 +1358,7 @@
                 </links>
                 <doctitle>${project.name} ${project.version}</doctitle>
                 <bottom>
-                  <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
+                  <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask Data, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
                 </bottom>
               </configuration>
               <executions>
@@ -1814,9 +1814,9 @@
                     <executable>fpm</executable>
                     <commandlineArgs>
                       --name "cdap-${project.artifactId}"
-                      --vendor "Cask, Inc."
+                      --vendor "Cask Data, Inc."
                       --maintainer "support@cask.co"
-                      --license "Copyright ${package.build.year} Cask, Inc. Licensed under the Apache License, Version 2.0."
+                      --license "Copyright ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
                       --description "Component of Cask DAP"
                       --category misc
                       -s dir
@@ -1865,9 +1865,9 @@
                     <executable>fpm</executable>
                     <commandlineArgs>
                       --name "cdap-${project.artifactId}"
-                      --vendor "Cask, Inc."
+                      --vendor "Cask Data, Inc."
                       --maintainer "support@cask.co"
-                      --license "Copyright ${package.build.year} Cask, Inc. Licensed under the Apache License, Version 2.0."
+                      --license "Copyright ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
                       --description "Component of Cask DAP"
                       --category misc
                       -s dir
@@ -1963,7 +1963,7 @@
           </links>
           <doctitle>${project.name} ${project.version}</doctitle>
           <bottom>
-            <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
+            <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask Data, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
           </bottom>
         </configuration>
         <reportSets>
