@@ -127,18 +127,15 @@ For example, in Flows::
 
     // URL for SecurityService in SecurityApplication
     private URL securityURL;
-
-    @Override
-    public void intialize(FlowletContext context) {
-      // Get URL for Service in same Application
-      serviceURL = context.getServiceURL("IPGeoLookupService");
-
-      // Get URL for Service in a different Application
-      securityURL = context.getServiceURL("SecurityApplication", "SecurityService");
-    }
   
     @ProcessInput
     public void process(String ip) {
+      // Get URL for Service in same Application
+      serviceURL = getContext().getServiceURL("IPGeoLookupService");
+
+      // Get URL for Service in a different Application
+      securityURL = getContext().getServiceURL("SecurityApplication", "SecurityService");
+
       // Access the IPGeoLookupService using its URL
       URLConnection connection = new URL(serviceURL, String.format("lookup/%s", ip)).openConnection();
       BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
