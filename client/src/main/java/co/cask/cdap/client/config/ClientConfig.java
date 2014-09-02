@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,6 +37,7 @@ public class ClientConfig {
   private String protocol;
   private URI baseURI;
   private int port;
+  private String accessToken;
 
   /**
    * @param hostname Hostname of the CDAP server (i.e. example.com)
@@ -47,11 +48,24 @@ public class ClientConfig {
    */
   public ClientConfig(String hostname, int port, HttpRequestConfig defaultConfig,
                       HttpRequestConfig uploadConfig) throws URISyntaxException {
+    this(hostname, port, defaultConfig, uploadConfig, DEFAULT_PROTOCOL);
+  }
+
+  /**
+   * @param hostname Hostname of the CDAP server (i.e. example.com)
+   * @param port Port of the CDAP server (i.e. 10000)
+   * @param defaultConfig {@link HttpRequestConfig} to use by default
+   * @param uploadConfig {@link HttpRequestConfig} to use when uploading a file
+   * @param protocol http/https according to SSL is enabled in the gateway server or not
+   * @throws URISyntaxException
+   */
+  public ClientConfig(String hostname, int port, HttpRequestConfig defaultConfig,
+                      HttpRequestConfig uploadConfig, String protocol) throws URISyntaxException {
     this.defaultConfig = defaultConfig;
     this.uploadConfig = uploadConfig;
     this.port = port;
-    this.protocol = DEFAULT_PROTOCOL;
-    this.baseURI = new URI(protocol + "://" + hostname + ":" + port);
+    this.protocol = protocol;
+    this.baseURI = new URI(String.format("%s://%s:%d", protocol, hostname, port));
   }
 
   /**
@@ -111,5 +125,33 @@ public class ClientConfig {
   public void setHostnameAndPort(String hostname, int port) throws URISyntaxException {
     this.port = port;
     this.baseURI = new URI(protocol + "://" + hostname + ":" + port);
+  }
+
+  /**
+   * @param accessToken the accessToken to set
+   */
+  public void setAccessToken(String accessToken) {
+    this.accessToken = accessToken;
+  }
+
+  /**
+   * @return the accessToken
+   */
+  public String getAccessToken() {
+    return accessToken;
+  }
+
+  /**
+   * @return the protocol
+   */
+  public String getProtocol() {
+    return protocol;
+  }
+
+  /**
+   * @param protocol the protocol to set
+   */
+  public void setProtocol(String protocol) {
+    this.protocol = protocol;
   }
 }

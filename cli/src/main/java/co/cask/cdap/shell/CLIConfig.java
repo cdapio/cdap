@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -86,6 +86,14 @@ public class CLIConfig {
     for (HostnameChangeListener listener : hostnameChangeListeners) {
       listener.onHostnameChanged(hostname);
     }
+  }
+
+  public void setAccessToken(String accessToken) {
+    this.clientConfig.setAccessToken(accessToken);
+  }
+
+  public void setProtocol(String protocol) {
+    this.clientConfig.setProtocol(protocol);
   }
 
   public void addHostnameChangeListener(HostnameChangeListener listener) {

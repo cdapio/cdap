@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,7 +61,7 @@ public class DatasetClient {
    */
   public List<DatasetSpecification> list() throws IOException {
     URL url = config.resolveURL("data/datasets");
-    HttpResponse response = restClient.execute(HttpMethod.GET, url);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<DatasetSpecification>>() { }).getResponseObject();
   }
 
@@ -80,7 +80,7 @@ public class DatasetClient {
     URL url = config.resolveURL(String.format("data/datasets/%s", datasetName));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(properties)).build();
 
-    HttpResponse response = restClient.execute(request, HttpURLConnection.HTTP_NOT_FOUND,
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_CONFLICT);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new DatasetTypeNotFoundException(properties.getTypeName());
@@ -112,7 +112,8 @@ public class DatasetClient {
    */
   public void delete(String datasetName) throws DatasetNotFoundException, IOException {
     URL url = config.resolveURL(String.format("data/datasets/%s", datasetName));
-    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new DatasetNotFoundException(datasetName);
     }
@@ -126,7 +127,7 @@ public class DatasetClient {
    */
   public void truncate(String datasetName) throws IOException {
     URL url = config.resolveURL(String.format("data/datasets/%s/admin/truncate", datasetName));
-    restClient.execute(HttpMethod.POST, url);
+    restClient.execute(HttpMethod.POST, url, config.getAccessToken());
   }
 
 }

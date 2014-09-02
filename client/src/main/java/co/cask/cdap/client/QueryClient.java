@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -67,7 +67,7 @@ public class QueryClient {
     URL url = config.resolveURL("data/explore/queries");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(ImmutableMap.of("query", query))).build();
 
-    HttpResponse response = restClient.execute(request, HttpURLConnection.HTTP_BAD_REQUEST);
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_BAD_REQUEST);
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException("The query is not well-formed or contains an error, " +
                                       "such as a nonexistent table name: " + query);
@@ -86,7 +86,8 @@ public class QueryClient {
    */
   public QueryStatus getStatus(QueryHandle queryHandle) throws IOException, QueryNotFoundException {
     URL url = config.resolveURL(String.format("data/explore/queries/%s/status", queryHandle.getHandle()));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new QueryNotFoundException(queryHandle.getHandle());
     }
@@ -106,7 +107,8 @@ public class QueryClient {
     throws IOException, QueryNotFoundException {
 
     URL url = config.resolveURL(String.format("data/explore/queries/%s/schema", queryHandle.getHandle()));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new QueryNotFoundException(queryHandle.getHandle());
     }
@@ -130,7 +132,7 @@ public class QueryClient {
     URL url = config.resolveURL(String.format("data/explore/queries/%s/next", queryHandle.getHandle()));
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(ImmutableMap.of("size", batchSize))).build();
 
-    HttpResponse response = restClient.execute(request, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new QueryNotFoundException(queryHandle.getHandle());
     }
@@ -148,7 +150,7 @@ public class QueryClient {
    */
   public void delete(QueryHandle queryHandle) throws IOException, QueryNotFoundException, BadRequestException {
     URL url = config.resolveURL(String.format("data/explore/queries/%s", queryHandle.getHandle()));
-    HttpResponse response = restClient.execute(HttpMethod.DELETE, url,
+    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_BAD_REQUEST);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -169,7 +171,7 @@ public class QueryClient {
    */
   public void cancel(QueryHandle queryHandle) throws IOException, QueryNotFoundException, BadRequestException {
     URL url = config.resolveURL(String.format("data/explore/queries/%s/cancel", queryHandle.getHandle()));
-    HttpResponse response = restClient.execute(HttpMethod.POST, url,
+    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_BAD_REQUEST);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

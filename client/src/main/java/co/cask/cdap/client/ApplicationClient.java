@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -60,7 +60,7 @@ public class ApplicationClient {
    * @throws IOException
    */
   public List<ApplicationRecord> list() throws IOException {
-    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("apps"));
+    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("apps"), config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() { }).getResponseObject();
   }
 
@@ -73,7 +73,7 @@ public class ApplicationClient {
    */
   public void delete(String appId) throws ApplicationNotFoundException, IOException {
     HttpResponse response = restClient.execute(HttpMethod.DELETE, config.resolveURL("apps/" + appId),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(appId);
     }
@@ -90,7 +90,7 @@ public class ApplicationClient {
     Map<String, String> headers = ImmutableMap.of("X-Archive-Name", jarFile.getName());
 
     HttpRequest request = HttpRequest.post(url).addHeaders(headers).withBody(jarFile).build();
-    restClient.upload(request);
+    restClient.upload(request, config.getAccessToken());
   }
 
   /**
@@ -103,7 +103,8 @@ public class ApplicationClient {
   public void promote(String appId) throws ApplicationNotFoundException, IOException {
     URL url = config.resolveURL("apps/" + appId);
 
-    HttpResponse response = restClient.execute(HttpMethod.POST, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(appId);
     }
@@ -123,7 +124,7 @@ public class ApplicationClient {
     HttpRequest request = HttpRequest.get(url).build();
 
     ObjectResponse<List<ProgramRecord>> response = ObjectResponse.fromJsonBody(
-      restClient.execute(request), new TypeToken<List<ProgramRecord>>() { });
+      restClient.execute(request, config.getAccessToken()), new TypeToken<List<ProgramRecord>>() { });
 
     return response.getResponseObject();
   }
@@ -146,7 +147,7 @@ public class ApplicationClient {
     }
     return allPrograms.build();
   }
-  
+
 
   /**
    * Lists programs of some type belonging to an application.
@@ -165,7 +166,8 @@ public class ApplicationClient {
     HttpRequest request = HttpRequest.get(url).build();
 
     ObjectResponse<List<ProgramRecord>> response = ObjectResponse.fromJsonBody(
-      restClient.execute(request, HttpURLConnection.HTTP_NOT_FOUND), new TypeToken<List<ProgramRecord>>() { });
+      restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND),
+      new TypeToken<List<ProgramRecord>>() { });
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(appId);

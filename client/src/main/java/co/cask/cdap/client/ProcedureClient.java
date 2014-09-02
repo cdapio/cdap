@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -70,7 +70,8 @@ public class ProcedureClient {
     URL url = config.resolveURL(String.format("apps/%s/procedures/%s/methods/%s", appId, procedureId, methodId));
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(parameters)).build();
 
-    HttpResponse response = restClient.execute(request, HttpURLConnection.HTTP_BAD_REQUEST,
+    HttpResponse response = restClient.execute(request, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_BAD_REQUEST,
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException("The Application, Procedure and method exist, " +
@@ -89,7 +90,7 @@ public class ProcedureClient {
    */
   public List<ProgramRecord> list() throws IOException {
     URL url = config.resolveURL("procedures");
-    HttpResponse response = restClient.execute(HttpMethod.GET, url);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<ProgramRecord>>() { }).getResponseObject();
   }
 }

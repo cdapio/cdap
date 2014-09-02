@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,6 @@ import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.Instances;
-import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -70,7 +69,8 @@ public class ProgramClient {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/start",
                                               appId, programType.getCategoryName(), programName));
-    HttpResponse response = restClient.execute(HttpMethod.POST, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programType, appId, programName);
     }
@@ -90,7 +90,8 @@ public class ProgramClient {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/stop",
                                               appId, programType.getCategoryName(), programName));
-    HttpResponse response = restClient.execute(HttpMethod.POST, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programType, appId, programName);
     }
@@ -111,7 +112,8 @@ public class ProgramClient {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/status",
                                               appId, programType.getCategoryName(), programName));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programType, appId, programName);
     }
@@ -135,7 +137,8 @@ public class ProgramClient {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/live-info",
                                               appId, programType.getCategoryName(), programName));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programType, appId, programName);
     }
@@ -157,7 +160,8 @@ public class ProgramClient {
     throws IOException, NotFoundException {
 
     URL url = config.resolveURL(String.format("apps/%s/flows/%s/flowlets/%s/instances", appId, flowId, flowletId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or flow or flowlet", appId + "/" + flowId + "/" + flowletId);
     }
@@ -181,7 +185,7 @@ public class ProgramClient {
     URL url = config.resolveURL(String.format("apps/%s/flows/%s/flowlets/%s/instances", appId, flowId, flowletId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
 
-    HttpResponse response = restClient.execute(request, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or flow or flowlet", appId + "/" + flowId + "/" + flowletId);
     }
@@ -199,7 +203,8 @@ public class ProgramClient {
   public int getProcedureInstances(String appId, String procedureId) throws IOException, NotFoundException {
 
     URL url = config.resolveURL(String.format("apps/%s/procedures/%s/instances", appId, procedureId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or procedure", appId + "/" + procedureId);
     }
@@ -222,7 +227,7 @@ public class ProgramClient {
     URL url = config.resolveURL(String.format("apps/%s/procedures/%s/instances", appId, procedureId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
 
-    HttpResponse response = restClient.execute(request, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or procedure", appId + "/" + procedureId);
     }
@@ -243,11 +248,12 @@ public class ProgramClient {
 
     URL url = config.resolveURL(String.format("apps/%s/services/%s/runnables/%s/instances",
                                               appId, serviceId, runnableId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
     }
-    
+
     return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
   }
 
@@ -268,7 +274,7 @@ public class ProgramClient {
                                               appId, serviceId, runnableId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
 
-    HttpResponse response = restClient.execute(request, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
     }
@@ -289,7 +295,8 @@ public class ProgramClient {
 
     URL url = config.resolveURL(String.format("apps/%s/services/%s/runnables/%s/history",
                                               appId, serviceId, runnableId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
     }
@@ -312,7 +319,7 @@ public class ProgramClient {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/history",
                                               appId, programType.getCategoryName(), programId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or " + programType.getCategoryName(), appId + "/" + programId);
     }
@@ -337,7 +344,7 @@ public class ProgramClient {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/logs?start=%d&stop=%d",
                                               appId, programType.getCategoryName(), programId, start, stop));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programType, appId, programId);
     }
@@ -362,7 +369,8 @@ public class ProgramClient {
 
     URL url = config.resolveURL(String.format("apps/%s/services/%s/runnables/%s/logs?start=%d&stop=%d",
                                               appId, serviceId, runnableId, start, stop));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
     }

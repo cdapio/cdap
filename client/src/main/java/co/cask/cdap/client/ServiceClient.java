@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,7 +54,7 @@ public class ServiceClient {
 
   /**
    * Gets information about a service.
-   * 
+   *
    * @param appId ID of the application that the service belongs to
    * @param serviceId ID of the service
    * @return {@link ServiceMeta} representing the service.
@@ -62,15 +62,16 @@ public class ServiceClient {
    */
   public ServiceMeta get(String appId, String serviceId) throws IOException {
     URL url = config.resolveURL(String.format("apps/%s/services/%s", appId, serviceId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, ServiceMeta.class).getResponseObject();
   }
 
   public List<Discoverable> discover(String appId, String serviceId, final String discoverableId) throws Exception {
     URL url = config.resolveURL(String.format("apps/%s/services/%s/discover/%s", appId, serviceId, discoverableId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND,
-                                                                    HttpURLConnection.HTTP_INTERNAL_ERROR,
-                                                                    HttpURLConnection.HTTP_UNAUTHORIZED);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND,
+                                               HttpURLConnection.HTTP_INTERNAL_ERROR,
+                                               HttpURLConnection.HTTP_UNAUTHORIZED);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ServiceNotFoundException("Could not discover " + discoverableId);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {

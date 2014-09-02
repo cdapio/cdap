@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -51,7 +51,7 @@ public class DatasetTypeClient {
    */
   public List<DatasetTypeMeta> list() throws IOException {
     URL url = config.resolveURL("data/types");
-    HttpResponse response = restClient.execute(HttpMethod.GET, url);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<DatasetTypeMeta>>() { }).getResponseObject();
   }
 
@@ -64,7 +64,7 @@ public class DatasetTypeClient {
    */
   public DatasetTypeMeta get(String typeName) throws IOException {
     URL url = config.resolveURL(String.format("data/types/%s", typeName));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, DatasetTypeMeta.class).getResponseObject();
   }
 

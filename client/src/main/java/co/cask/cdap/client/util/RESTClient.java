@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,7 +36,7 @@ public class RESTClient {
   private final HttpRequestConfig defaultConfig;
   private final HttpRequestConfig uploadConfig;
 
-  public RESTClient(HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig) {
+  private RESTClient(HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig) {
     this.defaultConfig = defaultConfig;
     this.uploadConfig = uploadConfig;
   }
@@ -51,8 +51,8 @@ public class RESTClient {
     return new RESTClient(config.getDefaultConfig(), config.getUploadConfig());
   }
 
-  public HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException {
-    HttpResponse response = HttpRequests.execute(request, defaultConfig);
+  public HttpResponse execute(HttpRequest request, String accessToken, int... allowedErrorCodes) throws IOException {
+    HttpResponse response = HttpRequests.execute(request, defaultConfig, accessToken);
     if (!isSuccessful(response.getResponseCode())
       && !ArrayUtils.contains(allowedErrorCodes, response.getResponseCode())) {
       throw new IOException(response.getResponseBodyAsString());
@@ -60,17 +60,18 @@ public class RESTClient {
     return response;
   }
 
-  public HttpResponse execute(HttpMethod httpMethod, URL url, int... allowedErrorCodes) throws IOException {
-    return execute(HttpRequest.builder(httpMethod, url).build(), allowedErrorCodes);
+  public HttpResponse execute(HttpMethod httpMethod, URL url, String accessToken, int... allowedErrorCodes)
+    throws IOException {
+    return execute(HttpRequest.builder(httpMethod, url).build(), accessToken, allowedErrorCodes);
   }
 
-  public HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers,
+  public HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers, String accessToken,
                               int... allowedErrorCodes) throws IOException {
-    return execute(HttpRequest.builder(httpMethod, url).addHeaders(headers).build(), allowedErrorCodes);
+    return execute(HttpRequest.builder(httpMethod, url).addHeaders(headers).build(), accessToken, allowedErrorCodes);
   }
 
-  public HttpResponse upload(HttpRequest request, int... allowedErrorCodes) throws IOException {
-    HttpResponse response = HttpRequests.execute(request, uploadConfig);
+  public HttpResponse upload(HttpRequest request, String accessToken, int... allowedErrorCodes) throws IOException {
+    HttpResponse response = HttpRequests.execute(request, uploadConfig, accessToken);
     if (!isSuccessful(response.getResponseCode())
       && !ArrayUtils.contains(allowedErrorCodes, response.getResponseCode())) {
       throw new IOException(response.getResponseBodyAsString());

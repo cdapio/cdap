@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,7 +61,7 @@ public class MonitorClient {
    */
   public List<SystemServiceMeta> listSystemServices() throws IOException {
     URL url = config.resolveURL("system/services");
-    HttpResponse response = restClient.execute(HttpMethod.GET, url);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<SystemServiceMeta>>() { }).getResponseObject();
   }
 
@@ -76,7 +76,8 @@ public class MonitorClient {
    */
   public String getSystemServiceStatus(String serviceName) throws IOException, NotFoundException, BadRequestException {
     URL url = config.resolveURL(String.format("system/services/%s/status", serviceName));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND,
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_BAD_REQUEST);
     String responseBody = new String(response.getResponseBody());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -96,7 +97,7 @@ public class MonitorClient {
    */
   public Map<String, String> getAllSystemServiceStatus() throws IOException {
     URL url = config.resolveURL("system/services/status");
-    HttpResponse response = restClient.execute(HttpMethod.GET, url);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
   }
 
@@ -105,7 +106,8 @@ public class MonitorClient {
 
     URL url = config.resolveURL(String.format("system/services/%s/instances", serviceName));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
-    HttpResponse response = restClient.execute(request, HttpURLConnection.HTTP_NOT_FOUND,
+    HttpResponse response = restClient.execute(request, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_BAD_REQUEST);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("system service", serviceName);
@@ -127,7 +129,8 @@ public class MonitorClient {
     throws IOException, NotFoundException, ServiceNotEnabledException {
 
     URL url = config.resolveURL(String.format("system/services/%s/instances", serviceName));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND,
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_FORBIDDEN);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("system service", serviceName);

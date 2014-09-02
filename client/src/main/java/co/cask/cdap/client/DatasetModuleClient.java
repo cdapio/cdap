@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,7 +61,7 @@ public class DatasetModuleClient {
    */
   public List<DatasetModuleMeta> list() throws IOException {
     URL url = config.resolveURL("data/modules");
-    return ObjectResponse.fromJsonBody(restClient.execute(HttpMethod.GET, url),
+    return ObjectResponse.fromJsonBody(restClient.execute(HttpMethod.GET, url, config.getAccessToken()),
                                        new TypeToken<List<DatasetModuleMeta>>() { }).getResponseObject();
   }
 
@@ -82,7 +82,8 @@ public class DatasetModuleClient {
     Map<String, String> headers = ImmutableMap.of("X-Continuuity-Class-Name", className);
     HttpRequest request = HttpRequest.put(url).addHeaders(headers).withBody(moduleJarFile).build();
 
-    HttpResponse response = restClient.upload(request, HttpURLConnection.HTTP_BAD_REQUEST,
+    HttpResponse response = restClient.upload(request, config.getAccessToken(),
+                                              HttpURLConnection.HTTP_BAD_REQUEST,
                                               HttpURLConnection.HTTP_CONFLICT);
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(String.format("Module jar file does not exist: %s", moduleJarFile));
@@ -104,7 +105,8 @@ public class DatasetModuleClient {
     throws DatasetModuleCannotBeDeletedException, DatasetModuleNotFoundException, IOException {
 
     URL url = config.resolveURL(String.format("data/modules/%s", moduleName));
-    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, HttpURLConnection.HTTP_CONFLICT,
+    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_CONFLICT,
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
       throw new DatasetModuleCannotBeDeletedException(moduleName);
@@ -122,7 +124,8 @@ public class DatasetModuleClient {
    */
   public void deleteAll() throws DatasetModuleCannotBeDeletedException, IOException {
     URL url = config.resolveURL("data/modules");
-    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, HttpURLConnection.HTTP_CONFLICT);
+    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_CONFLICT);
     if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
       // TODO: exception for all modules
       throw new DatasetModuleCannotBeDeletedException(null);
@@ -139,7 +142,8 @@ public class DatasetModuleClient {
    */
   public DatasetModuleMeta get(String moduleName) throws DatasetModuleNotFoundException, IOException {
     URL url = config.resolveURL(String.format("data/modules/%s", moduleName));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new DatasetModuleNotFoundException(moduleName);
     }

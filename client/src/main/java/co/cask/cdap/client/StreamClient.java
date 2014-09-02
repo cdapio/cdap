@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,6 +35,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -43,6 +44,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.List;
 import javax.inject.Inject;
+import javax.ws.rs.core.HttpHeaders;
 
 /**
  * Provides ways to interact with Reactor Streams.
@@ -50,6 +52,7 @@ import javax.inject.Inject;
 public class StreamClient {
 
   private static final Gson GSON = StreamEventTypeAdapter.register(new GsonBuilder()).create();
+  private static final String AUTHENTICATION_HEADER_PREFIX_BEARER = "Bearer ";
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -69,7 +72,8 @@ public class StreamClient {
    */
   public void create(String newStreamId) throws IOException, BadRequestException {
     URL url = config.resolveURL(String.format("streams/%s", newStreamId));
-    HttpResponse response = restClient.execute(HttpMethod.PUT, url, HttpURLConnection.HTTP_BAD_REQUEST);
+    HttpResponse response = restClient.execute(HttpMethod.PUT, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_BAD_REQUEST);
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException("Bad request: " + response.getResponseBodyAsString());
     }
@@ -87,7 +91,7 @@ public class StreamClient {
     URL url = config.resolveURL(String.format("streams/%s", streamId));
     HttpRequest request = HttpRequest.post(url).withBody(event).build();
 
-    HttpResponse response = restClient.execute(request, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new StreamNotFoundException(streamId);
     }
@@ -102,8 +106,8 @@ public class StreamClient {
    */
   public void truncate(String streamId) throws IOException, StreamNotFoundException {
     URL url = config.resolveURL(String.format("streams/%s/truncate", streamId));
-    HttpResponse response = restClient.execute(HttpMethod.POST, url, HttpURLConnection.HTTP_NOT_FOUND);
-
+    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new StreamNotFoundException(streamId);
     }
@@ -121,7 +125,7 @@ public class StreamClient {
     URL url = config.resolveURL(String.format("streams/%s/config", streamId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(ImmutableMap.of("ttl", ttlInSeconds))).build();
 
-    HttpResponse response = restClient.execute(request, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new StreamNotFoundException(streamId);
     }
@@ -135,7 +139,7 @@ public class StreamClient {
    */
   public List<StreamRecord> list() throws IOException {
     URL url = config.resolveURL("streams");
-    HttpResponse response = restClient.execute(HttpMethod.GET, url);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<StreamRecord>>() { }).getResponseObject();
   }
 
@@ -182,6 +186,10 @@ public class StreamClient {
     URL url = config.resolveURL(String.format("streams/%s/events?start=%d&end=%d&limit=%d",
                                               streamId, startTime, endTime, limit));
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
+    String accessToken = config.getAccessToken();
+    if (StringUtils.isNotEmpty(accessToken)) {
+      urlConn.setRequestProperty(HttpHeaders.AUTHORIZATION, AUTHENTICATION_HEADER_PREFIX_BEARER + accessToken);
+    }
     try {
       if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
         throw new StreamNotFoundException(streamId);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ package co.cask.cdap.common.http;
 import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
-import com.google.gson.Gson;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -27,13 +27,14 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
+import javax.ws.rs.core.HttpHeaders;
 
 /**
  * Executes {@link HttpRequest}s and returns an {@link HttpResponse}.
  */
 public final class HttpRequests {
 
-  private static final Gson GSON = new Gson();
+  private static final String AUTHENTICATION_HEADER_PREFIX_BEARER = "Bearer ";
 
   private HttpRequests() { }
 
@@ -43,8 +44,23 @@ public final class HttpRequests {
    * @param request HTTP request to execute
    * @param requestConfig configuration for the HTTP request to execute
    * @return HTTP response
+   * @throws IOException in case of a problem or the connection was aborted
    */
   public static HttpResponse execute(HttpRequest request, HttpRequestConfig requestConfig) throws IOException {
+    return execute(request, requestConfig, StringUtils.EMPTY);
+  }
+
+  /**
+   * Executes an HTTP request to the url provided with enabled authentication.
+   *
+   * @param request HTTP request to execute
+   * @param requestConfig configuration for the HTTP request to execute
+   * @param accessToken authentication token for the HTTP request if authentication is enabled in the gateway server
+   * @return HTTP response
+   * @throws IOException in case of a problem or the connection was aborted
+   */
+  public static HttpResponse execute(HttpRequest request, HttpRequestConfig requestConfig,
+                                     String accessToken) throws IOException {
     String requestMethod = request.getMethod().name();
     URL url = request.getURL();
 
@@ -58,6 +74,10 @@ public final class HttpRequests {
       for (Map.Entry<String, String> header : headers.entries()) {
         conn.setRequestProperty(header.getKey(), header.getValue());
       }
+    }
+
+    if (StringUtils.isNotEmpty(accessToken)) {
+      conn.setRequestProperty(HttpHeaders.AUTHORIZATION, AUTHENTICATION_HEADER_PREFIX_BEARER + accessToken);
     }
 
     InputSupplier<? extends InputStream> bodySrc = request.getBody();
