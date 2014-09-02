@@ -101,7 +101,7 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
                                                                 "Add datasets used in the Service's configure.");
 
           try {
-            Dataset dataset = datasetFramework.getDataset(name, ImmutableMap.<String, String>of(),
+            Dataset dataset = datasetFramework.getDataset(name, arguments,
                                                   Thread.currentThread().getContextClassLoader());
             context.addTransactionAware((TransactionAware) dataset);
             return (T) dataset;
