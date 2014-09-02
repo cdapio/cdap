@@ -141,6 +141,7 @@ public class InMemoryServiceRunner implements ProgramRunner {
     private final Table<String, Integer, ProgramController> runnables;
     private final Program program;
     private final ServiceSpecification serviceSpec;
+    private final Lock lock = new ReentrantLock();
 
     ServiceProgramController(Table<String, Integer, ProgramController> runnables,
                              RunId runId, Program program, ServiceSpecification serviceSpec) {
@@ -188,7 +189,6 @@ public class InMemoryServiceRunner implements ProgramRunner {
         return;
       }
       Map<String, String> command = (Map<String, String>) value;
-      Lock lock = new ReentrantLock();
       lock.lock();
       try {
         changeInstances(command.get("runnable"), Integer.valueOf(command.get("newInstances")));
@@ -200,7 +200,7 @@ public class InMemoryServiceRunner implements ProgramRunner {
     }
 
     /**
-     * Change the number of instances of the running flowlet. Notice that this method needs to be
+     * Change the number of instances of the running runnable. Notice that this method needs to be
      * synchronized as change of instances involves multiple steps that need to be completed all at once.
      * @param runnableName Name of the runnable
      * @param newInstanceCount New instance count
