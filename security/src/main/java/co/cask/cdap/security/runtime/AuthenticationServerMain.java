@@ -64,10 +64,10 @@ public class AuthenticationServerMain extends DaemonMain {
       LOG.info("Starting AuthenticationServer.");
       Services.chainStart(zkClientService, authServer);
     } else {
-      String error = "AuthenticationServer not started since security is disabled." +
-                      " To enable security, set \"security.enabled\" = \"true\" in cdap-site.xml" +
-                      " and edit the appropriate configuration.";
-      LOG.error(error);
+      String warning = "AuthenticationServer not started since security is disabled." +
+                        " To enable security, set \"security.enabled\" = \"true\" in cdap-site.xml" +
+                        " and edit the appropriate configuration.";
+      LOG.warn(warning);
     }
   }
 
