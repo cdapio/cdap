@@ -41,7 +41,7 @@ Application's ``configure`` method::
 
     @Override
     protected void configure() {
-      setName("IpGeoLookupService);
+      setName("IpGeoLookupService");
       setDescription("Service to lookup locations of IP addresses.");
       addHandler(new IPGeoLookupHandler());
       addWorker(new LogCleanupWorker();
@@ -62,9 +62,9 @@ Application's ``configure`` method::
 Service Workers
 ----------------
 ``ServiceWorker``s are used to execute tasks and act passively on behalf of the ``Service``.
-Each worker runs in its own YARN container and their instances may be updated via the Dashboard or the REST APIs.
+Each worker runs in its own YARN container and their instances may be updated via the CDAP Console or the REST APIs.
 
-You can add workers to your Service by calling the ``addWorker`` method in the Service's ``configure`` method.
+You add workers to your Service by calling the ``addWorker`` method in the Service's ``configure`` method.
 
 ::
 
@@ -87,7 +87,7 @@ You can add workers to your Service by calling the ``addWorker`` method in the S
     }
   }
 
-Workers can also access and use ``Dataset``s via a ``ServiceWorkerContext`` inside ``run``.
+Workers can access and use ``Dataset``s via a ``DataSetContext`` inside their ``run`` method.
 
 ::
 
@@ -115,7 +115,8 @@ Service are announced using the name passed in the ``configure`` method. The *ap
 *hostname* required for registering the Service are automatically obtained.
 
 The Service can then be discovered in Flows, Procedures, MapReduce jobs, and other Services using
-appropriate program contexts.
+appropriate program contexts. You may also access ``Service``s in a different ``Application``
+by specifying the ``Application`` name in the ``getServiceURL`` call.
 
 For example, in Flows::
 
@@ -123,21 +124,29 @@ For example, in Flows::
   
     // URL for IPGeoLookupService
     private URL serviceURL;
-  
+
+    // URL for SecurityService in SecurityApplication
+    private URL securityURL;
+
     @Override
     public void intialize(FlowletContext context) {
+      // Get URL for Service in same Application
       serviceURL = context.getServiceURL("IPGeoLookupService");
+
+      // Get URL for Service in a different Application
+      securityURL = context.getServiceURL("SecurityApplication", "SecurityService");
     }
   
     @ProcessInput
     public void process(String ip) {
       // Access the IPGeoLookupService using its URL
+      URLConnection connection = new URL(serviceURL, String.format("lookup/%s", ip)).openConnection();
+      BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
       ...
     }
   }
 
-You may also access ``Service``s in a different ``Application`` by specifying the ``Application`` name in the
-``getServiceURL`` call.
+
 
 Using Services
 -----------------
