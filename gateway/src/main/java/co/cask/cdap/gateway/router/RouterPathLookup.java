@@ -57,7 +57,9 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
         return fallbackService;
       }
 
-      if ((uriParts.length >= 2) && uriParts[1].equals("metrics")) {
+      if ((uriParts.length >= 2) && uriParts[1].equals("acls")) {
+        return Constants.Service.ACL;
+      } else if ((uriParts.length >= 2) && uriParts[1].equals("metrics")) {
         return Constants.Service.METRICS;
       } else if ((uriParts.length >= 2) && uriParts[1].equals("data")) {
         if ((uriParts.length >= 3) && uriParts[2].equals("explore")

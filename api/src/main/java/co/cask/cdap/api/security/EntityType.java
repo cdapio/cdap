@@ -22,12 +22,12 @@ package co.cask.cdap.api.security;
 public enum EntityType {
   NAMESPACE("namespaces"),
   APPLICATION("apps"),
-
-  // parts of an application
   FLOW("flows"),
   MAPREDUCE("mapreduce"),
-
-  // parts outside an application
+  SERVICE("services"),
+  WORKFLOW("workflows"),
+  PROCEDURE("procedures"),
+  DATASET("datasets"),
   STREAM("streams");
 
   private final String pluralForm;

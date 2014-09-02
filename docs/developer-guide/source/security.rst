@@ -1,15 +1,15 @@
-.. :author: Cask, Inc.
+.. :author: Cask Data, Inc.
    :description: Cask Data Application Platform Security
 
-=============
-CDAP Security
-=============
+=======================================
+Cask Data Application Platform Security
+=======================================
 
 Cask Data Application Platform (CDAP) supports securing clusters using a perimeter security model.  With perimeter
 security, access to cluster nodes is restricted through a firewall.  Cluster nodes can communicate
 with each other, but outside clients can only communicate with the cluster through a secured
 host.  Using CDAP security, the CDAP authentication server issues credentials (access
-tokens) to authenticated clients.  Clients then send these credentials on requests to the Cask DAP.
+tokens) to authenticated clients.  Clients then send these credentials on requests to CDAP.
 Calls that lack valid access tokens will be rejected, limiting access to only authenticated
 clients.
 
@@ -25,14 +25,14 @@ Authentication in CDAP consists of two components:
 
 For more details on the authentication process, see `Client Authentication`_.
 
-By enabling perimeter security for the Cask DAP, you can prevent access by any clients without valid
-credentials.  In addition, access logging can be enabled in the Cask DAP to provide an audit log of all
+By enabling perimeter security for CDAP, you can prevent access by any clients without valid
+credentials.  In addition, access logging can be enabled in CDAP to provide an audit log of all
 operations.
 
 
 Enabling Security
 ==================
-To enable security in the Cask DAP, add these properties to ``cdap-site.xml``:
+To enable security in CDAP, add these properties to ``cdap-site.xml``:
 
 ==========================================  ==============
    Property                                   Value
@@ -48,26 +48,26 @@ To configure the granting of ``AccessToken``\s via SSL, add these properties to 
 =============================================  =======================
    Property                                      Value
 =============================================  =======================
-security.authserver.ssl.enabled                  true
-security.authserver.ssl.keystore.path            <path>
-security.authserver.ssl.keystore.password        <password>
-security.authserver.ssl.keystore.keypassword     <password>
-security.authserver.ssl.keystore.type            <keystore-file-type>
+security.auth.server.ssl.enabled                  true
+security.auth.server.ssl.keystore.path            <path>
+security.auth.server.ssl.keystore.password        <password>
+security.auth.server.ssl.keystore.keypassword     <password>
+security.auth.server.ssl.keystore.type            <keystore-file-type>
 =============================================  =======================
 
 Configuring SSL for the Router
 ==============================================
 To configure SSL for the Router, add these properties to ``cdap-site.xml``:
 
-==========================================  =======================
-   Property                                   Value
-==========================================  =======================
-security.router.ssl.enabled                   true
-security.router.ssl.keystore.path             <path>
-security.router.ssl.keystore.password         <password>
-security.router.ssl.keystore.keypassword      <password>
-security.router.ssl.keystore.type             <keystore-file-type>
-==========================================  =======================
+================================    =======================
+   Property                           Value
+================================    =======================
+router.ssl.enabled                    true
+router.ssl.keystore.path              <path>
+router.ssl.keystore.password          <password>
+router.ssl.keystore.keypassword       <password>
+router.ssl.keystore.type              <keystore-file-type>
+================================    =======================
 
 Enabling Access Logging
 ========================
@@ -131,7 +131,7 @@ other methods described below.
 
 LDAP Authentication
 --------------------
-You can configure the Cask DAP to authenticate against an LDAP instance by adding these
+You can configure CDAP to authenticate against an LDAP instance by adding these
 properties to ``cdap-site.xml``:
 
 ================================================  ===========
@@ -209,7 +209,7 @@ To provide a custom authentication mechanism you may create your own ``Authentic
   }
 
 To make your custom handler class available to the authentication service, copy your packaged jar file (and any
-additional dependency jars) to the ``security/lib/`` directory within your Cask DAP installation
+additional dependency jars) to the ``security/lib/`` directory within your CDAP installation
 (typically under ``/opt/cdap``).
 
 Example Configuration
@@ -298,7 +298,7 @@ Testing Security
 To ensure that you've configured security correctly, run these simple tests to verify that the
 security components are working as expected:
 
-- After configuring the Cask DAP as described above, restart the Cask DAP and attempt to use a service::
+- After configuring CDAP as described above, restart CDAP and attempt to use a service::
 
 	curl -v <base-url>/apps
 
@@ -337,7 +337,7 @@ follows:
       the client can retry.
 
 #. The client stores the resulting Access Token and supplies it in subsequent requests.
-#. Cask DAP processes validate the supplied Access Token on each request.
+#. CDAP processes validate the supplied Access Token on each request.
 
    a. If validation succeeds, processing continues to authorization.
    #. If the submitted token is invalid, an "invalid token" error is returned.
@@ -428,7 +428,7 @@ __ rfc6750_
 Authentication with RESTful Endpoints
 -------------------------------------
 When security is enabled on a CDAP cluster, only requests with a valid access token will be
-allowed by the Cask DAP.  Clients accessing CDAP RESTful endpoints will first need to obtain an access token
+allowed by CDAP.  Clients accessing CDAP RESTful endpoints will first need to obtain an access token
 from the authentication server, as described above, which will be passed to the Router daemon on
 subsequent HTTP requests.
 
@@ -536,7 +536,7 @@ Comments
 
 Where to Go Next
 ================
-Now that you've secured your Cask DAP, take a look at:
+Now that you've secured your CDAP, take a look at:
 
 - `Cask Data Application Platform Operations Guide <operations.html>`__,
   which covers putting CDAP into production.

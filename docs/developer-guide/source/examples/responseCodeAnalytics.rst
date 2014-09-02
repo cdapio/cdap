@@ -1,4 +1,4 @@
-.. :Author: Cask, Inc.
+.. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform Apache Log Event Logger
 
 =============================
@@ -167,7 +167,7 @@ Command line tools are also available to deploy and manage apps. From within the
 #. To deploy the Application JAR file, run ``$ bin/app-manager.sh --action deploy [--host <hostname>]``
 #. To start the Application, run ``$ bin/app-manager.sh --action start [--host <hostname>]``
 
-:Note:	[--host <hostname>] is not available for a *Local DAP*.
+:Note:	[--host <hostname>] is not available for a *Standalone CDAP*.
 
 On Windows:
 
@@ -188,7 +188,7 @@ to a Stream named *logEventStream* in the ``ResponseCodeAnalyticsApp``::
 
 	$ bin/inject-data.sh [--host <hostname>]
 
-:Note:	[--host <hostname>] is not available for a *Local DAP*.
+:Note:	[--host <hostname>] is not available for a *Standalone CDAP*.
 
 On Windows::
 
@@ -232,7 +232,7 @@ Either:
 - On the Application detail page of the CDAP Console, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ bin/app-manager.sh --action stop [--host <hostname>]``
 
-  :Note:	[--host <hostname>] is not available for a *Local DAP*.
+  :Note:	[--host <hostname>] is not available for a *Standalone CDAP*.
 
   On Windows, run ``~SDK> bin\app-manager.bat stop``
 
