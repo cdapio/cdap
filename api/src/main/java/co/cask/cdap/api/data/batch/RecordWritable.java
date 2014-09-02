@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,6 +34,7 @@ public interface RecordWritable<RECORD> extends Closeable {
    * Writes the record into a dataset.
    *
    * @param record record to write into the dataset.
+   * @throws IOException when the {@code record} could not be written to the dataset.
    */
   public void write(RECORD record) throws IOException;
 

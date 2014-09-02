@@ -56,7 +56,7 @@ public class ContextManager {
    * @param conf configuration used to create a context, if necessary. If it is null, return the saved context, which
    *             can also be null.
    * @return Context of a query execution.
-   * @throws IOException
+   * @throws IOException when the configuration does not contain the required settings to create the context
    */
   public static Context getContext(@Nullable Configuration conf) throws IOException {
     if (conf != null && savedContext == null) {
@@ -105,7 +105,7 @@ public class ContextManager {
     private final DatasetFramework datasetFramework;
     private final ZKClientService zkClientService;
 
-    // TODO investigate multiple "insert into" in one query and make sure this doesn't make it break
+    // TODO investigate multiple "insert" in one query and make sure this doesn't make it break - REACTOR-887
     private String recordWritableName;
 
     public Context(DatasetFramework datasetFramework, ZKClientService zkClientService) {
