@@ -15,7 +15,7 @@ describe 'cdap::fullstack' do
       end.converge(described_recipe)
     end
 
-    %w(cdap-gateway cdap-kafka cdap-cdap-master cdap-web-app)
+    %w(cdap-gateway cdap-kafka cdap-master cdap-web-app)
       .each do |pkg|
       it "installs #{pkg} package" do
         expect(chef_run).to install_package(pkg)
