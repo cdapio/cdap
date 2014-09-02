@@ -161,7 +161,6 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public DatasetTypeMeta getType(String typeName) throws DatasetManagementException {
-    // todo : temporary, only used for testing now.
     return new DatasetTypeMeta(typeName, Collections.EMPTY_LIST);
   }
 
