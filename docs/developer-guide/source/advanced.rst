@@ -15,8 +15,8 @@ Cask Data Application Platform (CDAP) Application. Developers can implement Cust
 to interface with a legacy system and perform additional processing beyond the CDAP processing
 paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
 
-Services are implemented by extending ``AbstractService``. They consist of ``HttpServiceHandler``s to serve requests
-and ``ServiceWorker``s to passively execute tasks on behalf of the Service.
+Services are implemented by extending ``AbstractService``. They consist of ``HttpServiceHandler`` \s to serve requests
+and ``ServiceWorker`` \s to passively execute tasks on behalf of the Service.
 
 You can add services to your application by calling the ``addService`` method in the
 Application's ``configure`` method::
@@ -61,7 +61,7 @@ Application's ``configure`` method::
 
 Service Workers
 ----------------
-``ServiceWorker``s are used to execute tasks and act passively on behalf of the ``Service``.
+``ServiceWorker`` \s are used to execute tasks and act passively on behalf of the ``Service``.
 Each worker runs in its own YARN container and their instances may be updated via the CDAP Console or the REST APIs.
 
 You add workers to your Service by calling the ``addWorker`` method in the Service's ``configure`` method.
@@ -87,7 +87,7 @@ You add workers to your Service by calling the ``addWorker`` method in the Servi
     }
   }
 
-Workers can access and use ``Dataset``s via a ``DataSetContext`` inside their ``run`` method.
+Workers can access and use ``Dataset`` \s via a ``DataSetContext`` inside their ``run`` method.
 
 ::
 
@@ -102,7 +102,7 @@ Workers can access and use ``Dataset``s via a ``DataSetContext`` inside their ``
       });
     }
 
-Operations executed on ``Dataset``s within a  ``run`` are committed as part of a single transaction.
+Operations executed on ``Dataset`` \s within a  ``run`` are committed as part of a single transaction.
 The transaction is started before ``run`` is invoked and is committed upon successful execution. Exceptions thrown
 while committing the transaction or thrown by user-code result in a rollback of the transaction.
 
@@ -115,7 +115,7 @@ Service are announced using the name passed in the ``configure`` method. The *ap
 *hostname* required for registering the Service are automatically obtained.
 
 The Service can then be discovered in Flows, Procedures, MapReduce jobs, and other Services using
-appropriate program contexts. You may also access ``Service``s in a different ``Application``
+appropriate program contexts. You may also access ``Service`` \s in a different ``Application``
 by specifying the ``Application`` name in the ``getServiceURL`` call.
 
 For example, in Flows::
