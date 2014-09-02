@@ -40,7 +40,7 @@ public abstract class MetaTableUtil {
     this.dsFramework =
       new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf, Namespace.SYSTEM));
     this.cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                        getClass().getClassLoader());
+                                   getClass().getClassLoader());
   }
 
   public OrderedTable getMetaTable() throws Exception {

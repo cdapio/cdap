@@ -124,8 +124,8 @@ public class ExploreExecutorService extends AbstractIdleService {
           dsUtil.cleanup();
         }
         datasetClassLoaderUtilMap.clear();
-        // Finally stop explore service
 
+        // Finally stop explore service
         exploreService.stopAndWait();
       }
     }

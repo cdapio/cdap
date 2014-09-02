@@ -27,7 +27,7 @@ import java.io.IOException;
  */
 public class DatasetWrapper<D extends Dataset> {
   private DatasetClassLoaderUtil datasetClassLoaderUtil;
-  private  D  dataset;
+  private D dataset;
 
   public DatasetWrapper(DatasetClassLoaderUtil datasetClassLoaderUtil, D dataset) {
     this.datasetClassLoaderUtil = datasetClassLoaderUtil;
