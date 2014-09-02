@@ -167,7 +167,7 @@ public class InMemoryServiceRunner implements ProgramRunner {
     }
 
     @Override
-    protected synchronized void doStop() throws Exception {
+    protected void doStop() throws Exception {
       LOG.info("Stopping Service : " + serviceSpec.getName());
       lock.lock();
       try {
