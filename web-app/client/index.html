@@ -271,13 +271,13 @@
         </div>
       </div>
       <div class="info-box" style="float: right; border: 0;">
-          <div id="action-buttons" class="btn-group pull-right">
-            <button class="btn btn-blank btn-icon" {{action "config"}}><span class="btn-config"></span></button>
-          </div>
+        <div id="action-buttons" class="btn-group pull-right">
+          <button class="btn btn-blank btn-icon" {{action "config"}}><span class="btn-config"></span></button>
           <div class="start-stop-wrapper">
             <button class="btn btn-blank start-stop" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
           </div>
-          <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+        </div>
+        <div class="flow-state"><strong>{{model.currentState}}</strong></div>
       </div>
     </div>
 
