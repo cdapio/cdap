@@ -139,9 +139,6 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
-    } catch (HandlerException e) {
-      LOG.debug("Got handler exception", e);
-      responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());

@@ -26,7 +26,6 @@ import com.continuuity.tephra.DefaultTransactionExecutor;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.inmemory.MinimalTxSystemClient;
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
