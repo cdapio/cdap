@@ -21,6 +21,7 @@ import co.cask.cdap.client.auth.rest.BasicAuthenticationClient;
 import co.cask.cdap.client.auth.rest.BasicCredentials;
 import co.cask.cdap.shell.CLIConfig;
 import co.cask.cdap.shell.command.AbstractCommand;
+import co.cask.cdap.shell.exception.CommandInputError;
 import co.cask.cdap.shell.util.SocketUtil;
 
 import java.io.IOException;
@@ -45,7 +46,9 @@ public class ConnectCommand extends AbstractCommand {
 
   @Override
   public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
+    if (args.length < 1) {
+      throw new CommandInputError("Expected arguments: " + argsFormat);
+    }
 
     String hostname = args[0];
     int port = cliConfig.getClientConfig().getPort();
