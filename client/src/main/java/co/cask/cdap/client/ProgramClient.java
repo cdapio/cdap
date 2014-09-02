@@ -319,7 +319,8 @@ public class ProgramClient {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/history",
                                               appId, programType.getCategoryName(), programId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or " + programType.getCategoryName(), appId + "/" + programId);
     }
