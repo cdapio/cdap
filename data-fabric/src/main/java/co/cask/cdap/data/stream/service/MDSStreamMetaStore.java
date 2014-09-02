@@ -61,6 +61,8 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
     final DatasetFramework dsFramework =
       new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf, Namespace.SYSTEM));
 
+    final ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
     txnl = Transactional.of(
         new TransactionExecutorFactory() {
           @Override
@@ -71,8 +73,6 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
           @Override
           public StreamMds get() {
             try {
-              ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                                    getClass().getClassLoader());
               Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, STREAM_META_TABLE, "table",
                                                                DatasetProperties.EMPTY,
                                                                DatasetDefinition.NO_ARGUMENTS, cl);

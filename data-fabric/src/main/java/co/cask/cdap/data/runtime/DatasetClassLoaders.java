@@ -40,8 +40,9 @@ import java.util.Set;
 public class DatasetClassLoaders {
 
   /**
-   * Returns {@link java.lang.ClassLoader }provided a parent {@link java.lang.ClassLoader} ,
-   * {@link co.cask.cdap.proto.DatasetTypeMeta} and {@link org.apache.twill.filesystem.LocationFactory}
+   * Constructs and Returns {@link ClassLoader } provided a parent {@link ClassLoader},
+   * {@link DatasetTypeMeta} and {@link LocationFactory}.
+   * This clasloader contains the dataset classes based on the supplied {@link DatasetTypeMeta}
    * @param parentClassLoader
    * @param typeMeta
    * @param locationFactory

@@ -176,11 +176,11 @@ public class Main {
     // scheduler metadata
     ScheduleStoreTableUtil.setupDatasets(framework);
 
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
     // Upgrade all datasets
     for (DatasetSpecification spec : framework.getInstances()) {
       System.out.println(String.format("Upgrading dataset: %s, spec: %s", spec.getName(), spec.toString()));
-      ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                            getClass().getClassLoader());
       DatasetAdmin admin = framework.getAdmin(spec.getName(), cl);
       // we know admin is not null, since we are looping over existing datasets
       admin.upgrade();

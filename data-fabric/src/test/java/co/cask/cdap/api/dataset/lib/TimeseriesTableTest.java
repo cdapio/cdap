@@ -37,7 +37,6 @@ public class TimeseriesTableTest extends AbstractDatasetTest {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     createInstance("timeseriesTable", "metricsTable", DatasetProperties.EMPTY);
     table = getInstance("metricsTable");
   }

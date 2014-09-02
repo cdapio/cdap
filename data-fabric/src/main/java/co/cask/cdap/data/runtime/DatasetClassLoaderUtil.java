@@ -33,10 +33,15 @@ public class DatasetClassLoaderUtil {
     this.classLoader = classLoader;
     this.datasetTempFiles = datasetTempFiles;
   }
+
   public ClassLoader getClassLoader() {
     return classLoader;
   }
 
+  /**
+   * Cleans up the temporary directory used to expand the dataset jar files.
+   * @throws IOException
+   */
   public void cleanup() throws IOException {
     for (File file : datasetTempFiles) {
       DirUtils.deleteDirectoryContents(file);

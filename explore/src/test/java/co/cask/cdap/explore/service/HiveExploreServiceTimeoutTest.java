@@ -16,15 +16,18 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetWrapper;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapperUtility;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.test.XSlowTests;
 import com.continuuity.tephra.Transaction;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -48,7 +51,6 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   private static final long CLEANUP_JOB_SCHEDULE_SECS = 1;
 
   private static ExploreService exploreService;
-  private static DatasetWrapper datasetWrapper = null;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -71,7 +73,9 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
 
-    datasetWrapper = getDatasetWrapper("my_table", "keyStructValueTable");
+    DatasetWrapper datasetWrapper = DatasetWrapperUtility.getDatasetWrapper
+      (datasetFramework, "my_table", DatasetDefinition.NO_ARGUMENTS, locationFactory,
+       Thread.currentThread().getContextClassLoader());
 
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
@@ -107,9 +111,6 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   public static void stop() throws Exception {
     datasetFramework.deleteInstance("my_table");
     datasetFramework.deleteModule("keyStructValue");
-    if (datasetWrapper != null) {
-      datasetWrapper.cleanup();
-    }
   }
 
   @Test

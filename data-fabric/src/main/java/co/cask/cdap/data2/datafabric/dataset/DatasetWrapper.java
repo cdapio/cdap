@@ -22,18 +22,19 @@ import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
 import java.io.IOException;
 
 /**
- *
+ * Wrapper class for Type that extends {@link co.cask.cdap.api.dataset.Dataset}
+ * @param <D>
  */
-public class DatasetWrapper {
+public class DatasetWrapper<D extends Dataset> {
   private DatasetClassLoaderUtil datasetClassLoaderUtil;
-  private Dataset dataset;
+  private  D  dataset;
 
-  public DatasetWrapper(DatasetClassLoaderUtil datasetClassLoaderUtil, Dataset dataset) {
+  public DatasetWrapper(DatasetClassLoaderUtil datasetClassLoaderUtil, D dataset) {
     this.datasetClassLoaderUtil = datasetClassLoaderUtil;
     this.dataset = dataset;
   }
 
-  public Dataset getDataset() {
+  public D getDataset() {
     return dataset;
   }
 

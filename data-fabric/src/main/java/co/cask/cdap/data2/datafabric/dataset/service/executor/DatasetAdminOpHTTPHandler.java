@@ -21,13 +21,11 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.HandlerException;
-import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
-import co.cask.cdap.data.runtime.DatasetClassLoaders;
 import co.cask.cdap.data2.datafabric.dataset.DatasetAdminWrapper;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.DatasetTypeWrapper;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapperUtility;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.proto.DatasetTypeMeta;
@@ -60,6 +58,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
   private final RemoteDatasetFramework dsFramework;
   private final LocationFactory locationFactory;
+  private final ClassLoader parentClassLoader;
 
   @Inject
   public DatasetAdminOpHTTPHandler(Authenticator authenticator, RemoteDatasetFramework dsFramework,
@@ -67,6 +66,8 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     super(authenticator);
     this.dsFramework = dsFramework;
     this.locationFactory = locationFactory;
+    this.parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                  getClass().getClassLoader());
   }
 
   @POST
@@ -75,12 +76,16 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     throws IOException {
     DatasetAdminWrapper datasetAdminWrapper = null;
     try {
-      datasetAdminWrapper = getDatasetAdminWrapper(instanceName);
+      try {
+        datasetAdminWrapper = DatasetWrapperUtility.getDatasetAdminWrapper(dsFramework, instanceName,
+                                                                           locationFactory, parentClassLoader);
+      } catch (Exception e) {
+        responder.sendError(HttpResponseStatus.NOT_FOUND,
+                            String.format("Couldn't obtain DatasetAdmin for dataset instance %s", instanceName));
+        return;
+      }
       responder.sendJson(HttpResponseStatus.OK,
                          new DatasetAdminOpResponse(datasetAdminWrapper.getDatasetAdmin().exists(), null));
-    } catch (HandlerException e) {
-      LOG.debug("Got handler exception", e);
-      responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
     } catch (Exception e) {
       LOG.error(getAdminOpErrorMessage("exists", instanceName), e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, getAdminOpErrorMessage("exists", instanceName));
@@ -106,16 +111,20 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
       DatasetProperties props = GSON.fromJson(propsHeader, DatasetProperties.class);
       DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
-      datasetTypeWrapper = getDatasetTypeWrapper(typeMeta);
+      try {
+        datasetTypeWrapper = DatasetWrapperUtility.getDatasetTypeWrapper(dsFramework, typeMeta,
+                                                                         locationFactory, parentClassLoader);
+      } catch (Exception e) {
+        responder.sendError(HttpResponseStatus.NOT_FOUND,
+                            String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
+        return;
+      }
       DatasetType type = datasetTypeWrapper.getDatasetType();
 
       DatasetSpecification spec = type.configure(name, props);
       DatasetAdmin admin = type.getAdmin(spec);
       admin.create();
       responder.sendJson(HttpResponseStatus.OK, spec);
-    } catch (HandlerException e) {
-      LOG.debug("Got handler exception", e);
-      responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
     } finally {
       if (datasetTypeWrapper != null) {
         datasetTypeWrapper.cleanup();
@@ -138,15 +147,19 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
       DatasetSpecification spec = GSON.fromJson(specHeader, DatasetSpecification.class);
       DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
-      datasetTypeWrapper = getDatasetTypeWrapper(typeMeta);
+      try {
+        datasetTypeWrapper = DatasetWrapperUtility.getDatasetTypeWrapper(dsFramework, typeMeta,
+                                                                         locationFactory, parentClassLoader);
+      } catch (Exception e) {
+        responder.sendError(HttpResponseStatus.NOT_FOUND,
+                            String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
+        return;
+      }
       DatasetType type = datasetTypeWrapper.getDatasetType();
 
       DatasetAdmin admin = type.getAdmin(spec);
       admin.drop();
       responder.sendJson(HttpResponseStatus.OK, spec);
-    } catch (HandlerException e) {
-      LOG.debug("Got handler exception", e);
-      responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
     } finally {
       if (datasetTypeWrapper != null) {
         datasetTypeWrapper.cleanup();
@@ -160,12 +173,16 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     throws IOException {
     DatasetAdminWrapper datasetAdminWrapper = null;
     try {
-      datasetAdminWrapper = getDatasetAdminWrapper(instanceName);
+      try {
+        datasetAdminWrapper = DatasetWrapperUtility.getDatasetAdminWrapper(dsFramework, instanceName,
+                                                                           locationFactory, parentClassLoader);
+      } catch (Exception e) {
+        responder.sendError(HttpResponseStatus.NOT_FOUND,
+                            String.format("Couldn't obtain DatasetAdmin for dataset instance %s", instanceName));
+        return;
+      }
       datasetAdminWrapper.getDatasetAdmin().truncate();
       responder.sendJson(HttpResponseStatus.OK, new DatasetAdminOpResponse(null, null));
-    } catch (HandlerException e) {
-      LOG.debug("Got handler exception", e);
-      responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
     } catch (Exception e) {
       LOG.error(getAdminOpErrorMessage("truncate", instanceName), e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, getAdminOpErrorMessage("truncate", instanceName));
@@ -182,7 +199,14 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     throws IOException {
     DatasetAdminWrapper datasetAdminWrapper = null;
     try {
-      datasetAdminWrapper = getDatasetAdminWrapper(instanceName);
+      try {
+        datasetAdminWrapper = DatasetWrapperUtility.getDatasetAdminWrapper(dsFramework, instanceName,
+                                                                           locationFactory, parentClassLoader);
+      } catch (Exception e) {
+        responder.sendError(HttpResponseStatus.NOT_FOUND,
+                            String.format("Couldn't obtain DatasetAdmin for dataset instance %s", instanceName));
+        return;
+      }
       datasetAdminWrapper.getDatasetAdmin().upgrade();
       responder.sendJson(HttpResponseStatus.OK, new DatasetAdminOpResponse(null, null));
     } catch (HandlerException e) {
@@ -201,53 +225,4 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   private String getAdminOpErrorMessage(String opName, String instanceName) {
     return String.format("Error executing admin operation %s for dataset instance %s", opName, instanceName);
   }
-
-  private DatasetAdminWrapper getDatasetAdminWrapper(String instanceName)
-    throws IOException, DatasetManagementException {
-    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                                         getClass().getClassLoader());
-    String msg = String.format("Dataset instance %s does not exist", instanceName);
-
-    if (dsFramework.getDatasetSpec(instanceName) == null) {
-      throw new HandlerException(HttpResponseStatus.NOT_FOUND, msg);
-    }
-    DatasetTypeMeta typeMeta = dsFramework.getType(dsFramework.getDatasetSpec(instanceName).getType());
-    if (typeMeta == null) {
-      throw new HandlerException(HttpResponseStatus.NOT_FOUND, msg);
-    }
-    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
-      (parentClassLoader, typeMeta, locationFactory);
-    DatasetAdmin admin = dsFramework.getAdmin(instanceName, dsUtil.getClassLoader());
-
-    if (admin == null) {
-      throw new HandlerException(HttpResponseStatus.NOT_FOUND,
-                                 "Couldn't obtain DatasetAdmin for dataset instance " + instanceName);
-    }
-
-    return new DatasetAdminWrapper(dsUtil, admin);
-  }
-
-  private DatasetTypeWrapper getDatasetTypeWrapper(DatasetTypeMeta typeMeta)
-    throws IOException, DatasetManagementException {
-    String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
-
-    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                                         getClass().getClassLoader());
-    if (typeMeta == null) {
-      LOG.error(msg);
-      throw new HandlerException(HttpResponseStatus.BAD_REQUEST, msg);
-    }
-
-    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
-      (parentClassLoader, typeMeta, locationFactory);
-    DatasetType datasetType = dsFramework.getDatasetType(typeMeta, dsUtil.getClassLoader());
-
-    if (datasetType == null) {
-      LOG.error(msg);
-      throw new HandlerException(HttpResponseStatus.BAD_REQUEST, msg);
-    }
-
-    return new DatasetTypeWrapper(dsUtil, datasetType);
-  }
-
 }

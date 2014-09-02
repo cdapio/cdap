@@ -21,9 +21,11 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.HandlerException;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data.runtime.DatasetClassLoaderUtil;
 import co.cask.cdap.data.runtime.DatasetClassLoaders;
 import co.cask.cdap.data2.datafabric.dataset.DatasetWrapper;
+import co.cask.cdap.data2.datafabric.dataset.DatasetWrapperUtility;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.explore.client.DatasetExploreFacade;
@@ -66,6 +68,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private final ExploreService exploreService;
   private final DatasetFramework datasetFramework;
   private final LocationFactory locationFactory;
+  private final ClassLoader parentClassLoader;
 
   @Inject
   public ExploreExecutorHttpHandler(ExploreService exploreService, DatasetFramework datasetFramework,
@@ -73,6 +76,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     this.exploreService = exploreService;
     this.datasetFramework = datasetFramework;
     this.locationFactory = locationFactory;
+    this.parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                                  getClass().getClassLoader());
+
   }
 
   /**
@@ -86,7 +92,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       Dataset dataset;
       try {
-        datasetWrapper = getDatasetWrapper(datasetName);
+        datasetWrapper = DatasetWrapperUtility.getDatasetWrapper
+          (datasetFramework, datasetName, DatasetDefinition.NO_ARGUMENTS, locationFactory, parentClassLoader);
         dataset = datasetWrapper.getDataset();
       } catch (Exception e) {
         String className = isClassNotFoundException(e);
@@ -169,7 +176,12 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     DatasetWrapper datasetWrapper = null;
     try {
       LOG.debug("Disabling explore for dataset instance {}", datasetName);
-      datasetWrapper = getDatasetWrapper(datasetName);
+      try {
+        datasetWrapper = DatasetWrapperUtility.getDatasetWrapper
+          (datasetFramework, datasetName, DatasetDefinition.NO_ARGUMENTS, locationFactory, parentClassLoader);
+      } catch (Exception e) {
+        throw new HandlerException(HttpResponseStatus.NOT_FOUND, String.format("Cannot load dataset %s", datasetName));
+      }
       Dataset dataset = datasetWrapper.getDataset();
 
       if (!(dataset instanceof RecordScannable)) {
@@ -216,7 +228,12 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     DatasetWrapper datasetWrapper = null;
     try {
       LOG.trace("Retrieving Explore schema for dataset {}", datasetName);
-      datasetWrapper = getDatasetWrapper(datasetName);
+      try {
+        datasetWrapper = DatasetWrapperUtility.getDatasetWrapper
+          (datasetFramework, datasetName, DatasetDefinition.NO_ARGUMENTS, locationFactory, parentClassLoader);
+      } catch (Exception e) {
+        throw new HandlerException(HttpResponseStatus.NOT_FOUND, String.format("Cannot load dataset %s", datasetName));
+      }
       Dataset dataset = datasetWrapper.getDataset();
 
       if (!(dataset instanceof RecordScannable)) {
@@ -260,32 +277,5 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         throw Throwables.propagate(e);
       }
     }
-  }
-
-  private DatasetWrapper getDatasetWrapper(String instanceName) throws
-    DatasetManagementException, IOException, HandlerException {
-    String msg = String.format("Cannot load dataset %s", instanceName);
-    ClassLoader parentClassLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                                         getClass().getClassLoader());
-
-    if (datasetFramework.getDatasetSpec(instanceName) == null) {
-      throw new HandlerException(HttpResponseStatus.NOT_FOUND, msg);
-    }
-
-    DatasetTypeMeta typeMeta = datasetFramework.getType(datasetFramework.getDatasetSpec(instanceName).getType());
-
-    if (typeMeta == null) {
-      throw new HandlerException(HttpResponseStatus.NOT_FOUND, msg);
-    }
-
-    DatasetClassLoaderUtil dsUtil = DatasetClassLoaders.createDatasetClassLoaderFromType
-      (parentClassLoader, typeMeta, locationFactory);
-
-    Dataset dataset = datasetFramework.getDataset(instanceName, DatasetDefinition.NO_ARGUMENTS,
-                                                  dsUtil.getClassLoader());
-    if (dataset == null) {
-      throw new HandlerException(HttpResponseStatus.NOT_FOUND, msg);
-    }
-    return new DatasetWrapper(dsUtil, dataset);
   }
 }

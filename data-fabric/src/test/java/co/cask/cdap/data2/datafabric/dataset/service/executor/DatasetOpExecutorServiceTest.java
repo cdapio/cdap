@@ -138,6 +138,8 @@ public class DatasetOpExecutorServiceTest {
 
   @Test
   public void testRest() throws Exception {
+    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+                                          getClass().getClassLoader());
     // check non-existence with 404
     testAdminOp("bob", "exists", 404, null);
 
@@ -148,8 +150,6 @@ public class DatasetOpExecutorServiceTest {
     testAdminOp("joe", "exists", 404, null);
 
     // check truncate
-    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                          getClass().getClassLoader());
     final Table table = dsFramework.getDataset("bob", DatasetDefinition.NO_ARGUMENTS, cl);
     TransactionExecutor txExecutor =
       new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),

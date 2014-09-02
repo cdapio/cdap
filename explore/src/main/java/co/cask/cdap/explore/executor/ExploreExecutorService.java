@@ -123,6 +123,7 @@ public class ExploreExecutorService extends AbstractIdleService {
         for (DatasetClassLoaderUtil dsUtil : datasetClassLoaderUtilMap.values()) {
           dsUtil.cleanup();
         }
+        datasetClassLoaderUtilMap.clear();
         // Finally stop explore service
 
         exploreService.stopAndWait();
