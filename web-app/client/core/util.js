@@ -986,7 +986,7 @@ define([], function () {
      *
      **/
     handleInstancesKeyPress: function (btn, inp, prevVal) {
-      if (parseInt(inp) != prevVal && C.Util.isInteger(inp)){
+      if (parseInt(inp, 10) != prevVal && C.Util.isInteger(inp)){
           btn.attr("disabled", false);
       } else {
           btn.attr("disabled", true);
