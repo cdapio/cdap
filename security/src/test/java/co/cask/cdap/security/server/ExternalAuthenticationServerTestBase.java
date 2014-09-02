@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ import co.cask.cdap.security.auth.AccessToken;
 import co.cask.cdap.security.auth.AccessTokenCodec;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.JsonObject;
@@ -45,18 +46,17 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.net.InetAddress;
-import java.util.Iterator;
+import java.net.SocketAddress;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -67,22 +67,28 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 /**
- * Test class for ExternalAuthenticationServer.
+ * Base test class for ExternalAuthenticationServer.
  */
-public class TestExternalAuthenticationServer {
-  private static final Logger LOG = LoggerFactory.getLogger(TestExternalAuthenticationServer.class);
+public abstract class ExternalAuthenticationServerTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServerTestBase.class);
   private static ExternalAuthenticationServer server;
-  private static CConfiguration configuration;
   private static int port;
   private static Codec<AccessToken> tokenCodec;
   private static DiscoveryServiceClient discoveryServiceClient;
   private static InMemoryDirectoryServer ldapServer;
   private static int ldapPort = Networks.getRandomPort();
 
-  private static Logger testAuditLogger;
+  private static final Logger TEST_AUDIT_LOGGER = mock(Logger.class);
 
-  @BeforeClass
-  public static void setup() {
+  // Needs to be set by derived classes.
+  protected static CConfiguration configuration;
+
+  protected abstract String getProtocol();
+  protected abstract HttpClient getHTTPClient() throws Exception;
+
+  protected static void setup() {
+    Assert.assertNotNull("CConfiguration needs to be set by derived classes", configuration);
+
     Module securityModule = Modules.override(new InMemorySecurityModule()).with(
       new AbstractModule() {
         @Override
@@ -90,19 +96,23 @@ public class TestExternalAuthenticationServer {
           bind(AuditLogHandler.class)
             .annotatedWith(Names.named(
               ExternalAuthenticationServer.NAMED_EXTERNAL_AUTH))
-            .toInstance(new AuditLogHandler(testAuditLogger));
+            .toInstance(new AuditLogHandler(TEST_AUDIT_LOGGER));
         }
       }
     );
-    testAuditLogger = mock(Logger.class);
     Injector injector = Guice.createInjector(new IOModule(), securityModule,
-                                             new ConfigModule(getConfiguration()),
+                                             new ConfigModule(getConfiguration(configuration)),
                                              new DiscoveryRuntimeModule().getInMemoryModules());
     server = injector.getInstance(ExternalAuthenticationServer.class);
-    configuration = injector.getInstance(CConfiguration.class);
     tokenCodec = injector.getInstance(AccessTokenCodec.class);
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-    port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
+
+    if (configuration.getBoolean(Constants.Security.AuthenticationServer.SSL_ENABLED)) {
+      port = configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT);
+    } else {
+      port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
+    }
+
     try {
       startLDAPServer();
     } catch (Exception e) {
@@ -110,15 +120,20 @@ public class TestExternalAuthenticationServer {
     }
   }
 
+  public int getAuthServerPort() {
+    return port;
+  }
+
   /**
    * LDAP server and related handler configurations.
-   * @return
    */
-  private static CConfiguration getConfiguration() {
+  private static CConfiguration getConfiguration(CConfiguration cConf) {
     String configBase = Constants.Security.AUTH_HANDLER_CONFIG_BASE;
-    CConfiguration cConf = CConfiguration.create();
+
     // Use random port for testing
     cConf.setInt(Constants.Security.AUTH_SERVER_PORT, Networks.getRandomPort());
+    cConf.setInt(Constants.Security.AuthenticationServer.SSL_PORT, Networks.getRandomPort());
+
     cConf.set(Constants.Security.AUTH_HANDLER_CLASS,
               "co.cask.cdap.security.server.LDAPAuthenticationHandler");
     cConf.set(Constants.Security.LOGIN_MODULE_CLASS_NAME, "org.eclipse.jetty.plus.jaas.spi.LdapLoginModule");
@@ -128,7 +143,6 @@ public class TestExternalAuthenticationServer {
     cConf.set(configBase.concat("userBaseDn"), "dc=example,dc=com");
     cConf.set(configBase.concat("userRdnAttribute"), "cn");
     cConf.set(configBase.concat("userObjectClass"), "inetorgperson");
-    cConf.set(Constants.Security.AuthenticationServer.SSL_ENABLED, "false");
     return cConf;
   }
 
@@ -172,16 +186,17 @@ public class TestExternalAuthenticationServer {
   @Test
   public void testValidAuthentication() throws Exception {
     server.startAndWait();
+    LOG.info("Auth server running on port {}", port);
     ldapServer.startListening();
     TimeUnit.SECONDS.sleep(3);
-    HttpClient client = new DefaultHttpClient();
-    String uri = String.format("http://localhost:%d/%s", port, GrantAccessToken.Paths.GET_TOKEN);
+    HttpClient client = getHTTPClient();
+    String uri = String.format("%s://127.0.0.1:%d/%s", getProtocol(), port, GrantAccessToken.Paths.GET_TOKEN);
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
     HttpResponse response = client.execute(request);
 
     assertEquals(response.getStatusLine().getStatusCode(), 200);
-    verify(testAuditLogger, atLeastOnce()).trace(contains("admin"));
+    verify(TEST_AUDIT_LOGGER, atLeastOnce()).trace(contains("admin"));
 
     // Test correct headers being returned
     String cacheControlHeader = response.getFirstHeader("Cache-Control").getValue();
@@ -228,8 +243,8 @@ public class TestExternalAuthenticationServer {
     server.startAndWait();
     ldapServer.startListening();
     TimeUnit.SECONDS.sleep(3);
-    HttpClient client = new DefaultHttpClient();
-    String uri = String.format("http://localhost:%d/%s", port, GrantAccessToken.Paths.GET_TOKEN);
+    HttpClient client = getHTTPClient();
+    String uri = String.format("%s://127.0.0.1:%d/%s", getProtocol(), port, GrantAccessToken.Paths.GET_TOKEN);
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "xxxxx");
 
@@ -237,7 +252,7 @@ public class TestExternalAuthenticationServer {
 
     // Request is Unauthorized
     assertEquals(response.getStatusLine().getStatusCode(), 401);
-    verify(testAuditLogger, atLeastOnce()).trace(contains("401"));
+    verify(TEST_AUDIT_LOGGER, atLeastOnce()).trace(contains("401"));
 
     server.stopAndWait();
     ldapServer.shutDown(true);
@@ -252,8 +267,8 @@ public class TestExternalAuthenticationServer {
     server.startAndWait();
     ldapServer.startListening();
     TimeUnit.SECONDS.sleep(3);
-    HttpClient client = new DefaultHttpClient();
-    String uri = String.format("http://localhost:%d/%s", port, GrantAccessToken.Paths.GET_EXTENDED_TOKEN);
+    HttpClient client = getHTTPClient();
+    String uri = String.format("%s://127.0.0.1:%d/%s", getProtocol(), port, GrantAccessToken.Paths.GET_EXTENDED_TOKEN);
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
     HttpResponse response = client.execute(request);
@@ -293,8 +308,8 @@ public class TestExternalAuthenticationServer {
     server.startAndWait();
     ldapServer.startListening();
     TimeUnit.SECONDS.sleep(3);
-    HttpClient client = new DefaultHttpClient();
-    String uri = String.format("http://localhost:%d/%s", port, "invalid");
+    HttpClient client = getHTTPClient();
+    String uri = String.format("%s://127.0.0.1:%d/%s", getProtocol(), port, "invalid");
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
     HttpResponse response = client.execute(request);
@@ -310,11 +325,13 @@ public class TestExternalAuthenticationServer {
   public void testServiceRegistration() throws Exception {
     server.startAndWait();
     Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
-    Iterator<Discoverable> discoverableIterator = discoverables.iterator();
 
-    assertTrue(discoverableIterator.hasNext());
-    Discoverable discoverable = discoverableIterator.next();
-    assertEquals(discoverable.getSocketAddress(), server.getSocketAddress());
+    Set<SocketAddress> addresses = Sets.newHashSet();
+    for (Discoverable discoverable : discoverables) {
+      addresses.add(discoverable.getSocketAddress());
+    }
+
+    Assert.assertTrue(addresses.contains(server.getSocketAddress()));
 
     server.stopAndWait();
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Continuuity, Inc.
+ * Copyright (c) 2013 Cask Data, Inc.
  *
  * Tests for developer side main.js.
  */

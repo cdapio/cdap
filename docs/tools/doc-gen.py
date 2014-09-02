@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Copyright 2014 Cask, Inc.
+# Copyright 2014 Cask Data, Inc.
 #
 # Used to generate documentation media files from .rst sources.
 #
@@ -25,7 +25,7 @@
 # PDF generation examples:
 # python doc-gen.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-enterprise-dependencies.pdf ../developer-guide/source/licenses/cdap-enterprise-dependencies.rst
 # python doc-gen.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-level-1-dependencies.pdf    ../developer-guide/source/licenses/cdap-level-1-dependencies.rst
-# python doc-gen.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-singlenode-dependencies.pdf ../developer-guide/source/licenses/cdap-singlenode-dependencies.rst
+# python doc-gen.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-standalone-dependencies.pdf ../developer-guide/source/licenses/cdap-standalone-dependencies.rst
 #
 
 VERSION = "0.0.3"
