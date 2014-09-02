@@ -139,7 +139,7 @@ define([], function () {
 
       	var i = objects.length;
       		while (i--) {
-      			objects[i] = C.Userservice.create(objects[i]);
+      			objects[i] = C.Spark.create(objects[i]);
       		}
       		self.get('elements.Spark').pushObjects(objects);
       		self.__loaded();
@@ -241,8 +241,6 @@ define([], function () {
 
 			var HTTP = this.HTTP;
 
-      console.log( '-----------------', elements )
-
 			while (i--) {
 
 				if (elements[i].get('currentState').toLowerCase() === transition.toLowerCase() ||
@@ -251,19 +249,15 @@ define([], function () {
 					continue;
 				}
 
+        var inSingular = [ 'spark' ];
 				var model = elements[i];
-				console.log( '-----------', model );
-				var entityType = (model.get('type').toLowerCase() || '') + 's';
-				model.set('currentState', transition);
+				var entityType = (model.get('type').toLowerCase() || '');
 
-				console.log(
-				  '--------------',
-				  '/rest/apps/',
-				  appId + '/',
-				  entityType + '/',
-				  model.get('name') + '/',
-				  action
-				)
+				if(-1 === inSingular.indexOf(entityType)) {
+				  entityType += 's';
+				}
+
+				model.set('currentState', transition);
 
 				HTTP.post('rest', 'apps', appId, entityType, model.get('name'), action,
 					function (response) {
