@@ -167,18 +167,23 @@ public class InMemoryServiceRunner implements ProgramRunner {
     }
 
     @Override
-    protected void doStop() throws Exception {
+    protected synchronized void doStop() throws Exception {
       LOG.info("Stopping Service : " + serviceSpec.getName());
-      Futures.successfulAsList
-        (Iterables.transform(runnables.values(), new Function<ProgramController,
-                               ListenableFuture<ProgramController>>() {
-                               @Override
-                               public ListenableFuture<ProgramController> apply(ProgramController input) {
-                                 return input.stop();
+      lock.lock();
+      try {
+        Futures.successfulAsList
+          (Iterables.transform(runnables.values(), new Function<ProgramController,
+                                 ListenableFuture<ProgramController>>() {
+                                 @Override
+                                 public ListenableFuture<ProgramController> apply(ProgramController input) {
+                                   return input.stop();
+                                 }
                                }
-                             }
-         )
-        ).get();
+           )
+          ).get();
+      } finally {
+        lock.unlock();
+      }
       LOG.info("Service stopped: " + serviceSpec.getName());
     }
 
@@ -257,7 +262,7 @@ public class InMemoryServiceRunner implements ProgramRunner {
       for (int instanceId = liveCount; instanceId < newInstanceCount; instanceId++) {
         runnables.put(runnableName, instanceId,
                       startRunnable(program,
-                                  createRunnableOptions(runnableName, instanceId, newInstanceCount, getRunId())));
+                                    createRunnableOptions(runnableName, instanceId, newInstanceCount, getRunId())));
       }
     }
 
