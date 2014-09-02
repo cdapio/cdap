@@ -117,6 +117,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		});
 		this.resource('Dataset', { path: '/datasets/:dataset_id' });
 
+    this.resource('Spark', { path: '/spark/:spark_id' });
+
 		this.resource('Procedures', { path: '/procedures' });
 		this.resource('Procedure', { path: '/procedures/:procedure_id' }, function () {
 
@@ -354,6 +356,12 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		AppRoute: basicRouter.extend(),
 
 		StreamRoute: basicRouter.extend(),
+
+    SparkRoute: Ember.Route.extend({
+      model: function() {
+        return this.modelFor('Spark');
+      }
+    }),
 
 		/*
 		 * Ensures that the HTTP injection is handled properly (see basicRouter)
