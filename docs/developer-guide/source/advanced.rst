@@ -15,8 +15,10 @@ Cask Data Application Platform (CDAP) Application. Developers can implement Cust
 to interface with a legacy system and perform additional processing beyond the CDAP processing
 paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
 
-Services are implemented by extending ``AbstractHttpServiceHandler`` and are run in
-YARN. You can add services to your application by calling the ``addService`` method in the
+Services are implemented by extending ``AbstractService``. They consist of ``HttpServiceHandler`` \s to serve requests
+and ``ServiceWorker`` \s to passively execute tasks on behalf of the Service.
+
+You can add services to your application by calling the ``addService`` method in the
 Application's ``configure`` method::
 
   public class AnalyticsApp extends AbstractApplication {
@@ -26,16 +28,27 @@ Application's ``configure`` method::
       setDescription("Application for generating mobile analytics");
       addStream(new Stream("event"));
       addFlow(new EventProcessingFlow());
-      ....
-      addService("IpLookupService", new IpGeoLookupService());
-      addService("UserLookupService", new UserLookupService());
+      ...
+      addService(new IPGeoLookupService());
+      addService(new UserLookupService());
       ...
     }
   }
 
 ::
 
-  public class IpGeoLookupService implements AbstractHttpServiceHandler {
+  public class IPGeoLookupService extends AbstractService {
+
+    @Override
+    protected void configure() {
+      setName("IpGeoLookupService");
+      setDescription("Service to lookup locations of IP addresses.");
+      addHandler(new IPGeoLookupHandler());
+      addWorker(new LogCleanupWorker();
+    }
+  }
+
+  public class IPGeoLookupHandler implements AbstractHttpServiceHandler {
 
     @Path("lookup/{ip}")
     @GET
@@ -46,63 +59,91 @@ Application's ``configure`` method::
     }
   }
 
+Service Workers
+----------------
+``ServiceWorker`` \s are used to execute tasks and act passively on behalf of the ``Service``.
+Each worker runs in its own YARN container and their instances may be updated via the CDAP Console or the REST APIs.
+
+You add workers to your Service by calling the ``addWorker`` method in the Service's ``configure`` method.
+
+::
+
+  public class LogCleanupWorker extends AbstractServiceWorker {
+
+    @Override
+    public void stop() {
+      ...
+    }
+
+    @Override
+    public void destroy() {
+      ...
+    }
+
+    @Override
+    public void run() {
+      // Cleanup and rotate logs.
+      ...
+    }
+  }
+
+Workers can access and use ``Dataset`` \s via a ``DataSetContext`` inside their ``run`` method.
+
+::
+
+    @Override
+    public void run() {
+      getContext().execute(new TxRunnable(){
+        @Override
+        public void run(DataSetContext context) {
+          Dataset dataset = context.getDataSet("table");
+          ...
+        }
+      });
+    }
+
+Operations executed on ``Dataset`` \s within a  ``run`` are committed as part of a single transaction.
+The transaction is started before ``run`` is invoked and is committed upon successful execution. Exceptions thrown
+while committing the transaction or thrown by user-code result in a rollback of the transaction.
+
 Service Discovery
 -----------------
 Services announce the host and port they are running on so that they can be discovered by—and provide
-access to—other programs: Flows, Procedures, MapReduce jobs, and other Custom Services.
+access to—other programs.
 
 Service are announced using the name passed in the ``configure`` method. The *application name*, *service id*, and
 *hostname* required for registering the Service are automatically obtained.
 
-The service can then be discovered in Flows, Procedures, MapReduce jobs, and other Services using
-appropriate program contexts.
+The Service can then be discovered in Flows, Procedures, MapReduce jobs, and other Services using
+appropriate program contexts. You may also access ``Service`` \s in a different ``Application``
+by specifying the ``Application`` name in the ``getServiceURL`` call.
 
 For example, in Flows::
 
   public class GeoFlowlet extends AbstractFlowlet {
   
-    // Service discovery for ip-geo service
-    private ServiceDiscovered serviceDiscovered;
-  
-    @Override
-    public void intialize(FlowletContext context) {
-      serviceDiscovered = context.discover("AnalyticsApp", "IpGeoLookupService", "IpLookupService");
-    }
+    // URL for IPGeoLookupService
+    private URL serviceURL;
+
+    // URL for SecurityService in SecurityApplication
+    private URL securityURL;
   
     @ProcessInput
     public void process(String ip) {
-      Discoverable discoverable = Iterables.getFirst(serviceDiscovered, null);
-      if (discoverable != null) {
-        String hostName = discoverable.getSocketAddress().getHostName();
-        int port = discoverable.getSocketAddress().getPort();
-        // Access the appropriate service using the host and port info
-        ...
-      }
+      // Get URL for Service in same Application
+      serviceURL = getContext().getServiceURL("IPGeoLookupService");
+
+      // Get URL for Service in a different Application
+      securityURL = getContext().getServiceURL("SecurityApplication", "SecurityService");
+
+      // Access the IPGeoLookupService using its URL
+      URLConnection connection = new URL(serviceURL, String.format("lookup/%s", ip)).openConnection();
+      BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+      ...
     }
   }
 
-In MapReduce Mapper/Reducer jobs::
 
-  public class GeoMapper extends Mapper<byte[], Location, Text, Text> 
-      implements ProgramLifecycle<MapReduceContext> {
-  
-    private ServiceDiscovered serviceDiscovered;
-    
-    @Override
-    public void initialize(MapReduceContext mapReduceContext) throws Exception {
-      serviceDiscovered = mapReduceContext.discover("AnalyticsApp", "IpGeoLookupService", "IpLookupService");
-    }
-    
-    @Override
-    public void map(byte[] key, Location location, Context context) throws IOException, InterruptedException {
-      Discoverable discoverable = Iterables.getFirst(serviceDiscovered, null);
-      if (discoverable != null) {
-        String hostName = discoverable.getSocketAddress().getHostName();
-        int port = discoverable.getSocketAddress().getPort();
-        // Access the appropriate service using the host and port info
-      }
-    }
-  }
 
 Using Services
 -----------------
