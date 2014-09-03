@@ -18,6 +18,7 @@ package co.cask.cdap.shell.command.connect;
 
 import co.cask.cdap.client.auth.AuthenticationClient;
 import co.cask.cdap.client.auth.rest.BasicAuthenticationClient;
+import co.cask.cdap.client.auth.rest.BasicAuthenticationClientConfig;
 import co.cask.cdap.client.auth.rest.BasicCredentials;
 import co.cask.cdap.shell.CLIConfig;
 import co.cask.cdap.shell.command.AbstractCommand;
@@ -34,7 +35,7 @@ import javax.inject.Inject;
 public class ConnectCommand extends AbstractCommand {
 
   private final CLIConfig cliConfig;
-  private final AuthenticationClient<BasicCredentials> authenticationClient;
+  private final AuthenticationClient<BasicAuthenticationClientConfig, BasicCredentials> authenticationClient;
 
   @Inject
   public ConnectCommand(CLIConfig cliConfig) {
@@ -57,7 +58,7 @@ public class ConnectCommand extends AbstractCommand {
       throw new IOException(String.format("Host %s on port %d could not be reached", hostname, port));
     }
     //TODO: Check the provided hostname on HTTP and HTTPS. If HTTPS is available, make ClientConfig.resolve() use HTTPS
-    authenticationClient.configure(hostname, port, false);
+    authenticationClient.configure(new BasicAuthenticationClientConfig(hostname, port, false));
     if (authenticationClient.isAuthEnabled()) {
       if (args.length != 3) {
         throw new IOException("The authentication is enabled in the server. Please use command: " +
@@ -65,7 +66,8 @@ public class ConnectCommand extends AbstractCommand {
       }
       String username = args[1];
       String password = args[2];
-      cliConfig.setAccessToken(authenticationClient.getAccessToken(new BasicCredentials(username, password)));
+      authenticationClient.setCredentials(new BasicCredentials(username, password));
+      cliConfig.setAccessToken(authenticationClient.getAccessToken());
     }
 
     cliConfig.setHostname(hostname);
