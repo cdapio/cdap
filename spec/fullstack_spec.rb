@@ -39,5 +39,19 @@ describe 'cdap::fullstack' do
         expect(chef_run).not_to start_service(svc)
       end
     end
+
+    it 'runs execute[copy logback.xml from conf.dist]' do
+      expect(chef_run).to run_execute('copy logback.xml from conf.dist')
+    end
+
+    it 'runs execute[update cdap-conf alternatives]' do
+      expect(chef_run).to run_execute('update cdap-conf alternatives')
+    end
+
+    it 'creates /usr/bin/node link' do
+      expect(chef_run).to create_link('/usr/bin/node').with(
+        to: '/usr/local/bin/node'
+      )
+    end
   end
 end
