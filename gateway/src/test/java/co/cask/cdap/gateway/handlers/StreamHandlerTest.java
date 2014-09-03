@@ -118,16 +118,18 @@ public class StreamHandlerTest extends GatewayTestBase {
     int port = GatewayTestBase.getPort();
 
     // Now, create the new stream.
-    HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream1",
+    HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/stream_info",
                                                       HOSTNAME, port), HttpMethod.PUT);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
 
-    urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream1/config",
+    //config ttl for the stream
+    urlConn = openURL(String.format("http://%s:%d/v2/streams/stream_info/config",
                                     HOSTNAME, port), HttpMethod.PUT);
 
     urlConn.setDoOutput(true);
     String urlParameters = "{\"ttl\"=\"2\"}";
+
     OutputStreamWriter out = new OutputStreamWriter(urlConn.getOutputStream());
     out.write(urlParameters);
     out.flush();
@@ -135,8 +137,8 @@ public class StreamHandlerTest extends GatewayTestBase {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
 
-    // getInfo should now return 200
-    urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream1/info", HOSTNAME, port),
+    // test the config ttl by calling info
+    urlConn = openURL(String.format("http://%s:%d/v2/streams/stream_info/info", HOSTNAME, port),
                       HttpMethod.GET);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     StreamProperties properties = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
