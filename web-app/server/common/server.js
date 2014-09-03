@@ -9,16 +9,19 @@ var express = require('express'),
   Int64 = require('node-int64'),
   fs = require('fs'),
   log4js = require('log4js'),
-  http = require('http'),
-  https = require('https'),
   cookie = require('cookie'),
   utils = require('connect').utils,
   crypto = require('crypto'),
   path = require('path'),
-  request = require('request');
+  promise = require('q'),
+  request = require('request'),
+  emitter = require('emitter-component'),
+  lodash = require('lodash');
 
-var Api = require('../common/api');
-var Env = require('./env');
+
+var Api = require('../common/api'),
+    Env = require('./env'),
+    configParser = require('./configParser');
 
 /**
  * Generic web app server. This is a base class used for creating different editions of the server.
@@ -30,17 +33,24 @@ var Env = require('./env');
  */
 var WebAppServer = function(dirPath, logLevel, httpsEnabled) {
   this.dirPath = dirPath;
+  this.logger = this.getLogger();
+  this.isDefaultConfig = false;
+  emitter(this);
   this.LOG_LEVEL = logLevel;
-  this.lib = http;
-  if (httpsEnabled) {
-    this.lib = https;
-  }
+  this.extractBaseConfig()
+    .then(function onBaseConfigExtract() {
+      this.emit('baseConfigExtractSuccess');
+    }.bind(this));
 };
 
 /**
  * Thrift API service.
  */
 WebAppServer.prototype.Api = Api;
+
+WebAppServer.prototype.extractBaseConfig = configParser.extractBaseConfig
+
+WebAppServer.prototype.extractConfigFromXml = configParser.extractConfigFromXml;
 
 /**
  * API version.
@@ -77,6 +87,23 @@ var PRODUCT_VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
  * Security Globals
  */
 var SECURITY_ENABLED, AUTH_SERVER_ADDRESSES;
+
+WebAppServer.prototype.getConfig = function getConfig(filename, deferredObj) {
+  var deferred = deferredObj || promise.defer(),
+      configObj = {};
+  if (!this.isDefaultConfig) {
+    this.on('baseConfigExtractSuccess', function onBaseConfigExtract() {
+      this.getConfig(filename, deferred);
+    }.bind(this));
+  } else {
+    this.extractConfigFromXml(filename)
+      .then(function onExtractConfigFromXml(configuration) {
+        configObj = lodash.extend(this.baseConfig, configuration);
+        deferred.resolve(configObj);
+      }.bind(this));
+  }
+  return deferred.promise;
+}
 
 /**
  * Determines security status. Continues until it is able to determine if security is enabled if
