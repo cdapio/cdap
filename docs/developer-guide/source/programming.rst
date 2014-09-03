@@ -494,8 +494,8 @@ output.
 To process data using MapReduce, specify ``addMapReduce()`` in your
 Application specification::
 
-	public void configure() {
-	  ...
+  public void configure() {
+    ...
     addMapReduce(new WordCountJob());
 
 You must implement the ``MapReduce`` interface, which requires the
@@ -631,7 +631,7 @@ sequence are executed.
 To process one or more MapReduce jobs in sequence, specify
 ``addWorkflow()`` in your application::
 
-	public void configure() {
+  public void configure() {
     ...
     addWorkflow(new PurchaseHistoryWorkflow());
 
