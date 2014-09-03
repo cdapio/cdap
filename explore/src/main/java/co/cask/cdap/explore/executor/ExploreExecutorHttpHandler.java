@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.executor;
 
+import co.cask.cdap.api.data.batch.RecordEnabled;
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -89,10 +90,10 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      if (!(dataset instanceof RecordScannable)) {
-        // It is not an error to get non-RecordScannable datasets, since the type of dataset may not be known where this
+      if (!(dataset instanceof RecordEnabled)) {
+        // It is not an error to get non-RecordEnabled datasets, since the type of dataset may not be known where this
         // call originates from.
-        LOG.debug("Dataset {} does not implement {}", datasetName, RecordScannable.class.getName());
+        LOG.debug("Dataset {} does not implement {}", datasetName, RecordEnabled.class.getName());
         JsonObject json = new JsonObject();
         json.addProperty("handle", QueryHandle.NO_OP.getHandle());
         responder.sendJson(HttpResponseStatus.OK, json);
@@ -100,10 +101,10 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       }
 
       LOG.debug("Enabling explore for dataset instance {}", datasetName);
-      RecordScannable<?> scannable = (RecordScannable) dataset;
+      RecordEnabled recordEnabled = (RecordEnabled) dataset;
       String createStatement;
       try {
-        createStatement = DatasetExploreFacade.generateCreateStatement(datasetName, scannable);
+        createStatement = DatasetExploreFacade.generateCreateStatement(datasetName, recordEnabled);
       } catch (UnsupportedTypeException e) {
         LOG.error("Exception while generating create statement for dataset {}", datasetName, e);
         responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -190,23 +191,23 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      if (!(dataset instanceof RecordScannable)) {
-        LOG.debug("Dataset {} does not implement {}", datasetName, RecordScannable.class.getName());
+      if (!(dataset instanceof RecordEnabled)) {
+        LOG.debug("Dataset {} does not implement {}", datasetName, RecordEnabled.class.getName());
         responder.sendError(HttpResponseStatus.BAD_REQUEST,
                             String.format("Dataset %s does not implement %s",
-                                          datasetName, RecordScannable.class.getName()));
+                                          datasetName, RecordEnabled.class.getName()));
         return;
       }
 
-      RecordScannable recordScannable = (RecordScannable) dataset;
+      RecordEnabled recordEnabled = (RecordEnabled) dataset;
 
-      ObjectInspector oi = ObjectInspectorFactory.getReflectionObjectInspector(recordScannable.getRecordType());
+      ObjectInspector oi = ObjectInspectorFactory.getReflectionObjectInspector(recordEnabled.getRecordType());
       if (!(oi instanceof ReflectionStructObjectInspector)) {
         LOG.debug("Record type {} for dataset {} is not a RECORD.",
-                  recordScannable.getRecordType().getClass().getName(), datasetName);
+                  recordEnabled.getRecordType().getClass().getName(), datasetName);
         responder.sendError(HttpResponseStatus.BAD_REQUEST,
                             String.format("Record type %s for dataset %s is not a RECORD.",
-                                          recordScannable.getRecordType().getClass().getName(), datasetName));
+                                          recordEnabled.getRecordType().getClass().getName(), datasetName));
         return;
       }
 

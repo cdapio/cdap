@@ -167,6 +167,66 @@ public class WritableDatasetTest extends BaseHiveExploreServiceTest {
     }
   }
 
+  @Test
+  public void writeIntoNonScannableDataset() throws Exception {
+
+    datasetFramework.addModule("keyExtendedStructValueTable",
+                               new KeyExtendedStructValueTableDefinition.KeyExtendedStructValueTableModule());
+    datasetFramework.addInstance("keyExtendedStructValueTable", "extended_table", DatasetProperties.EMPTY);
+
+    datasetFramework.addModule("writableKeyStructValueTable",
+                               new WritableKeyStructValueTableDefinition.KeyStructValueTableModule());
+    datasetFramework.addInstance("writableKeyStructValueTable", "writable_table", DatasetProperties.EMPTY);
+    try {
+      // Accessing dataset instance to perform data operations
+      KeyExtendedStructValueTableDefinition.KeyExtendedStructValueTable table =
+        datasetFramework.getDataset("extended_table", DatasetDefinition.NO_ARGUMENTS, null);
+      Assert.assertNotNull(table);
+
+      Transaction tx1 = transactionManager.startShort(100);
+      table.startTx(tx1);
+
+      KeyExtendedStructValueTableDefinition.KeyExtendedValue value1 =
+        new KeyExtendedStructValueTableDefinition.KeyExtendedValue(
+          "10",
+          new KeyStructValueTableDefinition.KeyValue.Value("ten", Lists.newArrayList(10, 11, 12)),
+          20);
+      table.put("10", value1);
+      Assert.assertEquals(value1, table.get("10"));
+
+      Assert.assertTrue(table.commitTx());
+      transactionManager.canCommit(tx1, table.getTxChanges());
+      transactionManager.commit(tx1);
+      table.postTxCommit();
+
+      ListenableFuture<ExploreExecutionResult> future =
+        exploreClient.submit("insert into table writable_table select key,value from extended_table");
+      ExploreExecutionResult result = future.get();
+      result.close();
+
+      KeyStructValueTableDefinition.KeyStructValueTable table2 =
+        datasetFramework.getDataset("writable_table", DatasetDefinition.NO_ARGUMENTS, null);
+      Assert.assertNotNull(table);
+      Transaction tx = transactionManager.startShort(100);
+      table2.startTx(tx);
+
+      Assert.assertEquals(new KeyStructValueTableDefinition.KeyValue.Value("ten", Lists.newArrayList(10, 11, 12)),
+                          table2.get("10_2"));
+
+      Assert.assertTrue(table.commitTx());
+      transactionManager.canCommit(tx, table.getTxChanges());
+      transactionManager.commit(tx);
+      table.postTxCommit();
+
+    } finally {
+      datasetFramework.deleteInstance("writable_table");
+      datasetFramework.deleteInstance("extended_table");
+      datasetFramework.deleteModule("writableKeyStructValueTable");
+      datasetFramework.deleteModule("keyExtendedStructValueTable");
+    }
+  }
+
+
   // TODO test write from native table to dataset,
   // TODO test insert overwrite table: overwrite is the same as into
   // TODO test trying to write with incompatible types
