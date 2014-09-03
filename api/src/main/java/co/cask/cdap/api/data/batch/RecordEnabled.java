@@ -16,23 +16,19 @@
 
 package co.cask.cdap.api.data.batch;
 
-import co.cask.cdap.api.annotation.Beta;
-
-import java.io.IOException;
+import java.io.Closeable;
+import java.lang.reflect.Type;
 
 /**
- * Interface for a dataset that a batch job can output to, as series of records (as apposed to key/value pairs).
- * See {@link BatchWritable}.
- * @param <RECORD> the type of objects that represents a single record
+ * Represents a dataset that exposes a schema through a Record type. This interface is used for SQL interaction with
+ * datasets. {@link RecordScannable} and {@link RecordWritable} both extend this interface.
  */
-@Beta
-public interface RecordWritable<RECORD> extends RecordEnabled {
+public interface RecordEnabled extends Closeable {
 
   /**
-   * Writes the record into a dataset.
-   *
-   * @param record record to write into the dataset.
-   * @throws IOException when the {@code RECORD} could not be written to the dataset.
+   * The type of records that the dataset exposes as a schema. The schema will be derived from the type
+   * using reflection.
+   * @return the schema type.
    */
-  public void write(RECORD record) throws IOException;
+  Type getRecordType();
 }
