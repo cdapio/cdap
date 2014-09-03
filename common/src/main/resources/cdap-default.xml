@@ -571,12 +571,6 @@
     </property>
 
     <property>
-        <name>dataset.hbase.table.namespace</name>
-        <value>default</value>
-        <description>HBase table dataset namespace</description>
-    </property>
-
-    <property>
         <name>dataset.service.output.dir</name>
         <value>/datasets</value>
         <description>Directory where all dataset modules archives are stored</description>
@@ -743,6 +737,12 @@
         <name>metrics.processor.status.bind.address</name>
         <value>127.0.0.1</value>
         <description>Default inet address for binding metrics processor http service</description>
+    </property>
+
+    <property>
+        <name>metrics.dataset.hbase.stats.report.interval</name>
+        <value>60</value>
+        <description>Report interval for hbase stats, in seconds.</description>
     </property>
 
     <!--

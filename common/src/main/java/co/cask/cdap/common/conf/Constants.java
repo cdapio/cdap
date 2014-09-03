@@ -143,7 +143,6 @@ public final class Constants {
   public static final class Dataset {
 
     public static final String TABLE_PREFIX = "dataset.table.prefix";
-    public static final String HBASE_TABLE_NAMESPACE = "dataset.hbase.table.namespace";
 
     /**
      * DatasetManager service configuration.
@@ -342,6 +341,13 @@ public final class Constants {
     public static final String MEMORY_MB = "metrics.memory.mb";
     public static final String MAX_INSTANCES = "metrics.max.instances";
     public static final String SERVICE_DESCRIPTION = "Service to handle metrics requests.";
+
+    /**
+     * Metric's dataset related constants.
+     */
+    public static final class Dataset {
+      public static final String HBASE_STATS_REPORT_INTERVAL_IN_SEC = "metrics.dataset.hbase.stats.report.interval";
+    }
   }
 
   /**
