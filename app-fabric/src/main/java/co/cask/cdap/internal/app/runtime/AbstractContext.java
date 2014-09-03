@@ -24,14 +24,15 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import org.apache.twill.api.RunId;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -43,6 +44,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -157,13 +159,28 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
 
   @Override
   public URL getServiceURL(String applicationId, String serviceId) {
+    final CountDownLatch renameLatch = new CountDownLatch(1);
     ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(String.format("service.%s.%s.%s",
                                                                                         getAccountId(),
                                                                                         applicationId,
                                                                                         serviceId));
+    serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
+      @Override
+      public void onChange(ServiceDiscovered serviceDiscovered) {
+        if (!Iterables.isEmpty(serviceDiscovered)) {
+          renameLatch.countDown();
+        }
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
+
+    try {
+      renameLatch.await(1, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      LOG.error("Got exception: ", e);
+    }
 
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
-    Discoverable discoverable = new TimeLimitEndpointStrategy(endpointStrategy, 300L, TimeUnit.MILLISECONDS).pick();
+    Discoverable discoverable = endpointStrategy.pick();
     if (discoverable == null) {
       LOG.debug("Discoverable endpoint not found for appID: {}, serviceID: {}.", applicationId, serviceId);
       return null;
