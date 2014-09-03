@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 # Copyright 2014 Cask Data, Inc.
 #
