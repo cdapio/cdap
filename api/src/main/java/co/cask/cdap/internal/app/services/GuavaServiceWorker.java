@@ -17,43 +17,59 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.service.AbstractServiceWorker;
+import co.cask.cdap.api.service.ServiceWorkerContext;
 import com.google.common.util.concurrent.Service;
-import org.apache.twill.api.ResourceSpecification;
+import org.apache.twill.common.Services;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * Wrapper around a Guava-Service, to allow adding guava services as workers to a user-defined service.
  */
-public class GuavaServiceWorker extends AbstractServiceWorker {
-  private Service service;
-  private ResourceSpecification resourceSpecification;
+public final class GuavaServiceWorker extends AbstractServiceWorker {
+  private static final Logger LOG = LoggerFactory.getLogger(GuavaServiceWorker.class);
+  private Service delegate;
+  Future<Service.State> completion;
 
-  protected GuavaServiceWorker(Service service, ResourceSpecification resourceSpecification) {
-    this.service = service;
-    this.resourceSpecification = resourceSpecification;
+  public GuavaServiceWorker(Service service) {
+    this.delegate = service;
   }
 
-  protected Service getService() {
-    return service;
+  protected Service getDelegate() {
+    return delegate;
+  }
+
+  protected void setDelegate(Service service) {
+    this.delegate = service;
   }
 
   @Override
-  protected ResourceSpecification getResourceSpecification() {
-    return resourceSpecification;
+  public void initialize(ServiceWorkerContext context) throws Exception {
+    completion = Services.getCompletionFuture(delegate);
+    delegate.start();
   }
 
   @Override
   public void stop() {
-    // no-op
+    delegate.stop();
   }
 
   @Override
   public void destroy() {
-    // no-op
+    //no-op
   }
 
   @Override
   public void run() {
-    // no-op
+    try {
+      completion.get();
+    } catch (InterruptedException e) {
+      LOG.error("Caught exception while running guava service: ", e);
+    } catch (ExecutionException e) {
+      LOG.error("Caught exception while running guava service: ", e);
+    }
   }
-
 }

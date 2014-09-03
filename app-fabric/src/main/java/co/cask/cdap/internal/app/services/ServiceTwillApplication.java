@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.service.GuavaServiceTwillRunnable;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceConfigurer;
 import co.cask.cdap.api.service.ServiceWorker;
@@ -59,13 +58,7 @@ public class ServiceTwillApplication implements TwillApplication {
                                                                        serviceHandlers))
                                      .noLocalFiles();
     for (ServiceWorker worker : configurer.getWorkers()) {
-      TwillRunnable runnable;
-      if (worker instanceof GuavaServiceWorker) {
-        runnable = new GuavaServiceTwillRunnable(worker.getClass().getSimpleName(),
-                                                 ((GuavaServiceWorker) worker).getService());
-      } else {
-        runnable = new ServiceWorkerTwillRunnable(worker);
-      }
+      TwillRunnable runnable = new ServiceWorkerTwillRunnable(worker);
       runnableSetter = runnableSetter.add(runnable, worker.configure().getResourceSpecification()).noLocalFiles();
     }
     return runnableSetter.anyOrder().build();

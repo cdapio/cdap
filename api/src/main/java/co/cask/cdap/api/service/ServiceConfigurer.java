@@ -17,7 +17,6 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.service.http.HttpServiceHandler;
-import org.apache.twill.api.ResourceSpecification;
 
 import java.util.List;
 import java.util.Map;
@@ -52,19 +51,6 @@ public interface ServiceConfigurer {
   <T extends ServiceWorker> void addWorkers(Iterable<T> worker);
 
   /**
-   * Add a guava service as a worker to the Service.
-   * @param worker
-   */
-  void addWorker(com.google.common.util.concurrent.Service worker);
-
-  /**
-   * Add a guava service as a worker to the Service.
-   * @param worker
-   * @param resourceSpecification
-   */
-  void addWorker(com.google.common.util.concurrent.Service worker, ResourceSpecification resourceSpecification);
-
-  /**
    * Add a request handler to the Service.
    * @param handler to serve requests.
    */
@@ -93,12 +79,6 @@ public interface ServiceConfigurer {
    * @return a list of workers for the Service.
    */
   List<ServiceWorker> getWorkers();
-
-  /**
-   * Get a list of Guava workers for the Service.
-   * @return a list of Guava workers for the Service.
-   */
-  List<com.google.common.util.concurrent.Service> getGuavaWorkers();
 
   /**
    * Get the name of the Service.

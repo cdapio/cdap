@@ -80,9 +80,6 @@ public abstract class AbstractService implements Service {
     configurer.addWorkers(workers);
   }
 
-  protected void addWorker(com.google.common.util.concurrent.Service worker) {
-    configurer.addWorker(worker);
-  }
   /**
    * Implement this method and use a {@link ServiceConfigurer} to add a request handler
    * and workers.

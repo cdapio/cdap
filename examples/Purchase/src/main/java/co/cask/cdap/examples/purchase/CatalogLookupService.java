@@ -21,6 +21,7 @@ import co.cask.cdap.api.service.AbstractServiceWorker;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.internal.app.services.GuavaServiceWorker;
 import com.google.common.base.Charsets;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import org.slf4j.Logger;
@@ -35,7 +36,6 @@ import javax.ws.rs.PathParam;
  * A Catalog Lookup Service implementation that provides ids for products.
  */
 public class CatalogLookupService extends AbstractService {
-
 
   /**
    * Example Guava Service which simply writes to LOG once every 3 seconds.
@@ -92,8 +92,8 @@ public class CatalogLookupService extends AbstractService {
     setName(PurchaseApp.SERVICE_NAME);
     setDescription("Service to lookup product ids.");
     addHandler(new ProductCatalogLookup());
-    addWorker(new NoOpGuavaWorker());
     addWorker(new NoOpServiceWorker());
+    addWorker(new GuavaServiceWorker(new NoOpGuavaWorker()));
   }
 
   /**
