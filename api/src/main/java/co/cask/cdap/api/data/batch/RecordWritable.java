@@ -31,16 +31,16 @@ import java.lang.reflect.Type;
 public interface RecordWritable<RECORD> extends Closeable {
 
   /**
-   * Writes the record into a dataset.
-   *
-   * @param record record to write into the dataset.
-   * @throws IOException when the {@code record} could not be written to the dataset.
-   */
-  public void write(RECORD record) throws IOException;
-
-  /**
    * This method is needed because Java does not remember the RECORD type parameter at runtime.
    * @return the schema type, that is RECORD.
    */
   Type getRecordType();
+
+  /**
+   * Writes the record into a dataset.
+   *
+   * @param record record to write into the dataset.
+   * @throws IOException when the {@code RECORD} could not be written to the dataset.
+   */
+  public void write(RECORD record) throws IOException;
 }
