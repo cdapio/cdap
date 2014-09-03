@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,11 +48,11 @@ public class DatasetAccessor {
   private static final Map<String, ClassLoader> DATASET_CLASSLOADERS = Maps.newConcurrentMap();
 
   /**
-   * Returns a RecordScannable. The returned object will have to be closed by the caller.
+   * Returns a RecordScannable dataset. The returned object will have to be closed by the caller.
    *
    * @param conf Configuration that contains RecordScannable name to load, CDAP and HBase configuration.
-   * @return RecordScannable.
-   * @throws IOException
+   * @return RecordScannable which name is contained in the {@code conf}.
+   * @throws IOException in case the conf does not contain a valid RecordScannable.
    */
   public static RecordScannable getRecordScannable(Configuration conf) throws IOException {
     RecordEnabled dataset = instantiate(conf);
@@ -73,11 +73,11 @@ public class DatasetAccessor {
   }
 
   /**
-   * Returns a RecordWritable. The returned object will have to be closed by the caller.
+   * Returns a RecordWritable dataset. The returned object will have to be closed by the caller.
    *
    * @param conf Configuration that contains RecordWritable name to load, CDAP and HBase configurations.
-   * @return RecordWritable.
-   * @throws IOException
+   * @return RecordWritable which name is contained in the {@code conf}.
+   * @throws IOException in case the conf does not contain a valid RecordWritable.
    */
   public static RecordWritable getRecordWritable(Configuration conf) throws IOException {
     RecordWritable recordWritable = instantiateWritable(conf, null);
@@ -102,8 +102,8 @@ public class DatasetAccessor {
    * Returns record type of the RecordScannable.
    *
    * @param conf Configuration that contains RecordScannable name to load, CDAP and HBase configurations.
-   * @return Record type of RecordScannable.
-   * @throws IOException
+   * @return Record type of RecordScannable dataset.
+   * @throws IOException in case the conf does not contain a valid RecordScannable.
    */
   public static Type getRecordType(Configuration conf) throws IOException {
     RecordEnabled recordScannable = instantiate(conf);
@@ -119,8 +119,8 @@ public class DatasetAccessor {
    * cached to load the writable. If not, a {@link co.cask.cdap.hive.context.NullJobConfException} will be trown.
    *
    * @param datasetName dataset name to load.
-   * @return Record type of RecordWritable.
-   * @throws IOException
+   * @return Record type of RecordWritable dataset.
+   * @throws IOException in case the {@code datasetName} does not reference a RecordWritable.
    */
   public static Type getRecordWritableType(String datasetName) throws IOException {
     RecordWritable<?> recordWritable = instantiateWritable(null, datasetName);
@@ -163,20 +163,17 @@ public class DatasetAccessor {
     throws IOException {
     ContextManager.Context context = ContextManager.getContext(conf);
     String datasetName = dsName;
-    if (datasetName == null) {
-      if (isRecordWritable) {
-        datasetName = context.getRecordWritableName();
-        if (datasetName == null) {
-          throw new IOException("Writable Dataset name not defined in context.");
-        }
-      } else {
-        datasetName = conf.get(Constants.Explore.DATASET_NAME);
-        if (datasetName == null) {
-          throw new IOException(String.format("Dataset name property %s not defined.", Constants.Explore.DATASET_NAME));
-        }
-      }
+
+    if (datasetName == null && isRecordWritable) {
+      datasetName = context.getRecordWritableName();
     } else if (datasetName != null && isRecordWritable) {
       context.setRecordWritableName(datasetName);
+    } else if (datasetName == null && !isRecordWritable) {
+      datasetName = conf.get(Constants.Explore.DATASET_NAME);
+    }
+
+    if (datasetName == null) {
+      throw new IOException("Dataset name property could not be found.");
     }
 
     try {

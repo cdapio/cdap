@@ -491,11 +491,11 @@ written as in a conventional Hadoop system. Additionally, CDAP
 **Datasets** can be accessed from MapReduce jobs as both input and
 output.
 
-To process data using MapReduce, specify ``withMapReduce()`` in your
+To process data using MapReduce, specify ``addMapReduce()`` in your
 Application specification::
 
-	public void configure() {
-	  ...
+  public void configure() {
+    ...
     addMapReduce(new WordCountJob());
 
 You must implement the ``MapReduce`` interface, which requires the
@@ -629,9 +629,9 @@ execution is stopped at the failed job and no subsequent jobs in the
 sequence are executed.
 
 To process one or more MapReduce jobs in sequence, specify
-``withWorkflows()`` in your application::
+``addWorkflow()`` in your application::
 
-	public void configure() {
+  public void configure() {
     ...
     addWorkflow(new PurchaseHistoryWorkflow());
 

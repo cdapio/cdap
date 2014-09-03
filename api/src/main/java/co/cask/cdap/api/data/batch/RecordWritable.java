@@ -32,7 +32,7 @@ public interface RecordWritable<RECORD> extends RecordEnabled {
    * Writes the record into a dataset.
    *
    * @param record record to write into the dataset.
-   * @throws IOException when the {@code record} could not be written to the dataset.
+   * @throws IOException when the {@code RECORD} could not be written to the dataset.
    */
   public void write(RECORD record) throws IOException;
 }
