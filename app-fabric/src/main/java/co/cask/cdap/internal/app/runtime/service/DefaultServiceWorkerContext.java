@@ -54,6 +54,7 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
   private final Set<String> datasets;
   private final TransactionSystemClient transactionSystemClient;
   private final DatasetFramework datasetFramework;
+  private final ClassLoader programClassLoader;
 
   /**
    * Create a ServiceWorkerContext with runtime arguments and access to Datasets.
@@ -63,9 +64,11 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
    * @param datasetFramework used to get datasets.
    * @param transactionSystemClient used to transactionalize operations.
    */
-  public DefaultServiceWorkerContext(CConfiguration cConfiguration, Map<String, String> runtimeArgs,
-                                     Set<String> datasets, DatasetFramework datasetFramework,
+  public DefaultServiceWorkerContext(ClassLoader programClassLoader, CConfiguration cConfiguration,
+                                     Map<String, String> runtimeArgs, Set<String> datasets,
+                                     DatasetFramework datasetFramework,
                                      TransactionSystemClient transactionSystemClient) {
+    this.programClassLoader = programClassLoader;
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
     this.datasets = ImmutableSet.copyOf(datasets);
     this.transactionSystemClient = transactionSystemClient;
@@ -130,7 +133,7 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
 
       try {
         Dataset dataset = datasetFramework.getDataset(name, arguments,
-                                              Thread.currentThread().getContextClassLoader());
+                                                      programClassLoader);
         context.addTransactionAware((TransactionAware) dataset);
         return (T) dataset;
       } catch (DatasetManagementException e) {

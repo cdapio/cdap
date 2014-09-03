@@ -105,8 +105,9 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
       worker = (ServiceWorker) factory.get(type).create();
       Reflections.visit(worker, type, new MetricsFieldSetter(metrics),
                                       new PropertyFieldSetter(runnableArgs));
-      worker.initialize(new DefaultServiceWorkerContext(cConfiguration, context.getSpecification().getConfigs(),
-                                                        datasets, datasetFramework, transactionSystemClient));
+      worker.initialize(new DefaultServiceWorkerContext(programClassLoader, cConfiguration,
+                                                        context.getSpecification().getConfigs(), datasets,
+                                                        datasetFramework, transactionSystemClient));
     } catch (Exception e) {
       LOG.error("Could not instantiate service " + serviceClassName);
       Throwables.propagate(e);
