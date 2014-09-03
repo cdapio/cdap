@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Continuuity, Inc.
+ * Copyright (c) 2014 Cask Data, Inc.
  */
 
 @font-face {
@@ -1645,7 +1645,6 @@ span.log-icon.complete {
 
 #reactor-services .instance-wrapper div {
     width: 65px;
-    float: left;
 }
 
 .instance-wrapper {
@@ -1689,6 +1688,7 @@ span.log-icon.complete {
 
 #instancesInput {
    text-align:left;
+   margin-right:5px ! important;
    height: 29px;
    width: 25px;
    color: black;
@@ -1875,6 +1875,12 @@ a strong {
 #action-buttons .btn-blank.btn-icon {
     border-right: 1px solid #DEDEDE !important;
 }
+
+.btn.btn-set.btn-blank[disabled] {
+ /* color: grey; */
+ background: #eee;
+ cursor: not-allowed;
+ }
 
 .btn.btn-blue {
     border: 1px solid transparent;
