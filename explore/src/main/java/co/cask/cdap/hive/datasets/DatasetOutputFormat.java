@@ -52,6 +52,10 @@ public class DatasetOutputFormat implements OutputFormat<Void, ObjectWritable> {
         // We assume that a constructor with as many params as the number of attributes in the record
         // type exists for that type.
 
+        if (value == null) {
+          throw new IOException("Writable value is null.");
+        }
+
         Object [] objects = ((List<Object>) value.get()).toArray();
         Class<?> [] classes = new Class[objects.length];
         for (int i = 0; i < objects.length; i++) {
@@ -72,10 +76,11 @@ public class DatasetOutputFormat implements OutputFormat<Void, ObjectWritable> {
           Constructor<?> constructor = recordClass.getConstructor(classes);
           recordWritable.write(constructor.newInstance(objects));
         } catch (NoSuchMethodException e) {
-          throw new IOException("Could not find appropriate constructor to build record object for type " + recordType,
+          throw new IOException(String.format("Could not find appropriate constructor to " +
+                                                "build record object for type %s", recordType),
                                 e);
         } catch (Throwable e) {
-          throw new IOException("Could not build record object for type " + recordType, e);
+          throw new IOException(String.format("Could not build record object for type %s", recordType), e);
         }
       }
 
