@@ -17,37 +17,37 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.annotation.Handle;
+import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.DataSetContext;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
+import co.cask.cdap.api.service.AbstractService;
+import co.cask.cdap.api.service.AbstractServiceWorker;
+import co.cask.cdap.api.service.TxRunnable;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
-import org.apache.twill.api.AbstractTwillRunnable;
-import org.apache.twill.api.ElectionHandler;
-import org.apache.twill.api.ResourceSpecification;
-import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillContext;
-import org.apache.twill.api.TwillSpecification;
-import org.apache.twill.common.Cancellable;
 
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 
 /**
  * AppWithServices with a DummyService for unit testing.
  */
 public class AppWithServices extends AbstractApplication {
   public static final String SERVICE_NAME = "ServerService";
+  public static final String DATASET_WORKER_SERVICE_NAME = "DatasetUpdateService";
+  public static final String DATASET_TEST_KEY = "testKey";
+  public static final String DATASET_TEST_VALUE = "testValue";
+
+  private static final String DATASET_NAME = "AppWithServicesDataset";
 
     @Override
     public void configure() {
@@ -55,14 +55,19 @@ public class AppWithServices extends AbstractApplication {
       addStream(new Stream("text"));
       addProcedure(new NoOpProcedure());
       addService(SERVICE_NAME, new ServerService());
+      addService(new DatasetUpdateService());
+      createDataset(DATASET_NAME, KeyValueTable.class);
    }
 
 
   public static final class NoOpProcedure extends AbstractProcedure {
 
+    @UseDataSet(DATASET_NAME)
+    private KeyValueTable table;
+
     @Handle("ping")
     public void handle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
-      responder.sendJson(ProcedureResponse.Code.SUCCESS, "OK");
+      responder.sendJson(ProcedureResponse.Code.SUCCESS, Bytes.toString(table.read(DATASET_TEST_KEY)));
     }
 
   }
@@ -74,6 +79,45 @@ public class AppWithServices extends AbstractApplication {
     @GET
     public void handler(HttpServiceRequest request, HttpServiceResponder responder) {
       responder.sendStatus(200);
+    }
+  }
+
+  private static final class DatasetUpdateService extends AbstractService {
+
+    @Override
+    protected void configure() {
+      setName(DATASET_WORKER_SERVICE_NAME);
+      addHandler(new NoOpHandler());
+      addWorker(new DatasetUpdateWorker());
+      useDataset(DATASET_NAME);
+    }
+
+    private static final class NoOpHandler extends AbstractHttpServiceHandler {
+      // no-op
+    }
+
+    private static final class DatasetUpdateWorker extends AbstractServiceWorker {
+
+      @Override
+      public void stop() {
+        // no-op
+      }
+
+      @Override
+      public void destroy() {
+        // no-op
+      }
+
+      @Override
+      public void run() {
+        getContext().execute(new TxRunnable() {
+          @Override
+          public void run(DataSetContext context) throws Exception {
+            KeyValueTable table = context.getDataSet(DATASET_NAME);
+            table.write(DATASET_TEST_KEY, DATASET_TEST_VALUE);
+          }
+        });
+      }
     }
   }
 }

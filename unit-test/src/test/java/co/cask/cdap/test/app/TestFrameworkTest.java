@@ -277,10 +277,26 @@ public class TestFrameworkTest extends TestBase {
 
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
+
     LOG.info("Service Stopped");
     // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the REACTOR scope test in
     // TestMetricsCollectionService
 
+    LOG.info("DatasetUpdateService Started");
+    serviceManager = applicationManager.startService(AppWithServices.DATASET_WORKER_SERVICE_NAME);
+    serviceStatusCheck(serviceManager, true);
+
+    ProcedureManager procedureManager = applicationManager.startProcedure("NoOpProcedure");
+    ProcedureClient procedureClient = procedureManager.getClient();
+
+    String result = procedureClient.query("ping", ImmutableMap.<String, String>of());
+    String decodedResult = new Gson().fromJson(result, String.class);
+    Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE, decodedResult);
+
+    procedureManager.stop();
+    serviceManager.stop();
+    serviceStatusCheck(serviceManager, false);
+    LOG.info("DatasetUpdateService Stopped");
   }
 
   private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
