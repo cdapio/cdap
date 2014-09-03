@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,9 +35,9 @@ public class TestBatchStreamIntegration extends TestBase {
   public void testStreamBatch() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestBatchStreamIntegrationApp.class);
     try {
-      StreamWriter s1 = applicationManager.getStreamWriter("s1");
+      StreamWriter writer = applicationManager.getStreamWriter("s_1");
       for (int i = 0; i < 50; i++) {
-        s1.send(String.valueOf(i));
+        writer.send(String.valueOf(i));
       }
 
       MapReduceManager mapReduceManager = applicationManager.startMapReduce("StreamTestBatch");

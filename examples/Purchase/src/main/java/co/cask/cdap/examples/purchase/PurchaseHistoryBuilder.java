@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,7 +43,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
       .useDataSet("frequentCustomers")
       .useInputDataSet("purchases")
       .useOutputDataSet("history")
-      .setMapperMemoryMB(512)
+      .setMapperMemoryMB(1024)
       .setReducerMemoryMB(1024)
       .build();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -67,7 +67,7 @@ public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBO
   }
 
   @Override
-  protected LevelDBOrderedTableAdmin getTableAdmin(String name) throws IOException {
+  protected LevelDBOrderedTableAdmin getTableAdmin(String name, DatasetProperties ignored) throws IOException {
     DatasetSpecification spec =
       new LevelDBOrderedTableDefinition("foo").configure(name, DatasetProperties.EMPTY);
     return new LevelDBOrderedTableAdmin(spec, service);
@@ -81,7 +81,7 @@ public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBO
 
     // create a table and verify it is in the list of tables
     for (String tableName : tableNames) {
-      LevelDBOrderedTableAdmin admin = getTableAdmin(tableName);
+      LevelDBOrderedTableAdmin admin = getTableAdmin(tableName, DatasetProperties.EMPTY);
       admin.create();
       Assert.assertTrue(admin.exists());
     }

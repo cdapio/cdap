@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,12 @@ public interface OrderedTable extends Dataset {
    * the cell's data will no longer be visible and may be garbage collected.
    */
   public static final String PROPERTY_TTL = "dataset.table.ttl";
+
+  /**
+   * Property set to configure read-less increment support for a dataset.  When not set, calling the
+   * {@link Table#incrementWrite(byte[], byte[], long)} method will result in a normal read-modify-write operation.
+   */
+  public static final String PROPERTY_READLESS_INCREMENT_WRITE = "dataset.table.readless.increment.write";
 
   /**
    * Reads the values of the specified columns in the specified row.

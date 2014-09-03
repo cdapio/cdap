@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,16 +23,21 @@ import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.MetaDataInfo;
+import co.cask.cdap.explore.service.TableNotFoundException;
 import co.cask.cdap.hive.context.CConfCodec;
 import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
+import co.cask.cdap.hive.datasets.DatasetOutputFormat;
+import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.proto.TableInfo;
+import co.cask.cdap.proto.TableNameInfo;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
@@ -47,6 +52,11 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.IMetaStoreClient;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
+import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.io.HiveFileFormatUtils;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
 import org.apache.hive.service.cli.FetchOrientation;
@@ -59,6 +69,7 @@ import org.apache.hive.service.cli.TableSchema;
 import org.apache.hive.service.cli.thrift.TColumnValue;
 import org.apache.hive.service.cli.thrift.TRow;
 import org.apache.hive.service.cli.thrift.TRowSet;
+import org.apache.thrift.TException;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +80,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
@@ -78,6 +90,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Defines common functionality used by different HiveExploreServices. The common functionality includes
@@ -103,6 +116,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final long cleanupJobSchedule;
   private final File previewsDir;
 
+  private IMetaStoreClient metastoreClient;
+
   protected abstract QueryStatus fetchStatus(OperationHandle handle) throws HiveSQLException, ExploreException,
     HandleNotFoundException;
   protected abstract OperationHandle doExecute(SessionHandle sessionHandle, String statement)
@@ -114,6 +129,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.hConf = hConf;
     this.hiveConf = hiveConf;
     this.previewsDir = previewsDir;
+    this.metastoreClient = null;
 
     this.scheduledExecutorService =
       Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("explore-handle-timeout"));
@@ -155,6 +171,18 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     LOG.info("Starting {}...", BaseHiveExploreService.class.getSimpleName());
     cliService.init(getHiveConf());
     cliService.start();
+
+    Field[] fields = CLIService.class.getDeclaredFields();
+    for (Field field : fields) {
+      if (field.getGenericType().equals(IMetaStoreClient.class)) {
+        field.setAccessible(true);
+        metastoreClient = (IMetaStoreClient) field.get(cliService);
+        break;
+      }
+    }
+    if (metastoreClient == null) {
+      throw new ExploreException("Could not find MetastoreClient field in Hive CLI Service");
+    }
 
     // Schedule the cache cleanup
     scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
@@ -314,8 +342,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public QueryHandle getTables(String catalog, String schemaPattern,
-                          String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
+  public QueryHandle getTables(String catalog, String schemaPattern, String tableNamePattern,
+                               List<String> tableTypes) throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
@@ -333,6 +361,68 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     } catch (HiveSQLException e) {
       throw getSqlException(e);
     } catch (Throwable e) {
+      throw new ExploreException(e);
+    }
+  }
+
+  @Override
+  public List<TableNameInfo> getTables(@Nullable final String database) throws ExploreException {
+    // TODO check if the database user is allowed to access if security is enabled and
+    // namespacing is in place.
+
+    try {
+      List<String> databases;
+      if (database == null) {
+        databases = metastoreClient.getAllDatabases();
+      } else {
+        databases = ImmutableList.of(database);
+      }
+      ImmutableList.Builder<TableNameInfo> builder = ImmutableList.builder();
+      for (String db : databases) {
+        List<String> tables = metastoreClient.getAllTables(db);
+        for (String table : tables) {
+          builder.add(new TableNameInfo(db, table));
+        }
+      }
+      return builder.build();
+    } catch (TException e) {
+      throw new ExploreException("Error connecting to Hive metastore", e);
+    }
+  }
+
+  @Override
+  public TableInfo getTableInfo(@Nullable String database, String table)
+    throws ExploreException, TableNotFoundException {
+    // TODO check if the database user is allowed to access if security is enabled and
+    // namespacing is in place.
+
+    try {
+      String db = database == null ? "default" : database;
+      Table tableInfo = metastoreClient.getTable(db, table);
+      ImmutableList.Builder<TableInfo.ColumnInfo> schemaBuilder = ImmutableList.builder();
+      ImmutableList.Builder<TableInfo.ColumnInfo> partitionKeysBuilder = ImmutableList.builder();
+      for (FieldSchema column : tableInfo.getSd().getCols()) {
+        schemaBuilder.add(new TableInfo.ColumnInfo(column.getName(), column.getType(), column.getComment()));
+      }
+      for (FieldSchema column : tableInfo.getPartitionKeys()) {
+        partitionKeysBuilder.add(new TableInfo.ColumnInfo(column.getName(), column.getType(),
+                                                                     column.getComment()));
+      }
+      String storageHandler = tableInfo.getParameters().get("storage_handler");
+      boolean isDatasetTable = storageHandler != null &&
+        storageHandler.equals(DatasetStorageHandler.class.getName());
+
+      return new TableInfo(tableInfo.getTableName(), tableInfo.getDbName(), tableInfo.getOwner(),
+                           (long) tableInfo.getCreateTime() * 1000, (long) tableInfo.getLastAccessTime() * 1000,
+                           tableInfo.getRetention(), partitionKeysBuilder.build(), tableInfo.getParameters(),
+                           tableInfo.getTableType(), schemaBuilder.build(), tableInfo.getSd().getLocation(),
+                           tableInfo.getSd().getInputFormat(), tableInfo.getSd().getOutputFormat(),
+                           tableInfo.getSd().isCompressed(), tableInfo.getSd().getNumBuckets(),
+                           tableInfo.getSd().getSerdeInfo().getSerializationLib(),
+                           tableInfo.getSd().getSerdeInfo().getParameters(), isDatasetTable);
+    } catch (NoSuchObjectException e) {
+      throw new TableNotFoundException(e);
+    } catch (TException e) {
       throw new ExploreException(e);
     }
   }
@@ -418,6 +508,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
       // No results or error, so can be timed out aggressively
       if (status.getStatus() == QueryStatus.OpStatus.FINISHED && !status.hasResults()) {
+        // In case of a query that writes to a Dataset, we will always fall into this condition,
+        // and timing out aggressively will also close the transaction and make the writes visible
         timeoutAggresively(handle, getResultSchema(handle), status);
       } else if (status.getStatus() == QueryStatus.OpStatus.ERROR) {
         // getResultSchema will fail if the query is in error
@@ -545,19 +637,23 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
       // Fetch schema from hive
       LOG.trace("Getting schema for handle {}", handle);
-      ImmutableList.Builder<ColumnDesc> listBuilder = ImmutableList.builder();
       OperationHandle operationHandle = getOperationHandle(handle);
-      if (operationHandle.hasResultSet()) {
-        TableSchema tableSchema = cliService.getResultSetMetadata(operationHandle);
-        for (ColumnDescriptor colDesc : tableSchema.getColumnDescriptors()) {
-          listBuilder.add(new ColumnDesc(colDesc.getName(), colDesc.getTypeName(),
-                                         colDesc.getOrdinalPosition(), colDesc.getComment()));
-        }
-      }
-      return listBuilder.build();
+      return getResultSchemaInternal(operationHandle);
     } catch (HiveSQLException e) {
       throw getSqlException(e);
     }
+  }
+
+  protected List<ColumnDesc> getResultSchemaInternal(OperationHandle operationHandle) throws SQLException {
+    ImmutableList.Builder<ColumnDesc> listBuilder = ImmutableList.builder();
+    if (operationHandle.hasResultSet()) {
+      TableSchema tableSchema = cliService.getResultSetMetadata(operationHandle);
+      for (ColumnDescriptor colDesc : tableSchema.getColumnDescriptors()) {
+        listBuilder.add(new ColumnDesc(colDesc.getName(), colDesc.getTypeName(),
+                                       colDesc.getOrdinalPosition(), colDesc.getComment()));
+      }
+    }
+    return listBuilder.build();
   }
 
   /**
@@ -662,6 +758,14 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
     ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
     ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE, hConf);
+
+    // Help Hive - hack to HIVE-5515
+    // The output format class will be overwritten in case Hive wants to write to
+    // a native Hive-managed output format. However, because of the bug related in the JIRA,
+    // writing to an non-native hive table with an external output format like the one in
+    // HBaseStorageHandler will not work - as Hive will try to use the DatasetOutputFormat
+    HiveFileFormatUtils.setRealOutputFormatClassName(DatasetOutputFormat.class.getName());
+
     return sessionConf;
   }
 
@@ -746,9 +850,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                                              TxnCodec.INSTANCE);
       LOG.trace("Closing transaction {} for handle {}", tx, handle);
 
-      // Transaction doesn't involve any changes. We still commit it to take care of any side effect changes that
-      // SplitReader may have.
-      if (!(txClient.canCommit(tx, ImmutableList.<byte[]>of()) && txClient.commit(tx))) {
+      // Even if changes are empty, we still commit the tx to take care of
+      // any side effect changes that SplitReader may have.
+      if (!(txClient.commit(tx))) {
         txClient.abort(tx);
         LOG.info("Aborting transaction: {}", tx);
       }

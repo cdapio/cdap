@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,17 +61,6 @@ public interface ExploreClient extends Closeable {
    * @return {@link ListenableFuture} eventually containing the results of the statement execution.
    */
   ListenableFuture<ExploreExecutionResult> submit(String statement);
-
-  /**
-   * Return a schema for the specified dataset.
-   *
-   * @param datasetName dataset name for which to retrieve the schema. This name should be understood by the
-   *                    underlying SQL engine.
-   * @return a map of <field_name: field_data_type>.
-   * @throws ExploreException on any error getting the table types.
-   */
-  Map<String, String> datasetSchema(String datasetName) throws ExploreException;
-
 
   ///// METADATA
 

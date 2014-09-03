@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -381,7 +381,7 @@ public class DefaultStore implements Store {
       public Integer apply(AppMds mds) throws Exception {
         ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
         ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
-        RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnable);
+        RuntimeSpecification runtimeSpec = getRunnableSpecOrFail(id, serviceSpec, runnable);
         return runtimeSpec.getResourceSpecification().getInstances();
       }
     });
@@ -769,6 +769,16 @@ public class DefaultStore implements Store {
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  private RuntimeSpecification getRunnableSpecOrFail(final Id.Program id, ServiceSpecification serviceSpec,
+                                                     String runnable) {
+    RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnable);
+    if (runtimeSpec == null) {
+      throw new NoSuchElementException(String.format("Runnable not found, app: %s, service: %s, runnable %s",
+                                                     id.getApplication(), id.getId(), runnable));
+    }
+    return runtimeSpec;
   }
 
   private static FlowletDefinition getFlowletDefinitionOrFail(FlowSpecification flowSpec,

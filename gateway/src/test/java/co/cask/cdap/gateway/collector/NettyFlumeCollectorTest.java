@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,16 @@
 package co.cask.cdap.gateway.collector;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
+import com.google.common.base.Charsets;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.api.RpcClient;
@@ -28,12 +34,13 @@ import org.apache.flume.api.RpcClientFactory;
 import org.apache.flume.event.SimpleEvent;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
-import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,7 +50,8 @@ import java.util.Map;
  * Test netty flume collector.
  */
 public class NettyFlumeCollectorTest extends GatewayTestBase {
-  private static final String hostname = "localhost";
+  private static final String HOSTNAME = "localhost";
+  private static final Gson GSON = StreamEventTypeAdapter.register(new GsonBuilder()).create();
 
   @Test
   public void testFlumeEnqueue() throws Exception {
@@ -60,42 +68,40 @@ public class NettyFlumeCollectorTest extends GatewayTestBase {
     EntityUtils.consume(response.getEntity());
 
     // Send flume events
-    sendFlumeEvent(port, createFlumeEvent(0, streamName));
-    sendFlumeEvent(port, createFlumeEvent(1, streamName));
-    sendFlumeEvent(port, createFlumeEvent(2, streamName));
-    sendFlumeEvent(port, createFlumeEvent(3, streamName));
+    int totalEvents = 12;
+    // Send 6 events one by one
+    for (int i = 0; i < totalEvents / 2; i++) {
+      sendFlumeEvent(port, createFlumeEvent(i, streamName));
+    }
 
-    sendFlumeEvents(port, streamName, 4, 10);
-
-    sendFlumeEvent(port, createFlumeEvent(11, streamName));
-    sendFlumeEvent(port, createFlumeEvent(12, streamName));
+    // Send 6 events in a batch
+    sendFlumeEvents(port, streamName, totalEvents / 2, totalEvents);
 
     flumeCollector.stopAndWait();
 
-    // Get new consumer id
-    response = GatewayFastTestsSuite.doPost("/v2/streams/" + streamName + "/consumer-id", null);
+    // Get all stream events
+    response = GatewayFastTestsSuite.doGet("/v2/streams/" + streamName + "/events?limit=13");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(1, response.getHeaders(Constants.Stream.Headers.CONSUMER_ID).length);
-    String groupId = response.getFirstHeader(Constants.Stream.Headers.CONSUMER_ID).getValue();
 
-    // Dequeue all entries
-    for (int i = 0; i <= 12; ++i) {
-      response = GatewayFastTestsSuite.doPost("/v2/streams/" + streamName + "/dequeue", null,
-                                             new Header[]{
-                                               new BasicHeader(Constants.Stream.Headers.CONSUMER_ID, groupId)
-                                             });
-      Assert.assertEquals("Item " + i, HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-      String actual = EntityUtils.toString(response.getEntity());
-      Assert.assertEquals(Integer.toString(i), response.getFirstHeader("flume-stream.messageNumber").getValue());
-      Assert.assertEquals("This is a message " + i, actual);
+    long lastEventTime = 0L;
+    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
+    try {
+      List<StreamEvent> events = GSON.fromJson(reader, new TypeToken<List<StreamEvent>>() { }.getType());
+      Assert.assertEquals(totalEvents, events.size());
+      for (int i = 0; i < totalEvents; i++) {
+        StreamEvent event = events.get(i);
+        Assert.assertEquals(Integer.toString(i), event.getHeaders().get("messageNumber"));
+        Assert.assertEquals("This is a message " + i, Charsets.UTF_8.decode(event.getBody()).toString());
+
+        lastEventTime = event.getTimestamp();
+      }
+    } finally {
+      reader.close();
     }
 
-    // No more content
-    response = GatewayFastTestsSuite.doPost("/v2/streams/" + streamName + "/dequeue", null,
-                                           new Header[]{
-                                             new BasicHeader(Constants.Stream.Headers.CONSUMER_ID, groupId)
-                                           });
-    Assert.assertEquals("No item", HttpResponseStatus.NO_CONTENT.getCode(), response.getStatusLine().getStatusCode());
+    // Fetch again, there should be no more events
+    response = GatewayFastTestsSuite.doGet("/v2/streams/" + streamName + "/events?start=" + (lastEventTime + 1L));
+    Assert.assertEquals(HttpResponseStatus.NO_CONTENT.getCode(), response.getStatusLine().getStatusCode());
   }
 
   public static SimpleEvent createFlumeEvent(int i, String dest) {
@@ -112,7 +118,7 @@ public class NettyFlumeCollectorTest extends GatewayTestBase {
 
   public static void sendFlumeEvent(int port, SimpleEvent event)
     throws EventDeliveryException {
-    RpcClient client = RpcClientFactory.getDefaultInstance(hostname, port, 1);
+    RpcClient client = RpcClientFactory.getDefaultInstance(HOSTNAME, port, 1);
     try {
       client.append(event);
     } catch (EventDeliveryException e) {
@@ -123,10 +129,10 @@ public class NettyFlumeCollectorTest extends GatewayTestBase {
   }
 
   public static void sendFlumeEvents(int port, String dest, int begin, int end) throws EventDeliveryException {
-    RpcClient client = RpcClientFactory.getDefaultInstance(hostname, port, 100);
+    RpcClient client = RpcClientFactory.getDefaultInstance(HOSTNAME, port, 100);
     try {
       List<Event> events = new ArrayList<Event>();
-      for (int i = begin; i <= end; ++i) {
+      for (int i = begin; i < end; ++i) {
         events.add(createFlumeEvent(i, dest));
       }
       client.appendBatch(events);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.MetaDataInfo;
+import co.cask.cdap.explore.service.TableNotFoundException;
 import co.cask.cdap.explore.utils.ColumnsArgs;
 import co.cask.cdap.explore.utils.FunctionsArgs;
 import co.cask.cdap.explore.utils.SchemasArgs;
@@ -34,6 +35,8 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.proto.TableInfo;
+import co.cask.cdap.proto.TableNameInfo;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
@@ -65,6 +68,7 @@ abstract class ExploreHttpClient implements Explore {
   private static final Gson GSON = new Gson();
 
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type TABLES_TYPE = new TypeToken<List<TableNameInfo>>() { }.getType();
   private static final Type COL_DESC_LIST_TYPE = new TypeToken<List<ColumnDesc>>() { }.getType();
   private static final Type QUERY_INFO_LIST_TYPE = new TypeToken<List<QueryInfo>>() { }.getType();
   private static final Type ROW_LIST_TYPE = new TypeToken<List<QueryResult>>() { }.getType();
@@ -99,14 +103,6 @@ abstract class ExploreHttpClient implements Explore {
     }
     throw new ExploreException("Cannot disable explore on dataset " + datasetInstance + ". Reason: " +
                                  getDetails(response));
-  }
-
-  public Map<String, String> getDatasetSchema(String datasetName) throws ExploreException {
-    HttpResponse response = doGet(String.format("data/explore/datasets/%s/schema", datasetName));
-    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return parseJson(response, MAP_TYPE_TOKEN);
-    }
-    throw new ExploreException("Cannot get dataset schema. Reason: " + getDetails(response));
   }
 
   @Override
@@ -238,14 +234,36 @@ abstract class ExploreHttpClient implements Explore {
 
   @Override
   public QueryHandle getTables(String catalog, String schemaPattern,
-                          String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
-    String body = GSON.toJson(new TablesArgs(catalog, schemaPattern,
-                                                               tableNamePattern, tableTypes));
+                               String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
+    String body = GSON.toJson(new TablesArgs(catalog, schemaPattern, tableNamePattern, tableTypes));
     HttpResponse response = doPost("data/explore/jdbc/tables", body, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
     throw new ExploreException("Cannot get the tables. Reason: " + getDetails(response));
+  }
+
+  @Override
+  public List<TableNameInfo> getTables(@Nullable String database) throws ExploreException {
+    HttpResponse response = doGet(String.format("data/explore/tables%s", (database != null) ? "?db=" + database : ""));
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return parseJson(response, TABLES_TYPE);
+    }
+    throw new ExploreException("Cannot get the tables. Reason: " + getDetails(response));
+  }
+
+  @Override
+  public TableInfo getTableInfo(@Nullable String database, String table)
+    throws ExploreException, TableNotFoundException {
+    String tableNamePrefix = (database != null) ? database + "." : "";
+    HttpResponse response = doGet(String.format("data/explore/tables/%s/info", tableNamePrefix + table));
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return parseJson(response, TableInfo.class);
+    } else if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
+      throw new TableNotFoundException("Table " + tableNamePrefix + table + " not found.");
+    }
+    throw new ExploreException("Cannot get the schema of table " + tableNamePrefix + table +
+                               ". Reason: " + getDetails(response));
   }
 
   @Override

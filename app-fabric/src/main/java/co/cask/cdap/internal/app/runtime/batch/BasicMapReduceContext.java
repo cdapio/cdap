@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,10 +23,12 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
@@ -37,10 +39,10 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.ServiceDiscovered;
 
-import java.io.Closeable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -48,6 +50,8 @@ import javax.annotation.Nullable;
  */
 public class BasicMapReduceContext extends AbstractContext implements MapReduceContext {
 
+  // todo:  REACTOR-853: "InstanceId is not supported in MR jobs"
+  public static final String INSTANCE_ID = "0";
   private final String accountId;
   private final MapReduceSpecification spec;
   private final MapReduceLoggingContext loggingContext;
@@ -67,36 +71,21 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private String outputDatasetName;
   private Job job;
 
-  // todo: having it here seems like a hack will be fixed with further post-integration refactoring
-  private final Iterable<TransactionAware> txAwares;
-
   public BasicMapReduceContext(Program program,
                                MapReduceMetrics.TaskType type,
                                RunId runId,
                                Arguments runtimeArguments,
-                               Map<String, Closeable> datasets,
+                               Set<String> datasets,
                                MapReduceSpecification spec,
-                               Iterable<TransactionAware> txAwares,
-                               long logicalStartTime,
-                               String workflowBatch,
-                               ProgramServiceDiscovery serviceDiscovery) {
-    this(program, type, runId, runtimeArguments, datasets,
-         spec, txAwares, logicalStartTime, workflowBatch, serviceDiscovery, null);
-  }
-
-
-  public BasicMapReduceContext(Program program,
-                               MapReduceMetrics.TaskType type,
-                               RunId runId,
-                               Arguments runtimeArguments,
-                               Map<String, Closeable> datasets,
-                               MapReduceSpecification spec,
-                               Iterable<TransactionAware> txAwares,
                                long logicalStartTime,
                                String workflowBatch,
                                ProgramServiceDiscovery serviceDiscovery,
-                               MetricsCollectionService metricsCollectionService) {
-    super(program, runId, datasets);
+                               MetricsCollectionService metricsCollectionService,
+                               DatasetFramework dsFramework,
+                               CConfiguration conf) {
+    super(program, runId, datasets,
+          getMetricContext(program, type), metricsCollectionService,
+          dsFramework, conf);
     this.accountId = program.getAccountId();
     this.runtimeArguments = runtimeArguments;
     this.logicalStartTime = logicalStartTime;
@@ -109,12 +98,16 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       this.systemReducerMetrics = Maps.newHashMap();
       this.systemMetrics = Maps.newHashMap();
       for (MetricsScope scope : MetricsScope.values()) {
-        this.systemMapperMetrics.put(scope, getMetricsCollector(scope, metricsCollectionService,
-                                                                getMetricContext(MapReduceMetrics.TaskType.Mapper)));
-        this.systemReducerMetrics.put(scope, getMetricsCollector(scope, metricsCollectionService,
-                                                                 getMetricContext(MapReduceMetrics.TaskType.Reducer)));
-        this.systemMetrics.put(scope, getMetricsCollector(scope, metricsCollectionService,
-                                                                 getMetricContext()));
+        this.systemMapperMetrics.put(
+          scope, metricsCollectionService.getCollector(scope,
+                                                       getMetricContext(program, MapReduceMetrics.TaskType.Mapper),
+                                                       INSTANCE_ID));
+        this.systemReducerMetrics.put(
+          scope, metricsCollectionService.getCollector(scope,
+                                                       getMetricContext(program, MapReduceMetrics.TaskType.Reducer),
+                                                       INSTANCE_ID));
+        this.systemMetrics.put(
+          scope, metricsCollectionService.getCollector(scope, getMetricContext(program), INSTANCE_ID));
       }
       // for user metrics.  type can be null if its not in a map or reduce task, but in the yarn container that
       // launches the mapred job.
@@ -128,7 +121,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     }
     this.loggingContext = new MapReduceLoggingContext(getAccountId(), getApplicationId(), getProgramName());
     this.spec = spec;
-    this.txAwares = txAwares;
   }
 
   @Override
@@ -175,23 +167,22 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     this.outputDatasetName = datasetName;
   }
 
-  public int getInstanceId() {
-    return 0;
-  }
-
-  private String getMetricContext(MapReduceMetrics.TaskType type) {
-    return String.format("%s.b.%s.%s.%d",
-                         getApplicationId(),
-                         getProgramName(),
+  private static String getMetricContext(Program program, MapReduceMetrics.TaskType type) {
+    if (type == null) {
+      return getMetricContext(program);
+    }
+    return String.format("%s.b.%s.%s.%s",
+                         program.getApplicationId(),
+                         program.getName(),
                          type.getId(),
-                         getInstanceId());
+                         INSTANCE_ID);
   }
 
-  private String getMetricContext() {
-    return String.format("%s.b.%s.%d",
-                         getApplicationId(),
-                         getProgramName(),
-                         getInstanceId());
+  private static String getMetricContext(Program program) {
+    return String.format("%s.b.%s.%s",
+                         program.getApplicationId(),
+                         program.getName(),
+                         INSTANCE_ID);
   }
 
   @Override
@@ -201,10 +192,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   public MetricsCollectionService getMetricsCollectionService() {
     return metricsCollectionService;
-  }
-
-  public MetricsCollector getSystemMetrics(MetricsScope scope) {
-    return systemMetrics.get(scope);
   }
 
   public MetricsCollector getSystemMapperMetrics() {
@@ -261,7 +248,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   public void flushOperations() throws Exception {
-    for (TransactionAware txAware : txAwares) {
+    for (TransactionAware txAware : getDatasetInstantiator().getTransactionAware()) {
       txAware.commitTx();
     }
   }

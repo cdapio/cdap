@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -76,7 +76,7 @@ public class InMemoryServiceRunner implements ProgramRunner {
     ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
     Preconditions.checkNotNull(serviceSpec, "Missing ServiceSpecification for %s", program.getName());
 
-    //RuIid for the service
+    //RunId for the service
     RunId runId = RunIds.generate();
     programOptions.put(runId, options);
     final Table<String, Integer, ProgramController> serviceRunnables = createRunnables(program, runId, serviceSpec);

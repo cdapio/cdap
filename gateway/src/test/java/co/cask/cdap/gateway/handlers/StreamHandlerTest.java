@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,15 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import co.cask.cdap.gateway.GatewayTestBase;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
@@ -28,13 +33,16 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
 
 /**
  * Test stream handler. This is not part of GatewayFastTestsSuite because it needs to start the gateway multiple times.
  */
 public class StreamHandlerTest extends GatewayTestBase {
   private static final String API_KEY = GatewayTestBase.getAuthHeader().getValue();
-  private static final String hostname = "127.0.0.1";
+  private static final String HOSTNAME = "127.0.0.1";
+
+  private static final Gson GSON = StreamEventTypeAdapter.register(new GsonBuilder()).create();
 
   private HttpURLConnection openURL(String location, HttpMethod method) throws IOException {
     URL url = new URL(location);
@@ -50,19 +58,19 @@ public class StreamHandlerTest extends GatewayTestBase {
     int port = GatewayTestBase.getPort();
 
     // Try to get info on a non-existant stream
-    HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream1/info", hostname, port),
+    HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream1/info", HOSTNAME, port),
                                         HttpMethod.GET);
 
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // Now, create the new stream.
-    urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream1", hostname, port), HttpMethod.PUT);
+    urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream1", HOSTNAME, port), HttpMethod.PUT);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // getInfo should now return 200
-    urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream1/info", hostname, port),
+    urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream1/info", HOSTNAME, port),
                                         HttpMethod.GET);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -73,14 +81,14 @@ public class StreamHandlerTest extends GatewayTestBase {
     int port = GatewayTestBase.getPort();
 
     // Create new stream.
-    HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream_enqueue", hostname, port),
+    HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream_enqueue", HOSTNAME, port),
                                         HttpMethod.PUT);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // Enqueue 10 entries
     for (int i = 0; i < 10; ++i) {
-      urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream_enqueue", hostname, port), HttpMethod.POST);
+      urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream_enqueue", HOSTNAME, port), HttpMethod.POST);
       urlConn.setDoOutput(true);
       urlConn.addRequestProperty("test_stream_enqueue.header1", Integer.toString(i));
       urlConn.getOutputStream().write(Integer.toString(i).getBytes(Charsets.UTF_8));
@@ -88,38 +96,18 @@ public class StreamHandlerTest extends GatewayTestBase {
       urlConn.disconnect();
     }
 
-    String groupId = getStreamConsumer("test_stream_enqueue");
-
-    // Dequeue 10 entries
-    for (int i = 0; i < 10; ++i) {
-      urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream_enqueue/dequeue",
-                                                        hostname, port), HttpMethod.POST);
-      urlConn.setRequestProperty(Constants.Stream.Headers.CONSUMER_ID, groupId);
-      Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
-      int actual = Integer.parseInt(new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));
+    // Fetch 10 entries
+    urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream_enqueue/events?limit=10", HOSTNAME, port),
+                      HttpMethod.GET);
+    List<StreamEvent> events = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
+                                                        Charsets.UTF_8),
+                                             new TypeToken<List<StreamEvent>>() { }.getType());
+    for (int i = 0; i < 10; i++) {
+      StreamEvent event = events.get(i);
+      int actual = Integer.parseInt(Charsets.UTF_8.decode(event.getBody()).toString());
       Assert.assertEquals(i, actual);
-
-      Assert.assertEquals(Integer.toString(i), urlConn.getHeaderField("test_stream_enqueue.header1"));
-      urlConn.disconnect();
+      Assert.assertEquals(Integer.toString(i), event.getHeaders().get("header1"));
     }
-
-    // Dequeue-ing again should give NO_CONTENT
-    urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream_enqueue/dequeue",
-                                    hostname, port), HttpMethod.POST);
-    urlConn.setRequestProperty(Constants.Stream.Headers.CONSUMER_ID, groupId);
-    Assert.assertEquals(HttpResponseStatus.NO_CONTENT.getCode(), urlConn.getResponseCode());
-  }
-
-  private String getStreamConsumer(String streamName) throws IOException {
-    int port = GatewayTestBase.getPort();
-
-    HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/%s/consumer-id",
-                                                      hostname, port, streamName), HttpMethod.POST);
-    try {
-      Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
-      return new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8);
-    } finally {
-      urlConn.disconnect();
-    }
+    urlConn.disconnect();
   }
 }

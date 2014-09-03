@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -73,14 +72,5 @@ public final class DatasetsUtil {
         throw Throwables.propagate(e);
       }
     }
-  }
-
-  /**
-   * Performs an upgrade of a dataset instance.
-   */
-  public static void upgradeDataset(DatasetFramework datasetFramework, String instanceName, ClassLoader cl)
-    throws Exception {
-    DatasetAdmin admin = datasetFramework.getAdmin(instanceName, cl);
-    admin.upgrade();
   }
 }

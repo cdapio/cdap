@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -376,7 +376,7 @@ public class TestBase {
 
 
   /**
-   * Adds instance of data set.
+   * Adds an instance of a dataset.
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param props properties
@@ -390,6 +390,22 @@ public class TestBase {
                                                        DatasetProperties props) throws Exception {
 
     datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
+    return datasetFramework.getAdmin(datasetInstanceName, null);
+  }
+
+  /**
+   * Adds an instance of dataset.
+   * @param datasetTypeName dataset type name
+   * @param datasetInstanceName instance name
+   * @param <T> type of the dataset admin
+   * @return
+   * @throws Exception
+   */
+  @Beta
+  protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
+                                                                String datasetInstanceName) throws Exception {
+
+    datasetFramework.addInstance(datasetTypeName, datasetInstanceName, DatasetProperties.EMPTY);
     return datasetFramework.getAdmin(datasetInstanceName, null);
   }
 

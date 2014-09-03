@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -63,7 +63,8 @@ public class HBaseOrderedTable extends BufferingOrderedTable {
 
   private final TransactionCodec txCodec;
 
-  public HBaseOrderedTable(String name, ConflictDetection level, Configuration hConf) throws IOException {
+  public HBaseOrderedTable(String name, ConflictDetection level, Configuration hConf, boolean enableReadlessIncrements)
+    throws IOException {
     super(name, level);
 
     hTableName = HBaseTableUtil.getHBaseTableName(name);

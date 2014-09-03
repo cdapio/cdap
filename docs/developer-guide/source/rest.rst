@@ -1,11 +1,11 @@
-.. :author: Cask, Inc.
-   :description: HTTP RESTful Interface to the Cask DAP
+.. :author: Cask Data, Inc.
+   :description: HTTP RESTful Interface to the Cask Data Application Platform
 
 .. highlight:: console
 
-=====================
-CDAP HTTP RESTful API
-=====================
+===============================================
+Cask Data Application Platform HTTP RESTful API
+===============================================
 
 .. rst2pdf: .. contents::
 .. rst2pdf: config _templates/pdf-config
@@ -34,15 +34,15 @@ The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude 
 Conventions
 -----------
 
-In this API, *client* refers to an external application that is calling the Cask DAP using the HTTP interface.
+In this API, *client* refers to an external application that is calling CDAP using the HTTP interface.
 
-In this API, *Application* refers to a user Application that has been deployed into the Cask DAP.
+In this API, *Application* refers to a user Application that has been deployed into CDAP.
 
 All URLs referenced in this API have this base URL::
 
   http://<host>:10000/v2
 
-where ``<host>`` is the URL of the Cask DAP Instance. The base URL is represented as::
+where ``<host>`` is the URL of the CDAP server. The base URL is represented as::
 
   <base-url>
 
@@ -114,7 +114,7 @@ but a request may return any of these.
 
 Working with CDAP Security
 -----------------------------
-When working with a Cask DAP cluster with security enabled (``security.enabled=true`` in
+When working with a CDAP cluster with security enabled (``security.enabled=true`` in
 ``cdap-site.xml``), all calls to the HTTP RESTful APIs must be authenticated. Clients must first
 obtain an access token from the authentication server (see the *Client Authentication* section of the
 Developer Guide `CDAP Security <security.html#client-authentication>`__).
@@ -237,11 +237,11 @@ Comments
 
 .. rst2pdf: PageBreak
 
-Reading Events from a Stream: Getting a Consumer-ID
+Reading Events from a Stream
 ---------------------------------------------------
-Get a *Consumer-ID* for a Stream by sending an HTTP POST method to the URL::
+Reading events from an existing Stream is performed as an HTTP GET method to the URL::
 
-  POST <base-url>/streams/<stream-id>/consumer-id
+  GET <base-url>/streams/<stream-id>/events?start=<startTime>&end=<endTime>&limit=<limit>
 
 .. list-table::
    :widths: 20 80
@@ -251,63 +251,12 @@ Get a *Consumer-ID* for a Stream by sending an HTTP POST method to the URL::
      - Description
    * - ``<stream-id>``
      - Name of an existing Stream
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 25 75
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The event was successfully received and a new ``consumer-id`` was returned
-   * - ``404 Not Found``
-     - The Stream does not exist
-
-Example
-.......
-.. list-table::
-   :widths: 30 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``POST <base-url>/streams/mystream/consumer-id``
-   * - Description
-     - Request a ``Consumer-ID`` for the Stream named *mystream*
-
-Comments
-........
-- Streams may have multiple consumers (for example, multiple Flows), 
-  each of which may be a group of different agents (for example, multiple instances of a Flowlet).
-- In order to read events from a Stream, a client application must
-  first obtain a consumer (group) id, which is then passed to subsequent read requests.
-- The ``Consumer-ID`` is returned in a response header and—for convenience—also in the body of the response::
-
-    X-CDAP-ConsumerId: <consumer-id>
-
-  Once you have the ``Consumer-ID``, single events can be read from the Stream.
-
-.. rst2pdf: PageBreak
-
-Reading Events from a Stream: Using the Consumer-ID
----------------------------------------------------
-A read is performed as an HTTP POST method to the URL::
-
-  POST <base-url>/streams/<stream-id>/dequeue
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<stream-id>``
-     - Name of an existing Stream
-
-The request must pass the ``Consumer-ID`` in a header of the form::
-
-  X-CDAP-ConsumerId: <consumer-id>
+   * - ``<startTime>``
+     - Optional timestamp in milliseconds to start reading events from (inclusive); default is 0
+   * - ``<endTime>``
+     - Optional timestamp in milliseconds for the last event to read (exclusive); default is the maximum timestamp (2^63)
+   * - ``<limit>``
+     - Optional maximum number of events to read; default is unlimited
 
 HTTP Responses
 ..............
@@ -320,10 +269,29 @@ HTTP Responses
    * - ``200 OK``
      - The event was successfully received and the result of the read was returned
    * - ``204 No Content``
-     - The Stream exists but it is either empty or the given ``Consumer-ID``
-       has read all the events in the Stream
+     - The Stream exists but there are no events that satisfy the request
    * - ``404 Not Found``
      - The Stream does not exist
+
+The response body is an JSON array, with the Stream event objects as array elements::
+
+   [ 
+     {"timestamp" : ... , "headers": { ... }, "body" : ... }, 
+     {"timestamp" : ... , "headers": { ... }, "body" : ... } 
+   ]
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ``timestamp``
+     - Timestamp in milliseconds of the Stream event at ingestion time
+   * - ``headers``
+     - A JSON map of all custom headers associated with the Stream event
+   * - ``body``
+     - A printable string representing the event body; non-printable bytes are hex escaped in the format ``\x[hex-digit][hex-digit]``, e.g. ``\x05``
 
 Example
 .......
@@ -332,23 +300,11 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST <base-url>/streams/mystream/dequeue``
+     - ``GET <base-url>/streams/mystream/events?limit=1``
    * - Description
-     - Read the next event from an existing Stream named *mystream*
-
-Comments
-........
-The read will always return the next event from the Stream that was inserted first and has not been read yet
-(first-in, first-out or FIFO semantics). If the Stream has never been read from before, the first event will be read.
-
-For example, in order to read the third event that was sent to a Stream,
-two previous reads have to be performed after receiving the ``Consumer-ID``.
-You can always start reading from the first event by getting a new ``Consumer-ID``.
-
-The response will contain the binary body of the event in its body and a header for each header of the Stream event,
-analogous to how you send headers when posting an event to the Stream::
-
-  <stream-id>.<property>:<value>
+     - Read the initial event from an existing Stream named *mystream*
+   * - Response body
+     - ``[ {"timestamp" : 1407806944181, "headers" : { }, "body" : "Hello World" } ]``
 
 .. rst2pdf: PageBreak
 
@@ -457,20 +413,6 @@ Example
    * - Description
      - Change the TTL property of the Stream named *mystream* to 1 day
 
-
-Reading Multiple Events
------------------------
-Reading multiple events is not supported directly by the Stream HTTP API,
-but the command-line tool ``stream-client`` demonstrates how to view *all*, the *first N*, or the *last N* events in the Stream.
-
-For more information, see the Stream Command Line Client ``stream-client`` in the ``/bin`` directory of the
-CDAP SDK distribution.
-
-For usage and documentation of options, run at the command line::
-
-  $ stream-client --help
-
-
 .. rst2pdf: PageBreak
 
 Dataset HTTP API
@@ -494,7 +436,7 @@ Dataset HTTP API
 Listing all Datasets
 --------------------
 
-You can list all Datasets in the Cask DAP by issuing an HTTP GET request to the URL::
+You can list all Datasets in CDAP by issuing an HTTP GET request to the URL::
 
   GET <base-url>/data/datasets
 
@@ -1235,8 +1177,8 @@ with the arguments as a JSON string in the body::
 
   {"foo":"bar","this":"that"}
 
-The Cask DAP will use these these runtime arguments only for this single invocation of the
-element. To save the runtime arguments so that the Cask DAP will use them every time you start the element,
+CDAP will use these these runtime arguments only for this single invocation of the
+element. To save the runtime arguments so that CDAP will use them every time you start the element,
 issue an HTTP PUT with the parameter ``runtimeargs``::
 
   PUT <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
@@ -1275,7 +1217,7 @@ Container Information
 ---------------------
 
 To find out the address of an element's container host and the container’s debug port, you can query
-the Cask DAP for a Procedure, Flow or Service’s live info via an HTTP GET method::
+CDAP for a Procedure, Flow or Service’s live info via an HTTP GET method::
 
   GET <base-url>/apps/<app-id>/<element-type>/<element-id>/live-info
 
@@ -1600,7 +1542,7 @@ Example
      - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
        ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
 
-The *runid* field is a UUID that uniquely identifies a run within the Cask DAP,
+The *runid* field is a UUID that uniquely identifies a run within CDAP,
 with the start and end times in seconds since the start of the Epoch (midnight 1/1/1970).
 
 For Services, you can retrieve the history of a Twill Service using::
@@ -1638,7 +1580,7 @@ Logging HTTP API
 Downloading Logs
 ----------------
 You can download the logs that are emitted by any of the *Flows*, *Procedures*, *MapReduce* jobs,
-or *Services* running in the Cask DAP. To do that, send an HTTP GET request::
+or *Services* running in CDAP. To do that, send an HTTP GET request::
 
   GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
 
@@ -1684,7 +1626,7 @@ Note how the context of the log line shows the name of the Flowlet (*source*), i
 
 Metrics HTTP API
 ================
-As Applications process data, the Cask DAP collects metrics about the Application’s behavior and performance. Some of these metrics are the same for every Application—how many events are processed, how many data operations are performed, etc.—and are thus called system or CDAP metrics.
+As Applications process data, CDAP collects metrics about the Application’s behavior and performance. Some of these metrics are the same for every Application—how many events are processed, how many data operations are performed, etc.—and are thus called system or CDAP metrics.
 
 .. rst2pdf: CutStart
 
@@ -1781,7 +1723,7 @@ If you want the number of input objects processed across all Flowlets of a Flow,
   GET <base-url>/metrics/cdap/apps/CountRandom/flows/
     CountRandomFlow/process.events?start=now-5s&count=5
 
-Similarly, you can address the context of all flows of an Application, an entire Application, or the entire Cask DAP::
+Similarly, you can address the context of all flows of an Application, an entire Application, or the entire CDAP::
 
   GET <base-url>/metrics/cdap/apps/CountRandom/
     flows/process.events?start=now-5s&count=5
@@ -1833,7 +1775,7 @@ The time range of a metric query can be specified in various ways:
      - The same as before, but with the count given as a number of seconds
 
 Instead of getting the values for each second of a time range, you can also retrieve the
-aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that the Cask DAP has not been stopped or restarted (you cannot specify a time range for aggregates)::
+aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that CDAP has not been stopped or restarted (you cannot specify a time range for aggregates)::
 
   GET <base-url>/metrics/cdap/apps/CountRandom/process.events?aggregate=true
 
@@ -1841,7 +1783,7 @@ aggregate of a metric over time. The following request will return the total num
 
 Available Contexts
 ------------------
-The context of a metric is typically enclosed into a hierarchy of contexts. For example, the Flowlet context is enclosed in the Flow context, which in turn is enclosed in the Application context. A metric can always be queried (and aggregated) relative to any enclosing context. These are the available Application contexts of the Cask DAP:
+The context of a metric is typically enclosed into a hierarchy of contexts. For example, the Flowlet context is enclosed in the Flow context, which in turn is enclosed in the Application context. A metric can always be queried (and aggregated) relative to any enclosing context. These are the available Application contexts of CDAP:
 
 .. list-table::
    :header-rows: 1
@@ -1916,7 +1858,7 @@ Flowlet, Procedure, Mapper, or Reducer level:
 
 Available Metrics
 -----------------
-For Cask DAP metrics, the available metrics depend on the context.
+For CDAP metrics, the available metrics depend on the context.
 User-defined metrics will be available at whatever context that they are emitted from.
 
 These metrics are available in the Flowlet context:
@@ -2086,7 +2028,7 @@ The status of these CDAP System Servcies can be checked:
      - ``explore.service``
      - Service that handles all HTTP requests for ad-hoc data exploration
 
-Note that the Service status checks are more useful when the Cask DAP is running in a distributed cluster mode.
+Note that the Service status checks are more useful when CDAP is running in a distributed cluster mode.
 
 Example
 .......
@@ -2116,7 +2058,7 @@ HTTP Responses
 
 Scaling System Services
 -----------------------
-In distributed Cask DAP installations, the number of instances for system services 
+In distributed CDAP installations, the number of instances for system services 
 can be queried and changed by using these commands::
 
   GET <base-url>/system/services/<service-name>/instances
@@ -2137,7 +2079,7 @@ with the arguments as a JSON string in the body::
    * - ``<quantity>``
      - Number of instances to be used
      
-:Note: In single-node Cask DAP, these commands will return a Status Code ``400 Bad Request``.
+:Note: In standalone CDAP, these commands will return a Status Code ``400 Bad Request``.
 
 Examples
 ........

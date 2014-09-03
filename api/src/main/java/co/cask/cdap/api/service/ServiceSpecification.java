@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import org.apache.twill.api.TwillSpecification;
 
 /**
- * This class provides the specification of a Service.
+ * Provide the specification of a custom TwillApplication.
  */
 public interface ServiceSpecification extends ProgramSpecification, TwillSpecification {
 

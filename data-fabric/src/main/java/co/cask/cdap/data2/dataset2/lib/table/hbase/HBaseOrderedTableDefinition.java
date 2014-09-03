@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -63,7 +63,9 @@ public class HBaseOrderedTableDefinition
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     // NOTE: ttl property is applied on server-side in CPs
-    return new HBaseOrderedTable(spec.getName(), conflictDetection, hConf);
+    // check if read-less increment operations are supported
+    boolean supportsIncrements = HBaseOrderedTableAdmin.supportsReadlessIncrements(spec);
+    return new HBaseOrderedTable(spec.getName(), conflictDetection, hConf, supportsIncrements);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,11 @@
  */
 
 /**
+ * This package contains internal classes for supporting the CDAP API.
+ * <p>
+ * These should not be used directly by users of the CDAP API, as they may change in a later release without warning.
+ * </p>
+ *
  * <h3>Schema definition</h3>
  *
  * The schema definition is adopted from <a href="http://avro.apache.org/docs/1.7.3/spec.html#schemas">Avro Schema</a>,
@@ -69,16 +74,16 @@
  * </table>
  *
  * <h4>Complex types</h4>
- * <table border="1" cellpadding="3">
+ * <table border="1" cellpadding="3" style="width:100%">
  *   <tr>
  *     <th>Type</th>
  *     <th>Schema</th>
  *     <th>Description</th>
  *   </tr>
  *   <tr>
- *     <td>Enum</td>
- *     <td><code>{"type":"enum","symbols":["SUCCESS","FAILURE]}</code></td>
- *     <td>List of string symbols</td>
+ *     <td style="width:10%">Enum</td>
+ *     <td style="width:45%"><code>{"type":"enum","symbols":["SUCCESS","FAILURE]}</code></td>
+ *     <td style="width:45%">List of string symbols</td>
  *   </tr>
  *   <tr>
  *     <td>Array</td>
@@ -92,7 +97,7 @@
  *         {"type":"map","keys":<i>&lt;schema of key type&gt;</i>,"values":<i>&lt;schema of value type&gt;</i>}
  *       </code>
  *     </td>
- *     <td>Map from the same key type to the same value type.</td>
+ *     <td>Map from the same key type to the same value type</td>
  *   </tr>
  *   <tr>
  *     <td>Record</td>
@@ -107,16 +112,16 @@
  *     or<br/>
  *     <code>"<i>&lt;record name&gt;</i>"</code></td>
  *     <td>
- *       Record that contains list of fields. The <code>"name"</code> property defines name of the record, which<br/>
- *       could be used to define recursive data structure (such as linked list). The <code>"fields"</code> property<br/>
- *       is used for defining field name and schema for each field in the record.<br/>
+ *       Record that contains list of fields. The <code>"name"</code> property defines name of the record, which
+ *       could be used to define recursive data structure (such as linked list). The <code>"fields"</code> property
+ *       is used for defining field name and schema for each field in the record.
  *     </td>
  *   </tr>
  *   <tr>
  *     <td>Union</td>
  *     <td><code>[<i>&lt;schema of first type&gt</i>,<i>&lt;schema of second type&gt</i>,...]</code></td>
  *     <td>
- *       Represents an union of schemas.
+ *       Represents an union of schemas
  *     </td>
  *   </tr>
  * </table>
@@ -176,8 +181,8 @@
  *     </td>
  *   </tr>
  * </table>
- * <br/>
- * For union types:
+ * 
+ * <h4>For union types</h4>
  * <table border="1" cellpadding="3">
  *   <tr>
  *     <th>Is writer <code>union</code>?</th>

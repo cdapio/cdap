@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
@@ -89,8 +88,7 @@ public class DefaultApplicationManager implements ApplicationManager {
                                    TemporaryFolder tempFolder,
                                    @Assisted("accountId") String accountId,
                                    @Assisted("applicationId") String applicationId,
-                                   @Assisted Location deployedJar,
-                                   @Assisted ApplicationSpecification appSpec) {
+                                   @Assisted Location deployedJar) {
     this.accountId = accountId;
     this.applicationId = applicationId;
     this.streamWriterFactory = streamWriterFactory;
@@ -104,11 +102,12 @@ public class DefaultApplicationManager implements ApplicationManager {
       ProgramClassLoader classLoader = ClassLoaders.newProgramClassLoader
         (tempDir, ApiResourceListHolder.getResourceList(), this.getClass().getClassLoader());
       this.dataSetInstantiator = new DataSetInstantiator(datasetFramework, configuration,
-                                                         new DataSetClassLoader(classLoader));
+                                                         new DataSetClassLoader(classLoader),
+                                                         // todo: collect metrics for datasets outside programs too
+                                                         null, null);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
-    this.dataSetInstantiator.setDataSets(appSpec.getDatasets().values());
   }
 
   @Override
@@ -337,8 +336,8 @@ public class DefaultApplicationManager implements ApplicationManager {
         }
 
         @Override
-        public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
-          String discoveryName = String.format("service.%s.%s.%s.%s", accountId, applicationId, serviceId, serviceName);
+        public ServiceDiscovered discover(String applicationId, String serviceId) {
+          String discoveryName = String.format("service.%s.%s.%s", accountId, applicationId, serviceId);
           return discoveryServiceClient.discover(discoveryName);
         }
       };

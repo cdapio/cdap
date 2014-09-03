@@ -1,4 +1,4 @@
-.. :author: Cask, Inc.
+.. :author: Cask Data, Inc.
    :description: Ad-hoc Querying of Cask Data Application Platform Datasets using SQL 
 
 ==========================

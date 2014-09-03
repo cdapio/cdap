@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -215,6 +215,11 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
     public CoprocessorJar(Iterable<? extends Class<? extends Coprocessor>> coprocessors, Location jarLocation) {
       this.coprocessors = ImmutableList.copyOf(coprocessors);
+      // set coprocessor loading order to match iteration order
+      int priority = Coprocessor.PRIORITY_USER;
+      for (Class<? extends Coprocessor> cpClass : coprocessors) {
+        priorities.put(cpClass, priority++);
+      }
       this.jarLocation = jarLocation;
     }
 

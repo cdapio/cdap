@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,6 +36,7 @@ import org.apache.twill.zookeeper.ZKClientService;
 
 import java.io.Closeable;
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * Stores/creates context for Hive queries to run in MapReduce jobs.
@@ -47,11 +48,24 @@ public class ContextManager {
     savedContext = new Context(datasetFramework);
   }
 
-  public static Context getContext(Configuration conf) throws IOException {
-    if (savedContext == null) {
-      return createContext(conf);
+  /**
+   * Get the context of this JVM. If it has already been saved, return it, otherwise create one
+   * using the {@code conf} param, which contains serialized {@link co.cask.cdap.common.conf.CConfiguration} and
+   * {@link org.apache.hadoop.conf.Configuration} objects, as well as transaction information.
+   *
+   * @param conf configuration used to create a context, if necessary. If it is null, return the saved context, which
+   *             can also be null.
+   * @return Context of a query execution.
+   * @throws IOException when the configuration does not contain the required settings to create the context
+   */
+  public static Context getContext(@Nullable Configuration conf) throws IOException {
+    if (conf != null && savedContext == null) {
+      // Saving the context here is important. This code will be executed in a MR job launched by Hive, and accessed
+      // by the DatasetSerDe.initialize method, which needs to access the context when it wants to write to a
+      // dataset, so it can cache its name. In that case, conf will be null, and it won't be possible to create a
+      // context.
+      savedContext = createContext(conf);
     }
-
     return savedContext;
   }
 
@@ -72,7 +86,7 @@ public class ContextManager {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);;
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
         }
       }
     );
@@ -91,17 +105,30 @@ public class ContextManager {
     private final DatasetFramework datasetFramework;
     private final ZKClientService zkClientService;
 
+    // TODO investigate multiple "insert" in one query and make sure this doesn't make it break - REACTOR-887
+    private String recordWritableName;
+
     public Context(DatasetFramework datasetFramework, ZKClientService zkClientService) {
+      // This constructor is called from the MR job Hive launches.
       this.datasetFramework = datasetFramework;
       this.zkClientService = zkClientService;
     }
 
     public Context(DatasetFramework datasetFramework) {
+      // This constructor is called from Hive server, that is the Explore module.
       this(datasetFramework, null);
     }
 
     public DatasetFramework getDatasetFramework() {
       return datasetFramework;
+    }
+
+    public String getRecordWritableName() {
+      return recordWritableName;
+    }
+
+    public void setRecordWritableName(String recordWritableName) {
+      this.recordWritableName = recordWritableName;
     }
 
     @Override

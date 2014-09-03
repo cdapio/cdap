@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -221,12 +222,15 @@ public class Main {
       if (namespace.fromNamespaced(tableName) != null) {
         System.out.println(String.format("Upgrading hbase table: %s, desc: %s", tableName, desc.toString()));
 
+        final boolean supportsIncrement =
+          "true".equalsIgnoreCase(desc.getValue(OrderedTable.PROPERTY_READLESS_INCREMENT_WRITE));
         DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableName, hConf, hBaseTableUtil) {
           @Override
           protected CoprocessorJar createCoprocessorJar() throws IOException {
             return HBaseOrderedTableAdmin.createCoprocessorJarInternal(cConf,
                                                                        injector.getInstance(LocationFactory.class),
-                                                                       hBaseTableUtil);
+                                                                       hBaseTableUtil,
+                                                                       supportsIncrement);
           }
 
           @Override

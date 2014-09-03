@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,14 +17,12 @@
 package co.cask.cdap.runtime;
 
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
@@ -37,7 +35,6 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -81,14 +78,11 @@ public class MultiConsumerTest {
       controllers.add(runner.run(program, new SimpleProgramOptions(program)));
     }
 
-    LocationFactory locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
     DatasetFramework datasetFramework = AppFabricTestHelper.getInjector().getInstance(DatasetFramework.class);
 
     DataSetInstantiator dataSetInstantiator =
       new DataSetInstantiator(datasetFramework, CConfiguration.create(),
-                              getClass().getClassLoader());
-    ApplicationSpecification spec = Specifications.from(new MultiApp());
-    dataSetInstantiator.setDataSets(spec.getDatasets().values());
+                              getClass().getClassLoader(), null, null);
 
     final KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");
     TransactionExecutorFactory txExecutorFactory =

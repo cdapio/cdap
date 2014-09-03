@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ public final class Constants {
    * Global Service names.
    */
   public static final class Service {
+    public static final String ACL = "acl";
     public static final String APP_FABRIC_HTTP = "appfabric";
     public static final String TRANSACTION = "transaction";
     public static final String METRICS = "metrics";
@@ -422,27 +423,55 @@ public final class Constants {
     public static final String AUTH_HANDLER_CONFIG_BASE = "security.authentication.handler.";
     /** Authentication Login Module class name */
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
-    /** Configuration for enabling SSL */
-    public static final String SSL_ENABLED = "security.server.ssl.enabled";
-    /** SSL secured port for ExternalAuthentication */
-    public static final String AUTH_SERVER_SSL_PORT = "security.server.ssl.port";
-    /** SSL keystore path */
-    public static final String SSL_KEYSTORE_PATH = "security.server.ssl.keystore.path";
-    /** SSL keystore password */
-    public static final String SSL_KEYSTORE_PASSWORD = "security.server.ssl.keystore.password";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
+
+    /**
+     * Security configuration for Router.
+     */
+    public static final class Router {
+      /** Enables SSL */
+      public static final String SSL_ENABLED = "router.ssl.enabled";
+      /** SSL port */
+      public static final String SSL_PORT = "router.ssl.port";
+      /** SSL keystore location */
+      public static final String SSL_KEYSTORE_PATH = "router.ssl.keystore.path";
+      /** SSL keystore type */
+      public static final String SSL_KEYSTORE_TYPE = "router.ssl.keystore.type";
+      /** SSL keystore key password */
+      public static final String SSL_KEYPASSWORD = "router.ssl.keystore.keypassword";
+      /** SSL keystore password */
+      public static final String SSL_KEYSTORE_PASSWORD = "router.ssl.keystore.password";
+    }
+
+    /**
+     * Security configuration for ExternalAuthenticationServer.
+     */
+    public static final class AuthenticationServer {
+      /** Enables SSL */
+      public static final String SSL_ENABLED = "security.auth.server.ssl.enabled";
+      /** SSL port */
+      public static final String SSL_PORT = "security.auth.server.ssl.port";
+      /** SSL keystore location */
+      public static final String SSL_KEYSTORE_PATH = "security.auth.server.ssl.keystore.path";
+      /** SSL keystore type */
+      public static final String SSL_KEYSTORE_TYPE = "security.auth.server.ssl.keystore.type";
+      /** SSL keystore key password */
+      public static final String SSL_KEYPASSWORD = "security.auth.server.ssl.keystore.keypassword";
+      /** SSL keystore password */
+      public static final String SSL_KEYSTORE_PASSWORD = "security.auth.server.ssl.keystore.password";
+    }
   }
 
   /**
    * Explore module configuration.
    */
   public static final class Explore {
-    public static final String CCONF_KEY = "reactor.cconfiguration";
-    public static final String HCONF_KEY = "reactor.hconfiguration";
-    public static final String TX_QUERY_KEY = "reactor.hive.query.tx.id";
+    public static final String CCONF_KEY = "explore.cconfiguration";
+    public static final String HCONF_KEY = "explore.hconfiguration";
+    public static final String TX_QUERY_KEY = "explore.hive.query.tx.id";
 
-    public static final String DATASET_NAME = "reactor.dataset.name";
+    public static final String DATASET_NAME = "explore.dataset.name";
     public static final String DATASET_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.datasets.DatasetStorageHandler";
     public static final String EXPLORE_CLASSPATH = "explore.classpath";
     public static final String EXPLORE_CONF_FILES = "explore.conf.files";

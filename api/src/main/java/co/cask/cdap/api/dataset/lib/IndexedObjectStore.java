@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -62,6 +62,20 @@ public class IndexedObjectStore<T> extends AbstractDataset {
     super(name, objectStore, index);
     this.objectStore = objectStore;
     this.index = index;
+  }
+
+  /**
+   * See {@link ObjectStore#read(byte[])}.
+   */
+  public T read(byte[] key) {
+    return objectStore.read(key);
+  }
+
+  /**
+   * See {@link ObjectStore#read(String)}.
+   */
+  public T read(String key) {
+    return objectStore.read(key);
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -69,11 +69,6 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
     futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get(statement).iterator(),
                                                       statementsToMetadata.get(statement)));
     return new MockStatementExecutionFuture(futureDelegate, statement, statementsToMetadata, statementsToResults);
-  }
-
-  @Override
-  public Map<String, String> datasetSchema(String datasetName) throws ExploreException {
-    throw new ExploreException("Not implemented");
   }
 
   @Override
