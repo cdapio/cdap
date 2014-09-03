@@ -81,19 +81,19 @@ public abstract class AbstractService implements Service {
   }
 
   /**
-   * Add a dataset that will be used by the Service.
+   * Specify a dataset that will be used by the Service.
    * @param dataset name of dataset.
    */
-  protected void addDataset(String dataset) {
-    configurer.addDataset(dataset);
+  protected void useDataset(String dataset) {
+    configurer.useDataset(dataset);
   }
 
   /**
-   * Add a list of datasets that will be used by the Service.
+   * Specify a list of datasets that will be used by the Service.
    * @param datasets names of datasets.
    */
-  protected void addDatasets(Iterable<String> datasets) {
-    configurer.addDatasets(datasets);
+  protected void useDatasets(Iterable<String> datasets) {
+    configurer.useDatasets(datasets);
   }
 
   /**

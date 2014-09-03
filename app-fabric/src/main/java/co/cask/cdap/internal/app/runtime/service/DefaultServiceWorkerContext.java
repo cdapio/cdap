@@ -88,32 +88,7 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
     final TransactionContext context = new TransactionContext(transactionSystemClient);
     try {
       context.start();
-      runnable.run(new DataSetContext() {
-        @Override
-        public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
-          return getDataSet(name, DatasetDefinition.NO_ARGUMENTS);
-        }
-
-        @Override
-        public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
-          throws DataSetInstantiationException {
-          Preconditions.checkArgument(datasets.contains(name), "Access to dataset not explicitly allowed. " +
-                                                                "Add datasets used in the Service's configure.");
-
-          try {
-            Dataset dataset = datasetFramework.getDataset(name, arguments,
-                                                  Thread.currentThread().getContextClassLoader());
-            context.addTransactionAware((TransactionAware) dataset);
-            return (T) dataset;
-          } catch (DatasetManagementException e) {
-            LOG.error("Could not get dataset metainfo.");
-            throw Throwables.propagate(e);
-          } catch (IOException e) {
-            LOG.error("Could not instantiate dataset.");
-            throw Throwables.propagate(e);
-          }
-        }
-      });
+      runnable.run(new ServiceWorkerDataSetContext(context));
       context.finish();
     } catch (TransactionFailureException e) {
       abortTransaction(e, "Failed to commit. Aborting transaction.", context);
@@ -130,6 +105,41 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
     } catch (TransactionFailureException e1) {
       LOG.error("Failed to abort transaction.");
       throw Throwables.propagate(e1);
+    }
+  }
+
+  private class ServiceWorkerDataSetContext implements DataSetContext {
+    private final TransactionContext context;
+
+    private ServiceWorkerDataSetContext(TransactionContext context) {
+      this.context = context;
+    }
+
+    @Override
+    public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
+      return getDataSet(name, DatasetDefinition.NO_ARGUMENTS);
+    }
+
+    @Override
+    public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
+      throws DataSetInstantiationException {
+      String datasetNotUsedError = String.format("Trying to access dataset %s that is not declared as used " +
+                                                   "by the Worker. Specificy datasets used using useDataset() " +
+                                                   "method in the Workers's configure.", name);
+      Preconditions.checkArgument(datasets.contains(name), datasetNotUsedError);
+
+      try {
+        Dataset dataset = datasetFramework.getDataset(name, arguments,
+                                              Thread.currentThread().getContextClassLoader());
+        context.addTransactionAware((TransactionAware) dataset);
+        return (T) dataset;
+      } catch (DatasetManagementException e) {
+        LOG.error("Could not get dataset metainfo.");
+        throw Throwables.propagate(e);
+      } catch (IOException e) {
+        LOG.error("Could not instantiate dataset.");
+        throw Throwables.propagate(e);
+      }
     }
   }
 }
