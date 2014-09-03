@@ -159,7 +159,7 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
 
   @Override
   public URL getServiceURL(String applicationId, String serviceId) {
-    final CountDownLatch renameLatch = new CountDownLatch(1);
+    final CountDownLatch discoveryLatch = new CountDownLatch(1);
     ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(String.format("service.%s.%s.%s",
                                                                                         getAccountId(),
                                                                                         applicationId,
@@ -168,13 +168,13 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
       @Override
       public void onChange(ServiceDiscovered serviceDiscovered) {
         if (!Iterables.isEmpty(serviceDiscovered)) {
-          renameLatch.countDown();
+          discoveryLatch.countDown();
         }
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
     try {
-      renameLatch.await(1, TimeUnit.SECONDS);
+      discoveryLatch.await(1, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       LOG.error("Got exception: ", e);
     }
