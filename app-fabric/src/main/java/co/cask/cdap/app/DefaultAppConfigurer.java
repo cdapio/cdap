@@ -204,17 +204,6 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     addService(new SingleRunnableApplication(runnable, specification));
   }
 
-  /**
-   * Adds {@link Service} as a Custom Service {@link TwillApplication}
-   * to the Application.
-   * @param name Name of runnable.
-   * @param service Guava service to be added.
-   * @param specification ResourceSpecification for Twill container.
-   */
-  private void addService(String name, Service service, ResourceSpecification specification) {
-    addService(new GuavaServiceTwillRunnable(name, service), specification);
-  }
-
   @Override
   public void addService(final String serviceName, final Iterable<? extends HttpServiceHandler> handlers) {
     AbstractService serviceFromHandler = new AbstractService() {
