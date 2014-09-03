@@ -1,0 +1,1005 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+ Copyright (c) 2013, Continuuity Inc
+
+ All rights reserved.
+
+ Redistribution and use in source and binary forms,
+ with or without modification, are not permitted
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<configuration>
+
+    <property>
+        <name>reactor.namespace</name>
+        <value>continuuity</value>
+        <description>Specifies the namespace for this instance of Reactor</description>
+    </property>
+
+    <property>
+        <name>zookeeper.quorum</name>
+        <value>127.0.0.1:2181/${reactor.namespace}</value>
+        <description>Specifies the zookeeper host:port</description>
+    </property>
+
+    <property>
+        <name>zookeeper.session.timeout.millis</name>
+        <value>40000</value>
+        <description>Specifies the zookeeper session time out; time unit milliseconds</description>
+    </property>
+
+    <property>
+        <name>thrift.max.read.buffer</name>
+        <value>16777216</value>
+        <description>
+            Specifies the max read buffer size used by
+            thrift server. Value should be set to something greater
+            than max frame that is sent on RPC channel.
+        </description>
+    </property>
+
+    <property>
+        <name>weave.zookeeper.namespace</name>
+        <value>/weave</value>
+        <description>Namespace prefix for weave zookeeper</description>
+    </property>
+
+    <property>
+        <name>weave.java.reserved.memory.mb</name>
+        <value>250</value>
+        <description>
+            Reserved non-heap memory in MB for weave container.
+        </description>
+    </property>
+
+    <property>
+        <name>weave.no.container.timeout</name>
+        <value>120000</value>
+        <description>
+            Amount of time in milliseconds to wait for at least one container for weave runnable
+        </description>
+    </property>
+
+    <property>
+        <name>weave.jvm.gc.opts</name>
+        <value>-verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
+        <description>Java GC options for all weave containers</description>
+    </property>
+
+    <property>
+        <name>hdfs.namespace</name>
+        <value>/${reactor.namespace}</value>
+        <description>Namespace for files written by Reactor</description>
+    </property>
+
+    <property>
+        <name>hdfs.user</name>
+        <value>yarn</value>
+        <description>User name for accessing HDFS</description>
+    </property>
+
+    <property>
+        <name>yarn.user</name>
+        <value>yarn</value>
+        <description>User name for running applications in YARN</description>
+    </property>
+
+    <property>
+        <name>local.data.dir</name>
+        <value>data</value>
+        <description>Data directory for local mode</description>
+    </property>
+
+    <property>
+        <name>hdfs.lib.dir</name>
+        <value>${hdfs.namespace}/lib</value>
+        <description>Common directory in HDFS for jar files for coprocessors,
+        etc.</description>
+    </property>
+
+    <!--
+        Gateway configuration
+    -->
+    <property>
+        <name>gateway.bind.address</name>
+        <value>localhost</value>
+        <description>Specifies the hostname on which the Gateway will listen (single node only)</description>
+    </property>
+
+    <property>
+        <name>gateway.connectors</name>
+        <value>stream.flume</value>
+        <description>Specifies the list of Collectors we will use</description>
+    </property>
+
+    <property>
+        <name>gateway.connection.backlog</name>
+        <value>20000</value>
+        <description>Max connection backlog of gateway</description>
+    </property>
+
+    <property>
+        <name>gateway.max.cached.stream.events.num</name>
+        <value>10000</value>
+        <description>Max number of stream events cached before flushing</description>
+    </property>
+
+    <property>
+        <name>gateway.max.cached.events.per.stream.num</name>
+        <value>5000</value>
+        <description>Max number of stream events of a single stream cached before flushing</description>
+    </property>
+
+    <property>
+        <name>gateway.max.cached.stream.events.bytes</name>
+        <value>52428800</value>
+        <description>Max size of stream events cached before flushing</description>
+    </property>
+
+    <property>
+        <name>gateway.stream.events.flush.interval.ms</name>
+        <value>150</value>
+        <description>Specifies the interval at which cached stream events get flushed</description>
+    </property>
+
+    <property>
+        <name>gateway.stream.callback.exec.num.threads</name>
+        <value>5</value>
+        <description>Number of threads in stream events callback executor</description>
+    </property>
+
+    <property>
+        <name>gateway.exec.threads</name>
+        <value>20</value>
+        <description>Number of netty server executor threads</description>
+    </property>
+
+    <property>
+        <name>gateway.boss.threads</name>
+        <value>1</value>
+        <description>Number of netty server boss threads</description>
+    </property>
+
+    <property>
+        <name>gateway.worker.threads</name>
+        <value>10</value>
+        <description>Number of netty server worker threads</description>
+    </property>
+
+    <!-- Monitor Handler Parameters -->
+
+    <property>
+      <name>monitor.handler.service.discovery.timeout.seconds</name>
+      <value>1</value>
+      <description>Timeout in seconds for service discovery used in Monitor Handler Service Status check</description>
+    </property>
+
+    <!-- Reactor YARN Services Parameters -->
+
+    <property>
+        <name>reactor.service.num.cores</name>
+        <value>2</value>
+        <description>Number of cores for Reactor Service Twill Runnables</description>
+    </property>
+
+    <property>
+        <name>reactor.service.memory.mb</name>
+        <value>512</value>
+        <description>Size of Memory in MB for Reactor Service Twill Runnables</description>
+    </property>
+
+    <property>
+        <name>reactor.service.max.instances</name>
+        <value>5</value>
+        <description>Maximum Number of Reactor Service Instances</description>
+    </property>
+
+    <!-- Reactor Services HTTP handles -->
+    <property>
+        <name>http.service.connection.backlog</name>
+        <value>20000</value>
+        <description>Max connection backlog of Reactor HTTP service</description>
+    </property>
+
+    <property>
+        <name>http.service.exec.threads</name>
+        <value>20</value>
+        <description>Number of netty server executor threads for Reactor HTTP services</description>
+    </property>
+
+    <property>
+        <name>http.service.boss.threads</name>
+        <value>1</value>
+        <description>Number of netty server boss threads for Reactor HTTP services</description>
+    </property>
+
+    <property>
+        <name>http.service.worker.threads</name>
+        <value>10</value>
+        <description>Number of netty server worker threads for Reactor HTTP services</description>
+    </property>
+
+    <!-- Stream handles -->
+    <property>
+        <name>stream.flume.port</name>
+        <value>10004</value>
+    </property>
+
+    <property>
+        <name>stream.flume.threads</name>
+        <value>100</value>
+    </property>
+
+    <property>
+        <name>stream.base.dir</name>
+        <value>/streams</value>
+        <description>The directory root for all stream files, relative to the HDFS namespace</description>
+    </property>
+
+    <property>
+        <name>stream.partition.duration</name>
+        <value>3600000</value>
+        <description>The default duration of a Stream partition in milliseconds</description>
+    </property>
+
+    <property>
+        <name>stream.index.interval</name>
+        <value>10000</value>
+        <description>Default time interval in milliseconds for emitting new index entry in Stream file</description>
+    </property>
+
+    <property>
+        <name>stream.event.ttl</name>
+        <!-- Long.MAX_VALUE !-->
+        <value>9223372036854775807</value>
+        <description>Default time to live in milliseconds for Stream events</description>
+    </property>
+
+    <property>
+        <name>stream.file.prefix</name>
+        <value>file</value>
+        <description>Prefix of file name for Stream file</description>
+    </property>
+
+    <property>
+        <name>stream.consumer.table.presplits</name>
+        <value>16</value>
+        <description>Number of splits for the Stream consumer table</description>
+    </property>
+
+    <property>
+      <name>stream.bind.address</name>
+      <value>127.0.0.1</value>
+      <description>Default inet address for binding Stream http service</description>
+    </property>
+
+    <property>
+      <name>stream.worker.threads</name>
+      <value>${http.service.worker.threads}</value>
+      <description>Default number of IO worker threads for the Stream http service</description>
+    </property>
+
+    <property>
+      <name>stream.container.num.cores</name>
+      <value>2</value>
+      <description>Number of virtual core for the YARN container that runs the Stream handler</description>
+    </property>
+
+    <property>
+      <name>stream.container.memory.mb</name>
+      <value>512</value>
+      <description>Amount of memory in MB for the YARN container that runs the Stream handler</description>
+    </property>
+
+    <property>
+      <name>stream.container.instances</name>
+      <value>1</value>
+      <description>Number of YARN container instances for the Stream handler</description>
+    </property>
+
+    <property>
+      <name>stream.file.cleanup.period</name>
+      <value>300000</value>
+      <description>How often to run Stream file cleanup process in milliseconds</description>
+    </property>
+
+    <!--
+        Data Fabric Configuration
+    -->
+    <property>
+        <name>data.local.storage</name>
+        <value>${local.data.dir}/ldb</value>
+        <description>Specifies the database directory</description>
+    </property>
+
+    <property>
+        <name>data.local.storage.blocksize</name>
+        <value>1024</value>
+        <description>Specifies block size (in bytes)</description>
+    </property>
+
+    <property>
+        <name>data.local.storage.cachesize</name>
+        <value>104857600</value>
+        <description>Specifies cache size (in bytes)</description>
+    </property>
+
+    <property>
+        <name>data.tx.bind.port</name>
+        <value>15165</value>
+        <description>The port number for the transaction
+            service</description>
+    </property>
+
+    <property>
+        <name>data.tx.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>The inet address for the transaction
+            service</description>
+    </property>
+
+    <property>
+        <name>data.tx.server.io.threads</name>
+        <value>2</value>
+        <description>The number of IO threads for the transaction
+            service</description>
+    </property>
+
+    <property>
+        <name>data.tx.server.threads</name>
+        <value>25</value>
+        <description>The number of threads for the transaction
+            service</description>
+    </property>
+
+    <property>
+        <name>data.tx.client.count</name>
+        <value>5</value>
+        <description>The number of pooled instanced of the transaction
+            client</description>
+    </property>
+
+    <property>
+        <name>data.tx.client.provider</name>
+        <value>thread-local</value>
+        <description>The provider strategy for transaction clients;
+            valid values are "pool" and "thread-local"</description>
+    </property>
+
+    <property>
+        <name>data.queue.table.name</name>
+        <value>queues</value>
+        <description>Specifies the name of the table for queues</description>
+    </property>
+
+    <property>
+        <name>data.tx.snapshot.codecs</name>
+        <value>
+          com.continuuity.data2.transaction.snapshot.SnapshotCodecV1,
+          com.continuuity.data2.transaction.snapshot.SnapshotCodecV2
+        </value>
+        <description>Specifies the class names of all supported transaction state codecs</description>
+    </property>
+
+    <property>
+        <name>data.tx.snapshot.dir</name>
+        <value>${hdfs.namespace}/tx.snapshot</value>
+        <description>Directory in HDFS used to store snapshots and logs of
+            transaction state</description>
+    </property>
+
+    <property>
+        <name>data.tx.snapshot.local.dir</name>
+        <value>${local.data.dir}/tx.snapshot</value>
+        <description>Directory on the local filesystem used to store snapshots
+        and logs of transaction state for single-node operation</description>
+    </property>
+
+    <property>
+        <name>data.tx.snapshot.interval</name>
+        <value>300</value>
+        <description>Frequency, in seconds, at which snapshots of transaction
+            state should be written</description>
+    </property>
+
+    <property>
+        <name>data.tx.snapshot.retain</name>
+        <value>10</value>
+        <description>Number of transaction snapshot files to retain as
+            backups</description>
+    </property>
+
+    <property>
+        <name>data.tx.janitor.enable</name>
+        <value>true</value>
+        <description>Whether or not the TransactionDataJanitor coprocessor
+        should be enabled on tables; should normally be true</description>
+    </property>
+
+    <property>
+        <name>data.tx.num.instances</name>
+        <value>1</value>
+    </property>
+
+    <property>
+        <name>data.tx.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
+    </property>
+
+    <property>
+        <name>data.tx.num.cores</name>
+        <value>${reactor.service.num.cores}</value>
+    </property>
+
+    <property>
+        <name>data.tx.memory.mb</name>
+        <value>${reactor.service.memory.mb}</value>
+    </property>
+
+    <!--
+        Queue-related Configuration
+    -->
+    <property>
+        <name>data.queue.config.update.interval</name>
+        <value>5</value>
+        <description>Frequency, in seconds, of updates to the queue consumer
+        configuration used in evicting queue entries on flush and compaction
+        </description>
+    </property>
+
+    <!--
+        Metadata Service Configuration
+    -->
+    <property>
+        <name>metadata.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>Specifies the server address of metadata
+            server</description>
+    </property>
+
+    <property>
+        <name>metadata.bind.port</name>
+        <value>45004</value>
+        <description>Specifies the port on which metdata server
+            is started on</description>
+    </property>
+
+
+    <property>
+        <name>metadata.program.run.history.keepdays</name>
+        <value>30</value>
+        <description>Specifies the number of days to keep
+            program run run-history in metadata</description>
+    </property>
+
+    <!--
+        Log collection service configuration
+    -->
+    <property>
+        <name>log.query.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>Specifies the server address of metrics frontend
+            server</description>
+    </property>
+
+    <property>
+        <name>log.query.bind.port</name>
+        <value>45002</value>
+        <description>Specifies the port on which frontend metrics server
+            is started on</description>
+    </property>
+
+    <property>
+        <name>log.collection.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>Specifies the hostname where the collection service runs</description>
+    </property>
+
+    <property>
+        <name>log.collection.bind.port</name>
+        <value>12157</value>
+        <description>Port the log collection service runs on</description>
+    </property>
+
+    <property>
+        <name>log.collection.root</name>
+        <value>${local.data.dir}/logs</value>
+        <description>Root location for collecting logs</description>
+    </property>
+
+    <!--
+        Account Service Configuration
+    -->
+    <property>
+        <name>account.server.host</name>
+        <value>127.0.0.1</value>
+        <description>Specifies the host for account server</description>
+    </property>
+
+    <property>
+        <name>account.server.port</name>
+        <value>8080</value>
+        <description>Specifies the port for account server</description>
+    </property>
+
+    <!-- App Fabric related changes -->
+    <property>
+        <name>app.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>Host address on which the app fabric server is started</description>
+    </property>
+
+    <property>
+        <name>app.output.dir</name>
+        <value>/programs</value>
+        <description>Directory where all archives are stored</description>
+    </property>
+
+    <property>
+        <name>dataset.service.output.dir</name>
+        <value>/datasets</value>
+        <description>Directory where all dataset modules archives are stored</description>
+    </property>
+
+    <property>
+        <name>dataset.service.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>DataSet service hostname</description>
+    </property>
+
+    <property>
+        <name>dataset.executor.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
+        <description>Maximum Number of DataSet Executor Instances</description>
+    </property>
+
+    <property>
+        <name>dataset.executor.container.instances</name>
+        <value>1</value>
+        <description>Number of DataSet Executor Instances</description>
+    </property>
+
+    <property>
+        <name>app.temp.dir</name>
+        <value>/tmp</value>
+        <description>Directory temp</description>
+    </property>
+
+    <property>
+        <name>app.program.jvm.opts</name>
+        <value>${weave.jvm.gc.opts}</value>
+        <description>Java options for all program containers</description>
+    </property>
+
+    <!-- scheduler related changes -->
+    <property>
+        <name>scheduler.max.thread.pool.size</name>
+        <value>30</value>
+        <description>Size of the scheduler thread pool</description>
+    </property>
+
+
+    <!--
+        Router configuration
+    -->
+    <property>
+        <name>router.bind.address</name>
+        <value>0.0.0.0</value>
+        <description>Specifies the address for router server to bind to</description>
+    </property>
+
+    <property>
+        <name>router.forward.rule</name>
+        <value>10000:gateway,20000:webapp/$HOST</value>
+        <description>Forward rules for router (port:service -> forward port to service)</description>
+    </property>
+
+
+    <!-- Sets whether Devsuite is in Cloud or not -->
+    <!-- AppFabric will become Reactor later -->
+    <property>
+        <name>appfabric.environment</name>
+        <value>devsuite</value>
+        <description>Sets the environment the appfabric is in</description>
+    </property>
+
+    <!-- New Metrics system settings -->
+    <property>
+        <name>metrics.query.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>Host address where the metrics query server is started</description>
+    </property>
+
+    <property>
+        <name>metrics.query.bind.port</name>
+        <value>45005</value>
+        <description>Port for metrics query server to listen on</description>
+    </property>
+
+    <property>
+        <name>metrics.data.table.retention.resolution.1.seconds</name>
+        <value>7200</value>
+        <description>Retention resolution 1 sec table in seconds</description>
+    </property>
+
+    <property>
+        <name>metrics.kafka.partition.size</name>
+        <value>10</value>
+        <description>Number of partitions for metrics topic</description>
+    </property>
+
+    <property>
+        <name>metrics.connection.backlog</name>
+        <value>${http.service.connection.backlog}</value>
+        <description>Max connection backlog of Reactor HTTP service</description>
+    </property>
+
+    <property>
+        <name>metrics.exec.threads</name>
+        <value>${http.service.exec.threads}</value>
+        <description>Number of netty server executor threads for Reactor HTTP services</description>
+    </property>
+
+    <property>
+        <name>metrics.boss.threads</name>
+        <value>${http.service.boss.threads}</value>
+        <description>Number of netty server boss threads for Reactor HTTP services</description>
+    </property>
+
+    <property>
+        <name>metrics.worker.threads</name>
+        <value>${http.service.worker.threads}</value>
+        <description>Number of netty server worker threads for Reactor HTTP services</description>
+    </property>
+
+    <property>
+        <name>metrics.num.instances</name>
+        <value>1</value>
+    </property>
+
+    <property>
+        <name>metrics.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
+    </property>
+
+    <property>
+        <name>metrics.num.cores</name>
+        <value>${reactor.service.num.cores}</value>
+    </property>
+
+    <property>
+        <name>metrics.memory.mb</name>
+        <value>${reactor.service.memory.mb}</value>
+    </property>
+
+    <!--
+        Metrics Processor Configuration
+     -->
+
+    <property>
+        <name>metrics.processor.num.instances</name>
+        <value>1</value>
+        <description>Number of instances for Metrics Processor Service Twill Runnable</description>
+    </property>
+
+    <property>
+        <name>metrics.processor.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
+    </property>
+
+    <property>
+        <name>metrics.processor.num.cores</name>
+        <value>1</value>
+        <description>Number of cores for Metrics Processor Service Twill Runnable</description>
+    </property>
+
+    <property>
+        <name>metrics.processor.memory.mb</name>
+        <value>512</value>
+        <description>Size of Memory in MB for Metrics Processor Service Twill Runnable</description>
+    </property>
+
+    <property>
+        <name>metrics.processor.status.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>Default inet address for binding metrics processor http service</description>
+    </property>
+
+    <!--
+        Logging Configuration
+    -->
+    <property>
+        <name>kafka.seed.brokers</name>
+        <value>127.0.0.1:9092</value>
+        <description>List of Kafka brokers (comma separated)</description>
+    </property>
+
+    <property>
+        <name>log.publish.num.partitions</name>
+        <value>10</value>
+        <description>Number of Kafka partitions to publish the logs to</description>
+    </property>
+
+    <property>
+        <name>log.run.account</name>
+        <value>continuuity</value>
+        <description>Account to run the logging service</description>
+    </property>
+
+    <property>
+        <name>log.base.dir</name>
+        <value>/logs/avro</value>
+        <description>Base log directory</description>
+    </property>
+
+    <property>
+        <name>log.retention.duration.days</name>
+        <value>7</value>
+        <description>Log file hdfs retention duration in days</description>
+    </property>
+
+    <property>
+        <name>log.cleanup.run.interval.mins</name>
+        <value>1440</value>
+        <description>Interval at which to run log cleanup</description>
+    </property>
+
+    <property>
+        <name>log.saver.num.instances</name>
+        <value>1</value>
+        <description>Number of log saver instances to run in yarn</description>
+    </property>
+
+    <property>
+        <name>log.saver.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
+    </property>
+
+    <property>
+        <name>log.saver.run.memory.megs</name>
+        <value>1024</value>
+        <description>Memory in MB for log saver instances to run in yarn</description>
+    </property>
+
+    <property>
+        <name>log.saver.status.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>Default inet address for binding logsaver http service</description>
+    </property>
+
+    <!--
+        Kafka Configuration
+    -->
+    <property>
+        <name>kafka.bind.address</name>
+        <value>0.0.0.0</value>
+        <description>Kafka server hostname to bind to</description>
+    </property>
+
+    <property>
+        <name>kafka.bind.port</name>
+        <value>9092</value>
+        <description>Kafka server port</description>
+    </property>
+
+    <property>
+        <name>kafka.num.partitions</name>
+        <value>10</value>
+        <description>Default number of partitions for a topic</description>
+    </property>
+
+    <property>
+        <name>kafka.log.dir</name>
+        <value>/tmp/kafka-logs</value>
+        <description>Directory to store Kafka logs</description>
+    </property>
+
+    <property>
+        <name>kafka.zookeeper.namespace</name>
+        <value>continuuity_kafka</value>
+        <description>ZK namespace for Kafka</description>
+    </property>
+
+    <property>
+        <name>kafka.default.replication.factor</name>
+        <value>1</value>
+        <description>Kafka replication factor</description>
+    </property>
+
+    <!--
+        Global Configuration
+    -->
+    <property>
+        <name>enable.unrecoverable.reset</name>
+        <value>false</value>
+        <description>
+            WARNING! - Enabling this option enables the deletion of all applications and data;
+            NO RECOVERY IS POSSIBLE!
+        </description>
+    </property>
+
+    <!---
+         Web App Settings
+     -->
+    <property>
+        <name>dashboard.bind.address</name>
+        <value>0.0.0.0</value>
+    </property>
+
+    <property>
+        <name>dashboard.bind.port</name>
+        <value>9999</value>
+    </property>
+
+    <property>
+        <name>gateway.server.address</name>
+        <value>localhost</value>
+    </property>
+
+    <property>
+        <name>gateway.server.port</name>
+        <value>10000</value>
+    </property>
+
+    <!---
+         Hive Server Settings
+     -->
+    <property>
+        <name>hive.server.bind.address</name>
+        <value>localhost</value>
+    </property>
+    <property>
+        <name>reactor.explore.enabled</name>
+        <value>false</value>
+    </property>
+    <property>
+        <name>hive.local.data.dir</name>
+        <value>${local.data.dir}/hive</value>
+    </property>
+    <property>
+        <name>explore.executor.container.instances</name>
+        <value>1</value>
+        <description>Number of explore executor instances</description>
+    </property>
+    <property>
+        <name>explore.executor.max.instances</name>
+        <value>1</value>
+        <description>Maximum number of explore executor instances</description>
+    </property>
+    <property>
+        <name>explore.active.operation.timeout.secs</name>
+        <value>86400</value>
+        <description>Timeout value in seconds for a SQL operation whose result is not fetched completely</description>
+    </property>
+    <property>
+        <name>explore.inactive.operation.timeout.secs</name>
+        <value>3600</value>
+        <description>Timeout value in seconds for a SQL operation which does not have any more results
+            to be fetched</description>
+    </property>
+    <property>
+        <name>explore.cleanup.job.schedule.secs</name>
+        <value>60</value>
+        <description>Time in secs to schedule clean up job to timeout operations</description>
+    </property>
+
+    <!--
+        External Authentication Settings
+    -->
+    <property>
+        <name>security.token.digest.algorithm</name>
+        <value>HmacSHA256</value>
+    </property>
+
+    <property>
+        <name>security.token.digest.keylength</name>
+        <value>128</value>
+    </property>
+
+    <property>
+      <name>security.auth.server.address</name>
+      <value>127.0.0.1</value>
+    </property>
+
+    <property>
+        <name>security.auth.server.port</name>
+        <value>10009</value>
+    </property>
+
+    <property>
+        <name>security.server.maxthreads</name>
+        <value>100</value>
+    </property>
+
+    <property>
+        <name>security.server.token.expiration.ms</name>
+        <value>86400000</value>
+        <description>AccessToken expiration time in milliseconds (defaults to 24 hours)</description>
+    </property>
+
+    <property>
+        <name>security.data.keyfile.path</name>
+        <value>${local.data.dir}/security/keyfile</value>
+    </property>
+
+    <!--
+        External Authentication login module Settings
+    -->
+    <property>
+        <name>security.authentication.handlerClassName</name>
+        <value></value>
+    </property>
+
+    <property>
+        <name>security.authentication.loginmodule.className</name>
+        <value></value>
+    </property>
+
+    <property>
+      <name>security.authentication.basic.realmfile</name>
+      <value></value>
+    </property>
+
+    <property>
+        <name>security.token.digest.key.expiration.ms</name>
+        <value>3600000</value>
+        <description>Time duration (in milliseconds) after which an active secret key used
+        for signing tokens should be retired</description>
+    </property>
+
+    <property>
+        <name>security.server.extended.token.expiration.ms</name>
+        <value>604800000</value>
+        <description>Admin Tools AccessToken expiration time in milliseconds (defaults to 
+        1 week) (internal)</description>
+    </property>
+
+    <property>
+        <name>security.token.distributed.parent.znode</name>
+        <value>/${reactor.namespace}/security/auth</value>
+        <description>Parent node in ZooKeeper used for secret key distribution in distributed mode</description>
+    </property>
+
+    <!--
+        Security-enabled Flag
+    -->
+    <property>
+        <name>security.enabled</name>
+        <value>false</value>
+        <description>If this is set to true, security layer will be up and active in Reactor</description>
+    </property>
+
+    <property>
+        <name>security.realm</name>
+        <value>continuuity</value>
+        <description>Security realm used for authentication</description>
+    </property>
+
+    <property>
+      <name>security.server.ssl.enabled</name>
+      <value>false</value>
+    </property>
+
+    <property>
+      <name>security.server.ssl.port</name>
+      <value>10010</value>
+    </property>
+
+    <property>
+      <name>security.server.ssl.keystore.path</name>
+      <value></value>
+    </property>
+
+    <property>
+      <name>security.server.ssl.keystore.password</name>
+      <value></value>
+    </property>
+</configuration>
