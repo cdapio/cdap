@@ -92,6 +92,7 @@ public class HBaseDatasetStatsReporterTest {
 
     // 2. verifying metrics
 
+    // Wait for changes to be reflected in metrics: default refresh interval is 60 sec
     // todo: figure out how to make metrics update more frequently. Tried a lot, but still no luck
     TimeUnit.SECONDS.sleep(65);
 
