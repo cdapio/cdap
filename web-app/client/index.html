@@ -1931,19 +1931,19 @@
       <table class="table">
           <thead>
             <th style="padding-left: 14px;">Spark</th>
-            <th>
-                <div class="btn-group pull-right start-stop-btns" style="margin-top:2px;text-align:center;">
-                  <button {{action startAll "Spark" on="click"}} class="btn start"><img src="/assets/img/v2/play_icon.png" /></button>
-                  <img style="display: none;margin-top: 3px;" src="/assets/img/start-all-load-white.gif" />
-                  <button {{action stopAll "Spark" on="click"}} class="btn stop"><img src="/assets/img/v2/stop_active_icon.png" /></button>
-                </div>
-            </th>
           </thead>
           <tbody>
           {{#each elements.Spark.content }}
             <tr>
               <td class="app-list-name">
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
+              </td>
+              <td>
+                <div class="btn-group pull-right start-stop-btns" style="margin-top:2px;text-align:center;">
+                  <button {{action startJob description name on="click"}} class="btn start"><img src="/assets/img/v2/play_icon.png" /></button>
+                  <img style="display: none;margin-top: 3px;" src="/assets/img/start-all-load-white.gif" />
+                  <button {{action stopJob description name on="click"}} class="btn stop"><img src="/assets/img/v2/stop_active_icon.png" /></button>
+                </div>
               </td>
             </tr>
           {{/each}}

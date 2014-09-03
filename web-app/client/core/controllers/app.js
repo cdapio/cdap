@@ -277,9 +277,30 @@ define([], function () {
 
 		},
 
+    startJob: function (kind, elementName) {
+      var elements = $.grep(
+        this.get('elements.' + kind + '.content'),
+        function(element) {
+          return element.name == elementName;
+        }
+      );
+      this.transition(elements, 'start', 'starting', 'running');
+    },
+
+    stopJob: function (kind, elementName) {
+      var elements = $.grep(
+        this.get('elements.' + kind + '.content'),
+        function(element) {
+          return element.name == elementName;
+        }
+      );
+      this.transition(elements, 'stop', 'stopping', 'stopped');
+    },
+
 		startAll: function (kind) {
 
 			var elements = this.get('elements.' + kind + '.content');
+			console.log( '-------------', elements );
 			this.transition(elements, 'start', 'starting', 'running');
 
 		},
