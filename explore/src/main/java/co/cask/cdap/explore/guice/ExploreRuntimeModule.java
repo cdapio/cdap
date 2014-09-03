@@ -51,7 +51,6 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
