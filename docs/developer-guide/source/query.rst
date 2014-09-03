@@ -235,6 +235,13 @@ directory ``examples/Purchase``, namely the ``PurchaseHistoryStore``.
 
 Writing to Datasets with SQL
 ============================
+You may be interested in inserting query results in a dataset. For example, you can write in a dataset named
+``ProductCatalog`` with the following SQL query::
+
+  INSERT INTO TABLE cdap_user_productcatalog SELECT ...
+
+For more examples of queries, please refer to the `Hive language manual
+<https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML#LanguageManualDML-InsertingdataintoHiveTablesfromqueries>`_.
 
 In order for a dataset to enable record insertion from SQL query, it simply has to expose a way to write records
 into itself.
@@ -245,14 +252,56 @@ SQL queries.
 
 Let's take a closer look at the ``RecordWritable`` interface.
 
+Defining the Record Schema
+--------------------------
+Just like in the ``RecordScannable`` interface, the record schema is given by returning the Java type of each record,
+using the method::
+
+  Type getRecordType();
+
+The same rules as for the type of the ``RecordScannable`` interface apply to the type of the ``RecordWritable`` interface.
+In fact, if a dataset implements both ``RecordScannable`` and ``RecordWritable`` interfaces, they will have to
+have the same record type.
+
+Writing Records
+---------------
+To enable inserting SQL queries result into a Dataset, it needs to provide a means of writing a record into itself.
+This is similar to how the ``BatchWritable`` interface makes Datasets writable from Map/Reduce jobs by providing
+a way to write pairs of key and value. You need to implement the following ``RecordWritable`` method::
+
+      void write(RECORD record) throws IOException;
+
+To continue with the example used above which showed an implementation of ``RecordScannable``, this example shows
+a implementation of a ``RecordWritable`` dataset that is backed by a ``Table``::
+
+  class MyDataset implements Dataset, RecordWritable<Entry> {
+
+    private Table table;
+    private static final byte[] VALUE_COLUMN = { 'c' };
+
+    // ..
+    // All other Dataset methods
+    // ...
+
+    @Override
+    public Type getRecordType() {
+      return Entry.class;
+    }
+
+    @Override
+    public void write(Entry record) throws IOException {
+      return table.put(Bytes.toBytes(record.getKey()), VALUE_COLUMN, Bytes.toBytes(record.getValue()));
+    }
+  }
+
+Note that a Dataset can implement either ``RecordScannable``, or ``RecordWritable``, or both.
 
 Formulating Queries
 ===================
 When creating your queries, keep these limitations in mind:
 
 - The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.
-- In contrast to HiveQL, CDAP queries only allow reading from data sets, not writing
-- These SQL commands are not allowed on CDAP Datasets: ``INSERT``, ``UPDATE``, ``DELETE``.
+- These SQL commands are not allowed on CDAP Datasets: ``UPDATE``, ``DELETE``.
 - When addressing your datasets in queries, you need to prefix the data set name with the CDAP
   namespace ``cdap_user_``. For example, if your Dataset is named ``ProductCatalog``, then the corresponding table
   name is ``cdap_user_productcatalog``. Note that the table name is lower-case.
