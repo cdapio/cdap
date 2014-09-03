@@ -31,6 +31,7 @@ public interface ProgramRunnerFactory {
     FLOWLET,
     PROCEDURE,
     MAPREDUCE,
+    SPARK,
     WORKFLOW,
     WEBAPP,
     SERVICE,

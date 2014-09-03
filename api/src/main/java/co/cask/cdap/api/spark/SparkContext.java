@@ -79,8 +79,8 @@ public interface SparkContext extends RuntimeContext {
    * <a href="http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.SparkContext">SparkContext</a>
    * depending on user's job type.
    *
-   * @param <T> the type of Apache Spark Context
-   * @return the Apache Spark Context
+   * @param <T> the type of Spark Context
+   * @return the Spark Context
    */
-  <T> T getApacheSparkContext();
+  <T> T getBaseSparkContext();
 }
