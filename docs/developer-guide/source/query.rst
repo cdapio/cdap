@@ -1,14 +1,17 @@
 .. :author: Cask Data, Inc.
    :description: Ad-hoc Querying of Cask Data Application Platform Datasets using SQL 
 
-==========================
+==================================
+Interacting with Datasets with SQL
+==================================
+
+**Ad-hoc Querying of and Inserting into Cask Data Application Platform (CDAP) Datasets using SQL**
+
 Querying Datasets with SQL
 ==========================
 
-**Ad-hoc Querying of Cask Data Application Platform (CDAP) Datasets using SQL**
-
 Introduction
-============
+------------
 Procedures are a programmatic way to access and query the data in your Datasets. Yet sometimes you may want to explore
 a Dataset in an ad-hoc manner rather than writing procedure code. This can be done using SQL if your Dataset fulfills
 two requirements:
@@ -22,7 +25,7 @@ The CDAP built-in Dataset ``KeyValueTable`` already implements this and can be u
 Let's take a closer look at the ``RecordScannable`` interface.
 
 Defining the Record Schema
-==========================
+--------------------------
 The record schema is given by returning the Java type of each record, and CDAP will derive the record schema from
 that type::
 
@@ -52,7 +55,7 @@ In the case of the above class ``Entry``, the schema will be::
   (key STRING, value INT)
 
 Limitations
-===========
+-----------
 * The record type must be a structured type, that is, a Java class with fields. This is because SQL tables require
   a structure type at the top level. That means, the record type cannot be a primitive,
   collection or map type. However, these types may appear nested inside the record type.
@@ -86,9 +89,9 @@ Limitations
 
 
 Parameterized Types
-===================
-Suppose instead of being fixed to ``Strings``, the ``Entry`` class is generic with type parameters for both key
-and value::
+-------------------
+Suppose instead of being fixed to ``String`` and ``int``, the ``Entry`` class is generic with type parameters for both
+key and value::
 
   class GenericEntry<KEY, VALUE> {
     private final KEY key;
@@ -112,7 +115,7 @@ While this seems a little more complex at first sight, it is the de-facto standa
 erasure.
 
 Complex Types
-=============
+-------------
 Your record type can also contain nested structures, lists, or maps, and they will be mapped to type names as defined in
 the `Hive language manual <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL>`_. For example, if
 your record type is defined as::
@@ -131,7 +134,7 @@ The SQL schema of the dataset would be::
 Refer to the Hive language manual for more details on schema and data types.
 
 Scanning Records
-================
+----------------
 The second requirement for enabling SQL queries over a Dataset is to provide a means of scanning the Dataset record
 by record. Similar to how the ``BatchReadable`` interface makes Datasets readable by Map/Reduce jobs by iterating
 over pairs of key and value, ``RecordScannable`` iterates over records. You need to implement a method to partition the
@@ -218,7 +221,7 @@ into a record::
 
 Note there is an even simpler helper (``Scannables.valueRecordScanner``) that derives a split
 record scanner from a split reader. For each key and value returned by the split reader it ignores the key
-and returns each the value. For example,
+and returns the value. For example,
 if your dataset implements ``BatchReadable<String, Employee>``, then you can implement ``RecordScannable<Employee>`` by
 defining::
 
@@ -230,6 +233,19 @@ defining::
 An example demonstrating an implementation of ``RecordScannable`` is included in the Cask Data Application Platform SDK in the
 directory ``examples/Purchase``, namely the ``PurchaseHistoryStore``.
 
+Writing to Datasets with SQL
+============================
+
+In order for a dataset to enable record insertion from SQL query, it simply has to expose a way to write records
+into itself.
+
+For CDAP Datasets, this is done by implementing the ``RecordWritable`` interface.
+Once again, the CDAP built-in Dataset ``KeyValueTable`` already implements this and can be used to insert records from
+SQL queries.
+
+Let's take a closer look at the ``RecordWritable`` interface.
+
+
 Formulating Queries
 ===================
 When creating your queries, keep these limitations in mind:
@@ -238,8 +254,8 @@ When creating your queries, keep these limitations in mind:
 - In contrast to HiveQL, CDAP queries only allow reading from data sets, not writing
 - These SQL commands are not allowed on CDAP Datasets: ``INSERT``, ``UPDATE``, ``DELETE``.
 - When addressing your datasets in queries, you need to prefix the data set name with the CDAP
-  namespace ``cdap_user``. For example, if your Dataset is named ``ProductCatalog``, then the corresponding table
-  name is ``cdap_user_ProductCatalog``.
+  namespace ``cdap_user_``. For example, if your Dataset is named ``ProductCatalog``, then the corresponding table
+  name is ``cdap_user_productcatalog``. Note that the table name is lower-case.
 
 Where to Go Next
 ================
