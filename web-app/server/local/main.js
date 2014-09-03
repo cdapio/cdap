@@ -4,7 +4,8 @@
 
 var util = require("util"),
   fs = require('fs'),
-  xml2js = require('xml2js'),
+  http = require('http'),
+  https = require('https'),
   promise = require('q'),
   sys = require('sys'),
   argv = require('optimist').argv,
@@ -27,76 +28,35 @@ var logLevel = 'INFO';
 var devServer;
 
 var DevServer = function() {
-  this.getConfig()
-      .then(function(version) {
-        this.setAttrs(version);
-        this.start();
-      }.bind(this))
+  DevServer.super_.call(this, __dirname, logLevel);
+  this.getConfig(__dirname + '/continuuity-local.xml')
+      .then(this.setUpServer.bind(this));
 };
 util.inherits(DevServer, WebAppServer);
 
-DevServer.prototype.setAttrs = function(version) {
+DevServer.prototype.setAttrs = function(configuration) {
   if (this.config['dashboard.https.enabled'] === "true") {
-    DevServer.super_.call(this, __dirname, logLevel, true);
+    this.lib = https;
   } else {
-    DevServer.super_.call(this, __dirname, logLevel, false);
+    this.lib = http;
   }
+
+  this.config = configuration;
+  this.apiKey = configuration.apiKey;
+  this.version = configuration.version;
+  this.configSet = configuration.configSet;
   this.cookieName = 'continuuity-local-edition';
-  this.version = version;
+  this.version = this.version;
   this.secret = 'local-edition-secret';
-  this.logger = this.getLogger();
   this.setCookieSession(this.cookieName, this.secret);
   this.configureExpress();
 }
 
-/**
- * Sets config data for application server.
- * @param {Function} opt_callback Callback function to start sever start process.
- */
-DevServer.prototype.getConfig = function() {
-  var deferredObj = promise.defer(),
-      promises = [],
-      version,
-      readfile;
-
-  readfile = function (path, format) {
-    var deferred = promise.defer();
-    if (format) {
-      fs.readFile(path, format, function(err, result) {
-        deferred.resolve(result);
-      });
-    } else {
-      fs.readFile(path, function(err, result) {
-        deferred.resolve(result);
-      });
-    }
-    return deferred.promise;
-  };
-  //There should definitely be better way to do this.
-  readfile(__dirname + '/continuuity-local.xml')
-    .then( function(result, error) {
-      var parser = new xml2js.Parser();
-      parser.parseString(result, function(err, result) {
-        result = result.configuration.property;
-        for (var item in result) {
-          item = result[item];
-          this.config[item.name] = item.value[0];
-        }
-      }.bind(this));
-      return  readfile(__dirname + '/../../../VERSION', 'utf-8');
-
-    }.bind(this))
-    .then( function(v) {
-      version = v;
-      return readfile(__dirname + '/.credential', 'utf-8');
-    })
-    .then( function(error, apiKey) {
-      this.Api.configure(this.config, apiKey || null);
-      this.configSet = true;
-      deferredObj.resolve(version);
-    }.bind(this));
-  return deferredObj.promise;
-};
+DevServer.prototype.setUpServer = function setUpServer(configuration) {
+  this.setAttrs(configuration);
+  this.Api.configure(this.config, this.apiKey || null);
+  this.start();
+}
 
 /**
  * Starts the server after getting config, sets up socket io, configures route handlers.
@@ -108,9 +68,9 @@ DevServer.prototype.start = function() {
 DevServer.prototype.launchServer = function() {
    var key,
        cert,
-       options = {};
-   options = this.configureSSL();
+       options = this.configureSSL() || {};
    this.server = this.getServerInstance(options, this.app);
+   //LaunchServer and then StartServer?? Kind of redundant on names. Any alternative is welcome.
    this.setEnvironment('local', 'Development Kit', this.version, this.startServer.bind(this));
 }
 
@@ -140,7 +100,6 @@ DevServer.prototype.startServer = function () {
   this.server.listen(this.config['dashboard.bind.port']);
 
   this.logger.info('Listening on port', this.config['dashboard.bind.port']);
-  this.logger.info(this.config);
 
   /**
   * If mocks are enabled, use mock injector to simulate some responses.
