@@ -18,7 +18,6 @@ package co.cask.cdap.examples.purchase;
 import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureContext;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
@@ -35,14 +34,6 @@ public class PurchaseProcedure extends AbstractProcedure {
 
   @UseDataSet("history")
   private PurchaseHistoryStore store;
-  private URL serviceURL;
-
-  @Override
-  public void initialize(ProcedureContext context) {
-    //Discover the CatalogLookup service via discovery service
-    // the service name is the same as the one provided in the Application configure method
-    serviceURL = context.getServiceURL("PurchaseHistory", PurchaseApp.SERVICE_NAME);
-  }
 
   /**
    *
@@ -58,6 +49,10 @@ public class PurchaseProcedure extends AbstractProcedure {
     if (product == null) {
       responder.error(ProcedureResponse.Code.CLIENT_ERROR, "Product must be given as argument");
     }
+
+    // Discover the CatalogLookup service via discovery service
+    // The service name is the same as the one provided in the Application configure method
+    URL serviceURL = getContext().getServiceURL("PurchaseHistory", PurchaseApp.SERVICE_NAME);
     if (serviceURL == null) {
       responder.error(ProcedureResponse.Code.NOT_FOUND, "serviceURL is null");
     }

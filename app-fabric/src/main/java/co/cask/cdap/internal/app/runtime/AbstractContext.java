@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 import java.util.Set;
@@ -162,12 +163,9 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
                                                                                         serviceId));
 
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
-    if (new TimeLimitEndpointStrategy(endpointStrategy, 300L, TimeUnit.MILLISECONDS).pick() == null) {
-      LOG.debug("Discoverable endpoint not found for appID: {}, serviceID: {}.", applicationId, serviceId);
-    }
-    Discoverable discoverable = endpointStrategy.pick();
-
+    Discoverable discoverable = new TimeLimitEndpointStrategy(endpointStrategy, 300L, TimeUnit.MILLISECONDS).pick();
     if (discoverable == null) {
+      LOG.debug("Discoverable endpoint not found for appID: {}, serviceID: {}.", applicationId, serviceId);
       return null;
     }
 
@@ -177,12 +175,12 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
     String path = String.format("http://%s:%d%s/apps/%s/services/%s/methods/", hostName, port,
                                 Constants.Gateway.GATEWAY_VERSION, applicationId, serviceId);
 
-    URL url = null;
     try {
-      url = new URL(path);
-    } catch (Throwable th) {
+      return new URL(path);
+    } catch (MalformedURLException e) {
+      LOG.error("Got exception while creating serviceURL", e);
+      return null;
     }
-    return url;
   }
 
   @Override
