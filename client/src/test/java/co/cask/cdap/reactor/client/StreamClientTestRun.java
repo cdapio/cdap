@@ -112,4 +112,32 @@ public class StreamClientTestRun extends ClientTestBase {
       Assert.assertEquals("Testing " + i, Charsets.UTF_8.decode(events.get(i - 1).getBody()).toString());
     }
   }
+
+  /**
+   * Tests for async write to stream.
+   */
+  @Test
+  public void testAsyncWrite() throws IOException, BadRequestException, StreamNotFoundException {
+    String streamId = "testAsync";
+
+    streamClient.create(streamId);
+
+    // Send 10 async writes
+    int msgCount = 10;
+    for (int i = 0; i < msgCount; i++) {
+      streamClient.asyncSendEvent(streamId, "Testing " + i);
+    }
+
+    // Performs a sync write. Since there is only one writer instance, a sync writes completion implies all
+    // async writes previously also get persisted.
+    streamClient.sendEvent(streamId, "Testing " + msgCount);
+
+    // Reads them back to verify
+    List<StreamEvent> events = Lists.newArrayList();
+    streamClient.getEvents(streamId, 0, Long.MAX_VALUE, msgCount + 1, events);
+
+    for (int i = 0; i <= msgCount; i++) {
+      Assert.assertEquals("Testing " + i, Charsets.UTF_8.decode(events.get(i).getBody()).toString());
+    }
+  }
 }

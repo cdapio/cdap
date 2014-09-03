@@ -38,7 +38,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -107,15 +106,25 @@ public class StreamClient {
    * @throws IOException if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified ID was not found
    */
-  public void sendEvent(String streamId, String event) throws IOException, StreamNotFoundException,
-    UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL(String.format("streams/%s", streamId));
-    HttpRequest request = HttpRequest.post(url).withBody(event).build();
+  public void sendEvent(String streamId, String event) throws IOException,
+                                                              StreamNotFoundException,
+                                                              UnAuthorizedAccessTokenException {
+    writeEvent(config.resolveURL(String.format("streams/%s", streamId)), streamId, event);
+  }
 
-    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(streamId);
-    }
+  /**
+   * Sends an event to a stream. The writes is asynchronous, meaning when this method returns, it only guarantees
+   * the event has been received by the server, but may not get persisted.
+   *
+   * @param streamId ID of the stream
+   * @param event event to send to the stream
+   * @throws IOException if a network error occurred
+   * @throws StreamNotFoundException if the stream with the specified ID was not found
+   */
+  public void asyncSendEvent(String streamId, String event) throws IOException,
+                                                                   StreamNotFoundException,
+                                                                   UnAuthorizedAccessTokenException {
+    writeEvent(config.resolveURL(String.format("streams/%s/async", streamId)), streamId, event);
   }
 
   /**
@@ -232,6 +241,19 @@ public class StreamClient {
       // No need to close reader, the urlConn.disconnect in finally will close all underlying streams
     } finally {
       urlConn.disconnect();
+    }
+  }
+
+  /**
+   * Writes stream event using the given URL. The write maybe sync or async, depending on the URL.
+   */
+  private void writeEvent(URL url, String streamId, String event) throws IOException,
+                                                                         StreamNotFoundException,
+                                                                         UnAuthorizedAccessTokenException {
+    HttpRequest request = HttpRequest.post(url).withBody(event).build();
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new StreamNotFoundException(streamId);
     }
   }
 }

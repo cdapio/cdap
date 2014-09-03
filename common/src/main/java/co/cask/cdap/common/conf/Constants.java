@@ -219,6 +219,8 @@ public final class Constants {
     public static final String STREAM_HANDLER = "stream.handler";
     public static final String ADDRESS = "stream.bind.address";
     public static final String WORKER_THREADS = "stream.worker.threads";
+    public static final String ASYNC_WORKER_THREADS = "stream.async.worker.threads";
+    public static final String ASYNC_QUEUE_SIZE = "stream.async.queue.size";
 
     // YARN container configurations.
     public static final String CONTAINER_VIRTUAL_CORES = "stream.container.num.cores";
