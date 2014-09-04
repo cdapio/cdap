@@ -51,7 +51,7 @@ public abstract class AbstractHBaseTableUtilTest {
   @BeforeClass
   public static void beforeClass() throws Exception {
     testHBase = new HBaseTestFactory().get();
-    testHBase.startHBase(false);
+    testHBase.startHBase();
     hAdmin = new HBaseAdmin(testHBase.getConfiguration());
   }
 
