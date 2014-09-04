@@ -4,6 +4,11 @@
 
 define(['core/models/program'], function (Program) {
 
+  var EXPECTED_FIELDS = [
+      'name',
+      'description'
+  ];
+
 	var Model = Program.extend({
 	  type: 'Spark',
     plural: 'Spark',
@@ -19,8 +24,21 @@ define(['core/models/program'], function (Program) {
 
     	this.set('id', this.get('app') + ':' + this.get('name'));
     	this.set('description', this.get('meta') || 'Spark');
+    	if (this.get('meta')) {
+        this.set('startTime', this.get('meta').startTime);
+      }
 
     },
+
+    getStartDate: function() {
+      var time = parseInt(this.get('startTime'), 10);
+      return new Date(time).toString('MMM d, yyyy');
+    }.property('startTime'),
+
+    getStartHours: function() {
+      var time = parseInt(this.get('startTime'), 10);
+      return new Date(time).toString('hh:mm tt');
+    }.property('startTime'),
 
     context: function () {
 
@@ -59,6 +77,12 @@ define(['core/models/program'], function (Program) {
 
       http.rest('apps', app_id, 'spark', spark_id, function (model, error) {
 
+          var model = self.transformModel(model);
+          model.app = app_id;
+          model = C.Spark.create(model);
+          model.id = spark_id;
+          model.name = spark_id;
+
       		http.rest('apps', app_id, 'spark', spark_id, 'status', function (response) {
       			if (!$.isEmptyObject(response)) {
       				model.set('currentState', response.status);
@@ -71,6 +95,19 @@ define(['core/models/program'], function (Program) {
       });
 
       return promise;
+    },
+
+    transformModel: function (model) {
+
+      var newModel = {};
+      for (var i = EXPECTED_FIELDS.length - 1; i >= 0; i--) {
+        newModel[EXPECTED_FIELDS[i]] = model[EXPECTED_FIELDS[i]];
+      }
+      if ('appId' in model || 'applicationId' in model) {
+        newModel.appId = model.appId || model.applicationId;
+      }
+      return newModel;
+
     }
   });
 

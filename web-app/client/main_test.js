@@ -43,6 +43,8 @@ define(['main'], function(Main) {
 			expect(Main.ProceduresRoute).toBeDefined();
 			expect(Main.StreamRoute).toBeDefined();
 			expect(Main.StreamsRoute).toBeDefined();
+			expect(Main.SparkLogRoute).toBeDefined();
+      expect(Main.SparkRoute).toBeDefined();
 		});
 
 	});

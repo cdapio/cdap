@@ -117,7 +117,11 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		});
 		this.resource('Dataset', { path: '/datasets/:dataset_id' });
 
-    this.resource('Spark', { path: '/spark/:spark_id' });
+    this.resource('Spark', { path: '/spark/:spark_id' }, function() {
+
+ 			this.route('Log', { path: '/log'});
+
+ 		});
 
 		this.resource('Procedures', { path: '/procedures' });
 		this.resource('Procedure', { path: '/procedures/:procedure_id' }, function () {
@@ -358,9 +362,16 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		StreamRoute: basicRouter.extend(),
 
     SparkRoute: Ember.Route.extend({
-      model: function() {
-        return this.modelFor('Spark');
-      }
+      model: modelFinder
+    }),
+
+    SparkLogRoute: basicRouter.extend({
+    	model: function () {
+    		return this.modelFor('Spark');
+    	},
+    	renderTemplate: function () {
+    		this.render('Runnable/Log');
+    	}
     }),
 
 		/*
