@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright 2014 Cask, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,18 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.api.service;
+package co.cask.cdap.data2.util.hbase;
 
-import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.test.XSlowTests;
+import org.junit.experimental.categories.Category;
 
 /**
- * Context for custom Service workers.
+ *
  */
-public interface ServiceWorkerContext extends RuntimeContext {
+@Category(XSlowTests.class)
+public class HBase96TableUtilTest extends AbstractHBaseTableUtilTest {
 
-  /**
-   * Execute a set of operations on datasets via a {@link TxRunnable} that are committed as a single transaction.
-   * @param runnable
-   */
-  void execute(TxRunnable runnable);
+  @Override
+  protected HBaseTableUtil getTableUtil() {
+    return new HBase96TableUtil();
+  }
 }

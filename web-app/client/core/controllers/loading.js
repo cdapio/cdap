@@ -8,7 +8,7 @@ define([], function () {
 
       load: function () {
         var self = this;
-
+        self.set('loadingComplete', false);
         self.set('serviceStatuses', []);
 
         /**
@@ -45,7 +45,7 @@ define([], function () {
               setTimeout(function() {
                 clearInterval(self.interval);
                 $("#warning").hide();
-                self.transitionToRoute('Overview');
+                self.set('loadingComplete', true);
               }, 500);
             }
 

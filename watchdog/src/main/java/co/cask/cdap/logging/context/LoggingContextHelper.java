@@ -40,7 +40,7 @@ public final class LoggingContextHelper {
    * Defines entity types.
    */
   public enum EntityType {
-    FLOW, PROCEDURE, MAP_REDUCE, SERVICE
+    FLOW, PROCEDURE, MAP_REDUCE, SPARK, SERVICE
   }
 
   public static LoggingContext getLoggingContext(Map<String, String> tags) {
@@ -71,6 +71,8 @@ public final class LoggingContextHelper {
     } else if (tags.containsKey(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID)) {
       return new MapReduceLoggingContext(accountId, applicationId,
                                          tags.get(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID));
+    } else if (tags.containsKey(SparkLoggingContext.TAG_SPARK_JOB_ID)) {
+        return new SparkLoggingContext(accountId, applicationId, tags.get(SparkLoggingContext.TAG_SPARK_JOB_ID));
     } else if (tags.containsKey(ProcedureLoggingContext.TAG_PROCEDURE_ID)) {
       return new ProcedureLoggingContext(accountId, applicationId,
                                          tags.get(ProcedureLoggingContext.TAG_PROCEDURE_ID));
@@ -102,6 +104,8 @@ public final class LoggingContextHelper {
         return new ProcedureLoggingContext(accountId, applicationId, entityId);
       case MAP_REDUCE:
         return new MapReduceLoggingContext(accountId, applicationId, entityId);
+      case SPARK:
+        return new SparkLoggingContext(accountId, applicationId, entityId);
       case SERVICE:
         return new UserServiceLoggingContext(accountId, applicationId, entityId, "");
       default:
@@ -134,6 +138,9 @@ public final class LoggingContextHelper {
       } else if (loggingContext instanceof MapReduceLoggingContext) {
         tagName = MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID;
         entityId = loggingContext.getSystemTagsMap().get(tagName).getValue();
+      } else if (loggingContext instanceof SparkLoggingContext) {
+        tagName = SparkLoggingContext.TAG_SPARK_JOB_ID;
+        entityId = loggingContext.getSystemTagsMap().get(tagName).getValue();
       } else if (loggingContext instanceof UserServiceLoggingContext) {
         tagName = UserServiceLoggingContext.TAG_USERSERVICE_ID;
         entityId = loggingContext.getSystemTagsMap().get(tagName).getValue();
@@ -157,6 +164,7 @@ public final class LoggingContextHelper {
     FlowletLoggingContext flowletLoggingContext = new FlowletLoggingContext(accountId, applicationId, entityId, "");
     ProcedureLoggingContext procedureLoggingContext = new ProcedureLoggingContext(accountId, applicationId, entityId);
     MapReduceLoggingContext mapReduceLoggingContext = new MapReduceLoggingContext(accountId, applicationId, entityId);
+    SparkLoggingContext sparkLoggingContext = new SparkLoggingContext(accountId, applicationId, entityId);
     UserServiceLoggingContext userServiceLoggingContext = new UserServiceLoggingContext(accountId, applicationId,
                                                                                         entityId, "");
 
@@ -165,6 +173,7 @@ public final class LoggingContextHelper {
       ImmutableList.of(createFilter(flowletLoggingContext),
                        createFilter(procedureLoggingContext),
                        createFilter(mapReduceLoggingContext),
+                       createFilter(sparkLoggingContext),
                        createFilter(userServiceLoggingContext)
       )
     );

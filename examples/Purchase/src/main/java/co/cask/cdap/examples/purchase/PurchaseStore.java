@@ -20,12 +20,8 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import com.google.common.base.Charsets;
-import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,22 +36,14 @@ public class PurchaseStore extends AbstractFlowlet {
   @UseDataSet("purchases")
   private ObjectStore<Purchase> store;
   private static final Logger LOG = LoggerFactory.getLogger(PurchaseStore.class);
-  private ServiceDiscovered serviceDiscovered;
 
-  @Override
-  public void initialize(FlowletContext context) {
-    //Discover the UserInterestsLookup service via discovery service
-    // the service name and runnable are the same as the one provided in the Application configure method
-    serviceDiscovered = context.discover("PurchaseHistory", PurchaseApp.SERVICE_NAME, PurchaseApp.SERVICE_NAME);
-  }
   @ProcessInput
   public void process(Purchase purchase) {
-    Discoverable discoverable = Iterables.getFirst(serviceDiscovered, null);
-    if (discoverable != null) {
-      // Look up user preference by calling the HTTP service that is started by UserPreferenceService.
-      String hostName = discoverable.getSocketAddress().getHostName();
-      int port = discoverable.getSocketAddress().getPort();
-      String catalog = getCatalogId(hostName, port, purchase.getProduct());
+    // Discover the CatalogLookup service via discovery service
+    // the service name is the same as the one provided in the Application configure method
+    URL serviceURL = getContext().getServiceURL("PurchaseHistory", PurchaseApp.SERVICE_NAME);
+    if (serviceURL != null) {
+      String catalog = getCatalogId(serviceURL, purchase.getProduct());
       if (catalog != null) {
         purchase.setCatalogId(catalog);
       }
@@ -69,9 +57,9 @@ public class PurchaseStore extends AbstractFlowlet {
    * Make an HTTP call to the catalog service for a given product.
    * @return the catalog ID of the product, or null in case of error
    */
-  private String getCatalogId(String host, int port, String productId) {
+  private String getCatalogId(URL baseURL, String productId) {
     try {
-      URL url = new URL(String.format("http://%s:%d/v1/product/%s/catalog", host, port, productId));
+      URL url = new URL(baseURL, String.format("v1/product/%s/catalog", productId));
       HttpURLConnection conn = (HttpURLConnection) url.openConnection();
       if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
         try {

@@ -23,9 +23,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A default implementation of {@link ServiceConfigurer}.
@@ -36,6 +38,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   private Map<String, String> properties;
   private List<ServiceWorker> workers;
   private List<HttpServiceHandler> handlers;
+  private Set<String> datasets;
 
   /**
    * Create an instance of {@link DefaultServiceConfigurer}
@@ -44,6 +47,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
     this.workers = Lists.newArrayList();
     this.properties = Maps.newHashMap();
     this.handlers = Lists.newArrayList();
+    this.datasets = Sets.newHashSet();
   }
 
   @Override
@@ -104,5 +108,20 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   @Override
   public Map<String, String> getProperties() {
     return this.properties;
+  }
+
+  @Override
+  public void useDataset(String dataset) {
+    datasets.add(dataset);
+  }
+
+  @Override
+  public void useDatasets(Iterable<String> datasets) {
+    Iterables.addAll(this.datasets, datasets);
+  }
+
+  @Override
+  public Set<String> getDatasets() {
+    return datasets;
   }
 }
