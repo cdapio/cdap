@@ -20,6 +20,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import co.cask.cdap.gateway.GatewayTestBase;
+import co.cask.cdap.proto.StreamProperties;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
@@ -31,6 +32,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
@@ -108,6 +110,40 @@ public class StreamHandlerTest extends GatewayTestBase {
       Assert.assertEquals(i, actual);
       Assert.assertEquals(Integer.toString(i), event.getHeaders().get("header1"));
     }
+    urlConn.disconnect();
+  }
+
+  @Test
+  public void testStreamInfo() throws Exception {
+    int port = GatewayTestBase.getPort();
+
+    // Now, create the new stream.
+    HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/stream_info",
+                                                      HOSTNAME, port), HttpMethod.PUT);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    urlConn.disconnect();
+
+    //config ttl for the stream
+    urlConn = openURL(String.format("http://%s:%d/v2/streams/stream_info/config",
+                                    HOSTNAME, port), HttpMethod.PUT);
+
+    urlConn.setDoOutput(true);
+    String urlParameters = "{\"ttl\"=\"2\"}";
+
+    OutputStreamWriter out = new OutputStreamWriter(urlConn.getOutputStream());
+    out.write(urlParameters);
+    out.flush();
+    out.close();
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    urlConn.disconnect();
+
+    // test the config ttl by calling info
+    urlConn = openURL(String.format("http://%s:%d/v2/streams/stream_info/info", HOSTNAME, port),
+                      HttpMethod.GET);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    StreamProperties properties = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
+                                                        Charsets.UTF_8), StreamProperties.class);
+    Assert.assertEquals(2, properties.getTTL());
     urlConn.disconnect();
   }
 }
