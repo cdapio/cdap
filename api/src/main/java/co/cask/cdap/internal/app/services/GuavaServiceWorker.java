@@ -23,7 +23,6 @@ import org.apache.twill.common.Services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
@@ -31,18 +30,19 @@ import java.util.concurrent.Future;
  */
 public final class GuavaServiceWorker extends AbstractServiceWorker {
   private static final Logger LOG = LoggerFactory.getLogger(GuavaServiceWorker.class);
+
   private Service delegate;
-  Future<Service.State> completion;
+  private Future<Service.State> completion;
 
   public GuavaServiceWorker(Service service) {
     this.delegate = service;
   }
 
-  protected Service getDelegate() {
+  Service getDelegate() {
     return delegate;
   }
 
-  protected void setDelegate(Service service) {
+  void setDelegate(Service service) {
     this.delegate = service;
   }
 
@@ -66,9 +66,7 @@ public final class GuavaServiceWorker extends AbstractServiceWorker {
   public void run() {
     try {
       completion.get();
-    } catch (InterruptedException e) {
-      LOG.error("Caught exception while running guava service: ", e);
-    } catch (ExecutionException e) {
+    } catch (Exception e) {
       LOG.error("Caught exception while running guava service: ", e);
     }
   }

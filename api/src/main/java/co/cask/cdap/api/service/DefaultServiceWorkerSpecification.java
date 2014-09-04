@@ -18,7 +18,7 @@ package co.cask.cdap.api.service;
 
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
-import com.google.common.collect.Maps;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import org.apache.twill.api.ResourceSpecification;
 
@@ -47,7 +47,7 @@ public class DefaultServiceWorkerSpecification implements ServiceWorkerSpecifica
     this.className = serviceWorker.getClass().getName();
     this.name = name;
     this.description = description;
-    this.properties = Maps.newHashMap(properties);
+    this.properties = ImmutableMap.copyOf(properties);
     this.resourceSpecification = resourceSpecification;
 
     Reflections.visit(serviceWorker, TypeToken.of(serviceWorker.getClass()),
