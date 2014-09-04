@@ -32,6 +32,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import org.apache.twill.api.RunId;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -44,7 +45,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -159,33 +160,40 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
 
   @Override
   public URL getServiceURL(String applicationId, String serviceId) {
-    final CountDownLatch discoveryLatch = new CountDownLatch(1);
     ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(String.format("service.%s.%s.%s",
                                                                                         getAccountId(),
                                                                                         applicationId,
                                                                                         serviceId));
-    serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
-      @Override
-      public void onChange(ServiceDiscovered serviceDiscovered) {
-        if (!Iterables.isEmpty(serviceDiscovered)) {
-          discoveryLatch.countDown();
-        }
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-
-    try {
-      discoveryLatch.await(1, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      LOG.error("Got exception: ", e);
-    }
-
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
     Discoverable discoverable = endpointStrategy.pick();
+    if (discoverable == null) {
+      final SynchronousQueue<Discoverable> discoverableQueue = new SynchronousQueue<Discoverable>();
+      Cancellable discoveryCancel = serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
+        @Override
+        public void onChange(ServiceDiscovered serviceDiscovered) {
+          if (!Iterables.isEmpty(serviceDiscovered)) {
+            try {
+              discoverableQueue.put(serviceDiscovered.iterator().next());
+            } catch (InterruptedException e) {
+              LOG.error("Got exception: ", e);
+            }
+          }
+        }
+      }, Threads.SAME_THREAD_EXECUTOR);
+
+      try {
+        discoverable = discoverableQueue.poll(1, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        LOG.error("Got exception: ", e);
+      }
+      discoveryCancel.cancel();
+    }
+
+
     if (discoverable == null) {
       LOG.debug("Discoverable endpoint not found for appID: {}, serviceID: {}.", applicationId, serviceId);
       return null;
     }
-
     String hostName = discoverable.getSocketAddress().getHostName();
     int port = discoverable.getSocketAddress().getPort();
 
