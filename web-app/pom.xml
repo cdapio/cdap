@@ -29,6 +29,14 @@
   <artifactId>web-app</artifactId>
   <name>Cask CDAP Web-App</name>
 
+  <dependencies>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+
   <build>
     <plugins>
       <plugin>
