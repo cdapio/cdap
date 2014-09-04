@@ -17,12 +17,7 @@ define(['core/models/program'], function (Program) {
 
     	this._super();
 
-    	this.set('name', (this.get('sparkId') || this.get('id') || this.get('meta').name));
-
-    	this.set('app', this.get('applicationId') || this.get('app') || this.get('meta').app);
-    	this.set('id', this.get('app') + ':' +
-    	  (this.get('sparkId') || this.get('id') || this.get('meta').name));
-
+    	this.set('id', this.get('app') + ':' + this.get('name'));
     	this.set('description', this.get('meta') || 'Spark');
 
     },
@@ -53,18 +48,18 @@ define(['core/models/program'], function (Program) {
   Model.reopenClass({
     type: 'Spark',
     kind: 'Model',
-    find: function(spark_id, http) {
+    find: function(model_id, http) {
 
       var self = this,
         promise = Ember.Deferred.create(),
 
         model_id = model_id.split(':'),
         app_id = model_id[0],
-        flow_id = model_id[1];
+        spark_id = model_id[1];
 
-      http.rest('apps', app_id, 'spark', flow_id, function (model, error) {
+      http.rest('apps', app_id, 'spark', spark_id, function (model, error) {
 
-      		http.rest('apps', app_id, 'spark', flow_id, 'status', function (response) {
+      		http.rest('apps', app_id, 'spark', spark_id, 'status', function (response) {
       			if (!$.isEmptyObject(response)) {
       				model.set('currentState', response.status);
       				promise.resolve(model);
