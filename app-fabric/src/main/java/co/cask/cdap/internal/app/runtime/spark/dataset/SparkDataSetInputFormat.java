@@ -19,13 +19,14 @@ package co.cask.cdap.internal.app.runtime.spark.dataset;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.internal.app.runtime.spark.BasicSparkContext;
 import co.cask.cdap.internal.app.runtime.spark.SparkContextConfig;
 import co.cask.cdap.internal.app.runtime.spark.SparkContextProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -37,18 +38,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * An {@link InputFormat} that reads from dataset.
- * @param <KEY> Type of key.
+ * An {@link InputFormat} for {@link Spark} jobs that reads from {@link Dataset}.
+ *
+ * @param <KEY>   Type of key.
  * @param <VALUE> Type of value.
+ *                TODO: Refactor this and MapReduce DatasetInputFormat
  */
-public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE> {
-  private static final Logger LOG = LoggerFactory.getLogger(DataSetInputFormat.class);
+public final class SparkDatasetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE> {
+  private static final Logger LOG = LoggerFactory.getLogger(SparkDatasetInputFormat.class);
   public static final String HCONF_ATTR_INPUT_DATASET = "input.dataset.name";
-
-  public static void setInput(Job job, String inputDatasetName) {
-    job.setInputFormatClass(DataSetInputFormat.class);
-    job.getConfiguration().set(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET, inputDatasetName);
-  }
 
   @Override
   public List<InputSplit> getSplits(final JobContext context) throws IOException, InterruptedException {
@@ -56,7 +54,7 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
     List<Split> splits = sparkContextConfig.getInputSelection();
     List<InputSplit> list = new ArrayList<InputSplit>();
     for (Split split : splits) {
-      list.add(new DataSetInputSplit(split));
+      list.add(new DatasetInputSplit(split));
     }
     return list;
   }
@@ -67,14 +65,12 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
                                                      final TaskAttemptContext context)
     throws IOException, InterruptedException {
 
-    DataSetInputSplit inputSplit = (DataSetInputSplit) split;
+    DatasetInputSplit inputSplit = (DatasetInputSplit) split;
 
     Configuration conf = context.getConfiguration();
-    // we don't currently allow datasets as the format between map and reduce stages, otherwise we'll have to
-    // pass in the stage here instead of hardcoding mapper.
     SparkContextProvider contextProvider = new SparkContextProvider(context.getConfiguration());
     BasicSparkContext sparkContext = contextProvider.get();
-    //sparkContext.getMetricsCollectionService().startAndWait();
+    //TODO: Metrics should be started here when implemented
     String dataSetName = getInputName(conf);
     BatchReadable<KEY, VALUE> inputDataset = (BatchReadable<KEY, VALUE>) sparkContext.getDataSet(dataSetName);
     SplitReader<KEY, VALUE> splitReader = inputDataset.createSplitReader(inputSplit.getSplit());

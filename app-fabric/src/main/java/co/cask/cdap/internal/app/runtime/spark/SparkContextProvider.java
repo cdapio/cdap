@@ -20,15 +20,11 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.spark.inmemory.InMemorySparkContextBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.MRConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Provides access to SparkContext for Spark job tasks
  */
 public class SparkContextProvider {
-
-  private static final Logger LOG = LoggerFactory.getLogger(SparkContextProvider.class);
 
   private final Configuration hConf;
   private final SparkContextConfig contextConfig;
@@ -64,16 +60,11 @@ public class SparkContextProvider {
 
   private synchronized AbstractSparkContextBuilder getBuilder(CConfiguration conf) {
     if (contextBuilder == null) {
-      //TODO: This should be changed to determine mode from SparkProgramRunner
       String mrFramework = hConf.get(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
       if ("local".equals(mrFramework)) {
         contextBuilder = new InMemorySparkContextBuilder(conf);
       } else {
-        // mrFramework = "yarn" or "classic"
-        // if the jobContext is not a TaskAttemptContext, mrFramework should not be yarn.
         throw new RuntimeException("Spark does not run in distributed mode right now");
-//        contextBuilder = new DistributedMapReduceContextBuilder(
-//          conf, HBaseConfiguration.create(taskContext.getConfiguration()), taskContext);
       }
     }
     return contextBuilder;

@@ -20,7 +20,6 @@ import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.internal.app.runtime.spark.BasicSparkContext;
 import co.cask.cdap.internal.app.runtime.spark.SparkContextProvider;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.OutputFormat;
@@ -33,32 +32,26 @@ import java.io.IOException;
 
 /**
  * An {@link OutputFormat} for writing into dataset.
- * @param <KEY> Type of key.
+ *
+ * @param <KEY>   Type of key.
  * @param <VALUE> Type of value.
+ *                TODO: Refactor this OutputFormat and MapReduce OutputFormat
  */
-public final class DataSetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VALUE> {
-  private static final Logger LOG = LoggerFactory.getLogger(DataSetOutputFormat.class);
+public final class SparkDatasetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VALUE> {
+  private static final Logger LOG = LoggerFactory.getLogger(SparkDatasetOutputFormat.class);
   public static final String HCONF_ATTR_OUTPUT_DATASET = "output.dataset.name";
-
-  public static void setOutput(Job job, String outputDatasetName) {
-    job.setOutputFormatClass(DataSetOutputFormat.class);
-    job.getConfiguration().set(HCONF_ATTR_OUTPUT_DATASET, outputDatasetName);
-  }
 
   @Override
   public RecordWriter<KEY, VALUE> getRecordWriter(final TaskAttemptContext context)
     throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
-    // we don't currently allow datasets as the format between map and reduce stages, otherwise we'll have to
-    // pass in the stage here instead of hardcoding reducer.
     SparkContextProvider contextProvider = new SparkContextProvider(context.getConfiguration());
     BasicSparkContext sparkContext = contextProvider.get();
-//    mrContext.getMetricsCollectionService().startAndWait();
-    @SuppressWarnings("unchecked")
+    //TODO: Metrics collection needs to be started here once implemented
     BatchWritable<KEY, VALUE> dataset = (BatchWritable<KEY, VALUE>) sparkContext.getDataSet(getOutputDataSet(conf));
 
     // the record writer now owns the context and will close it
-    return new DataSetRecordWriter<KEY, VALUE>(dataset, sparkContext);
+    return new DatasetRecordWriter<KEY, VALUE>(dataset, sparkContext);
   }
 
   private String getOutputDataSet(Configuration conf) {
@@ -72,6 +65,6 @@ public final class DataSetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VAL
 
   @Override
   public OutputCommitter getOutputCommitter(final TaskAttemptContext context) throws IOException, InterruptedException {
-    return new DataSetOutputCommitter();
+    return new DatasetOutputCommitter();
   }
 }

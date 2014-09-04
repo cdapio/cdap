@@ -35,8 +35,8 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
-import co.cask.cdap.internal.app.runtime.spark.dataset.DataSetInputFormat;
-import co.cask.cdap.internal.app.runtime.spark.dataset.DataSetOutputFormat;
+import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
+import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.continuuity.tephra.Transaction;
@@ -51,6 +51,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.ProvisionException;
@@ -73,7 +74,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.jar.JarEntry;
@@ -88,7 +88,7 @@ public class SparkProgramRunner implements ProgramRunner {
   public static final String SPARK_HCONF_FILENAME = "spark_hconf.xml";
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRunner.class);
-  public static final int DEFAULT_TEMP_BUFFER_SIZE = 32768;
+  private static final int DEFAULT_TEMP_BUFFER_SIZE = 32768;
 
   private final DatasetFramework datasetFramework;
   private final Configuration hConf;
@@ -213,7 +213,7 @@ public class SparkProgramRunner implements ProgramRunner {
           // note: this sets logging context on the thread level
           LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
 
-          LOG.info("Submitting Saprk Job: {}", context.toString());
+          LOG.info("Submitting Spark Job: {}", context.toString());
 
           ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
           Thread.currentThread().setContextClassLoader(conf.getClassLoader());
@@ -249,7 +249,7 @@ public class SparkProgramRunner implements ProgramRunner {
    *
    * @param sparkSpec     {@link SparkSpecification} of this job
    * @param conf          {@link Configuration} of the job whose {@link MRConfig#FRAMEWORK_NAME} specifies the mode in
-   *                                           which spark runs
+   *                      which spark runs
    * @param jobJarCopy    {@link Location} copy of user program
    * @param dependencyJar {@link Location} jar containing the dependencies of this job
    * @return String[] of arguments with which {@link SparkJobWrapper} will be submitted
@@ -358,15 +358,15 @@ public class SparkProgramRunner implements ProgramRunner {
     Set<URI> resources = Sets.newHashSet();
 
     classes.add(Spark.class);
-    classes.add(DataSetInputFormat.class);
-    classes.add(DataSetOutputFormat.class);
+    classes.add(SparkDatasetInputFormat.class);
+    classes.add(SparkDatasetOutputFormat.class);
     classes.add(SparkJobWrapper.class);
     classes.add(SparkContextFactory.class);
     classes.add(JavaSparkContext.class);
     classes.add(ScalaSparkContext.class);
 
     /**
-     * We have to add this Hadoop {@link Configuration} to the dependency jar so thay when the Spark job runs outside
+     * We have to add this Hadoop {@link Configuration} to the dependency jar so that when the Spark job runs outside
      * CDAP it can create the {@link BasicMapReduceContext} to have access to our datasets, transactions etc.
      */
     resources.add(hConfLocation);
@@ -405,18 +405,11 @@ public class SparkProgramRunner implements ProgramRunner {
   private void deleteLocalHConf(URI hConfLocation) {
     // get the path to the folder containing this file
     String hConfLocationFolder = hConfLocation.toString().split(("/" + SPARK_HCONF_FILENAME), 2)[0];
-    File hConfFile = null;
     try {
-      hConfFile = new File(new URI(hConfLocationFolder));
-    } catch (URISyntaxException e) {
-      e.printStackTrace();
-    }
-    if (hConfFile.exists()) {
-      try {
-        FileUtils.deleteDirectory(hConfFile);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+      File hConfFile = new File(new URI(hConfLocationFolder));
+      FileUtils.deleteDirectory(hConfFile);
+    } catch (Exception e) {
+      LOG.warn("Failed to delete the local hadoop configuration");
     }
   }
 
@@ -425,7 +418,7 @@ public class SparkProgramRunner implements ProgramRunner {
    *
    * @param jobJarLocation {link Location} of the user's job
    * @param context        {@link BasicSparkContext} context of this job
-   * @return {@link Location} where the programn jar was copied
+   * @return {@link Location} where the program jar was copied
    * @throws IOException if failed to get the {@link Location#getInputStream()} or {@link Location#getOutputStream()}
    */
   private Location copyProgramJar(Location jobJarLocation, BasicSparkContext context) throws IOException {
@@ -489,11 +482,9 @@ public class SparkProgramRunner implements ProgramRunner {
               tmpJarOutputStream.putNextEntry(new JarEntry(entry.getName().split(ApplicationBundler.SUBDIR_CLASSES,
                                                                                  2)[1]));
             } else if (entry.getName().startsWith(ApplicationBundler.SUBDIR_LIB)) {
-
               tmpJarOutputStream.putNextEntry(new JarEntry(entry.getName().split(ApplicationBundler.SUBDIR_LIB,
                                                                                  2)[1]));
             } else {
-
               tmpJarOutputStream.putNextEntry(new JarEntry(entry.getName().split(ApplicationBundler.SUBDIR_RESOURCES,
                                                                                  2)[1]));
             }
@@ -509,9 +500,11 @@ public class SparkProgramRunner implements ProgramRunner {
         jarUpdated = true;
       } catch (Exception e) {
         LOG.warn("Failed to create the new job jar without folder hierarchy", e);
-        tmpJarOutputStream.putNextEntry(new JarEntry("stub"));
+        if (tmpJarOutputStream != null) {
+          tmpJarOutputStream.putNextEntry(new JarEntry("stub"));
+        }
       } finally {
-        tmpJarOutputStream.close();
+        Closeables.closeQuietly(tmpJarOutputStream);
       }
     } catch (IOException e) {
       LOG.warn("Failed to to get the jar file from the location {}", jobJar.toURI().toString(), e);
@@ -524,12 +517,14 @@ public class SparkProgramRunner implements ProgramRunner {
         LOG.warn("Failed to close the source jar", e);
       }
       if (!jarUpdated) {
-        tmpJobJarFile.delete();
+        FileUtils.deleteQuietly(tmpJobJarFile);
       }
     }
     if (jarUpdated) {
-      srcJarFile.delete();
-      tmpJobJarFile.renameTo(srcJarFile);
+      FileUtils.deleteQuietly(srcJarFile);
+      if (!tmpJobJarFile.renameTo(srcJarFile)) {
+        throw new RuntimeException("Failed to rename the updated job jar file with source jar file");
+      }
     }
   }
 

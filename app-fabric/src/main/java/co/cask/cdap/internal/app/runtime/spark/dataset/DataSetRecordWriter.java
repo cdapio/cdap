@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.spark.dataset;
 
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
 import co.cask.cdap.internal.app.runtime.spark.BasicSparkContext;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.mapreduce.RecordWriter;
@@ -29,13 +28,14 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
-  private static final Logger LOG = LoggerFactory.getLogger(DataSetRecordWriter.class);
+final class DatasetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
+  //TODO: Needs support for metrics
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetRecordWriter.class);
 
   private final BatchWritable<KEY, VALUE> batchWritable;
   private final BasicSparkContext sparkContext;
 
-  public DataSetRecordWriter(final BatchWritable<KEY, VALUE> batchWritable, BasicSparkContext sparkContext) {
+  public DatasetRecordWriter(final BatchWritable<KEY, VALUE> batchWritable, BasicSparkContext sparkContext) {
     this.batchWritable = batchWritable;
     this.sparkContext = sparkContext;
     // hack: making sure logging context is set on the thread that accesses the runtime context
@@ -60,7 +60,6 @@ final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
       sparkContext.close();
       // sleep to allow metrics to be emitted
       TimeUnit.SECONDS.sleep(2L);
-//      sparkContext.getMetricsCollectionService().stop();
     }
   }
 }

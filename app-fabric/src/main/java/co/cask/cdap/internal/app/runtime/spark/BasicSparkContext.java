@@ -41,7 +41,7 @@ import java.util.Set;
  */
 public class BasicSparkContext extends AbstractContext implements SparkContext {
 
-  // todo:  REACTOR-853: "InstanceId is not supported in Spark jobs" Talk to Sasha about it
+  // todo:  REACTOR-853: "InstanceId is not supported in Spark jobs"
   public static final String INSTANCE_ID = "0";
   private final Arguments runtimeArguments;
   private final SparkSpecification spec;
@@ -52,17 +52,10 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
   private final MetricsCollectionService metricsCollectionService;
   private final SparkLoggingContext loggingContext;
 
-  public BasicSparkContext(Program program,
-                           RunId runId,
-                           Arguments runtimeArguments,
-                           Set<String> datasets,
-                           SparkSpecification spec,
-                           long logicalStartTime,
-                           String workflowBatch,
-                           ProgramServiceDiscovery serviceDiscovery,
-                           MetricsCollectionService metricsCollectionService,
-                           DatasetFramework dsFramework,
-                           CConfiguration conf) {
+  public BasicSparkContext(Program program, RunId runId, Arguments runtimeArguments, Set<String> datasets,
+                           SparkSpecification spec, long logicalStartTime, String workflowBatch,
+                           ProgramServiceDiscovery serviceDiscovery, MetricsCollectionService metricsCollectionService,
+                           DatasetFramework dsFramework, CConfiguration conf) {
     super(program, runId, datasets, getMetricContext(program), metricsCollectionService, dsFramework, conf);
     this.accountId = program.getAccountId();
     this.runtimeArguments = runtimeArguments;

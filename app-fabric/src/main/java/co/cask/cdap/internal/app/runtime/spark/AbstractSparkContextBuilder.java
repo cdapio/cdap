@@ -60,14 +60,8 @@ public abstract class AbstractSparkContextBuilder {
    * @param programLocation  program location
    * @return instance of {@link BasicMapReduceContext}
    */
-  public BasicSparkContext build(String runId,
-                                 long logicalStartTime,
-                                 String workflowBatch,
-                                 Arguments runtimeArguments,
-                                 Transaction tx,
-                                 ClassLoader classLoader,
-                                 URI programLocation
-  ) {
+  public BasicSparkContext build(String runId, long logicalStartTime, String workflowBatch, Arguments runtimeArguments,
+                                 Transaction tx, ClassLoader classLoader, URI programLocation) {
     Injector injector = prepare();
 
     // Initializing Program
@@ -75,14 +69,7 @@ public abstract class AbstractSparkContextBuilder {
     Program program;
     try {
       program = Programs.create(locationFactory.create(programLocation), classLoader);
-      // See if it is launched from Workflow, if it is, change the Program.
       //TODO: This should be changed when we support Spark in Workflow
-//      if (workflowBatch != null) {
-//        SparkSpecification sparkSpecification = program.getSpecification().getSpark().get(workflowBatch);
-//        Preconditions.checkArgument(sparkSpecification != null, "Cannot find SparkSpecification for %s",
-//                                    workflowBatch);
-//        program = new WorkflowMapReduceProgram(program, sparkSpecification);
-//      }
     } catch (IOException e) {
       LOG.error("Could not init Program based on location: " + programLocation);
       throw Throwables.propagate(e);
@@ -103,9 +90,9 @@ public abstract class AbstractSparkContextBuilder {
     // Creating Spark job context
     SparkSpecification spec = program.getSpecification().getSpark().get(program.getName());
     BasicSparkContext context =
-      new BasicSparkContext(program, RunIds.fromString(runId),
-                            runtimeArguments, programSpec.getDatasets().keySet(), spec, logicalStartTime,
-                            workflowBatch, serviceDiscovery, metricsCollectionService, datasetFramework, configuration);
+      new BasicSparkContext(program, RunIds.fromString(runId), runtimeArguments, programSpec.getDatasets().keySet(),
+                            spec, logicalStartTime, workflowBatch, serviceDiscovery, metricsCollectionService,
+                            datasetFramework, configuration);
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code

@@ -27,7 +27,6 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.gateway.auth.AuthModule;
-import co.cask.cdap.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
 import co.cask.cdap.internal.app.runtime.spark.AbstractSparkContextBuilder;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -38,8 +37,6 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;

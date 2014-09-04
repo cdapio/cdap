@@ -21,8 +21,8 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.internal.app.runtime.spark.dataset.DataSetInputFormat;
-import co.cask.cdap.internal.app.runtime.spark.dataset.DataSetOutputFormat;
+import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
+import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
@@ -73,12 +73,12 @@ class ScalaSparkContext extends AbstractSparkContext {
       throw new IllegalArgumentException("Failed to read dataset " + datasetName + ". The dataset does not implements" +
                                            " BatchReadable");
     }
-    hConf.setClass(MRJobConfig.INPUT_FORMAT_CLASS_ATTR, DataSetInputFormat.class, InputFormat.class);
-    hConf.set(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET, datasetName);
+    hConf.setClass(MRJobConfig.INPUT_FORMAT_CLASS_ATTR, SparkDatasetInputFormat.class, InputFormat.class);
+    hConf.set(SparkDatasetInputFormat.HCONF_ATTR_INPUT_DATASET, datasetName);
     hConf.set(SparkContextConfig.HCONF_ATTR_INPUT_SPLIT_CLASS, inputSplits.get(0).getClass().getName());
     hConf.set(SparkContextConfig.HCONF_ATTR_INPUT_SPLITS, new Gson().toJson(inputSplits));
 
-    return (T) apacheContext.newAPIHadoopFile(datasetName, DataSetInputFormat.class, kClass, vClass, hConf);
+    return (T) apacheContext.newAPIHadoopFile(datasetName, SparkDatasetInputFormat.class, kClass, vClass, hConf);
   }
 
   /**
@@ -100,9 +100,9 @@ class ScalaSparkContext extends AbstractSparkContext {
     ClassTag<V> vClassTag = ClassTag$.MODULE$.apply(vClass);
     PairRDDFunctions pairRDD = new PairRDDFunctions<K, V>((RDD<Tuple2<K, V>>) rdd, kClassTag, vClassTag, null);
     Configuration hConf = new Configuration(getHConf());
-    hConf.set(DataSetOutputFormat.HCONF_ATTR_OUTPUT_DATASET, datasetName);
-    hConf.setClass(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, DataSetOutputFormat.class, OutputFormat.class);
-    pairRDD.saveAsNewAPIHadoopFile(datasetName, kClass, vClass, DataSetOutputFormat.class, hConf);
+    hConf.set(SparkDatasetOutputFormat.HCONF_ATTR_OUTPUT_DATASET, datasetName);
+    hConf.setClass(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, SparkDatasetOutputFormat.class, OutputFormat.class);
+    pairRDD.saveAsNewAPIHadoopFile(datasetName, kClass, vClass, SparkDatasetOutputFormat.class, hConf);
   }
 
   /**

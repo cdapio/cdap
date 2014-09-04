@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
-import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 
@@ -55,7 +54,7 @@ public final class SparkProgramController extends AbstractProgramController {
   }
 
   /**
-   * Returns the {@link MapReduceContext} for MapReduce run represented by this controller.
+   * Returns the {@link SparkContext} for Spark run represented by this controller.
    */
   public SparkContext getContext() {
     return context;

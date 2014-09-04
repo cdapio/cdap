@@ -22,7 +22,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 
-class DataSetOutputCommitter extends OutputCommitter {
+class DatasetOutputCommitter extends OutputCommitter {
   @Override
   public void setupJob(final JobContext jobContext) throws IOException {
     // DO NOTHING, see needsTaskCommit() comment

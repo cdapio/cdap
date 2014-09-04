@@ -17,11 +17,7 @@
 package co.cask.cdap.internal.app.runtime.spark.dataset;
 
 import co.cask.cdap.api.data.batch.SplitReader;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
 import co.cask.cdap.internal.app.runtime.spark.BasicSparkContext;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -37,37 +33,26 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
   private final SplitReader<KEY, VALUE> splitReader;
   private final BasicSparkContext context;
   private final String dataSetName;
-//  private final MetricsCollector dataSetMetrics;
+  //TODO: Needs support for metrics when implemented
 
-  public DataSetRecordReader(final SplitReader<KEY, VALUE> splitReader,
-                             BasicSparkContext context, String dataSetName) {
+  public DataSetRecordReader(final SplitReader<KEY, VALUE> splitReader, BasicSparkContext context, String dataSetName) {
     this.splitReader = splitReader;
     this.context = context;
     this.dataSetName = dataSetName;
-//    this.dataSetMetrics = context.getMetricsCollectionService().getCollector(
-//      MetricsScope.REACTOR, Constants.Metrics.DATASET_CONTEXT, "0");
   }
 
   @Override
   public void initialize(final InputSplit split, final TaskAttemptContext context) throws IOException,
-                                                                                          InterruptedException {
+    InterruptedException {
     // hack: making sure logging context is set on the thread that accesses the runtime context
     LoggingContextAccessor.setLoggingContext(this.context.getLoggingContext());
-    co.cask.cdap.internal.app.runtime.spark.dataset.DataSetInputSplit inputSplit = (co.cask.cdap.internal.app.runtime
-      .spark.dataset.DataSetInputSplit) split;
+    DatasetInputSplit inputSplit = (DatasetInputSplit) split;
     splitReader.initialize(inputSplit.getSplit());
   }
 
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
     boolean hasNext = splitReader.nextKeyValue();
-    if (hasNext) {
-      // splitreader doesn't increment these metrics, need to do it ourselves.
-//      context.getSystemMapperMetrics().gauge("store.reads", 1, dataSetName);
-//      context.getSystemMapperMetrics().gauge("store.ops", 1, dataSetName);
-//      dataSetMetrics.gauge("dataset.store.reads", 1, dataSetName);
-//      dataSetMetrics.gauge("dataset.store.ops", 1, dataSetName);
-    }
     return hasNext;
   }
 
@@ -97,8 +82,6 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
         TimeUnit.SECONDS.sleep(2L);
       } catch (InterruptedException e) {
         LOG.info("sleep interrupted while waiting for final metrics to be emitted", e);
-      } finally {
-//        context.getMetricsCollectionService().stop();
       }
     }
   }
