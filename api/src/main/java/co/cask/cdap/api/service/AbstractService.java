@@ -18,8 +18,6 @@ package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 
-import java.util.List;
-
 /**
  * An abstract implementation of {@link Service}. Users may extend this to write a {@link Service}.
  *

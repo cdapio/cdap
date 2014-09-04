@@ -31,7 +31,6 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.service.AbstractService;
-import co.cask.cdap.api.service.GuavaServiceTwillRunnable;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.spark.Spark;
@@ -50,7 +49,6 @@ import co.cask.cdap.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillRunnable;
@@ -202,17 +200,6 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
    */
   private void addService(TwillRunnable runnable, ResourceSpecification specification) {
     addService(new SingleRunnableApplication(runnable, specification));
-  }
-
-  /**
-   * Adds {@link Service} as a Custom Service {@link TwillApplication}
-   * to the Application.
-   * @param name Name of runnable.
-   * @param service Guava service to be added.
-   * @param specification ResourceSpecification for Twill container.
-   */
-  private void addService(String name, Service service, ResourceSpecification specification) {
-    addService(new GuavaServiceTwillRunnable(name, service), specification);
   }
 
   @Override
