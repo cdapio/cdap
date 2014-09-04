@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,6 +29,7 @@ import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
+import co.cask.cdap.hive.datasets.DatasetOutputFormat;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
@@ -55,6 +56,7 @@ import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.io.HiveFileFormatUtils;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
 import org.apache.hive.service.cli.FetchOrientation;
@@ -506,6 +508,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
       // No results or error, so can be timed out aggressively
       if (status.getStatus() == QueryStatus.OpStatus.FINISHED && !status.hasResults()) {
+        // In case of a query that writes to a Dataset, we will always fall into this condition,
+        // and timing out aggressively will also close the transaction and make the writes visible
         timeoutAggresively(handle, getResultSchema(handle), status);
       } else if (status.getStatus() == QueryStatus.OpStatus.ERROR) {
         // getResultSchema will fail if the query is in error
@@ -754,6 +758,14 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
     ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
     ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE, hConf);
+
+    // Help Hive - hack to HIVE-5515
+    // The output format class will be overwritten in case Hive wants to write to
+    // a native Hive-managed output format. However, because of the bug related in the JIRA,
+    // writing to an non-native hive table with an external output format like the one in
+    // HBaseStorageHandler will not work - as Hive will try to use the DatasetOutputFormat
+    HiveFileFormatUtils.setRealOutputFormatClassName(DatasetOutputFormat.class.getName());
+
     return sessionConf;
   }
 
@@ -838,9 +850,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                                              TxnCodec.INSTANCE);
       LOG.trace("Closing transaction {} for handle {}", tx, handle);
 
-      // Transaction doesn't involve any changes. We still commit it to take care of any side effect changes that
-      // SplitReader may have.
-      if (!(txClient.canCommit(tx, ImmutableList.<byte[]>of()) && txClient.commit(tx))) {
+      // Even if changes are empty, we still commit the tx to take care of
+      // any side effect changes that SplitReader may have.
+      if (!(txClient.commit(tx))) {
         txClient.abort(tx);
         LOG.info("Aborting transaction: {}", tx);
       }
@@ -964,33 +976,5 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     public QueryStatus getStatus() {
       return status;
     }
-  }
-
-  /**
-   * Contains the results of a Hive operation execution as well as the schema of those.
-   */
-  private static class OperationResultInfo {
-    private final List<QueryResult> results;
-    private final List<ColumnDesc> schema;
-
-    private OperationResultInfo(List<QueryResult> results, List<ColumnDesc> schema) {
-      this.results = results;
-      this.schema = schema;
-    }
-
-    public List<ColumnDesc> getSchema() {
-      return schema;
-    }
-
-    public List<QueryResult> getResults() {
-      return results;
-    }
-  }
-
-  /**
-   * Produces a Hive {@link OperationHandle}.
-   */
-  private interface HandleProducer {
-    OperationHandle getHandle(SessionHandle sessionHandle) throws ExploreException, SQLException;
   }
 }

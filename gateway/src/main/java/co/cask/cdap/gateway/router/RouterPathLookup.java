@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,7 +57,9 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
         return fallbackService;
       }
 
-      if ((uriParts.length >= 2) && uriParts[1].equals("metrics")) {
+      if ((uriParts.length >= 2) && uriParts[1].equals("acls")) {
+        return Constants.Service.ACL;
+      } else if ((uriParts.length >= 2) && uriParts[1].equals("metrics")) {
         return Constants.Service.METRICS;
       } else if ((uriParts.length >= 2) && uriParts[1].equals("data")) {
         if ((uriParts.length >= 3) && uriParts[2].equals("explore")
