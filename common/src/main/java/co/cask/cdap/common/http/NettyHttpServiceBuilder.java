@@ -46,7 +46,7 @@ public class NettyHttpServiceBuilder implements Provider<NettyHttpService.Builde
   @Override
   public NettyHttpService.Builder get() {
     NettyHttpService.Builder builder = NettyHttpService.builder();
-    if (configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED)) {
+    if (configuration.getBoolean(Constants.Security.CFG_SECURITY_AUTHORIZATION_ENABLED)) {
       builder.modifyChannelPipeline(new Function<ChannelPipeline, ChannelPipeline>() {
         @Override
         public ChannelPipeline apply(ChannelPipeline input) {

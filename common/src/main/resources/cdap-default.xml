@@ -999,6 +999,12 @@
       <description>Security realm used for authentication</description>
   </property>
 
+  <property>
+    <name>security.authorization.enabled</name>
+    <value>false</value>
+    <description>If this is set to true, authorization checks will be made</description>
+  </property>
+
   <!-- Security configuration for the external authentication server -->
 
   <property>
