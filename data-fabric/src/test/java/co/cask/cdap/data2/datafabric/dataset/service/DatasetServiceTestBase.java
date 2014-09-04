@@ -19,9 +19,9 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.BaseNettyHttpService;
 import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpRequests;
+import co.cask.cdap.common.http.NettyHttpServiceBuilder;
 import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -119,7 +119,7 @@ public abstract class DatasetServiceTestBase {
     ImmutableSet<HttpHandler> handlers =
       ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(new NoAuthenticator(), dsFramework));
     opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService,
-                                                     new BaseNettyHttpService(), handlers);
+                                                     new NettyHttpServiceBuilder(), handlers);
 
     opExecutorService.startAndWait();
 
@@ -139,7 +139,7 @@ public abstract class DatasetServiceTestBase {
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  mdsDatasetsRegistry,
-                                 new BaseNettyHttpService(),
+                                 new NettyHttpServiceBuilder(),
                                  new DatasetExploreFacade(new DiscoveryExploreClient(discoveryService), cConf));
 
     // Start dataset service, wait for it to be discoverable

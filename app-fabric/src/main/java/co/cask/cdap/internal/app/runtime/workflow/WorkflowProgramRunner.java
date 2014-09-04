@@ -22,7 +22,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.BaseNettyHttpService;
+import co.cask.cdap.common.http.NettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.proto.ProgramType;
@@ -44,19 +44,19 @@ public class WorkflowProgramRunner implements ProgramRunner {
   private final ServiceAnnouncer serviceAnnouncer;
   private final InetAddress hostname;
   private final MetricsCollectionService metricsCollectionService;
-  private final BaseNettyHttpService baseNettyHttpService;
+  private final NettyHttpServiceBuilder nettyHttpServiceBuilder;
 
   @Inject
   public WorkflowProgramRunner(MapReduceProgramRunner mapReduceProgramRunner,
                                ServiceAnnouncer serviceAnnouncer,
                                @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
-                               BaseNettyHttpService baseNettyHttpService,
+                               NettyHttpServiceBuilder nettyHttpServiceBuilder,
                                MetricsCollectionService metricsCollectionService) {
     this.mapReduceProgramRunner = mapReduceProgramRunner;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
     this.metricsCollectionService = metricsCollectionService;
-    this.baseNettyHttpService = baseNettyHttpService;
+    this.nettyHttpServiceBuilder = nettyHttpServiceBuilder;
   }
 
   @Override
@@ -73,7 +73,7 @@ public class WorkflowProgramRunner implements ProgramRunner {
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
     RunId runId = RunIds.generate();
-    WorkflowDriver driver = new WorkflowDriver(program, runId, options, hostname, baseNettyHttpService,
+    WorkflowDriver driver = new WorkflowDriver(program, runId, options, hostname, nettyHttpServiceBuilder,
                                                workflowSpec, mapReduceProgramRunner);
 
     // Controller needs to be created before starting the driver so that the state change of the driver

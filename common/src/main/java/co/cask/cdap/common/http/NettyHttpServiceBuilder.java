@@ -26,19 +26,19 @@ import org.jboss.netty.channel.ChannelPipeline;
 /**
  * Provides a {@link NettyHttpService.Builder} that has common configuration built-in.
  */
-public class BaseNettyHttpService implements Provider<NettyHttpService.Builder> {
+public class NettyHttpServiceBuilder implements Provider<NettyHttpService.Builder> {
 
   private final CConfiguration configuration;
   private final AuthenticationChannelHandler authenticationChannelHandler;
 
   @Inject
-  public BaseNettyHttpService(CConfiguration configuration,
-                              AuthenticationChannelHandler authenticationChannelHandler) {
+  public NettyHttpServiceBuilder(CConfiguration configuration,
+                                 AuthenticationChannelHandler authenticationChannelHandler) {
     this.configuration = configuration;
     this.authenticationChannelHandler = authenticationChannelHandler;
   }
 
-  public BaseNettyHttpService() {
+  public NettyHttpServiceBuilder() {
     this.configuration = CConfiguration.create();
     this.authenticationChannelHandler = new AuthenticationChannelHandler();
   }

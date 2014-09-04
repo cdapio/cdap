@@ -22,7 +22,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.workflow.WorkflowStatus;
-import co.cask.cdap.common.http.BaseNettyHttpService;
+import co.cask.cdap.common.http.NettyHttpServiceBuilder;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
@@ -57,13 +57,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final WorkflowSpecification workflowSpec;
   private final long logicalStartTime;
   private final MapReduceRunnerFactory runnerFactory;
-  private final BaseNettyHttpService baseNettyHttpService;
+  private final NettyHttpServiceBuilder nettyHttpServiceBuilder;
   private NettyHttpService httpService;
   private volatile boolean running;
   private volatile WorkflowStatus workflowStatus;
 
   WorkflowDriver(Program program, RunId runId, ProgramOptions options, InetAddress hostname,
-                 BaseNettyHttpService baseNettyHttpService,
+                 NettyHttpServiceBuilder nettyHttpServiceBuilder,
                  WorkflowSpecification workflowSpec, MapReduceProgramRunner programRunner) {
     this.program = program;
     this.runId = runId;
@@ -77,7 +77,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     this.runnerFactory = new WorkflowMapReduceRunnerFactory(workflowSpec, programRunner, program,
                                                             runId, options.getUserArguments(), logicalStartTime);
-    this.baseNettyHttpService = baseNettyHttpService;
+    this.nettyHttpServiceBuilder = nettyHttpServiceBuilder;
   }
 
   @Override
@@ -85,7 +85,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     LOG.info("Starting Workflow {}", workflowSpec);
 
     // Using small size thread pool is enough, as the API we supported are just simple lookup.
-    httpService = baseNettyHttpService.get()
+    httpService = nettyHttpServiceBuilder.get()
       .setWorkerThreadPoolSize(2)
       .setExecThreadPoolSize(4)
       .setHost(hostname.getHostName())

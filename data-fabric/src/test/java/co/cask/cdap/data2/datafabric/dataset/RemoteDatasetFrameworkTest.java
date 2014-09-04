@@ -19,7 +19,7 @@ package co.cask.cdap.data2.datafabric.dataset;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.BaseNettyHttpService;
+import co.cask.cdap.common.http.NettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -99,7 +99,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     ImmutableSet<HttpHandler> handlers =
       ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(new NoAuthenticator(), framework));
     opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService,
-                                                     new BaseNettyHttpService(), handlers);
+                                                     new NettyHttpServiceBuilder(), handlers);
 
     opExecutorService.startAndWait();
 
@@ -119,7 +119,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(framework),
                                  mdsDatasetsRegistry,
-                                 new BaseNettyHttpService(),
+                                 new NettyHttpServiceBuilder(),
                                  new DatasetExploreFacade(new DiscoveryExploreClient(discoveryService), cConf));
     // Start dataset service, wait for it to be discoverable
     service.start();
