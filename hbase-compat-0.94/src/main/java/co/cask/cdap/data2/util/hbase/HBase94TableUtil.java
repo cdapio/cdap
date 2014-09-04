@@ -16,14 +16,24 @@
 
 package co.cask.cdap.data2.util.hbase;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.data2.increment.hbase94.IncrementHandler;
 import co.cask.cdap.data2.transaction.coprocessor.hbase94.DefaultTransactionProcessor;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase94.DequeueScanObserver;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase94.HBaseQueueRegionObserver;
+import com.google.common.collect.Maps;
+import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HServerLoad;
+import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  *
@@ -117,4 +127,31 @@ public class HBase94TableUtil extends HBaseTableUtil {
   public Class<? extends Coprocessor> getIncrementHandlerClassForVersion() {
     return IncrementHandler.class;
   }
+
+  @Override
+  public Map<String, HBaseTableUtil.TableStats> getTableStats(HBaseAdmin admin) throws IOException {
+    // The idea is to walk thru live region servers, collect table region stats and aggregate them towards table total
+    // metrics.
+
+    Map<String, TableStats> datasetStat = Maps.newHashMap();
+    ClusterStatus clusterStatus = admin.getClusterStatus();
+
+    for (ServerName serverName : clusterStatus.getServers()) {
+      Map<byte[], HServerLoad.RegionLoad> regionsLoad = clusterStatus.getLoad(serverName).getRegionsLoad();
+
+      for (HServerLoad.RegionLoad regionLoad : regionsLoad.values()) {
+        String tableName = Bytes.toString(HRegionInfo.getTableName(regionLoad.getName()));
+        TableStats stat = datasetStat.get(tableName);
+        if (stat == null) {
+          stat = new TableStats(regionLoad.getStorefileSizeMB(), regionLoad.getMemStoreSizeMB());
+          datasetStat.put(tableName, stat);
+        } else {
+          stat.incStoreFileSizeMB(regionLoad.getStorefileSizeMB());
+          stat.incMemStoreSizeMB(regionLoad.getMemStoreSizeMB());
+        }
+      }
+    }
+    return datasetStat;
+  }
+
 }
