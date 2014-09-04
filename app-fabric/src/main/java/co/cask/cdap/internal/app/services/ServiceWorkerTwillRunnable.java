@@ -29,8 +29,8 @@ import co.cask.cdap.internal.lang.Reflections;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.TwillContext;
@@ -82,6 +82,9 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
   public TwillRunnableSpecification configure() {
     ServiceWorkerSpecification workerSpecification = worker.configure();
     Map<String, String> runnableArgs = Maps.newHashMap(workerSpecification.getProperties());
+    if (worker instanceof GuavaServiceWorker) {
+      runnableArgs.put("delegate.class.name", ((GuavaServiceWorker) worker).getDelegate().getClass().getName());
+    }
     runnableArgs.put("service.class.name", workerSpecification.getClassName());
 
     // Serialize and store the datasets that have explicitly been granted access to.
@@ -105,6 +108,11 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
       worker = (ServiceWorker) factory.get(type).create();
       Reflections.visit(worker, type, new MetricsFieldSetter(metrics),
                                       new PropertyFieldSetter(runnableArgs));
+      if (worker instanceof GuavaServiceWorker) {
+        String delegateClassName = runnableArgs.get("delegate.class.name");
+        type = TypeToken.of(programClassLoader.loadClass(delegateClassName));
+        ((GuavaServiceWorker) worker).setDelegate((Service) factory.get(type).create());
+      }
       worker.initialize(new DefaultServiceWorkerContext(programClassLoader, cConfiguration,
                                                         context.getSpecification().getConfigs(), datasets,
                                                         datasetFramework, transactionSystemClient));

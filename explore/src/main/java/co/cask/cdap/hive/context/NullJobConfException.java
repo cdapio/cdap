@@ -14,20 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.service;
+package co.cask.cdap.hive.context;
 
-import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.common.PropertyProvider;
-import org.apache.twill.api.ResourceSpecification;
+import java.io.IOException;
 
 /**
- * Specification for user Service's {@link ServiceWorker}s.
+ * Exception raised when a job conf object is null when it shouldn't.
  */
-public interface ServiceWorkerSpecification extends ProgramSpecification, PropertyProvider {
-
-  /**
-   * @return ResourceSpecification which will be used to run the serviceWorker.
-   */
-  ResourceSpecification getResourceSpecification();
-
+public class NullJobConfException extends IOException {
 }

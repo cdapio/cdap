@@ -739,6 +739,12 @@
         <description>Default inet address for binding metrics processor http service</description>
     </property>
 
+    <property>
+        <name>metrics.dataset.hbase.stats.report.interval</name>
+        <value>60</value>
+        <description>Report interval for hbase stats, in seconds.</description>
+    </property>
+
     <!--
         Logging Configuration
     -->

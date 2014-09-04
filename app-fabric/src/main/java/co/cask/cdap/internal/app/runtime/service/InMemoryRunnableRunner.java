@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.service;
 
 import co.cask.cdap.api.common.RuntimeArguments;
-import co.cask.cdap.api.service.GuavaServiceTwillRunnable;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.metrics.ServiceRunnableMetrics;
@@ -176,11 +175,7 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       TypeToken<? extends  TwillRunnable> runnableType = TypeToken.of(runnableClass);
       TwillRunnable runnable = null;
 
-      if (runnableClass.isAssignableFrom(GuavaServiceTwillRunnable.class)) {
-        // Special case for running Guava services since we need to instantiate the Guava service
-        // using the program classloader.
-        runnable = new GuavaServiceTwillRunnable(program.getClassLoader());
-      } else if (runnableClass.isAssignableFrom(HttpServiceTwillRunnable.class)) {
+      if (runnableClass.isAssignableFrom(HttpServiceTwillRunnable.class)) {
         // Special case for running HTTP services
         runnable = new HttpServiceTwillRunnable(program.getClassLoader());
       } else if (runnableClass.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {

@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 
 npm install jshint -g
 npm install groc -g

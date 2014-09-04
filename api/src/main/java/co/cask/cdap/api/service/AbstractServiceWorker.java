@@ -17,7 +17,7 @@
 package co.cask.cdap.api.service;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
+import org.apache.twill.api.ResourceSpecification;
 
 import java.util.Map;
 
@@ -29,7 +29,8 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
 
   @Override
   public ServiceWorkerSpecification configure() {
-    return new DefaultServiceWorkerSpecification(this, getName(), getDescription(), getRuntimeArguments());
+    return new DefaultServiceWorkerSpecification(this, getName(), getDescription(), getRuntimeArguments(),
+                                                 getResourceSpecification());
   }
 
   /**
@@ -57,6 +58,14 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
    */
   protected Map<String, String> getRuntimeArguments() {
     return ImmutableMap.of();
+  }
+
+  /**
+   * Currently defaults to {@link ResourceSpecification.BASIC}, until we allow the user to specify it.
+   * @return The resourceSpecification to be used for this serviceWorker
+   */
+  protected ResourceSpecification getResourceSpecification() {
+    return ResourceSpecification.BASIC;
   }
 
   @Override

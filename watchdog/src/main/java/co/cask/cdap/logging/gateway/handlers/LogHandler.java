@@ -52,7 +52,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
   private final String logPattern;
 
   private enum EntityType {
-    flows, procedures, mapreduce, services
+    flows, procedures, mapreduce, spark, services
   }
 
   @Inject
@@ -330,6 +330,8 @@ public class LogHandler extends AuthenticatedHttpHandler {
         return LoggingContextHelper.EntityType.PROCEDURE;
       case mapreduce:
         return LoggingContextHelper.EntityType.MAP_REDUCE;
+      case spark:
+        return LoggingContextHelper.EntityType.SPARK;
       case services:
         return LoggingContextHelper.EntityType.SERVICE;
       default:

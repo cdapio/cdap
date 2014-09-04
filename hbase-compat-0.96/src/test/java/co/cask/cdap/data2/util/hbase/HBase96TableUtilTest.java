@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright 2014 Cask, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,20 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.api.service;
+package co.cask.cdap.data2.util.hbase;
 
-import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.common.PropertyProvider;
-import org.apache.twill.api.ResourceSpecification;
+import co.cask.cdap.test.XSlowTests;
+import org.junit.experimental.categories.Category;
 
 /**
- * Specification for user Service's {@link ServiceWorker}s.
+ *
  */
-public interface ServiceWorkerSpecification extends ProgramSpecification, PropertyProvider {
+@Category(XSlowTests.class)
+public class HBase96TableUtilTest extends AbstractHBaseTableUtilTest {
 
-  /**
-   * @return ResourceSpecification which will be used to run the serviceWorker.
-   */
-  ResourceSpecification getResourceSpecification();
-
+  @Override
+  protected HBaseTableUtil getTableUtil() {
+    return new HBase96TableUtil();
+  }
 }
