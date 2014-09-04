@@ -43,13 +43,14 @@ import java.util.Map;
 /**
  * Simple key value table for testing.
  */
-public class KeyStructValueTableDefinition
-  extends AbstractDatasetDefinition<KeyStructValueTableDefinition.KeyStructValueTable, DatasetAdmin> {
-  private static final Gson GSON = new Gson();
+public class KeyExtendedStructValueTableDefinition extends
+  AbstractDatasetDefinition<KeyExtendedStructValueTableDefinition.KeyExtendedStructValueTable, DatasetAdmin> {
 
+  private static final Gson GSON = new Gson();
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public KeyStructValueTableDefinition(String name, DatasetDefinition<? extends Table, ?> orderedTableDefinition) {
+  public KeyExtendedStructValueTableDefinition(String name,
+                                               DatasetDefinition<? extends Table, ?> orderedTableDefinition) {
     super(name);
     this.tableDef = orderedTableDefinition;
   }
@@ -68,37 +69,37 @@ public class KeyStructValueTableDefinition
   }
 
   @Override
-  public KeyStructValueTable getDataset(DatasetSpecification spec,
+  public KeyExtendedStructValueTable getDataset(DatasetSpecification spec,
                                         Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     Table table = tableDef.getDataset(spec.getSpecification("key-value-table"), arguments, classLoader);
-    return new KeyStructValueTable(spec.getName(), table);
+    return new KeyExtendedStructValueTable(spec.getName(), table);
   }
 
   /**
    * KeyStructValueTable
    */
-  public static class KeyStructValueTable extends AbstractDataset
-    implements RecordScannable<KeyValue>, RecordWritable<KeyValue> {
-    static final byte[] COL = new byte[] {'c', 'o', 'l', '1'};
+  public static class KeyExtendedStructValueTable extends AbstractDataset
+    implements RecordScannable<KeyExtendedValue>, RecordWritable<KeyExtendedValue> {
 
+    static final byte[] COL = new byte[] {'c', 'o', 'l', '1'};
     private final Table table;
 
-    public KeyStructValueTable(String instanceName, Table table) {
+    public KeyExtendedStructValueTable(String instanceName, Table table) {
       super(instanceName, table);
       this.table = table;
     }
 
-    public void put(String key, KeyValue.Value value) throws Exception {
+    public void put(String key, KeyExtendedValue value) throws Exception {
       table.put(Bytes.toBytes(key), COL, Bytes.toBytes(GSON.toJson(value)));
     }
 
-    public KeyValue.Value get(String key) throws Exception {
-      return GSON.fromJson(Bytes.toString(table.get(Bytes.toBytes(key), COL)), KeyValue.Value.class);
+    public KeyExtendedValue get(String key) throws Exception {
+      return GSON.fromJson(Bytes.toString(table.get(Bytes.toBytes(key), COL)), KeyExtendedValue.class);
     }
 
     @Override
     public Type getRecordType() {
-      return KeyValue.class;
+      return KeyExtendedValue.class;
     }
 
     @Override
@@ -107,27 +108,29 @@ public class KeyStructValueTableDefinition
     }
 
     @Override
-    public RecordScanner<KeyValue> createSplitRecordScanner(Split split) {
+    public RecordScanner<KeyExtendedValue> createSplitRecordScanner(Split split) {
       return Scannables.splitRecordScanner(table.createSplitReader(split), KEY_VALUE_ROW_MAKER);
     }
 
     @Override
-    public void write(KeyValue keyValue) throws IOException {
+    public void write(KeyExtendedValue keyValue) throws IOException {
       try {
-        put(keyValue.getKey() + "_2", keyValue.getValue());
+        put(keyValue.getKey() + "_2", keyValue);
       } catch (Exception e) {
         throw new IOException(e);
       }
     }
   }
 
-  public static class KeyValue {
+  public static class KeyExtendedValue {
     private final String key;
-    private final Value value;
+    private final KeyStructValueTableDefinition.KeyValue.Value value;
+    private final int count;
 
-    public KeyValue(String key, Value value) {
+    public KeyExtendedValue(String key, KeyStructValueTableDefinition.KeyValue.Value value, int count) {
       this.key = key;
       this.value = value;
+      this.count = count;
     }
 
     @SuppressWarnings("UnusedDeclaration")
@@ -136,8 +139,13 @@ public class KeyStructValueTableDefinition
     }
 
     @SuppressWarnings("UnusedDeclaration")
-    public Value getValue() {
+    public KeyStructValueTableDefinition.KeyValue.Value getValue() {
       return value;
+    }
+
+    @SuppressWarnings("UnusedDeclaration")
+    public int getCount() {
+      return count;
     }
 
     @Override
@@ -149,76 +157,41 @@ public class KeyStructValueTableDefinition
         return false;
       }
 
-      KeyValue that = (KeyValue) o;
+      KeyExtendedValue that = (KeyExtendedValue) o;
 
       return Objects.equal(this.key, that.key) &&
-        Objects.equal(this.value, that.value);
+        Objects.equal(this.value, that.value) &&
+        Objects.equal(this.count, that.count);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(key, value);
-    }
-
-    public static class Value {
-      private final String name;
-      private final List<Integer> ints;
-
-      public Value(String name, List<Integer> ints) {
-        this.name = name;
-        this.ints = ints;
-      }
-
-      @SuppressWarnings("UnusedDeclaration")
-      public String getName() {
-        return name;
-      }
-
-      @SuppressWarnings("UnusedDeclaration")
-      public List<Integer> getInts() {
-        return ints;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-        if (this == o) {
-          return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-          return false;
-        }
-
-        Value that = (Value) o;
-
-        return Objects.equal(this.name, that.name) &&
-          Objects.equal(this.ints, that.ints);
-      }
-
-      @Override
-      public int hashCode() {
-        return Objects.hashCode(name, ints);
-      }
+      return Objects.hashCode(key, value, count);
     }
   }
 
   /**
    * KeyStructValueTableModule
    */
-  public static class KeyStructValueTableModule implements DatasetModule {
+  public static class KeyExtendedStructValueTableModule implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
       DatasetDefinition<Table, DatasetAdmin> table = registry.get("table");
-      KeyStructValueTableDefinition keyValueTable = new KeyStructValueTableDefinition("keyStructValueTable", table);
-      registry.add(keyValueTable);
+      KeyExtendedStructValueTableDefinition keyExtendedValueTable =
+        new KeyExtendedStructValueTableDefinition("keyExtendedStructValueTable", table);
+      registry.add(keyExtendedValueTable);
     }
   }
 
-  private static final Scannables.RecordMaker<byte[], Row, KeyValue> KEY_VALUE_ROW_MAKER =
-    new Scannables.RecordMaker<byte[], Row, KeyValue>() {
+  private static final Scannables.RecordMaker<byte[], Row, KeyExtendedValue> KEY_VALUE_ROW_MAKER =
+    new Scannables.RecordMaker<byte[], Row, KeyExtendedValue>() {
       @Override
-      public KeyValue makeRecord(byte[] key, Row row) {
-        return new KeyValue(Bytes.toString(key),
-                            GSON.fromJson(Bytes.toString(row.get(KeyStructValueTable.COL)), KeyValue.Value.class));
+      public KeyExtendedValue makeRecord(byte[] key, Row row) {
+        KeyExtendedValue value = GSON.fromJson(Bytes.toString(row.get(KeyExtendedStructValueTable.COL)),
+                                               KeyExtendedValue.class);
+        return new KeyExtendedValue(Bytes.toString(key),
+                                    value.getValue(),
+                                    value.getCount());
       }
     };
 }
