@@ -8,6 +8,8 @@ var util = require('util'),
   xml2js = require('xml2js'),
   sys = require('sys'),
   cluster = require('cluster'),
+  http = require('http'),
+  https = require('https'),
   os = require('os');
 
 var WebAppServer = require('../common/server');
@@ -29,16 +31,20 @@ var logLevel = 'INFO';
 
 var EntServer = function() {
   var self = this;
+  EntServer.super_.call(self, __dirname, logLevel, 'Enterprise UI');
   this.getConfig(function(version) {
     if (self.config['dashboard.https.enabled'] === "true") {
-      EntServer.super_.call(self, __dirname, logLevel, true);
+      console.log("HTTPS Enabled");
+      this.lib = https;
+      this.httpsEnabled = true;
     } else {
-      EntServer.super_.call(self, __dirname, logLevel, false);
+      console.log("HTTPS is not Enabled");
+      this.lib = http;
+      this.httpsEnabled = false;
     }
 
     self.cookieName = 'continuuity-enterprise-edition';
     self.secret = 'enterprise-edition-secret';
-    self.logger = self.getLogger('console', 'Enterprise UI');
     self.setCookieSession(self.cookieName, self.secret);
     self.configureExpress();
   });
@@ -90,7 +96,11 @@ EntServer.prototype.start = function() {
     if (self.config['dashboard.https.enabled'] === "true") {
       self.server = self.getHttpsServerInstance(self.app, self.config['dashboard.ssl.key'],
                                                 self.config['dashboard.ssl.cert']);
+      self.lib = https;
+      self.httpsEnabled = true;
     } else {
+      self.lib = http;
+      self.httpsEnabled = false;
       self.server = self.getServerInstance(self.app);
     }
 

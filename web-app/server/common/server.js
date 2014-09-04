@@ -9,8 +9,6 @@ var express = require('express'),
   Int64 = require('node-int64'),
   fs = require('fs'),
   log4js = require('log4js'),
-  http = require('http'),
-  https = require('https'),
   cookie = require('cookie'),
   utils = require('connect').utils,
   crypto = require('crypto'),
@@ -28,14 +26,10 @@ var Env = require('./env');
  * @param {string} logLevel log level {TRACE|INFO|ERROR}
  * @param {boolean} https whether to use https for requests.
  */
-var WebAppServer = function(dirPath, logLevel, httpsEnabled) {
+var WebAppServer = function(dirPath, logLevel, env) {
   this.dirPath = dirPath;
   this.LOG_LEVEL = logLevel;
-  this.httpsEnabled = httpsEnabled;
-  this.lib = http;
-  if (httpsEnabled) {
-    this.lib = https;
-  }
+  this.logger = this.getLogger('console', env);
 };
 
 /**
