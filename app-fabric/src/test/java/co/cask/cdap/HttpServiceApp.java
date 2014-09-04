@@ -19,7 +19,6 @@ package co.cask.cdap;
 import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureContext;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
@@ -78,18 +77,6 @@ public class HttpServiceApp extends AbstractApplication {
 
     private static final Logger LOG = LoggerFactory.getLogger(NoOpProcedure.class);
 
-    private URL serviceURL;
-
-    /**
-     *
-     * @param context
-     */
-    @Override
-    public void initialize(ProcedureContext context) {
-      //Discover the UserInterestsLookup service via discovery service
-      serviceURL = context.getServiceURL("HttpServiceApp", "HttpService");
-    }
-
     /**
      *
      * @param request
@@ -98,6 +85,7 @@ public class HttpServiceApp extends AbstractApplication {
      */
     @Handle("noop")
     public void handle(ProcedureRequest request, ProcedureResponder responder) throws Exception {
+      URL serviceURL = getContext().getServiceURL("HttpServiceApp", "HttpService");
       if (serviceURL != null) {
         String response = doGet(serviceURL);
         LOG.debug(response);
