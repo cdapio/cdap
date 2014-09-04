@@ -282,7 +282,7 @@
     </div>
 
     <div id="panels">
-      <h2>Components</h2>
+      <h2>Service Workers</h2>
       <br />
       <div class="panel">
         <table class="table">
@@ -295,7 +295,7 @@
           </thead>
           <tbody>
             {{!--  RUNNABLES ROWS --}}
-            {{#each runnable in model.runnablesList}}
+            {{#each runnable in model.workersList}}
             <tr>
               <td class="app-list-name service-col"><a class="none-text-decoration">
                 {{runnable.id}}
@@ -2084,7 +2084,7 @@
       <table class="table">
       <thead>
         <th style="padding-left: 14px;">Services</th>
-        <th style="width: 262px;">Number of Components</th>
+        <th style="width: 262px;">Number of Workers</th>
       </thead>
       <tbody>
         {{#each elements.Userservice}}
@@ -2092,7 +2092,7 @@
             <td class="app-list-name">
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
             </td>
-            <td class="app-list-count">{{numRunnables}}</td>
+            <td class="app-list-count">{{numWorkers}}</td>
           </tr>
         {{/each}}
       </tbody>
