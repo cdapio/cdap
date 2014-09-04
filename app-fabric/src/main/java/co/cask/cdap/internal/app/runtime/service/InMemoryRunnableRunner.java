@@ -74,12 +74,14 @@ public class InMemoryRunnableRunner implements ProgramRunner {
   private final TransactionSystemClient transactionSystemClient;
   private final DatasetFramework datasetFramework;
   private final CConfiguration cConfiguration;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
   public InMemoryRunnableRunner(CConfiguration cConfiguration, ProgramServiceDiscovery serviceDiscovery,
                                 DiscoveryService dsService, InMemoryElectionRegistry electionRegistry,
                                 MetricsCollectionService metricsCollectionService,
-                                TransactionSystemClient transactionSystemClient, DatasetFramework datasetFramework) {
+                                TransactionSystemClient transactionSystemClient, DatasetFramework datasetFramework,
+                                DiscoveryServiceClient discoveryServiceClient) {
     this.metricsCollectionService = metricsCollectionService;
     this.serviceDiscovery = serviceDiscovery;
     this.dsService = dsService;
@@ -88,6 +90,7 @@ public class InMemoryRunnableRunner implements ProgramRunner {
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = datasetFramework;
     this.cConfiguration = cConfiguration;
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @SuppressWarnings("unchecked")
@@ -177,7 +180,9 @@ public class InMemoryRunnableRunner implements ProgramRunner {
 
       if (runnableClass.isAssignableFrom(HttpServiceTwillRunnable.class)) {
         // Special case for running HTTP services
-        runnable = new HttpServiceTwillRunnable(program.getClassLoader());
+        runnable = new HttpServiceTwillRunnable(program.getClassLoader(), program, runId, metricsCollectionService,
+                                                datasetFramework, cConfiguration, "", serviceDiscovery,
+                                                discoveryServiceClient);
       } else if (runnableClass.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
         runnable = new ServiceWorkerTwillRunnable(program.getClassLoader(), cConfiguration,
                                                   datasetFramework, transactionSystemClient);

@@ -20,14 +20,20 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.app.program.Program;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
+import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
+import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
+import co.cask.cdap.internal.app.runtime.service.http.DefaultHttpServiceContext;
 import co.cask.cdap.internal.app.runtime.service.http.DefaultHttpServiceHandlerConfigurer;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.internal.service.http.DefaultHttpServiceContext;
 import co.cask.cdap.internal.service.http.DefaultHttpServiceSpecification;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
@@ -42,10 +48,12 @@ import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import org.apache.twill.api.AbstractTwillRunnable;
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Services;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +65,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -89,6 +98,16 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   private Map<Reference<? extends Supplier<HttpServiceHandler>>, HttpServiceHandler> handlerReferences;
   private ReferenceQueue<Supplier<HttpServiceHandler>> handlerReferenceQueue;
 
+  private Program program;
+  private RunId runId;
+  private Set<String> datasets;
+  private String metricsContext;
+  private MetricsCollectionService metricsCollectionService;
+  private DatasetFramework datasetFramework;
+  private CConfiguration cConfiguration;
+  private ProgramServiceDiscovery programServiceDiscovery;
+  private DiscoveryServiceClient discoveryServiceClient;
+
   /**
    * Instantiates this class with a name which will be used when this service is announced
    * and a list of {@link HttpServiceHandler}s used to to handle the HTTP requests.
@@ -97,10 +116,12 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
    * @param serviceName the name of the service which will be used to announce the service
    * @param handlers the handlers of the HTTP requests
    */
-  public HttpServiceTwillRunnable(String appName, String serviceName, Iterable<? extends HttpServiceHandler> handlers) {
+  public HttpServiceTwillRunnable(String appName, String serviceName, Iterable<? extends HttpServiceHandler> handlers,
+                                  Set<String> datasets) {
     this.serviceName = serviceName;
     this.handlers = ImmutableList.copyOf(handlers);
     this.appName = appName;
+    this.datasets = datasets;
   }
 
   /**
@@ -108,8 +129,20 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
    *
    * @param programClassLoader the classloader to instantiate the service with
    */
-  public HttpServiceTwillRunnable(ClassLoader programClassLoader) {
+  public HttpServiceTwillRunnable(ClassLoader programClassLoader, Program program, RunId runId,
+                                  MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
+                                  CConfiguration cConfiguration, String metricsContext,
+                                  ProgramServiceDiscovery programServiceDiscovery,
+                                  DiscoveryServiceClient discoveryServiceClient) {
     this.programClassLoader = programClassLoader;
+    this.program = program;
+    this.runId = runId;
+    this.metricsCollectionService = metricsCollectionService;
+    this.datasetFramework = datasetFramework;
+    this.cConfiguration = cConfiguration;
+    this.metricsContext = metricsContext;
+    this.programServiceDiscovery = programServiceDiscovery;
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   /**
@@ -160,6 +193,11 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     runnableArgs.put(CONF_RUNNABLE, serviceName);
     List<String> handlerNames = Lists.newArrayList();
     List<HttpServiceSpecification> specs = Lists.newArrayList();
+
+    // Serialize and store the datasets that have explicitly been granted access to.
+    String serializedDatasets = GSON.toJson(datasets, new TypeToken<Set<String>>() { }.getType());
+    runnableArgs.put("service.datasets", serializedDatasets);
+
     for (HttpServiceHandler handler : handlers) {
       handlerNames.add(handler.getClass().getName());
       // call the configure method of the HTTP Handler
@@ -196,6 +234,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     handlers = Lists.newArrayList();
     List<String> handlerNames = GSON.fromJson(runnableArgs.get(CONF_HANDLER), HANDLER_NAMES_TYPE);
     List<HttpServiceSpecification> specs = GSON.fromJson(runnableArgs.get(CONF_SPEC), HANDLER_SPEC_TYPE);
+    datasets = GSON.fromJson(runnableArgs.get("service.datasets"), new TypeToken<Set<String>>() { }.getType());
     // we will need the context based on the spec when we create NettyHttpService
     List<HandlerDelegatorContext> delegatorContexts = Lists.newArrayList();
     InstantiatorFactory instantiatorFactory = new InstantiatorFactory(false);
@@ -206,8 +245,15 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
         @SuppressWarnings("unchecked")
         TypeToken<HttpServiceHandler> type = TypeToken.of((Class<HttpServiceHandler>) handlerClass);
 
-        DefaultHttpServiceContext httpServiceContext =
-          new DefaultHttpServiceContext(specs.get(i), context.getApplicationArguments());
+      DefaultHttpServiceContext httpServiceContext = new DefaultHttpServiceContext(specs.get(i),
+                                                                                   context.getApplicationArguments(),
+                                                                                   program, runId,
+                                                                                   datasets, metricsContext,
+                                                                                   metricsCollectionService,
+                                                                                   datasetFramework,
+                                                                                   cConfiguration,
+                                                                                   programServiceDiscovery,
+                                                                                   discoveryServiceClient);
         delegatorContexts.add(new HandlerDelegatorContext(type, instantiatorFactory, httpServiceContext));
       } catch (Exception e) {
         LOG.error("Could not initialize HTTP Service");
@@ -315,7 +361,8 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
         return supplier.get();
       }
       HttpServiceHandler handler = instantiatorFactory.get(handlerType).create();
-      Reflections.visit(handler, handlerType, new MetricsFieldSetter(metrics));
+      Reflections.visit(handler, handlerType, new MetricsFieldSetter(metrics),
+                                              new DataSetFieldSetter(serviceContext));
       initHandler(handler, serviceContext);
       supplier = Suppliers.ofInstance(handler);
 

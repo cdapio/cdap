@@ -16,6 +16,8 @@
 
 package co.cask.cdap.examples.purchase;
 
+import co.cask.cdap.api.annotation.UseDataSet;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.AbstractServiceWorker;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -94,6 +96,7 @@ public class CatalogLookupService extends AbstractService {
     addHandler(new ProductCatalogLookup());
     addWorker(new NoOpServiceWorker());
     addWorker(new GuavaServiceWorker(new NoOpGuavaWorker()));
+    useDataset("frequentCustomers");
   }
 
   /**
@@ -101,6 +104,9 @@ public class CatalogLookupService extends AbstractService {
    */
   @Path("/v1")
   public static final class ProductCatalogLookup extends AbstractHttpServiceHandler {
+
+    @UseDataSet("frequentCustomers")
+    KeyValueTable table;
 
     @Path("product/{id}/catalog")
     @GET

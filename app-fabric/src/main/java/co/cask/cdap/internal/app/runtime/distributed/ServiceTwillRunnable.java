@@ -193,7 +193,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
       ServiceSpecification serviceSpec = appSpec.getServices().get(processorName);
       final RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnableName);
-
       String className = runtimeSpec.getRunnableSpecification().getClassName();
       LOG.info("Getting class : {}", program.getMainClass().getName());
       Class<?> clz = Class.forName(className, true, program.getClassLoader());
@@ -202,7 +201,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
       if (clz.isAssignableFrom(HttpServiceTwillRunnable.class)) {
         // Special case for running http services since we need to instantiate the http service
         // using the program classloader.
-        delegate = new HttpServiceTwillRunnable(program.getClassLoader());
+        delegate = new HttpServiceTwillRunnable(program.getClassLoader(), null, null, null, null, null, null,
+                                                null, null);
       } else if (clz.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
         delegate = new ServiceWorkerTwillRunnable(program.getClassLoader(), cConf,
                                                   datasetFramework, transactionSystemClient);

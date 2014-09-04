@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import co.cask.cdap.api.data.DataSetInstantiationException;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
@@ -31,6 +32,7 @@ import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.Closeable;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.net.URLConnection;
@@ -163,6 +165,16 @@ public class HttpHandlerGeneratorTest {
 
         @Override
         public Map<String, String> getRuntimeArguments() {
+          return null;
+        }
+
+        @Override
+        public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
+          return null;
+        }
+
+        @Override
+        public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments) throws DataSetInstantiationException {
           return null;
         }
       };

@@ -542,6 +542,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/webapp/stop")
   public void webappStop(final HttpRequest request, final HttpResponder responder,
                          @PathParam("app-id") final String appId) {
+
     runnableStartStop(request, responder, appId, ProgramType.WEBAPP.getPrettyName().toLowerCase(),
                       ProgramType.WEBAPP, "stop");
   }
