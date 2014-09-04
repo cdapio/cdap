@@ -44,8 +44,10 @@ public class ConfigurationJsonTool {
 
   public static void main(String[] args) {
 
+    String programName = System.getProperty("script", "ConfigurationJsonTool");
+
     if (args.length != 2 || !"--output".equals(args[0])) {
-      System.err.println("Usage: ConfigurationJsonTool --output <file name>");
+      System.err.println("Usage: " + programName + " --output <file name>");
       System.exit(1);
     }
     String outputFile = args[1];
