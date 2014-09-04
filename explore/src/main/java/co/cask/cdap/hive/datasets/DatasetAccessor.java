@@ -113,8 +113,7 @@ public class DatasetAccessor {
         return ((RecordScannable) dataset).getRecordType();
       }
       throw new IOException(
-        String.format("Dataset %s does not implement neither RecordScannable nor RecordWritable, " +
-                        "and hence cannot be queried or written to in Hive.",
+        String.format("Dataset %s does not implement neither RecordScannable nor RecordWritable.",
                       conf.get(Constants.Explore.DATASET_NAME)));
     } finally {
       dataset.close();
@@ -160,8 +159,7 @@ public class DatasetAccessor {
 
     if (!(dataset instanceof RecordScannable || dataset instanceof RecordWritable)) {
       throw new IOException(
-        String.format("Dataset %s does not implement neither RecordScannable nor RecordWritable, " +
-                        "and hence cannot be queried or written to in Hive.",
+        String.format("Dataset %s does not implement neither RecordScannable nor RecordWritable.",
                       conf.get(Constants.Explore.DATASET_NAME)));
     }
     return dataset;
