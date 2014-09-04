@@ -159,7 +159,7 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
   }
 
   @Override
-  public URL getServiceURL(String applicationId, String serviceId) {
+  public URL getServiceURL(final String applicationId, final String serviceId) {
     ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(String.format("service.%s.%s.%s",
                                                                                         getAccountId(),
                                                                                         applicationId,
@@ -170,29 +170,29 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
       return createURL(discoverable, applicationId, serviceId);
     }
 
-    final SynchronousQueue<Discoverable> discoverableQueue = new SynchronousQueue<Discoverable>();
+    final SynchronousQueue<URL> discoverableQueue = new SynchronousQueue<URL>();
     Cancellable discoveryCancel = serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
       @Override
       public void onChange(ServiceDiscovered serviceDiscovered) {
         if (!Iterables.isEmpty(serviceDiscovered)) {
-          discoverableQueue.offer(serviceDiscovered.iterator().next());
+          URL url = createURL(serviceDiscovered.iterator().next(), applicationId, serviceId);
+          discoverableQueue.offer(url);
         }
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
     try {
-      discoverable = discoverableQueue.poll(1, TimeUnit.SECONDS);
+      URL url = discoverableQueue.poll(1, TimeUnit.SECONDS);
+      if (url == null) {
+        LOG.debug("Discoverable endpoint not found for appID: {}, serviceID: {}.", applicationId, serviceId);
+      }
+      return url;
     } catch (InterruptedException e) {
       LOG.error("Got exception: ", e);
-    }
-    discoveryCancel.cancel();
-
-    if (discoverable == null) {
-      LOG.debug("Discoverable endpoint not found for appID: {}, serviceID: {}.", applicationId, serviceId);
       return null;
+    } finally {
+      discoveryCancel.cancel();
     }
-
-    return createURL(discoverable, applicationId, serviceId);
   }
 
   @Override
