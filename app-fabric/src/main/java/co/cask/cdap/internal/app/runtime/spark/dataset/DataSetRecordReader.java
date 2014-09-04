@@ -28,14 +28,14 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
-  private static final Logger LOG = LoggerFactory.getLogger(DataSetRecordReader.class);
+final class DatasetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetRecordReader.class);
   private final SplitReader<KEY, VALUE> splitReader;
   private final BasicSparkContext context;
   private final String dataSetName;
   //TODO: Needs support for metrics when implemented
 
-  public DataSetRecordReader(final SplitReader<KEY, VALUE> splitReader, BasicSparkContext context, String dataSetName) {
+  public DatasetRecordReader(final SplitReader<KEY, VALUE> splitReader, BasicSparkContext context, String dataSetName) {
     this.splitReader = splitReader;
     this.context = context;
     this.dataSetName = dataSetName;

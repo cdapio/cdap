@@ -20,6 +20,7 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContextFactory;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -51,7 +52,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.ProvisionException;
@@ -69,16 +69,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.Enumeration;
 import java.util.Set;
 import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 
 /**
  * Runs {@link Spark} programs
@@ -88,7 +87,6 @@ public class SparkProgramRunner implements ProgramRunner {
   public static final String SPARK_HCONF_FILENAME = "spark_hconf.xml";
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRunner.class);
-  private static final int DEFAULT_TEMP_BUFFER_SIZE = 32768;
 
   private final DatasetFramework datasetFramework;
   private final Configuration hConf;
@@ -168,7 +166,7 @@ public class SparkProgramRunner implements ProgramRunner {
       @Override
       public void stopping() {
         LOG.info("Stopping Spark Job: {}", context);
-        //TODO: Add stopping logic here
+        //TODO: Add killing logic here
       }
     }, MoreExecutors.sameThreadExecutor());
     return controller;
@@ -202,6 +200,7 @@ public class SparkProgramRunner implements ProgramRunner {
     // packaging Spark job dependency jar which includes required classes with dependencies
     final Location dependencyJar = buildDependencyJar(context, sparkContextConfig);
     LOG.info("Built Dependency Jar at {}", dependencyJar.toURI().getPath());
+    System.out.println("Built Dependency Jar at {}" + dependencyJar.toURI().getPath());
 
     final String[] sparkSubmitArgs = prepareSparkSubmitArgs(sparkSpec, conf, jobJarCopy, dependencyJar);
 
@@ -259,6 +258,203 @@ public class SparkProgramRunner implements ProgramRunner {
     return new String[]{"--class", SparkJobWrapper.class.getCanonicalName(), "--master",
       conf.get(MRConfig.FRAMEWORK_NAME), jobJarCopy.toURI().toString().split("file:", 2)[1], "--jars",
       dependencyJar.toURI().toString().split("file:", 2)[1], sparkSpec.getMainClassName()};
+  }
+
+  /**
+   * Packages all the dependencies of the Spark job
+   *
+   * @param context            {@link BasicSparkContext} created for this job
+   * @param sparkContextConfig {@link SparkContextConfig} prepared for this job through {@link Configuration}
+   * @return {@link Location} of the dependency jar
+   * @throws IOException if failed to package the jar through
+   *                     {@link ApplicationBundler#createBundle(Location, Iterable, Iterable)}
+   */
+  private Location buildDependencyJar(BasicSparkContext context, SparkContextConfig sparkContextConfig)
+    throws IOException {
+    ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop"),
+                                                           Lists.newArrayList("org.apache.hadoop.hbase",
+                                                                              "org.apache.hadoop.hive"));
+    Id.Program programId = context.getProgram().getId();
+
+    Location appFabricDependenciesJarLocation =
+      locationFactory.create(String.format("%s.%s.%s.%s.%s_temp.jar",
+                                           ProgramType.SPARK.name().toLowerCase(), programId.getAccountId(),
+                                           programId.getApplicationId(), programId.getId(),
+                                           context.getRunId().getId()));
+
+    LOG.debug("Creating Spark Job Dependency jar: {}", appFabricDependenciesJarLocation.toURI());
+
+    URI hConfLocation = writeHConfLocally(context, sparkContextConfig.getHConf());
+
+    Set<Class<?>> classes = Sets.newHashSet();
+    Set<URI> resources = Sets.newHashSet();
+
+    classes.add(Spark.class);
+    classes.add(SparkDatasetInputFormat.class);
+    classes.add(SparkDatasetOutputFormat.class);
+    classes.add(SparkJobWrapper.class);
+    classes.add(SparkContextFactory.class);
+    classes.add(JavaSparkContext.class);
+    classes.add(ScalaSparkContext.class);
+
+    /**
+     * We have to add this Hadoop {@link Configuration} to the dependency jar so that when the Spark job runs outside
+     * CDAP it can create the {@link BasicMapReduceContext} to have access to our datasets, transactions etc.
+     */
+    resources.add(hConfLocation);
+
+    try {
+      Class<?> hbaseTableUtilClass = new HBaseTableUtilFactory().get().getClass();
+      classes.add(hbaseTableUtilClass);
+    } catch (ProvisionException e) {
+      LOG.warn("Not including HBaseTableUtil classes in submitted Job Jar since they are not available");
+    }
+
+    ClassLoader oldCLassLoader = Thread.currentThread().getContextClassLoader();
+    Thread.currentThread().setContextClassLoader(sparkContextConfig.getHConf().getClassLoader());
+    appBundler.createBundle(appFabricDependenciesJarLocation, classes, resources);
+    Thread.currentThread().setContextClassLoader(oldCLassLoader);
+
+    deleteLocalHConf(hConfLocation);
+
+    /**
+     * {@link ApplicationBundler} currently packages classes, jars and resources under classes, lib,
+     * resources directory. Spark expects everything to exists on top level and doesn't look for things recursively
+     * under folders. So we need move everything one level up in the dependency jar.
+     */
+    return updateDependencyJar(appFabricDependenciesJarLocation, context);
+  }
+
+  /**
+   * Deletes the local copy of Hadoop Configuration file created earlier
+   * jar.
+   *
+   * @param hConfLocation the {@link URI} to the Hadoop Configuration file to be deleted
+   */
+  private void deleteLocalHConf(URI hConfLocation) {
+    // get the path to the folder containing this file
+    String hConfLocationFolder = hConfLocation.toString().split(("/" + SPARK_HCONF_FILENAME), 2)[0];
+    try {
+      File hConfFile = new File(new URI(hConfLocationFolder));
+      FileUtils.deleteDirectory(hConfFile);
+    } catch (Exception e) {
+      LOG.warn("Failed to delete the local hadoop configuration");
+    }
+  }
+
+  /**
+   * Copies the user submitted program jar
+   *
+   * @param jobJarLocation {link Location} of the user's job
+   * @param context        {@link BasicSparkContext} context of this job
+   * @return {@link Location} where the program jar was copied
+   * @throws IOException if failed to get the {@link Location#getInputStream()} or {@link Location#getOutputStream()}
+   */
+  private Location copyProgramJar(Location jobJarLocation, BasicSparkContext context) throws IOException {
+
+    Id.Program programId = context.getProgram().getId();
+    Location programJarCopy = locationFactory.create(String.format("%s.%s.%s.%s.%s.program.jar",
+                                                                   ProgramType.SPARK.name().toLowerCase(),
+                                                                   programId.getAccountId(),
+                                                                   programId.getApplicationId(), programId.getId(),
+                                                                   context.getRunId().getId()));
+    InputStream src = jobJarLocation.getInputStream();
+    try {
+      OutputStream dest = programJarCopy.getOutputStream();
+      try {
+        ByteStreams.copy(src, dest);
+      } finally {
+        dest.close();
+      }
+    } finally {
+      src.close();
+    }
+    return programJarCopy;
+  }
+
+  /**
+   * Updates the dependency jar packaged by the {@link ApplicationBundler#createBundle(Location, Iterable,
+   * Iterable)} by moving the things inside classes, lib, resources a level up as expected by spark.
+   *
+   * @param jobJar  {@link Location} of the job jar to be updated
+   * @param context {@link BasicSparkContext} of this job
+   */
+  private Location updateDependencyJar(Location jobJar, BasicSparkContext context) throws IOException {
+
+    Id.Program programId = context.getProgram().getId();
+
+    Location updatedJar = locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
+                                                               ProgramType.SPARK.name().toLowerCase(), programId.getAccountId(),
+                                                               programId.getApplicationId(), programId.getId(),
+                                                               context.getRunId().getId()));
+
+    // Creates Manifest
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
+
+    JarOutputStream jarOutput = new JarOutputStream(updatedJar.getOutputStream(), manifest);
+    try {
+      JarInputStream jarInput = new JarInputStream(jobJar.getInputStream());
+      try {
+        JarEntry jarEntry = jarInput.getNextJarEntry();
+        while (jarEntry != null) {
+          boolean isDir = jarEntry.isDirectory();
+          String entryName = jarEntry.getName();
+          if (!(entryName.equals(ApplicationBundler.SUBDIR_CLASSES) || entryName.equals(ApplicationBundler
+                                                                                          .SUBDIR_LIB) ||
+            entryName.equals(ApplicationBundler.SUBDIR_RESOURCES))) {
+            if (entryName.startsWith(ApplicationBundler.SUBDIR_CLASSES) || entryName.startsWith(ApplicationBundler
+                                                                                                  .SUBDIR_LIB) ||
+              entryName.startsWith(ApplicationBundler.SUBDIR_RESOURCES)) {
+              jarEntry = new JarEntry(entryName.split("/", 2)[1]);
+            } else {
+              jarEntry = new JarEntry(entryName);
+            }
+            jarOutput.putNextEntry(jarEntry);
+
+            if (!isDir) {
+              ByteStreams.copy(jarInput, jarOutput);
+            }
+          }
+
+          jarEntry = jarInput.getNextJarEntry();
+        }
+      } finally {
+        jarInput.close();
+        jobJar.delete();
+      }
+    } finally {
+      jarOutput.close();
+    }
+    return updatedJar;
+  }
+
+  /**
+   * Stores the Hadoop {@link Configuration} locally which is then packaged with the dependency jar so that this
+   * {@link Configuration} is available to Spark jobs.
+   *
+   * @param context {@link BasicSparkContext} created for this job
+   * @param conf    {@link Configuration} of this job which has to be written to a file
+   * @return {@link URI} the URI of the file to which {@link Configuration} is written
+   * @throws IOException if failed to get an output stream through {@link Location#getOutputStream()}
+   */
+  private URI writeHConfLocally(BasicSparkContext context, Configuration conf) throws IOException {
+    Id.Program programId = context.getProgram().getId();
+    // There can be more than one Spark job running simultaneously so store their Hadoop Configuration file under
+    // different directories uniquely identified by their run id. We cannot add the run id to filename itself to
+    // uniquely identify them as there is no way to access the run id in the Spark job without first loading the
+    // Hadoop configuration in which the run id is stored.
+    Location hConfLocation =
+      locationFactory.create(String.format("%s%s%s%s.%s%s%s", ProgramType.SPARK.getPrettyName(),
+                                           Location.TEMP_FILE_SUFFIX, "/", programId.getId(),
+                                           context.getRunId().getId(), "/", SPARK_HCONF_FILENAME));
+
+    OutputStream hConfOS = new BufferedOutputStream(hConfLocation.getOutputStream());
+    conf.writeXml(hConfOS);
+    hConfOS.flush();
+    hConfOS.close();
+    LOG.info("Hadoop Configuration stored at {} ", hConfLocation.toURI());
+    return hConfLocation.toURI();
   }
 
   private void beforeSubmit(final Spark job, final BasicSparkContext context) throws TransactionFailureException,
@@ -326,233 +522,5 @@ public class SparkProgramRunner implements ProgramRunner {
       // release all resources, datasets, etc. of the context
       context.close();
     }
-  }
-
-  /**
-   * Packages all the dependencies of the Spark job
-   *
-   * @param context            {@link BasicSparkContext} created for this job
-   * @param sparkContextConfig {@link SparkContextConfig} prepared for this job through {@link Configuration}
-   * @return {@link Location} of the dependency jar
-   * @throws IOException if failed to package the jar through
-   *                     {@link ApplicationBundler#createBundle(Location, Iterable, Iterable)}
-   */
-  private Location buildDependencyJar(BasicSparkContext context, SparkContextConfig sparkContextConfig)
-    throws IOException {
-    ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop"),
-                                                           Lists.newArrayList("org.apache.hadoop.hbase",
-                                                                              "org.apache.hadoop.hive"));
-    Id.Program programId = context.getProgram().getId();
-
-    Location appFabricDependenciesJarLocation =
-      locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
-                                           ProgramType.SPARK.name().toLowerCase(), programId.getAccountId(),
-                                           programId.getApplicationId(), programId.getId(),
-                                           context.getRunId().getId()));
-
-    LOG.debug("Creating Spark Job Dependency jar: {}", appFabricDependenciesJarLocation.toURI());
-
-    URI hConfLocation = writeHConfLocally(context, sparkContextConfig.getHConf());
-
-    Set<Class<?>> classes = Sets.newHashSet();
-    Set<URI> resources = Sets.newHashSet();
-
-    classes.add(Spark.class);
-    classes.add(SparkDatasetInputFormat.class);
-    classes.add(SparkDatasetOutputFormat.class);
-    classes.add(SparkJobWrapper.class);
-    classes.add(SparkContextFactory.class);
-    classes.add(JavaSparkContext.class);
-    classes.add(ScalaSparkContext.class);
-
-    /**
-     * We have to add this Hadoop {@link Configuration} to the dependency jar so that when the Spark job runs outside
-     * CDAP it can create the {@link BasicMapReduceContext} to have access to our datasets, transactions etc.
-     */
-    resources.add(hConfLocation);
-
-    try {
-      Class<?> hbaseTableUtilClass = new HBaseTableUtilFactory().get().getClass();
-      classes.add(hbaseTableUtilClass);
-    } catch (ProvisionException e) {
-      LOG.warn("Not including HBaseTableUtil classes in submitted Job Jar since they are not available");
-    }
-
-    ClassLoader oldCLassLoader = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(sparkContextConfig.getHConf().getClassLoader());
-    appBundler.createBundle(appFabricDependenciesJarLocation, classes, resources);
-    Thread.currentThread().setContextClassLoader(oldCLassLoader);
-
-    deleteLocalHConf(hConfLocation);
-
-    /**
-     * {@link ApplicationBundler} currently packages classes, jars and resources under classes, lib,
-     * resources directory. Spark expects everything to exists on top level and doesn't look for things recursively
-     * under folders. So we need move everything one level up in the dependency jar.
-     * TODO: This is inefficient. ApplicationBundler should be changed to support hierarchy less packaging.
-     */
-    updateDependencyJar(appFabricDependenciesJarLocation);
-
-    return appFabricDependenciesJarLocation;
-  }
-
-  /**
-   * Deletes the local copy of Hadoop Configuration file created earlier
-   * jar.
-   *
-   * @param hConfLocation the {@link URI} to the Hadoop Configuration file to be deleted
-   */
-  private void deleteLocalHConf(URI hConfLocation) {
-    // get the path to the folder containing this file
-    String hConfLocationFolder = hConfLocation.toString().split(("/" + SPARK_HCONF_FILENAME), 2)[0];
-    try {
-      File hConfFile = new File(new URI(hConfLocationFolder));
-      FileUtils.deleteDirectory(hConfFile);
-    } catch (Exception e) {
-      LOG.warn("Failed to delete the local hadoop configuration");
-    }
-  }
-
-  /**
-   * Copies the user submitted program jar
-   *
-   * @param jobJarLocation {link Location} of the user's job
-   * @param context        {@link BasicSparkContext} context of this job
-   * @return {@link Location} where the program jar was copied
-   * @throws IOException if failed to get the {@link Location#getInputStream()} or {@link Location#getOutputStream()}
-   */
-  private Location copyProgramJar(Location jobJarLocation, BasicSparkContext context) throws IOException {
-
-    Id.Program programId = context.getProgram().getId();
-    Location programJarCopy = locationFactory.create(String.format("%s.%s.%s.%s.%s.program.jar",
-                                                                   ProgramType.SPARK.name().toLowerCase(),
-                                                                   programId.getAccountId(),
-                                                                   programId.getApplicationId(), programId.getId(),
-                                                                   context.getRunId().getId()));
-    InputStream src = jobJarLocation.getInputStream();
-    try {
-      OutputStream dest = programJarCopy.getOutputStream();
-      try {
-        ByteStreams.copy(src, dest);
-      } finally {
-        dest.close();
-      }
-    } finally {
-      src.close();
-    }
-    return programJarCopy;
-  }
-
-  /**
-   * Updates the dependency jar packaged by the {@link ApplicationBundler#createBundle(Location, Iterable,
-   * Iterable)} by moving the things inside classes, lib, resources a level up as expected by spark.
-   *
-   * @param jobJar {@link Location} of the job jar to be updated
-   */
-  private void updateDependencyJar(Location jobJar) {
-
-    JarFile jarFile = null;
-    File srcJarFile = null;
-    JarOutputStream tmpJarOutputStream = null;
-    boolean jarUpdated = false;
-    File tmpJobJarFile = null;
-
-    try {
-      srcJarFile = new File(jobJar.toURI());
-      jarFile = new JarFile(srcJarFile);
-      tmpJobJarFile = File.createTempFile("tmpJobJarFile", ".tmp");
-
-      try {
-        tmpJarOutputStream = new JarOutputStream(new FileOutputStream(tmpJobJarFile));
-        Enumeration jarEntries = jarFile.entries();
-        byte[] buffer = new byte[DEFAULT_TEMP_BUFFER_SIZE];
-
-        while (jarEntries.hasMoreElements()) {
-          JarEntry entry = (JarEntry) jarEntries.nextElement();
-          // skip the folder classes, lib and resources
-          if (entry.getName().equals(ApplicationBundler.SUBDIR_CLASSES) || entry.getName().equals(ApplicationBundler
-                                                                                                    .SUBDIR_LIB) ||
-            entry.getName().equals(ApplicationBundler.SUBDIR_RESOURCES)) {
-            continue;
-          }
-          // if this jar entry is under classes, lib or resources then move them up
-          if (entry.getName().startsWith(ApplicationBundler.SUBDIR_CLASSES) || entry.getName().startsWith
-            (ApplicationBundler.SUBDIR_LIB) || entry.getName().startsWith(ApplicationBundler.SUBDIR_RESOURCES)) {
-            if (entry.getName().startsWith(ApplicationBundler.SUBDIR_CLASSES)) {
-              tmpJarOutputStream.putNextEntry(new JarEntry(entry.getName().split(ApplicationBundler.SUBDIR_CLASSES,
-                                                                                 2)[1]));
-            } else if (entry.getName().startsWith(ApplicationBundler.SUBDIR_LIB)) {
-              tmpJarOutputStream.putNextEntry(new JarEntry(entry.getName().split(ApplicationBundler.SUBDIR_LIB,
-                                                                                 2)[1]));
-            } else {
-              tmpJarOutputStream.putNextEntry(new JarEntry(entry.getName().split(ApplicationBundler.SUBDIR_RESOURCES,
-                                                                                 2)[1]));
-            }
-          } else {
-            tmpJarOutputStream.putNextEntry(entry);
-          }
-          InputStream entryInputStream = jarFile.getInputStream(entry);
-          int bytesRead;
-          while ((bytesRead = entryInputStream.read(buffer)) != -1) {
-            tmpJarOutputStream.write(buffer, 0, bytesRead);
-          }
-        }
-        jarUpdated = true;
-      } catch (Exception e) {
-        LOG.warn("Failed to create the new job jar without folder hierarchy", e);
-        if (tmpJarOutputStream != null) {
-          tmpJarOutputStream.putNextEntry(new JarEntry("stub"));
-        }
-      } finally {
-        Closeables.closeQuietly(tmpJarOutputStream);
-      }
-    } catch (IOException e) {
-      LOG.warn("Failed to to get the jar file from the location {}", jobJar.toURI().toString(), e);
-    } finally {
-      try {
-        if (jarFile != null) {
-          jarFile.close();
-        }
-      } catch (IOException e) {
-        LOG.warn("Failed to close the source jar", e);
-      }
-      if (!jarUpdated) {
-        FileUtils.deleteQuietly(tmpJobJarFile);
-      }
-    }
-    if (jarUpdated) {
-      FileUtils.deleteQuietly(srcJarFile);
-      if (!tmpJobJarFile.renameTo(srcJarFile)) {
-        throw new RuntimeException("Failed to rename the updated job jar file with source jar file");
-      }
-    }
-  }
-
-  /**
-   * Stores the Hadoop {@link Configuration} locally which is then packaged with the dependency jar so that this
-   * {@link Configuration} is available to Spark jobs.
-   *
-   * @param context {@link BasicSparkContext} created for this job
-   * @param conf    {@link Configuration} of this job which has to be written to a file
-   * @return {@link URI} the URI of the file to which {@link Configuration} is written
-   * @throws IOException if failed to get an output stream through {@link Location#getOutputStream()}
-   */
-  private URI writeHConfLocally(BasicSparkContext context, Configuration conf) throws IOException {
-    Id.Program programId = context.getProgram().getId();
-    // There can be more than one Spark job running simultaneously so store their Hadoop Configuration file under
-    // different directories uniquely identified by their run id. We cannot add the run id to filename itself to
-    // uniquely identify them as there is no way to access the run id in the Spark job without first loading the
-    // Hadoop configuration in which the run id is stored.
-    Location hConfLocation =
-      locationFactory.create(String.format("%s%s%s%s.%s%s%s", ProgramType.SPARK.getPrettyName(),
-                                           Location.TEMP_FILE_SUFFIX, "/", programId.getId(),
-                                           context.getRunId().getId(), "/", SPARK_HCONF_FILENAME));
-
-    OutputStream hConfOS = new BufferedOutputStream(hConfLocation.getOutputStream());
-    conf.writeXml(hConfOS);
-    hConfOS.flush();
-    hConfOS.close();
-    LOG.info("Hadoop Configuration stored at {} ", hConfLocation.toURI());
-    return hConfLocation.toURI();
   }
 }
