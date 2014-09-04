@@ -138,7 +138,7 @@ public class DatasetAccessor {
 
   private static RecordWritable instantiateWritable(@Nullable Configuration conf, String datasetName)
     throws IOException {
-    Dataset dataset = instantiate(conf, datasetName, true);
+    Dataset dataset = instantiate(conf, datasetName);
 
     if (!(dataset instanceof RecordWritable)) {
       throw new IOException(
@@ -149,7 +149,7 @@ public class DatasetAccessor {
   }
 
   private static RecordEnabled instantiate(Configuration conf) throws IOException {
-    Dataset dataset = instantiate(conf, null, false);
+    Dataset dataset = instantiate(conf, null);
 
     if (!(dataset instanceof RecordEnabled)) {
       throw new IOException(
@@ -159,18 +159,10 @@ public class DatasetAccessor {
     return (RecordEnabled) dataset;
   }
 
-  private static Dataset instantiate(@Nullable Configuration conf, String dsName, boolean isRecordWritable)
+  private static Dataset instantiate(@Nullable Configuration conf, String dsName)
     throws IOException {
     ContextManager.Context context = ContextManager.getContext(conf);
-    String datasetName = dsName;
-
-    if (datasetName == null && isRecordWritable) {
-      datasetName = context.getRecordWritableName();
-    } else if (datasetName != null && isRecordWritable) {
-      context.setRecordWritableName(datasetName);
-    } else if (datasetName == null && !isRecordWritable) {
-      datasetName = conf.get(Constants.Explore.DATASET_NAME);
-    }
+    String datasetName = dsName != null ? dsName : conf.get(Constants.Explore.DATASET_NAME);
 
     if (datasetName == null) {
       throw new IOException("Dataset name property could not be found.");
