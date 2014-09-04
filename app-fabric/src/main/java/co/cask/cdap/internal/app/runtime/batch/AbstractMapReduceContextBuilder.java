@@ -33,6 +33,7 @@ import com.continuuity.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Injector;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
@@ -108,13 +109,14 @@ public abstract class AbstractMapReduceContextBuilder {
       (type == null) ? null : injector.getInstance(MetricsCollectionService.class);
 
     ProgramServiceDiscovery serviceDiscovery = injector.getInstance(ProgramServiceDiscovery.class);
+    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
 
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getSpecification().getMapReduce().get(program.getName());
     BasicMapReduceContext context =
       new BasicMapReduceContext(program, type, RunIds.fromString(runId),
-                                runtimeArguments, programSpec.getDatasets().keySet(), spec,
-                                logicalStartTime, workflowBatch, serviceDiscovery, metricsCollectionService,
+                                runtimeArguments, programSpec.getDatasets().keySet(), spec, logicalStartTime,
+                                workflowBatch, serviceDiscovery, discoveryServiceClient, metricsCollectionService,
                                 datasetFramework, configuration);
 
     // propagating tx to all txAware guys
