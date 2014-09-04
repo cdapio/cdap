@@ -282,8 +282,53 @@
     </div>
 
     <div id="panels">
+      <h2>Handler</h2>
+      <br />
+      <div class="panel">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="padding-left: 14px; min-width: 200px" class="service-col">Name</th>
+              <th style="min-width: 200px;" class="center-align">Instances Requested</th>
+              <th style="min-width: 200px;" class="center-align">Instances Active</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="app-list-name service-col"><a class="none-text-decoration">
+                {{model.handler.id}}
+                </a>
+                <br />
+                <span class="app-list-status pull-left">description here?</span>
+              </td>
+              <td style="max-width: 200px;" class="instance-col">
+                <div class="instance-wrapper">
+                  <div>
+                    <form {{action "runnableChangeInstances" model model.handler on="submit"}}>
+                      {{input keyUp=keyPressed placeholder=model.handler.requested maxlength="3" value=model.handler.instancesInput class="services-instances-input" }}
+                    </form>
+                  </div>
+                  <div>
+                    <button class="btn btn-blank btn-set" disabled="true" {{action runnableChangeInstances model model.handler on="click"}}>SET</button>
+                  </div>
+                </div>
+              </td>
+              <td class="instance-provisioned service-col">
+                  <div class="instance-num auto-margin"><span>{{model.handler.provisioned}}</span></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+
+
+
       <h2>Service Workers</h2>
       <br />
+
+
+
       <div class="panel">
         <table class="table">
           <thead>
@@ -301,7 +346,7 @@
                 {{runnable.id}}
                 </a>
                 <br />
-                <span class="app-list-status pull-left">component</span>
+                <span class="app-list-status pull-left">description here?</span>
               </td>
               <td style="max-width: 200px;" class="instance-col">
                 <div class="instance-wrapper">
