@@ -107,6 +107,11 @@ public class LevelDBOrderedTableService {
     return builder.build();
   }
 
+  /**
+   * Gets tables stats.
+   * @return map of table name -> table stats entries
+   * @throws Exception
+   */
   public Map<String, TableStats> getTableStats() throws Exception {
     File baseDir = new File(basePath);
     File[] subDirs = baseDir.listFiles();
@@ -117,6 +122,7 @@ public class LevelDBOrderedTableService {
     ImmutableMap.Builder<String, TableStats> builder = ImmutableMap.builder();
     for (File dir : subDirs) {
       String tableName = getTableName(dir.getName());
+      // NOTE: we are using recursion to traverse file tree as we know that leveldb table fs tree is couple levels deep.
       long size = getSize(dir);
       builder.put(tableName, new TableStats(size));
     }
