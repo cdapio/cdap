@@ -41,6 +41,20 @@ if node['cdap'].key? 'cdap_site'
   end
 end # End cdap-site.xml
 
+# Setup cdap-security.xml
+if node['cdap'].key? 'cdap_security'
+  my_vars = { :options => node['cdap']['cdap_security'] }
+
+  template "#{cdap_conf_dir}/cdap-security.xml" do
+    source 'generic-site.xml.erb'
+    mode 0600
+    owner 'cdap'
+    group 'cdap'
+    variables my_vars
+    action :create
+  end
+end # End cdap-security.xml
+
 execute 'copy logback.xml from conf.dist' do
   command "cp /etc/cdap/conf.dist/logback.xml /etc/cdap/#{node['cdap']['conf_dir']}"
   not_if { ::File.exist?("/etc/cdap/#{node['cdap']['conf_dir']}/logback.xml") }
