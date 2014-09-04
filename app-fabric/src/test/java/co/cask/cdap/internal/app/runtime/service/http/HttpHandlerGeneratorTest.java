@@ -174,7 +174,8 @@ public class HttpHandlerGeneratorTest {
         }
 
         @Override
-        public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments) throws DataSetInstantiationException {
+        public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
+          throws DataSetInstantiationException {
           return null;
         }
       };
