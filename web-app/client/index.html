@@ -2110,9 +2110,10 @@
   <script type="text/x-handlebars" data-template-name="Loading">
     <div id="services-loading">
       <div class="services-box">
-        <div class="animated">
+        <div {{bindAttr class=":animated loadingComplete:force-invisible:force-shown" }} id="loading-animation">
           <img src="assets/img/services-loading.gif" />Loading Services...
         </div>
+        <a {{bindAttr class=":btn :btn-blank loadingComplete:force-shown:force-hidden" }} id="goto-btn" href="/#/overview">Go to Overview </a>
         <ul class="services-list">
           {{#each serviceStatuses}}
           <li class="service">
