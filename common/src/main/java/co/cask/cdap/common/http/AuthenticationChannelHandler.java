@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,55 +31,54 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.security.auth.login.CredentialNotFoundException;
 
 /**
  * An UpstreamHandler that verifies the userId in a request header and updates the {@code SecurityRequestContext}.
  */
 public class AuthenticationChannelHandler extends SimpleChannelUpstreamHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(AuthenticationChannelHandler.class);
+
   public static final String HANDLER_NAME = "authenticator";
   private String currentUserId;
 
   /**
    * Decode the AccessTokenIdentifier passed as a header and set it in a ThreadLocal.
    * Returns a 401 if the identifier is malformed. 
-   * @param ctx
-   * @param e
-   * @throws Exception
    */
   @Override
   public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
     Object message = e.getMessage();
-    if (!(message instanceof HttpRequest)) {
-      if (currentUserId == null) {
-        // TODO: throw correct exception
-        throw new RuntimeException("No userId was found in request.");
+    if (message instanceof HttpRequest) {
+      // TODO: authenticate the user using user id - REACTOR-823
+      HttpRequest request = (HttpRequest) message;
+      String userIdHeader = request.getHeader(Constants.Security.Headers.USER_ID);
+      if (userIdHeader == null) {
+        throw new CredentialNotFoundException("No userId was found in request.");
       }
-      SecurityRequestContext.setUserId(currentUserId);
-      if (((HttpChunk) message).isLast()) {
-        currentUserId = null;
-      }
-      super.messageReceived(ctx, e);
-      return;
-    }
 
-    // TODO: authenticate the user using user id
-    HttpRequest request = (HttpRequest) message;
-    String userIdHeader = request.getHeader(Constants.Security.Headers.USER_ID);
-    try {
       currentUserId = userIdHeader;
       SecurityRequestContext.setUserId(userIdHeader);
-      super.messageReceived(ctx, e);
-    } catch (Exception ex) {
-      throw ex;
+    } else if (message instanceof HttpChunk) {
+      if (currentUserId == null) {
+        throw new CredentialNotFoundException("No userId was found in request.");
+      }
+      SecurityRequestContext.setUserId(currentUserId);
     }
+
+    super.messageReceived(ctx, e);
   }
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
+    LOG.error("Got exception: ", e);
     ChannelFuture future = Channels.future(ctx.getChannel());
     future.addListener(ChannelFutureListener.CLOSE);
+    // TODO: add WWW-Authenticate header for 401 response -  REACTOR-900
     HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
     Channels.write(ctx, future, response);
-    Channels.close(ctx, future);
   }
 }

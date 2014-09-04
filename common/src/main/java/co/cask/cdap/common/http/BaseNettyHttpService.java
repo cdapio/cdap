@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,12 +19,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Function;
-import com.google.common.base.Supplier;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.jboss.netty.channel.ChannelPipeline;
-
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 /**
  * Provides a {@link NettyHttpService.Builder} that has common configuration built-in.
@@ -51,9 +48,8 @@ public class BaseNettyHttpService implements Provider<NettyHttpService.Builder> 
     NettyHttpService.Builder builder = NettyHttpService.builder();
     if (configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED)) {
       builder.modifyChannelPipeline(new Function<ChannelPipeline, ChannelPipeline>() {
-        @Nullable
         @Override
-        public ChannelPipeline apply(@Nullable ChannelPipeline input) {
+        public ChannelPipeline apply(ChannelPipeline input) {
           input.addAfter("decoder", AuthenticationChannelHandler.HANDLER_NAME, authenticationChannelHandler);
           return input;
         }
