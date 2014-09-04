@@ -22,7 +22,6 @@ import co.cask.cdap.data2.transaction.coprocessor.hbase96.DefaultTransactionProc
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase96.DequeueScanObserver;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase96.HBaseQueueRegionObserver;
 import com.google.common.collect.Maps;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -129,11 +128,9 @@ public class HBase96TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public Map<String, TableStats> getTableStats(Configuration hConf) throws IOException {
+  public Map<String, TableStats> getTableStats(HBaseAdmin admin) throws IOException {
     // The idea is to walk thru live region servers, collect table region stats and aggregate them towards table total
     // metrics.
-
-    HBaseAdmin admin = new HBaseAdmin(hConf);
     Map<String, TableStats> datasetStat = Maps.newHashMap();
     ClusterStatus clusterStatus = admin.getClusterStatus();
 

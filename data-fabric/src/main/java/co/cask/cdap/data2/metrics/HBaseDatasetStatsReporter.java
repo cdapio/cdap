@@ -24,6 +24,7 @@ import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.common.Threads;
 
 import java.io.IOException;
@@ -43,6 +44,8 @@ public class HBaseDatasetStatsReporter extends AbstractScheduledService {
   private final Configuration hConf;
   private final HBaseTableUtil hBaseTableUtil;
 
+  private HBaseAdmin hAdmin;
+
   public HBaseDatasetStatsReporter(MetricsCollectionService metricsService, HBaseTableUtil hBaseTableUtil,
                                    Configuration hConf, CConfiguration conf) {
     this.metricsService = metricsService;
@@ -52,9 +55,17 @@ public class HBaseDatasetStatsReporter extends AbstractScheduledService {
   }
 
   @Override
+  protected void startUp() throws Exception {
+    hAdmin = new HBaseAdmin(hConf);
+  }
+
+  @Override
   protected void shutDown() throws Exception {
     if (executor != null) {
       executor.shutdownNow();
+    }
+    if (hAdmin != null) {
+      hAdmin.close();
     }
   }
 
@@ -76,7 +87,7 @@ public class HBaseDatasetStatsReporter extends AbstractScheduledService {
   }
 
   private void reportHBaseStats() throws IOException {
-    Map<String, HBaseTableUtil.TableStats> tableStats = hBaseTableUtil.getTableStats(hConf);
+    Map<String, HBaseTableUtil.TableStats> tableStats = hBaseTableUtil.getTableStats(hAdmin);
     if (tableStats.size() > 0) {
       report(tableStats);
     }

@@ -399,7 +399,13 @@ public abstract class HBaseTableUtil {
   public abstract Class<? extends Coprocessor> getDequeueScanObserverClassForVersion();
   public abstract Class<? extends Coprocessor> getIncrementHandlerClassForVersion();
 
-  public abstract Map<String, TableStats> getTableStats(Configuration hConf) throws IOException;
+  /**
+   * Collects HBase table stats
+   * @param admin instance of {@link HBaseAdmin} to communicate with HBase
+   * @return map of table name -> table stats
+   * @throws IOException
+   */
+  public abstract Map<String, TableStats> getTableStats(HBaseAdmin admin) throws IOException;
 
   /**
    * Carries information about table stats

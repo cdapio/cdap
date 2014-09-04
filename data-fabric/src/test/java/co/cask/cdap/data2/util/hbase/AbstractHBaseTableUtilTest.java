@@ -101,10 +101,10 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   private void waitForMetricsToUpdate() throws InterruptedException {
-    // Wait for a bit to allow changes reflect in metrics: for whatever reason it takes some time.
-    // Did not investigated why :(
+    // Wait for a bit to allow changes reflect in metrics: metrics updated on master with the heartbeat which
+    // by default happens ~every 3 sec
     LOG.info("Waiting for metrics to reflect changes");
-    TimeUnit.SECONDS.sleep(5);
+    TimeUnit.SECONDS.sleep(4);
   }
 
   private void writeSome(String tableName) throws IOException {
@@ -140,6 +140,6 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   private HBaseTableUtil.TableStats getTableStats(String tableName) throws IOException {
-    return getTableUtil().getTableStats(testHBase.getConfiguration()).get(tableName);
+    return getTableUtil().getTableStats(hAdmin).get(tableName);
   }
 }
