@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -342,6 +342,14 @@ public final class Constants {
     public static final String MEMORY_MB = "metrics.memory.mb";
     public static final String MAX_INSTANCES = "metrics.max.instances";
     public static final String SERVICE_DESCRIPTION = "Service to handle metrics requests.";
+
+    /**
+     * Metric's dataset related constants.
+     */
+    public static final class Dataset {
+      /** Defines reporting interval for HBase stats, in seconds */
+      public static final String HBASE_STATS_REPORT_INTERVAL = "metrics.dataset.hbase.stats.report.interval";
+    }
   }
 
   /**

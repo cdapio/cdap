@@ -97,42 +97,31 @@ define([], function () {
     keyPressed: function (evt) {
       var btn = this.$().next();
       var inp = this.value;
-      if (inp.length > 0 && parseInt(inp) != this.placeholder){
-          btn.css("opacity",'1')
-
-      } else {
-          btn.css("opacity",'')
-      }
-      return true;
+      return C.Util.handleInstancesKeyPress(btn, inp, this.placeholder);
     },
 
     changeInstances: function () {
       var inputStr = this.get('instancesInput');
       var input = parseInt(inputStr);
+
       this.set('instancesInput', '');
       setTimeout(function () {
         $('#instancesInput').keyup();
       },500);
 
-      if(!inputStr || inputStr.length === 0){
-        C.Modal.show('Change Instances','Enter a valid number of instances.');
+      if (this.get('model') && this.get('model').instances === input) {
+        return; //no-op
+      }
+      var isInvalid = C.Util.isInvalidNumInstances(inputStr);
+      if(isInvalid){
+        C.Modal.show('Error', isInvalid);
         return;
       }
 
-      if(isNaN(input) || isNaN(inputStr)){
-        C.Modal.show('Incorrect Input', 'Instance count can only be set to numbers (between 1 and 100).');
-        return;
-      }
-
-      if(input < 1 || input > 100) {
-        C.Modal.show('Instances Requested out of bounds', 'Please select an instance count (between 1 and 100)');
-        return;
-      }
-
-      this.setInstances(input, "Change Instances to " + input + " for ");
+      this.setInstances(input);
     },
 
-		setInstances: function (instances, message) {
+		setInstances: function (instances) {
 
 			var self = this;
 			var appId = this.get('model.app');
@@ -140,7 +129,7 @@ define([], function () {
 
 			C.Modal.show(
 				"Procedure Instances",
-				message + ' "' + procedureName + '" procedure?',
+				"Change Instances to " + instances + " for " + ' "' + procedureName + '" procedure?',
 				function () {
 //
 					self.HTTP.put('rest', 'apps', appId, 'procedures', procedureName, 'instances', {
@@ -151,28 +140,6 @@ define([], function () {
 
 					});
 				});
-
-		},
-
-		addOneInstance: function () {
-
-			var instances = this.get('model.instances');
-			instances ++;
-
-			if (instances >= 1 && instances <= 64) {
-				this.setInstances(instances, 'Add an instance to');
-			}
-
-		},
-
-		removeOneInstance: function () {
-
-			var instances = this.get('model.instances');
-			instances --;
-
-			if (instances >= 1 && instances <= 64) {
-				this.setInstances(instances, 'Remove an instance from');
-			}
 
 		},
 

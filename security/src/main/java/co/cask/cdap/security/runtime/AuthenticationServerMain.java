@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -64,10 +64,10 @@ public class AuthenticationServerMain extends DaemonMain {
       LOG.info("Starting AuthenticationServer.");
       Services.chainStart(zkClientService, authServer);
     } else {
-      String error = "AuthenticationServer not started since security is disabled." +
-                      " To enable security, set \"security.enabled\" = \"true\" in cdap-site.xml" +
-                      " and edit the appropriate configuration.";
-      LOG.error(error);
+      String warning = "AuthenticationServer not started since security is disabled." +
+                        " To enable security, set \"security.enabled\" = \"true\" in cdap-site.xml" +
+                        " and edit the appropriate configuration.";
+      LOG.warn(warning);
     }
   }
 
