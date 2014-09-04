@@ -27,7 +27,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -62,7 +62,7 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -81,7 +81,7 @@ public class NettyRouter extends AbstractIdleService {
   private final int clientBossThreadPoolSize;
   private final int clientWorkerThreadPoolSize;
   private final InetAddress hostname;
-  private final Set<String> forwards; // format port:service
+  private final Map<String, Integer> serviceToPortMap;
 
   private final ChannelGroup channelGroup = new DefaultChannelGroup("server channels");
   private final RouterServiceLookup serviceLookup;
@@ -119,9 +119,7 @@ public class NettyRouter extends AbstractIdleService {
                                                    Constants.Router.DEFAULT_CLIENT_WORKER_THREADS);
 
     this.hostname = hostname;
-    this.forwards = Sets.newHashSet(cConf.getStrings(Constants.Router.FORWARD, Constants.Router.DEFAULT_FORWARD));
-    Preconditions.checkState(!this.forwards.isEmpty(), "Require at least one forward rule for router to start");
-    LOG.info("Forwards - {}", this.forwards);
+    this.serviceToPortMap = Maps.newHashMap();
 
     this.serviceLookup = serviceLookup;
     this.securityEnabled = cConf.getBoolean(Constants.Security.CFG_SECURITY_ENABLED, false);
@@ -133,6 +131,11 @@ public class NettyRouter extends AbstractIdleService {
 
     this.sslEnabled = cConf.getBoolean(Constants.Security.Router.SSL_ENABLED);
     if (isSSLEnabled()) {
+      this.serviceToPortMap.put(Constants.Router.GATEWAY_LOOKUP_KEY, Integer.parseInt
+        (cConf.get(Constants.Router.GATEWAY_SSL_LOOKUP_PORT, Constants.Router.DEFAULT_GATEWAY_SSL_LOOKUP_PORT)));
+      this.serviceToPortMap.put(Constants.Router.WEBAPP_LOOKUP_KEY, Integer.parseInt
+        (cConf.get(Constants.Router.WEBAPP_SSL_LOOKUP_PORT, Constants.Router.DEFAULT_WEBAPP_SSL_LOOKUP_PORT)));
+
       File keystore;
       try {
         keystore = new File(cConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
@@ -145,8 +148,15 @@ public class NettyRouter extends AbstractIdleService {
         cConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD),
         cConf.get(Constants.Security.Router.SSL_KEYPASSWORD));
     } else {
+      this.serviceToPortMap.put(Constants.Router.GATEWAY_LOOKUP_KEY,
+                        Integer.parseInt(cConf.get(Constants.Router.GATEWAY_LOOKUP_PORT,
+                                                   Constants.Router.DEFAULT_GATEWAY_LOOKUP_PORT)));
+      this.serviceToPortMap.put(Constants.Router.WEBAPP_LOOKUP_KEY,
+                        Integer.parseInt(cConf.get(Constants.Router.WEBAPP_LOOKUP_PORT,
+                                                   Constants.Router.DEFAULT_WEBAPP_LOOKUP_PORT)));
       this.sslHandlerFactory = null;
     }
+    LOG.info("Service to Port Mapping - {}", this.serviceToPortMap);
   }
 
   @Override
@@ -244,10 +254,9 @@ public class NettyRouter extends AbstractIdleService {
 
     // Start listening on ports.
     ImmutableMap.Builder<Integer, String> serviceMapBuilder = ImmutableMap.builder();
-    for (String forward : forwards) {
-      int ind = forward.indexOf(':');
-      int port = Integer.parseInt(forward.substring(0, ind));
-      String service = forward.substring(ind + 1);
+    for (Map.Entry<String, Integer> forward : serviceToPortMap.entrySet()) {
+      int port = forward.getValue();
+      String service = forward.getKey();
 
       String boundService = serviceLookup.getService(port);
       if (boundService != null) {

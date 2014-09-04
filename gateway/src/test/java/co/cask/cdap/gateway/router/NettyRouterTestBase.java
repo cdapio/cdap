@@ -81,8 +81,9 @@ import javax.ws.rs.PathParam;
 public abstract class NettyRouterTestBase {
   protected static final String HOSTNAME = "127.0.0.1";
   protected static final DiscoveryService DISCOVERY_SERVICE = new InMemoryDiscoveryService();
-  protected static final String DEFAULT_SERVICE = Constants.Service.APP_FABRIC_HTTP;
-  protected static final String WEBAPP_SERVICE = "$HOST";
+  protected static final String DEFAULT_SERVICE = Constants.Router.GATEWAY_LOOKUP_KEY;
+  protected static final String WEBAPP_SERVICE = Constants.Router.WEBAPP_LOOKUP_KEY;
+  protected static final String APP_FABRIC_SERVICE = Constants.Service.APP_FABRIC_HTTP;
 
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouterTestBase.class);
   private static final int MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -91,7 +92,7 @@ public abstract class NettyRouterTestBase {
   private final Supplier<String> defaultServiceSupplier = new Supplier<String>() {
     @Override
     public String get() {
-      return DEFAULT_SERVICE;
+      return APP_FABRIC_SERVICE;
     }
   };
 
@@ -99,7 +100,7 @@ public abstract class NettyRouterTestBase {
     @Override
     public String get() {
       try {
-        return Networks.normalizeWebappDiscoveryName(HOSTNAME + ":" + lookupService(WEBAPP_SERVICE));
+        return "webapp/" + Networks.normalizeWebappDiscoveryName(HOSTNAME + ":" + lookupService(WEBAPP_SERVICE));
       } catch (UnsupportedEncodingException e) {
         LOG.error("Got exception: ", e);
         throw Throwables.propagate(e);
@@ -111,7 +112,7 @@ public abstract class NettyRouterTestBase {
     @Override
     public String get() {
       try {
-        return Networks.normalizeWebappDiscoveryName("default/abc");
+        return "webapp/" + Networks.normalizeWebappDiscoveryName("default/abc");
       } catch (UnsupportedEncodingException e) {
         LOG.error("Got exception: ", e);
         throw Throwables.propagate(e);
@@ -123,7 +124,7 @@ public abstract class NettyRouterTestBase {
     @Override
     public String get() {
       try {
-        return Networks.normalizeWebappDiscoveryName("default/def");
+        return "webapp/" + Networks.normalizeWebappDiscoveryName("default/def");
       } catch (UnsupportedEncodingException e) {
         LOG.error("Got exception: ", e);
         throw Throwables.propagate(e);
@@ -356,7 +357,8 @@ public abstract class NettyRouterTestBase {
   private void testSync(int numRequests) throws Exception {
     for (int i = 0; i < numRequests; ++i) {
       LOG.trace("Sending request " + i);
-      HttpResponse response = get(resolveURI(DEFAULT_SERVICE, String.format("%s/%s-%d", "/v1/ping", "sync", i)));
+      HttpResponse response = get(resolveURI(Constants.Router.GATEWAY_LOOKUP_KEY,
+                                             String.format("%s/%s-%d", "/v1/ping", "sync", i)));
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     }
   }

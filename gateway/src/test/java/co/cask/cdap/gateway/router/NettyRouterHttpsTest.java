@@ -24,7 +24,6 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.net.InetAddresses;
 import com.google.inject.Guice;
@@ -43,7 +42,6 @@ import java.net.URL;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.util.Map;
-import java.util.Set;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -55,9 +53,7 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
 
   @Override
   protected RouterService createRouterService() {
-    return new HttpsRouterService(HOSTNAME, DISCOVERY_SERVICE,
-                                  ImmutableSet.of("0:" + DEFAULT_SERVICE,
-                                                  "0:" + WEBAPP_SERVICE));
+    return new HttpsRouterService(HOSTNAME, DISCOVERY_SERVICE);
   }
 
   @Override
@@ -103,15 +99,14 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
   private static class HttpsRouterService extends RouterService {
     private final String hostname;
     private final DiscoveryService discoveryService;
-    private final Set<String> forwards;
     private final Map<String, Integer> serviceMap = Maps.newHashMap();
 
     private NettyRouter router;
 
-    private HttpsRouterService(String hostname, DiscoveryService discoveryService, Set<String> forwards) {
+    private HttpsRouterService(String hostname, DiscoveryService discoveryService) {
       this.hostname = hostname;
       this.discoveryService = discoveryService;
-      this.forwards = forwards;
+
     }
 
     @Override
@@ -128,7 +123,8 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
       cConf.set(Constants.Router.ADDRESS, hostname);
-      cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
+      cConf.setInt(Constants.Router.GATEWAY_LOOKUP_PORT, 0);
+      cConf.setInt(Constants.Router.WEBAPP_LOOKUP_PORT, 0);
 
       cConf.set(Constants.Security.Router.SSL_KEYPASSWORD, "secret");
       cConf.set(Constants.Security.Router.SSL_KEYSTORE_PASSWORD, "secret");

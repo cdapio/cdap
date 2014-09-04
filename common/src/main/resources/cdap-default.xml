@@ -624,11 +624,28 @@
     </property>
 
     <property>
-        <name>router.forward.rule</name>
-        <value>10000:gateway,20000:webapp/$HOST</value>
-        <description>Forward rules for router (port:service -> forward port to service)</description>
+        <name>router.gateway.port</name>
+        <value>10000</value>
+        <description>Router listening port for gateway</description>
     </property>
 
+    <property>
+      <name>router.webapp.port</name>
+      <value>20000</value>
+      <description>Router listening port for webapp</description>
+    </property>
+
+    <property>
+      <name>router.ssl.gateway.port</name>
+      <value>10000</value>
+      <description>Secure router listening port for gateway</description>
+    </property>
+
+    <property>
+      <name>router.ssl.webapp.port</name>
+      <value>20000</value>
+      <description>Secure router listening port for webapp</description>
+    </property>
 
     <!-- Sets whether Devsuite is in Cloud or not -->
     <property>

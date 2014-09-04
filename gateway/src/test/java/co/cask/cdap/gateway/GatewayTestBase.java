@@ -43,7 +43,6 @@ import co.cask.cdap.security.guice.InMemorySecurityModule;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import com.continuuity.tephra.TransactionManager;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -73,7 +72,6 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -114,14 +112,14 @@ public abstract class GatewayTestBase {
     }
     tmpFolder.create();
     conf = CConfiguration.create();
-    Set<String> forwards = ImmutableSet.of("0:" + Constants.Service.GATEWAY, "0:" + WEBAPPSERVICE);
     conf.setInt(Constants.Gateway.PORT, 0);
     conf.set(Constants.Gateway.ADDRESS, hostname);
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
     conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
     conf.set(Constants.Router.ADDRESS, hostname);
-    conf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
+    conf.setInt(Constants.Router.GATEWAY_LOOKUP_PORT, 0);
+    conf.setInt(Constants.Router.WEBAPP_LOOKUP_PORT, 0);
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     injector = startGateway(conf);
   }
