@@ -31,8 +31,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -43,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -57,6 +60,7 @@ public class DatasetService extends AbstractExecutionThreadService {
   private final DiscoveryService discoveryService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetOpExecutor opExecutorClient;
+  private final Set<Service> metricReporters;
   private Cancellable cancelDiscovery;
 
   private final DatasetTypeManager typeManager;
@@ -76,7 +80,8 @@ public class DatasetService extends AbstractExecutionThreadService {
                         MetricsCollectionService metricsCollectionService,
                         DatasetOpExecutor opExecutorClient,
                         MDSDatasetsRegistry mdsDatasets,
-                        DatasetExploreFacade datasetExploreFacade) throws Exception {
+                        DatasetExploreFacade datasetExploreFacade,
+                        @Named("metricReporters") Set<Service> metricReporters) throws Exception {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
 
@@ -105,6 +110,7 @@ public class DatasetService extends AbstractExecutionThreadService {
     this.discoveryServiceClient = discoveryServiceClient;
     this.opExecutorClient = opExecutorClient;
     this.mdsDatasets = mdsDatasets;
+    this.metricReporters = metricReporters;
   }
 
   @Override
@@ -129,6 +135,10 @@ public class DatasetService extends AbstractExecutionThreadService {
           }
         }
       }, MoreExecutors.sameThreadExecutor());
+
+    for (Service service : metricReporters) {
+      service.start();
+    }
   }
 
   @Override
@@ -198,6 +208,10 @@ public class DatasetService extends AbstractExecutionThreadService {
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping DatasetService...");
+
+    for (Service service : metricReporters) {
+      service.stop();
+    }
 
     if (opExecutorServiceWatch != null) {
       opExecutorServiceWatch.cancel();

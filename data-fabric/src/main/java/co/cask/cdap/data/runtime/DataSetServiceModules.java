@@ -38,9 +38,12 @@ import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModul
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule;
+import co.cask.cdap.data2.metrics.HBaseDatasetStatsReporter;
+import co.cask.cdap.data2.metrics.LevelDBDatasetStatsReporter;
 import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.http.HttpHandler;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
@@ -97,6 +100,8 @@ public class DataSetServiceModules {
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
         handlerBinder.addBinding().to(PingHandler.class);
 
+        Multibinder.newSetBinder(binder(), Service.class, Names.named("metricReporters"));
+
         bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
         expose(DatasetOpExecutorService.class);
 
@@ -128,6 +133,10 @@ public class DataSetServiceModules {
         //       as long as the data is durably persisted
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
+
+        Multibinder.newSetBinder(binder(), Service.class, Names.named("metricReporters"))
+          .addBinding().to(LevelDBDatasetStatsReporter.class);
+
         bind(DatasetService.class);
         expose(DatasetService.class);
 
@@ -167,6 +176,10 @@ public class DataSetServiceModules {
         //       as long as the data is durably persisted
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
+
+        Multibinder.newSetBinder(binder(), Service.class, Names.named("metricReporters"))
+          .addBinding().to(HBaseDatasetStatsReporter.class);
+
         bind(DatasetService.class);
         expose(DatasetService.class);
 

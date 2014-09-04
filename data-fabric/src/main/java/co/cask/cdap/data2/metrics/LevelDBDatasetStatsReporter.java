@@ -24,47 +24,38 @@ import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.common.Threads;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Collects HBase-based dataset's metrics from HBase.
+ * Collects LevelDB-based dataset's metrics from levelDB.
  */
 // todo: consider extracting base class from HBaseDatasetStatsReporter and LevelDBDatasetStatsReporter
-public class HBaseDatasetStatsReporter extends AbstractScheduledService {
+public class LevelDBDatasetStatsReporter extends AbstractScheduledService {
+  private static final int BYTES_IN_MB = 1024 * 1024;
+
   private volatile ScheduledExecutorService executor;
   private final int reportIntervalInSec;
 
   private final MetricsCollectionService metricsService;
-  private final Configuration hConf;
-  private final HBaseTableUtil hBaseTableUtil;
+  private final LevelDBOrderedTableService ldbService;
   private final DatasetNamespace userDsNamespace;
 
-  private HBaseAdmin hAdmin;
-
   @Inject
-  public HBaseDatasetStatsReporter(MetricsCollectionService metricsService, HBaseTableUtil hBaseTableUtil,
-                                   Configuration hConf, CConfiguration conf) {
+  public LevelDBDatasetStatsReporter(MetricsCollectionService metricsService,
+                                     LevelDBOrderedTableService ldbService,
+                                     CConfiguration conf) {
     this.metricsService = metricsService;
-    this.hBaseTableUtil = hBaseTableUtil;
-    this.hConf = hConf;
-    this.reportIntervalInSec = conf.getInt(Constants.Metrics.Dataset.HBASE_STATS_REPORT_INTERVAL);
+    this.ldbService = ldbService;
+    this.reportIntervalInSec = conf.getInt(Constants.Metrics.Dataset.LEVELDB_STATS_REPORT_INTERVAL);
     this.userDsNamespace = new DefaultDatasetNamespace(conf, Namespace.USER);
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-    hAdmin = new HBaseAdmin(hConf);
   }
 
   @Override
@@ -72,14 +63,11 @@ public class HBaseDatasetStatsReporter extends AbstractScheduledService {
     if (executor != null) {
       executor.shutdownNow();
     }
-    if (hAdmin != null) {
-      hAdmin.close();
-    }
   }
 
   @Override
   protected void runOneIteration() throws Exception {
-    reportHBaseStats();
+    reportStats();
   }
 
   @Override
@@ -90,29 +78,30 @@ public class HBaseDatasetStatsReporter extends AbstractScheduledService {
   @Override
   protected final ScheduledExecutorService executor() {
     executor = Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("HBaseDatasetStatsReporter-scheduler"));
+      Threads.createDaemonThreadFactory("LevelDBDatasetStatsReporter-scheduler"));
     return executor;
   }
 
-  private void reportHBaseStats() throws IOException {
-    Map<String, HBaseTableUtil.TableStats> tableStats = hBaseTableUtil.getTableStats(hAdmin);
+  private void reportStats() throws Exception {
+    Map<String, LevelDBOrderedTableService.TableStats> tableStats = ldbService.getTableStats();
     if (tableStats.size() > 0) {
       report(tableStats);
     }
   }
 
-  private void report(Map<String, HBaseTableUtil.TableStats> datasetStat) {
+  private void report(Map<String, LevelDBOrderedTableService.TableStats> datasetStat) {
     // we use "0" as runId: it is required by metrics system to provide something at this point
     MetricsCollector collector =
       metricsService.getCollector(MetricsScope.REACTOR, Constants.Metrics.DATASET_CONTEXT, "0");
-    for (Map.Entry<String, HBaseTableUtil.TableStats> statEntry : datasetStat.entrySet()) {
+    for (Map.Entry<String, LevelDBOrderedTableService.TableStats> statEntry : datasetStat.entrySet()) {
       String datasetName = userDsNamespace.fromNamespaced(statEntry.getKey());
       if (datasetName == null) {
         // not a user dataset
         continue;
       }
       // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
-      collector.gauge("dataset.size.mb", statEntry.getValue().getTotalSizeMB(), datasetName);
+      int sizeInMb = (int) (statEntry.getValue().getDiskSizeBytes() / BYTES_IN_MB);
+      collector.gauge("dataset.size.mb", sizeInMb, datasetName);
     }
   }
 }
