@@ -18,6 +18,8 @@ package co.cask.cdap.api.data.batch;
 
 import co.cask.cdap.api.annotation.Beta;
 
+import java.io.Closeable;
+import java.lang.reflect.Type;
 import java.util.List;
 
 /**
@@ -26,7 +28,14 @@ import java.util.List;
  * @param <RECORD> the type of objects that represents a single record
  */
 @Beta
-public interface RecordScannable<RECORD> extends RecordEnabled {
+public interface RecordScannable<RECORD> extends Closeable {
+
+  /**
+   * The type of records that the dataset exposes as a schema. The schema will be derived from the type
+   * using reflection.
+   * @return the schema type.
+   */
+  Type getRecordType();
 
   /**
    * Returns all splits of the dataset.

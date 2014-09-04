@@ -16,7 +16,6 @@
 
 package co.cask.cdap.hive.datasets;
 
-import co.cask.cdap.api.data.batch.RecordEnabled;
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.dataset.Dataset;
@@ -55,7 +54,7 @@ public class DatasetAccessor {
    * @throws IOException in case the conf does not contain a valid RecordScannable.
    */
   public static RecordScannable getRecordScannable(Configuration conf) throws IOException {
-    RecordEnabled dataset = instantiate(conf);
+    Dataset dataset = instantiate(conf);
 
     if (!(dataset instanceof RecordScannable)) {
       throw new IOException(
@@ -106,11 +105,19 @@ public class DatasetAccessor {
    * @throws IOException in case the conf does not contain a valid RecordScannable.
    */
   public static Type getRecordType(Configuration conf) throws IOException {
-    RecordEnabled recordScannable = instantiate(conf);
+    Dataset dataset = instantiate(conf);
     try {
-      return recordScannable.getRecordType();
+      if (dataset instanceof RecordWritable) {
+        return ((RecordWritable) dataset).getRecordType();
+      } else if (dataset instanceof RecordScannable) {
+        return ((RecordScannable) dataset).getRecordType();
+      }
+      throw new IOException(
+        String.format("Dataset %s does not implement neither RecordScannable nor RecordWritable, " +
+                        "and hence cannot be queried or written to in Hive.",
+                      conf.get(Constants.Explore.DATASET_NAME)));
     } finally {
-      recordScannable.close();
+      dataset.close();
     }
   }
 
@@ -148,15 +155,16 @@ public class DatasetAccessor {
     return (RecordWritable) dataset;
   }
 
-  private static RecordEnabled instantiate(Configuration conf) throws IOException {
+  private static Dataset instantiate(Configuration conf) throws IOException {
     Dataset dataset = instantiate(conf, null);
 
-    if (!(dataset instanceof RecordEnabled)) {
+    if (!(dataset instanceof RecordScannable || dataset instanceof RecordWritable)) {
       throw new IOException(
-        String.format("Dataset %s does not implement RecordEnabled, and hence cannot be queried or written to in Hive.",
+        String.format("Dataset %s does not implement neither RecordScannable nor RecordWritable, " +
+                        "and hence cannot be queried or written to in Hive.",
                       conf.get(Constants.Explore.DATASET_NAME)));
     }
-    return (RecordEnabled) dataset;
+    return dataset;
   }
 
   private static Dataset instantiate(@Nullable Configuration conf, String dsName)

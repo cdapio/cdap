@@ -16,7 +16,9 @@
 
 package co.cask.cdap.explore.client;
 
-import co.cask.cdap.api.data.batch.RecordEnabled;
+import co.cask.cdap.api.data.batch.RecordScannable;
+import co.cask.cdap.api.data.batch.RecordWritable;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.service.ExploreException;
@@ -140,9 +142,9 @@ public class DatasetExploreFacade {
     return datasetName.replaceAll("\\.", "_").toLowerCase();
   }
 
-  public static String generateCreateStatement(String name, RecordEnabled recordEnabled)
+  public static String generateCreateStatement(String name, Dataset dataset)
     throws UnsupportedTypeException {
-    String hiveSchema = hiveSchemaFor(recordEnabled);
+    String hiveSchema = hiveSchemaFor(dataset);
     String tableName = getHiveTableName(name);
     return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Cask CDAP Dataset\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
@@ -158,10 +160,16 @@ public class DatasetExploreFacade {
    * Given a record-enabled dataset, determine its record type and generate a schema string compatible with Hive.
    * @param dataset The data set
    * @return the hive schema
-   * @throws UnsupportedTypeException if the row type is not a record or contains null types.
+   * @throws UnsupportedTypeException if the dataset is neither RecordScannable, nor RecordWritable,
+   * or if the row type is not a record or contains null types.
    */
-  static String hiveSchemaFor(RecordEnabled dataset) throws UnsupportedTypeException {
-    return hiveSchemaFor(dataset.getRecordType());
+  static String hiveSchemaFor(Dataset dataset) throws UnsupportedTypeException {
+    if (dataset instanceof RecordScannable) {
+      return hiveSchemaFor(((RecordScannable) dataset).getRecordType());
+    } else if (dataset instanceof RecordWritable) {
+      return hiveSchemaFor(((RecordWritable) dataset).getRecordType());
+    }
+    throw new UnsupportedTypeException("Dataset neither implements RecordScannable not RecordWritable.");
   }
 
   static String hiveSchemaFor(Type type) throws UnsupportedTypeException {
