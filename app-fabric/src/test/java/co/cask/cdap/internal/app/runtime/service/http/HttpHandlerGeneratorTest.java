@@ -139,7 +139,7 @@ public class HttpHandlerGeneratorTest {
     }
   }
 
-  private static abstract class AbstractDelegatorContext<T extends HttpServiceHandler> implements DelegatorContext<T> {
+  private abstract static class AbstractDelegatorContext<T extends HttpServiceHandler> implements DelegatorContext<T> {
 
     private final ThreadLocal<T> threadLocal = new ThreadLocal<T>() {
       @Override

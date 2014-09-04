@@ -45,7 +45,6 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
 
   @Override
   public void destroy(HandlerContext context) {
-    // TODO
   }
 
   @Override

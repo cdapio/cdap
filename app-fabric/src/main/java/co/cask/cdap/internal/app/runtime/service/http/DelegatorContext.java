@@ -21,6 +21,8 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 /**
  * Context object for carrying context information used by generated handler delegator classes.
+ *
+ * @param <T> Type of the user {@link HttpServiceHandler}
  */
 public interface DelegatorContext<T extends HttpServiceHandler> {
 
