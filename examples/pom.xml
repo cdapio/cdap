@@ -47,6 +47,7 @@
     <module>Ticker</module>
     <module>TrafficAnalytics</module>
     <module>WordCount</module>
+    <module>SparkPageRank</module>
   </modules>
 
   <repositories>

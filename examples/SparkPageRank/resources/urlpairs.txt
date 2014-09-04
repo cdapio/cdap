@@ -1,0 +1,4 @@
+http://example.com/hello http://example.com/buy
+http://example.com/hello http://example.com/buy2
+http://example.com/hello http://example.com/buy3
+http://example.com/hello http://example.com/buy4
