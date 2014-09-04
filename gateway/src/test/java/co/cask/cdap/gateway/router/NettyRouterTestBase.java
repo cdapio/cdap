@@ -84,6 +84,7 @@ public abstract class NettyRouterTestBase {
   protected static final String DEFAULT_SERVICE = Constants.Router.GATEWAY_LOOKUP_KEY;
   protected static final String WEBAPP_SERVICE = Constants.Router.WEBAPP_LOOKUP_KEY;
   protected static final String APP_FABRIC_SERVICE = Constants.Service.APP_FABRIC_HTTP;
+  protected static final String WEB_APP_SERVICE_PREFIX = "webapp/";
 
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouterTestBase.class);
   private static final int MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -100,7 +101,7 @@ public abstract class NettyRouterTestBase {
     @Override
     public String get() {
       try {
-        return "webapp/" + Networks.normalizeWebappDiscoveryName(HOSTNAME + ":" + lookupService(WEBAPP_SERVICE));
+        return WEB_APP_SERVICE_PREFIX + Networks.normalizeWebappDiscoveryName(HOSTNAME + ":" + lookupService(WEBAPP_SERVICE));
       } catch (UnsupportedEncodingException e) {
         LOG.error("Got exception: ", e);
         throw Throwables.propagate(e);
@@ -112,7 +113,7 @@ public abstract class NettyRouterTestBase {
     @Override
     public String get() {
       try {
-        return "webapp/" + Networks.normalizeWebappDiscoveryName("default/abc");
+        return WEB_APP_SERVICE_PREFIX + Networks.normalizeWebappDiscoveryName("default/abc");
       } catch (UnsupportedEncodingException e) {
         LOG.error("Got exception: ", e);
         throw Throwables.propagate(e);
@@ -124,7 +125,7 @@ public abstract class NettyRouterTestBase {
     @Override
     public String get() {
       try {
-        return "webapp/" + Networks.normalizeWebappDiscoveryName("default/def");
+        return WEB_APP_SERVICE_PREFIX + Networks.normalizeWebappDiscoveryName("default/def");
       } catch (UnsupportedEncodingException e) {
         LOG.error("Got exception: ", e);
         throw Throwables.propagate(e);
