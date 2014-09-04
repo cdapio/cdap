@@ -30,7 +30,6 @@ import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
@@ -44,6 +43,7 @@ import java.io.Closeable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
@@ -174,9 +174,11 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
     Cancellable discoveryCancel = serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
       @Override
       public void onChange(ServiceDiscovered serviceDiscovered) {
-        if (!Iterables.isEmpty(serviceDiscovered)) {
+        try {
           URL url = createURL(serviceDiscovered.iterator().next(), applicationId, serviceId);
           discoverableQueue.offer(url);
+        } catch (NoSuchElementException e) {
+          LOG.debug("serviceDiscovered is empty");
         }
       }
     }, Threads.SAME_THREAD_EXECUTOR);
