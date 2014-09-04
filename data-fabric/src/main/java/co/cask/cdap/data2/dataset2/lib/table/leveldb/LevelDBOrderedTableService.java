@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright 2014 Cask, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -38,6 +39,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
@@ -103,6 +105,40 @@ public class LevelDBOrderedTableService {
       builder.add(getTableName(dir));
     }
     return builder.build();
+  }
+
+  public Map<String, TableStats> getTableStats() throws Exception {
+    File baseDir = new File(basePath);
+    File[] subDirs = baseDir.listFiles();
+    if (subDirs == null) {
+      return ImmutableMap.of();
+    }
+
+    ImmutableMap.Builder<String, TableStats> builder = ImmutableMap.builder();
+    for (File dir : subDirs) {
+      String tableName = getTableName(dir.getName());
+      long size = getSize(dir);
+      builder.put(tableName, new TableStats(size));
+    }
+    return builder.build();
+  }
+
+  // todo: use Guava's utils instead when we switch to v15+
+  private static long getSize(File f) {
+    if (f.isFile()) {
+      return f.length();
+    }
+
+    File[] files = f.listFiles();
+    if (files == null) {
+      return 0;
+    }
+
+    long size = 0;
+    for (File file : files) {
+      size += getSize(file);
+    }
+    return size;
   }
 
   public WriteOptions getWriteOptions() {
@@ -216,6 +252,21 @@ public class LevelDBOrderedTableService {
     @Override
     public String name() {
       return "hbase-kv";
+    }
+  }
+
+  /**
+   * Represents LevelDB's table stats.
+   */
+  public static final class TableStats {
+    private final long diskSizeBytes;
+
+    public TableStats(long sizeInBytes) {
+      this.diskSizeBytes = sizeInBytes;
+    }
+
+    public long getDiskSizeBytes() {
+      return diskSizeBytes;
     }
   }
 }
