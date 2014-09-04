@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.batch.dataset;
 
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.dataset.Dataset;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import org.apache.hadoop.io.Text;
@@ -27,7 +28,11 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-class DataSetInputSplit extends InputSplit implements Writable {
+/**
+ * Class for {@link InputSplit} of a {@link Dataset}
+ * @see {link InputSplit}
+ */
+public class DataSetInputSplit extends InputSplit implements Writable {
   private Split split;
 
   public DataSetInputSplit() {
