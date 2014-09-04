@@ -419,17 +419,20 @@ public abstract class HBaseTableUtil {
       this.memStoreSizeMB = memStoreSizeMB;
     }
 
-    public static TableStats add(TableStats stats, int storeFileSizeMBtoAdd, int memStoreSizeMBtoAdd) {
-      return new TableStats(stats.getStoreFileSizeMB() + storeFileSizeMBtoAdd,
-                            stats.getMemStoreSizeMB() + memStoreSizeMBtoAdd);
-    }
-
     public int getStoreFileSizeMB() {
       return storeFileSizeMB;
     }
 
     public int getMemStoreSizeMB() {
       return memStoreSizeMB;
+    }
+
+    void incStoreFileSizeMB(int deltaMB) {
+      this.storeFileSizeMB += deltaMB;
+    }
+
+    void incMemStoreSizeMB(int deltaMB) {
+      this.memStoreSizeMB += deltaMB;
     }
 
     public int getTotalSizeMB() {

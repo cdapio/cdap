@@ -146,8 +146,8 @@ public class HBase94TableUtil extends HBaseTableUtil {
           stat = new TableStats(regionLoad.getStorefileSizeMB(), regionLoad.getMemStoreSizeMB());
           datasetStat.put(tableName, stat);
         } else {
-          TableStats stats = TableStats.add(stat, regionLoad.getStorefileSizeMB(), regionLoad.getMemStoreSizeMB());
-          datasetStat.put(tableName, stats);
+          stat.incStoreFileSizeMB(regionLoad.getStorefileSizeMB());
+          stat.incMemStoreSizeMB(regionLoad.getMemStoreSizeMB());
         }
       }
     }
