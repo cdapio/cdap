@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Base class for program runtime context
@@ -64,7 +65,6 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
 
   private final ProgramServiceDiscovery serviceDiscovery;
   private final DiscoveryServiceClient discoveryServiceClient;
-
 
   public AbstractContext(Program program, RunId runId,
                          Set<String> datasets,
@@ -166,51 +166,54 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
                                                                                         serviceId));
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
     Discoverable discoverable = endpointStrategy.pick();
-    if (discoverable == null) {
-      final SynchronousQueue<Discoverable> discoverableQueue = new SynchronousQueue<Discoverable>();
-      Cancellable discoveryCancel = serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
-        @Override
-        public void onChange(ServiceDiscovered serviceDiscovered) {
-          if (!Iterables.isEmpty(serviceDiscovered)) {
-            try {
-              discoverableQueue.put(serviceDiscovered.iterator().next());
-            } catch (InterruptedException e) {
-              LOG.error("Got exception: ", e);
-            }
-          }
-        }
-      }, Threads.SAME_THREAD_EXECUTOR);
-
-      try {
-        discoverable = discoverableQueue.poll(1, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        LOG.error("Got exception: ", e);
-      }
-      discoveryCancel.cancel();
+    if (discoverable != null) {
+      return createURL(discoverable, applicationId, serviceId);
     }
 
+    final SynchronousQueue<Discoverable> discoverableQueue = new SynchronousQueue<Discoverable>();
+    Cancellable discoveryCancel = serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
+      @Override
+      public void onChange(ServiceDiscovered serviceDiscovered) {
+        if (!Iterables.isEmpty(serviceDiscovered)) {
+          discoverableQueue.offer(serviceDiscovered.iterator().next());
+        }
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
+
+    try {
+      discoverable = discoverableQueue.poll(1, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      LOG.error("Got exception: ", e);
+    }
+    discoveryCancel.cancel();
 
     if (discoverable == null) {
       LOG.debug("Discoverable endpoint not found for appID: {}, serviceID: {}.", applicationId, serviceId);
       return null;
     }
+
+    return createURL(discoverable, applicationId, serviceId);
+  }
+
+  @Override
+  public URL getServiceURL(String serviceId) {
+    return getServiceURL(getApplicationId(), serviceId);
+  }
+
+  private URL createURL(@Nullable Discoverable discoverable, String applicationId, String serviceId) {
+    if (discoverable == null) {
+      return null;
+    }
     String hostName = discoverable.getSocketAddress().getHostName();
     int port = discoverable.getSocketAddress().getPort();
-
     String path = String.format("http://%s:%d%s/apps/%s/services/%s/methods/", hostName, port,
                                 Constants.Gateway.GATEWAY_VERSION, applicationId, serviceId);
-
     try {
       return new URL(path);
     } catch (MalformedURLException e) {
       LOG.error("Got exception while creating serviceURL", e);
       return null;
     }
-  }
-
-  @Override
-  public URL getServiceURL(String serviceId) {
-    return getServiceURL(getApplicationId(), serviceId);
   }
 
   /**

@@ -48,6 +48,7 @@ public class PurchaseProcedure extends AbstractProcedure {
     String product = request.getArgument("product");
     if (product == null) {
       responder.error(ProcedureResponse.Code.CLIENT_ERROR, "Product must be given as argument");
+      return;
     }
 
     // Discover the CatalogLookup service via discovery service
@@ -55,18 +56,16 @@ public class PurchaseProcedure extends AbstractProcedure {
     URL serviceURL = getContext().getServiceURL("PurchaseHistory", PurchaseApp.SERVICE_NAME);
     if (serviceURL == null) {
       responder.error(ProcedureResponse.Code.NOT_FOUND, "serviceURL is null");
+      return;
     }
-    try {
-      URL url = new URL(serviceURL, String.format("v1/product/%s/catalog", product));
-      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-      if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
-        try {
-          productId = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
-        } finally {
-          conn.disconnect();
-        }
+    URL url = new URL(serviceURL, String.format("v1/product/%s/catalog", product));
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
+      try {
+        productId = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
+      } finally {
+        conn.disconnect();
       }
-    } catch (Throwable th) {
     }
 
     if (productId == null) {
