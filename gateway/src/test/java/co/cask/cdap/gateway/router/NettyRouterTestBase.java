@@ -101,7 +101,8 @@ public abstract class NettyRouterTestBase {
     @Override
     public String get() {
       try {
-        return WEB_APP_SERVICE_PREFIX + Networks.normalizeWebappDiscoveryName(HOSTNAME + ":" + lookupService(WEBAPP_SERVICE));
+        return WEB_APP_SERVICE_PREFIX + Networks.normalizeWebappDiscoveryName(HOSTNAME + ":" +
+                                                                                lookupService(WEBAPP_SERVICE));
       } catch (UnsupportedEncodingException e) {
         LOG.error("Got exception: ", e);
         throw Throwables.propagate(e);
