@@ -105,9 +105,6 @@ public class ContextManager {
     private final DatasetFramework datasetFramework;
     private final ZKClientService zkClientService;
 
-    // TODO investigate multiple "insert" in one query and make sure this doesn't make it break - REACTOR-887
-    private String recordWritableName;
-
     public Context(DatasetFramework datasetFramework, ZKClientService zkClientService) {
       // This constructor is called from the MR job Hive launches.
       this.datasetFramework = datasetFramework;
@@ -121,14 +118,6 @@ public class ContextManager {
 
     public DatasetFramework getDatasetFramework() {
       return datasetFramework;
-    }
-
-    public String getRecordWritableName() {
-      return recordWritableName;
-    }
-
-    public void setRecordWritableName(String recordWritableName) {
-      this.recordWritableName = recordWritableName;
     }
 
     @Override

@@ -48,8 +48,9 @@ public class DatasetSerDe implements SerDe {
     String datasetName = properties.getProperty(Constants.Explore.DATASET_NAME);
     try {
       if (entries != null) {
-        entries.set(Constants.Explore.DATASET_NAME, datasetName);
-        recordType = DatasetAccessor.getRecordScannableType(entries);
+        Configuration conf = new Configuration(entries);
+        conf.set(Constants.Explore.DATASET_NAME, datasetName);
+        recordType = DatasetAccessor.getRecordScannableType(conf);
       } else {
         // When initialize is called to write to a table, entries is null
         try {
