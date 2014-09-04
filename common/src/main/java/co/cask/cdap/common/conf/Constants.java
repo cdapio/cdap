@@ -346,7 +346,8 @@ public final class Constants {
      * Metric's dataset related constants.
      */
     public static final class Dataset {
-      public static final String HBASE_STATS_REPORT_INTERVAL_IN_SEC = "metrics.dataset.hbase.stats.report.interval";
+      /** Defines reporting interval for HBase stats, in seconds */
+      public static final String HBASE_STATS_REPORT_INTERVAL = "metrics.dataset.hbase.stats.report.interval";
     }
   }
 

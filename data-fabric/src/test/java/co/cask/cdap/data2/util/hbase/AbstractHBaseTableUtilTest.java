@@ -14,14 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metrics;
+package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.test.XSlowTests;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -32,8 +29,9 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -41,13 +39,13 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-@Category(XSlowTests.class)
-public class HBaseDatasetStatsReporterTest {
+public abstract class AbstractHBaseTableUtilTest {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractHBaseTableUtilTest.class);
+
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static HBaseTestBase testHBase;
-  private static HBaseTableUtil hBaseTableUtil = new HBaseTableUtilFactory().get();
   private static HBaseAdmin hAdmin;
 
   @BeforeClass
@@ -63,55 +61,59 @@ public class HBaseDatasetStatsReporterTest {
     testHBase.stopHBase();
   }
 
+  protected abstract HBaseTableUtil getTableUtil();
+
   @Test
   public void testTableSizeMetrics() throws Exception {
-    // Ideally we'd test how table changes are reflected in metrics, but that would require waiting on exposed by HBase
-    // metrics to refresh, which currently takes 60 sec in unit-tests. If we wait couple times - that would be minutes,
-    // so we don't do that here and checking metrics once, after some table & data manipulation.
+    Assert.assertNull(getTableStats("table1"));
+    Assert.assertNull(getTableStats("table2"));
+    Assert.assertNull(getTableStats("table3"));
 
-    // 1. doing table & data manipulation.
-
-    // Create couple tables:
-    // - one we will keep empty
-    // - second we will write some data in it
-    // - third we'll write some data to it, but then truncate it
-    //
-    // In the end, first and third should have same size metric after flush, which is smaller than the second size.
     create("table1");
     create("table2");
     create("table3");
 
+    waitForMetricsToUpdate();
+
+    Assert.assertEquals(0, getTableStats("table1").getTotalSizeMB());
+    Assert.assertEquals(0, getTableStats("table2").getTotalSizeMB());
+    Assert.assertEquals(0, getTableStats("table3").getTotalSizeMB());
+
     writeSome("table2");
     writeSome("table3");
 
+    waitForMetricsToUpdate();
+
+    Assert.assertEquals(0, getTableStats("table1").getTotalSizeMB());
+    Assert.assertTrue(getTableStats("table2").getTotalSizeMB() > 0);
+    Assert.assertTrue(getTableStats("table3").getTotalSizeMB() > 0);
+
+    drop("table1");
+    testHBase.forceRegionFlush(Bytes.toBytes("table2"));
     truncate("table3");
 
-    testHBase.forceRegionFlush(Bytes.toBytes("table1"));
-    testHBase.forceRegionFlush(Bytes.toBytes("table2"));
-    testHBase.forceRegionFlush(Bytes.toBytes("table3"));
+    waitForMetricsToUpdate();
 
-    // 2. verifying metrics
+    Assert.assertNull(getTableStats("table1"));
+    Assert.assertTrue(getTableStats("table2").getTotalSizeMB() > 0);
+    Assert.assertTrue(getTableStats("table2").getStoreFileSizeMB() > 0);
+    Assert.assertEquals(0, getTableStats("table3").getTotalSizeMB());
+  }
 
-    // Wait for changes to be reflected in metrics: default refresh interval is 60 sec
-    // todo: figure out how to make metrics update more frequently. Tried a lot, but still no luck
-    TimeUnit.SECONDS.sleep(65);
-
-    Assert.assertNull(getTableStats("noTable"));
-    int table1Size = getTableStats("table1").getTotalSize();
-    int table2Size = getTableStats("table2").getTotalSize();
-    int table3Size = getTableStats("table3").getTotalSize();
-
-    Assert.assertTrue(table1Size < table2Size);
-    Assert.assertTrue(table3Size < table2Size);
-    Assert.assertEquals(table1Size, table3Size);
+  private void waitForMetricsToUpdate() throws InterruptedException {
+    // Wait for a bit to allow changes reflect in metrics: for whatever reason it takes some time.
+    // Did not investigated why :(
+    LOG.info("Waiting for metrics to reflect changes");
+    TimeUnit.SECONDS.sleep(5);
   }
 
   private void writeSome(String tableName) throws IOException {
     HTable table = new HTable(testHBase.getConfiguration(), tableName);
     try {
-      for (int i = 0; i < 100; i++) {
+      // writing at least couple megs to reflect in "megabyte"-based metrics
+      for (int i = 0; i < 8; i++) {
         Put put = new Put(Bytes.toBytes("row" + i));
-        put.add(Bytes.toBytes("d"), Bytes.toBytes("col" + i), new byte[1024]);
+        put.add(Bytes.toBytes("d"), Bytes.toBytes("col" + i), new byte[1024 * 1024]);
         table.put(put);
       }
     } finally {
@@ -119,20 +121,25 @@ public class HBaseDatasetStatsReporterTest {
     }
   }
 
-  private static void create(String tableName) throws IOException {
+  private void create(String tableName) throws IOException {
     HTableDescriptor desc = new HTableDescriptor(tableName);
     desc.addFamily(new HColumnDescriptor("d"));
-    hBaseTableUtil.createTableIfNotExists(hAdmin, tableName, desc);
+    getTableUtil().createTableIfNotExists(hAdmin, tableName, desc);
   }
 
-  private static void truncate(String tableName) throws IOException {
+  private void truncate(String tableName) throws IOException {
     HTableDescriptor tableDescriptor = hAdmin.getTableDescriptor(Bytes.toBytes(tableName));
     hAdmin.disableTable(tableName);
     hAdmin.deleteTable(tableName);
     hAdmin.createTable(tableDescriptor);
   }
 
-  private static HBaseDatasetStatsReporter.TableStats getTableStats(String tableName) throws IOException {
-    return HBaseDatasetStatsReporter.getTableStats(testHBase.getConfiguration()).get(tableName);
+  private void drop(String tableName) throws IOException {
+    hAdmin.disableTable(tableName);
+    hAdmin.deleteTable(tableName);
+  }
+
+  private HBaseTableUtil.TableStats getTableStats(String tableName) throws IOException {
+    return getTableUtil().getTableStats(testHBase.getConfiguration()).get(tableName);
   }
 }

@@ -399,6 +399,35 @@ public abstract class HBaseTableUtil {
   public abstract Class<? extends Coprocessor> getDequeueScanObserverClassForVersion();
   public abstract Class<? extends Coprocessor> getIncrementHandlerClassForVersion();
 
+  public abstract Map<String, TableStats> getTableStats(Configuration hConf) throws IOException;
+
+  /**
+   * Carries information about table stats
+   */
+  public static final class TableStats {
+    private int storeFileSizeMB = 0;
+    private int memStoreSizeMB = 0;
+
+    public TableStats(int storeFileSizeMB, int memStoreSizeMB) {
+      this.storeFileSizeMB = storeFileSizeMB;
+      this.memStoreSizeMB = memStoreSizeMB;
+    }
+
+    public int getStoreFileSizeMB() {
+      return storeFileSizeMB;
+    }
+
+    public int getMemStoreSizeMB() {
+      return memStoreSizeMB;
+    }
+
+    public int getTotalSizeMB() {
+      // both memstore and size on fs contribute to size of the dataset, otherwise user will be confused with zeroes
+      // in dataset size even after something was written...
+      return storeFileSizeMB + memStoreSizeMB;
+    }
+  }
+
   /**
    * Carries information about coprocessor information.
    */
