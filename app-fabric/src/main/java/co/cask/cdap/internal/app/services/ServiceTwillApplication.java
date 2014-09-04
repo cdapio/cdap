@@ -26,6 +26,7 @@ import org.apache.twill.api.TwillSpecification;
 
 import java.security.InvalidParameterException;
 import java.util.List;
+import java.util.Set;
 
 /**
  * TwillApplication to run a {@link Service}.
@@ -47,6 +48,7 @@ public class ServiceTwillApplication implements TwillApplication {
   public TwillSpecification configure() {
     ServiceConfigurer configurer = new DefaultServiceConfigurer();
     service.configure(configurer);
+    Set<String> datasets = configurer.getDatasets();
     List<? extends HttpServiceHandler> serviceHandlers = configurer.getHandlers();
     if (serviceHandlers.size() == 0) {
       throw new InvalidParameterException("No handlers provided. Add handlers using configurer.");
@@ -58,7 +60,7 @@ public class ServiceTwillApplication implements TwillApplication {
                                                                        serviceHandlers))
                                      .noLocalFiles();
     for (ServiceWorker worker : configurer.getWorkers()) {
-      TwillRunnable runnable = new ServiceWorkerTwillRunnable(worker);
+      TwillRunnable runnable = new ServiceWorkerTwillRunnable(worker, datasets);
       runnableSetter = runnableSetter.add(runnable, worker.configure().getResourceSpecification()).noLocalFiles();
     }
     return runnableSetter.anyOrder().build();
