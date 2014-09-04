@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,7 @@ import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.ProcedureLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
-import org.apache.twill.discovery.ServiceDiscovered;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -51,16 +51,15 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
   private final ProcedureMetrics procedureMetrics;
   private final ProcedureLoggingContext procedureLoggingContext;
   private final Arguments runtimeArguments;
-  private final ProgramServiceDiscovery serviceDiscovery;
 
   BasicProcedureContext(Program program, RunId runId, int instanceId, int instanceCount,
                         Set<String> datasets, Arguments runtimeArguments,
                         ProcedureSpecification procedureSpec, MetricsCollectionService collectionService,
-                        ProgramServiceDiscovery serviceDiscovery,
+                        ProgramServiceDiscovery serviceDiscovery, DiscoveryServiceClient discoveryServiceClient,
                         DatasetFramework dsFramework, CConfiguration conf) {
     super(program, runId, datasets,
           getMetricsContext(program, instanceId), collectionService,
-          dsFramework, conf);
+          dsFramework, conf, serviceDiscovery, discoveryServiceClient);
     this.accountId = program.getAccountId();
     this.procedureId = program.getName();
     this.instanceId = instanceId;
@@ -69,7 +68,6 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
     this.procedureMetrics = new ProcedureMetrics(collectionService, getApplicationId(), getProcedureId());
     this.runtimeArguments = runtimeArguments;
     this.procedureLoggingContext = new ProcedureLoggingContext(getAccountId(), getApplicationId(), getProcedureId());
-    this.serviceDiscovery = serviceDiscovery;
   }
 
   @Override
@@ -127,10 +125,5 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
       arguments.put(it.next());
     }
     return arguments.build();
-  }
-
-  @Override
-  public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
-    return serviceDiscovery.discover(accountId, appId, serviceId, serviceName);
   }
 }

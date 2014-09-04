@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,15 +31,17 @@ import java.lang.reflect.Type;
 public interface RecordWritable<RECORD> extends Closeable {
 
   /**
+   * The type of records that the dataset exposes as a schema. The schema will be derived from the type
+   * using reflection.
+   * @return the schema type.
+   */
+  Type getRecordType();
+
+  /**
    * Writes the record into a dataset.
    *
    * @param record record to write into the dataset.
+   * @throws IOException when the {@code RECORD} could not be written to the dataset.
    */
   public void write(RECORD record) throws IOException;
-
-  /**
-   * This method is needed because Java does not remember the RECORD type parameter at runtime.
-   * @return the schema type, that is RECORD.
-   */
-  Type getRecordType();
 }

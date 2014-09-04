@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -56,7 +56,7 @@ public class ContextManager {
    * @param conf configuration used to create a context, if necessary. If it is null, return the saved context, which
    *             can also be null.
    * @return Context of a query execution.
-   * @throws IOException
+   * @throws IOException when the configuration does not contain the required settings to create the context
    */
   public static Context getContext(@Nullable Configuration conf) throws IOException {
     if (conf != null && savedContext == null) {
@@ -105,9 +105,6 @@ public class ContextManager {
     private final DatasetFramework datasetFramework;
     private final ZKClientService zkClientService;
 
-    // TODO investigate multiple "insert into" in one query and make sure this doesn't make it break
-    private String recordWritableName;
-
     public Context(DatasetFramework datasetFramework, ZKClientService zkClientService) {
       // This constructor is called from the MR job Hive launches.
       this.datasetFramework = datasetFramework;
@@ -121,14 +118,6 @@ public class ContextManager {
 
     public DatasetFramework getDatasetFramework() {
       return datasetFramework;
-    }
-
-    public String getRecordWritableName() {
-      return recordWritableName;
-    }
-
-    public void setRecordWritableName(String recordWritableName) {
-      this.recordWritableName = recordWritableName;
     }
 
     @Override

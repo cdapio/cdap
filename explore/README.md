@@ -23,7 +23,7 @@ to what version of CDAP you are modifying.
   
 ## License and Trademarks
 
-© Copyright 2014 Cask, Inc.
+© Copyright 2014 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 in compliance with the License. You may obtain a copy of the License at
@@ -35,4 +35,4 @@ License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
 either express or implied. See the License for the specific language governing permissions 
 and limitations under the License.
 
-Cask is a trademark of Cask, Inc. All rights reserved.
+Cask is a trademark of Cask Data, Inc. All rights reserved.

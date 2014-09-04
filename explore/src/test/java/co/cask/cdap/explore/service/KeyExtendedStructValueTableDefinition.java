@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,10 +43,10 @@ import java.util.Map;
 /**
  * Simple key value table for testing.
  */
-public class KeyExtendedStructValueTableDefinition
-  extends AbstractDatasetDefinition<KeyExtendedStructValueTableDefinition.KeyExtendedStructValueTable, DatasetAdmin> {
-  private static final Gson GSON = new Gson();
+public class KeyExtendedStructValueTableDefinition extends
+  AbstractDatasetDefinition<KeyExtendedStructValueTableDefinition.KeyExtendedStructValueTable, DatasetAdmin> {
 
+  private static final Gson GSON = new Gson();
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
   public KeyExtendedStructValueTableDefinition(String name,
@@ -80,8 +80,8 @@ public class KeyExtendedStructValueTableDefinition
    */
   public static class KeyExtendedStructValueTable extends AbstractDataset
     implements RecordScannable<KeyExtendedValue>, RecordWritable<KeyExtendedValue> {
-    static final byte[] COL = new byte[] {'c', 'o', 'l', '1'};
 
+    static final byte[] COL = new byte[] {'c', 'o', 'l', '1'};
     private final Table table;
 
     public KeyExtendedStructValueTable(String instanceName, Table table) {

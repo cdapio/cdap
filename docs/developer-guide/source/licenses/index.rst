@@ -1,16 +1,16 @@
-.. :author: Cask, Inc.
-   :description: CDAP Dependencies
+.. :author: Cask Data, Inc.
+   :description: Cask Data Application Platform Dependencies
 
-==============================
-CDAP Licenses and Dependencies
-==============================
+========================================================
+Cask Data Application Platform Licenses and Dependencies
+========================================================
 
 CDAP Product License
 ----------------------------------------------
 
 The Cask Data Application Platform (CDAP) product is copyright and licensed as follows:
 
-   Copyright 2014 Cask, Inc.
+   Copyright 2014 Cask Data, Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ CDAP Documentation License
 
 The Cask Data Application Platform (CDAP) documentation is copyright and licensed as follows:
 
-   Copyright 2014 Cask, Inc.
+   Copyright 2014 Cask Data, Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -49,8 +49,8 @@ The Cask Data Application Platform (CDAP) documentation is copyright and license
 CDAP Dependent Packages, Licenses and License URLs
 ----------------------------------------------------------------------------
 
-- `CDAP SingleNode Dependencies <cdap-singlenode-dependencies.html>`_
-  (`PDF <cdap-singlenode-dependencies.pdf>`__)
+- `CDAP Standalone Dependencies <cdap-standalone-dependencies.html>`_
+  (`PDF <cdap-standalone-dependencies.pdf>`__)
 - `CDAP Level 1 Dependencies <cdap-level-1-dependencies.html>`_
   (`PDF <cdap-level-1-dependencies.pdf>`__)
 - `CDAP Distributed Dependencies <cdap-enterprise-dependencies.html>`_

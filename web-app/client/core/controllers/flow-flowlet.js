@@ -199,13 +199,7 @@ define([], function () {
     keyPressed: function (evt) {
       var btn = this.$().next();
       var inp = this.value;
-      if (inp.length > 0 && parseInt(inp) != this.placeholder){
-          btn.css("opacity",'1')
-
-      } else {
-          btn.css("opacity",'')
-      }
-      return true;
+      return C.Util.handleInstancesKeyPress(btn, inp, this.placeholder);
     },
 
     changeInstances: function () {
@@ -217,20 +211,15 @@ define([], function () {
         $('#instancesInput').keyup();
       },500);
 
-      if(!inputStr || inputStr.length === 0){
-        C.Modal.show('Change Instances','Enter a valid number of instances.');
+      if (this.get('model') && this.get('model').instances === input) {
+        return; //no-op
+      }
+      var isInvalid = C.Util.isInvalidNumInstances(inputStr);
+      if(isInvalid){
+        C.Modal.show('Error', isInvalid);
         return;
       }
 
-      if(isNaN(input) || isNaN(inputStr)){
-        C.Modal.show('Incorrect Input', 'Instance count can only be set to numbers (between 1 and 100).');
-        return;
-      }
-
-      if(input < 1 || input > 100) {
-        C.Modal.show('Instances Requested out of bounds', 'Please select an instance count (between 1 and 100)');
-        return;
-      }
 
 			var self = this;
 			C.Modal.show(

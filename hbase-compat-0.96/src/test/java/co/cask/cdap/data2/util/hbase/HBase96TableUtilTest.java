@@ -14,8 +14,19 @@
  * the License.
  */
 
+package co.cask.cdap.data2.util.hbase;
+
+import co.cask.cdap.test.XSlowTests;
+import org.junit.experimental.categories.Category;
+
 /**
- * Defines Dataset exceptions.
  *
  */
-package co.cask.cdap.api.data.dataset;
+@Category(XSlowTests.class)
+public class HBase96TableUtilTest extends AbstractHBaseTableUtilTest {
+
+  @Override
+  protected HBaseTableUtil getTableUtil() {
+    return new HBase96TableUtil();
+  }
+}

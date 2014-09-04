@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,8 +48,10 @@ public class DatasetSerDe implements SerDe {
     String datasetName = properties.getProperty(Constants.Explore.DATASET_NAME);
     try {
       if (entries != null) {
-        entries.set(Constants.Explore.DATASET_NAME, datasetName);
-        recordType = DatasetAccessor.getRecordScannableType(entries);
+        // Here, we can't say whether Hive wants to read the table, or write to it
+        Configuration conf = new Configuration(entries);
+        conf.set(Constants.Explore.DATASET_NAME, datasetName);
+        recordType = DatasetAccessor.getRecordType(conf);
       } else {
         // When initialize is called to write to a table, entries is null
         try {

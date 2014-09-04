@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -76,6 +76,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
@@ -108,6 +109,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private final TransactionSystemClient txSystemClient;
   private final TransactionExecutorFactory txExecutorFactory;
   private final ProgramServiceDiscovery serviceDiscovery;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
   private Job jobConf;
   private MapReduceProgramController controller;
@@ -120,7 +122,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
                                 TransactionExecutorFactory txExecutorFactory,
-                                ProgramServiceDiscovery serviceDiscovery) {
+                                ProgramServiceDiscovery serviceDiscovery,
+                                DiscoveryServiceClient discoveryServiceClient) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -130,6 +133,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.txSystemClient = txSystemClient;
     this.txExecutorFactory = txExecutorFactory;
     this.serviceDiscovery = serviceDiscovery;
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @Inject (optional = true)
@@ -169,7 +173,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       new BasicMapReduceContext(program, null, runId, options.getUserArguments(),
                                 program.getSpecification().getDatasets().keySet(), spec,
                                 logicalStartTime,
-                                workflowBatch, serviceDiscovery, metricsCollectionService,
+                                workflowBatch, serviceDiscovery, discoveryServiceClient, metricsCollectionService,
                                 datasetFramework, cConf);
 
     try {

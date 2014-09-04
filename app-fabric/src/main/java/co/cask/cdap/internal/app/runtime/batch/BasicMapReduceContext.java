@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,7 +37,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
-import org.apache.twill.discovery.ServiceDiscovered;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.Iterator;
 import java.util.List;
@@ -63,7 +63,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final String workflowBatch;
   private final Metrics mapredMetrics;
   private final MetricsCollectionService metricsCollectionService;
-  private final ProgramServiceDiscovery serviceDiscovery;
 
   private String inputDatasetName;
   private List<Split> inputDataSelection;
@@ -80,17 +79,17 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                long logicalStartTime,
                                String workflowBatch,
                                ProgramServiceDiscovery serviceDiscovery,
+                               DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
                                DatasetFramework dsFramework,
                                CConfiguration conf) {
     super(program, runId, datasets,
           getMetricContext(program, type), metricsCollectionService,
-          dsFramework, conf);
+          dsFramework, conf, serviceDiscovery, discoveryServiceClient);
     this.accountId = program.getAccountId();
     this.runtimeArguments = runtimeArguments;
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
-    this.serviceDiscovery = serviceDiscovery;
     this.metricsCollectionService = metricsCollectionService;
 
     if (metricsCollectionService != null) {
@@ -240,11 +239,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       arguments.put(it.next());
     }
     return arguments.build();
-  }
-
-  @Override
-  public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
-    return serviceDiscovery.discover(accountId, appId, serviceId, serviceName);
   }
 
   public void flushOperations() throws Exception {

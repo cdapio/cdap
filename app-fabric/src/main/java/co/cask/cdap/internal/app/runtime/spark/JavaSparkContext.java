@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,8 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.api.java.JavaPairRDD;
+
+import java.net.URL;
 
 /**
  * A concrete implementation of {@link AbstractSparkContext} which is used if the user's spark job is written in Java.
@@ -78,5 +80,15 @@ class JavaSparkContext extends AbstractSparkContext {
   @Override
   public <T> T getApacheSparkContext() {
     return (T) apacheContext;
+  }
+
+  @Override
+  public URL getServiceURL(String applicationId, String serviceId) {
+    throw new UnsupportedOperationException("Does not support service discovery");
+  }
+
+  @Override
+  public URL getServiceURL(String serviceId) {
+    throw new UnsupportedOperationException("Does not support service discovery");
   }
 }
