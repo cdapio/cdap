@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Map;
 import java.util.Set;
 
@@ -83,6 +84,16 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
 
   @Override
   public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
+    throw new UnsupportedOperationException("Service discovery not yet supported.");
+  }
+
+  @Override
+  public URL getServiceURL(String applicationId, String serviceId) {
+    throw new UnsupportedOperationException("Service discovery not yet supported.");
+  }
+
+  @Override
+  public URL getServiceURL(String serviceId) {
     throw new UnsupportedOperationException("Service discovery not yet supported.");
   }
 
