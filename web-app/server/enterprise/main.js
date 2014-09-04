@@ -94,10 +94,10 @@ EntServer.prototype.start = function() {
 
   self.getConfig(function(version) {
     if (self.config['dashboard.https.enabled'] === "true") {
-      self.server = self.getHttpsServerInstance(self.app, self.config['dashboard.ssl.key'],
-                                                self.config['dashboard.ssl.cert']);
       self.lib = https;
       self.httpsEnabled = true;
+      self.server = self.getHttpsServerInstance(self.app, self.config['dashboard.ssl.key'],
+                                                self.config['dashboard.ssl.cert']);
     } else {
       self.lib = http;
       self.httpsEnabled = false;
